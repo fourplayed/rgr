@@ -1,0 +1,24 @@
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
+
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, 'src'),
+      '@/components': path.resolve(__dirname, 'src/components'),
+      '@/hooks': path.resolve(__dirname, 'src/hooks'),
+      '@/contexts': path.resolve(__dirname, 'src/contexts'),
+      '@/stores': path.resolve(__dirname, 'src/stores'),
+      '@/utils': path.resolve(__dirname, 'src/utils'),
+      '@rgr/shared': path.resolve(__dirname, '../../packages/shared/src'),
+      '@rgr/ui': path.resolve(__dirname, '../../packages/ui/src'),
+      '@rgr/config': path.resolve(__dirname, '../../packages/config/src'),
+    },
+  },
+  server: {
+    port: 5173,
+    open: false,
+  },
+});
