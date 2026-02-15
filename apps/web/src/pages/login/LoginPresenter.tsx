@@ -18,7 +18,7 @@
  * - Screen reader announcements for errors
  * - Required field indicators
  */
-import { useState, type ComponentType } from 'react';
+import { useState, useCallback, useEffect, type ComponentType } from 'react';
 import type { LoginLogicState, LoginLogicActions } from './useLoginLogic';
 import { LOGIN_CONSTANTS } from './types';
 import { Logo } from '@/components/common';
@@ -28,12 +28,12 @@ import { ErrorContainer } from './components/ErrorContainer';
 import { LoginFormCard } from './components/LoginFormCard';
 import { ForgotPasswordCard } from './components/ForgotPasswordCard';
 import { FlipCardContainer } from './components/FlipCardContainer';
-import { Stars } from './components/Stars';
-import { Meteors } from './components/Meteors';
-import { DebugToolbar } from './components/DebugToolbar';
+import { Stars } from '@/components/backgrounds/Stars';
+import { DebugToolbar, type WorkflowStep } from './components/DebugToolbar';
+import { WorkflowLogPanel } from './components/WorkflowLogPanel';
 import { BackgroundBeamsWithCollisionDemo } from '@/components/ui/BackgroundBeamsDemo';
-import { Aurora } from './components/Aurora';
 import { useTheme } from '@/hooks/useTheme';
+import { Hover3D } from '@/components/ui/Hover3D';
 import { useFlipAnimation } from './hooks/useFlipAnimation';
 import { useSwipeAnimation } from './hooks/useSwipeAnimation';
 
@@ -55,6 +55,8 @@ export interface LoginPresenterProps {
   state: LoginLogicState;
   actions: LoginLogicActions;
   ButtonComponent: ComponentType<ButtonProps>;
+  /** Called when the workflow log is done and it is safe to navigate away */
+  onNavigationReady?: () => void;
 }
 
 /**
@@ -65,6 +67,7 @@ export function LoginPresenter({
   state,
   actions,
   ButtonComponent,
+  onNavigationReady,
 }: LoginPresenterProps) {
   // Global theme state from unified context
   const { isDark } = useTheme();
@@ -86,16 +89,28 @@ export function LoginPresenter({
   // Local state for forgot password errors
   const [forgotPasswordError, setForgotPasswordError] = useState<string | null>(null);
 
+  // Workflow log state
+  const [workflowSteps, setWorkflowSteps] = useState<WorkflowStep[]>([]);
+  const [workflowComplete, setWorkflowComplete] = useState(false);
+
+  // Exit slide animation: when auth succeeds, slide the card + logo off-screen
+  const [isExiting, setIsExiting] = useState(false);
+  useEffect(() => {
+    if (state.status === 'success') {
+      setIsExiting(true);
+    }
+  }, [state.status]);
+
   // Local state for custom gradient colors - Light theme
-  const [lightTopColor, setLightTopColor] = useState('#0091ff');
-  const [lightUpperMiddleColor, setLightUpperMiddleColor] = useState('#0040ff');
+  const [lightTopColor, setLightTopColor] = useState('#170986');
+  const [lightUpperMiddleColor, setLightUpperMiddleColor] = useState('#0017c2');
   const [lightLowerMiddleColor, setLightLowerMiddleColor] = useState('#0000ff');
   const [lightBottomColor, setLightBottomColor] = useState('#0091ff');
 
   // Local state for custom gradient colors - Dark theme
-  const [darkTopColor, setDarkTopColor] = useState('#000433');
+  const [darkTopColor, setDarkTopColor] = useState('#060f74');
   const [darkUpperMiddleColor, setDarkUpperMiddleColor] = useState('#000970');
-  const [darkLowerMiddleColor, setDarkLowerMiddleColor] = useState('#000970');
+  const [darkLowerMiddleColor, setDarkLowerMiddleColor] = useState('#000757');
   const [darkBottomColor, setDarkBottomColor] = useState('#080a21');
 
   // Collect all errors for display
@@ -162,107 +177,144 @@ export function LoginPresenter({
         onBottomColorChange={isDark ? setDarkBottomColor : setLightBottomColor}
         defaultColors={
           isDark
-            ? { top: '#000433', upperMiddle: '#000970', lowerMiddle: '#000970', bottom: '#080a21' }
-            : { top: '#0091ff', upperMiddle: '#0040ff', lowerMiddle: '#0000ff', bottom: '#0091ff' }
+            ? { top: '#060f74', upperMiddle: '#000970', lowerMiddle: '#000757', bottom: '#080a21' }
+            : { top: '#170986', upperMiddle: '#0017c2', lowerMiddle: '#0000ff', bottom: '#0091ff' }
         }
       />
 
-      {/* Dark theme logo */}
-      {isDark && (
-        <div
-          className="absolute flex justify-center w-full max-w-[400px] z-20 pointer-events-none"
-          style={{
-            top: `calc(50% - ${CARD_HEIGHT / 2}px - 180px)`,
-            left: '50%',
-            transform: (() => {
-              const baseTransform = 'translateX(-50%)';
-              if (swipePhase === 'idle' || swipePhase === 'swipe-in') {
-                return baseTransform;
-              }
-              if (swipePhase === 'swipe-out') {
-                return `${baseTransform} translateY(-120vh)`;
-              }
-              if (swipePhase === 'position-in') {
-                return `${baseTransform} translateY(-120vh)`;
-              }
-              return baseTransform;
-            })(),
-            transition: swipePhase === 'position-in'
-              ? 'none'
-              : `transform ${THEME_SWIPE_DURATION_MS}ms cubic-bezier(0.25, 0.1, 0.25, 1)`,
-          }}
-        >
-          <Logo
-            variant="auto"
-            size="custom"
-            className="h-[525.53px] w-auto"
-            isDark={true}
-            alt={LOGIN_CONSTANTS.UI.LOGO_LABEL}
-          />
-        </div>
-      )}
-
-      {/* Light theme logo - original dimensions */}
-      {!isDark && (
-        <div
-          className="absolute flex justify-center z-20 pointer-events-none"
-          style={{
-            top: `calc(50% - ${CARD_HEIGHT / 2}px - 17px)`,
-            left: '50%',
-            transform: (() => {
-              const baseTransform = 'translateX(-50%)';
-              if (swipePhase === 'idle' || swipePhase === 'swipe-in') {
-                return baseTransform;
-              }
-              if (swipePhase === 'swipe-out') {
-                return `${baseTransform} translateY(-120vh)`;
-              }
-              if (swipePhase === 'position-in') {
-                return `${baseTransform} translateY(-120vh)`;
-              }
-              return baseTransform;
-            })(),
-            transition: swipePhase === 'position-in'
-              ? 'none'
-              : `transform ${THEME_SWIPE_DURATION_MS}ms cubic-bezier(0.25, 0.1, 0.25, 1)`,
-          }}
-        >
-          <Logo
-            variant="auto"
-            size="custom"
-            className="h-[185px] w-auto"
-            isDark={false}
-            alt={LOGIN_CONSTANTS.UI.LOGO_LABEL}
-          />
-        </div>
-      )}
-
-      {/* 3D Flip Container with cards */}
-      <FlipCardContainer
-        showBack={showForgotPassword}
-        swipePhase={swipePhase}
-        swipeDirection={swipeDirection}
-        frontFace={
-          <LoginFormCard
-            state={state}
-            actions={actions}
-            ButtonComponent={ButtonComponent}
-            onForgotPassword={handleForgotPasswordClick}
-            isDark={isDark}
-          />
-        }
-        backFace={
-          <ForgotPasswordCard
-            ButtonComponent={ButtonComponent}
-            onBack={handleBackToLogin}
-            isDark={isDark}
-            onError={setForgotPasswordError}
-          />
-        }
+      {/* Workflow Log - slide-out panel bottom-right */}
+      <WorkflowLogPanel
+        workflowSteps={workflowSteps}
+        workflowComplete={workflowComplete}
+        onClear={() => {
+          setWorkflowSteps([]);
+          setWorkflowComplete(false);
+        }}
       />
 
-      {/* Error container below card */}
-      <ErrorContainer errors={allErrors} isDark={isDark} />
+      {/* Exit slide wrapper — slides logo + card + errors left on auth success */}
+      <div
+        style={{
+          transform: isExiting ? 'translateX(-120vw)' : 'none',
+          transition: 'transform 600ms ease-in',
+          // Fill the full viewport so absolutely-positioned children stay put
+          position: 'absolute',
+          inset: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+        onTransitionEnd={(e) => {
+          // Only fire on the wrapper's own transform transition
+          if (isExiting && e.target === e.currentTarget) {
+            onNavigationReady?.();
+          }
+        }}
+      >
+        {/* Dark theme logo */}
+        {isDark && (
+          <div
+            className="absolute flex justify-center w-full max-w-[400px] z-20 pointer-events-none"
+            style={{
+              top: `calc(50% - ${CARD_HEIGHT / 2}px - 17px)`,
+              left: '50%',
+              transform: (() => {
+                const baseTransform = 'translateX(-50%)';
+                if (swipePhase === 'idle' || swipePhase === 'swipe-in') {
+                  return baseTransform;
+                }
+                if (swipePhase === 'swipe-out') {
+                  return `${baseTransform} translateY(-120vh)`;
+                }
+                if (swipePhase === 'position-in') {
+                  return `${baseTransform} translateY(-120vh)`;
+                }
+                return baseTransform;
+              })(),
+              transition: swipePhase === 'position-in'
+                ? 'none'
+                : `transform ${THEME_SWIPE_DURATION_MS}ms cubic-bezier(0.25, 0.1, 0.25, 1)`,
+            }}
+          >
+            <Hover3D maxRotation={12} perspective={1000} scale={1.03} className="pointer-events-auto" style={{ display: 'inline-block' }}>
+              <Logo
+                variant="auto"
+                size="custom"
+                className="h-[185px] w-auto pointer-events-none"
+                isDark={true}
+                alt={LOGIN_CONSTANTS.UI.LOGO_LABEL}
+              />
+            </Hover3D>
+          </div>
+        )}
+
+        {/* Light theme logo - original dimensions */}
+        {!isDark && (
+          <div
+            className="absolute flex justify-center z-20 pointer-events-none"
+            style={{
+              top: `calc(50% - ${CARD_HEIGHT / 2}px - 17px)`,
+              left: '50%',
+              transform: (() => {
+                const baseTransform = 'translateX(-50%)';
+                if (swipePhase === 'idle' || swipePhase === 'swipe-in') {
+                  return baseTransform;
+                }
+                if (swipePhase === 'swipe-out') {
+                  return `${baseTransform} translateY(-120vh)`;
+                }
+                if (swipePhase === 'position-in') {
+                  return `${baseTransform} translateY(-120vh)`;
+                }
+                return baseTransform;
+              })(),
+              transition: swipePhase === 'position-in'
+                ? 'none'
+                : `transform ${THEME_SWIPE_DURATION_MS}ms cubic-bezier(0.25, 0.1, 0.25, 1)`,
+            }}
+          >
+            <Hover3D maxRotation={12} perspective={1000} scale={1.03} className="pointer-events-auto" style={{ display: 'inline-block' }}>
+              <Logo
+                variant="auto"
+                size="custom"
+                className="h-[185px] w-auto pointer-events-none"
+                isDark={false}
+                alt={LOGIN_CONSTANTS.UI.LOGO_LABEL}
+              />
+            </Hover3D>
+          </div>
+        )}
+
+        {/* 3D Flip Container with cards */}
+        <FlipCardContainer
+          showBack={showForgotPassword}
+          swipePhase={swipePhase}
+          swipeDirection={swipeDirection}
+          frontFace={
+            <LoginFormCard
+              state={state}
+              actions={actions}
+              ButtonComponent={ButtonComponent}
+              onForgotPassword={handleForgotPasswordClick}
+              isDark={isDark}
+              onWorkflowStepsChange={setWorkflowSteps}
+              onWorkflowComplete={setWorkflowComplete}
+            />
+          }
+          backFace={
+            <ForgotPasswordCard
+              ButtonComponent={ButtonComponent}
+              onBack={handleBackToLogin}
+              isDark={isDark}
+              onError={setForgotPasswordError}
+            />
+          }
+        />
+
+        {/* Error container below card */}
+        <ErrorContainer errors={allErrors} isDark={isDark} />
+      </div>
     </div>
   );
 }

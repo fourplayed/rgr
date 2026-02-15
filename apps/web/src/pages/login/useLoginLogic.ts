@@ -159,7 +159,7 @@ export function useLoginLogic(deps?: LoginLogicDeps): UseLoginLogicResult {
       try {
         await login(formData.email, formData.password);
         setStatus('success');
-        navigate('/');
+        navigate('/dashboard', { state: { fromLogin: true } });
       } catch (err) {
         setStatus('error');
 
