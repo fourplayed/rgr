@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "paths": {
+      "@rgr/shared": ["../../packages/shared/src"],
+      "@rgr/ui": ["../../packages/ui/src"],
+      "@rgr/config": ["../../packages/config/src"]
+    }
+  },
+  "include": ["src/**/*", "app.json"],
+  "exclude": ["node_modules"]
+}

@@ -1,0 +1,41 @@
+{
+  "name": "rgr-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "dev:mobile": "npm run dev --workspace=@rgr/mobile",
+    "dev:web": "npm run dev --workspace=@rgr/web",
+    "build": "turbo run build",
+    "build:mobile": "npm run build --workspace=@rgr/mobile",
+    "build:web": "npm run build --workspace=@rgr/web",
+    "test": "turbo run test",
+    "test:mobile": "npm run test --workspace=@rgr/mobile",
+    "test:web": "npm run test --workspace=@rgr/web",
+    "test:shared": "npm run test --workspace=@rgr/shared",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint -- --fix",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "db:migrate": "cd supabase && supabase db push",
+    "db:reset": "cd supabase && supabase db reset",
+    "db:seed": "cd supabase && psql $DATABASE_URL < seed.sql"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0",
+    "typescript": "^5.5.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.57.0",
+    "prettier": "^3.3.0"
+  },
+  "packageManager": "npm@10.0.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "@rgr/ui",
+  "version": "1.0.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "react-native": "./dist/index.native.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "lint": "eslint src --ext .ts,.tsx",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "react-native": ">=0.70.0"
+  },
+  "dependencies": {
+    "@rgr/shared": "*"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.0",
+    "typescript": "^5.5.0"
+  }
+}
