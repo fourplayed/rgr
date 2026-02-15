@@ -31,6 +31,9 @@ export function ThemedInput({
   const inputStyle = isDark ? INPUT_STYLES.dark : INPUT_STYLES.light;
 
   const labelClasses = isDark ? 'text-slate-200 transition-colors duration-400' : 'text-white transition-colors duration-400';
+  const labelShadow = isDark
+    ? '0 2px 4px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3)'
+    : '0 2px 4px rgba(0, 0, 0, 0.6), 0 1px 2px rgba(0, 0, 0, 0.4)';
 
   return (
     <div className="space-y-1">
@@ -40,7 +43,11 @@ export function ThemedInput({
         }
       `}</style>
       {label && (
-        <label htmlFor={inputId} className={`block text-sm font-medium ${labelClasses}`}>
+        <label
+          htmlFor={inputId}
+          className={`block text-sm font-medium ${labelClasses}`}
+          style={{ textShadow: labelShadow }}
+        >
           {label}
         </label>
       )}

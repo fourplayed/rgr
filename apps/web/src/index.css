@@ -281,40 +281,38 @@
   }
 }
 
-/* Starfield animation - horizontal movement (right to left) with parallax */
-/* Stars travel from off-screen right to off-screen left */
-/* Extended travel distance to prevent visible spawn/death */
+/* Starfield animation - horizontal movement with upward drift */
 @keyframes animStarFast {
   from {
-    transform: translateX(0px);
+    transform: translateX(0px) translateY(0px);
   }
   to {
-    transform: translateX(-260vw);
+    transform: translateX(-260vw) translateY(-80vh);
   }
 }
 
 @keyframes animStarMedium {
   from {
-    transform: translateX(0px);
+    transform: translateX(0px) translateY(0px);
   }
   to {
-    transform: translateX(-260vw);
+    transform: translateX(-260vw) translateY(-60vh);
   }
 }
 
 @keyframes animStarSlow {
   from {
-    transform: translateX(0px);
+    transform: translateX(0px) translateY(0px);
   }
   to {
-    transform: translateX(-260vw);
+    transform: translateX(-260vw) translateY(-40vh);
   }
 }
 
 #stars, #stars2, #stars3 {
   position: absolute;
-  top: 0;
-  left: 105vw; /* Start off-screen right with buffer */
+  top: 300px;
+  left: calc(105vw - 500px); /* Start off-screen right with buffer */
   width: 1px;
   height: 1px;
   pointer-events: none;
@@ -326,7 +324,7 @@
   width: 1px;
   height: 1px;
   background: transparent;
-  animation: animStarSlow 131s linear infinite;
+  animation: animStarSlow 101.4s linear infinite;
   opacity: 0.7;
   filter: blur(0px);
   z-index: 1;
@@ -345,7 +343,7 @@
 /* Medium stars - medium horizontal speed */
 #stars2 {
   background: transparent;
-  animation: animStarMedium 165s linear infinite;
+  animation: animStarMedium 131.3s linear infinite;
   opacity: 0.85;
   filter: blur(0px);
   z-index: 2;
@@ -364,7 +362,7 @@
 /* Large stars - slowest horizontal movement */
 #stars3 {
   background: transparent;
-  animation: animStarFast 264s linear infinite;
+  animation: animStarFast 198.9s linear infinite;
   opacity: 1;
   filter: blur(0px);
   z-index: 3;
@@ -406,6 +404,147 @@
 @media (prefers-reduced-motion: reduce) {
   .light-stars {
     animation: none !important;
+  }
+}
+
+/* Fireballs / meteors */
+.shooting-star {
+  position: fixed;
+  width: 12px;
+  height: 12px;
+  background: radial-gradient(circle, #fff 0%, #ffeb3b 30%, #ff9800 60%, #ff5722 100%);
+  border-radius: 50%;
+  box-shadow: 0 0 0 8px rgba(255, 152, 0, 0.5),
+              0 0 0 16px rgba(255, 87, 34, 0.4),
+              0 0 50px rgba(255, 152, 0, 1),
+              0 0 80px rgba(255, 87, 34, 0.9);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.shooting-star::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  width: 150px;
+  height: 40px;
+  background: radial-gradient(ellipse at left,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(255, 235, 59, 0.9) 15%,
+    rgba(255, 152, 0, 0.7) 35%,
+    rgba(255, 87, 34, 0.4) 60%,
+    rgba(255, 87, 34, 0) 100%);
+  box-shadow: 0 0 20px 8px rgba(255, 152, 0, 0.8),
+              0 0 40px 12px rgba(255, 87, 34, 0.5);
+  filter: blur(3px);
+  border-radius: 50%;
+}
+
+.fireball-1 {
+  top: 20%;
+  right: 0;
+  animation: shootingStar1 2s ease-in infinite;
+  animation-delay: 0s;
+}
+
+.fireball-2 {
+  top: 40%;
+  right: 0;
+  animation: shootingStar2 1.8s ease-in infinite;
+  animation-delay: 1.5s;
+}
+
+.fireball-3 {
+  top: 60%;
+  right: 0;
+  animation: shootingStar3 2.2s ease-in infinite;
+  animation-delay: 3s;
+}
+
+.fireball-4 {
+  top: 15%;
+  right: 0;
+  animation: shootingStar4 2s ease-in infinite;
+  animation-delay: 4s;
+}
+
+.fireball-5 {
+  top: 70%;
+  right: 0;
+  animation: shootingStar5 2.1s ease-in infinite;
+  animation-delay: 5s;
+}
+
+@keyframes shootingStar1 {
+  0% {
+    transform: translateX(0) translateY(0) rotate(-45deg);
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-100vw) translateY(50vh) rotate(-45deg);
+    opacity: 0;
+  }
+}
+
+@keyframes shootingStar2 {
+  0% {
+    transform: translateX(0) translateY(0) rotate(-40deg);
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-120vw) translateY(60vh) rotate(-40deg);
+    opacity: 0;
+  }
+}
+
+@keyframes shootingStar3 {
+  0% {
+    transform: translateX(0) translateY(0) rotate(-50deg);
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-110vw) translateY(55vh) rotate(-50deg);
+    opacity: 0;
+  }
+}
+
+@keyframes shootingStar4 {
+  0% {
+    transform: translateX(0) translateY(0) rotate(-42deg);
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-105vw) translateY(52vh) rotate(-42deg);
+    opacity: 0;
+  }
+}
+
+@keyframes shootingStar5 {
+  0% {
+    transform: translateX(0) translateY(0) rotate(-48deg);
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-115vw) translateY(58vh) rotate(-48deg);
+    opacity: 0;
   }
 }
 

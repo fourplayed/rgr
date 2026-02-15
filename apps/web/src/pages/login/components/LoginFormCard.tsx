@@ -137,6 +137,15 @@ export function LoginFormCard({
             background-size: 200% 200%;
             background-position: 0% 50%;
             border: none;
+            box-shadow: 0 2px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3), inset 0 -1px 2px rgba(0, 0, 0, 0.2);
+          }
+
+          .chrome-button-light:hover {
+            box-shadow: 0 3px 4px rgba(0, 0, 0, 0.5), 0 2px 3px rgba(0, 0, 0, 0.4), inset 0 -1px 2px rgba(0, 0, 0, 0.2);
+          }
+
+          .chrome-button-light:active {
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(0, 0, 0, 0.3);
           }
 
           .chrome-button-light::before {
@@ -171,6 +180,15 @@ export function LoginFormCard({
           .chrome-button-dark {
             background: #1e3a8a;
             border: none;
+            box-shadow: 0 2px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4), inset 0 -1px 2px rgba(0, 0, 0, 0.3);
+          }
+
+          .chrome-button-dark:hover {
+            box-shadow: 0 3px 4px rgba(0, 0, 0, 0.6), 0 2px 3px rgba(0, 0, 0, 0.5), inset 0 -1px 2px rgba(0, 0, 0, 0.3);
+          }
+
+          .chrome-button-dark:active {
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(0, 0, 0, 0.4);
           }
 
           .chrome-button-dark::before {
