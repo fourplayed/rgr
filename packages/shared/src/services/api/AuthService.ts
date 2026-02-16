@@ -23,15 +23,15 @@ import type {
   AuthResult,
   SessionInfo,
   CreateUserInput,
-} from '@rgr/shared/types/api/auth';
+} from '../../types/api/auth';
 import {
   SignInCredentialsSchema,
   SignUpInputSchema,
   UpdateProfileInputSchema,
   mapRowToProfile,
-} from '@rgr/shared/types/api/auth';
-import type { UserRole } from '@rgr/shared/types/enums/UserRole';
-import type { ServiceResult } from '@rgr/shared/types';
+} from '../../types/api/auth';
+import type { UserRole } from '../../types/enums/UserRole';
+import type { ServiceResult } from '../../types';
 
 /**
  * AuthService - High-level authentication service

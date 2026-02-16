@@ -8,9 +8,9 @@ import type {
   UpdateProfileInput,
   AuthResult,
   SessionInfo,
-} from '@rgr/shared/types/api/auth';
-import { mapRowToProfile, mapProfileToUpdate } from '@rgr/shared/types/api/auth';
-import type { ServiceResult } from '@rgr/shared/types';
+} from '../../types/api/auth';
+import { mapRowToProfile, mapProfileToUpdate } from '../../types/api/auth';
+import type { ServiceResult } from '../../types';
 
 /**
  * Supabase Auth Service
