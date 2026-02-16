@@ -104,7 +104,7 @@ export function useAssetScans(assetId: string | undefined) {
         throw new Error(result.error);
       }
 
-      return result.data ?? [];
+      return result.data?.data ?? [];
     },
     enabled: !!assetId,
   });
@@ -125,7 +125,7 @@ export function useAssetMaintenance(assetId: string | undefined) {
         throw new Error(result.error);
       }
 
-      return result.data ?? [];
+      return result.data?.data ?? [];
     },
     enabled: !!assetId,
   });
@@ -146,7 +146,7 @@ export function useAssetHazards(assetId: string | undefined) {
         throw new Error(result.error);
       }
 
-      return result.data ?? [];
+      return result.data?.data ?? [];
     },
     enabled: !!assetId,
   });

@@ -26,7 +26,6 @@ export default function AssetListScreen() {
   const [selectedStatuses, setSelectedStatuses] = useState<AssetStatus[]>([
     'active',
     'maintenance',
-    'inspection',
   ]);
 
   const { data, isLoading, error, refetch, isRefreshing } = useAssetList({

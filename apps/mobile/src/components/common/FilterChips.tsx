@@ -13,9 +13,8 @@ interface FilterChipsProps {
 const AVAILABLE_STATUSES: AssetStatus[] = [
   'active',
   'maintenance',
-  'inspection',
   'out_of_service',
-  'retired',
+  'decommissioned',
 ];
 
 export function FilterChips({ selectedStatuses, onToggleStatus }: FilterChipsProps) {
