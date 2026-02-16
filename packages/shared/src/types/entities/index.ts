@@ -4,3 +4,5 @@ export * from './maintenanceRecord';
 export * from './hazardAlert';
 export * from './depot';
 export * from './photo';
+export * from './freightAnalysis';
+export * from './auditLog';

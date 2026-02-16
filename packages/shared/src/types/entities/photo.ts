@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 /**
  * Photo — camelCase application interface
  */
@@ -38,7 +40,40 @@ export interface PhotoRow {
   created_at: string;
 }
 
-// ── Mapper ──
+/**
+ * Input for creating a photo record
+ */
+export interface CreatePhotoInput {
+  assetId?: string | null;
+  scanEventId?: string | null;
+  uploadedBy: string;
+  photoType: string;
+  storagePath: string;
+  thumbnailPath?: string | null;
+  filename?: string | null;
+  fileSize?: number | null;
+  mimeType?: string | null;
+  width?: number | null;
+  height?: number | null;
+}
+
+// ── Zod schemas ──
+
+export const CreatePhotoInputSchema = z.object({
+  assetId: z.string().uuid().nullable().optional(),
+  scanEventId: z.string().uuid().nullable().optional(),
+  uploadedBy: z.string().uuid(),
+  photoType: z.string().min(1).max(50),
+  storagePath: z.string().min(1),
+  thumbnailPath: z.string().nullable().optional(),
+  filename: z.string().max(255).nullable().optional(),
+  fileSize: z.number().int().min(0).nullable().optional(),
+  mimeType: z.string().max(100).nullable().optional(),
+  width: z.number().int().min(0).nullable().optional(),
+  height: z.number().int().min(0).nullable().optional(),
+});
+
+// ── Mappers ──
 
 export function mapRowToPhoto(row: PhotoRow): Photo {
   return {
@@ -56,5 +91,23 @@ export function mapRowToPhoto(row: PhotoRow): Photo {
     height: row.height,
     isAnalyzed: row.is_analyzed,
     createdAt: row.created_at,
+  };
+}
+
+export function mapPhotoToInsert(
+  input: CreatePhotoInput
+): Record<string, unknown> {
+  return {
+    asset_id: input.assetId ?? null,
+    scan_event_id: input.scanEventId ?? null,
+    uploaded_by: input.uploadedBy,
+    photo_type: input.photoType,
+    storage_path: input.storagePath,
+    thumbnail_path: input.thumbnailPath ?? null,
+    filename: input.filename ?? null,
+    file_size: input.fileSize ?? null,
+    mime_type: input.mimeType ?? null,
+    width: input.width ?? null,
+    height: input.height ?? null,
   };
 }

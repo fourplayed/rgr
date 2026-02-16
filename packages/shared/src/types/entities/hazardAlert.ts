@@ -1,3 +1,9 @@
+import { z } from 'zod';
+import {
+  HazardSeveritySchema,
+  HazardStatusSchema,
+  ReviewOutcomeSchema,
+} from '../enums/HazardEnums';
 import type { HazardSeverity, HazardStatus, ReviewOutcome } from '../enums/HazardEnums';
 
 /**
@@ -60,7 +66,34 @@ export interface HazardAlertRow {
   updated_at: string;
 }
 
-// ── Mapper ──
+/**
+ * Input for acknowledging/reviewing a hazard alert
+ */
+export interface UpdateHazardAlertInput {
+  status?: HazardStatus;
+  acknowledgedBy?: string | null;
+  acknowledgedAt?: string | null;
+  acknowledgmentType?: string | null;
+  managerReviewBy?: string | null;
+  managerReviewAt?: string | null;
+  reviewOutcome?: ReviewOutcome | null;
+  reviewNotes?: string | null;
+}
+
+// ── Zod schemas ──
+
+export const UpdateHazardAlertInputSchema = z.object({
+  status: HazardStatusSchema.optional(),
+  acknowledgedBy: z.string().uuid().nullable().optional(),
+  acknowledgedAt: z.string().nullable().optional(),
+  acknowledgmentType: z.string().max(50).nullable().optional(),
+  managerReviewBy: z.string().uuid().nullable().optional(),
+  managerReviewAt: z.string().nullable().optional(),
+  reviewOutcome: ReviewOutcomeSchema.nullable().optional(),
+  reviewNotes: z.string().nullable().optional(),
+});
+
+// ── Mappers ──
 
 export function mapRowToHazardAlert(row: HazardAlertRow): HazardAlert {
   return {
@@ -89,4 +122,21 @@ export function mapRowToHazardAlert(row: HazardAlertRow): HazardAlert {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+}
+
+export function mapHazardAlertToUpdate(
+  input: UpdateHazardAlertInput
+): Record<string, unknown> {
+  const updates: Record<string, unknown> = {};
+
+  if (input.status !== undefined) updates.status = input.status;
+  if (input.acknowledgedBy !== undefined) updates.acknowledged_by = input.acknowledgedBy;
+  if (input.acknowledgedAt !== undefined) updates.acknowledged_at = input.acknowledgedAt;
+  if (input.acknowledgmentType !== undefined) updates.acknowledgment_type = input.acknowledgmentType;
+  if (input.managerReviewBy !== undefined) updates.manager_review_by = input.managerReviewBy;
+  if (input.managerReviewAt !== undefined) updates.manager_review_at = input.managerReviewAt;
+  if (input.reviewOutcome !== undefined) updates.review_outcome = input.reviewOutcome;
+  if (input.reviewNotes !== undefined) updates.review_notes = input.reviewNotes;
+
+  return updates;
 }

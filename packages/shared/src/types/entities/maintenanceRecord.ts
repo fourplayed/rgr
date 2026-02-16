@@ -1,3 +1,8 @@
+import { z } from 'zod';
+import {
+  MaintenanceStatusSchema,
+  MaintenancePrioritySchema,
+} from '../enums/MaintenanceEnums';
 import type { MaintenanceStatus, MaintenancePriority } from '../enums/MaintenanceEnums';
 
 /**
@@ -64,7 +69,85 @@ export interface MaintenanceRecordWithNames extends MaintenanceRecord {
   assigneeName: string | null;
 }
 
-// ── Mapper ──
+/**
+ * Input for creating a maintenance record
+ */
+export interface CreateMaintenanceInput {
+  assetId: string;
+  reportedBy?: string | null;
+  assignedTo?: string | null;
+  title: string;
+  description?: string | null;
+  priority?: MaintenancePriority;
+  status?: MaintenanceStatus;
+  maintenanceType?: string | null;
+  scheduledDate?: string | null;
+  dueDate?: string | null;
+  estimatedCost?: number | null;
+  hazardAlertId?: string | null;
+  scanEventId?: string | null;
+  notes?: string | null;
+}
+
+/**
+ * Input for updating a maintenance record
+ */
+export interface UpdateMaintenanceInput {
+  assignedTo?: string | null;
+  completedBy?: string | null;
+  title?: string;
+  description?: string | null;
+  priority?: MaintenancePriority;
+  status?: MaintenanceStatus;
+  maintenanceType?: string | null;
+  scheduledDate?: string | null;
+  startedAt?: string | null;
+  completedAt?: string | null;
+  dueDate?: string | null;
+  estimatedCost?: number | null;
+  actualCost?: number | null;
+  partsUsed?: Record<string, unknown>[] | null;
+  notes?: string | null;
+}
+
+// ── Zod schemas ──
+
+export const CreateMaintenanceInputSchema = z.object({
+  assetId: z.string().uuid(),
+  reportedBy: z.string().uuid().nullable().optional(),
+  assignedTo: z.string().uuid().nullable().optional(),
+  title: z.string().min(1).max(200),
+  description: z.string().nullable().optional(),
+  priority: MaintenancePrioritySchema.optional(),
+  status: MaintenanceStatusSchema.optional(),
+  maintenanceType: z.string().max(50).nullable().optional(),
+  scheduledDate: z.string().nullable().optional(),
+  dueDate: z.string().nullable().optional(),
+  estimatedCost: z.number().min(0).nullable().optional(),
+  hazardAlertId: z.string().uuid().nullable().optional(),
+  scanEventId: z.string().uuid().nullable().optional(),
+  notes: z.string().nullable().optional(),
+});
+
+export const UpdateMaintenanceInputSchema = z.object({
+  assignedTo: z.string().uuid().nullable().optional(),
+  completedBy: z.string().uuid().nullable().optional(),
+  title: z.string().min(1).max(200).optional(),
+  description: z.string().nullable().optional(),
+  priority: MaintenancePrioritySchema.optional(),
+  status: MaintenanceStatusSchema.optional(),
+  maintenanceType: z.string().max(50).nullable().optional(),
+  scheduledDate: z.string().nullable().optional(),
+  startedAt: z.string().nullable().optional(),
+  completedAt: z.string().nullable().optional(),
+  dueDate: z.string().nullable().optional(),
+  estimatedCost: z.number().min(0).nullable().optional(),
+  actualCost: z.number().min(0).nullable().optional(),
+  partsUsed: z.array(z.record(z.unknown())).nullable().optional(),
+  notes: z.string().nullable().optional(),
+});
+
+// ── Mappers ──
 
 export function mapRowToMaintenanceRecord(
   row: MaintenanceRecordRow
@@ -93,4 +176,49 @@ export function mapRowToMaintenanceRecord(
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+}
+
+export function mapMaintenanceToInsert(
+  input: CreateMaintenanceInput
+): Record<string, unknown> {
+  return {
+    asset_id: input.assetId,
+    reported_by: input.reportedBy ?? null,
+    assigned_to: input.assignedTo ?? null,
+    title: input.title,
+    description: input.description ?? null,
+    priority: input.priority ?? 'medium',
+    status: input.status ?? 'scheduled',
+    maintenance_type: input.maintenanceType ?? null,
+    scheduled_date: input.scheduledDate ?? null,
+    due_date: input.dueDate ?? null,
+    estimated_cost: input.estimatedCost ?? null,
+    hazard_alert_id: input.hazardAlertId ?? null,
+    scan_event_id: input.scanEventId ?? null,
+    notes: input.notes ?? null,
+  };
+}
+
+export function mapMaintenanceToUpdate(
+  input: UpdateMaintenanceInput
+): Record<string, unknown> {
+  const updates: Record<string, unknown> = {};
+
+  if (input.assignedTo !== undefined) updates.assigned_to = input.assignedTo;
+  if (input.completedBy !== undefined) updates.completed_by = input.completedBy;
+  if (input.title !== undefined) updates.title = input.title;
+  if (input.description !== undefined) updates.description = input.description;
+  if (input.priority !== undefined) updates.priority = input.priority;
+  if (input.status !== undefined) updates.status = input.status;
+  if (input.maintenanceType !== undefined) updates.maintenance_type = input.maintenanceType;
+  if (input.scheduledDate !== undefined) updates.scheduled_date = input.scheduledDate;
+  if (input.startedAt !== undefined) updates.started_at = input.startedAt;
+  if (input.completedAt !== undefined) updates.completed_at = input.completedAt;
+  if (input.dueDate !== undefined) updates.due_date = input.dueDate;
+  if (input.estimatedCost !== undefined) updates.estimated_cost = input.estimatedCost;
+  if (input.actualCost !== undefined) updates.actual_cost = input.actualCost;
+  if (input.partsUsed !== undefined) updates.parts_used = input.partsUsed;
+  if (input.notes !== undefined) updates.notes = input.notes;
+
+  return updates;
 }

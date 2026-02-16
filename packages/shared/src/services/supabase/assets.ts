@@ -16,6 +16,9 @@ import type {
   DepotRow,
 } from '../../types/entities';
 import type { AssetStatus, AssetCategory } from '../../types/enums';
+import type { ScanEventRow } from '../../types/entities/scanEvent';
+import type { MaintenanceRecordRow } from '../../types/entities/maintenanceRecord';
+import type { HazardAlertRow } from '../../types/entities/hazardAlert';
 import {
   mapRowToAsset,
   mapAssetToInsert,
@@ -31,6 +34,27 @@ import {
 import { mapRowToMaintenanceRecord } from '../../types/entities/maintenanceRecord';
 import { mapRowToHazardAlert } from '../../types/entities/hazardAlert';
 import { mapRowToDepot } from '../../types/entities/depot';
+
+// ── Join Result Types ──
+
+/** Asset row with joined depot, driver, and scanner relations */
+interface AssetRowWithJoins extends AssetRow {
+  depot: { name: string; code: string } | null;
+  driver: { full_name: string } | null;
+  scanner: { full_name: string } | null;
+}
+
+/** Scan event row with joined profile and asset */
+interface ScanEventRowWithJoins extends ScanEventRow {
+  profiles: { full_name: string } | null;
+  assets: { asset_number: string; category: string } | null;
+}
+
+/** Maintenance record row with joined reporter and assignee */
+interface MaintenanceRowWithJoins extends MaintenanceRecordRow {
+  reporter: { full_name: string } | null;
+  assignee: { full_name: string } | null;
+}
 
 // ── Types ──
 
@@ -141,7 +165,7 @@ export async function listAssets(
   }
 
   const total = count ?? 0;
-  const assets = (data || []).map((row: any) => mapRowToAsset(row as AssetRow));
+  const assets = (data || []).map((row: AssetRow) => mapRowToAsset(row));
 
   return {
     data: {
@@ -182,18 +206,16 @@ export async function getAsset(
     return { data: null, error: 'Asset not found' };
   }
 
-  const asset = mapRowToAsset(data as unknown as AssetRow);
-  const depot = data.depot as any;
-  const driver = data.driver as any;
-  const scanner = data.scanner as any;
+  const row = data as unknown as AssetRowWithJoins;
+  const asset = mapRowToAsset(row as unknown as AssetRow);
 
   return {
     data: {
       ...asset,
-      depotName: depot?.name ?? null,
-      depotCode: depot?.code ?? null,
-      driverName: driver?.full_name ?? null,
-      lastScannerName: scanner?.full_name ?? null,
+      depotName: row.depot?.name ?? null,
+      depotCode: row.depot?.code ?? null,
+      driverName: row.driver?.full_name ?? null,
+      lastScannerName: row.scanner?.full_name ?? null,
     },
     error: null,
   };
@@ -317,8 +339,8 @@ export async function getAssetScans(
   }
 
   const total = count ?? 0;
-  const scans = (data || []).map((row: any) => {
-    const scan = mapRowToScanEvent(row);
+  const scans = (data || []).map((row: ScanEventRowWithJoins) => {
+    const scan = mapRowToScanEvent(row as unknown as ScanEventRow);
     return {
       ...scan,
       scannerName: row.profiles?.full_name ?? null,
@@ -437,8 +459,8 @@ export async function getMyRecentScans(
     return { data: null, error: `Failed to fetch recent scans: ${error.message}` };
   }
 
-  const scans = (data || []).map((row: any) => {
-    const scan = mapRowToScanEvent(row);
+  const scans = (data || []).map((row: ScanEventRowWithJoins) => {
+    const scan = mapRowToScanEvent(row as unknown as ScanEventRow);
     return {
       ...scan,
       scannerName: row.profiles?.full_name ?? null,
@@ -483,8 +505,8 @@ export async function getAssetMaintenance(
   }
 
   const total = count ?? 0;
-  const records = (data || []).map((row: any) => {
-    const record = mapRowToMaintenanceRecord(row);
+  const records = (data || []).map((row: MaintenanceRowWithJoins) => {
+    const record = mapRowToMaintenanceRecord(row as unknown as MaintenanceRecordRow);
     return {
       ...record,
       reporterName: row.reporter?.full_name ?? null,
@@ -530,7 +552,7 @@ export async function getAssetHazards(
   }
 
   const total = count ?? 0;
-  const alerts = (data || []).map((row: any) => mapRowToHazardAlert(row));
+  const alerts = (data || []).map((row: HazardAlertRow) => mapRowToHazardAlert(row));
 
   return {
     data: {
@@ -563,7 +585,7 @@ export async function listDepots(): Promise<ServiceResult<Depot[]>> {
   }
 
   return {
-    data: (data || []).map((row: any) => mapRowToDepot(row as DepotRow)),
+    data: (data || []).map((row: DepotRow) => mapRowToDepot(row)),
     error: null,
   };
 }

@@ -22,8 +22,10 @@ export interface Profile {
   isActive: boolean;
   /** Employee ID or badge number */
   employeeId: string | null;
-  /** Assigned depot/location */
+  /** Assigned depot/location (free text, legacy) */
   depot: string | null;
+  /** FK to depots table */
+  depotId: string | null;
   /** Last login timestamp */
   lastLoginAt: string | null;
   /** Record creation timestamp */
@@ -45,6 +47,7 @@ export const ProfileSchema = z.object({
   isActive: z.boolean(),
   employeeId: z.string().max(50).nullable(),
   depot: z.string().max(100).nullable(),
+  depotId: z.string().uuid().nullable(),
   lastLoginAt: z.string().datetime().nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
@@ -63,6 +66,7 @@ export interface ProfileRow {
   is_active: boolean;
   employee_id: string | null;
   depot: string | null;
+  depot_id: string | null;
   last_login_at: string | null;
   created_at: string;
   updated_at: string;
@@ -211,6 +215,7 @@ export function mapRowToProfile(row: ProfileRow): Profile {
     isActive: row.is_active,
     employeeId: row.employee_id,
     depot: row.depot,
+    depotId: row.depot_id,
     lastLoginAt: row.last_login_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
