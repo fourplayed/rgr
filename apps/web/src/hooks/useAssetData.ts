@@ -12,7 +12,6 @@ import {
   useQuery,
   useMutation,
   useQueryClient,
-  type UseQueryOptions,
 } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import {
@@ -28,16 +27,10 @@ import {
   listDepots,
 } from '@rgr/shared';
 import type {
-  Asset,
   AssetWithRelations,
   CreateAssetInput,
   UpdateAssetInput,
-  ScanEventWithScanner,
-  MaintenanceRecordWithNames,
-  HazardAlert,
-  Depot,
 } from '@rgr/shared';
-import type { PaginatedResult } from '@rgr/shared';
 import type { AssetFilters, AssetSort, AssetPagination } from '@/pages/assets/types';
 import { FLEET_QUERY_KEYS } from './useFleetData';
 

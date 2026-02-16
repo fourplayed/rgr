@@ -338,11 +338,11 @@ describe('PhotoUploadZone', () => {
 
     it('should not accept drop when loading', () => {
       const onFileSelect = vi.fn();
-      renderPhotoUploadZone({ onFileSelect, isLoading: true });
+      const { container } = renderPhotoUploadZone({ onFileSelect, isLoading: true });
 
-      const uploadZone = screen.getByRole('button', {
-        name: /upload photo for hazard analysis/i,
-      });
+      // When loading, the upload zone shows loading spinner, no button
+      const uploadZone = container.querySelector('[class*="border-dashed"]') as HTMLElement;
+      expect(uploadZone).toBeInTheDocument();
 
       const file = createMockFile();
 
@@ -587,12 +587,10 @@ describe('PhotoUploadZone', () => {
     });
 
     it('should have reduced opacity when loading', () => {
-      renderPhotoUploadZone({ isLoading: true });
+      const { container } = renderPhotoUploadZone({ isLoading: true });
 
-      const uploadZone = screen.getByRole('button', {
-        name: /upload photo for hazard analysis/i,
-      });
-
+      // When loading, the parent div has opacity-50, not a button
+      const uploadZone = container.querySelector('[class*="border-dashed"]') as HTMLElement;
       expect(uploadZone).toHaveClass('opacity-50');
     });
 
@@ -603,11 +601,11 @@ describe('PhotoUploadZone', () => {
       const input = container.querySelector('input[type="file"]') as HTMLInputElement;
       const clickSpy = vi.spyOn(input, 'click');
 
-      const uploadZone = screen.getByRole('button', {
-        name: /upload photo for hazard analysis/i,
-      });
+      // When loading, click the upload zone container
+      const uploadZone = container.querySelector('[class*="border-dashed"]') as HTMLElement;
       await user.click(uploadZone);
 
+      // Should not trigger file dialog because input is disabled
       expect(clickSpy).not.toHaveBeenCalled();
     });
   });
@@ -618,22 +616,23 @@ describe('PhotoUploadZone', () => {
 
   describe('Disabled State', () => {
     it('should have cursor-not-allowed when disabled', () => {
-      renderPhotoUploadZone({ disabled: true });
+      const { container } = renderPhotoUploadZone({ disabled: true });
 
       const uploadZone = screen.getByRole('button', {
         name: /upload photo for hazard analysis/i,
       });
 
       expect(uploadZone).toHaveClass('cursor-not-allowed');
+      // Also verify parent container has opacity-50
+      const outerZone = container.querySelector('[class*="border-dashed"]') as HTMLElement;
+      expect(outerZone).toHaveClass('opacity-50');
     });
 
     it('should have reduced opacity when disabled', () => {
-      renderPhotoUploadZone({ disabled: true });
+      const { container } = renderPhotoUploadZone({ disabled: true });
 
-      const uploadZone = screen.getByRole('button', {
-        name: /upload photo for hazard analysis/i,
-      });
-
+      // The parent container has opacity-50, not the button itself
+      const uploadZone = container.querySelector('[class*="border-dashed"]') as HTMLElement;
       expect(uploadZone).toHaveClass('opacity-50');
     });
 
@@ -683,7 +682,7 @@ describe('PhotoUploadZone', () => {
     });
 
     it('should show error icon with error message', () => {
-      const { container } = renderPhotoUploadZone({ error: 'Test error' });
+      renderPhotoUploadZone({ error: 'Test error' });
 
       // AlertCircle icon should be present (rendered as SVG)
       // Find the error display container and check for SVG icon
@@ -714,7 +713,6 @@ describe('PhotoUploadZone', () => {
     });
 
     it('should clear validation error when file input is cleared', async () => {
-      const user = userEvent.setup();
       const onClearError = vi.fn();
       const { container } = renderPhotoUploadZone({ onClearError });
 

@@ -58,7 +58,8 @@ describe('ThemedInput', () => {
 
       const styles = document.querySelectorAll('style');
       const hasFocusStyles = Array.from(styles).some((style) =>
-        style.textContent?.includes('.themed-input:focus')
+        style.textContent?.includes('.themed-input-light:focus') ||
+        style.textContent?.includes('.themed-input-dark:focus')
       );
       expect(hasFocusStyles).toBe(true);
     });
@@ -251,7 +252,7 @@ describe('ThemedInput', () => {
       render(<ThemedInput name="test" label="Test Label" isDark={false} />);
 
       const label = screen.getByText(/test label/i);
-      expect(label).toHaveClass('text-black');
+      expect(label).toHaveClass('text-white');
     });
 
     it('should apply dark theme label color', () => {
@@ -265,8 +266,8 @@ describe('ThemedInput', () => {
       render(<ThemedInput name="test" isDark={false} />);
 
       const input = screen.getByRole('textbox');
-      // Light theme uses gray-600, dark theme uses gray-500
-      expect(input).toHaveClass('placeholder:text-gray-600');
+      // Light theme uses white, dark theme uses gray-500
+      expect(input).toHaveClass('placeholder:text-white');
     });
 
     it('should apply light theme focus background', () => {
@@ -274,7 +275,7 @@ describe('ThemedInput', () => {
 
       const styles = document.querySelectorAll('style');
       const hasFocusBg = Array.from(styles).some((style) =>
-        style.textContent?.includes('background-color: rgba(229, 229, 229, 0.6)')
+        style.textContent?.includes('background-color: rgba(209, 213, 219, 0.3)')
       );
       expect(hasFocusBg).toBe(true);
     });

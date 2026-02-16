@@ -5,23 +5,26 @@
  */
 import { render, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { MemoryRouter } from 'react-router-dom';
 import { SlidingNavIndicator } from '../SlidingNavIndicator';
 
-// Helper to render with router
-function renderWithRouter(ui: React.ReactElement) {
-  return render(
-    <MemoryRouter>{ui}</MemoryRouter>
-  );
-}
+// Mock react-router-dom
+vi.mock('react-router-dom', () => ({
+  useLocation: () => ({ pathname: '/dashboard' }),
+}));
 
 // Mock RAF
 let rafCallbacks: FrameRequestCallback[] = [];
 let rafId = 0;
 
+// Store original getBoundingClientRect before mocking
+let originalGetBoundingClientRect: typeof Element.prototype.getBoundingClientRect;
+
 beforeEach(() => {
   rafCallbacks = [];
   rafId = 0;
+
+  // Store original before mocking
+  originalGetBoundingClientRect = Element.prototype.getBoundingClientRect;
 
   // Mock requestAnimationFrame
   vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback) => {
@@ -46,6 +49,7 @@ beforeEach(() => {
   button1.setAttribute('data-nav-button', 'true');
   const icon1 = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   const text1 = document.createElement('span');
+  text1.setAttribute('data-nav-label', 'Dashboard');
   text1.textContent = 'Dashboard';
   button1.appendChild(icon1);
   button1.appendChild(text1);
@@ -55,6 +59,7 @@ beforeEach(() => {
   button2.setAttribute('data-nav-button', 'true');
   const icon2 = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   const text2 = document.createElement('span');
+  text2.setAttribute('data-nav-label', 'Assets');
   text2.textContent = 'Assets';
   button2.appendChild(icon2);
   button2.appendChild(text2);
@@ -64,7 +69,7 @@ beforeEach(() => {
   document.body.appendChild(navContainer);
 
   // Mock getBoundingClientRect
-  Element.prototype.getBoundingClientRect = vi.fn(function(this: Element) {
+  Element.prototype.getBoundingClientRect = function(this: Element) {
     // Dashboard button
     if (this.getAttribute('aria-label') === 'Dashboard') {
       return {
@@ -121,8 +126,8 @@ beforeEach(() => {
         toJSON: () => {},
       } as DOMRect;
     }
-    // Text span inside Dashboard button
-    if (this.tagName === 'SPAN' && this.parentElement?.getAttribute('aria-label') === 'Dashboard') {
+    // Text span inside Dashboard button (has data-nav-label)
+    if (this.tagName === 'SPAN' && this.getAttribute('data-nav-label') === 'Dashboard') {
       return {
         left: 30,
         right: 95,
@@ -149,8 +154,8 @@ beforeEach(() => {
         toJSON: () => {},
       } as DOMRect;
     }
-    // Text span inside Assets button
-    if (this.tagName === 'SPAN' && this.parentElement?.getAttribute('aria-label') === 'Assets') {
+    // Text span inside Assets button (has data-nav-label)
+    if (this.tagName === 'SPAN' && this.getAttribute('data-nav-label') === 'Assets') {
       return {
         left: 150,
         right: 195,
@@ -174,49 +179,54 @@ beforeEach(() => {
       y: 0,
       toJSON: () => {},
     } as DOMRect;
-  });
+  };
 });
 
 afterEach(() => {
-  // Cleanup
-  vi.restoreAllMocks();
+  // Cleanup - restore original implementations
+  (window.requestAnimationFrame as unknown as ReturnType<typeof vi.spyOn>).mockRestore?.();
+  (window.cancelAnimationFrame as unknown as ReturnType<typeof vi.spyOn>).mockRestore?.();
+  // Restore original getBoundingClientRect
+  Element.prototype.getBoundingClientRect = originalGetBoundingClientRect;
   document.body.innerHTML = '';
 });
 
 describe('SlidingNavIndicator', () => {
   it('should render with zero opacity initially', () => {
-    const { container } = renderWithRouter(<SlidingNavIndicator isDark={true} />);
+    const { container } = render(<SlidingNavIndicator isDark={true} />);
     const indicator = container.querySelector('div');
 
     expect(indicator).toBeTruthy();
     expect(indicator?.style.opacity).toBe('0');
+    // Verify indicator renders with gradient background (not hovered)
+    expect(indicator?.style.background).toContain('linear-gradient');
   });
 
   it('should render with correct aria-hidden attribute', () => {
-    const { container } = renderWithRouter(<SlidingNavIndicator isDark={false} />);
+    const { container } = render(<SlidingNavIndicator isDark={false} />);
     const indicator = container.querySelector('div');
 
     expect(indicator?.getAttribute('aria-hidden')).toBe('true');
   });
 
   it('should apply dark theme colors', () => {
-    const { container } = renderWithRouter(<SlidingNavIndicator isDark={true} />);
+    const { container } = render(<SlidingNavIndicator isDark={true} />);
     const indicator = container.querySelector('div');
 
-    // Component uses #06b6d4 (cyan-500) for dark theme
-    expect(indicator?.style.backgroundColor).toBe('rgb(6, 182, 212)');
+    // Component uses gradient background for dark theme (not hovered)
+    expect(indicator?.style.background).toContain('linear-gradient');
   });
 
   it('should apply light theme colors', () => {
-    const { container } = renderWithRouter(<SlidingNavIndicator isDark={false} />);
+    const { container } = render(<SlidingNavIndicator isDark={false} />);
     const indicator = container.querySelector('div');
 
-    // Component uses #1e40af (blue-800) for light theme
-    expect(indicator?.style.backgroundColor).toBe('rgb(30, 64, 175)');
+    // Component uses gradient background for light theme (not hovered)
+    expect(indicator?.style.background).toContain('linear-gradient');
   });
 
   it('should apply custom className', () => {
-    const { container } = renderWithRouter(
+    const { container } = render(
       <SlidingNavIndicator isDark={true} className="custom-class" />
     );
     const indicator = container.querySelector('div');
@@ -225,14 +235,14 @@ describe('SlidingNavIndicator', () => {
   });
 
   it('should apply custom z-index', () => {
-    const { container } = renderWithRouter(<SlidingNavIndicator isDark={true} zIndex={20} />);
+    const { container } = render(<SlidingNavIndicator isDark={true} zIndex={20} />);
     const indicator = container.querySelector('div');
 
     expect(indicator?.style.zIndex).toBe('20');
   });
 
   it('should update position on button hover', async () => {
-    const { container } = renderWithRouter(<SlidingNavIndicator isDark={true} />);
+    const { container } = render(<SlidingNavIndicator isDark={true} />);
     const indicator = container.querySelector('div');
     const button = document.querySelector('[aria-label="Dashboard"]');
 
@@ -246,47 +256,49 @@ describe('SlidingNavIndicator', () => {
     rafCallbacks.forEach((cb) => cb(0));
 
     // Width = textRect.right - iconRect.left + 10 = 95 - 5 + 10 = 100
-    // Left = iconRect.left - containerRect.left - 25 = 5 - 0 - 25 = -20
+    // Left = iconRect.left - containerRect.left - 5 = 5 - 0 - 5 = 0
     await waitFor(() => {
       expect(indicator?.style.opacity).toBe('1');
       expect(indicator?.style.width).toBe('100px');
-      expect(indicator?.style.left).toBe('-20px');
+      expect(indicator?.style.left).toBe('0px');
+      // When hovered, background should be white
+      expect(indicator?.style.background).toBe('rgb(255, 255, 255)');
     });
   });
 
   it('should handle sliding between buttons', async () => {
-    const { container } = renderWithRouter(<SlidingNavIndicator isDark={true} />);
+    const { container } = render(<SlidingNavIndicator isDark={true} />);
     const indicator = container.querySelector('div');
     const dashboardButton = document.querySelector('[aria-label="Dashboard"]');
     const assetsButton = document.querySelector('[aria-label="Assets"]');
 
     // Hover first button (Dashboard)
-    // Left = iconRect.left - containerRect.left - 25 = 5 - 0 - 25 = -20
+    // Left = iconRect.left - containerRect.left - 5 = 5 - 0 - 5 = 0
     // Width = textRect.right - iconRect.left + 10 = 95 - 5 + 10 = 100
     const mouseEnter1 = new Event('mouseenter', { bubbles: true });
     dashboardButton?.dispatchEvent(mouseEnter1);
     rafCallbacks.forEach((cb) => cb(0));
 
     await waitFor(() => {
-      expect(indicator?.style.left).toBe('-20px');
+      expect(indicator?.style.left).toBe('0px');
       expect(indicator?.style.width).toBe('100px');
     });
 
     // Hover second button (Assets)
-    // Left = iconRect.left - containerRect.left - 25 = 125 - 0 - 25 = 100
+    // Left = iconRect.left - containerRect.left - 5 = 125 - 0 - 5 = 120
     // Width = textRect.right - iconRect.left + 10 = 195 - 125 + 10 = 80
     const mouseEnter2 = new Event('mouseenter', { bubbles: true });
     assetsButton?.dispatchEvent(mouseEnter2);
     rafCallbacks.forEach((cb) => cb(0));
 
     await waitFor(() => {
-      expect(indicator?.style.left).toBe('100px');
+      expect(indicator?.style.left).toBe('120px');
       expect(indicator?.style.width).toBe('80px');
     });
   });
 
   it('should fade out immediately on mouseleave', async () => {
-    const { container } = renderWithRouter(<SlidingNavIndicator isDark={true} />);
+    const { container } = render(<SlidingNavIndicator isDark={true} />);
     const indicator = container.querySelector('div');
     const navContainer = document.querySelector('[aria-label="Main navigation"]');
     const button = document.querySelector('[aria-label="Dashboard"]');
@@ -310,7 +322,7 @@ describe('SlidingNavIndicator', () => {
   });
 
   it('should show indicator again when hovering new button after fade', async () => {
-    const { container } = renderWithRouter(<SlidingNavIndicator isDark={true} />);
+    const { container } = render(<SlidingNavIndicator isDark={true} />);
     const indicator = container.querySelector('div');
     const navContainer = document.querySelector('[aria-label="Main navigation"]');
     const button1 = document.querySelector('[aria-label="Dashboard"]');
@@ -340,15 +352,15 @@ describe('SlidingNavIndicator', () => {
 
     await waitFor(() => {
       expect(indicator?.style.opacity).toBe('1');
-      // Left = iconRect.left - containerRect.left - 25 = 125 - 0 - 25 = 100
-      expect(indicator?.style.left).toBe('100px');
+      // Left = iconRect.left - containerRect.left - 5 = 125 - 0 - 5 = 120
+      expect(indicator?.style.left).toBe('120px');
     });
   });
 
   it('should cleanup event listeners on unmount', () => {
     const removeEventListenerSpy = vi.spyOn(Element.prototype, 'removeEventListener');
 
-    const { unmount } = renderWithRouter(<SlidingNavIndicator isDark={true} />);
+    const { unmount } = render(<SlidingNavIndicator isDark={true} />);
 
     unmount();
 
@@ -357,7 +369,7 @@ describe('SlidingNavIndicator', () => {
   });
 
   it('should apply GPU acceleration styles', () => {
-    const { container } = renderWithRouter(<SlidingNavIndicator isDark={true} />);
+    const { container } = render(<SlidingNavIndicator isDark={true} />);
     const indicator = container.querySelector('div');
 
     expect(indicator?.style.transform).toBe('translateZ(0)');
@@ -365,7 +377,7 @@ describe('SlidingNavIndicator', () => {
   });
 
   it('should have proper CSS transition styles', () => {
-    const { container } = renderWithRouter(<SlidingNavIndicator isDark={true} />);
+    const { container } = render(<SlidingNavIndicator isDark={true} />);
     const indicator = container.querySelector('div');
 
     // Component uses inline styles for transitions, not Tailwind classes
@@ -375,23 +387,23 @@ describe('SlidingNavIndicator', () => {
     expect(indicator?.className).toContain('ease-out');
   });
 
-  it('should keep box-shadow none when visible (no glow effect)', async () => {
-    const { container } = renderWithRouter(<SlidingNavIndicator isDark={true} />);
+  it('should keep white background when hovered', async () => {
+    const { container } = render(<SlidingNavIndicator isDark={true} />);
     const indicator = container.querySelector('div');
     const button = document.querySelector('[aria-label="Dashboard"]');
 
-    // Initially no glow
-    expect(indicator?.style.boxShadow).toBe('none');
+    // Initially gradient
+    expect(indicator?.style.background).toContain('linear-gradient');
 
     // Hover button
     const mouseEnter = new Event('mouseenter', { bubbles: true });
     button?.dispatchEvent(mouseEnter);
     rafCallbacks.forEach((cb) => cb(0));
 
-    // Component sets boxShadow: 'none' - no glow effect
+    // Component sets solid white background when hovered
     await waitFor(() => {
       expect(indicator?.style.opacity).toBe('1');
-      expect(indicator?.style.boxShadow).toBe('none');
+      expect(indicator?.style.background).toBe('rgb(255, 255, 255)');
     });
   });
 
@@ -401,7 +413,7 @@ describe('SlidingNavIndicator', () => {
 
     // Should not throw error
     expect(() => {
-      renderWithRouter(<SlidingNavIndicator isDark={true} />);
+      render(<SlidingNavIndicator isDark={true} />);
     }).not.toThrow();
   });
 });

@@ -159,6 +159,18 @@ export const PhotoUploadZone = React.memo<PhotoUploadZoneProps>(({
     }
   }, [disabled, isLoading]);
 
+  // Keyboard handler for accessibility
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (disabled || isLoading) return;
+
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (fileInputRef.current) {
+        fileInputRef.current.click();
+      }
+    }
+  }, [disabled, isLoading]);
+
   // Background styles
   const getBgStyle = () => {
     if (isDragging) {
@@ -204,6 +216,7 @@ export const PhotoUploadZone = React.memo<PhotoUploadZoneProps>(({
           onChange={handleInputChange}
           className="hidden"
           disabled={disabled || isLoading}
+          tabIndex={-1}
         />
 
         {/* Preview Mode */}
@@ -267,7 +280,9 @@ export const PhotoUploadZone = React.memo<PhotoUploadZoneProps>(({
           <button
             type="button"
             onClick={handleClick}
+            onKeyDown={handleKeyDown}
             disabled={disabled || isLoading}
+            tabIndex={disabled || isLoading ? -1 : 0}
             className={`
               w-full flex flex-col items-center justify-center py-8 px-4
               ${disabled || isLoading ? 'cursor-not-allowed' : 'cursor-pointer hover:scale-[1.01]'}

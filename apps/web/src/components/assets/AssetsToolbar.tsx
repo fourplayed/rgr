@@ -169,7 +169,6 @@ export const AssetsToolbar = React.memo<AssetsToolbarProps>(
 
     // ── Shared style values ──────────────────────────────────────────────────
     const mutedColor = '#94a3b8';
-    const filterLabelColor = '#e2e8f0';
     const pillDefaultColor = isDark ? 'rgba(203, 213, 225, 0.6)' : 'rgba(255, 255, 255, 0.6)';
 
     const inputStyle: React.CSSProperties = isDark

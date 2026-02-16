@@ -28,10 +28,10 @@ describe('ThemeToggle', () => {
       const button = screen.getByRole('button');
       expect(button).toHaveAttribute('aria-label', 'Switch to dark mode');
 
-      // Moon icon should be present
+      // Moon icon should be present with light-gray class
       const svg = container.querySelector('svg');
       expect(svg).toBeInTheDocument();
-      expect(svg).toHaveClass('moon-navy');
+      expect(svg).toHaveClass('moon-light-gray');
     });
 
     it('should render sun icon in dark mode', () => {
@@ -123,7 +123,7 @@ describe('ThemeToggle', () => {
       const { container } = render(<ThemeToggle isDark={false} onToggle={vi.fn()} />);
 
       const svg = container.querySelector('svg');
-      expect(svg).toHaveClass('w-6', 'h-6', 'moon-navy');
+      expect(svg).toHaveClass('w-6', 'h-6', 'moon-light-gray');
     });
 
     it('should have transition classes on sun icon', () => {
@@ -152,7 +152,7 @@ describe('ThemeToggle', () => {
 
       const styles = document.querySelectorAll('style');
       const hasMoonStyles = Array.from(styles).some((style) =>
-        style.textContent?.includes('.moon-navy')
+        style.textContent?.includes('.moon-light-gray')
       );
       expect(hasMoonStyles).toBe(true);
     });
@@ -209,7 +209,7 @@ describe('ThemeToggle', () => {
       const styles = document.querySelectorAll('style');
       const hasMoonHoverStyles = Array.from(styles).some(
         (style) =>
-          style.textContent?.includes('.group:hover .moon-navy') &&
+          style.textContent?.includes('.group:hover .moon-light-gray') &&
           style.textContent?.includes('transform: scale(1.15) rotate(360deg)')
       );
       expect(hasMoonHoverStyles).toBe(true);
@@ -279,13 +279,13 @@ describe('ThemeToggle', () => {
 
       // Light mode - moon icon
       let svg = container.querySelector('svg');
-      expect(svg).toHaveClass('moon-navy');
+      expect(svg).toHaveClass('moon-light-gray');
 
       // Dark mode - sun icon
       rerender(<ThemeToggle isDark={true} onToggle={vi.fn()} />);
 
       svg = container.querySelector('svg');
-      expect(svg).not.toHaveClass('moon-navy');
+      expect(svg).not.toHaveClass('moon-light-gray');
       expect(svg).toHaveClass('text-white/70');
     });
 
@@ -303,14 +303,14 @@ describe('ThemeToggle', () => {
   });
 
   describe('Color Schemes', () => {
-    it('should use navy color for moon in light mode', () => {
+    it('should use light gray color for moon in light mode', () => {
       render(<ThemeToggle isDark={false} onToggle={vi.fn()} />);
 
       const styles = document.querySelectorAll('style');
-      const hasNavyColor = Array.from(styles).some((style) =>
-        style.textContent?.includes('.moon-navy { color: #0a1433; }')
+      const hasLightGrayColor = Array.from(styles).some((style) =>
+        style.textContent?.includes('.moon-light-gray { color: #d1d5db; }')
       );
-      expect(hasNavyColor).toBe(true);
+      expect(hasLightGrayColor).toBe(true);
     });
 
     it('should use white/gray color for sun in dark mode', () => {
@@ -320,13 +320,13 @@ describe('ThemeToggle', () => {
       expect(svg).toHaveClass('text-white/70');
     });
 
-    it('should change moon to light gray on hover', () => {
+    it('should change moon to navy on hover', () => {
       render(<ThemeToggle isDark={false} onToggle={vi.fn()} />);
 
       const styles = document.querySelectorAll('style');
       const hasHoverColor = Array.from(styles).some((style) =>
-        style.textContent?.includes('.group:hover .moon-navy') &&
-        style.textContent?.includes('color: #e5e7eb')
+        style.textContent?.includes('.group:hover .moon-light-gray') &&
+        style.textContent?.includes('color: #0a1433')
       );
       expect(hasHoverColor).toBe(true);
     });

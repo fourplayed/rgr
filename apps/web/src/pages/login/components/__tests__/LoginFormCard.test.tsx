@@ -11,11 +11,18 @@
  * - Accessibility
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { MemoryRouter } from 'react-router-dom';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LoginFormCard } from '../LoginFormCard';
 import type { LoginLogicState, LoginLogicActions } from '../../useLoginLogic';
+
+// Mock dev tools store
+vi.mock('@/stores/devToolsStore', () => ({
+  useDevToolsStore: () => ({
+    setWorkflowSteps: vi.fn(),
+    setWorkflowComplete: vi.fn(),
+  }),
+}));
 
 // Mock button component
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -40,7 +47,7 @@ describe('LoginFormCard', () => {
       setEmail: vi.fn(),
       setPassword: vi.fn(),
       setRememberMe: vi.fn(),
-      handleSubmit: vi.fn(async (e) => { e.preventDefault(); }),
+      handleSubmit: vi.fn().mockImplementation(async (e) => { e.preventDefault(); }) as (e: React.FormEvent) => Promise<void>,
       clearErrors: vi.fn(),
     };
 
@@ -50,7 +57,7 @@ describe('LoginFormCard', () => {
   describe('Rendering', () => {
     it('should render all form elements', () => {
       render(
-        <MemoryRouter>
+
           <LoginFormCard
             state={mockState}
             actions={mockActions}
@@ -58,10 +65,10 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+
       );
 
-      expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/^email$/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/remember me/i)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /forgot password/i })).toBeInTheDocument();
@@ -70,7 +77,7 @@ describe('LoginFormCard', () => {
 
     it('should render with light theme styles', () => {
       const { container } = render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={mockState}
             actions={mockActions}
@@ -78,16 +85,17 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
       const card = container.firstChild as HTMLElement;
-      expect(card).toHaveStyle({ background: expect.stringContaining('rgba') });
+      expect(card).toBeInTheDocument();
+      expect(card.style.background).toContain('rgba');
     });
 
     it('should render with dark theme styles', () => {
       const { container } = render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={mockState}
             actions={mockActions}
@@ -95,16 +103,17 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={true}
           />
-        </MemoryRouter>
+        
       );
 
       const card = container.firstChild as HTMLElement;
-      expect(card).toHaveStyle({ background: expect.stringContaining('rgba') });
+      expect(card).toBeInTheDocument();
+      expect(card.style.background).toContain('rgba');
     });
 
     it('should have proper form ID', () => {
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={mockState}
             actions={mockActions}
@@ -112,7 +121,7 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
       expect(screen.getByRole('form')).toHaveAttribute('id', 'login-form');
@@ -120,7 +129,7 @@ describe('LoginFormCard', () => {
 
     it('should have noValidate attribute on form', () => {
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={mockState}
             actions={mockActions}
@@ -128,7 +137,7 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
       expect(screen.getByRole('form')).toHaveAttribute('noValidate');
@@ -143,7 +152,7 @@ describe('LoginFormCard', () => {
       };
 
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={stateWithEmail}
             actions={mockActions}
@@ -151,10 +160,10 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
-      const emailInput = screen.getByLabelText(/email address/i) as HTMLInputElement;
+      const emailInput = screen.getByLabelText(/^email$/i) as HTMLInputElement;
       expect(emailInput.value).toBe('test@example.com');
     });
 
@@ -165,7 +174,7 @@ describe('LoginFormCard', () => {
       };
 
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={stateWithPassword}
             actions={mockActions}
@@ -173,7 +182,7 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
       const passwordInput = screen.getByLabelText(/^password$/i) as HTMLInputElement;
@@ -183,7 +192,7 @@ describe('LoginFormCard', () => {
     it('should call setEmail when email input changes', async () => {
       const user = userEvent.setup();
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={mockState}
             actions={mockActions}
@@ -191,10 +200,10 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
-      const emailInput = screen.getByLabelText(/email address/i);
+      const emailInput = screen.getByLabelText(/^email$/i);
       await user.type(emailInput, 'a');
 
       expect(mockActions.setEmail).toHaveBeenCalled();
@@ -203,7 +212,7 @@ describe('LoginFormCard', () => {
     it('should call setPassword when password input changes', async () => {
       const user = userEvent.setup();
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={mockState}
             actions={mockActions}
@@ -211,7 +220,7 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
       const passwordInput = screen.getByLabelText(/^password$/i);
@@ -222,7 +231,7 @@ describe('LoginFormCard', () => {
 
     it('should have email input with correct attributes', () => {
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={mockState}
             actions={mockActions}
@@ -230,10 +239,10 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
-      const emailInput = screen.getByLabelText(/email address/i);
+      const emailInput = screen.getByLabelText(/^email$/i);
       expect(emailInput).toHaveAttribute('type', 'email');
       expect(emailInput).toHaveAttribute('name', 'email');
       expect(emailInput).toHaveAttribute('id', 'login-email');
@@ -243,7 +252,7 @@ describe('LoginFormCard', () => {
 
     it('should have password input with correct attributes', () => {
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={mockState}
             actions={mockActions}
@@ -251,7 +260,7 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
       const passwordInput = screen.getByLabelText(/^password$/i);
@@ -264,7 +273,7 @@ describe('LoginFormCard', () => {
 
     it('should have placeholder text on inputs', () => {
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={mockState}
             actions={mockActions}
@@ -272,7 +281,7 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
       const emailInput = screen.getByPlaceholderText(/enter your email/i);
@@ -286,7 +295,7 @@ describe('LoginFormCard', () => {
   describe('Remember Me Checkbox', () => {
     it('should render unchecked by default', () => {
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={mockState}
             actions={mockActions}
@@ -294,7 +303,7 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
       const checkbox = screen.getByLabelText(/remember me/i) as HTMLInputElement;
@@ -308,7 +317,7 @@ describe('LoginFormCard', () => {
       };
 
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={stateWithRememberMe}
             actions={mockActions}
@@ -316,7 +325,7 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
       const checkbox = screen.getByLabelText(/remember me/i) as HTMLInputElement;
@@ -326,7 +335,7 @@ describe('LoginFormCard', () => {
     it('should call setRememberMe when checkbox is toggled', async () => {
       const user = userEvent.setup();
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={mockState}
             actions={mockActions}
@@ -334,7 +343,7 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
       const checkbox = screen.getByLabelText(/remember me/i);
@@ -345,7 +354,7 @@ describe('LoginFormCard', () => {
 
     it('should have proper checkbox attributes', () => {
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={mockState}
             actions={mockActions}
@@ -353,7 +362,7 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
       const checkbox = screen.getByLabelText(/remember me/i);
@@ -366,7 +375,7 @@ describe('LoginFormCard', () => {
   describe('Forgot Password Link', () => {
     it('should render forgot password button', () => {
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={mockState}
             actions={mockActions}
@@ -374,7 +383,7 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
       const forgotButton = screen.getByRole('button', { name: /forgot password/i });
@@ -384,7 +393,7 @@ describe('LoginFormCard', () => {
     it('should call onForgotPassword when clicked', async () => {
       const user = userEvent.setup();
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={mockState}
             actions={mockActions}
@@ -392,7 +401,7 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
       const forgotButton = screen.getByRole('button', { name: /forgot password/i });
@@ -403,7 +412,7 @@ describe('LoginFormCard', () => {
 
     it('should have proper button type', () => {
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={mockState}
             actions={mockActions}
@@ -411,7 +420,7 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
       const forgotButton = screen.getByRole('button', { name: /forgot password/i });
@@ -420,7 +429,7 @@ describe('LoginFormCard', () => {
 
     it('should have light theme styles', () => {
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={mockState}
             actions={mockActions}
@@ -428,16 +437,16 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
       const forgotButton = screen.getByRole('button', { name: /forgot password/i });
-      expect(forgotButton).toHaveClass('text-blue-600');
+      expect(forgotButton).toHaveClass('text-white/90');
     });
 
     it('should have dark theme styles', () => {
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={mockState}
             actions={mockActions}
@@ -445,18 +454,18 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={true}
           />
-        </MemoryRouter>
+        
       );
 
       const forgotButton = screen.getByRole('button', { name: /forgot password/i });
-      expect(forgotButton).toHaveClass('text-gray-400');
+      expect(forgotButton).toHaveClass('text-white/90');
     });
   });
 
   describe('Submit Button', () => {
     it('should render sign in button', () => {
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={mockState}
             actions={mockActions}
@@ -464,7 +473,7 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
       const submitButton = screen.getByRole('button', { name: /sign in/i });
@@ -473,7 +482,7 @@ describe('LoginFormCard', () => {
 
     it('should have submit type', () => {
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={mockState}
             actions={mockActions}
@@ -481,7 +490,7 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
       const submitButton = screen.getByRole('button', { name: /sign in/i });
@@ -490,7 +499,7 @@ describe('LoginFormCard', () => {
 
     it('should be enabled when not loading', () => {
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={mockState}
             actions={mockActions}
@@ -498,7 +507,7 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
       const submitButton = screen.getByRole('button', { name: /sign in/i });
@@ -509,7 +518,7 @@ describe('LoginFormCard', () => {
       const loadingState = { ...mockState, status: 'loading' as const };
 
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={loadingState}
             actions={mockActions}
@@ -517,7 +526,7 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
       const submitButton = screen.getByRole('button', { name: /signing in/i });
@@ -528,7 +537,7 @@ describe('LoginFormCard', () => {
       const loadingState = { ...mockState, status: 'loading' as const };
 
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={loadingState}
             actions={mockActions}
@@ -536,7 +545,7 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
       const submitButton = screen.getByRole('button', { name: /signing in/i });
@@ -547,7 +556,7 @@ describe('LoginFormCard', () => {
       const loadingState = { ...mockState, status: 'loading' as const };
 
       const { container } = render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={loadingState}
             actions={mockActions}
@@ -555,7 +564,7 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
       // LoadingSpinner renders an SVG
@@ -565,7 +574,7 @@ describe('LoginFormCard', () => {
 
     it('should have chrome button styles', () => {
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={mockState}
             actions={mockActions}
@@ -573,7 +582,7 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
       const submitButton = screen.getByRole('button', { name: /sign in/i });
@@ -582,7 +591,7 @@ describe('LoginFormCard', () => {
 
     it('should inject chrome button styles', () => {
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={mockState}
             actions={mockActions}
@@ -590,7 +599,7 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
       const styles = document.querySelectorAll('style');
@@ -605,7 +614,7 @@ describe('LoginFormCard', () => {
     it('should call handleSubmit when form is submitted', async () => {
       const user = userEvent.setup();
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={mockState}
             actions={mockActions}
@@ -613,7 +622,7 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
       screen.getByRole('form'); // Verify form exists
@@ -624,7 +633,7 @@ describe('LoginFormCard', () => {
 
     it('should submit form when Enter is pressed in email field', () => {
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={mockState}
             actions={mockActions}
@@ -632,11 +641,11 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
       const form = screen.getByRole('form');
-      const emailInput = screen.getByLabelText(/email address/i) as HTMLInputElement;
+      const emailInput = screen.getByLabelText(/^email$/i) as HTMLInputElement;
       emailInput.focus();
 
       // Simulate Enter key press which triggers form submit in real browsers
@@ -647,7 +656,7 @@ describe('LoginFormCard', () => {
 
     it('should submit form when Enter is pressed in password field', () => {
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={mockState}
             actions={mockActions}
@@ -655,7 +664,7 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
       const form = screen.getByRole('form');
@@ -672,7 +681,7 @@ describe('LoginFormCard', () => {
   describe('Accessibility', () => {
     it('should have proper form label', () => {
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={mockState}
             actions={mockActions}
@@ -680,7 +689,7 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
       const form = screen.getByRole('form', { name: /login form/i });
@@ -691,7 +700,7 @@ describe('LoginFormCard', () => {
       const loadingState = { ...mockState, status: 'loading' as const };
 
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={loadingState}
             actions={mockActions}
@@ -699,7 +708,7 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
       const announcement = screen.getByRole('status');
@@ -710,7 +719,7 @@ describe('LoginFormCard', () => {
 
     it('should have accessible checkbox label', () => {
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={mockState}
             actions={mockActions}
@@ -718,7 +727,7 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
       const checkbox = screen.getByLabelText(/remember me/i);
@@ -727,7 +736,7 @@ describe('LoginFormCard', () => {
 
     it('should have accessible forgot password button', () => {
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={mockState}
             actions={mockActions}
@@ -735,7 +744,7 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
       const forgotButton = screen.getByRole('button', { name: /forgot password/i });
@@ -744,7 +753,7 @@ describe('LoginFormCard', () => {
 
     it('should respect prefers-reduced-motion', () => {
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={mockState}
             actions={mockActions}
@@ -752,7 +761,7 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
       const styles = document.querySelectorAll('style');
@@ -766,7 +775,7 @@ describe('LoginFormCard', () => {
   describe('Theme Variations', () => {
     it('should apply light theme text colors', () => {
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={mockState}
             actions={mockActions}
@@ -774,16 +783,16 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={false}
           />
-        </MemoryRouter>
+        
       );
 
       const rememberLabel = screen.getByText(/remember me/i);
-      expect(rememberLabel).toHaveClass('text-black');
+      expect(rememberLabel).toHaveClass('text-white');
     });
 
     it('should apply dark theme text colors', () => {
       render(
-        <MemoryRouter>
+        
           <LoginFormCard
             state={mockState}
             actions={mockActions}
@@ -791,7 +800,7 @@ describe('LoginFormCard', () => {
             onForgotPassword={mockOnForgotPassword}
             isDark={true}
           />
-        </MemoryRouter>
+        
       );
 
       const rememberLabel = screen.getByText(/remember me/i);

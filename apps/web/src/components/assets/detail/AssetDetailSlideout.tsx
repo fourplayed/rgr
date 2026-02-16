@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { X, Pencil } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { useAsset } from '@/hooks/useAssetData';
 import type { AssetDetailTab } from '@/pages/assets/types';
 import { AssetOverviewTab } from './AssetOverviewTab';

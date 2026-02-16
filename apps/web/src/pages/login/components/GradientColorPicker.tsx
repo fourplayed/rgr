@@ -30,7 +30,7 @@ export function GradientColorPicker({
   upperMiddleColor,
   lowerMiddleColor,
   bottomColor,
-  isDark = false,
+  isDark: _isDark = false,
   defaultColors,
 }: GradientColorPickerProps) {
   const labelColor = '#ffffff'; // White text for visibility on dark glass

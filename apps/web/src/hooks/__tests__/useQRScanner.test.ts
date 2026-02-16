@@ -88,7 +88,17 @@ describe('useQRScanner', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockMediaStream = new MockMediaStream() as any;
 
-    // Spy on the existing getUserMedia method (already setup in test/setup.ts)
+    // Ensure navigator.mediaDevices exists before spying
+    if (!navigator.mediaDevices) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (navigator as any).mediaDevices = {};
+    }
+
+    // Create getUserMedia if it doesn't exist, then spy on it
+    if (!navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia = vi.fn();
+    }
+
     getUserMediaSpy = vi.spyOn(navigator.mediaDevices, 'getUserMedia')
       .mockResolvedValue(mockMediaStream);
 

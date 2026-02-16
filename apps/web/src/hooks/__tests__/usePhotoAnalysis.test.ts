@@ -11,8 +11,8 @@
  * - API integration
  * - State management
  */
-import { renderHook, act, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
+import { renderHook, act } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { usePhotoAnalysis } from '../usePhotoAnalysis';
 
 // ============================================================================
@@ -41,6 +41,7 @@ const mockSupabase = {
 
 vi.mock('@rgr/shared', () => ({
   getSupabase: () => mockSupabase,
+  getSupabaseClient: () => mockSupabase,
 }));
 
 // Mock Image for compression

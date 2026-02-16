@@ -14,7 +14,7 @@ interface AssetOverviewTabProps {
 }
 
 export const AssetOverviewTab = React.memo<AssetOverviewTabProps>(
-  ({ asset, isDark, canEdit, canDelete }) => {
+  ({ asset, isDark, canEdit: _canEdit, canDelete: _canDelete }) => {
     const [isEditing, setIsEditing] = useState(false);
 
     const textColor = isDark ? 'text-slate-200' : 'text-white';

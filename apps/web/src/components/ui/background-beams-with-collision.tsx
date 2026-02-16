@@ -73,7 +73,7 @@ const CollisionMechanism = React.forwardRef<
     containerRef: React.RefObject<HTMLDivElement>;
     parentRef: React.RefObject<HTMLDivElement>;
   }
->(({ beamOptions = {}, containerRef, parentRef }, ref) => {
+>(({ beamOptions = {}, containerRef, parentRef }, _ref) => {
   const beamRef = useRef<HTMLDivElement>(null);
   const [collision, setCollision] = useState<{
     detected: boolean;
@@ -161,7 +161,7 @@ const Explosion = ({ ...props }: React.HTMLProps<HTMLDivElement>) => {
               className="absolute h-2 w-2 rounded-full bg-gradient-to-b from-blue-400 to-purple-600"
               style={{
                 animation: 'explode 0.8s ease-out forwards',
-                // @ts-ignore
+                // @ts-expect-error CSS custom properties not in CSSProperties type
                 '--x': `${x}px`,
                 '--y': `${y}px`,
               }}

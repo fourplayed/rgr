@@ -18,7 +18,6 @@ import type {
   AssetDetailTab,
 } from './types';
 import {
-  DEFAULT_ASSET_FILTERS,
   DEFAULT_ASSET_SORT,
   DEFAULT_ASSET_PAGINATION,
 } from './types';

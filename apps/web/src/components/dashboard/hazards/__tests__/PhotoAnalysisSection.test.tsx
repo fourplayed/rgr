@@ -22,6 +22,27 @@ import type { PhotoAnalysisState, AnalysisResult } from '@/hooks/usePhotoAnalysi
 // Mock Setup
 // ============================================================================
 
+// Mock @rgr/shared
+vi.mock('@rgr/shared', () => ({
+  getSupabaseClient: vi.fn(() => ({
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          order: vi.fn(() => ({
+            limit: vi.fn(() => ({
+              data: [
+                { id: 'asset-1', asset_number: 'TL001', category: 'trailer', subtype: 'flattop', status: 'serviced' },
+                { id: 'asset-2', asset_number: 'TL002', category: 'trailer', subtype: 'dropdeck', status: 'serviced' },
+              ],
+              error: null,
+            })),
+          })),
+        })),
+      })),
+    })),
+  })),
+}));
+
 // Mock the usePhotoAnalysis hook
 vi.mock('@/hooks/usePhotoAnalysis', () => ({
   usePhotoAnalysis: vi.fn(),
@@ -133,15 +154,17 @@ describe('PhotoAnalysisSection', () => {
       renderPhotoAnalysisSection();
 
       expect(screen.getByText('Analyze New Photo')).toBeInTheDocument();
-      expect(screen.getByText('AI-powered hazard detection')).toBeInTheDocument();
+      // Asset selector is now shown
+      expect(screen.getByText('Assign to Asset')).toBeInTheDocument();
     });
 
-    it('should show info text when idle', () => {
+    it('should show info text when idle and no asset selected', () => {
       setupMockHook({ status: 'idle' });
       renderPhotoAnalysisSection();
 
+      // Should show warning about selecting asset first
       expect(
-        screen.getByText(/upload a photo of freight.*analyze it for potential safety hazards/i)
+        screen.getByText(/please select an asset above before uploading a photo/i)
       ).toBeInTheDocument();
     });
 
@@ -159,16 +182,34 @@ describe('PhotoAnalysisSection', () => {
   // ============================================================================
 
   describe('File Selection', () => {
-    it('should call analyzePhoto when file is selected', async () => {
+    it('should call analyzePhoto with assetId when file is selected after asset selection', async () => {
+      const user = userEvent.setup();
       const { actions } = setupMockHook({ status: 'idle' });
       const { container } = renderPhotoAnalysisSection();
 
+      // Wait for asset selector to finish loading
+      await waitFor(() => {
+        expect(screen.queryByText('Loading assets...')).not.toBeInTheDocument();
+      });
+
+      // First select an asset
+      const assetButton = screen.getByRole('button', { name: /select an asset/i });
+      await user.click(assetButton);
+
+      // Wait for dropdown and select first asset
+      await waitFor(() => {
+        expect(screen.getByText('TL001')).toBeInTheDocument();
+      });
+      const firstAsset = screen.getByText('TL001').closest('button');
+      if (firstAsset) await user.click(firstAsset);
+
+      // Now select a file
       const input = container.querySelector('input[type="file"]') as HTMLInputElement;
       const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
 
       fireEvent.change(input, { target: { files: [file] } });
 
-      expect(actions.analyzePhoto).toHaveBeenCalledWith(file, undefined);
+      expect(actions.analyzePhoto).toHaveBeenCalledWith(file, 'asset-1');
     });
   });
 
@@ -389,7 +430,7 @@ describe('PhotoAnalysisSection', () => {
   describe('State Transitions', () => {
     it('should transition from idle to uploading when file selected', async () => {
       const { actions } = setupMockHook({ status: 'idle' });
-      const { container, rerender } = renderPhotoAnalysisSection();
+      const { container } = renderPhotoAnalysisSection();
 
       // Select file
       const input = container.querySelector('input[type="file"]') as HTMLInputElement;
@@ -408,11 +449,11 @@ describe('PhotoAnalysisSection', () => {
       ).not.toBeInTheDocument();
     });
 
-    it('should show AI-powered badge when idle', () => {
+    it('should show asset selector when idle', () => {
       setupMockHook({ status: 'idle' });
       renderPhotoAnalysisSection();
 
-      expect(screen.getByText('AI-powered hazard detection')).toBeInTheDocument();
+      expect(screen.getByText('Assign to Asset')).toBeInTheDocument();
     });
 
     it('should show Analysis Complete header when completed', () => {

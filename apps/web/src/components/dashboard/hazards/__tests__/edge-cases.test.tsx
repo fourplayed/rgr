@@ -10,26 +10,48 @@
  * - Network failures
  */
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { PhotoUploadZone } from '../PhotoUploadZone';
 import { PhotoAnalysisSection } from '../PhotoAnalysisSection';
-import * as usePhotoAnalysisModule from '@/hooks/usePhotoAnalysis';
 
 // ============================================================================
 // Mock Setup
 // ============================================================================
 
-vi.mock('@rgr/shared', () => ({
-  getSupabase: () => mockSupabase,
-}));
+// Edge-case tests that use PhotoAnalysisSection need the real hook with mocked Supabase
 
+// Create mock Supabase client that can be configured by test helpers
 const mockSupabase = {
-  auth: { getUser: vi.fn() },
-  storage: { from: vi.fn() },
-  functions: { invoke: vi.fn() },
-  from: vi.fn(),
+  from: vi.fn(() => ({
+    select: vi.fn(() => ({
+      eq: vi.fn(() => ({
+        order: vi.fn(() => ({
+          limit: vi.fn(() => ({
+            data: [
+              { id: 'asset-1', asset_number: 'TL001', category: 'trailer', subtype: 'flattop', status: 'serviced' },
+              { id: 'asset-2', asset_number: 'TL002', category: 'trailer', subtype: 'dropdeck', status: 'serviced' },
+            ],
+            error: null,
+          })),
+        })),
+      })),
+    })),
+    insert: vi.fn(),
+  })),
+  auth: {
+    getUser: vi.fn(),
+  },
+  storage: {
+    from: vi.fn(),
+  },
+  functions: {
+    invoke: vi.fn(),
+  },
 };
+
+vi.mock('@rgr/shared', () => ({
+  getSupabaseClient: () => mockSupabase,
+}));
 
 // Store original createElement before mocking
 const originalCreateElement = document.createElement.bind(document);
@@ -110,6 +132,7 @@ function createMockFile(
   return file;
 }
 
+// Setup helper for tests that use PhotoAnalysisSection
 function setupSuccessfulMocks() {
   mockSupabase.auth.getUser.mockResolvedValue({
     data: { user: { id: 'user-123' } },
@@ -122,6 +145,18 @@ function setupSuccessfulMocks() {
     }),
   });
   mockSupabase.from.mockReturnValue({
+    select: vi.fn(() => ({
+      eq: vi.fn(() => ({
+        order: vi.fn(() => ({
+          limit: vi.fn(() => ({
+            data: [
+              { id: 'asset-1', asset_number: 'TL001', category: 'trailer', subtype: 'flattop', status: 'serviced' },
+            ],
+            error: null,
+          })),
+        })),
+      })),
+    })),
     insert: vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({
         single: vi.fn().mockResolvedValue({
@@ -320,16 +355,17 @@ describe('Edge Cases: Concurrent Operations', () => {
       />
     );
 
-    const uploadZone = screen.getByRole('button', {
-      name: /upload photo for hazard analysis/i,
-    });
+    // When loading, button is not rendered - find the drop zone container instead
+    const dropZone = container.querySelector('[class*="border-dashed"]') as HTMLElement;
+    expect(dropZone).toBeTruthy();
 
-    fireEvent.drop(uploadZone, {
+    fireEvent.drop(dropZone, {
       dataTransfer: {
         files: [createMockFile()],
       },
     });
 
+    // Should not call onFileSelect when loading
     expect(onFileSelect).not.toHaveBeenCalled();
   });
 

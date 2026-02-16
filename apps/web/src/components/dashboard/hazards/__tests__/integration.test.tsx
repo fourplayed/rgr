@@ -10,23 +10,37 @@
  * - Theme switching during flow
  * - Component interactions
  */
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { PhotoAnalysisSection } from '../PhotoAnalysisSection';
-import * as usePhotoAnalysisModule from '@/hooks/usePhotoAnalysis';
-import type { PhotoAnalysisState, AnalysisResult, AnalysisStatus } from '@/hooks/usePhotoAnalysis';
+import type { AnalysisResult } from '@/hooks/usePhotoAnalysis';
 
 // ============================================================================
 // Integration Test Setup
 // ============================================================================
 
-// We test the components together while mocking the external API layer
-vi.mock('@rgr/shared', () => ({
-  getSupabase: () => mockSupabase,
-}));
+// Integration tests should use the real usePhotoAnalysis hook
+// We only mock the external Supabase API layer
 
+// Create mock Supabase client that can be configured by test helpers
 const mockSupabase = {
+  from: vi.fn(() => ({
+    select: vi.fn(() => ({
+      eq: vi.fn(() => ({
+        order: vi.fn(() => ({
+          limit: vi.fn(() => ({
+            data: [
+              { id: 'asset-1', asset_number: 'TL001', category: 'trailer', subtype: 'flattop', status: 'serviced' },
+              { id: 'asset-2', asset_number: 'TL002', category: 'trailer', subtype: 'dropdeck', status: 'serviced' },
+            ],
+            error: null,
+          })),
+        })),
+      })),
+    })),
+    insert: vi.fn(),
+  })),
   auth: {
     getUser: vi.fn(),
   },
@@ -36,8 +50,12 @@ const mockSupabase = {
   functions: {
     invoke: vi.fn(),
   },
-  from: vi.fn(),
 };
+
+// We test the components together while mocking the external API layer
+vi.mock('@rgr/shared', () => ({
+  getSupabaseClient: () => mockSupabase,
+}));
 
 // Store original createElement before mocking
 const originalCreateElement = document.createElement.bind(document);
@@ -138,8 +156,20 @@ function setupSuccessfulUploadMocks(analysisResult: Partial<AnalysisResult> = {}
     }),
   });
 
-  // Photo record
+  // Photo record + asset selector
   mockSupabase.from.mockReturnValue({
+    select: vi.fn(() => ({
+      eq: vi.fn(() => ({
+        order: vi.fn(() => ({
+          limit: vi.fn(() => ({
+            data: [
+              { id: 'asset-1', asset_number: 'TL001', category: 'trailer', subtype: 'flattop', status: 'serviced' },
+            ],
+            error: null,
+          })),
+        })),
+      })),
+    })),
     insert: vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({
         single: vi.fn().mockResolvedValue({
@@ -222,6 +252,18 @@ function setupAnalysisFailureMocks() {
   });
 
   mockSupabase.from.mockReturnValue({
+    select: vi.fn(() => ({
+      eq: vi.fn(() => ({
+        order: vi.fn(() => ({
+          limit: vi.fn(() => ({
+            data: [
+              { id: 'asset-1', asset_number: 'TL001', category: 'trailer', subtype: 'flattop', status: 'serviced' },
+            ],
+            error: null,
+          })),
+        })),
+      })),
+    })),
     insert: vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({
         single: vi.fn().mockResolvedValue({

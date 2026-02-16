@@ -19,7 +19,7 @@ interface WorkflowLogProps {
   onComplete?: () => void;
 }
 
-export function WorkflowLog({ isVisible, isDark, onComplete }: WorkflowLogProps): JSX.Element | null {
+export function WorkflowLog({ isVisible, isDark: _isDark, onComplete }: WorkflowLogProps): JSX.Element | null {
   const [steps, setSteps] = useState<WorkflowStep[]>([]);
   const [isComplete, setIsComplete] = useState(false);
 

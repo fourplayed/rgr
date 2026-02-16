@@ -12,7 +12,7 @@
  * - Theme support
  * - Edge cases (no hazards, many hazards)
  */
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
 import { AnalysisResultCard, type AnalysisResultCardProps } from '../AnalysisResultCard';
@@ -437,7 +437,6 @@ describe('AnalysisResultCard', () => {
     });
 
     it('should expand to show recommended actions when clicked', async () => {
-      const user = userEvent.setup();
       renderAnalysisResultCard({
         result: createMockResult({
           hazards: [

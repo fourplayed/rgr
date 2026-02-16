@@ -151,7 +151,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
   isDark = true,
   focusAssetId,
   onFocusComplete,
-  enableFilters = false,
+  enableFilters: _enableFilters = false,
   filters: externalFilters,
   showDepotLabels = true,
 }, ref) => {

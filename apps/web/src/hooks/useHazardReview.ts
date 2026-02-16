@@ -345,8 +345,7 @@ export function useHazardReview(): UseHazardReviewResult {
       // Refresh stats after a short delay to get accurate numbers
       setTimeout(fetchStats, 500);
     } catch (err) {
-      // Re-throw error to be handled by the calling component
-      throw err;
+      throw err instanceof Error ? err : new Error(String(err));
     }
   }, [fetchStats]);
 

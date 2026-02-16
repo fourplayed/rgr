@@ -3,39 +3,8 @@
  * Generates random star positions using box-shadow with theme-aware colors
  */
 import { useMemo, memo } from 'react';
-import { DEFAULT_SETTINGS, DARK_THEME_SETTINGS, type ThemeSettings } from './themeSettings';
+import { type ThemeSettings } from './themeSettings';
 import { ExplodingStars } from './ExplodingStars';
-
-interface StarConfig {
-  color: string;
-  size: number;
-  glowRadius: number;
-  glowColor: string;
-}
-
-/**
- * Generate stars with glow effect - subtle glow
- * Stars spawn off-screen to the right and travel left across viewport
- */
-function generateStarsWithGlow(count: number, config: StarConfig): string {
-  const stars: string[] = [];
-  const travelDistance = 150; // Stars spawn across 150vw travel distance
-  const viewportHeight = 1200; // Vertical distribution
-
-  for (let i = 0; i < count; i++) {
-    // Random x position across the travel distance (in vw units converted to approximate px)
-    const x = Math.floor(Math.random() * (travelDistance * 19.2)); // ~150vw in px (assuming 1920px viewport)
-    // Random y position within viewport height
-    const y = Math.floor(Math.random() * viewportHeight);
-
-    // Dual-layer shadow: glow + core
-    stars.push(
-      `${x}px ${y}px ${config.glowRadius}px ${config.glowColor}, ` +
-      `${x}px ${y}px ${config.size}px ${config.color}`
-    );
-  }
-  return stars.join(', ');
-}
 
 /**
  * Generate star positions (position and size data only, no color)
@@ -86,10 +55,7 @@ interface StarsProps {
   settings?: ThemeSettings;
 }
 
-export const Stars = memo(function Stars({ isDark = true, settings }: StarsProps) {
-  // Use provided settings or defaults based on theme
-  const themeSettings = settings ?? (isDark ? DARK_THEME_SETTINGS : DEFAULT_SETTINGS);
-
+export const Stars = memo(function Stars({ isDark = true, settings: _settings }: StarsProps) {
   // Light theme star configurations
   const lightStarConfigs = useMemo(() => ({
     small: {

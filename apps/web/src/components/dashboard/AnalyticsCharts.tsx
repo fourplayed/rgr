@@ -25,7 +25,6 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  TooltipProps,
 } from 'recharts';
 import { Activity, TrendingUp, Clock, AlertTriangle } from 'lucide-react';
 import { VisionCard } from './vision/VisionCard';
@@ -87,7 +86,7 @@ const CustomTooltip = ({ active, payload, label, isDark = true }: { active?: boo
 /**
  * Loading skeleton for chart
  */
-const ChartSkeleton: React.FC<{ isDark?: boolean }> = ({ isDark = true }) => {
+const ChartSkeleton: React.FC<{ isDark?: boolean }> = ({ isDark: _isDark = true }) => {
   return (
     <div className="flex items-center justify-center h-64">
       <div
