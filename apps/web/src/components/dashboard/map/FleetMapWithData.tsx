@@ -455,7 +455,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
     // Only call setStyle when the URL actually changes (skip on initial load)
     if (styleUrl !== currentStyleUrl.current) {
       currentStyleUrl.current = styleUrl;
-      map.current.setStyle(styleUrl, { diff: false });
+      map.current.setStyle(styleUrl, { diff: false } as any);
     }
 
     // Update popup themes

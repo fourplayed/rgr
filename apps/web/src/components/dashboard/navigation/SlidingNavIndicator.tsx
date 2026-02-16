@@ -111,6 +111,7 @@ export const SlidingNavIndicator = React.memo<SlidingNavIndicatorProps>(({
           left,
           width: contentWidth + 10,
           opacity: 1,
+          isHovered: true,
         });
       } else {
         // Fallback: center under the button
@@ -120,6 +121,7 @@ export const SlidingNavIndicator = React.memo<SlidingNavIndicatorProps>(({
           left,
           width: elementRect.width,
           opacity: 1,
+          isHovered: true,
         });
       }
     });

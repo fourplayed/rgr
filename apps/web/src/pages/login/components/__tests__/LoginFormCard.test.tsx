@@ -34,15 +34,13 @@ describe('LoginFormCard', () => {
       errors: { email: null, password: null, general: null },
       status: 'idle',
       isValid: false,
-      lockoutRemainingSeconds: null,
-      failedAttempts: 0,
     };
 
     mockActions = {
       setEmail: vi.fn(),
       setPassword: vi.fn(),
       setRememberMe: vi.fn(),
-      handleSubmit: vi.fn((e) => e.preventDefault()),
+      handleSubmit: vi.fn(async (e) => { e.preventDefault(); }),
       clearErrors: vi.fn(),
     };
 

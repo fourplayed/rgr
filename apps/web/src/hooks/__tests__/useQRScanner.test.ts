@@ -41,7 +41,6 @@ class MockMediaStream {
   dispatchEvent() { return true; }
 }
 
-// @ts-expect-error - Global polyfill for JSDOM
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 global.MediaStream = MockMediaStream as any;
 
@@ -383,7 +382,7 @@ describe('useQRScanner', () => {
     let resolveStart: (() => void) | null = null;
     mockScanner.start.mockImplementation(() => {
       return new Promise((resolve) => {
-        resolveStart = resolve;
+        resolveStart = () => resolve(undefined);
       });
     });
 
