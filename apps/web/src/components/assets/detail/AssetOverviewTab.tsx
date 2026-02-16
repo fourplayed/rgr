@@ -86,17 +86,23 @@ export const AssetOverviewTab = React.memo<AssetOverviewTabProps>(
           const printQR = () => {
             const win = window.open('', '_blank', 'width=400,height=500');
             if (!win) return;
+            const esc = (s: string) =>
+              s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            const safeNumber = esc(asset.assetNumber);
+            const safeCategory = esc(asset.category.charAt(0).toUpperCase() + asset.category.slice(1));
+            const safeDepot = asset.depotName ? ' — ' + esc(asset.depotName) : '';
+            const safeId = esc(asset.id);
             win.document.write(`
-              <html><head><title>QR — ${asset.assetNumber}</title>
+              <html><head><title>QR — ${safeNumber}</title>
               <style>body{margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:#fff;font-family:'Lato',sans-serif}
               img{width:250px;height:250px;image-rendering:pixelated}
               h2{margin:20px 0 4px;font-size:24px;letter-spacing:0.05em}
               p{margin:2px 0;color:#666;font-size:12px}
               </style></head><body>
               <img src="${qrUrl}" />
-              <h2>${asset.assetNumber}</h2>
-              <p>${asset.category.charAt(0).toUpperCase() + asset.category.slice(1)}${asset.depotName ? ' — ' + asset.depotName : ''}</p>
-              <p style="font-family:monospace;font-size:10px;margin-top:8px;color:#999">${asset.id}</p>
+              <h2>${safeNumber}</h2>
+              <p>${safeCategory}${safeDepot}</p>
+              <p style="font-family:monospace;font-size:10px;margin-top:8px;color:#999">${safeId}</p>
               <script>window.onload=()=>{window.print()}</script>
               </body></html>
             `);

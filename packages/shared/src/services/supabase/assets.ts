@@ -99,7 +99,7 @@ const SORT_FIELD_MAP: Record<string, string> = {
  */
 export async function listAssets(
   params: ListAssetsParams = {}
-): Promise<ServiceResult<PaginatedResult<Asset>>> {
+): Promise<ServiceResult<PaginatedResult<AssetWithRelations>>> {
   const {
     page = 1,
     pageSize = 20,
@@ -119,7 +119,7 @@ export async function listAssets(
 
   let query = supabase
     .from('assets')
-    .select('*', { count: 'exact' })
+    .select('*, depot:assigned_depot_id(name, code)', { count: 'exact' })
     .is('deleted_at', null);
 
   // Filters
@@ -165,7 +165,21 @@ export async function listAssets(
   }
 
   const total = count ?? 0;
-  const assets = (data || []).map((row: AssetRow) => mapRowToAsset(row));
+
+  interface ListAssetRow extends AssetRow {
+    depot: { name: string; code: string } | null;
+  }
+
+  const assets = (data || []).map((row: ListAssetRow) => {
+    const asset = mapRowToAsset(row as unknown as AssetRow);
+    return {
+      ...asset,
+      depotName: row.depot?.name ?? null,
+      depotCode: row.depot?.code ?? null,
+      driverName: null,
+      lastScannerName: null,
+    } as AssetWithRelations;
+  });
 
   return {
     data: {
@@ -293,13 +307,18 @@ export async function softDeleteAsset(
 ): Promise<ServiceResult<void>> {
   const supabase = getSupabaseClient();
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('assets')
     .update({ deleted_at: new Date().toISOString(), status: 'out_of_service' })
     .eq('id', id)
-    .is('deleted_at', null);
+    .is('deleted_at', null)
+    .select('id')
+    .single();
 
   if (error) {
+    if (error.code === 'PGRST116') {
+      return { data: null, error: 'Asset not found or already retired' };
+    }
     return { data: null, error: `Failed to retire asset: ${error.message}` };
   }
 

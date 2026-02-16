@@ -20,7 +20,7 @@ const queryClient = new QueryClient({
 export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
-  const { isAuthenticated, checkAuth } = useAuthStore();
+  const { isAuthenticated, isLoading, checkAuth } = useAuthStore();
 
   // Check auth on mount
   useEffect(() => {
@@ -29,6 +29,8 @@ export default function RootLayout() {
 
   // Auth gate: redirect based on authentication status
   useEffect(() => {
+    if (isLoading) return; // Wait for checkAuth to finish
+
     const inAuthGroup = segments[0] === '(auth)';
 
     if (!isAuthenticated && !inAuthGroup) {
@@ -38,7 +40,7 @@ export default function RootLayout() {
       // User is authenticated and on auth screens
       router.replace('/(tabs)');
     }
-  }, [isAuthenticated, segments]);
+  }, [isAuthenticated, isLoading, segments]);
 
   return (
     <QueryClientProvider client={queryClient}>

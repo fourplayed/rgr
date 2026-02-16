@@ -365,11 +365,13 @@ export class AuthService {
         return { data: null, error: 'Failed to create user' };
       }
 
-      // Profile is created by database trigger
-      // Fetch it to return (may need a short delay for trigger to complete)
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      const profileResult = await fetchProfile(authData.user.id);
+      // Profile is created by database trigger — poll with backoff
+      let profileResult: ServiceResult<Profile | null> = { data: null, error: null };
+      for (const delay of [50, 150, 500]) {
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        profileResult = await fetchProfile(authData.user.id);
+        if (profileResult.data) break;
+      }
 
       if (profileResult.error || !profileResult.data) {
         // Fallback: manually create profile if trigger failed
@@ -395,7 +397,7 @@ export class AuthService {
         return { data: mapRowToProfile(profile as ProfileRow), error: null };
       }
 
-      return profileResult;
+      return { data: profileResult.data, error: null };
     } catch (error) {
       console.error('Create user error:', error);
       return { data: null, error: 'Failed to create user' };
