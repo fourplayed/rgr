@@ -19,6 +19,8 @@ coverage/
 .env
 .env.local
 .env.*.local
+new-secrets.txt
+*.secrets.txt
 
 # IDEs
 .vscode/

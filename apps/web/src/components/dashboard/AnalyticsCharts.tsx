@@ -54,7 +54,7 @@ export interface AnalyticsChartsProps {
 /**
  * Custom tooltip component for charts
  */
-const CustomTooltip: React.FC<TooltipProps<any, any> & { isDark?: boolean }> = ({ active, payload, label, isDark = true }) => {
+const CustomTooltip = ({ active, payload, label, isDark = true }: { active?: boolean; payload?: Array<{ color?: string; name?: string; value?: unknown }>; label?: string; isDark?: boolean }) => {
   if (!active || !payload || !payload.length) return null;
 
   const bgColor = isDark
@@ -190,8 +190,7 @@ export const AnalyticsCharts = React.memo<AnalyticsChartsProps>(({
                   cx="50%"
                   cy="50%"
                   outerRadius={90}
-                  label={({ status, percentage }) => `${status}: ${percentage}%`}
-                  labelStyle={{ fontSize: 11, fill: chartColors.text }}
+                  label={((entry: any) => `${entry.status}: ${entry.percentage}%`) as any}
                 >
                   {assetUtilization.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -275,7 +274,7 @@ export const AnalyticsCharts = React.memo<AnalyticsChartsProps>(({
                   dataKey="date"
                   tick={axisStyle}
                   stroke={chartColors.grid}
-                  tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  tickFormatter={(value: string) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                 />
                 <YAxis
                   tick={axisStyle}

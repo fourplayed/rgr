@@ -14,6 +14,10 @@ export interface VisionCardProps {
   children: React.ReactNode;
   className?: string;
   noPadding?: boolean;
+  /** Optional card title displayed as an h3 heading */
+  title?: string;
+  /** Optional icon rendered before the title */
+  icon?: React.ReactNode;
   /** Theme mode - when true, uses dark theme; when false, uses light theme */
   isDark?: boolean;
 }
@@ -22,6 +26,8 @@ export const VisionCard = React.memo<VisionCardProps>(({
   children,
   className = '',
   noPadding = false,
+  title,
+  icon,
   isDark = true,
 }) => {
   // Login card-style backgrounds - gradient filled for both themes
@@ -62,6 +68,14 @@ export const VisionCard = React.memo<VisionCardProps>(({
         borderWidth: isDark ? '1px' : '1.5px',
       }}
     >
+      {title && (
+        <h3 className="flex items-center gap-2 text-lg font-semibold mb-4"
+          style={{ color: isDark ? '#ebebeb' : '#0a2654' }}
+        >
+          {icon && <span className="flex-shrink-0">{icon}</span>}
+          {title}
+        </h3>
+      )}
       {children}
     </div>
   );

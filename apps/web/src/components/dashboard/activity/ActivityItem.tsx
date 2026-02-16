@@ -65,7 +65,7 @@ export const ActivityItem = React.memo<ActivityItemProps>(({
 
   const timeAgo = useMemo(() => formatTimeAgo(event.scannedAt), [event.scannedAt]);
   const categoryConfig = useMemo(
-    () => CATEGORY_CONFIG[event.assetCategory] || CATEGORY_CONFIG.trailer,
+    () => CATEGORY_CONFIG[event.assetCategory as keyof typeof CATEGORY_CONFIG] || CATEGORY_CONFIG.trailer,
     [event.assetCategory]
   );
 

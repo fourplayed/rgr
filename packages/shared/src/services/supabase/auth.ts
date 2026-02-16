@@ -146,13 +146,13 @@ export async function refreshSession(): Promise<ServiceResult<Session>> {
  * Send password reset email
  */
 export async function sendPasswordResetEmail(
-  email: string
+  email: string,
+  redirectUrl?: string
 ): Promise<ServiceResult<void>> {
   const supabase = getSupabaseClient();
 
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/auth/reset-password`,
-  });
+  const options = redirectUrl ? { redirectTo: redirectUrl } : {};
+  const { error } = await supabase.auth.resetPasswordForEmail(email, options);
 
   if (error) {
     return { data: null, error: error.message };
@@ -213,7 +213,7 @@ export async function fetchProfile(
     .from('profiles')
     .select('*')
     .eq('id', userId)
-    .single();
+    .maybeSingle();
 
   if (error) {
     return { data: null, error: error.message };

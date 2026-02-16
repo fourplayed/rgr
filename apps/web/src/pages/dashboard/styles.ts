@@ -1,0 +1,113 @@
+/**
+ * Dashboard styles - Glassmorphic nav and panel tokens
+ */
+import { BACKGROUND_STYLES } from '@/pages/login/styles';
+
+// Re-export background styles for dashboard use
+export { BACKGROUND_STYLES };
+
+/**
+ * Glassmorphic nav bar styles for dark and light themes
+ */
+export const NAV_BAR_STYLES = {
+  dark: {
+    background: 'rgba(0, 0, 48, 0.9)',
+    backdropFilter: 'blur(24px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+    borderBottom: '1px solid rgba(148, 163, 184, 0.2)',
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
+  },
+  light: {
+    background: 'linear-gradient(to bottom, #0000cc, #000088)',
+    backdropFilter: 'blur(24px)',
+    WebkitBackdropFilter: 'blur(24px)',
+    borderBottom: '1px solid rgba(148, 163, 184, 0.2)',
+    boxShadow: '0 4px 30px rgba(0, 0, 0, 0.08)',
+  },
+} as const;
+
+/**
+ * Glassmorphic content panel styles for dashboard widgets
+ */
+export const CONTENT_PANEL_STYLES = {
+  dark: {
+    background: 'rgba(6, 11, 40, 0.6)',
+    backdropFilter: 'blur(16px)',
+    WebkitBackdropFilter: 'blur(16px)',
+    border: '1px solid rgba(255, 255, 255, 0.08)',
+    borderRadius: '12px',
+  },
+  light: {
+    background: 'rgba(255, 255, 255, 0.12)',
+    backdropFilter: 'blur(16px)',
+    WebkitBackdropFilter: 'blur(16px)',
+    border: '1px solid rgba(255, 255, 255, 0.2)',
+    borderRadius: '12px',
+  },
+} as const;
+
+/**
+ * Nav link color tokens
+ */
+export const NAV_LINK_COLORS = {
+  dark: {
+    default: '#ffffff',                      // white
+    hover: '#ffffff',                        // white
+    active: '#ffffff',                       // white
+  },
+  light: {
+    default: '#ffffff',                      // white
+    hover: '#ffffff',                        // white
+    active: '#ffffff',                       // white
+  },
+} as const;
+
+/**
+ * Nav button glassmorphic style tokens
+ *
+ * These define the button "pill" appearance for nav links inside the
+ * near-black glassmorphic nav bar. Each state (default, hover, active)
+ * has background, border, and shadow values that layer on top of the
+ * dark nav bar surface to create depth.
+ *
+ * Design rationale:
+ * - Default: subtle frosted surface, barely lifted off the bar
+ * - Hover: soft cyan glow begins to bleed through edges
+ * - Active: full cyan-tinted glass with inset glow and outer halo
+ */
+export const NAV_BUTTON_STYLES = {
+  dark: {
+    default: {
+      background: 'transparent',
+      border: '1px solid transparent',
+      boxShadow: 'none',
+    },
+    hover: {
+      background: 'transparent',
+      border: '1px solid transparent',
+      boxShadow: 'none',
+    },
+    active: {
+      background: 'transparent',
+      border: '1px solid transparent',
+      boxShadow: 'none',
+    },
+  },
+  light: {
+    default: {
+      background: 'transparent',
+      border: '1px solid transparent',
+      boxShadow: 'none',
+    },
+    hover: {
+      background: 'transparent',
+      border: '1px solid transparent',
+      boxShadow: 'none',
+    },
+    active: {
+      background: 'transparent',
+      border: '1px solid transparent',
+      boxShadow: 'none',
+    },
+  },
+} as const;

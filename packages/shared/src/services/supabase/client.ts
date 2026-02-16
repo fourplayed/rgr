@@ -2,10 +2,17 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 /**
  * Supabase client configuration
+ *
+ * For React Native, pass `storage` (AsyncStorage) and set
+ * `detectSessionInUrl: false` to avoid browser-only APIs.
  */
 export interface SupabaseConfig {
   url: string;
   anonKey: string;
+  /** Custom session storage (pass AsyncStorage for React Native) */
+  storage?: any;
+  /** Set to false for React Native (default: true for web) */
+  detectSessionInUrl?: boolean;
 }
 
 /**
@@ -29,6 +36,9 @@ let currentConfig: SupabaseConfig | null = null;
  * ```
  */
 export function initSupabase(config: SupabaseConfig): SupabaseClient {
+  // Return existing client if already initialized
+  if (supabaseClient) return supabaseClient;
+
   if (!config.url || !config.anonKey) {
     throw new Error(
       'Supabase configuration missing. Ensure SUPABASE_URL and SUPABASE_ANON_KEY are set.'
@@ -47,7 +57,8 @@ export function initSupabase(config: SupabaseConfig): SupabaseClient {
     auth: {
       autoRefreshToken: true,
       persistSession: true,
-      detectSessionInUrl: true,
+      detectSessionInUrl: config.detectSessionInUrl ?? true,
+      ...(config.storage ? { storage: config.storage } : {}),
     },
     global: {
       headers: {

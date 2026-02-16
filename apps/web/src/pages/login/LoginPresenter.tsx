@@ -18,20 +18,16 @@
  * - Screen reader announcements for errors
  * - Required field indicators
  */
-import { useState, useCallback, useEffect, type ComponentType } from 'react';
+import { useState, useEffect, type ComponentType } from 'react';
 import type { LoginLogicState, LoginLogicActions } from './useLoginLogic';
 import { LOGIN_CONSTANTS } from './types';
 import { Logo } from '@/components/common';
-import { BACKGROUND_STYLES, CARD_HEIGHT, THEME_SWIPE_DURATION_MS } from './styles';
+import { CARD_HEIGHT, THEME_SWIPE_DURATION_MS } from './styles';
 import { ThemeToggle } from './components/ThemeToggle';
 import { ErrorContainer } from './components/ErrorContainer';
 import { LoginFormCard } from './components/LoginFormCard';
 import { ForgotPasswordCard } from './components/ForgotPasswordCard';
 import { FlipCardContainer } from './components/FlipCardContainer';
-import { Stars } from '@/components/backgrounds/Stars';
-import { DebugToolbar, type WorkflowStep } from './components/DebugToolbar';
-import { WorkflowLogPanel } from './components/WorkflowLogPanel';
-import { BackgroundBeamsWithCollisionDemo } from '@/components/ui/BackgroundBeamsDemo';
 import { useTheme } from '@/hooks/useTheme';
 import { Hover3D } from '@/components/ui/Hover3D';
 import { useFlipAnimation } from './hooks/useFlipAnimation';
@@ -89,10 +85,6 @@ export function LoginPresenter({
   // Local state for forgot password errors
   const [forgotPasswordError, setForgotPasswordError] = useState<string | null>(null);
 
-  // Workflow log state
-  const [workflowSteps, setWorkflowSteps] = useState<WorkflowStep[]>([]);
-  const [workflowComplete, setWorkflowComplete] = useState(false);
-
   // Exit slide animation: when auth succeeds, slide the card + logo off-screen
   const [isExiting, setIsExiting] = useState(false);
   useEffect(() => {
@@ -100,18 +92,6 @@ export function LoginPresenter({
       setIsExiting(true);
     }
   }, [state.status]);
-
-  // Local state for custom gradient colors - Light theme
-  const [lightTopColor, setLightTopColor] = useState('#170986');
-  const [lightUpperMiddleColor, setLightUpperMiddleColor] = useState('#0017c2');
-  const [lightLowerMiddleColor, setLightLowerMiddleColor] = useState('#0000ff');
-  const [lightBottomColor, setLightBottomColor] = useState('#0091ff');
-
-  // Local state for custom gradient colors - Dark theme
-  const [darkTopColor, setDarkTopColor] = useState('#060f74');
-  const [darkUpperMiddleColor, setDarkUpperMiddleColor] = useState('#000970');
-  const [darkLowerMiddleColor, setDarkLowerMiddleColor] = useState('#000757');
-  const [darkBottomColor, setDarkBottomColor] = useState('#080a21');
 
   // Collect all errors for display
   const allErrors: string[] = [];
@@ -134,63 +114,15 @@ export function LoginPresenter({
     handleFlipToLogin();
   };
 
-  // Dynamic background style with custom colors for both themes
-  const backgroundStyle = isDark
-    ? {
-        ...BACKGROUND_STYLES.dark,
-        background: `linear-gradient(to bottom, ${darkTopColor} 0%, ${darkUpperMiddleColor} 33%, ${darkLowerMiddleColor} 66%, ${darkBottomColor} 100%)`,
-      }
-    : {
-        ...BACKGROUND_STYLES.light,
-        background: `linear-gradient(to bottom, ${lightTopColor} 0%, ${lightUpperMiddleColor} 33%, ${lightLowerMiddleColor} 66%, ${lightBottomColor} 100%)`,
-      };
-
   return (
     <div
-      className="relative min-h-screen h-screen flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 overflow-hidden theme-bg-transition"
-      style={backgroundStyle}
+      className="relative min-h-screen h-screen flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 overflow-hidden"
+      style={{ zIndex: 1 }}
     >
-      <style>{`
-        .theme-bg-transition {
-          transition: background 1.2s cubic-bezier(0.4, 0.0, 0.2, 1);
-        }
-      `}</style>
-
-      {/* Starfield background for both themes */}
-      <Stars isDark={isDark} />
-
       {/* Theme toggle button - positioned at top-right of screen */}
       <div className="absolute top-6 right-6 z-30">
         <ThemeToggle isDark={isDark} onToggle={handleThemeToggle} />
       </div>
-
-      {/* Debug Toolbar - bottom panel with console and gradient customizer */}
-      <DebugToolbar
-        isDark={isDark}
-        topColor={isDark ? darkTopColor : lightTopColor}
-        upperMiddleColor={isDark ? darkUpperMiddleColor : lightUpperMiddleColor}
-        lowerMiddleColor={isDark ? darkLowerMiddleColor : lightLowerMiddleColor}
-        bottomColor={isDark ? darkBottomColor : lightBottomColor}
-        onTopColorChange={isDark ? setDarkTopColor : setLightTopColor}
-        onUpperMiddleColorChange={isDark ? setDarkUpperMiddleColor : setLightUpperMiddleColor}
-        onLowerMiddleColorChange={isDark ? setDarkLowerMiddleColor : setLightLowerMiddleColor}
-        onBottomColorChange={isDark ? setDarkBottomColor : setLightBottomColor}
-        defaultColors={
-          isDark
-            ? { top: '#060f74', upperMiddle: '#000970', lowerMiddle: '#000757', bottom: '#080a21' }
-            : { top: '#170986', upperMiddle: '#0017c2', lowerMiddle: '#0000ff', bottom: '#0091ff' }
-        }
-      />
-
-      {/* Workflow Log - slide-out panel bottom-right */}
-      <WorkflowLogPanel
-        workflowSteps={workflowSteps}
-        workflowComplete={workflowComplete}
-        onClear={() => {
-          setWorkflowSteps([]);
-          setWorkflowComplete(false);
-        }}
-      />
 
       {/* Exit slide wrapper — slides logo + card + errors left on auth success */}
       <div
@@ -298,8 +230,6 @@ export function LoginPresenter({
               ButtonComponent={ButtonComponent}
               onForgotPassword={handleForgotPasswordClick}
               isDark={isDark}
-              onWorkflowStepsChange={setWorkflowSteps}
-              onWorkflowComplete={setWorkflowComplete}
             />
           }
           backFace={

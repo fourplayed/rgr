@@ -30,9 +30,10 @@ export const SunIcon = React.memo<{ className?: string }>(({ className = '' }) =
 SunIcon.displayName = 'SunIcon';
 
 /** Moon icon for switching to dark mode - filled */
-export const MoonIcon = React.memo<{ className?: string }>(({ className = '' }) => (
+export const MoonIcon = React.memo<{ className?: string; style?: React.CSSProperties }>(({ className = '', style }) => (
   <svg
     className={className}
+    style={style}
     fill="currentColor"
     viewBox="0 0 24 24"
     aria-hidden="true"
@@ -47,10 +48,10 @@ MoonIcon.displayName = 'MoonIcon';
 
 /** Combined theme toggle icon that renders sun or moon based on current theme */
 export const ThemeToggleIcon = React.memo<ThemeToggleIconProps>(({ isDark, className = '' }) => {
-  const darkModeClass = `w-6 h-6 text-white transition-all duration-500 ease-out group-hover:text-yellow-400 group-hover:scale-125 group-hover:rotate-180 ${className}`;
-  const lightModeClass = `w-6 h-6 text-slate-500 transition-all duration-500 ease-out group-hover:text-blue-800 group-hover:scale-125 group-hover:rotate-12 ${className}`;
+  const darkModeClass = `w-6 h-6 text-white transition-all duration-500 ease-out group-hover:text-white group-hover:scale-125 group-hover:rotate-180 ${className}`;
+  const lightModeClass = `w-6 h-6 transition-all duration-500 ease-out group-hover:scale-125 group-hover:rotate-12 ${className}`;
 
-  return isDark ? <SunIcon className={darkModeClass} /> : <MoonIcon className={lightModeClass} />;
+  return isDark ? <SunIcon className={darkModeClass} /> : <MoonIcon className={lightModeClass} style={{ color: '#cbd5e1' }} />;
 });
 
 ThemeToggleIcon.displayName = 'ThemeToggleIcon';

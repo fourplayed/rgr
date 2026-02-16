@@ -27,7 +27,7 @@ import {
   RefreshCw,
   TrendingUp,
 } from 'lucide-react';
-import { getSupabase } from '@rgr/shared';
+import { getSupabaseClient } from '@rgr/shared';
 import { VisionCard } from '../vision/VisionCard';
 import { RGR_COLORS } from '@/styles/color-palette';
 import { ImageLightbox } from './ImageLightbox';
@@ -122,7 +122,7 @@ export const AnalysisHistoryPanel = React.memo<AnalysisHistoryPanelProps>(({
     setError(null);
 
     try {
-      const supabase = getSupabase();
+      const supabase = getSupabaseClient();
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
@@ -136,12 +136,10 @@ export const AnalysisHistoryPanel = React.memo<AnalysisHistoryPanelProps>(({
         .select(`
           id,
           photo_id,
-          primary_freight_category,
-          freight_description,
-          confidence_score,
-          analysis_status,
-          analyzed_at,
-          learning_weight,
+          primary_category,
+          description,
+          confidence,
+          created_at,
           photos!inner (
             id,
             storage_path,
@@ -152,17 +150,16 @@ export const AnalysisHistoryPanel = React.memo<AnalysisHistoryPanelProps>(({
           ),
           hazard_alerts (
             id,
-            was_accurate,
-            reviewed_at
+            review_outcome,
+            manager_review_at
           )
         `)
-        .eq('analysis_status', 'completed')
-        .order('analyzed_at', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(maxItems);
 
       // Apply freight category filter
       if (filters.freightCategory) {
-        query = query.eq('primary_freight_category', filters.freightCategory);
+        query = query.eq('primary_category', filters.freightCategory);
       }
 
       // Apply date filter
@@ -184,7 +181,7 @@ export const AnalysisHistoryPanel = React.memo<AnalysisHistoryPanelProps>(({
             startDate = new Date(0);
         }
 
-        query = query.gte('analyzed_at', startDate.toISOString());
+        query = query.gte('created_at', startDate.toISOString());
       }
 
       const { data, error: fetchError } = await query;
@@ -199,9 +196,9 @@ export const AnalysisHistoryPanel = React.memo<AnalysisHistoryPanelProps>(({
       const transformedItems: AnalysisHistoryItem[] = (data || []).map((item: any) => {
         const photo = item.photos;
         const hazards = item.hazard_alerts || [];
-        const hasReview = hazards.some((h: { reviewed_at: string | null }) => h.reviewed_at !== null);
-        const reviewedHazards = hazards.filter((h: { was_accurate: boolean | null }) => h.was_accurate !== null);
-        const accurateCount = reviewedHazards.filter((h: { was_accurate: boolean }) => h.was_accurate === true).length;
+        const hasReview = hazards.some((h: { manager_review_at: string | null }) => h.manager_review_at !== null);
+        const reviewedHazards = hazards.filter((h: { review_outcome: string | null }) => h.review_outcome !== null);
+        const accurateCount = reviewedHazards.filter((h: { review_outcome: string }) => h.review_outcome === 'confirmed').length;
 
         return {
           id: item.id,
@@ -210,16 +207,16 @@ export const AnalysisHistoryPanel = React.memo<AnalysisHistoryPanelProps>(({
             ? `${supabaseUrl}/storage/v1/object/public/photos-compressed/${photo.storage_path}`
             : '',
           storagePath: photo?.storage_path || '',
-          freightCategory: formatCategory(item.primary_freight_category),
-          freightDescription: item.freight_description || '',
-          confidence: Math.round((item.confidence_score || 0) * 100),
+          freightCategory: formatCategory(item.primary_category),
+          freightDescription: item.description || '',
+          confidence: Math.round((item.confidence || 0) * 100),
           hazardCount: hazards.length,
-          status: item.analysis_status,
+          status: 'completed', // Default status since column doesn't exist in DB
           wasReviewed: hasReview,
           wasAccurate: reviewedHazards.length > 0
             ? accurateCount === reviewedHazards.length
             : null,
-          analyzedAt: item.analyzed_at,
+          analyzedAt: item.created_at,
           assetNumber: photo?.assets?.asset_number,
         };
       });

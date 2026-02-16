@@ -10,7 +10,7 @@
  */
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { ChevronDown, Search, Truck, X, Loader2, AlertCircle } from 'lucide-react';
-import { getSupabase } from '@rgr/shared';
+import { getSupabaseClient } from '@rgr/shared';
 import { RGR_COLORS } from '@/styles/color-palette';
 
 // ============================================================================
@@ -68,7 +68,7 @@ export const AssetSelector = React.memo<AssetSelectorProps>(({
       setError(null);
 
       try {
-        const supabase = getSupabase();
+        const supabase = getSupabaseClient();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data, error: fetchError } = await (supabase as any)
           .from('assets')

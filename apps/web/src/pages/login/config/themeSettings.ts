@@ -20,9 +20,9 @@ export interface ThemeSettings {
 
 export const DEFAULT_SETTINGS: ThemeSettings = {
   backgroundColors: [
-    '#ffffff', // Top - white
-    '#d1d5db', // Light grey at 60%
-    '#0000ff', // Vibrant blue at 100%
+    '#75b8ff', // Sky blue top
+    '#5c8dff', // Medium blue at 60%
+    '#1f62ff', // Deep blue at 100%
   ],
   backgroundLocations: [0, 0.6, 1], // White 0%, light grey 60%, vibrant blue 100%
   starColor: NORD_SNOW_STORM.nord4,

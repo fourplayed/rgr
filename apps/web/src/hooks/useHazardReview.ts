@@ -9,7 +9,7 @@
  * - Calculate review statistics
  */
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { getSupabase } from '@rgr/shared';
+import { getSupabaseClient } from '@rgr/shared';
 import type { HazardSeverity, ReviewAction, HazardData, HazardFilters } from '../components/dashboard/hazards';
 import type { HazardReviewStatsData } from '../components/dashboard/hazards/HazardReviewStats';
 
@@ -134,16 +134,13 @@ function saveReviewedHazardId(hazardId: string): void {
 // ============================================================================
 
 function getDateRangeStart(range: string): Date {
-  const now = new Date();
+  const now = Date.now();
+  const DAY_MS = 86400000;
   switch (range) {
-    case '7d':
-      return new Date(now.setDate(now.getDate() - 7));
-    case '30d':
-      return new Date(now.setDate(now.getDate() - 30));
-    case '90d':
-      return new Date(now.setDate(now.getDate() - 90));
-    default:
-      return new Date(now.setDate(now.getDate() - 30));
+    case '7d': return new Date(now - 7 * DAY_MS);
+    case '30d': return new Date(now - 30 * DAY_MS);
+    case '90d': return new Date(now - 90 * DAY_MS);
+    default: return new Date(now - 30 * DAY_MS);
   }
 }
 
@@ -153,7 +150,7 @@ function mapAlertToHazardData(alert: HazardAlert): HazardData {
   const asset = alert.assets;
 
   // Construct photo URL from storage path (photos stored in 'photos-compressed' bucket)
-  const supabase = getSupabase();
+  const supabase = getSupabaseClient();
   const photoUrl = photo?.storage_path
     ? supabase.storage.from('photos-compressed').getPublicUrl(photo.storage_path).data.publicUrl
     : '/api/placeholder/120/90';
@@ -198,7 +195,7 @@ export function useHazardReview(): UseHazardReviewResult {
     setError(null);
 
     try {
-      const supabase = getSupabase();
+      const supabase = getSupabaseClient();
 
       // Build query
       // Note: asset_id and photo_id are on hazard_alerts, not freight_analysis
@@ -275,7 +272,7 @@ export function useHazardReview(): UseHazardReviewResult {
   // Fetch statistics
   const fetchStats = useCallback(async () => {
     try {
-      const supabase = getSupabase();
+      const supabase = getSupabaseClient();
 
       // Get total photos analyzed count from freight_analysis table
       const { count: totalPhotosAnalyzed } = await supabase
@@ -345,7 +342,7 @@ export function useHazardReview(): UseHazardReviewResult {
   // Submit review action
   const submitReview = useCallback(async (hazardId: string, action: ReviewAction) => {
     try {
-      const supabase = getSupabase();
+      const supabase = getSupabaseClient();
 
       // Map action to review outcome
       const reviewOutcome = action === 'confirm'
@@ -410,16 +407,11 @@ export function useHazardReview(): UseHazardReviewResult {
     setHasMore(true);
   }, []);
 
-  // Initial fetch
+  // Fetch hazards on mount and when filters change (covers initial load)
   useEffect(() => {
     fetchHazards(0, false);
     fetchStats();
-  }, [fetchHazards, fetchStats]);
-
-  // Refetch when filters change
-  useEffect(() => {
-    fetchHazards(0, false);
-  }, [filters, fetchHazards]);
+  }, [filters, fetchHazards, fetchStats]);
 
   // Memoize state object
   const state = useMemo<HazardReviewState>(() => ({

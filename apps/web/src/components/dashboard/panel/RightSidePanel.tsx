@@ -71,7 +71,7 @@ export const RightSidePanel = React.memo<RightSidePanelProps>(({
 
   const statItems = [
     { label: 'Total', value: stats.totalAssets, icon: Truck, color: 'text-blue-500' },
-    { label: 'Active', value: stats.activeAssets, icon: CheckCircle, color: 'text-emerald-500' },
+    { label: 'Serviced', value: stats.activeAssets, icon: CheckCircle, color: 'text-emerald-500' },
     { label: 'Maintenance', value: stats.inMaintenance, icon: Wrench, color: 'text-amber-500' },
     { label: 'Out of Service', value: stats.outOfService, icon: XCircle, color: 'text-red-500' },
   ];

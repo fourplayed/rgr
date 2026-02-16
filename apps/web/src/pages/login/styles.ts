@@ -21,10 +21,10 @@ export const BACKGROUND_STYLES = {
   light: {
     background: `linear-gradient(
       to bottom,
-      #85c0ff 0%,      /* Light blue top */
-      #0040ff 33%,     /* Vibrant blue upper-middle */
-      #0040ff 66%,     /* Vibrant blue lower-middle */
-      #85c0ff 100%     /* Light blue bottom */
+      #75b8ff 0%,      /* Sky blue top */
+      #5c8dff 33%,     /* Medium blue upper-middle */
+      #477eff 66%,     /* Azure lower-middle */
+      #1f62ff 100%     /* Deep blue bottom */
     )`,
     minHeight: '100vh',
     transition: 'background 1.2s cubic-bezier(0.4, 0.0, 0.2, 1)',
@@ -33,10 +33,10 @@ export const BACKGROUND_STYLES = {
   dark: {
     background: `linear-gradient(
       to bottom,
-      #000433 0%,      /* Dark blue top */
-      #000970 33%,     /* Medium dark blue upper-middle */
-      #000970 66%,     /* Medium dark blue lower-middle */
-      #080a21 100%     /* Dark blue-gray bottom */
+      #000d99 0%,
+      #000b80 33%,
+      #000861 66%,
+      #000533 100%
     )`,
     minHeight: '100vh',
     transition: 'background 1.2s cubic-bezier(0.4, 0.0, 0.2, 1)',
@@ -95,7 +95,7 @@ export const CARD_STYLES = {
 export const INPUT_STYLES = {
   // Light theme - simple border like dark theme (no fancy focus effects)
   light: {
-    backgroundColor: 'rgba(209, 213, 219, 0.3)',
+    backgroundColor: 'rgba(209, 213, 219, 0.1)',
     border: '1px solid rgba(255, 255, 255, 0.5)',
     color: '#ffffff', // white
     outline: 'none',

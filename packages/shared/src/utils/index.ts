@@ -4,6 +4,8 @@
  * Common helper functions used across the application.
  */
 
+export * from './qrCode';
+
 /**
  * Validate email format
  */

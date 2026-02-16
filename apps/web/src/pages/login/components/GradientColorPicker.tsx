@@ -157,6 +157,24 @@ export function GradientColorPicker({
             />
           </div>
         </div>
+
+        {/* All colors in one line for copy/paste */}
+        <div className="mt-4">
+          <label className="block text-xs font-medium mb-1" style={{ color: labelColor }}>
+            All Colors (Copy/Paste)
+          </label>
+          <input
+            type="text"
+            value={`${topColor} ${upperMiddleColor} ${lowerMiddleColor} ${bottomColor}`}
+            readOnly
+            onClick={(e) => e.currentTarget.select()}
+            className="w-full px-2 py-1.5 text-xs rounded border-0 font-mono outline-none cursor-text"
+            style={{
+              color: labelColor,
+              background: 'rgba(0, 0, 0, 0.4)',
+            }}
+          />
+        </div>
       </div>
     </div>
   );

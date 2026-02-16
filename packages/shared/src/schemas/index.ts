@@ -1,22 +1,12 @@
 /**
  * Zod schemas for validation
  *
- * Re-exports all validation schemas from type definition files.
+ * Auth and enum schemas (ProfileSchema, SignInCredentialsSchema, SignUpInputSchema,
+ * ResetPasswordInputSchema, UpdatePasswordInputSchema, UpdateProfileInputSchema,
+ * CreateUserInputSchema, UserRoleSchema) are exported via the types barrel
+ * (see ../types/index.ts) and must NOT be re-exported here to avoid duplicate
+ * export errors in the package entry point.
  */
-
-// Auth schemas
-export {
-  ProfileSchema,
-  SignInCredentialsSchema,
-  SignUpInputSchema,
-  ResetPasswordInputSchema,
-  UpdatePasswordInputSchema,
-  UpdateProfileInputSchema,
-  CreateUserInputSchema,
-} from '@rgr/shared/types/api/auth';
-
-// Enum schemas
-export { UserRoleSchema } from '@rgr/shared/types/enums/UserRole';
 
 // Common validation helpers
 import { z } from 'zod';

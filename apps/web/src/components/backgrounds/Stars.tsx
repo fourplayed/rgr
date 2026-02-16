@@ -90,62 +90,62 @@ export const Stars = memo(function Stars({ isDark = true, settings }: StarsProps
   // Use provided settings or defaults based on theme
   const themeSettings = settings ?? (isDark ? DARK_THEME_SETTINGS : DEFAULT_SETTINGS);
 
-  // Light theme star configurations - white color, tiny size, full opacity
+  // Light theme star configurations
   const lightStarConfigs = useMemo(() => ({
     small: {
-      color: 'rgba(255, 255, 255, 1)', // Full opacity
+      color: 'rgba(255, 255, 255, 1)',
       glowColor: 'rgba(255, 255, 255, 0.2)',
-      size: 0.17, // 20% smaller
-      glowRadius: 4,
+      size: 0.35,
+      glowRadius: 6,
     },
     medium: {
-      color: 'rgba(255, 255, 255, 1)', // Full opacity
+      color: 'rgba(255, 255, 255, 1)',
       glowColor: 'rgba(255, 255, 255, 0.4)',
-      size: 0.54, // 20% smaller
-      glowRadius: 7.5,
+      size: 1.0,
+      glowRadius: 12,
     },
     large: {
-      color: 'rgba(255, 255, 255, 1)', // Full opacity
+      color: 'rgba(255, 255, 255, 1)',
       glowColor: 'rgba(255, 255, 255, 0.6)',
-      size: 0.82, // 20% smaller
-      glowRadius: 20,
+      size: 1.6,
+      glowRadius: 30,
     },
   }), []);
 
-  // Dark theme star configurations - tiny size, full opacity
+  // Dark theme star configurations
   const darkStarConfigs = useMemo(() => ({
     small: {
-      color: 'rgba(255, 255, 255, 1)', // Full opacity
+      color: 'rgba(255, 255, 255, 1)',
       glowColor: 'rgba(255, 255, 255, 0.15)',
-      size: 0.17, // 20% smaller
-      glowRadius: 4,
+      size: 0.35,
+      glowRadius: 6,
     },
     medium: {
-      color: 'rgba(255, 255, 255, 1)', // Full opacity
+      color: 'rgba(255, 255, 255, 1)',
       glowColor: 'rgba(255, 255, 255, 0.25)',
-      size: 0.54, // 20% smaller
-      glowRadius: 7.5,
+      size: 1.0,
+      glowRadius: 12,
     },
     large: {
-      color: 'rgba(255, 255, 255, 1)', // Full opacity
+      color: 'rgba(255, 255, 255, 1)',
       glowColor: 'rgba(255, 255, 255, 0.4)',
-      size: 0.82, // 20% smaller
-      glowRadius: 17.5,
+      size: 1.6,
+      glowRadius: 28,
     },
   }), []);
 
   // Generate star POSITIONS once (never regenerate - positions stay constant)
   // All stars: 0% to 100% vertical range (full screen)
   const smallStarPositions = useMemo(() => {
-    return generateStarPositions(80, 0.17, false, 0, 100);
+    return generateStarPositions(80, 0.35, false, 0, 100);
   }, []); // Empty deps - positions generated once and never change
 
   const mediumStarPositions = useMemo(() => {
-    return generateStarPositions(16, 0.54, false, 0, 100);
+    return generateStarPositions(16, 1.0, false, 0, 100);
   }, []); // Empty deps - positions generated once and never change
 
   const largeStarPositions = useMemo(() => {
-    return generateStarPositions(8, 0.82, true, 0, 100);
+    return generateStarPositions(8, 1.6, true, 0, 100);
   }, []); // Empty deps - positions generated once and never change
 
   // Apply COLORS based on theme (positions stay the same, only colors change)
@@ -162,34 +162,26 @@ export const Stars = memo(function Stars({ isDark = true, settings }: StarsProps
 
   return (
     <>
+      {/* Small stars — primary + trailing copy for seamless loop */}
       <div
         id="stars"
         className={isDark ? '' : 'light-stars'}
         style={{
           boxShadow: starsSmall,
         }}
-      />
-      <div
-        id="stars"
-        className={isDark ? '' : 'light-stars'}
-        style={{
-          boxShadow: starsSmall,
-        }}
-      />
+      >
+        <div style={{ position: 'absolute', left: '260vw', top: 0, width: 1, height: 1, boxShadow: starsSmall }} />
+      </div>
+      {/* Medium stars — primary + trailing copy for seamless loop */}
       <div
         id="stars2"
         className={isDark ? '' : 'light-stars'}
         style={{
           boxShadow: starsMedium,
         }}
-      />
-      <div
-        id="stars2"
-        className={isDark ? '' : 'light-stars'}
-        style={{
-          boxShadow: starsMedium,
-        }}
-      />
+      >
+        <div style={{ position: 'absolute', left: '260vw', top: 0, width: 1, height: 1, boxShadow: starsMedium }} />
+      </div>
       {/* Large stars rendered as individual elements for explosion animations */}
       <ExplodingStars
         positions={largeStarPositions}

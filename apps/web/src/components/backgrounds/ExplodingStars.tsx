@@ -1,11 +1,12 @@
 /**
- * ExplodingStars - Large stars that randomly explode with chain reactions
+ * ExplodingStars - Large stars with ambient lightning tendrils and proximity shocks
+ *
+ * Each star has small lightning tendrils crackling off it at all times.
+ * When two stars are within SHOCK_RADIUS (150px), a shock bolt arcs between them
+ * and triggers the chain reaction explosion sequence.
  *
  * Lifecycle per star:
- *   normal → warning (5s accelerating blue pulse + 6× speed toward nearest star) → exploding → dead → respawning → normal
- *
- * Chain reaction: when a star enters warning phase, any nearby stars within
- * BLAST_RADIUS also trigger (with a slight stagger). The rule applies recursively.
+ *   normal → warning → exploding → dead → respawning → normal
  */
 import { useState, useEffect, useRef, useCallback, memo } from 'react';
 
@@ -29,9 +30,21 @@ interface Particle {
   duration: number;
 }
 
+interface AmbientTendril {
+  path: string;
+  opacity: number;
+}
+
+interface ShockBolt {
+  id: number;
+  path: string;
+  branches: string[];
+}
+
 // ---------------------------------------------------------------------------
 // Tunables
 // ---------------------------------------------------------------------------
+const SHOCK_RADIUS = 150;
 const BLAST_RADIUS = 500;
 const WARNING_MS = 5000;
 const EXPLOSION_MS = 800;
@@ -42,19 +55,97 @@ const MAX_TRIGGER_MS = 22000;
 const FIRST_TRIGGER_MIN_MS = 3000;
 const FIRST_TRIGGER_MAX_MS = 8000;
 const PARTICLE_COUNT = 12;
+const TENDRIL_COUNT = 4;          // tendrils per star
+const TENDRIL_REFRESH_MS = 150;   // how often tendrils re-jag
+const SHOCK_BOLT_MS = 400;        // how long a shock bolt stays visible
 
 function dist(a: StarPosition, b: StarPosition) {
   return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
 }
 
 // ---------------------------------------------------------------------------
+// Lightning path generation
+// ---------------------------------------------------------------------------
+function generateLightningPath(
+  x1: number, y1: number,
+  x2: number, y2: number,
+  segments: number = 10,
+  jitter: number = 0.15,
+): string {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const len = Math.sqrt(dx * dx + dy * dy);
+  if (len === 0) return `M ${x1} ${y1}`;
+
+  const perpX = -dy / len;
+  const perpY = dx / len;
+
+  const points: string[] = [`M ${x1} ${y1}`];
+
+  for (let i = 1; i < segments; i++) {
+    const t = i / segments;
+    const midX = x1 + dx * t;
+    const midY = y1 + dy * t;
+    const maxOffset = len * jitter * Math.sin(t * Math.PI);
+    const offset = (Math.random() - 0.5) * 2 * maxOffset;
+    points.push(`L ${midX + perpX * offset} ${midY + perpY * offset}`);
+  }
+
+  points.push(`L ${x2} ${y2}`);
+  return points.join(' ');
+}
+
+function generateBranches(
+  x1: number, y1: number,
+  x2: number, y2: number,
+): string[] {
+  const branches: string[] = [];
+  const count = 1 + Math.floor(Math.random() * 2);
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const len = Math.sqrt(dx * dx + dy * dy);
+
+  for (let b = 0; b < count; b++) {
+    const t = 0.25 + Math.random() * 0.5;
+    const startX = x1 + dx * t;
+    const startY = y1 + dy * t;
+    const branchLen = len * (0.2 + Math.random() * 0.25);
+    const baseAngle = Math.atan2(dy, dx);
+    const branchAngle = baseAngle + (Math.random() > 0.5 ? 1 : -1) * (0.4 + Math.random() * 0.8);
+    const endX = startX + Math.cos(branchAngle) * branchLen;
+    const endY = startY + Math.sin(branchAngle) * branchLen;
+    branches.push(generateLightningPath(startX, startY, endX, endY, 4, 0.2));
+  }
+
+  return branches;
+}
+
+/**
+ * Generate small ambient tendrils radiating from a star position
+ */
+function generateTendrils(x: number, y: number, count: number): AmbientTendril[] {
+  const tendrils: AmbientTendril[] = [];
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const length = 20 + Math.random() * 40;
+    const endX = x + Math.cos(angle) * length;
+    const endY = y + Math.sin(angle) * length;
+    tendrils.push({
+      path: generateLightningPath(x, y, endX, endY, 4, 0.25),
+      opacity: 0.3 + Math.random() * 0.7,
+    });
+  }
+  return tendrils;
+}
+
+// ---------------------------------------------------------------------------
 // CSS Keyframes
 // ---------------------------------------------------------------------------
 const KEYFRAMES = `
-  /* Normal: gentle breathing glow pulse */
+  /* Normal: fade to transparent, then back */
   @keyframes explGlowPulse {
-    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; filter: brightness(1); }
-    50% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.6; filter: brightness(1.4); }
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    50% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
   }
 
   /* Warning: accelerating blink over 5 seconds */
@@ -91,46 +182,66 @@ const KEYFRAMES = `
     100%  { opacity: 1; }
   }
 
-  /* Star core grows + brightens during warning */
+  /* Star core grows during warning — flickers transparent to blue */
   @keyframes explWarningGrow {
-    0%   { transform: translate(-50%, -50%) scale(1); filter: brightness(1); }
-    100% { transform: translate(-50%, -50%) scale(2); filter: brightness(1.6); }
+    0%   { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+    10%  { opacity: 1; filter: brightness(1.5) hue-rotate(210deg); }
+    20%  { opacity: 0; }
+    30%  { opacity: 1; filter: brightness(1.5) hue-rotate(210deg); }
+    40%  { opacity: 0; }
+    50%  { transform: translate(-50%, -50%) scale(1.3); opacity: 1; filter: brightness(1.5) hue-rotate(210deg); }
+    55%  { opacity: 0; }
+    60%  { opacity: 1; filter: brightness(1.5) hue-rotate(210deg); }
+    65%  { opacity: 0; }
+    70%  { opacity: 1; filter: brightness(1.5) hue-rotate(210deg); }
+    75%  { opacity: 0; }
+    80%  { opacity: 1; filter: brightness(1.8) hue-rotate(210deg); }
+    85%  { opacity: 0; }
+    88%  { opacity: 1; filter: brightness(1.8) hue-rotate(210deg); }
+    91%  { opacity: 0; }
+    94%  { opacity: 1; filter: brightness(2) hue-rotate(210deg); }
+    97%  { opacity: 0; }
+    100% { transform: translate(-50%, -50%) scale(2); opacity: 1; filter: brightness(2) hue-rotate(210deg); }
   }
 
-  /* 500% extra speed during warning (6× total) — attracted toward nearest neighbor */
   @keyframes explSpeedBoost {
     0%   { transform: translate(0, 0); }
     100% { transform: translate(var(--attract-tx), var(--attract-ty)); }
   }
 
-  /* Bright flash expanding outward on explosion */
   @keyframes explFlash {
     0%   { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-    40%  { transform: translate(-50%, -50%) scale(8); opacity: 0.7; }
-    100% { transform: translate(-50%, -50%) scale(14); opacity: 0; }
+    40%  { transform: translate(-50%, -50%) scale(16); opacity: 0.7; }
+    100% { transform: translate(-50%, -50%) scale(28); opacity: 0; }
   }
 
-  /* Expanding shockwave ring */
   @keyframes explBlastRing {
     0%   { transform: translate(-50%, -50%) scale(0); opacity: 0.8; }
-    100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+    100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
   }
 
-  /* Particle flying outward from center */
   @keyframes explParticle {
     0%   { transform: translate(-50%, -50%) translate(0, 0) scale(1); opacity: 1; }
     70%  { opacity: 0.4; }
     100% { transform: translate(-50%, -50%) translate(var(--expl-tx), var(--expl-ty)) scale(0.1); opacity: 0; }
   }
 
-  /* Star fading back in after death */
   @keyframes explRespawn {
     0%   { transform: translate(-50%, -50%) scale(0); opacity: 0; }
     60%  { transform: translate(-50%, -50%) scale(1.3); opacity: 0.7; }
     100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
   }
 
-  /* Container mirrors #stars3 positioning + animation */
+  /* Shock bolt flash */
+  @keyframes shockFlash {
+    0%   { opacity: 1; }
+    10%  { opacity: 0.4; }
+    20%  { opacity: 1; }
+    40%  { opacity: 0.6; }
+    50%  { opacity: 0.9; }
+    100% { opacity: 0; }
+  }
+
   .expl-stars-layer {
     position: absolute;
     top: 300px;
@@ -140,7 +251,7 @@ const KEYFRAMES = `
     pointer-events: none;
     overflow: visible;
     background: transparent;
-    animation: animStarFast 198.9s linear infinite;
+    animation: animStarFast 248.6s linear infinite;
     z-index: 3;
   }
 
@@ -176,6 +287,15 @@ export const ExplodingStars = memo(function ExplodingStars({
   const phasesRef = useRef(phases);
   phasesRef.current = phases;
 
+  // Ambient tendrils — regenerate rapidly for crackle effect ----------------
+  const [tendrils, setTendrils] = useState<AmbientTendril[][]>(() =>
+    positions.map((pos) => generateTendrils(pos.x, pos.y, TENDRIL_COUNT)),
+  );
+
+  // Shock bolts between nearby stars ---------------------------------------
+  const [shockBolts, setShockBolts] = useState<ShockBolt[]>([]);
+  const shockIdRef = useRef(0);
+
   // Synchronous guard prevents double-triggering from concurrent chains
   const busyRef = useRef(new Set<number>());
 
@@ -199,12 +319,60 @@ export const ExplodingStars = memo(function ExplodingStars({
     });
   }, []);
 
+  // Pre-compute proximity pairs (static — positions don't move relative) ----
+  const proximityPairs = useRef<Array<[number, number]>>([]);
+  useEffect(() => {
+    const pairs: Array<[number, number]> = [];
+    for (let i = 0; i < positions.length; i++) {
+      for (let j = i + 1; j < positions.length; j++) {
+        if (dist(positions[i], positions[j]) <= SHOCK_RADIUS) {
+          pairs.push([i, j]);
+        }
+      }
+    }
+    proximityPairs.current = pairs;
+  }, [positions]);
+
+  // Ambient tendril refresh loop -------------------------------------------
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTendrils(
+        positions.map((pos, i) => {
+          // Only show tendrils for alive stars
+          const phase = phasesRef.current[i];
+          if (phase === 'dead' || phase === 'exploding') return [];
+          return generateTendrils(pos.x, pos.y, TENDRIL_COUNT);
+        }),
+      );
+    }, TENDRIL_REFRESH_MS);
+    return () => clearInterval(interval);
+  }, [positions]);
+
+  // Spawn a shock bolt between two stars -----------------------------------
+  const spawnShock = useCallback((fromIdx: number, toIdx: number) => {
+    const from = positions[fromIdx];
+    const to = positions[toIdx];
+    const id = ++shockIdRef.current;
+
+    const bolt: ShockBolt = {
+      id,
+      path: generateLightningPath(from.x, from.y, to.x, to.y, 8, 0.2),
+      branches: generateBranches(from.x, from.y, to.x, to.y),
+    };
+
+    setShockBolts((prev) => [...prev, bolt]);
+
+    sched(() => {
+      setShockBolts((prev) => prev.filter((b) => b.id !== id));
+    }, SHOCK_BOLT_MS);
+  }, [positions, sched]);
+
   // Stable particle data (randomized once) ---------------------------------
   const particlesRef = useRef<Particle[][]>(
     positions.map(() =>
       Array.from({ length: PARTICLE_COUNT }, (_, i) => ({
         angle: (360 / PARTICLE_COUNT) * i + Math.random() * 24 - 12,
-        distance: 25 + Math.random() * 55,
+        distance: 50 + Math.random() * 110,
         size: 0.4 + Math.random() * 1.2,
         brightness: Math.random(),
         duration: 400 + Math.random() * 400,
@@ -212,12 +380,10 @@ export const ExplodingStars = memo(function ExplodingStars({
     ),
   );
 
-  // Per-star random pulse duration so they breathe out of sync
   const pulseDurations = useRef<number[]>(
-    positions.map(() => 3000 + Math.random() * 3000),
+    positions.map(() => 3750 + Math.random() * 3750),
   );
 
-  // Per-star attraction vector toward nearest large star
   const attractVectors = useRef(
     positions.map((pos, i) => {
       let nearestDist = Infinity;
@@ -241,11 +407,14 @@ export const ExplodingStars = memo(function ExplodingStars({
 
       setOne(i, 'warning');
 
-      // Chain reaction — nearby normal stars also trigger
+      // Chain reaction — nearby stars get shocked + triggered
       positions.forEach((_, j) => {
         if (j === i || busyRef.current.has(j)) return;
         if (dist(positions[i], positions[j]) <= BLAST_RADIUS) {
-          sched(() => trigger(j), 300 + Math.random() * 700);
+          const chainDelay = 300 + Math.random() * 700;
+          // Shock bolt
+          sched(() => spawnShock(i, j), chainDelay * 0.3);
+          sched(() => trigger(j), chainDelay);
         }
       });
 
@@ -263,8 +432,33 @@ export const ExplodingStars = memo(function ExplodingStars({
         }, EXPLOSION_MS);
       }, WARNING_MS);
     },
-    [positions, setOne, sched],
+    [positions, setOne, sched, spawnShock],
   );
+
+  // Proximity shock — stars within 150px zap each other periodically -------
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const pairs = proximityPairs.current;
+      for (const [i, j] of pairs) {
+        const pi = phasesRef.current[i];
+        const pj = phasesRef.current[j];
+        // Both alive? Random chance to zap
+        if ((pi === 'normal' || pi === 'warning') && (pj === 'normal' || pj === 'warning')) {
+          if (Math.random() < 0.3) {
+            spawnShock(i, j);
+          }
+          // If one is normal and other is normal, chance to trigger chain
+          if (pi === 'normal' && pj === 'normal' && !busyRef.current.has(i) && !busyRef.current.has(j)) {
+            if (Math.random() < 0.02) {
+              spawnShock(i, j);
+              sched(() => trigger(i), 200);
+            }
+          }
+        }
+      }
+    }, 800);
+    return () => clearInterval(interval);
+  }, [spawnShock, trigger, sched]);
 
   // Random trigger loop ----------------------------------------------------
   useEffect(() => {
@@ -312,6 +506,98 @@ export const ExplodingStars = memo(function ExplodingStars({
         className="expl-stars-layer"
         style={!isDark ? { opacity: 1, filter: 'brightness(1.2)' } : undefined}
       >
+        {/* SVG layer for all lightning */}
+        <svg
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: 0,
+            height: 0,
+            overflow: 'visible',
+            pointerEvents: 'none',
+          }}
+        >
+          {/* Ambient tendrils on each star */}
+          {tendrils.map((starTendrils, i) =>
+            starTendrils.map((t, ti) => (
+              <g key={`t-${i}-${ti}`} opacity={t.opacity}>
+                <path
+                  d={t.path}
+                  fill="none"
+                  stroke="rgba(120,180,255,0.8)"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+                <path
+                  d={t.path}
+                  fill="none"
+                  stroke="rgba(60,130,255,0.3)"
+                  strokeWidth="5"
+                  strokeLinecap="round"
+                />
+              </g>
+            )),
+          )}
+
+          {/* Shock bolts between nearby stars */}
+          {shockBolts.map((bolt) => (
+            <g
+              key={bolt.id}
+              style={{
+                animation: `shockFlash ${SHOCK_BOLT_MS}ms ease-out forwards`,
+              }}
+            >
+              {/* Core — bright white-blue */}
+              <path
+                d={bolt.path}
+                fill="none"
+                stroke="rgba(200,225,255,1)"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              {/* Mid glow */}
+              <path
+                d={bolt.path}
+                fill="none"
+                stroke="rgba(60,130,255,0.7)"
+                strokeWidth="8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              {/* Wide glow */}
+              <path
+                d={bolt.path}
+                fill="none"
+                stroke="rgba(40,100,255,0.25)"
+                strokeWidth="18"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              {/* Branches */}
+              {bolt.branches.map((bp, bi) => (
+                <g key={bi}>
+                  <path
+                    d={bp}
+                    fill="none"
+                    stroke="rgba(200,225,255,0.8)"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d={bp}
+                    fill="none"
+                    stroke="rgba(60,130,255,0.4)"
+                    strokeWidth="5"
+                    strokeLinecap="round"
+                  />
+                </g>
+              ))}
+            </g>
+          ))}
+        </svg>
+
         {positions.map((pos, i) => {
           const phase = phases[i];
           const d = pos.size * 2;
@@ -361,7 +647,7 @@ export const ExplodingStars = memo(function ExplodingStars({
                 />
               )}
 
-              {/* Warning: deep-blue blink overlay */}
+              {/* Warning: blue blink overlay */}
               {phase === 'warning' && (
                 <div
                   style={{
@@ -369,7 +655,7 @@ export const ExplodingStars = memo(function ExplodingStars({
                     width: d * 12,
                     height: d * 12,
                     borderRadius: '50%',
-                    background: 'radial-gradient(circle, rgba(0,20,120,0.9) 0%, rgba(0,10,80,0.4) 40%, transparent 70%)',
+                    background: 'radial-gradient(circle, rgba(60,130,255,1) 0%, rgba(0,60,200,0.5) 40%, transparent 70%)',
                     transform: 'translate(-50%, -50%)',
                     animation: `explWarningBlink ${WARNING_MS}ms ease-in-out forwards`,
                     pointerEvents: 'none',
@@ -386,7 +672,7 @@ export const ExplodingStars = memo(function ExplodingStars({
                       width: d * 4,
                       height: d * 4,
                       borderRadius: '50%',
-                      background: 'radial-gradient(circle, rgba(0,255,255,1) 0%, rgba(0,180,200,0.8) 25%, rgba(0,40,40,0.4) 55%, transparent 100%)',
+                      background: 'radial-gradient(circle, rgba(60,130,255,1) 0%, rgba(0,60,200,0.8) 25%, rgba(0,10,40,0.4) 55%, transparent 100%)',
                       animation: `explFlash ${EXPLOSION_MS}ms ease-out forwards`,
                       pointerEvents: 'none',
                     }}
@@ -394,10 +680,10 @@ export const ExplodingStars = memo(function ExplodingStars({
                   <div
                     style={{
                       position: 'absolute',
-                      width: 80,
-                      height: 80,
+                      width: 160,
+                      height: 160,
                       borderRadius: '50%',
-                      border: '2px solid rgba(0,255,255,0.5)',
+                      border: '2px solid rgba(60,130,255,0.5)',
                       animation: `explBlastRing ${EXPLOSION_MS}ms ease-out forwards`,
                       pointerEvents: 'none',
                     }}
@@ -406,10 +692,10 @@ export const ExplodingStars = memo(function ExplodingStars({
                     const rad = (p.angle * Math.PI) / 180;
                     const tx = Math.cos(rad) * p.distance;
                     const ty = Math.sin(rad) * p.distance;
-                    const g = Math.round(p.brightness * 255);
-                    const b = Math.round(p.brightness * 255);
-                    const bg = `rgb(0, ${g}, ${b})`;
-                    const glow = `0 0 4px 1px rgb(0, ${Math.round(p.brightness * 200)}, ${Math.round(p.brightness * 200)})`;
+                    const g = Math.round(60 + p.brightness * 70);
+                    const b = Math.round(180 + p.brightness * 75);
+                    const bg = `rgb(${Math.round(p.brightness * 60)}, ${g}, ${b})`;
+                    const glow = `0 0 4px 1px rgb(${Math.round(p.brightness * 40)}, ${Math.round(p.brightness * 100)}, ${Math.round(150 + p.brightness * 105)})`;
 
                     return (
                       <div

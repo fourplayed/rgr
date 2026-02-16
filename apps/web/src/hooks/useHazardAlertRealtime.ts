@@ -11,7 +11,7 @@
  * - Sound/notification on critical hazards
  */
 import { useEffect, useCallback, useRef, useState } from 'react';
-import { getSupabase } from '@rgr/shared';
+import { getSupabaseClient } from '@rgr/shared';
 import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 // ============================================================================
@@ -188,6 +188,18 @@ export function useHazardAlertRealtime(
   const channelRef = useRef<RealtimeChannel | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Use refs for callback options to prevent re-subscription thrashing
+  const onNewAlertRef = useRef(onNewAlert);
+  const onAlertUpdateRef = useRef(onAlertUpdate);
+  const onEventRef = useRef(onEvent);
+
+  // Keep refs up to date
+  useEffect(() => {
+    onNewAlertRef.current = onNewAlert;
+    onAlertUpdateRef.current = onAlertUpdate;
+    onEventRef.current = onEvent;
+  });
+
   // Handle incoming changes
   const handleChange = useCallback(
     (payload: RealtimePostgresChangesPayload<RealtimeHazardAlert>) => {
@@ -224,7 +236,7 @@ export function useHazardAlertRealtime(
       // Handle specific event types
       if (eventType === 'INSERT' && alert) {
         setNewAlertCount((prev) => prev + 1);
-        onNewAlert?.(alert);
+        onNewAlertRef.current?.(alert);
 
         // Play sound for new critical/high alerts
         if (playSound && (alert.severity === 'critical' || alert.severity === 'high')) {
@@ -236,18 +248,18 @@ export function useHazardAlertRealtime(
           showBrowserNotification(alert);
         }
       } else if (eventType === 'UPDATE' && alert) {
-        onAlertUpdate?.(alert, oldAlert);
+        onAlertUpdateRef.current?.(alert, oldAlert);
       }
 
       // General callback
-      onEvent?.(event);
+      onEventRef.current?.(event);
     },
-    [assetIds, severities, statuses, onNewAlert, onAlertUpdate, onEvent, playSound, browserNotifications]
+    [assetIds, severities, statuses, playSound, browserNotifications]
   );
 
   // Connect to realtime channel
   const connect = useCallback(() => {
-    const supabase = getSupabase();
+    const supabase = getSupabaseClient();
 
     // Clean up existing channel
     if (channelRef.current) {
@@ -266,7 +278,7 @@ export function useHazardAlertRealtime(
         },
         handleChange
       )
-      .subscribe((status) => {
+      .subscribe((status: string) => {
         setIsConnected(status === 'SUBSCRIBED');
 
         // Auto-reconnect on error
@@ -287,7 +299,7 @@ export function useHazardAlertRealtime(
     }
 
     if (channelRef.current) {
-      const supabase = getSupabase();
+      const supabase = getSupabaseClient();
       supabase.removeChannel(channelRef.current);
       channelRef.current = null;
     }

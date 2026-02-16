@@ -1,0 +1,92 @@
+import type { HazardSeverity, HazardStatus, ReviewOutcome } from '../enums/HazardEnums';
+
+/**
+ * HazardAlert — camelCase application interface
+ */
+export interface HazardAlert {
+  id: string;
+  freightAnalysisId: string;
+  photoId: string;
+  assetId: string | null;
+  scanEventId: string | null;
+  hazardRuleId: string | null;
+  hazardType: string;
+  severity: HazardSeverity;
+  confidenceScore: number;
+  description: string;
+  evidencePoints: string[];
+  recommendedActions: string[];
+  locationInImage: string | null;
+  boundingBox: Record<string, unknown> | null;
+  status: HazardStatus;
+  acknowledgedBy: string | null;
+  acknowledgedAt: string | null;
+  acknowledgmentType: string | null;
+  managerReviewBy: string | null;
+  managerReviewAt: string | null;
+  reviewOutcome: ReviewOutcome | null;
+  reviewNotes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * HazardAlertRow — snake_case database row type
+ */
+export interface HazardAlertRow {
+  id: string;
+  freight_analysis_id: string;
+  photo_id: string;
+  asset_id: string | null;
+  scan_event_id: string | null;
+  hazard_rule_id: string | null;
+  hazard_type: string;
+  severity: string;
+  confidence_score: number;
+  description: string;
+  evidence_points: string[];
+  recommended_actions: string[];
+  location_in_image: string | null;
+  bounding_box: Record<string, unknown> | null;
+  status: string;
+  acknowledged_by: string | null;
+  acknowledged_at: string | null;
+  acknowledgment_type: string | null;
+  manager_review_by: string | null;
+  manager_review_at: string | null;
+  review_outcome: string | null;
+  review_notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ── Mapper ──
+
+export function mapRowToHazardAlert(row: HazardAlertRow): HazardAlert {
+  return {
+    id: row.id,
+    freightAnalysisId: row.freight_analysis_id,
+    photoId: row.photo_id,
+    assetId: row.asset_id,
+    scanEventId: row.scan_event_id,
+    hazardRuleId: row.hazard_rule_id,
+    hazardType: row.hazard_type,
+    severity: row.severity as HazardSeverity,
+    confidenceScore: row.confidence_score,
+    description: row.description,
+    evidencePoints: row.evidence_points ?? [],
+    recommendedActions: row.recommended_actions ?? [],
+    locationInImage: row.location_in_image,
+    boundingBox: row.bounding_box,
+    status: row.status as HazardStatus,
+    acknowledgedBy: row.acknowledged_by,
+    acknowledgedAt: row.acknowledged_at,
+    acknowledgmentType: row.acknowledgment_type,
+    managerReviewBy: row.manager_review_by,
+    managerReviewAt: row.manager_review_at,
+    reviewOutcome: row.review_outcome as ReviewOutcome | null,
+    reviewNotes: row.review_notes,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}

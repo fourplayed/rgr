@@ -20,9 +20,9 @@ describe('VisionStatCard', () => {
   });
 
   it('should display subtitle when provided', () => {
-    render(<VisionStatCard {...defaultProps} subtitle="Active fleet items" />);
+    render(<VisionStatCard {...defaultProps} subtitle="Serviced fleet items" />);
 
-    expect(screen.getByText('Active fleet items')).toBeInTheDocument();
+    expect(screen.getByText('Serviced fleet items')).toBeInTheDocument();
   });
 
   it('should display change with correct color when positive', () => {
@@ -173,10 +173,10 @@ describe('VisionStatCard', () => {
   });
 
   it('should render with aria-label for accessibility', () => {
-    render(<VisionStatCard title="Active Scans" value={42} icon={Package} />);
+    render(<VisionStatCard title="Serviced Scans" value={42} icon={Package} />);
 
-    const article = screen.getByRole('article', { name: /Active Scans: 42/i });
-    expect(article).toHaveAttribute('aria-label', 'Active Scans: 42');
+    const article = screen.getByRole('article', { name: /Serviced Scans: 42/i });
+    expect(article).toHaveAttribute('aria-label', 'Serviced Scans: 42');
   });
 
   it('should memoize component correctly', () => {

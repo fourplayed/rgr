@@ -24,7 +24,7 @@ import {
   Target,
   TrendingUp,
 } from 'lucide-react';
-import { getSupabase } from '@rgr/shared';
+import { getSupabaseClient } from '@rgr/shared';
 import type { AnalysisResult } from '@/hooks/usePhotoAnalysis';
 
 // ============================================================================
@@ -149,7 +149,7 @@ export const AnalysisFeedbackPanel = React.memo<AnalysisFeedbackPanelProps>(({
     setError(null);
 
     try {
-      const supabase = getSupabase();
+      const supabase = getSupabaseClient();
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
@@ -176,11 +176,10 @@ export const AnalysisFeedbackPanel = React.memo<AnalysisFeedbackPanelProps>(({
           await (supabase as any)
             .from('hazard_alerts')
             .update({
-              was_accurate: feedback,
               review_outcome: feedback ? 'confirmed' : 'false_positive',
-              reviewed_at: new Date().toISOString(),
-              reviewed_by: user.id,
-              feedback_notes: generalNotes || null,
+              manager_review_at: new Date().toISOString(),
+              manager_review_by: user.id,
+              review_notes: generalNotes || null,
               updated_at: new Date().toISOString(),
             })
             .eq('freight_analysis_id', result.analysisId)
@@ -188,27 +187,27 @@ export const AnalysisFeedbackPanel = React.memo<AnalysisFeedbackPanelProps>(({
         }
       }
 
-      // Log missed hazards for training (store in safla_freight_patterns)
-      if (missedHazards.length > 0) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabase as any)
-          .from('safla_freight_patterns')
-          .upsert({
-            pattern_type: 'missed_hazard',
-            pattern_key: `missed_${result.photoId}_${Date.now()}`,
-            pattern_features: {
-              photoId: result.photoId,
-              analysisId: result.analysisId,
-              missedHazards: missedHazards,
-              freightCategory: result.freight.primaryCategory,
-              reportedBy: user.id,
-              reportedAt: new Date().toISOString(),
-            },
-            pattern_confidence: 1.0,
-            source_photo_ids: [result.photoId],
-            source_analysis_ids: [result.analysisId],
-          }, { onConflict: 'pattern_type,pattern_key' });
-      }
+      // TODO: Create safla_freight_patterns table in a migration.
+      // Log missed hazards for training once the table exists.
+      // if (missedHazards.length > 0) {
+      //   await supabase
+      //     .from('safla_freight_patterns')
+      //     .upsert({
+      //       pattern_type: 'missed_hazard',
+      //       pattern_key: `missed_${result.photoId}_${Date.now()}`,
+      //       pattern_features: {
+      //         photoId: result.photoId,
+      //         analysisId: result.analysisId,
+      //         missedHazards: missedHazards,
+      //         freightCategory: result.freight.primaryCategory,
+      //         reportedBy: user.id,
+      //         reportedAt: new Date().toISOString(),
+      //       },
+      //       pattern_confidence: 1.0,
+      //       source_photo_ids: [result.photoId],
+      //       source_analysis_ids: [result.analysisId],
+      //     }, { onConflict: 'pattern_type,pattern_key' });
+      // }
 
       // Build feedback data for callback
       const feedbackData: AnalysisFeedbackData = {

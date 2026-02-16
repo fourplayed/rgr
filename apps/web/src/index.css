@@ -1,3 +1,35 @@
+@font-face {
+  font-family: 'Code-Bold';
+  src: url('/fonts/CODE-Bold.otf') format('opentype');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Code-Light';
+  src: url('/fonts/CODE-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'EncampTest';
+  src: url('/fonts/EncampTest-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'EncampTest';
+  src: url('/fonts/EncampTest-ExtraBold.ttf') format('truetype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -263,24 +295,6 @@
   }
 }
 
-/* Meteor shower particles */
-@keyframes meteorShower {
-  0% {
-    transform: translateX(-20px) translateY(-20px);
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  90% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(150px) translateY(150px);
-    opacity: 0;
-  }
-}
-
 /* Starfield animation - horizontal movement with upward drift */
 @keyframes animStarFast {
   from {
@@ -311,7 +325,7 @@
 
 #stars, #stars2, #stars3 {
   position: absolute;
-  top: 300px;
+  top: 200px;
   left: calc(105vw - 500px); /* Start off-screen right with buffer */
   width: 1px;
   height: 1px;
@@ -324,59 +338,35 @@
   width: 1px;
   height: 1px;
   background: transparent;
-  animation: animStarSlow 101.4s linear infinite;
+  animation: animStarSlow 145.75s linear infinite;
   opacity: 0.7;
   filter: blur(0px);
   z-index: 1;
 }
 
-#stars::after {
-  content: " ";
-  position: absolute;
-  left: 260vw; /* Loop seamlessly with extended travel */
-  top: 0;
-  width: 1px;
-  height: 1px;
-  background: transparent;
-}
+/* Seamless loop handled by inline child divs in Stars.tsx */
 
 /* Medium stars - medium horizontal speed */
 #stars2 {
   background: transparent;
-  animation: animStarMedium 131.3s linear infinite;
+  animation: animStarMedium 188.75s linear infinite;
   opacity: 0.85;
   filter: blur(0px);
   z-index: 2;
 }
 
-#stars2::after {
-  content: " ";
-  position: absolute;
-  left: 260vw; /* Loop seamlessly with extended travel */
-  top: 0;
-  width: 1px;
-  height: 1px;
-  background: transparent;
-}
+/* Seamless loop handled by inline child divs in Stars.tsx */
 
 /* Large stars - slowest horizontal movement */
 #stars3 {
   background: transparent;
-  animation: animStarFast 198.9s linear infinite;
+  animation: animStarFast 248.6s linear infinite;
   opacity: 1;
   filter: blur(0px);
   z-index: 3;
 }
 
-#stars3::after {
-  content: " ";
-  position: absolute;
-  left: 260vw; /* Loop seamlessly with extended travel */
-  top: 0;
-  width: 1px;
-  height: 1px;
-  background: transparent;
-}
+/* Seamless loop handled by inline child div in ExplodingStars.tsx */
 
 /* Light theme star styles - more prominent */
 .light-stars {

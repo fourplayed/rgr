@@ -175,11 +175,11 @@ export const CompactExample: React.FC = () => {
             All
           </button>
           <button
-            aria-label="Active"
+            aria-label="Serviced"
             className="px-3 py-1 text-sm font-medium transition-colors rounded"
             style={{ color: isDark ? RGR_COLORS.chrome.medium : '#0a2654' }}
           >
-            Active
+            Serviced
           </button>
           <button
             aria-label="Completed"

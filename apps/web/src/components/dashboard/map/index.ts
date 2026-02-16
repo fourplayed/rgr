@@ -1,3 +1,2 @@
-export { FleetMap, type FleetMapProps } from './FleetMap';
-export { FleetMapLazy, type FleetMapLazyProps } from './FleetMapLazy';
-export { FleetMapWithData, type FleetMapWithDataProps, type AssetFilters } from './FleetMapWithData';
+export { FleetMapWithData, type FleetMapWithDataProps, type AssetFilters, type FleetMapHandle } from './FleetMapWithData';
+export { MapHeader } from './MapHeader';

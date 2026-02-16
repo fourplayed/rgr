@@ -91,38 +91,32 @@ export const SlidingNavIndicator = React.memo<SlidingNavIndicatorProps>(({
 
       // Find icon and text elements within the button
       const icon = element.querySelector('svg');
-      const text = element.querySelector('span');
+      const text = element.querySelector('[data-nav-label]');
 
       if (icon && text) {
         const iconRect = icon.getBoundingClientRect();
         const textRect = text.getBoundingClientRect();
 
-        // Start from icon left edge
-        const startLeft = iconRect.left;
+        // Span from icon left edge to text right edge
+        const contentLeft = iconRect.left;
+        const contentRight = textRect.right;
+        const contentWidth = contentRight - contentLeft;
 
-        // End at text right edge
-        const endRight = textRect.right;
-
-        // Calculate full width from icon to end of text, plus 10px extra
-        const fullWidth = endRight - startLeft + 10;
-
-        // Position starting from icon left, shifted 25px left
-        const left = startLeft - containerRect.left - 25;
+        // Center the indicator under the icon+text content, with 5px padding each side
+        const left = contentLeft - containerRect.left - 5;
 
         setIndicatorState({
           left,
-          width: fullWidth,
+          width: contentWidth + 10,
           opacity: 1,
         });
       } else {
-        // Fallback to button center if elements not found
-        const buttonCenter = elementRect.left + (elementRect.width / 2);
-        const lineWidth = 50;
-        const left = buttonCenter - containerRect.left - (lineWidth / 2) - 25;
+        // Fallback: center under the button
+        const left = elementRect.left - containerRect.left;
 
         setIndicatorState({
           left,
-          width: lineWidth,
+          width: elementRect.width,
           opacity: 1,
         });
       }
@@ -215,6 +209,8 @@ export const SlidingNavIndicator = React.memo<SlidingNavIndicatorProps>(({
       const navElement = document.querySelector('[aria-label="Main navigation"]');
       if (!navElement) return;
 
+      containerRef.current = navElement as HTMLElement;
+
       // Find the active button (has aria-current="page")
       const activeButton = navElement.querySelector('button[aria-current="page"]') as HTMLElement | null;
 
@@ -224,28 +220,24 @@ export const SlidingNavIndicator = React.memo<SlidingNavIndicatorProps>(({
       } else {
         activeButtonRef.current = null;
       }
-    }, 50);
+    }, 150);
 
     return () => clearTimeout(timeoutId);
   }, [location.pathname, updateIndicatorPosition]);
 
-  // Theme-aware colors - Cyan for dark, deep blue for light (matching nav button hover color)
-  const indicatorColor = _isDark ? '#06b6d4' : '#1e40af'; // Cyan-500 for dark, blue-800 for light
-
   return (
     <div
-      className={`pointer-events-none absolute bottom-0 h-0.5 ease-out ${className}`}
+      className={`pointer-events-none absolute h-[2.5px] ease-out chrome-gradient-bar ${className}`}
       style={{
         left: `${indicatorState.left}px`,
         width: `${indicatorState.width}px`,
+        bottom: '8px',
         opacity: indicatorState.opacity,
-        backgroundColor: indicatorColor,
-        boxShadow: 'none',
         zIndex,
-        transform: 'translateZ(0)', // Force GPU acceleration
-        transformOrigin: 'left', // Grow from left to right
-        willChange: 'left, width, opacity', // Optimize animations
-        transition: 'left 0.25s ease-out, width 0.3s ease-out, opacity 0.15s ease-out, background-color 0.15s ease-out, box-shadow 0.15s ease-out',
+        transform: 'translateZ(0)',
+        transformOrigin: 'left',
+        willChange: 'left, width, opacity',
+        transition: 'left 0.25s ease-out, width 0.3s ease-out, opacity 0.15s ease-out',
       }}
       aria-hidden="true"
     />

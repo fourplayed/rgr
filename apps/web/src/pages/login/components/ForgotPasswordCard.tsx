@@ -2,6 +2,7 @@
  * ForgotPasswordCard - Forgot password form component
  */
 import { useState, type ComponentType } from 'react';
+import DOMPurify from 'dompurify';
 import { validateEmail } from '../types';
 import { CARD_STYLES } from '../styles';
 import { ThemedInput } from './ThemedInput';
@@ -11,14 +12,10 @@ import { AnimatedMailIcon } from './AnimatedMailIcon';
 
 /**
  * Sanitize input to prevent XSS attacks
- * Removes HTML tags and dangerous characters
+ * Uses DOMPurify with no allowed tags (email input only)
  */
 function sanitizeInput(input: string): string {
-  return input
-    .replace(/[<>]/g, '') // Remove angle brackets
-    .replace(/javascript:/gi, '') // Remove javascript: protocol
-    .replace(/on\w+=/gi, '') // Remove event handlers
-    .trim();
+  return DOMPurify.sanitize(input, { ALLOWED_TAGS: [] }).trim();
 }
 
 export interface ButtonProps {

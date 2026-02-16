@@ -1,28 +1,16 @@
 /**
- * DebugToolbar - Debug toolbar for login page development
- * Contains console for error logging and gradient customizer
+ * DebugToolbar - Global debug toolbar
+ * Contains console for error logging and gradient customizer.
+ * Reads all state from useDevToolsStore — no props needed.
+ * Rendered at the App level so it persists across route changes.
  */
 import { useState, useEffect } from 'react';
 import { GradientColorPicker } from './GradientColorPicker';
+import { useDevToolsStore } from '@/stores/devToolsStore';
+import { useTheme } from '@/hooks/useTheme';
 
-interface DebugToolbarProps {
-  isDark: boolean;
-  // Gradient colors
-  topColor: string;
-  upperMiddleColor: string;
-  lowerMiddleColor: string;
-  bottomColor: string;
-  onTopColorChange: (color: string) => void;
-  onUpperMiddleColorChange: (color: string) => void;
-  onLowerMiddleColorChange: (color: string) => void;
-  onBottomColorChange: (color: string) => void;
-  defaultColors: {
-    top: string;
-    upperMiddle: string;
-    lowerMiddle: string;
-    bottom: string;
-  };
-}
+// Re-export for backward compatibility
+export type { WorkflowStep } from '@/stores/devToolsStore';
 
 interface LogEntry {
   id: number;
@@ -31,21 +19,40 @@ interface LogEntry {
   message: string;
 }
 
-export function DebugToolbar({
-  isDark,
-  topColor,
-  upperMiddleColor,
-  lowerMiddleColor,
-  bottomColor,
-  onTopColorChange,
-  onUpperMiddleColorChange,
-  onLowerMiddleColorChange,
-  onBottomColorChange,
-  defaultColors,
-}: DebugToolbarProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export function DebugToolbar() {
+  const { isDark } = useTheme();
+
+  // Gradient state from global store
+  const lightGradient = useDevToolsStore((s) => s.lightGradient);
+  const darkGradient = useDevToolsStore((s) => s.darkGradient);
+  const setLightGradient = useDevToolsStore((s) => s.setLightGradient);
+  const setDarkGradient = useDevToolsStore((s) => s.setDarkGradient);
+  const defaultLightGradient = useDevToolsStore((s) => s.defaultLightGradient);
+  const defaultDarkGradient = useDevToolsStore((s) => s.defaultDarkGradient);
+
+  const gradient = isDark ? darkGradient : lightGradient;
+  const setGradient = isDark ? setDarkGradient : setLightGradient;
+  const defaults = isDark ? defaultDarkGradient : defaultLightGradient;
+
+  // Persist panel state across remounts
+  const [isOpen, setIsOpen] = useState(() => {
+    const stored = localStorage.getItem('debug-toolbar-open');
+    return stored ? JSON.parse(stored) : false;
+  });
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [activeTab, setActiveTab] = useState<'console' | 'gradient'>('console');
+  const [activeTab, setActiveTab] = useState<'console' | 'gradient'>(() => {
+    const stored = localStorage.getItem('debug-toolbar-tab');
+    return (stored === 'console' || stored === 'gradient') ? stored : 'console';
+  });
+
+  // Persist panel state to localStorage so it doesn't auto-close
+  useEffect(() => {
+    localStorage.setItem('debug-toolbar-open', JSON.stringify(isOpen));
+  }, [isOpen]);
+
+  useEffect(() => {
+    localStorage.setItem('debug-toolbar-tab', activeTab);
+  }, [activeTab]);
 
   // Intercept console methods to capture logs
   useEffect(() => {
@@ -53,6 +60,7 @@ export function DebugToolbar({
     const originalWarn = console.warn;
     const originalLog = console.log;
     const originalInfo = console.info;
+    let logIdCounter = 0;
 
     const addLog = (type: LogEntry['type'], args: any[]) => {
       const message = args.map(arg =>
@@ -60,7 +68,7 @@ export function DebugToolbar({
       ).join(' ');
 
       const entry: LogEntry = {
-        id: Date.now(),
+        id: Date.now() + logIdCounter++,
         timestamp: new Date().toLocaleTimeString(),
         type,
         message,
@@ -97,11 +105,11 @@ export function DebugToolbar({
     };
   }, []);
 
-  const toolbarBg = 'rgba(55, 65, 81, 0.3)'; // Dark gray glassmorphic
+  const toolbarBg = 'rgba(55, 65, 81, 0.3)';
   const toolbarBorder = 'rgba(255, 255, 255, 0.2)';
-  const textColor = '#ffffff'; // White text for contrast
-  const tabActiveBg = 'rgba(255, 255, 255, 0.2)'; // White tint for active tab
-  const tabHoverBg = 'rgba(255, 255, 255, 0.1)'; // Light white hover
+  const textColor = '#ffffff';
+  const tabActiveBg = 'rgba(255, 255, 255, 0.2)';
+  const tabHoverBg = 'rgba(255, 255, 255, 0.1)';
 
   const getLogColor = (type: LogEntry['type']) => {
     switch (type) {
@@ -133,19 +141,19 @@ export function DebugToolbar({
         </button>
       )}
 
-      {/* Toolbar panel - 28% width, bottom-left */}
+      {/* Toolbar panel - slides out from left */}
       <div
-        className="fixed bottom-0 left-0 z-40 border-t border-r transition-transform duration-500 ease-out"
+        className="fixed bottom-0 left-0 z-40 border-t border-r rounded-tr-xl transition-transform duration-500 ease-out"
         style={{
           background: toolbarBg,
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
           borderColor: toolbarBorder,
-          height: '400px',
-          width: '28%',
+          height: '450px',
+          width: 'calc(28% + 200px)',
           display: 'flex',
           flexDirection: 'column',
-          transform: isOpen ? 'translateY(0)' : 'translateY(100%)',
+          transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
         }}
       >
           {/* Header with tabs */}
@@ -191,10 +199,12 @@ export function DebugToolbar({
                 }
               }}
             >
-              Modify BG Gradient
+              BG Gradient
             </button>
             <button
-              onClick={() => setLogs([])}
+              onClick={() => {
+                setLogs([]);
+              }}
               className="ml-auto px-3 py-1 rounded text-sm font-medium transition-colors"
               style={{
                 background: 'transparent',
@@ -223,7 +233,7 @@ export function DebugToolbar({
                 e.currentTarget.style.background = 'transparent';
               }}
             >
-              ✕ Close
+              ✕
             </button>
           </div>
 
@@ -264,19 +274,21 @@ export function DebugToolbar({
             {activeTab === 'gradient' && (
               <div className="flex justify-center">
                 <GradientColorPicker
-                  topColor={topColor}
-                  upperMiddleColor={upperMiddleColor}
-                  lowerMiddleColor={lowerMiddleColor}
-                  bottomColor={bottomColor}
-                  onTopColorChange={onTopColorChange}
-                  onUpperMiddleColorChange={onUpperMiddleColorChange}
-                  onLowerMiddleColorChange={onLowerMiddleColorChange}
-                  onBottomColorChange={onBottomColorChange}
+                  topColor={gradient.top}
+                  upperMiddleColor={gradient.upperMiddle}
+                  lowerMiddleColor={gradient.lowerMiddle}
+                  bottomColor={gradient.bottom}
+                  onTopColorChange={(c) => setGradient({ top: c })}
+                  onUpperMiddleColorChange={(c) => setGradient({ upperMiddle: c })}
+                  onLowerMiddleColorChange={(c) => setGradient({ lowerMiddle: c })}
+                  onBottomColorChange={(c) => setGradient({ bottom: c })}
                   isDark={isDark}
-                  defaultColors={defaultColors}
+                  defaultColors={defaults}
                 />
               </div>
             )}
+
+
           </div>
         </div>
     </>

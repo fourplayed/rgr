@@ -62,7 +62,7 @@ export const Logo = React.memo<LogoProps>(({
 }) => {
   // Use theme-specific logo
   // splash_logo3.png dimensions: same as logo_v3.png (576x288, aspect ratio 2:1)
-  const logoSrc = isDark ? '/splash_logo.png' : '/splash_logo3.png';
+  const logoSrc = isDark ? '/logo_dark.png' : '/logo_light.png';
   const sizeClass = SIZE_CLASSES[size];
 
   return (

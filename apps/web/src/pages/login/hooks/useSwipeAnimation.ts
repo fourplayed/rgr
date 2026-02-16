@@ -2,7 +2,7 @@
  * useSwipeAnimation - Theme swipe animation state management
  * Updated to work with unified theme context
  */
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useTheme } from '@/hooks/useTheme';
 import { THEME_SWIPE_DURATION_MS } from '../styles';
 
@@ -25,6 +25,15 @@ export function useSwipeAnimation(): UseSwipeAnimationResult {
   const [swipePhase, setSwipePhase] = useState<SwipePhase>('idle');
   const [swipeDirection, setSwipeDirection] = useState<SwipeDirection>('right');
   const [isThemeAnimating, setIsThemeAnimating] = useState(false);
+  const timersRef = useRef<NodeJS.Timeout[]>([]);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      timersRef.current.forEach(clearTimeout);
+      timersRef.current = [];
+    };
+  }, []);
 
   // Toggle theme with full-width swipe animation
   const handleThemeToggle = useCallback(() => {
@@ -39,21 +48,21 @@ export function useSwipeAnimation(): UseSwipeAnimationResult {
     setSwipePhase('swipe-out');
 
     // Phase 2: Instantly position on opposite side (no transition) + toggle theme
-    setTimeout(() => {
+    timersRef.current.push(setTimeout(() => {
       toggleTheme(); // Use unified theme context
       setSwipePhase('position-in'); // Instant position, no animation
-    }, THEME_SWIPE_DURATION_MS);
+    }, THEME_SWIPE_DURATION_MS));
 
     // Phase 3: Animate swipe back to center
-    setTimeout(() => {
+    timersRef.current.push(setTimeout(() => {
       setSwipePhase('swipe-in');
-    }, THEME_SWIPE_DURATION_MS + 20); // Small delay to ensure position is set
+    }, THEME_SWIPE_DURATION_MS + 20)); // Small delay to ensure position is set
 
     // Phase 4: Reset to idle
-    setTimeout(() => {
+    timersRef.current.push(setTimeout(() => {
       setSwipePhase('idle');
       setIsThemeAnimating(false);
-    }, THEME_SWIPE_DURATION_MS * 2 + 50);
+    }, THEME_SWIPE_DURATION_MS * 2 + 50));
   }, [swipeDirection, isThemeAnimating, toggleTheme]);
 
   return {

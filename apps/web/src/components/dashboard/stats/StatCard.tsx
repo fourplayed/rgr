@@ -114,9 +114,8 @@ export const StatCard = React.memo<StatCardProps>(({
     >
       <style>{`
         @keyframes spin-stat-card {
-          0% { transform: rotateY(0deg); opacity: 0.9; }
-          50% { opacity: 1; }
-          100% { transform: rotateY(360deg); opacity: 0.9; }
+          0% { transform: rotateY(0deg); }
+          100% { transform: rotateY(360deg); }
         }
         .spinning-stat-card {
           animation: spin-stat-card 1000ms ease-in-out forwards;
@@ -124,8 +123,7 @@ export const StatCard = React.memo<StatCardProps>(({
       `}</style>
       {/* Animated gradient background blur */}
       <div className={`
-        absolute -inset-0.5 rounded-2xl blur opacity-0
-        group-hover:opacity-40 transition-opacity duration-500
+        absolute -inset-0.5 rounded-2xl blur opacity-40
         bg-gradient-to-r ${config.gradient}
       `} />
 
@@ -140,7 +138,7 @@ export const StatCard = React.memo<StatCardProps>(({
         `}
         style={{
           transformStyle: 'preserve-3d',
-          opacity: 0.9,
+          opacity: 1,
         }}
         onMouseEnter={handleMouseEnter}
       >

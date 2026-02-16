@@ -10,7 +10,7 @@
  * - Error handling with retry capability
  */
 import { useState, useCallback, useMemo } from 'react';
-import { getSupabase } from '@rgr/shared';
+import { getSupabaseClient } from '@rgr/shared';
 import type { HazardSeverity } from '../components/dashboard/hazards';
 
 // ============================================================================
@@ -181,6 +181,7 @@ async function compressImage(file: File, maxWidth = 1920, quality = 0.85): Promi
       // Convert to blob
       canvas.toBlob(
         (blob) => {
+          URL.revokeObjectURL(img.src);
           if (blob) {
             resolve(blob);
           } else {
@@ -191,7 +192,10 @@ async function compressImage(file: File, maxWidth = 1920, quality = 0.85): Promi
         quality
       );
     };
-    img.onerror = () => reject(new Error('Failed to load image'));
+    img.onerror = () => {
+      URL.revokeObjectURL(img.src);
+      reject(new Error('Failed to load image'));
+    };
     img.src = URL.createObjectURL(file);
   });
 }
@@ -234,7 +238,7 @@ export function usePhotoAnalysis(): UsePhotoAnalysisResult {
 
       setProgress(10);
 
-      const supabase = getSupabase();
+      const supabase = getSupabaseClient();
 
       // Get current user
       const { data: { user }, error: authError } = await supabase.auth.getUser();

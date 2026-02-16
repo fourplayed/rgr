@@ -11,7 +11,7 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import { getSupabase } from '@rgr/shared';
+import { getSupabaseClient } from '@rgr/shared';
 import type { AnalyticsTimeRange } from '@/services/analyticsService';
 
 /**
@@ -74,6 +74,7 @@ export interface AssetLocation {
   accuracy: number | null;
   lastUpdated: string;
   recentScanCount?: number;
+  depot?: string | null;
 }
 
 /**
@@ -90,7 +91,7 @@ export const FLEET_QUERY_KEYS = {
  * Fetch fleet statistics
  */
 async function fetchFleetStatistics(): Promise<FleetStatistics> {
-  const supabase = getSupabase();
+  const supabase = getSupabaseClient();
 
   const { data: assets, error } = await supabase
     .from('assets')
@@ -115,7 +116,7 @@ async function fetchFleetStatistics(): Promise<FleetStatistics> {
     dolly: 0,
   };
 
-  assets?.forEach((asset) => {
+  assets?.forEach((asset: { status: string; category: string }) => {
     const status = asset.status as keyof typeof statusCounts;
     if (status in statusCounts) {
       statusCounts[status]++;
@@ -142,7 +143,7 @@ async function fetchFleetStatistics(): Promise<FleetStatistics> {
  * Fetch recent scans
  */
 async function fetchRecentScans(limit: number): Promise<RecentScan[]> {
-  const supabase = getSupabase();
+  const supabase = getSupabaseClient();
 
   const { data, error } = await supabase
     .from('scan_events')
@@ -182,10 +183,11 @@ async function fetchRecentScans(limit: number): Promise<RecentScan[]> {
  * Fetch outstanding assets (not scanned in X days)
  */
 async function fetchOutstandingAssets(days: number): Promise<OutstandingAsset[]> {
-  const supabase = getSupabase();
+  const supabase = getSupabaseClient();
   const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
-  // Get all assets with their last scan
+  // Get assets that haven't been scanned since the cutoff date (or never scanned)
+  // Uses the last_location_updated_at column maintained by a DB trigger from scan_events
   const { data: assets, error: assetsError } = await supabase
     .from('assets')
     .select(`
@@ -198,48 +200,36 @@ async function fetchOutstandingAssets(days: number): Promise<OutstandingAsset[]>
       last_location_updated_at
     `)
     .is('deleted_at', null)
-    .in('status', ['active', 'maintenance']); // Only check active assets
+    .in('status', ['active', 'maintenance'])
+    .or(`last_location_updated_at.lt.${cutoffDate.toISOString()},last_location_updated_at.is.null`);
 
   if (assetsError) {
     throw new Error(`Failed to fetch outstanding assets: ${assetsError.message}`);
   }
 
-  // For each asset, get the last scan date
-  const outstanding: OutstandingAsset[] = [];
-
-  for (const asset of assets || []) {
-    const { data: lastScan } = await supabase
-      .from('scan_events')
-      .select('created_at')
-      .eq('asset_id', asset.id)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
-
-    const lastScanDate = lastScan?.created_at || null;
+  // Map results directly — last_location_updated_at serves as last scan date
+  const outstanding: OutstandingAsset[] = (assets || []).map((asset) => {
+    const lastScanDate = asset.last_location_updated_at || null;
     const lastScanTime = lastScanDate ? new Date(lastScanDate).getTime() : 0;
     const daysSince = lastScanDate
       ? Math.floor((Date.now() - lastScanTime) / (1000 * 60 * 60 * 24))
       : null;
 
-    // Include if no scan or scan is older than cutoff
-    if (!lastScanDate || lastScanTime < cutoffDate.getTime()) {
-      outstanding.push({
-        id: asset.id,
-        assetNumber: asset.asset_number,
-        category: asset.category,
-        status: asset.status,
-        lastScanDate,
-        daysSinceLastScan: daysSince,
-        lastLocation: asset.last_latitude && asset.last_longitude
-          ? {
-              latitude: asset.last_latitude,
-              longitude: asset.last_longitude,
-            }
-          : null,
-      });
-    }
-  }
+    return {
+      id: asset.id,
+      assetNumber: asset.asset_number,
+      category: asset.category,
+      status: asset.status,
+      lastScanDate,
+      daysSinceLastScan: daysSince,
+      lastLocation: asset.last_latitude && asset.last_longitude
+        ? {
+            latitude: asset.last_latitude,
+            longitude: asset.last_longitude,
+          }
+        : null,
+    };
+  });
 
   // Sort by days since last scan (descending)
   return outstanding.sort((a, b) => {
@@ -253,7 +243,7 @@ async function fetchOutstandingAssets(days: number): Promise<OutstandingAsset[]>
  * Fetch asset locations for map
  */
 async function fetchAssetLocations(): Promise<AssetLocation[]> {
-  const supabase = getSupabase();
+  const supabase = getSupabaseClient();
 
   const { data, error } = await supabase
     .from('assets')
@@ -276,7 +266,17 @@ async function fetchAssetLocations(): Promise<AssetLocation[]> {
     throw new Error(`Failed to fetch asset locations: ${error.message}`);
   }
 
-  return (data || []).map((asset) => ({
+  return (data || []).map((asset: {
+    id: string;
+    asset_number: string;
+    category: string;
+    subtype: string | null;
+    status: string;
+    last_latitude: number | null;
+    last_longitude: number | null;
+    last_location_accuracy: number | null;
+    last_location_updated_at: string | null;
+  }) => ({
     id: asset.id,
     assetNumber: asset.asset_number,
     category: asset.category,
@@ -344,11 +344,13 @@ export function useAssetLocations(enabled: boolean = true) {
 /**
  * Hook for real-time fleet updates via Supabase subscriptions
  */
-export function useFleetRealtime() {
+export function useFleetRealtime(enabled: boolean = true) {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    const supabase = getSupabase();
+    if (!enabled) return;
+
+    const supabase = getSupabaseClient();
 
     // Subscribe to scan events
     const scanSubscription = supabase
@@ -393,7 +395,7 @@ export function useFleetRealtime() {
       scanSubscription.unsubscribe();
       assetSubscription.unsubscribe();
     };
-  }, [queryClient]);
+  }, [queryClient, enabled]);
 }
 
 /**
@@ -416,9 +418,7 @@ export function useFleetDashboard(options?: {
   const assetLocations = useAssetLocations();
 
   // Enable real-time updates
-  if (enableRealtime) {
-    useFleetRealtime();
-  }
+  useFleetRealtime(enableRealtime);
 
   return {
     statistics,

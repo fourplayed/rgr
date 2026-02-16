@@ -9,14 +9,20 @@
  * - Performance optimized for large datasets
  */
 
-import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo, useImperativeHandle, forwardRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { ZoomIn, ZoomOut, Maximize2, Filter } from 'lucide-react';
 import { AssetHoverCard } from './AssetHoverCard';
 import { RGR_COLORS } from '@/styles/color-palette';
+import { DEPOT_LOCATIONS, DEPOT_COLOR, DEPOT_COLORS, type DepotLocation } from '@/constants/fleetMap';
 import type { AssetLocation } from '@/hooks/useFleetData';
+
+export interface FleetMapHandle {
+  zoomIn: () => void;
+  zoomOut: () => void;
+  fitBounds: () => void;
+}
 
 // Validate and set Mapbox access token
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
@@ -28,8 +34,10 @@ if (MAPBOX_TOKEN) {
  * Asset filter options
  */
 export interface AssetFilters {
-  category?: 'trailer' | 'dolly' | 'all';
-  status?: 'active' | 'maintenance' | 'out_of_service' | 'all';
+  category?: Array<'trailer' | 'dolly'> | 'all';
+  subtype?: string | 'all';
+  status?: Array<'active' | 'maintenance' | 'out_of_service'> | 'all';
+  depot?: string[] | 'all';
   lastScannedDays?: number | 'all';
 }
 
@@ -45,6 +53,8 @@ export interface FleetMapWithDataProps {
   focusAssetId?: string | null;
   onFocusComplete?: (found: boolean) => void;
   enableFilters?: boolean;
+  filters?: AssetFilters;
+  showDepotLabels?: boolean;
 }
 
 /**
@@ -133,7 +143,7 @@ function clusterAssets(assets: AssetLocation[], zoom: number): Array<{
 /**
  * FleetMapWithData component
  */
-export const FleetMapWithData = React.memo<FleetMapWithDataProps>(({
+const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(({
   assets,
   className = '',
   onAssetClick,
@@ -142,27 +152,37 @@ export const FleetMapWithData = React.memo<FleetMapWithDataProps>(({
   focusAssetId,
   onFocusComplete,
   enableFilters = false,
-}) => {
+  filters: externalFilters,
+  showDepotLabels = true,
+}, ref) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markers = useRef<mapboxgl.Marker[]>([]);
+  const depotMarkers = useRef<mapboxgl.Marker[]>([]);
   const popupRoots = useRef<Array<{ root: ReturnType<typeof createRoot>; asset: AssetLocation }>>([]);
+  const depotPopupRoots = useRef<Array<{ root: ReturnType<typeof createRoot>; depot: DepotLocation }>>([]);
+  const currentStyleUrl = useRef<string | null>(null);
+  const initialIsDark = useRef(isDark);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
   const [currentZoom, setCurrentZoom] = useState(4.5);
-  const [filters, setFilters] = useState<AssetFilters>({
-    category: 'all',
-    status: 'all',
-    lastScannedDays: 'all',
-  });
-  const [showFilters, setShowFilters] = useState(false);
+
+  const filters = externalFilters || { category: 'all' as const, subtype: 'all' as const, status: 'all' as const, lastScannedDays: 'all' as const };
 
   // Filter assets based on current filters
   const filteredAssets = useMemo(() => {
     return assets.filter((asset) => {
-      if (filters.category !== 'all' && asset.category !== filters.category) return false;
-      if (filters.status !== 'all' && asset.status !== filters.status) return false;
-      if (filters.lastScannedDays !== 'all') {
+      if (filters.category !== 'all' && Array.isArray(filters.category) && filters.category.length > 0) {
+        if (!filters.category.includes(asset.category as 'trailer' | 'dolly')) return false;
+      }
+      if (filters.subtype && filters.subtype !== 'all' && asset.subtype !== filters.subtype) return false;
+      if (filters.depot !== 'all' && Array.isArray(filters.depot) && filters.depot.length > 0) {
+        if (!asset.depot || !filters.depot.includes(asset.depot)) return false;
+      }
+      if (filters.status !== 'all' && Array.isArray(filters.status) && filters.status.length > 0) {
+        if (!filters.status.includes(asset.status as 'active' | 'maintenance' | 'out_of_service')) return false;
+      }
+      if (filters.lastScannedDays != null && filters.lastScannedDays !== 'all') {
         const daysSince = asset.lastUpdated
           ? Math.floor((Date.now() - new Date(asset.lastUpdated).getTime()) / (1000 * 60 * 60 * 24))
           : Infinity;
@@ -171,6 +191,20 @@ export const FleetMapWithData = React.memo<FleetMapWithDataProps>(({
       return true;
     });
   }, [assets, filters]);
+
+  // Expose zoom/fit controls via ref
+  useImperativeHandle(ref, () => ({
+    zoomIn: () => map.current?.zoomIn(),
+    zoomOut: () => map.current?.zoomOut(),
+    fitBounds: () => {
+      if (!map.current) return;
+      const bounds = new mapboxgl.LngLatBounds();
+      DEPOT_LOCATIONS.forEach((depot) => bounds.extend([depot.lng, depot.lat]));
+      filteredAssets.forEach((asset) => bounds.extend([asset.longitude, asset.latitude]));
+      if (bounds.isEmpty()) return;
+      map.current.fitBounds(bounds, { padding: 50 });
+    },
+  }), [filteredAssets]);
 
   // Cluster filtered assets
   const clusters = useMemo(() => {
@@ -195,9 +229,11 @@ export const FleetMapWithData = React.memo<FleetMapWithDataProps>(({
     let isMounted = true;
 
     try {
-      const styleUrl = isDark
+      const styleUrl = initialIsDark.current
         ? import.meta.env.VITE_MAPBOX_STYLE_DARK || 'mapbox://styles/mapbox/dark-v11'
         : import.meta.env.VITE_MAPBOX_STYLE_LIGHT || 'mapbox://styles/mapbox/light-v11';
+
+      currentStyleUrl.current = styleUrl;
 
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
@@ -221,11 +257,64 @@ export const FleetMapWithData = React.memo<FleetMapWithDataProps>(({
         setMapLoaded(true);
         onMapLoad?.();
 
-        // Add navigation controls
-        mapInstance.addControl(
-          new mapboxgl.NavigationControl({ showCompass: false }),
-          'top-right'
-        );
+        // Per-depot layout: stem height, anchor side, z-index
+        // 'west' = right edge of label sits on pole, label extends left
+        // 'east' = left edge of label sits on pole, label extends right
+        const depotLayout: Record<string, { stem: number; anchor: 'west' | 'east' | 'center'; z: number }> = {
+          Perth:     { stem: 68, anchor: 'west',   z: 16 },
+          Wubin:     { stem: 98, anchor: 'east',   z: 14 },
+          Newman:    { stem: 45, anchor: 'east',   z: 12 },
+          Hedland:   { stem: 58, anchor: 'east',   z: 16 },
+          Karratha:  { stem: 88, anchor: 'west',   z: 14 },
+          Carnarvon: { stem: 68, anchor: 'west',   z: 12 },
+        };
+
+        // Add depot markers with text labels
+        DEPOT_LOCATIONS.forEach((depot: DepotLocation) => {
+          const depotColor = DEPOT_COLORS[depot.name] || DEPOT_COLOR;
+          const layout = depotLayout[depot.name] ?? { stem: 68, anchor: 'center', z: 10 };
+
+          // Translate label so the correct edge sits on the pole
+          const offsetX = layout.anchor === 'west' ? '-100%' : layout.anchor === 'east' ? '0%' : '-50%';
+
+          // Tooltip on opposite side of beam from label, anchored to the pole
+          const tipOnRight = layout.anchor === 'west';  // label left → tooltip right
+          const tipOrigin = tipOnRight ? 'transform-origin: left center;' : 'transform-origin: right center;';
+          const tipHidden = tipOnRight ? 'transform: rotateY(-90deg);' : 'transform: rotateY(90deg);';
+          const tipRadius = tipOnRight ? 'border-radius: 0 8px 8px 0;' : 'border-radius: 8px 0 0 8px;';
+          // Position tooltip at beam center: right-side starts at left:50%, left-side ends at beam via right + calc
+          const tipPosition = tipOnRight
+            ? 'left: 50%;'
+            : 'right: calc(50% - 1px);';  // -1px to overlap the beam edge
+
+          const el = document.createElement('div');
+          el.className = 'depot-marker';
+          el.style.cssText = `margin: 0; padding: 0; line-height: 0; z-index: ${layout.z};`;
+          el.innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; position: relative; margin: 0; padding: 0; perspective: 400px;">
+              <div style="width: 2px; height: ${layout.stem}px; background: linear-gradient(to bottom, ${depotColor}cc, ${depotColor}44 70%, transparent); pointer-events: none;"></div>
+              <div style="position: absolute; top: 0; width: 4px; height: ${layout.stem}px; background: linear-gradient(to bottom, ${depotColor}25, ${depotColor}0a 60%, transparent); filter: blur(2px); pointer-events: none; left: 50%; transform: translateX(-50%);"></div>
+              <div class="depot-label-wrap" style="position: absolute; top: -4px; left: 50%; transform: translateX(${offsetX}); display: inline-flex; align-items: center; pointer-events: auto; cursor: pointer;">
+                <span class="depot-label" style="position: relative; z-index: 1; color: white; font-family: 'Lato', sans-serif; font-size: 14px; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; text-shadow: 0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.6); background: ${depotColor}cc; border: 1px solid ${depotColor}; padding: 12px 10px 8px 10px; border-radius: 8px; backdrop-filter: blur(4px);">${depot.name}</span>
+              </div>
+              <div class="depot-tooltip" style="position: absolute; top: -4px; ${tipPosition} ${tipOrigin} ${tipHidden} line-height: 1.4; white-space: nowrap; color: white; font-family: 'Lato', sans-serif; font-size: 12px; font-weight: 600; background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: none; padding: 0; ${tipRadius} opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease; pointer-events: none; overflow: hidden;">
+                <div style="display: grid; grid-template-columns: auto auto; line-height: 1;">
+                  <div style="padding: 8px 10px; border-right: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1); color: white;">TL</div>
+                  <div style="padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.1); color: white; font-weight: 800;">${depot.trailers}</div>
+                  <div style="padding: 8px 10px; border-right: 1px solid rgba(255,255,255,0.1); color: white;">DL</div>
+                  <div style="padding: 8px 10px; color: white; font-weight: 800;">${depot.dollies}</div>
+                </div>
+              </div>
+              <div style="width: 5px; height: 5px; border-radius: 50%; background-color: ${depotColor}; box-shadow: 0 0 6px ${depotColor}, 0 0 12px ${depotColor}80; cursor: pointer; flex-shrink: 0;"></div>
+            </div>
+          `;
+
+          const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+            .setLngLat([depot.lng, depot.lat])
+            .addTo(mapInstance);
+
+          depotMarkers.current.push(marker);
+        });
       });
 
       // Track zoom level for clustering
@@ -243,12 +332,17 @@ export const FleetMapWithData = React.memo<FleetMapWithDataProps>(({
 
     return () => {
       isMounted = false;
+      depotPopupRoots.current.forEach(({ root }) => root.unmount());
+      depotPopupRoots.current = [];
+      depotMarkers.current.forEach((marker) => marker.remove());
+      depotMarkers.current = [];
       if (map.current) {
         map.current.remove();
         map.current = null;
       }
     };
-  }, [isDark, onMapLoad]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onMapLoad]);
 
   // Update markers when clusters change
   useEffect(() => {
@@ -342,7 +436,7 @@ export const FleetMapWithData = React.memo<FleetMapWithDataProps>(({
         .addTo(map.current!);
 
       // Show popup on hover
-      el.addEventListener('mouseenter', () => popup.addTo(map.current!));
+      el.addEventListener('mouseenter', () => map.current && popup.addTo(map.current));
       el.addEventListener('mouseleave', () => popup.remove());
 
       markers.current.push(marker);
@@ -357,7 +451,11 @@ export const FleetMapWithData = React.memo<FleetMapWithDataProps>(({
       ? import.meta.env.VITE_MAPBOX_STYLE_DARK || 'mapbox://styles/mapbox/dark-v11'
       : import.meta.env.VITE_MAPBOX_STYLE_LIGHT || 'mapbox://styles/mapbox/light-v11';
 
-    map.current.setStyle(styleUrl);
+    // Only call setStyle when the URL actually changes (skip on initial load)
+    if (styleUrl !== currentStyleUrl.current) {
+      currentStyleUrl.current = styleUrl;
+      map.current.setStyle(styleUrl, { diff: false });
+    }
 
     // Update popup themes
     popupRoots.current.forEach(({ root, asset }) => {
@@ -368,7 +466,22 @@ export const FleetMapWithData = React.memo<FleetMapWithDataProps>(({
         />
       );
     });
+
+    // Depot text labels don't need theme updates (white on both themes)
   }, [isDark, mapLoaded]);
+
+  // Toggle depot marker visibility based on Flag button + location filters
+  useEffect(() => {
+    const selectedDepots = Array.isArray(filters.depot) ? filters.depot : [];
+    const hasDepotFilter = selectedDepots.length > 0;
+
+    depotMarkers.current.forEach((marker, i) => {
+      const el = marker.getElement();
+      const depotName = DEPOT_LOCATIONS[i]?.name;
+      const visible = showDepotLabels && (!hasDepotFilter || selectedDepots.includes(depotName));
+      el.style.display = visible ? '' : 'none';
+    });
+  }, [showDepotLabels, filters.depot]);
 
   // Focus on asset
   useEffect(() => {
@@ -388,15 +501,6 @@ export const FleetMapWithData = React.memo<FleetMapWithDataProps>(({
       onFocusComplete?.(false);
     }
   }, [focusAssetId, mapLoaded, assets, onFocusComplete]);
-
-  const handleZoomIn = () => map.current?.zoomIn();
-  const handleZoomOut = () => map.current?.zoomOut();
-  const handleFitBounds = () => {
-    if (!map.current || filteredAssets.length === 0) return;
-    const bounds = new mapboxgl.LngLatBounds();
-    filteredAssets.forEach((asset) => bounds.extend([asset.longitude, asset.latitude]));
-    map.current.fitBounds(bounds, { padding: 50 });
-  };
 
   return (
     <div className={`relative w-full h-full ${className}`} role="application" aria-label="Fleet tracking map">
@@ -432,124 +536,6 @@ export const FleetMapWithData = React.memo<FleetMapWithDataProps>(({
         </div>
       )}
 
-      {/* Map controls */}
-      {MAPBOX_TOKEN && mapLoaded && (
-        <>
-          <div className="absolute bottom-4 right-4 flex flex-row gap-2 z-10">
-            <button
-              type="button"
-              onClick={handleZoomIn}
-              className="p-2.5 rounded-xl backdrop-blur-sm border transition-colors"
-              style={{
-                backgroundColor: `${RGR_COLORS.navy.base}CC`,
-                borderColor: `${RGR_COLORS.bright.vibrant}33`,
-                color: RGR_COLORS.chrome.light,
-              }}
-              aria-label="Zoom in"
-            >
-              <ZoomIn className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={handleZoomOut}
-              className="p-2.5 rounded-xl backdrop-blur-sm border transition-colors"
-              style={{
-                backgroundColor: `${RGR_COLORS.navy.base}CC`,
-                borderColor: `${RGR_COLORS.bright.vibrant}33`,
-                color: RGR_COLORS.chrome.light,
-              }}
-              aria-label="Zoom out"
-            >
-              <ZoomOut className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={handleFitBounds}
-              className="p-2.5 rounded-xl backdrop-blur-sm border transition-colors"
-              style={{
-                backgroundColor: `${RGR_COLORS.navy.base}CC`,
-                borderColor: `${RGR_COLORS.bright.vibrant}33`,
-                color: RGR_COLORS.chrome.light,
-              }}
-              aria-label="Fit all assets"
-            >
-              <Maximize2 className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Filter button (if enabled) */}
-          {enableFilters && (
-            <div className="absolute top-4 right-4 z-10">
-              <button
-                type="button"
-                onClick={() => setShowFilters(!showFilters)}
-                className="p-2.5 rounded-xl backdrop-blur-sm border transition-colors"
-                style={{
-                  backgroundColor: `${RGR_COLORS.navy.base}CC`,
-                  borderColor: `${RGR_COLORS.bright.vibrant}33`,
-                  color: RGR_COLORS.chrome.light,
-                }}
-                aria-label="Toggle filters"
-              >
-                <Filter className="w-4 h-4" />
-              </button>
-
-              {/* Filter panel */}
-              {showFilters && (
-                <div
-                  className="absolute top-12 right-0 p-4 rounded-xl backdrop-blur-sm border min-w-[200px]"
-                  style={{
-                    backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-                    borderColor: `${RGR_COLORS.bright.vibrant}33`,
-                  }}
-                >
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-xs font-medium mb-1 block" style={{ color: RGR_COLORS.chrome.light }}>
-                        Category
-                      </label>
-                      <select
-                        value={filters.category}
-                        onChange={(e) => setFilters({ ...filters, category: e.target.value as any })}
-                        className="w-full px-2 py-1 rounded text-sm"
-                        style={{
-                          backgroundColor: isDark ? RGR_COLORS.navy.darkest : 'white',
-                          color: isDark ? RGR_COLORS.chrome.light : RGR_COLORS.navy.base,
-                          border: `1px solid ${RGR_COLORS.bright.vibrant}33`,
-                        }}
-                      >
-                        <option value="all">All</option>
-                        <option value="trailer">Trailers</option>
-                        <option value="dolly">Dollies</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium mb-1 block" style={{ color: RGR_COLORS.chrome.light }}>
-                        Status
-                      </label>
-                      <select
-                        value={filters.status}
-                        onChange={(e) => setFilters({ ...filters, status: e.target.value as any })}
-                        className="w-full px-2 py-1 rounded text-sm"
-                        style={{
-                          backgroundColor: isDark ? RGR_COLORS.navy.darkest : 'white',
-                          color: isDark ? RGR_COLORS.chrome.light : RGR_COLORS.navy.base,
-                          border: `1px solid ${RGR_COLORS.bright.vibrant}33`,
-                        }}
-                      >
-                        <option value="all">All</option>
-                        <option value="active">Active</option>
-                        <option value="maintenance">Maintenance</option>
-                        <option value="out_of_service">Out of Service</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </>
-      )}
 
       <style>{`
         .mapboxgl-popup-content {
@@ -563,11 +549,37 @@ export const FleetMapWithData = React.memo<FleetMapWithDataProps>(({
         .asset-hover-popup {
           z-index: 1000 !important;
         }
+        .depot-hover-popup {
+          z-index: 1000 !important;
+        }
+        .depot-hover-popup .mapboxgl-popup-content {
+          background: transparent !important;
+          padding: 0 !important;
+          box-shadow: none !important;
+          border: none !important;
+        }
+        .depot-hover-popup .mapboxgl-popup-tip {
+          display: none !important;
+        }
+        .depot-marker {
+          z-index: 10;
+        }
+        .depot-label-wrap:hover ~ .depot-tooltip,
+        .depot-tooltip:hover {
+          opacity: 1 !important;
+          transform: rotateY(0deg) !important;
+          pointer-events: auto !important;
+        }
+        .fleet-marker {
+          z-index: 5;
+        }
       `}</style>
     </div>
   );
 });
 
-FleetMapWithData.displayName = 'FleetMapWithData';
+FleetMapWithDataInner.displayName = 'FleetMapWithData';
+
+export const FleetMapWithData = React.memo(FleetMapWithDataInner);
 
 export default FleetMapWithData;

@@ -3,13 +3,15 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "skipLibCheck": true,
     "paths": {
       "@/*": ["./src/*"],
       "@rgr/shared": ["../../packages/shared/src"],
+      "@rgr/shared/*": ["../../packages/shared/src/*"],
       "@rgr/ui": ["../../packages/ui/src"],
       "@rgr/config": ["../../packages/config/src"]
     }
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "../../packages/*/src/**/*"],
   "exclude": ["node_modules", "dist", "build"]
 }

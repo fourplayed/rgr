@@ -11,7 +11,7 @@
  * - Loading state during upload/analysis
  * - Error handling with retry
  */
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Upload, X, Image as ImageIcon, Loader2, AlertCircle } from 'lucide-react';
 import { RGR_COLORS } from '@/styles/color-palette';
 
@@ -54,6 +54,13 @@ export const PhotoUploadZone = React.memo<PhotoUploadZoneProps>(({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Revoke object URL on unmount or when preview changes to prevent memory leak
+  useEffect(() => {
+    return () => {
+      if (preview) URL.revokeObjectURL(preview);
+    };
+  }, [preview]);
 
   // Theme colors
   const textPrimary = isDark ? '#ffffff' : '#000000';
