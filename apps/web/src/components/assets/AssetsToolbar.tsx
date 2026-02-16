@@ -61,6 +61,49 @@ const DEPOT_ROW2 = [
   { name: 'Carnarvon', color: '#38bdf8' },
 ];
 
+// ── FilterPill (stable reference — defined outside memo to avoid remount) ─────
+
+function FilterPill({
+  active,
+  label,
+  color,
+  fallbackColor,
+  onClick,
+}: {
+  active: boolean;
+  label: string;
+  color?: string;
+  fallbackColor: string;
+  onClick: () => void;
+}) {
+  const accent = color || fallbackColor;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="filter-pill flex items-center gap-1 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide"
+      style={{
+        fontFamily: "'Lato', sans-serif",
+        paddingLeft: active ? '5px' : '6px',
+        paddingRight: '6px',
+        background: active ? `${accent}30` : `${accent}20`,
+        border: `1px solid ${active ? accent : `${accent}50`}`,
+        color: active ? (color ? color : '#f1f5f9') : accent,
+      }}
+    >
+      {active && (
+        <span
+          className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full text-[8px] leading-none flex-shrink-0"
+          style={{ backgroundColor: accent, color: '#0f172a' }}
+        >
+          ✓
+        </span>
+      )}
+      {label}
+    </button>
+  );
+}
+
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export const AssetsToolbar = React.memo<AssetsToolbarProps>(
@@ -135,46 +178,6 @@ export const AssetsToolbar = React.memo<AssetsToolbarProps>(
           border: '1px solid rgba(255, 255, 255, 0.5)',
           color: '#ffffff',
         };
-
-    // ── FilterPill (inline) ──────────────────────────────────────────────────
-    const FilterPill = ({
-      active,
-      label,
-      color,
-      onClick,
-    }: {
-      active: boolean;
-      label: string;
-      color?: string;
-      onClick: () => void;
-    }) => {
-      const accent = color || pillDefaultColor;
-      return (
-        <button
-          type="button"
-          onClick={onClick}
-          className="filter-pill flex items-center gap-1 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide"
-          style={{
-            fontFamily: "'Lato', sans-serif",
-            paddingLeft: active ? '5px' : '6px',
-            paddingRight: '6px',
-            background: active ? `${accent}30` : `${accent}20`,
-            border: `1px solid ${active ? accent : `${accent}50`}`,
-            color: active ? (color ? color : '#f1f5f9') : accent,
-          }}
-        >
-          {active && (
-            <span
-              className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full text-[8px] leading-none flex-shrink-0"
-              style={{ backgroundColor: accent, color: '#0f172a' }}
-            >
-              ✓
-            </span>
-          )}
-          {label}
-        </button>
-      );
-    };
 
     // ── Toggle helpers ────────────────────────────────────────────────────────
 
@@ -423,6 +426,7 @@ export const AssetsToolbar = React.memo<AssetsToolbarProps>(
                     active={filters.categories.includes(cat.value)}
                     label={AssetCategoryLabels[cat.value]}
                     color={cat.color}
+                    fallbackColor={pillDefaultColor}
                     onClick={() => toggleCategory(cat.value)}
                   />
                 ))}
@@ -473,6 +477,7 @@ export const AssetsToolbar = React.memo<AssetsToolbarProps>(
                     active={selectedDepotName === depot.name}
                     label={depot.name}
                     color={depot.color}
+                    fallbackColor={pillDefaultColor}
                     onClick={() => selectDepot(depot.name)}
                   />
                 ))}
@@ -491,6 +496,7 @@ export const AssetsToolbar = React.memo<AssetsToolbarProps>(
                     active={filters.statuses.includes(s.value)}
                     label={AssetStatusLabels[s.value]}
                     color={s.color}
+                    fallbackColor={pillDefaultColor}
                     onClick={() => toggleStatus(s.value)}
                   />
                 ))}
