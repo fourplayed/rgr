@@ -102,18 +102,22 @@ export const AssetsToolbar = React.memo<AssetsToolbarProps>(
       return new Map(depots.map((d) => [d.name, d.id]));
     }, [depots]);
 
-    // Reverse lookup: which depot name is currently selected?
-    const selectedDepotName = useMemo(() => {
-      if (!filters.depotId || !depots) return null;
-      const found = depots.find((d) => d.id === filters.depotId);
-      return found?.name ?? null;
-    }, [filters.depotId, depots]);
+    // Track selected depot name locally so ticks show even before depot IDs load
+    const [selectedDepotName, setSelectedDepotName] = useState<string | null>(null);
+
+    // Sync local name when filters are reset externally (e.g. "Clear All")
+    useEffect(() => {
+      if (!filters.depotId) {
+        setSelectedDepotName(null);
+      }
+    }, [filters.depotId]);
 
     // ── Active filter detection ──────────────────────────────────────────────
     const hasActiveFilters =
       filters.categories.length > 0 ||
       filters.statuses.length > 0 ||
-      filters.depotId !== null;
+      filters.depotId !== null ||
+      selectedDepotName !== null;
 
     // ── Shared style values ──────────────────────────────────────────────────
     const mutedColor = '#94a3b8';
@@ -149,19 +153,19 @@ export const AssetsToolbar = React.memo<AssetsToolbarProps>(
         <button
           type="button"
           onClick={onClick}
-          className="filter-pill relative text-center py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide"
+          className="filter-pill flex items-center gap-1 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide"
           style={{
             fontFamily: "'Lato', sans-serif",
-            paddingLeft: '6px',
+            paddingLeft: active ? '5px' : '6px',
             paddingRight: '6px',
-            background: `${accent}20`,
+            background: active ? `${accent}30` : `${accent}20`,
             border: `1px solid ${active ? accent : `${accent}50`}`,
             color: active ? (color ? color : '#f1f5f9') : accent,
           }}
         >
           {active && (
             <span
-              className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] leading-none"
+              className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full text-[8px] leading-none flex-shrink-0"
               style={{ backgroundColor: accent, color: '#0f172a' }}
             >
               ✓
@@ -198,13 +202,15 @@ export const AssetsToolbar = React.memo<AssetsToolbarProps>(
 
     const selectDepot = useCallback(
       (depotName: string) => {
-        const id = depotIdByName.get(depotName);
-        if (!id) return; // depots not loaded yet
-        onFiltersChange({
-          depotId: filters.depotId === id ? null : id,
-        });
+        // Toggle: deselect if already selected, otherwise select
+        const newName = selectedDepotName === depotName ? null : depotName;
+        setSelectedDepotName(newName);
+
+        // Also set depot ID in filters for the actual query (if depot data is loaded)
+        const id = newName ? depotIdByName.get(newName) ?? null : null;
+        onFiltersChange({ depotId: id });
       },
-      [filters.depotId, depotIdByName, onFiltersChange],
+      [selectedDepotName, depotIdByName, onFiltersChange],
     );
 
     // ── Render ───────────────────────────────────────────────────────────────
@@ -317,8 +323,7 @@ export const AssetsToolbar = React.memo<AssetsToolbarProps>(
             transition: all 0.25s ease;
           }
           .filter-grid-locations .filter-pill {
-            padding-left: 21px;
-            padding-right: 21px;
+            /* padding now handled inline by FilterPill */
           }
           .filter-pill:hover {
             transform: translateY(-2px);
@@ -366,7 +371,7 @@ export const AssetsToolbar = React.memo<AssetsToolbarProps>(
           {/* Row 1: Search + Status + spacer + Add Asset */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
             {/* Search bar */}
-            <div className="relative flex items-center" style={{ width: '30%' }}>
+            <div className="relative flex items-center" style={{ width: '45%' }}>
               <Search
                 className="absolute left-3 w-4 h-4 pointer-events-none"
                 style={{ color: mutedColor }}
