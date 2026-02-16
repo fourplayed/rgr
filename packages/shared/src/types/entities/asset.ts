@@ -174,7 +174,7 @@ export function mapAssetToInsert(
     asset_number: input.assetNumber,
     category: input.category,
     subtype: input.subtype ?? null,
-    status: input.status ?? 'active',
+    status: input.status ?? 'serviced',
     description: input.description ?? null,
     year_manufactured: input.yearManufactured ?? null,
     make: input.make ?? null,

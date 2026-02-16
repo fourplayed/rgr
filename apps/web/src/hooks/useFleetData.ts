@@ -22,7 +22,6 @@ export interface FleetStatistics {
   activeAssets: number;
   inMaintenance: number;
   outOfService: number;
-  decommissioned: number;
   trailerCount: number;
   dollyCount: number;
 }
@@ -104,10 +103,9 @@ async function fetchFleetStatistics(): Promise<FleetStatistics> {
 
   // Count by status
   const statusCounts = {
-    active: 0,
+    serviced: 0,
     maintenance: 0,
     out_of_service: 0,
-    decommissioned: 0,
   };
 
   // Count by category
@@ -130,10 +128,9 @@ async function fetchFleetStatistics(): Promise<FleetStatistics> {
 
   return {
     totalAssets: assets?.length || 0,
-    activeAssets: statusCounts.active,
+    activeAssets: statusCounts.serviced,
     inMaintenance: statusCounts.maintenance,
     outOfService: statusCounts.out_of_service,
-    decommissioned: statusCounts.decommissioned,
     trailerCount: categoryCounts.trailer,
     dollyCount: categoryCounts.dolly,
   };
@@ -200,7 +197,7 @@ async function fetchOutstandingAssets(days: number): Promise<OutstandingAsset[]>
       last_location_updated_at
     `)
     .is('deleted_at', null)
-    .in('status', ['active', 'maintenance'])
+    .in('status', ['serviced', 'maintenance'])
     .or(`last_location_updated_at.lt.${cutoffDate.toISOString()},last_location_updated_at.is.null`);
 
   if (assetsError) {

@@ -49,7 +49,7 @@ const STAT_CARDS: StatCardData[] = [
     icon: XCircle,
     count: 1,
     title: 'Out of Service',
-    subtitle: 'decommissioned',
+    subtitle: 'out of service',
     bg: '#d43050',
   },
 ];

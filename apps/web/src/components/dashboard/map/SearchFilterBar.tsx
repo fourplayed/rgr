@@ -45,7 +45,7 @@ const DEPOT_LOCATIONS = [...DEPOT_LOCATIONS_ROW1, ...DEPOT_LOCATIONS_ROW2];
 
 const FILTER_STATUSES = [
   { value: 'all', label: 'All Statuses', color: '#9ca3af' },
-  { value: 'active', label: 'Serviced', color: '#10b981' },
+  { value: 'serviced', label: 'Serviced', color: '#10b981' },
   { value: 'maintenance', label: 'Maintenance', color: '#f59e0b' },
   { value: 'out_of_service', label: 'Out of Service', color: '#ef4444' },
 ] as const;
@@ -612,7 +612,7 @@ export const SearchFilterBar = React.memo<SearchFilterBarProps>(({
               <div className="filter-grid-status" style={{ display: 'flex', flexDirection: 'row', flexWrap: 'nowrap', gap: '5px' }}>
                 {FILTER_STATUSES.filter((s) => s.value !== 'all').map((status) => {
                   const currentStatuses = Array.isArray(filters.status) ? filters.status : [];
-                  const isActive = currentStatuses.includes(status.value as 'active' | 'maintenance' | 'out_of_service');
+                  const isActive = currentStatuses.includes(status.value as 'serviced' | 'maintenance' | 'out_of_service');
                   return (
                     <FilterPill
                       key={status.value}
@@ -622,7 +622,7 @@ export const SearchFilterBar = React.memo<SearchFilterBarProps>(({
                       onClick={() => {
                         const next = isActive
                           ? currentStatuses.filter((v) => v !== status.value)
-                          : [...currentStatuses, status.value as 'active' | 'maintenance' | 'out_of_service'];
+                          : [...currentStatuses, status.value as 'serviced' | 'maintenance' | 'out_of_service'];
                         onFiltersChange({ ...filters, status: next.length === 0 ? 'all' : next });
                       }}
                     />

@@ -267,12 +267,12 @@ export async function softDeleteAsset(
 
   const { error } = await supabase
     .from('assets')
-    .update({ deleted_at: new Date().toISOString(), status: 'decommissioned' })
+    .update({ deleted_at: new Date().toISOString(), status: 'out_of_service' })
     .eq('id', id)
     .is('deleted_at', null);
 
   if (error) {
-    return { data: null, error: `Failed to decommission asset: ${error.message}` };
+    return { data: null, error: `Failed to retire asset: ${error.message}` };
   }
 
   return { data: undefined, error: null };

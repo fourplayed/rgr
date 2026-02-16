@@ -226,7 +226,7 @@ export function useUpdateAsset() {
 }
 
 /**
- * Soft-delete (decommission) an asset
+ * Soft-delete an asset
  */
 export function useDeleteAsset() {
   const queryClient = useQueryClient();

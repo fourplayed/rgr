@@ -31,7 +31,7 @@
 -- ============================================================================
 
 CREATE TYPE user_role AS ENUM ('driver', 'mechanic', 'manager', 'superuser');
-CREATE TYPE asset_status AS ENUM ('active', 'maintenance', 'out_of_service', 'decommissioned');
+CREATE TYPE asset_status AS ENUM ('serviced', 'maintenance', 'out_of_service');
 CREATE TYPE asset_category AS ENUM ('trailer', 'dolly');
 CREATE TYPE scan_type AS ENUM ('qr_scan', 'manual_entry', 'nfc_scan', 'gps_auto');
 CREATE TYPE photo_type AS ENUM ('freight', 'damage', 'inspection', 'general');
@@ -110,7 +110,7 @@ CREATE TABLE assets (
     asset_number                VARCHAR(20) NOT NULL UNIQUE,  -- TL001, DL015
     category                    asset_category NOT NULL,
     subtype                     VARCHAR(50),                   -- e.g., "flatbed", "curtainsider", "converter"
-    status                      asset_status NOT NULL DEFAULT 'active',
+    status                      asset_status NOT NULL DEFAULT 'serviced',
     description                 TEXT,
     year_manufactured           SMALLINT,
     make                        VARCHAR(100),
@@ -160,7 +160,7 @@ CREATE INDEX idx_assets_map ON assets(last_latitude, last_longitude)
 
 -- Outstanding assets: active assets by last location update
 CREATE INDEX idx_assets_outstanding ON assets(last_location_updated_at)
-    WHERE deleted_at IS NULL AND status IN ('active', 'maintenance');
+    WHERE deleted_at IS NULL AND status IN ('serviced', 'maintenance');
 
 -- Assignment lookups
 CREATE INDEX idx_assets_depot ON assets(assigned_depot_id)

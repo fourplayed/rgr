@@ -48,9 +48,7 @@ export const AssetFiltersPanel = React.memo<AssetFiltersPanelProps>(
       onFiltersChange({ categories: next });
     }
 
-    const statuses = Object.values(AssetStatus).filter(
-      (s) => s !== 'decommissioned'
-    ) as AssetStatus[];
+    const statuses = Object.values(AssetStatus) as AssetStatus[];
 
     const categories = Object.values(AssetCategory) as AssetCategory[];
 

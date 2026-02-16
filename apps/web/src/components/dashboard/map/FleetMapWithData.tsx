@@ -38,7 +38,7 @@ try { (mapboxgl as any).config.EVENTS_URL = ''; } catch { /* read-only in newer 
 export interface AssetFilters {
   category?: Array<'trailer' | 'dolly'> | 'all';
   subtype?: string | 'all';
-  status?: Array<'active' | 'maintenance' | 'out_of_service'> | 'all';
+  status?: Array<'serviced' | 'maintenance' | 'out_of_service'> | 'all';
   depot?: string[] | 'all';
   lastScannedDays?: number | 'all';
 }
@@ -63,20 +63,18 @@ export interface FleetMapWithDataProps {
  * Status colors for markers
  */
 const STATUS_COLORS: Record<string, string> = {
-  active: '#10b981',      // emerald-500
+  serviced: '#10b981',      // emerald-500
   maintenance: '#f59e0b', // amber-500
   out_of_service: '#ef4444', // red-500
-  decommissioned: '#6b7280', // gray-500
 };
 
 /**
  * Light theme colors for better visibility
  */
 const LIGHT_THEME_COLORS: Record<string, string> = {
-  active: '#059669',      // emerald-600
+  serviced: '#059669',      // emerald-600
   maintenance: '#d97706', // amber-600
   out_of_service: '#dc2626', // red-600
-  decommissioned: '#4b5563', // gray-600
 };
 
 /**
@@ -182,7 +180,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         if (!asset.depot || !filters.depot.includes(asset.depot)) return false;
       }
       if (filters.status !== 'all' && Array.isArray(filters.status) && filters.status.length > 0) {
-        if (!filters.status.includes(asset.status as 'active' | 'maintenance' | 'out_of_service')) return false;
+        if (!filters.status.includes(asset.status as 'serviced' | 'maintenance' | 'out_of_service')) return false;
       }
       if (filters.lastScannedDays != null && filters.lastScannedDays !== 'all') {
         const daysSince = asset.lastUpdated
@@ -364,8 +362,8 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
       const isCluster = cluster.count > 1;
       const representativeAsset = cluster.assets[0];
       const statusColor = isDark
-        ? (STATUS_COLORS[representativeAsset.status] || STATUS_COLORS.decommissioned)
-        : (LIGHT_THEME_COLORS[representativeAsset.status] || LIGHT_THEME_COLORS.decommissioned);
+        ? (STATUS_COLORS[representativeAsset.status] || '#6b7280')
+        : (LIGHT_THEME_COLORS[representativeAsset.status] || '#4b5563');
 
       const el = document.createElement('div');
       el.className = 'fleet-marker';

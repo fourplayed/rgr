@@ -17,7 +17,7 @@ export interface PlaceholderAsset {
   id: string;
   /** Display name (e.g., asset number) */
   name: string;
-  /** Current status (e.g., "active", "maintenance", "out_of_service") */
+  /** Current status (e.g., "serviced", "maintenance", "out_of_service") */
   status: string;
   /** Longitude coordinate */
   lng: number;
@@ -30,10 +30,9 @@ export interface PlaceholderAsset {
 /** Map from asset status to marker color */
 export const STATUS_COLORS: Record<string, string> = {
   // TODO: Align with RGR_COLORS semantic palette
-  active: '#22c55e',         // Green
+  serviced: '#22c55e',         // Green
   maintenance: '#f59e0b',    // Amber
   out_of_service: '#ef4444', // Red
-  decommissioned: '#6b7280', // Gray
 };
 
 /** Placeholder assets for map rendering before real data is loaded */

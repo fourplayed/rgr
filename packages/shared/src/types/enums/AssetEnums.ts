@@ -4,33 +4,29 @@ import { z } from 'zod';
  * Asset status enum — matches DB: asset_status
  */
 export const AssetStatus = {
-  ACTIVE: 'active',
+  SERVICED: 'serviced',
   MAINTENANCE: 'maintenance',
   OUT_OF_SERVICE: 'out_of_service',
-  DECOMMISSIONED: 'decommissioned',
 } as const;
 
 export type AssetStatus = (typeof AssetStatus)[keyof typeof AssetStatus];
 
 export const AssetStatusSchema = z.enum([
-  'active',
+  'serviced',
   'maintenance',
   'out_of_service',
-  'decommissioned',
 ]);
 
 export const AssetStatusLabels: Record<AssetStatus, string> = {
-  active: 'Active',
+  serviced: 'Serviced',
   maintenance: 'Maintenance',
   out_of_service: 'Out of Service',
-  decommissioned: 'Decommissioned',
 };
 
 export const AssetStatusColors: Record<AssetStatus, string> = {
-  active: '#2bbb6e',
+  serviced: '#2bbb6e',
   maintenance: '#e8a020',
   out_of_service: '#d43050',
-  decommissioned: '#6b7280',
 };
 
 /**

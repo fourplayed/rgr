@@ -3,7 +3,7 @@
 ## Enum Types
 ```sql
 user_role: driver, mechanic, manager, superuser
-asset_status: active, maintenance, out_of_service, decommissioned
+asset_status: serviced, maintenance, out_of_service
 asset_category: trailer, dolly
 scan_type: qr_scan, manual_entry, nfc_scan, gps_auto
 photo_type: freight, damage, inspection, general
@@ -51,7 +51,7 @@ maintenance_priority: low, medium, high, critical
 | asset_number | VARCHAR(20) | NOT NULL UNIQUE |
 | category | asset_category | NOT NULL |
 | subtype | VARCHAR(50) | |
-| status | asset_status | NOT NULL DEFAULT 'active' |
+| status | asset_status | NOT NULL DEFAULT 'serviced' |
 | description | TEXT | |
 | year_manufactured | SMALLINT | |
 | make | VARCHAR(100) | |

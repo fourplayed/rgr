@@ -22,7 +22,7 @@ interface Asset {
   asset_number: string;
   category: 'trailer' | 'dolly';
   subtype: string | null;
-  status: 'active' | 'maintenance' | 'out_of_service' | 'decommissioned';
+  status: 'serviced' | 'maintenance' | 'out_of_service';
 }
 
 export interface AssetSelectorProps {
@@ -73,7 +73,7 @@ export const AssetSelector = React.memo<AssetSelectorProps>(({
         const { data, error: fetchError } = await (supabase as any)
           .from('assets')
           .select('id, asset_number, category, subtype, status')
-          .eq('status', 'active')
+          .eq('status', 'serviced')
           .order('asset_number', { ascending: true })
           .limit(100);
 
@@ -87,11 +87,11 @@ export const AssetSelector = React.memo<AssetSelectorProps>(({
         setError('Failed to load assets');
         // Use mock data with real UUIDs from production database for development/testing
         setAssets([
-          { id: '910472f2-2185-483a-ad70-87e55f46e2fe', asset_number: 'TL001', category: 'trailer', subtype: 'flattop', status: 'active' },
-          { id: '937e0b87-8c68-43d3-8244-abcd0ad68be9', asset_number: 'TL002', category: 'trailer', subtype: 'dropdeck', status: 'active' },
-          { id: '94cf231d-9804-4f1b-a01d-82d02f17b645', asset_number: 'TL004', category: 'trailer', subtype: 'skel_trailer', status: 'active' },
-          { id: 'e3e92532-032c-4a8e-825d-bc8af25102b0', asset_number: 'TL005', category: 'trailer', subtype: 'extendable_flattop', status: 'active' },
-          { id: 'e6858fe1-edab-4ada-abe7-65f853bc5a2d', asset_number: 'DL001', category: 'dolly', subtype: null, status: 'active' },
+          { id: '910472f2-2185-483a-ad70-87e55f46e2fe', asset_number: 'TL001', category: 'trailer', subtype: 'flattop', status: 'serviced' },
+          { id: '937e0b87-8c68-43d3-8244-abcd0ad68be9', asset_number: 'TL002', category: 'trailer', subtype: 'dropdeck', status: 'serviced' },
+          { id: '94cf231d-9804-4f1b-a01d-82d02f17b645', asset_number: 'TL004', category: 'trailer', subtype: 'skel_trailer', status: 'serviced' },
+          { id: 'e3e92532-032c-4a8e-825d-bc8af25102b0', asset_number: 'TL005', category: 'trailer', subtype: 'extendable_flattop', status: 'serviced' },
+          { id: 'e6858fe1-edab-4ada-abe7-65f853bc5a2d', asset_number: 'DL001', category: 'dolly', subtype: null, status: 'serviced' },
         ]);
       } finally {
         setIsLoading(false);

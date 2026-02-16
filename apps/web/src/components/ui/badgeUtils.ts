@@ -2,7 +2,7 @@ type BadgeVariant = 'default' | 'success' | 'warning' | 'danger' | 'info';
 
 export function getStatusBadgeVariant(status: string): BadgeVariant {
   switch (status.toLowerCase()) {
-    case 'active':
+    case 'serviced':
     case 'completed':
     case 'available':
       return 'success';
@@ -24,14 +24,12 @@ export function getStatusBadgeVariant(status: string): BadgeVariant {
  */
 export function getAssetStatusBadgeVariant(status: string): BadgeVariant {
   switch (status) {
-    case 'active':
+    case 'serviced':
       return 'success';
     case 'maintenance':
       return 'warning';
     case 'out_of_service':
       return 'danger';
-    case 'decommissioned':
-      return 'default';
     default:
       return 'default';
   }

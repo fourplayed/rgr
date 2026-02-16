@@ -1,12 +1,11 @@
 /**
- * AssetOverviewTab — Info grid, location, QR code, edit/decommission actions
+ * AssetOverviewTab — Info grid, location, QR code, edit/retire actions
  */
 import React, { useState } from 'react';
 import { MapPin, QrCode, Calendar, Truck, Hash, User, Building } from 'lucide-react';
 import type { AssetWithRelations, AssetStatus } from '@rgr/shared';
 import { AssetStatusLabels, AssetStatusColors, AssetCategoryLabels } from '@rgr/shared';
 import { EditAssetForm } from '../forms/EditAssetForm';
-import { DecommissionConfirmDialog } from '../forms/DecommissionConfirmDialog';
 
 interface AssetOverviewTabProps {
   asset: AssetWithRelations;
@@ -18,7 +17,6 @@ interface AssetOverviewTabProps {
 export const AssetOverviewTab = React.memo<AssetOverviewTabProps>(
   ({ asset, isDark, canEdit, canDelete }) => {
     const [isEditing, setIsEditing] = useState(false);
-    const [showDecommission, setShowDecommission] = useState(false);
 
     const textColor = isDark ? 'text-slate-200' : 'text-white';
     const mutedColor = isDark ? 'text-slate-400' : 'text-white/60';
@@ -130,34 +128,15 @@ export const AssetOverviewTab = React.memo<AssetOverviewTabProps>(
         )}
 
         {/* Actions */}
-        {(canEdit || canDelete) && (
+        {canEdit && (
           <div className={`pt-4 border-t ${sectionBorder} flex gap-2`}>
-            {canEdit && (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="flex-1 px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white transition-colors"
-              >
-                Edit
-              </button>
-            )}
-            {canDelete && asset.status !== 'decommissioned' && (
-              <button
-                onClick={() => setShowDecommission(true)}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 transition-colors"
-              >
-                Decommission
-              </button>
-            )}
+            <button
+              onClick={() => setIsEditing(true)}
+              className="flex-1 px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white transition-colors"
+            >
+              Edit
+            </button>
           </div>
-        )}
-
-        {/* Decommission dialog */}
-        {showDecommission && (
-          <DecommissionConfirmDialog
-            asset={asset}
-            isDark={isDark}
-            onClose={() => setShowDecommission(false)}
-          />
         )}
       </div>
     );

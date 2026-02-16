@@ -24,7 +24,7 @@ export default function AssetListScreen() {
   const { logout } = useAuthStore();
   const [search, setSearch] = useState('');
   const [selectedStatuses, setSelectedStatuses] = useState<AssetStatus[]>([
-    'active',
+    'serviced',
     'maintenance',
   ]);
 
