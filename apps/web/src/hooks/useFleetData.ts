@@ -92,47 +92,28 @@ export const FLEET_QUERY_KEYS = {
 async function fetchFleetStatistics(): Promise<FleetStatistics> {
   const supabase = getSupabaseClient();
 
-  const { data: assets, error } = await supabase
-    .from('assets')
-    .select('status, category')
-    .is('deleted_at', null);
+  const { data, error } = await supabase.rpc('get_fleet_statistics');
 
   if (error) {
     throw new Error(`Failed to fetch fleet statistics: ${error.message}`);
   }
 
-  // Count by status
-  const statusCounts = {
-    serviced: 0,
-    maintenance: 0,
-    out_of_service: 0,
+  const stats = data as {
+    total_assets: number;
+    serviced: number;
+    maintenance: number;
+    out_of_service: number;
+    trailer_count: number;
+    dolly_count: number;
   };
-
-  // Count by category
-  const categoryCounts = {
-    trailer: 0,
-    dolly: 0,
-  };
-
-  assets?.forEach((asset: { status: string; category: string }) => {
-    const status = asset.status as keyof typeof statusCounts;
-    if (status in statusCounts) {
-      statusCounts[status]++;
-    }
-
-    const category = asset.category as keyof typeof categoryCounts;
-    if (category in categoryCounts) {
-      categoryCounts[category]++;
-    }
-  });
 
   return {
-    totalAssets: assets?.length || 0,
-    activeAssets: statusCounts.serviced,
-    inMaintenance: statusCounts.maintenance,
-    outOfService: statusCounts.out_of_service,
-    trailerCount: categoryCounts.trailer,
-    dollyCount: categoryCounts.dolly,
+    totalAssets: stats.total_assets,
+    activeAssets: stats.serviced,
+    inMaintenance: stats.maintenance,
+    outOfService: stats.out_of_service,
+    trailerCount: stats.trailer_count,
+    dollyCount: stats.dolly_count,
   };
 }
 
@@ -389,8 +370,8 @@ export function useFleetRealtime(enabled: boolean = true) {
 
     // Cleanup subscriptions
     return () => {
-      scanSubscription.unsubscribe();
-      assetSubscription.unsubscribe();
+      supabase.removeChannel(scanSubscription);
+      supabase.removeChannel(assetSubscription);
     };
   }, [queryClient, enabled]);
 }

@@ -269,69 +269,34 @@ export function useHazardReview(): UseHazardReviewResult {
     }
   }, [filters]);
 
-  // Fetch statistics
+  // Fetch statistics via single RPC call
   const fetchStats = useCallback(async () => {
     try {
       const supabase = getSupabaseClient();
 
-      // Get total photos analyzed count from freight_analysis table
-      const { count: totalPhotosAnalyzed } = await supabase
-        .from('freight_analysis')
-        .select('*', { count: 'exact', head: true });
+      const { data, error } = await supabase.rpc('get_hazard_review_stats');
 
-      // Get pending count
-      const { count: pendingCount } = await supabase
-        .from('hazard_alerts')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'active');
+      if (error) throw error;
 
-      // Get severity breakdown
-      const { data: severityData } = await supabase
-        .from('hazard_alerts')
-        .select('severity')
-        .eq('status', 'active');
-
-      const severityBreakdown = {
-        critical: 0,
-        high: 0,
-        medium: 0,
-        low: 0,
+      const rpc = data as {
+        total_photos_analyzed: number;
+        pending_reviews: number;
+        ai_accuracy: number;
+        false_positive_rate: number;
+        severity_breakdown: {
+          critical: number;
+          high: number;
+          medium: number;
+          low: number;
+        };
       };
 
-      (severityData || []).forEach((item: { severity: HazardSeverity }) => {
-        if (item.severity in severityBreakdown) {
-          severityBreakdown[item.severity]++;
-        }
-      });
-
-      // Calculate AI accuracy from reviewed alerts
-      const { data: reviewedData } = await supabase
-        .from('hazard_alerts')
-        .select('review_outcome')
-        .not('review_outcome', 'is', null);
-
-      const totalReviewed = reviewedData?.length || 0;
-      const confirmedCount = (reviewedData || []).filter(
-        (r: { review_outcome: string }) => r.review_outcome === 'confirmed'
-      ).length;
-      const falsePositiveCount = (reviewedData || []).filter(
-        (r: { review_outcome: string }) => r.review_outcome === 'false_positive'
-      ).length;
-
-      const aiAccuracy = totalReviewed > 0
-        ? Math.round((confirmedCount / totalReviewed) * 100 * 10) / 10
-        : 0;
-      const falsePositiveRate = totalReviewed > 0
-        ? Math.round((falsePositiveCount / totalReviewed) * 100 * 10) / 10
-        : 0;
-
-      // Set stats from database
       setStats({
-        pendingReviews: pendingCount || 0,
-        aiAccuracy,
-        falsePositiveRate,
-        totalPhotosAnalyzed: totalPhotosAnalyzed || 0,
-        severityBreakdown,
+        pendingReviews: rpc.pending_reviews,
+        aiAccuracy: rpc.ai_accuracy,
+        falsePositiveRate: rpc.false_positive_rate,
+        totalPhotosAnalyzed: rpc.total_photos_analyzed,
+        severityBreakdown: rpc.severity_breakdown,
       });
     } catch {
       // Keep default stats on error

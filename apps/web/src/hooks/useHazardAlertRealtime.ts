@@ -188,19 +188,31 @@ export function useHazardAlertRealtime(
   const channelRef = useRef<RealtimeChannel | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Use refs for callback options to prevent re-subscription thrashing
+  // Use refs for all option values to prevent re-subscription thrashing.
+  // Callbacks and filter arrays change identity on every parent render,
+  // but the subscription only needs the latest values when a message arrives.
   const onNewAlertRef = useRef(onNewAlert);
   const onAlertUpdateRef = useRef(onAlertUpdate);
   const onEventRef = useRef(onEvent);
+  const assetIdsRef = useRef(assetIds);
+  const severitiesRef = useRef(severities);
+  const statusesRef = useRef(statuses);
+  const playSoundRef = useRef(playSound);
+  const browserNotificationsRef = useRef(browserNotifications);
 
   // Keep refs up to date
   useEffect(() => {
     onNewAlertRef.current = onNewAlert;
     onAlertUpdateRef.current = onAlertUpdate;
     onEventRef.current = onEvent;
+    assetIdsRef.current = assetIds;
+    severitiesRef.current = severities;
+    statusesRef.current = statuses;
+    playSoundRef.current = playSound;
+    browserNotificationsRef.current = browserNotifications;
   });
 
-  // Handle incoming changes
+  // Handle incoming changes — stable callback (no deps that change per render)
   const handleChange = useCallback(
     (payload: RealtimePostgresChangesPayload<RealtimeHazardAlert>) => {
       const { eventType, new: newRecord, old: oldRecord } = payload;
@@ -209,15 +221,18 @@ export function useHazardAlertRealtime(
       const alert = newRecord as RealtimeHazardAlert | undefined;
       const oldAlert = oldRecord as RealtimeHazardAlert | undefined;
 
-      // Apply filters
+      // Apply filters (read latest values from refs)
       if (alert) {
-        if (assetIds?.length && alert.asset_id && !assetIds.includes(alert.asset_id)) {
+        const ids = assetIdsRef.current;
+        const sevs = severitiesRef.current;
+        const sts = statusesRef.current;
+        if (ids?.length && alert.asset_id && !ids.includes(alert.asset_id)) {
           return;
         }
-        if (severities?.length && !severities.includes(alert.severity)) {
+        if (sevs?.length && !sevs.includes(alert.severity)) {
           return;
         }
-        if (statuses?.length && !statuses.includes(alert.status)) {
+        if (sts?.length && !sts.includes(alert.status)) {
           return;
         }
       }
@@ -239,12 +254,12 @@ export function useHazardAlertRealtime(
         onNewAlertRef.current?.(alert);
 
         // Play sound for new critical/high alerts
-        if (playSound && (alert.severity === 'critical' || alert.severity === 'high')) {
+        if (playSoundRef.current && (alert.severity === 'critical' || alert.severity === 'high')) {
           playAlertSound(alert.severity);
         }
 
         // Show browser notification
-        if (browserNotifications) {
+        if (browserNotificationsRef.current) {
           showBrowserNotification(alert);
         }
       } else if (eventType === 'UPDATE' && alert) {
@@ -254,7 +269,7 @@ export function useHazardAlertRealtime(
       // General callback
       onEventRef.current?.(event);
     },
-    [assetIds, severities, statuses, playSound, browserNotifications]
+    [] // stable — all volatile values read from refs
   );
 
   // Connect to realtime channel

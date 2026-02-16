@@ -296,9 +296,9 @@ export function useAssetsRealtime(enabled: boolean = true) {
       .subscribe();
 
     return () => {
-      assetSub.unsubscribe();
-      scanSub.unsubscribe();
-      hazardSub.unsubscribe();
+      supabase.removeChannel(assetSub);
+      supabase.removeChannel(scanSub);
+      supabase.removeChannel(hazardSub);
     };
   }, [queryClient, enabled]);
 }
