@@ -262,6 +262,15 @@ BEGIN
   INSERT INTO maintenance_records (asset_id, title, description, priority, status, maintenance_type, scheduled_date, started_at, completed_at, estimated_cost, actual_cost, notes)
   VALUES (a05, 'Pre-season heavy haulage inspection', 'Full inspection before wet season Pilbara runs. Chassis, suspension, electrical.', 'low', 'completed', 'inspection', CURRENT_DATE - 21, NOW() - INTERVAL '20 days', NOW() - INTERVAL '19 days', 750.00, 750.00, 'All clear — passed with no defects.');
 
-  RAISE NOTICE 'Seed complete: 30 assets (20 trailers + 10 dollies), scan events, and maintenance records inserted.';
+  -- ──────────────────────────────────────────────────────────────────────────
+  -- 6. FIX QR CODE DATA — use rgr://asset/{UUID} format matching parseQRCode()
+  -- ──────────────────────────────────────────────────────────────────────────
+  UPDATE assets
+  SET qr_code_data   = 'rgr://asset/' || id,
+      qr_generated_at = NOW()
+  WHERE deleted_at IS NULL
+    AND qr_code_data LIKE 'RGR-%';
+
+  RAISE NOTICE 'Seed complete: 30 assets (20 trailers + 10 dollies), scan events, maintenance records inserted. QR codes updated to rgr://asset/{UUID} format.';
 
 END $$;
