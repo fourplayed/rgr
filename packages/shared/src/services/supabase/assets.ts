@@ -100,8 +100,10 @@ export async function listAssets(
 
   // Filters
   if (search) {
+    // Escape PostgREST filter metacharacters to prevent query injection
+    const safeSearch = search.replace(/[%_\\,().]/g, (c) => `\\${c}`);
     query = query.or(
-      `asset_number.ilike.%${search}%,make.ilike.%${search}%,model.ilike.%${search}%,registration_number.ilike.%${search}%,description.ilike.%${search}%`
+      `asset_number.ilike.%${safeSearch}%,make.ilike.%${safeSearch}%,model.ilike.%${safeSearch}%,registration_number.ilike.%${safeSearch}%,description.ilike.%${safeSearch}%`
     );
   }
 

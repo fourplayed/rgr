@@ -41,11 +41,11 @@ BEGIN
 
   -- Perth trailers
   INSERT INTO assets (asset_number, category, subtype, status, make, model, year_manufactured, registration_number, registration_expiry, assigned_depot_id, last_latitude, last_longitude, last_location_updated_at, qr_code_data, notes)
-  VALUES ('TL001', 'trailer', 'flatbed', 'active', 'Vawdrey', 'VB-S3', 2022, '1TQR987', '2026-08-15', d_per, -31.9505, 115.8605, NOW() - INTERVAL '2 hours', 'RGR-TL001', 'Primary Perth metro run')
+  VALUES ('TL001', 'trailer', 'flatbed', 'serviced', 'Vawdrey', 'VB-S3', 2022, '1TQR987', '2026-08-15', d_per, -31.9505, 115.8605, NOW() - INTERVAL '2 hours', 'RGR-TL001', 'Primary Perth metro run')
   RETURNING id INTO a01;
 
   INSERT INTO assets (asset_number, category, subtype, status, make, model, year_manufactured, registration_number, registration_expiry, assigned_depot_id, last_latitude, last_longitude, last_location_updated_at, qr_code_data, notes)
-  VALUES ('TL002', 'trailer', 'curtainsider', 'active', 'Maxitrans', 'Freighter ST3', 2021, '1TQR654', '2026-11-30', d_per, -31.8868, 115.8613, NOW() - INTERVAL '5 hours', 'RGR-TL002', 'General freight — Welshpool')
+  VALUES ('TL002', 'trailer', 'curtainsider', 'serviced', 'Maxitrans', 'Freighter ST3', 2021, '1TQR654', '2026-11-30', d_per, -31.8868, 115.8613, NOW() - INTERVAL '5 hours', 'RGR-TL002', 'General freight — Welshpool')
   RETURNING id INTO a02;
 
   INSERT INTO assets (asset_number, category, subtype, status, make, model, year_manufactured, registration_number, registration_expiry, assigned_depot_id, last_latitude, last_longitude, last_location_updated_at, qr_code_data, notes)
@@ -53,16 +53,16 @@ BEGIN
   RETURNING id INTO a03;
 
   INSERT INTO assets (asset_number, category, subtype, status, make, model, year_manufactured, registration_number, registration_expiry, assigned_depot_id, last_latitude, last_longitude, last_location_updated_at, qr_code_data, notes)
-  VALUES ('TL004', 'trailer', 'flatbed', 'active', 'Krueger', 'ST-3-OD', 2023, '1TQR111', '2027-02-28', d_per, -31.7920, 115.8881, NOW() - INTERVAL '1 day', 'RGR-TL004', 'Oversize load certified')
+  VALUES ('TL004', 'trailer', 'flatbed', 'serviced', 'Krueger', 'ST-3-OD', 2023, '1TQR111', '2027-02-28', d_per, -31.7920, 115.8881, NOW() - INTERVAL '1 day', 'RGR-TL004', 'Oversize load certified')
   RETURNING id INTO a04;
 
   -- Karratha trailers
   INSERT INTO assets (asset_number, category, subtype, status, make, model, year_manufactured, registration_number, registration_expiry, assigned_depot_id, last_latitude, last_longitude, last_location_updated_at, qr_code_data, notes)
-  VALUES ('TL005', 'trailer', 'flatbed', 'active', 'Vawdrey', 'VB-S3', 2021, '1KAR501', '2026-09-15', d_kar, -20.7364, 116.8463, NOW() - INTERVAL '6 hours', 'RGR-TL005', 'Karratha iron ore run')
+  VALUES ('TL005', 'trailer', 'flatbed', 'serviced', 'Vawdrey', 'VB-S3', 2021, '1KAR501', '2026-09-15', d_kar, -20.7364, 116.8463, NOW() - INTERVAL '6 hours', 'RGR-TL005', 'Karratha iron ore run')
   RETURNING id INTO a05;
 
   INSERT INTO assets (asset_number, category, subtype, status, make, model, year_manufactured, registration_number, registration_expiry, assigned_depot_id, last_latitude, last_longitude, last_location_updated_at, qr_code_data, notes)
-  VALUES ('TL006', 'trailer', 'drop-deck', 'active', 'Freighter', 'DD-45', 2022, '1KAR502', '2026-12-01', d_kar, -20.7500, 116.8300, NOW() - INTERVAL '12 hours', 'RGR-TL006', 'Heavy haulage — Pilbara')
+  VALUES ('TL006', 'trailer', 'drop-deck', 'serviced', 'Freighter', 'DD-45', 2022, '1KAR502', '2026-12-01', d_kar, -20.7500, 116.8300, NOW() - INTERVAL '12 hours', 'RGR-TL006', 'Heavy haulage — Pilbara')
   RETURNING id INTO a06;
 
   INSERT INTO assets (asset_number, category, subtype, status, make, model, year_manufactured, registration_number, registration_expiry, assigned_depot_id, last_latitude, last_longitude, last_location_updated_at, qr_code_data, notes)
@@ -71,11 +71,11 @@ BEGIN
 
   -- Port Hedland trailers
   INSERT INTO assets (asset_number, category, subtype, status, make, model, year_manufactured, registration_number, registration_expiry, assigned_depot_id, last_latitude, last_longitude, last_location_updated_at, qr_code_data, notes)
-  VALUES ('TL008', 'trailer', 'side-tipper', 'active', 'Azmeb', 'ST-40', 2023, '1PHD801', '2027-01-15', d_phd, -20.3106, 118.5753, NOW() - INTERVAL '4 hours', 'RGR-TL008', 'Ore haulage — BHP contract')
+  VALUES ('TL008', 'trailer', 'side-tipper', 'serviced', 'Azmeb', 'ST-40', 2023, '1PHD801', '2027-01-15', d_phd, -20.3106, 118.5753, NOW() - INTERVAL '4 hours', 'RGR-TL008', 'Ore haulage — BHP contract')
   RETURNING id INTO a08;
 
   INSERT INTO assets (asset_number, category, subtype, status, make, model, year_manufactured, registration_number, registration_expiry, assigned_depot_id, last_latitude, last_longitude, last_location_updated_at, qr_code_data, notes)
-  VALUES ('TL009', 'trailer', 'side-tipper', 'active', 'Azmeb', 'ST-40', 2023, '1PHD802', '2027-01-15', d_phd, -20.3200, 118.5600, NOW() - INTERVAL '8 hours', 'RGR-TL009', 'Ore haulage — FMG contract')
+  VALUES ('TL009', 'trailer', 'side-tipper', 'serviced', 'Azmeb', 'ST-40', 2023, '1PHD802', '2027-01-15', d_phd, -20.3200, 118.5600, NOW() - INTERVAL '8 hours', 'RGR-TL009', 'Ore haulage — FMG contract')
   RETURNING id INTO a09;
 
   INSERT INTO assets (asset_number, category, subtype, status, make, model, year_manufactured, registration_number, registration_expiry, assigned_depot_id, last_latitude, last_longitude, last_location_updated_at, qr_code_data, notes)
@@ -84,25 +84,25 @@ BEGIN
 
   -- Kalgoorlie trailers
   INSERT INTO assets (asset_number, category, subtype, status, make, model, year_manufactured, registration_number, registration_expiry, assigned_depot_id, last_latitude, last_longitude, last_location_updated_at, qr_code_data, notes)
-  VALUES ('TL011', 'trailer', 'flatbed', 'active', 'Vawdrey', 'VB-S2', 2021, '1KAL111', '2026-10-20', d_kal, -30.7489, 121.4660, NOW() - INTERVAL '1 hour', 'RGR-TL011', 'Goldfields freight')
+  VALUES ('TL011', 'trailer', 'flatbed', 'serviced', 'Vawdrey', 'VB-S2', 2021, '1KAL111', '2026-10-20', d_kal, -30.7489, 121.4660, NOW() - INTERVAL '1 hour', 'RGR-TL011', 'Goldfields freight')
   RETURNING id INTO a11;
 
   INSERT INTO assets (asset_number, category, subtype, status, make, model, year_manufactured, registration_number, registration_expiry, assigned_depot_id, last_latitude, last_longitude, last_location_updated_at, qr_code_data, notes)
-  VALUES ('TL012', 'trailer', 'curtainsider', 'active', 'Maxitrans', 'Tautliner', 2022, '1KAL112', '2026-07-15', d_kal, -30.7600, 121.4500, NOW() - INTERVAL '3 hours', 'RGR-TL012', 'Retail deliveries — Kalgoorlie CBD')
+  VALUES ('TL012', 'trailer', 'curtainsider', 'serviced', 'Maxitrans', 'Tautliner', 2022, '1KAL112', '2026-07-15', d_kal, -30.7600, 121.4500, NOW() - INTERVAL '3 hours', 'RGR-TL012', 'Retail deliveries — Kalgoorlie CBD')
   RETURNING id INTO a12;
 
   -- Geraldton trailers
   INSERT INTO assets (asset_number, category, subtype, status, make, model, year_manufactured, registration_number, registration_expiry, assigned_depot_id, last_latitude, last_longitude, last_location_updated_at, qr_code_data, notes)
-  VALUES ('TL013', 'trailer', 'refrigerated', 'active', 'Lucar', 'RFG-48', 2022, '1GER131', '2026-06-30', d_ger, -28.7745, 114.6150, NOW() - INTERVAL '10 hours', 'RGR-TL013', 'Seafood — Geraldton to Perth')
+  VALUES ('TL013', 'trailer', 'refrigerated', 'serviced', 'Lucar', 'RFG-48', 2022, '1GER131', '2026-06-30', d_ger, -28.7745, 114.6150, NOW() - INTERVAL '10 hours', 'RGR-TL013', 'Seafood — Geraldton to Perth')
   RETURNING id INTO a13;
 
   INSERT INTO assets (asset_number, category, subtype, status, make, model, year_manufactured, registration_number, registration_expiry, assigned_depot_id, last_latitude, last_longitude, last_location_updated_at, qr_code_data, notes)
-  VALUES ('TL014', 'trailer', 'flatbed', 'active', 'Freighter', 'FB-ST', 2019, '1GER132', '2026-05-01', d_ger, -28.7800, 114.6200, NOW() - INTERVAL '2 days', 'RGR-TL014', 'Mid-west grain run')
+  VALUES ('TL014', 'trailer', 'flatbed', 'serviced', 'Freighter', 'FB-ST', 2019, '1GER132', '2026-05-01', d_ger, -28.7800, 114.6200, NOW() - INTERVAL '2 days', 'RGR-TL014', 'Mid-west grain run')
   RETURNING id INTO a14;
 
   -- Bunbury trailers
   INSERT INTO assets (asset_number, category, subtype, status, make, model, year_manufactured, registration_number, registration_expiry, assigned_depot_id, last_latitude, last_longitude, last_location_updated_at, qr_code_data, notes)
-  VALUES ('TL015', 'trailer', 'curtainsider', 'active', 'Vawdrey', 'VB-CS3', 2023, '1BUN151', '2027-03-15', d_bun, -33.3271, 115.6414, NOW() - INTERVAL '5 hours', 'RGR-TL015', 'South-west timber')
+  VALUES ('TL015', 'trailer', 'curtainsider', 'serviced', 'Vawdrey', 'VB-CS3', 2023, '1BUN151', '2027-03-15', d_bun, -33.3271, 115.6414, NOW() - INTERVAL '5 hours', 'RGR-TL015', 'South-west timber')
   RETURNING id INTO a15;
 
   INSERT INTO assets (asset_number, category, subtype, status, make, model, year_manufactured, registration_number, registration_expiry, assigned_depot_id, last_latitude, last_longitude, last_location_updated_at, qr_code_data, notes)
@@ -111,16 +111,16 @@ BEGIN
 
   -- Albany trailers
   INSERT INTO assets (asset_number, category, subtype, status, make, model, year_manufactured, registration_number, registration_expiry, assigned_depot_id, last_latitude, last_longitude, last_location_updated_at, qr_code_data, notes)
-  VALUES ('TL017', 'trailer', 'flatbed', 'active', 'Krueger', 'FB-2A', 2021, '1ALB171', '2026-09-30', d_alb, -35.0269, 117.8837, NOW() - INTERVAL '1 day', 'RGR-TL017', 'Great Southern grain')
+  VALUES ('TL017', 'trailer', 'flatbed', 'serviced', 'Krueger', 'FB-2A', 2021, '1ALB171', '2026-09-30', d_alb, -35.0269, 117.8837, NOW() - INTERVAL '1 day', 'RGR-TL017', 'Great Southern grain')
   RETURNING id INTO a17;
 
   INSERT INTO assets (asset_number, category, subtype, status, make, model, year_manufactured, registration_number, registration_expiry, assigned_depot_id, last_latitude, last_longitude, last_location_updated_at, qr_code_data, notes)
-  VALUES ('TL018', 'trailer', 'curtainsider', 'active', 'Maxitrans', 'Tautliner', 2020, '1ALB172', '2026-08-01', d_alb, -35.0300, 117.8900, NOW() - INTERVAL '18 hours', 'RGR-TL018', 'Albany port freight')
+  VALUES ('TL018', 'trailer', 'curtainsider', 'serviced', 'Maxitrans', 'Tautliner', 2020, '1ALB172', '2026-08-01', d_alb, -35.0300, 117.8900, NOW() - INTERVAL '18 hours', 'RGR-TL018', 'Albany port freight')
   RETURNING id INTO a18;
 
   -- Esperance trailers
   INSERT INTO assets (asset_number, category, subtype, status, make, model, year_manufactured, registration_number, registration_expiry, assigned_depot_id, last_latitude, last_longitude, last_location_updated_at, qr_code_data, notes)
-  VALUES ('TL019', 'trailer', 'side-tipper', 'active', 'Azmeb', 'ST-35', 2022, '1ESP191', '2026-11-15', d_esp, -33.8614, 121.8919, NOW() - INTERVAL '6 hours', 'RGR-TL019', 'Nickel ore — Norseman')
+  VALUES ('TL019', 'trailer', 'side-tipper', 'serviced', 'Azmeb', 'ST-35', 2022, '1ESP191', '2026-11-15', d_esp, -33.8614, 121.8919, NOW() - INTERVAL '6 hours', 'RGR-TL019', 'Nickel ore — Norseman')
   RETURNING id INTO a19;
 
   INSERT INTO assets (asset_number, category, subtype, status, make, model, year_manufactured, registration_number, registration_expiry, assigned_depot_id, last_latitude, last_longitude, last_location_updated_at, qr_code_data, notes)
@@ -131,11 +131,11 @@ BEGIN
 
   -- Perth dollies
   INSERT INTO assets (asset_number, category, subtype, status, make, model, year_manufactured, registration_number, registration_expiry, assigned_depot_id, last_latitude, last_longitude, last_location_updated_at, qr_code_data, notes)
-  VALUES ('DL001', 'dolly', 'converter', 'active', 'Howard Porter', 'CD-2A', 2022, '1DPR001', '2026-10-15', d_per, -31.9480, 115.8590, NOW() - INTERVAL '3 hours', 'RGR-DL001', 'B-double converter — Perth')
+  VALUES ('DL001', 'dolly', 'converter', 'serviced', 'Howard Porter', 'CD-2A', 2022, '1DPR001', '2026-10-15', d_per, -31.9480, 115.8590, NOW() - INTERVAL '3 hours', 'RGR-DL001', 'B-double converter — Perth')
   RETURNING id INTO a21;
 
   INSERT INTO assets (asset_number, category, subtype, status, make, model, year_manufactured, registration_number, registration_expiry, assigned_depot_id, last_latitude, last_longitude, last_location_updated_at, qr_code_data, notes)
-  VALUES ('DL002', 'dolly', 'converter', 'active', 'Howard Porter', 'CD-2A', 2021, '1DPR002', '2026-07-20', d_per, -31.9510, 115.8620, NOW() - INTERVAL '1 day', 'RGR-DL002', 'Road-train converter — Perth')
+  VALUES ('DL002', 'dolly', 'converter', 'serviced', 'Howard Porter', 'CD-2A', 2021, '1DPR002', '2026-07-20', d_per, -31.9510, 115.8620, NOW() - INTERVAL '1 day', 'RGR-DL002', 'Road-train converter — Perth')
   RETURNING id INTO a22;
 
   INSERT INTO assets (asset_number, category, subtype, status, make, model, year_manufactured, registration_number, registration_expiry, assigned_depot_id, last_latitude, last_longitude, last_location_updated_at, qr_code_data, notes)
@@ -144,16 +144,16 @@ BEGIN
 
   -- Karratha dollies
   INSERT INTO assets (asset_number, category, subtype, status, make, model, year_manufactured, registration_number, registration_expiry, assigned_depot_id, last_latitude, last_longitude, last_location_updated_at, qr_code_data, notes)
-  VALUES ('DL004', 'dolly', 'converter', 'active', 'Howard Porter', 'CD-3A', 2023, '1DKR004', '2027-01-30', d_kar, -20.7380, 116.8480, NOW() - INTERVAL '8 hours', 'RGR-DL004', 'Triple road-train converter')
+  VALUES ('DL004', 'dolly', 'converter', 'serviced', 'Howard Porter', 'CD-3A', 2023, '1DKR004', '2027-01-30', d_kar, -20.7380, 116.8480, NOW() - INTERVAL '8 hours', 'RGR-DL004', 'Triple road-train converter')
   RETURNING id INTO a24;
 
   INSERT INTO assets (asset_number, category, subtype, status, make, model, year_manufactured, registration_number, registration_expiry, assigned_depot_id, last_latitude, last_longitude, last_location_updated_at, qr_code_data, notes)
-  VALUES ('DL005', 'dolly', 'converter', 'active', 'Drake', 'RT-CV', 2022, '1DKR005', '2026-08-15', d_kar, -20.7350, 116.8450, NOW() - INTERVAL '4 hours', 'RGR-DL005', 'Pilbara mine haul')
+  VALUES ('DL005', 'dolly', 'converter', 'serviced', 'Drake', 'RT-CV', 2022, '1DKR005', '2026-08-15', d_kar, -20.7350, 116.8450, NOW() - INTERVAL '4 hours', 'RGR-DL005', 'Pilbara mine haul')
   RETURNING id INTO a25;
 
   -- Port Hedland dollies
   INSERT INTO assets (asset_number, category, subtype, status, make, model, year_manufactured, registration_number, registration_expiry, assigned_depot_id, last_latitude, last_longitude, last_location_updated_at, qr_code_data, notes)
-  VALUES ('DL006', 'dolly', 'converter', 'active', 'Howard Porter', 'CD-3A', 2023, '1DPH006', '2027-02-28', d_phd, -20.3120, 118.5770, NOW() - INTERVAL '2 hours', 'RGR-DL006', 'BHP quad road-train')
+  VALUES ('DL006', 'dolly', 'converter', 'serviced', 'Howard Porter', 'CD-3A', 2023, '1DPH006', '2027-02-28', d_phd, -20.3120, 118.5770, NOW() - INTERVAL '2 hours', 'RGR-DL006', 'BHP quad road-train')
   RETURNING id INTO a26;
 
   INSERT INTO assets (asset_number, category, subtype, status, make, model, year_manufactured, registration_number, registration_expiry, assigned_depot_id, last_latitude, last_longitude, last_location_updated_at, qr_code_data, notes)
@@ -162,17 +162,17 @@ BEGIN
 
   -- Kalgoorlie dolly
   INSERT INTO assets (asset_number, category, subtype, status, make, model, year_manufactured, registration_number, registration_expiry, assigned_depot_id, last_latitude, last_longitude, last_location_updated_at, qr_code_data, notes)
-  VALUES ('DL008', 'dolly', 'converter', 'active', 'Howard Porter', 'CD-2A', 2022, '1DKL008', '2026-12-01', d_kal, -30.7500, 121.4680, NOW() - INTERVAL '6 hours', 'RGR-DL008', 'Goldfields road-train')
+  VALUES ('DL008', 'dolly', 'converter', 'serviced', 'Howard Porter', 'CD-2A', 2022, '1DKL008', '2026-12-01', d_kal, -30.7500, 121.4680, NOW() - INTERVAL '6 hours', 'RGR-DL008', 'Goldfields road-train')
   RETURNING id INTO a28;
 
   -- Geraldton dolly
   INSERT INTO assets (asset_number, category, subtype, status, make, model, year_manufactured, registration_number, registration_expiry, assigned_depot_id, last_latitude, last_longitude, last_location_updated_at, qr_code_data, notes)
-  VALUES ('DL009', 'dolly', 'converter', 'active', 'Drake', 'RT-CV', 2021, '1DGR009', '2026-06-15', d_ger, -28.7760, 114.6170, NOW() - INTERVAL '12 hours', 'RGR-DL009', 'Mid-west freight')
+  VALUES ('DL009', 'dolly', 'converter', 'serviced', 'Drake', 'RT-CV', 2021, '1DGR009', '2026-06-15', d_ger, -28.7760, 114.6170, NOW() - INTERVAL '12 hours', 'RGR-DL009', 'Mid-west freight')
   RETURNING id INTO a29;
 
   -- Bunbury dolly
   INSERT INTO assets (asset_number, category, subtype, status, make, model, year_manufactured, registration_number, registration_expiry, assigned_depot_id, last_latitude, last_longitude, last_location_updated_at, qr_code_data, notes)
-  VALUES ('DL010', 'dolly', 'converter', 'active', 'Howard Porter', 'CD-2A', 2020, '1DBN010', '2026-05-30', d_bun, -33.3280, 115.6430, NOW() - INTERVAL '2 days', 'RGR-DL010', 'South-west B-double')
+  VALUES ('DL010', 'dolly', 'converter', 'serviced', 'Howard Porter', 'CD-2A', 2020, '1DBN010', '2026-05-30', d_bun, -33.3280, 115.6430, NOW() - INTERVAL '2 days', 'RGR-DL010', 'South-west B-double')
   RETURNING id INTO a30;
 
   -- ──────────────────────────────────────────────────────────────────────────

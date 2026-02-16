@@ -29,7 +29,7 @@ export default function AssetListScreen() {
     'maintenance',
   ]);
 
-  const { data, isLoading, error, refetch, isRefreshing } = useAssetList({
+  const { data, isLoading, error, refetch, isRefetching } = useAssetList({
     search: search || undefined,
     statuses: selectedStatuses.length > 0 ? selectedStatuses : undefined,
     page: 1,
@@ -80,7 +80,7 @@ export default function AssetListScreen() {
         onToggleStatus={handleToggleStatus}
       />
 
-      {isLoading && !isRefreshing ? (
+      {isLoading && !isRefetching ? (
         <View style={styles.centerContent}>
           <ActivityIndicator size="large" color={colors.electricBlue} />
         </View>
@@ -101,7 +101,7 @@ export default function AssetListScreen() {
           contentContainerStyle={styles.listContent}
           refreshControl={
             <RefreshControl
-              refreshing={isRefreshing}
+              refreshing={!!isRefetching}
               onRefresh={refetch}
               tintColor={colors.electricBlue}
             />

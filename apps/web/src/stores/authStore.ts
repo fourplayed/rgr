@@ -61,6 +61,13 @@ export const useAuthStore = create<AuthState>((set) => ({
       if (profileError) {
         console.warn('[Auth] Could not fetch profile, falling back to user_metadata role:', profileError);
       } else if (profile) {
+        // Block deactivated users from logging in
+        if (!profile.isActive) {
+          await supabase.auth.signOut();
+          const errorMsg = 'Your account has been deactivated. Contact an administrator.';
+          set({ error: errorMsg, isLoading: false });
+          throw new Error(errorMsg);
+        }
         role = profile.role as UserRole;
         fullName = profile.fullName;
         avatarUrl = profile.avatarUrl;
@@ -139,6 +146,12 @@ export const useAuthStore = create<AuthState>((set) => ({
         if (profileError) {
           console.warn('[Auth] Could not fetch profile, falling back to user_metadata role:', profileError);
         } else if (profile) {
+          // Block deactivated users on session restore
+          if (!profile.isActive) {
+            await supabase.auth.signOut();
+            set({ user: null, isAuthenticated: false, isLoading: false, error: null });
+            return;
+          }
           role = profile.role as UserRole;
           fullName = profile.fullName;
           avatarUrl = profile.avatarUrl;

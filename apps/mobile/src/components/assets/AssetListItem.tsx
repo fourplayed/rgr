@@ -12,8 +12,8 @@ interface AssetListItemProps {
 }
 
 export function AssetListItem({ asset, onPress }: AssetListItemProps) {
-  const lastScanText = asset.lastScannedAt
-    ? `Scanned ${formatRelativeTime(asset.lastScannedAt)}`
+  const lastScanText = asset.lastLocationUpdatedAt
+    ? `Scanned ${formatRelativeTime(asset.lastLocationUpdatedAt)}`
     : 'Never scanned';
 
   return (

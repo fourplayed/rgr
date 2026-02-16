@@ -26,7 +26,7 @@ export default function ActivityScreen() {
     isLoading,
     error,
     refetch,
-    isRefreshing,
+    isRefetching,
   } = useMyRecentScans(user?.id);
 
   if (isLoading) {
@@ -81,16 +81,16 @@ export default function ActivityScreen() {
           >
             <View style={styles.scanHeader}>
               <Text style={styles.assetNumber}>
-                {item.asset?.assetNumber || 'Unknown Asset'}
+                {item.assetNumber || 'Unknown Asset'}
               </Text>
               <Text style={styles.scanTime}>
                 {formatRelativeTime(item.createdAt)}
               </Text>
             </View>
 
-            {item.asset?.description && (
+            {item.locationDescription && (
               <Text style={styles.assetDescription} numberOfLines={1}>
-                {item.asset.description}
+                {item.locationDescription}
               </Text>
             )}
 
@@ -109,7 +109,7 @@ export default function ActivityScreen() {
         contentContainerStyle={styles.listContent}
         refreshControl={
           <RefreshControl
-            refreshing={isRefreshing}
+            refreshing={!!isRefetching}
             onRefresh={refetch}
             tintColor={colors.electricBlue}
           />

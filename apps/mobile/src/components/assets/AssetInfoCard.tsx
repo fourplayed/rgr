@@ -26,25 +26,19 @@ export function AssetInfoCard({ asset }: AssetInfoCardProps) {
         <InfoRow label="Category" value={asset.category.replace(/_/g, ' ')} />
         <InfoRow
           label="Depot"
-          value={asset.depot?.name || 'Not assigned'}
+          value={asset.assignedDepotId || 'Not assigned'}
         />
         <InfoRow
           label="VIN"
           value={asset.vin || 'N/A'}
         />
         <InfoRow
-          label="License Plate"
-          value={asset.licensePlate || 'N/A'}
+          label="Registration"
+          value={asset.registrationNumber || 'N/A'}
         />
-        {asset.lastScannedAt && (
-          <InfoRow
-            label="Last Scanned"
-            value={formatDate(asset.lastScannedAt)}
-          />
-        )}
         {asset.lastLocationUpdatedAt && (
           <InfoRow
-            label="Last Location Update"
+            label="Last Scanned"
             value={formatDate(asset.lastLocationUpdatedAt)}
           />
         )}
@@ -56,9 +50,9 @@ export function AssetInfoCard({ asset }: AssetInfoCardProps) {
           <Text style={styles.coordinates}>
             {asset.lastLatitude.toFixed(6)}, {asset.lastLongitude.toFixed(6)}
           </Text>
-          {asset.lastAccuracy && (
+          {asset.lastLocationAccuracy && (
             <Text style={styles.accuracy}>
-              Accuracy: ±{Math.round(asset.lastAccuracy)}m
+              Accuracy: ±{Math.round(asset.lastLocationAccuracy)}m
             </Text>
           )}
         </View>
