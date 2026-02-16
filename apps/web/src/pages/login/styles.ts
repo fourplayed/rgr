@@ -21,10 +21,10 @@ export const BACKGROUND_STYLES = {
   light: {
     background: `linear-gradient(
       to bottom,
-      #75b8ff 0%,      /* Sky blue top */
-      #5c8dff 33%,     /* Medium blue upper-middle */
-      #477eff 66%,     /* Azure lower-middle */
-      #1f62ff 100%     /* Deep blue bottom */
+      #4785ff 0%,
+      #9eb1ff 33%,
+      #9ec8ff 66%,
+      #4e7adf 100%
     )`,
     minHeight: '100vh',
     transition: 'background 1.2s cubic-bezier(0.4, 0.0, 0.2, 1)',
@@ -33,10 +33,10 @@ export const BACKGROUND_STYLES = {
   dark: {
     background: `linear-gradient(
       to bottom,
-      #000d99 0%,
-      #000b80 33%,
-      #000861 66%,
-      #000533 100%
+      #5c69ff 0%,
+      #1e2ea4 33%,
+      #15186f 66%,
+      #0d1359 100%
     )`,
     minHeight: '100vh',
     transition: 'background 1.2s cubic-bezier(0.4, 0.0, 0.2, 1)',

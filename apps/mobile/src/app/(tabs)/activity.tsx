@@ -9,6 +9,7 @@ import {
   RefreshControl,
   TouchableOpacity,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useMyRecentScans } from '../../hooks/useAssetData';
 import { useAuthStore } from '../../store/authStore';
@@ -30,7 +31,8 @@ export default function ActivityScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <LinearGradient colors={[...colors.gradientLight]} style={styles.container}>
+      <SafeAreaView style={styles.containerInner}>
         <View style={styles.header}>
           <Text style={styles.title}>My Activity</Text>
         </View>
@@ -38,12 +40,14 @@ export default function ActivityScreen() {
           <ActivityIndicator size="large" color={colors.electricBlue} />
         </View>
       </SafeAreaView>
+      </LinearGradient>
     );
   }
 
   if (error) {
     return (
-      <SafeAreaView style={styles.container}>
+      <LinearGradient colors={[...colors.gradientLight]} style={styles.container}>
+      <SafeAreaView style={styles.containerInner}>
         <View style={styles.header}>
           <Text style={styles.title}>My Activity</Text>
         </View>
@@ -54,11 +58,13 @@ export default function ActivityScreen() {
           </TouchableOpacity>
         </View>
       </SafeAreaView>
+      </LinearGradient>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <LinearGradient colors={[...colors.gradientLight]} style={styles.container}>
+    <SafeAreaView style={styles.containerInner}>
       <View style={styles.header}>
         <Text style={styles.title}>My Activity</Text>
         <Text style={styles.subtitle}>{scans.length} scans</Text>
@@ -118,13 +124,16 @@ export default function ActivityScreen() {
         }
       />
     </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+  },
+  containerInner: {
+    flex: 1,
   },
   header: {
     paddingHorizontal: spacing.base,

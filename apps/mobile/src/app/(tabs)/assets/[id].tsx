@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAsset, useAssetScans, useAssetMaintenance } from '../../../hooks/useAssetData';
 import { AssetInfoCard } from '../../../components/assets/AssetInfoCard';
@@ -37,17 +38,20 @@ export default function AssetDetailScreen() {
 
   if (assetLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <LinearGradient colors={[...colors.gradientLight]} style={styles.container}>
+      <SafeAreaView style={styles.containerInner}>
         <View style={styles.centerContent}>
           <ActivityIndicator size="large" color={colors.electricBlue} />
         </View>
       </SafeAreaView>
+      </LinearGradient>
     );
   }
 
   if (assetError || !asset) {
     return (
-      <SafeAreaView style={styles.container}>
+      <LinearGradient colors={[...colors.gradientLight]} style={styles.container}>
+      <SafeAreaView style={styles.containerInner}>
         <View style={styles.centerContent}>
           <Text style={styles.errorText}>Failed to load asset</Text>
           <TouchableOpacity
@@ -58,6 +62,7 @@ export default function AssetDetailScreen() {
           </TouchableOpacity>
         </View>
       </SafeAreaView>
+      </LinearGradient>
     );
   }
 
@@ -67,7 +72,8 @@ export default function AssetDetailScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <LinearGradient colors={[...colors.gradientLight]} style={styles.container}>
+    <SafeAreaView style={styles.containerInner}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Text style={styles.backText}>← Back</Text>
@@ -141,13 +147,16 @@ export default function AssetDetailScreen() {
         )}
       </ScrollView>
     </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+  },
+  containerInner: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',

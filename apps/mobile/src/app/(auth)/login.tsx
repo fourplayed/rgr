@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
 import { colors } from '../../theme/colors';
@@ -43,8 +44,9 @@ export default function LoginScreen() {
   };
 
   return (
+    <LinearGradient colors={[...colors.gradientDark]} style={styles.container}>
     <KeyboardAvoidingView
-      style={styles.container}
+      style={styles.containerInner}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.content}>
@@ -96,13 +98,16 @@ export default function LoginScreen() {
         </View>
       </View>
     </KeyboardAvoidingView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.navy,
+  },
+  containerInner: {
+    flex: 1,
   },
   content: {
     flex: 1,

@@ -7,6 +7,7 @@ import {
   Alert,
   TouchableOpacity,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { useAssetByQRCode, useCreateScanEvent } from '../../hooks/useAssetData';
@@ -109,17 +110,20 @@ export default function ScanScreen() {
 
   if (!permission) {
     return (
-      <SafeAreaView style={styles.container}>
+      <LinearGradient colors={[...colors.gradientDark]} style={styles.container}>
+      <SafeAreaView style={styles.containerInner}>
         <View style={styles.centerContent}>
           <Text style={styles.messageText}>Checking camera permission...</Text>
         </View>
       </SafeAreaView>
+      </LinearGradient>
     );
   }
 
   if (!permission.granted) {
     return (
-      <SafeAreaView style={styles.container}>
+      <LinearGradient colors={[...colors.gradientDark]} style={styles.container}>
+      <SafeAreaView style={styles.containerInner}>
         <View style={styles.centerContent}>
           <Text style={styles.messageText}>Camera permission is required to scan QR codes</Text>
           <TouchableOpacity style={styles.button} onPress={requestPermission}>
@@ -127,6 +131,7 @@ export default function ScanScreen() {
           </TouchableOpacity>
         </View>
       </SafeAreaView>
+      </LinearGradient>
     );
   }
 
@@ -186,7 +191,9 @@ const CORNER_THICKNESS = 4;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundDark,
+  },
+  containerInner: {
+    flex: 1,
   },
   camera: {
     flex: 1,

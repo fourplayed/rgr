@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import type { AssetStatus, Asset } from '@rgr/shared';
 import { useAssetList } from '../../../hooks/useAssetData';
@@ -53,7 +54,8 @@ export default function AssetListScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <LinearGradient colors={[...colors.gradientLight]} style={styles.container}>
+    <SafeAreaView style={styles.containerInner}>
       <View style={styles.header}>
         <Text style={styles.title}>Fleet Assets</Text>
         <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
@@ -112,13 +114,16 @@ export default function AssetListScreen() {
         />
       )}
     </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+  },
+  containerInner: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',

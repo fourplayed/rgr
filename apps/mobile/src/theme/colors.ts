@@ -65,6 +65,10 @@ export const colors = {
   scanCorner: '#00A8FF',
   scanSuccess: '#22C55E',
 
+  // Background gradients
+  gradientLight: ['#4785ff', '#9eb1ff', '#9ec8ff', '#4e7adf'] as const,
+  gradientDark: ['#5c69ff', '#1e2ea4', '#15186f', '#0d1359'] as const,
+
   // Opacity variants
   overlay: 'rgba(0, 0, 0, 0.5)',
   overlayLight: 'rgba(0, 0, 0, 0.3)',

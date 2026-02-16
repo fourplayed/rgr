@@ -11,14 +11,14 @@ export { BACKGROUND_STYLES };
  */
 export const NAV_BAR_STYLES = {
   dark: {
-    background: 'rgba(0, 0, 48, 0.9)',
+    background: 'linear-gradient(to bottom, #5c69ff, #1e2ea4)',
     backdropFilter: 'blur(24px) saturate(180%)',
     WebkitBackdropFilter: 'blur(24px) saturate(180%)',
     borderBottom: '1px solid rgba(148, 163, 184, 0.2)',
     boxShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
   },
   light: {
-    background: 'linear-gradient(to bottom, #0000cc, #000088)',
+    background: 'linear-gradient(to bottom, #4785ff, #4e7adf)',
     backdropFilter: 'blur(24px)',
     WebkitBackdropFilter: 'blur(24px)',
     borderBottom: '1px solid rgba(148, 163, 184, 0.2)',
@@ -31,14 +31,14 @@ export const NAV_BAR_STYLES = {
  */
 export const CONTENT_PANEL_STYLES = {
   dark: {
-    background: 'rgba(6, 11, 40, 0.6)',
+    background: 'rgba(0, 0, 48, 0.45)',
     backdropFilter: 'blur(16px)',
     WebkitBackdropFilter: 'blur(16px)',
     border: '1px solid rgba(255, 255, 255, 0.08)',
     borderRadius: '12px',
   },
   light: {
-    background: 'rgba(255, 255, 255, 0.12)',
+    background: 'rgba(0, 0, 48, 0.45)',
     backdropFilter: 'blur(16px)',
     WebkitBackdropFilter: 'blur(16px)',
     border: '1px solid rgba(255, 255, 255, 0.2)',

@@ -16,17 +16,17 @@ export interface GradientColors {
 }
 
 const DEFAULT_LIGHT_GRADIENT: GradientColors = {
-  top: '#75b8ff',
-  upperMiddle: '#5c8dff',
-  lowerMiddle: '#477eff',
-  bottom: '#1f62ff',
+  top: '#4785ff',
+  upperMiddle: '#9eb1ff',
+  lowerMiddle: '#9ec8ff',
+  bottom: '#4e7adf',
 };
 
 const DEFAULT_DARK_GRADIENT: GradientColors = {
-  top: '#060f74',
-  upperMiddle: '#000970',
-  lowerMiddle: '#000757',
-  bottom: '#080a21',
+  top: '#5c69ff',
+  upperMiddle: '#1e2ea4',
+  lowerMiddle: '#15186f',
+  bottom: '#0d1359',
 };
 
 interface DevToolsState {

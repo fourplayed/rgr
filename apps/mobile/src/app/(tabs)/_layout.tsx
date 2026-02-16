@@ -1,5 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Tabs } from 'expo-router';
 import { colors } from '../../theme/colors';
 import { fontSize } from '../../theme/spacing';
@@ -11,8 +12,15 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: colors.electricBlue,
         tabBarInactiveTintColor: colors.textSecondary,
+        tabBarBackground: () => (
+          <LinearGradient
+            colors={[...colors.gradientDark]}
+            style={{ flex: 1 }}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+          />
+        ),
         tabBarStyle: {
-          backgroundColor: colors.navy,
           borderTopColor: colors.borderDark,
           paddingBottom: 8,
           paddingTop: 8,
