@@ -9,6 +9,7 @@ import {
   Platform,
   ActivityIndicator,
   Alert,
+  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -51,8 +52,11 @@ export default function LoginScreen() {
     >
       <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.title}>RGR Fleet</Text>
-          <Text style={styles.subtitle}>Scan-First Asset Tracking</Text>
+          <Image
+            source={require('../../assets/logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
         </View>
 
         <View style={styles.form}>
@@ -118,15 +122,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing['3xl'],
   },
+  logo: {
+    width: 320,
+    height: 160,
+    marginBottom: spacing['2xl'],
+  },
   title: {
     fontSize: fontSize['4xl'],
     fontWeight: fontWeight.extrabold,
-    color: colors.textInverse,
+    color: colors.text,
     marginBottom: spacing.sm,
   },
   subtitle: {
     fontSize: fontSize.base,
-    color: colors.chrome,
+    color: colors.textSecondary,
   },
   form: {
     gap: spacing.lg,
@@ -137,7 +146,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
-    color: colors.textInverse,
+    color: colors.text,
   },
   input: {
     backgroundColor: colors.background,
@@ -150,7 +159,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   button: {
-    backgroundColor: colors.electricBlue,
+    backgroundColor: '#0000ff',
     paddingVertical: spacing.base,
     borderRadius: borderRadius.md,
     alignItems: 'center',
