@@ -30,7 +30,7 @@ if (MAPBOX_TOKEN) {
   mapboxgl.accessToken = MAPBOX_TOKEN;
 }
 // Disable Mapbox telemetry to prevent ERR_NAME_NOT_RESOLVED console spam
-try { (mapboxgl as any).config.EVENTS_URL = ''; } catch { /* read-only in newer versions */ }
+try { (mapboxgl as unknown as { config: { EVENTS_URL: string } }).config.EVENTS_URL = ''; } catch { /* read-only in newer versions */ }
 
 /**
  * Asset filter options
@@ -167,7 +167,8 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
   const [mapError, setMapError] = useState<string | null>(null);
   const [currentZoom, setCurrentZoom] = useState(4.5);
 
-  const filters = externalFilters || { category: 'all' as const, subtype: 'all' as const, status: 'all' as const, lastScannedDays: 'all' as const };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- stable default object; externalFilters identity is controlled by parent
+  const filters = useMemo(() => externalFilters || { category: 'all' as const, subtype: 'all' as const, status: 'all' as const, lastScannedDays: 'all' as const }, [externalFilters]);
 
   // Filter assets based on current filters
   const filteredAssets = useMemo(() => {
@@ -455,6 +456,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
     // Only call setStyle when the URL actually changes (skip on initial load)
     if (styleUrl !== currentStyleUrl.current) {
       currentStyleUrl.current = styleUrl;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Mapbox GL typings lack `diff` option on setStyle
       map.current.setStyle(styleUrl, { diff: false } as any);
     }
 

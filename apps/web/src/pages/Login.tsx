@@ -28,16 +28,16 @@ export default function Login() {
   // Ref that stores a pending navigation target.  The presenter will call
   // `onNavigationReady` once the exit animation finishes, at which point
   // we execute the deferred navigate.
-  const pendingNavRef = useRef<{ path: string; options?: any } | null>(null);
+  const pendingNavRef = useRef<{ path: string; options?: { replace?: boolean; state?: unknown } } | null>(null);
 
   // Deferred navigate: stash the path + options instead of navigating immediately
   const deferredNavigate = useCallback(
-    (to: string | number, options?: any) => {
+    (to: string | number, options?: { replace?: boolean; state?: unknown }) => {
       if (typeof to === 'string') {
         pendingNavRef.current = { path: to, options };
       } else {
         // Numeric (history go) -- pass through immediately
-        realNavigate(to as any);
+        realNavigate(to);
       }
     },
     [realNavigate],

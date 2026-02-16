@@ -26,6 +26,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
+import type { PieLabelRenderProps } from 'recharts';
 import { Activity, TrendingUp, Clock, AlertTriangle } from 'lucide-react';
 import { VisionCard } from './vision/VisionCard';
 import type {
@@ -74,9 +75,9 @@ const CustomTooltip = ({ active, payload, label, isDark = true }: { active?: boo
       <p className="text-sm font-medium mb-1" style={{ color: textColor }}>
         {label}
       </p>
-      {payload.map((entry: any, index: number) => (
+      {payload.map((entry: { color?: string; name?: string; value?: unknown }, index: number) => (
         <p key={index} className="text-xs" style={{ color: entry.color }}>
-          {entry.name}: {entry.value}
+          {entry.name}: {String(entry.value)}
         </p>
       ))}
     </div>
@@ -189,7 +190,10 @@ export const AnalyticsCharts = React.memo<AnalyticsChartsProps>(({
                   cx="50%"
                   cy="50%"
                   outerRadius={90}
-                  label={((entry: any) => `${entry.status}: ${entry.percentage}%`) as any}
+                  label={(props: PieLabelRenderProps) => {
+                    const d = props as PieLabelRenderProps & { status: string; percentage: number };
+                    return `${d.status}: ${d.percentage}%`;
+                  }}
                 >
                   {assetUtilization.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />

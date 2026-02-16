@@ -163,6 +163,7 @@ async function fetchRecentScans(limit: number): Promise<RecentScan[]> {
     throw new Error(`Failed to fetch recent scans: ${error.message}`);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase embedded join returns untyped nested objects
   return (data || []).map((scan: any) => ({
     id: scan.id,
     assetId: scan.asset_id,

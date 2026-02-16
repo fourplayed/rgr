@@ -67,7 +67,7 @@ export function DebugToolbar() {
     const originalInfo = console.info;
     let logIdCounter = 0;
 
-    const addLog = (type: LogEntry['type'], args: any[]) => {
+    const addLog = (type: LogEntry['type'], args: unknown[]) => {
       const message = args.map(arg =>
         typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
       ).join(' ');
@@ -82,22 +82,22 @@ export function DebugToolbar() {
       setLogs(prev => [...prev, entry].slice(-50)); // Keep last 50 logs
     };
 
-    console.error = (...args: any[]) => {
+    console.error = (...args: unknown[]) => {
       originalError(...args);
       addLog('error', args);
     };
 
-    console.warn = (...args: any[]) => {
+    console.warn = (...args: unknown[]) => {
       originalWarn(...args);
       addLog('warn', args);
     };
 
-    console.log = (...args: any[]) => {
+    console.log = (...args: unknown[]) => {
       originalLog(...args);
       addLog('log', args);
     };
 
-    console.info = (...args: any[]) => {
+    console.info = (...args: unknown[]) => {
       originalInfo(...args);
       addLog('info', args);
     };

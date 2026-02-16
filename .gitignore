@@ -44,6 +44,9 @@ yarn-error.log*
 .temp/
 *.tmp
 
+# Source fonts (design files — app fonts live in apps/web/public/fonts/)
+packages/shared/fonts/
+
 # Supabase
 supabase/.branches/
 supabase/.temp/
