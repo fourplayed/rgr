@@ -6,7 +6,6 @@ import { initializeSupabase } from './config/supabase';
 import { useAuthStore } from './stores/authStore';
 import { getSupabaseClient } from '@rgr/shared';
 import { DebugToolbar } from './pages/login/components/DebugToolbar';
-import { WorkflowLogPanel } from './pages/login/components/WorkflowLogPanel';
 import { PersistentBackground } from './components/backgrounds';
 
 const Login = lazy(() => import('./pages/Login'));
@@ -131,7 +130,6 @@ function App() {
 
         {/* Global dev tool panels — fixed to viewport, persist across routes */}
         <DebugToolbar />
-        <WorkflowLogPanel />
 
         <Suspense fallback={
           <div className="relative z-10 flex items-center justify-center min-h-screen">

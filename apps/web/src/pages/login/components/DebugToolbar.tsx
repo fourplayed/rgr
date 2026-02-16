@@ -30,6 +30,11 @@ export function DebugToolbar() {
   const defaultLightGradient = useDevToolsStore((s) => s.defaultLightGradient);
   const defaultDarkGradient = useDevToolsStore((s) => s.defaultDarkGradient);
 
+  // Workflow state from global store
+  const workflowSteps = useDevToolsStore((s) => s.workflowSteps);
+  const workflowComplete = useDevToolsStore((s) => s.workflowComplete);
+  const clearWorkflow = useDevToolsStore((s) => s.clearWorkflow);
+
   const gradient = isDark ? darkGradient : lightGradient;
   const setGradient = isDark ? setDarkGradient : setLightGradient;
   const defaults = isDark ? defaultDarkGradient : defaultLightGradient;
@@ -40,9 +45,9 @@ export function DebugToolbar() {
     return stored ? JSON.parse(stored) : false;
   });
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [activeTab, setActiveTab] = useState<'console' | 'gradient'>(() => {
+  const [activeTab, setActiveTab] = useState<'console' | 'gradient' | 'workflow'>(() => {
     const stored = localStorage.getItem('debug-toolbar-tab');
-    return (stored === 'console' || stored === 'gradient') ? stored : 'console';
+    return (stored === 'console' || stored === 'gradient' || stored === 'workflow') ? stored : 'console';
   });
 
   // Persist panel state to localStorage so it doesn't auto-close
@@ -202,8 +207,29 @@ export function DebugToolbar() {
               BG Gradient
             </button>
             <button
+              onClick={() => setActiveTab('workflow')}
+              className="px-3 py-1 rounded text-sm font-medium transition-colors"
+              style={{
+                background: activeTab === 'workflow' ? tabActiveBg : 'transparent',
+                color: textColor,
+              }}
+              onMouseEnter={(e) => {
+                if (activeTab !== 'workflow') {
+                  e.currentTarget.style.background = tabHoverBg;
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeTab !== 'workflow') {
+                  e.currentTarget.style.background = 'transparent';
+                }
+              }}
+            >
+              Workflow {workflowSteps.length > 0 && `(${workflowSteps.length})`}
+            </button>
+            <button
               onClick={() => {
-                setLogs([]);
+                if (activeTab === 'workflow') clearWorkflow();
+                else setLogs([]);
               }}
               className="ml-auto px-3 py-1 rounded text-sm font-medium transition-colors"
               style={{
@@ -288,6 +314,80 @@ export function DebugToolbar() {
               </div>
             )}
 
+            {activeTab === 'workflow' && (
+              <div className="space-y-3 font-mono text-sm">
+                {workflowSteps.length === 0 ? (
+                  <div style={{ color: textColor, opacity: 0.5 }}>
+                    No workflow activity yet. Sign in to start authentication workflow.
+                  </div>
+                ) : (
+                  <>
+                    {workflowComplete && (
+                      <div
+                        className="px-4 py-3 rounded-lg text-center text-lg font-bold mb-3"
+                        style={{
+                          color: '#10b981',
+                          background: 'rgba(16, 185, 129, 0.1)',
+                          border: '1px solid rgba(16, 185, 129, 0.3)',
+                        }}
+                      >
+                        Authentication Complete!
+                      </div>
+                    )}
+                    {workflowSteps.map((step) => (
+                      <div
+                        key={step.id}
+                        className="flex items-start gap-3 px-3 py-2 rounded-lg transition-all duration-300"
+                        style={{
+                          background: 'rgba(0, 0, 0, 0.2)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                        }}
+                      >
+                        <div className="flex-shrink-0 mt-1">
+                          {step.status === 'success' && (
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="#10b981">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                          {step.status === 'active' && (
+                            <div
+                              className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin"
+                              style={{ borderColor: '#60a5fa' }}
+                            />
+                          )}
+                          {step.status === 'pending' && (
+                            <div
+                              className="w-5 h-5 rounded-full border-2"
+                              style={{ borderColor: 'rgba(255, 255, 255, 0.2)' }}
+                            />
+                          )}
+                          {step.status === 'error' && (
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="#ef4444">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium" style={{ color: textColor }}>
+                            {step.label}
+                          </div>
+                          {step.detail && (
+                            <div className="text-sm mt-0.5 font-mono" style={{ color: textColor, opacity: 0.6 }}>
+                              {step.detail}
+                            </div>
+                          )}
+                        </div>
+                        {step.timestamp && (
+                          <div className="text-xs font-mono" style={{ color: textColor, opacity: 0.4 }}>
+                            {new Date(step.timestamp).toLocaleTimeString()}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+            )}
 
           </div>
         </div>

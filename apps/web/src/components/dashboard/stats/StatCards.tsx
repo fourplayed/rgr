@@ -60,13 +60,13 @@ interface StatCardsProps {
 
 export const StatCards = React.memo<StatCardsProps>(({ isDark: _isDark }) => {
   return (
-    <div className="flex gap-4">
+    <div className="flex flex-wrap gap-4">
       {STAT_CARDS.map((card) => {
         const Icon = card.icon;
         return (
           <div
             key={card.title}
-            className="group relative flex-1 rounded-xl p-5 flex flex-col justify-between cursor-pointer"
+            className="group relative flex-1 min-w-[200px] rounded-xl p-5 flex flex-col justify-between cursor-pointer"
             style={{
               background: card.bg,
               minHeight: '130px',

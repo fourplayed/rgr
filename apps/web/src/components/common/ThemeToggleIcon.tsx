@@ -48,10 +48,13 @@ MoonIcon.displayName = 'MoonIcon';
 
 /** Combined theme toggle icon that renders sun or moon based on current theme */
 export const ThemeToggleIcon = React.memo<ThemeToggleIconProps>(({ isDark, className = '' }) => {
-  const darkModeClass = `w-6 h-6 text-white transition-all duration-500 ease-out group-hover:text-white group-hover:scale-125 group-hover:rotate-180 ${className}`;
-  const lightModeClass = `w-6 h-6 transition-all duration-500 ease-out group-hover:scale-125 group-hover:rotate-12 ${className}`;
+  const baseClass = `w-6 h-6 transition-all duration-500 ease-out group-hover:scale-125 ${className}`;
+  const darkModeClass = `${baseClass} group-hover:rotate-180`;
+  const lightModeClass = `${baseClass} group-hover:rotate-12`;
 
-  return isDark ? <SunIcon className={darkModeClass} /> : <MoonIcon className={lightModeClass} style={{ color: '#cbd5e1' }} />;
+  return isDark
+    ? <SunIcon className={darkModeClass} />
+    : <MoonIcon className={lightModeClass} />;
 });
 
 ThemeToggleIcon.displayName = 'ThemeToggleIcon';

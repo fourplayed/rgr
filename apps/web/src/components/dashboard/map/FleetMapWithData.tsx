@@ -29,6 +29,8 @@ const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
 if (MAPBOX_TOKEN) {
   mapboxgl.accessToken = MAPBOX_TOKEN;
 }
+// Disable Mapbox telemetry to prevent ERR_NAME_NOT_RESOLVED console spam
+try { (mapboxgl as any).config.EVENTS_URL = ''; } catch { /* read-only in newer versions */ }
 
 /**
  * Asset filter options
@@ -261,17 +263,18 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         // 'west' = right edge of label sits on pole, label extends left
         // 'east' = left edge of label sits on pole, label extends right
         const depotLayout: Record<string, { stem: number; anchor: 'west' | 'east' | 'center'; z: number }> = {
-          Perth:     { stem: 68, anchor: 'west',   z: 16 },
-          Wubin:     { stem: 98, anchor: 'east',   z: 14 },
+          Perth:     { stem: 45, anchor: 'east',   z: 16 },
+          Wubin:     { stem: 85, anchor: 'east',   z: 14 },
           Newman:    { stem: 45, anchor: 'east',   z: 12 },
-          Hedland:   { stem: 58, anchor: 'east',   z: 16 },
-          Karratha:  { stem: 88, anchor: 'west',   z: 14 },
-          Carnarvon: { stem: 68, anchor: 'west',   z: 12 },
+          Hedland:   { stem: 48, anchor: 'east',   z: 16 },
+          Karratha:  { stem: 88, anchor: 'east',   z: 14 },
+          Carnarvon: { stem: 45, anchor: 'east',   z: 12 },
         };
 
         // Add depot markers with text labels
         DEPOT_LOCATIONS.forEach((depot: DepotLocation) => {
           const depotColor = DEPOT_COLORS[depot.name] || DEPOT_COLOR;
+          const tipTextColor = depot.name === 'Newman' ? '#6366f1' : depotColor;
           const layout = depotLayout[depot.name] ?? { stem: 68, anchor: 'center', z: 10 };
 
           // Translate label so the correct edge sits on the pole
@@ -299,10 +302,10 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
               </div>
               <div class="depot-tooltip" style="position: absolute; top: -4px; ${tipPosition} ${tipOrigin} ${tipHidden} line-height: 1.4; white-space: nowrap; color: white; font-family: 'Lato', sans-serif; font-size: 12px; font-weight: 600; background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: none; padding: 0; ${tipRadius} opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease; pointer-events: none; overflow: hidden;">
                 <div style="display: grid; grid-template-columns: auto auto; line-height: 1;">
-                  <div style="padding: 8px 10px; border-right: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1); color: white;">TL</div>
-                  <div style="padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.1); color: white; font-weight: 800;">${depot.trailers}</div>
-                  <div style="padding: 8px 10px; border-right: 1px solid rgba(255,255,255,0.1); color: white;">DL</div>
-                  <div style="padding: 8px 10px; color: white; font-weight: 800;">${depot.dollies}</div>
+                  <div style="padding: 8px 10px; border-right: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1); color: ${tipTextColor};">TL</div>
+                  <div style="padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.1); color: ${tipTextColor}; font-weight: 800;">${depot.trailers}</div>
+                  <div style="padding: 8px 10px; border-right: 1px solid rgba(255,255,255,0.1); color: ${tipTextColor};">DL</div>
+                  <div style="padding: 8px 10px; color: ${tipTextColor}; font-weight: 800;">${depot.dollies}</div>
                 </div>
               </div>
               <div style="width: 5px; height: 5px; border-radius: 50%; background-color: ${depotColor}; box-shadow: 0 0 6px ${depotColor}, 0 0 12px ${depotColor}80; cursor: pointer; flex-shrink: 0;"></div>

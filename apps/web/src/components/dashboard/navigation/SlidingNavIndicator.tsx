@@ -33,6 +33,7 @@ interface IndicatorState {
   left: number;
   width: number;
   opacity: number;
+  isHovered: boolean;
 }
 
 /**
@@ -58,6 +59,7 @@ export const SlidingNavIndicator = React.memo<SlidingNavIndicatorProps>(({
     left: 0,
     width: 0,
     opacity: 0,
+    isHovered: false,
   });
 
   // Refs for cleanup and animation control
@@ -151,6 +153,7 @@ export const SlidingNavIndicator = React.memo<SlidingNavIndicatorProps>(({
     const target = event.currentTarget as HTMLElement;
     if (target) {
       updateIndicatorPosition(target);
+      setIndicatorState((prev) => ({ ...prev, isHovered: true }));
     }
   }, [updateIndicatorPosition]);
 
@@ -159,6 +162,7 @@ export const SlidingNavIndicator = React.memo<SlidingNavIndicatorProps>(({
    */
   const handleNavLeave = useCallback(() => {
     returnToActiveButton();
+    setIndicatorState((prev) => ({ ...prev, isHovered: false }));
   }, [returnToActiveButton]);
 
   /**
@@ -227,17 +231,20 @@ export const SlidingNavIndicator = React.memo<SlidingNavIndicatorProps>(({
 
   return (
     <div
-      className={`pointer-events-none absolute h-[2.5px] ease-out chrome-gradient-bar ${className}`}
+      className={`pointer-events-none absolute h-[2.5px] ease-out ${className}`}
       style={{
         left: `${indicatorState.left}px`,
         width: `${indicatorState.width}px`,
-        bottom: '8px',
+        bottom: '0px',
+        background: indicatorState.isHovered
+          ? '#ffffff'
+          : 'linear-gradient(90deg, #9ca3af, #cbd5e1, #e2e8f0, #cbd5e1, #9ca3af)',
         opacity: indicatorState.opacity,
         zIndex,
         transform: 'translateZ(0)',
         transformOrigin: 'left',
         willChange: 'left, width, opacity',
-        transition: 'left 0.25s ease-out, width 0.3s ease-out, opacity 0.15s ease-out',
+        transition: 'left 0.25s ease-out, width 0.3s ease-out, opacity 0.15s ease-out, background 0.2s ease',
       }}
       aria-hidden="true"
     />

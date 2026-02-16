@@ -45,10 +45,10 @@ export const TopNavBar = React.memo<TopNavBarProps>(({
   animateIn,
 }) => {
   const navStyle = isDark ? NAV_BAR_STYLES.dark : NAV_BAR_STYLES.light;
-  const iconColor = isDark ? NAV_LINK_COLORS.dark.default : NAV_LINK_COLORS.light.default;
-  const iconHoverColor = isDark ? NAV_LINK_COLORS.dark.hover : NAV_LINK_COLORS.light.hover;
-  const textColor = isDark ? '#cbd5e1' : '#e2e8f0';
-  const mutedColor = isDark ? '#64748b' : '#94a3b8';
+  const iconColor = '#7da8ff';
+  const iconHoverColor = '#ffffff';
+  const textColor = '#7da8ff';
+  const mutedColor = '#5b8af5';
 
   return (
     <>
@@ -90,13 +90,14 @@ export const TopNavBar = React.memo<TopNavBarProps>(({
                 active={activeSection === item.section}
                 isDark={isDark}
                 onClick={() => onNavigate(item.path)}
+                borderGradient
               />
             </React.Fragment>
           ))}
         </div>
 
-        {/* Sliding indicator under nav links (hidden) */}
-        {/* <SlidingNavIndicator isDark={isDark} /> */}
+        {/* Sliding indicator under nav links */}
+        <SlidingNavIndicator isDark={isDark} />
 
         {/* Spacer */}
         <div className="flex-1" />
@@ -220,6 +221,12 @@ export const TopNavBar = React.memo<TopNavBarProps>(({
             onClick={onToggleTheme}
             className="group relative p-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 transition-all duration-200"
             aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            onMouseEnter={(e) => {
+              (e.currentTarget.querySelector('svg') as SVGElement).style.color = iconHoverColor;
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget.querySelector('svg') as SVGElement).style.color = iconColor;
+            }}
           >
             <ThemeToggleIcon isDark={isDark} />
           </button>

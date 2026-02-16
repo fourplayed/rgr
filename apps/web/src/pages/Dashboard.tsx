@@ -9,7 +9,7 @@ import { useState, useCallback, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useDashboardLogic } from './dashboard/useDashboardLogic';
 import { DashboardPresenter } from './dashboard/DashboardPresenter';
-import { FleetMapWithData, MapHeader } from '@/components/dashboard/map';
+import { FleetMapWithData, SearchFilterBar } from '@/components/dashboard/map';
 import type { FleetMapHandle, AssetFilters } from '@/components/dashboard/map';
 import { useAssetLocations } from '@/hooks/useFleetData';
 import { StatCards } from '@/components/dashboard/stats/StatCards';
@@ -42,7 +42,8 @@ export default function Dashboard() {
       {/* Stat cards row */}
       <div
         style={{
-          width: '1360px',
+          width: 'calc(100% - 48px)',
+          maxWidth: '1360px',
           position: 'fixed',
           top: '86px',
           left: '50%',
@@ -53,8 +54,8 @@ export default function Dashboard() {
       >
         <StatCards isDark={state.isDark} />
       </div>
-      {/* Map header */}
-      <MapHeader
+      {/* Search/Filter bar — standalone row between stat cards and map */}
+      <SearchFilterBar
         isDark={state.isDark}
         assets={assets}
         onSearch={handleSearch}
@@ -69,14 +70,11 @@ export default function Dashboard() {
       {/* Map container */}
       <div
         style={{
-          width: '1360px',
-          height: '960px',
-          minWidth: '1360px',
-          minHeight: '960px',
+          width: 'calc(100% - 48px)',
           maxWidth: '1360px',
-          maxHeight: '960px',
           border: 'none',
           position: 'fixed',
+          top: '342px',
           bottom: '20px',
           left: '50%',
           transform: 'translateX(-50%)',

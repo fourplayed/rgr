@@ -78,36 +78,36 @@ export const NAV_LINK_COLORS = {
 export const NAV_BUTTON_STYLES = {
   dark: {
     default: {
-      background: 'transparent',
-      border: '1px solid transparent',
-      boxShadow: 'none',
+      background: 'rgba(255, 255, 255, 0.06)',
+      border: '1px solid rgba(255, 255, 255, 0.1)',
+      boxShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
     },
     hover: {
-      background: 'transparent',
-      border: '1px solid transparent',
-      boxShadow: 'none',
+      background: 'rgba(255, 255, 255, 0.12)',
+      border: '1px solid rgba(255, 255, 255, 0.18)',
+      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.4)',
     },
     active: {
-      background: 'transparent',
-      border: '1px solid transparent',
-      boxShadow: 'none',
+      background: 'rgba(255, 255, 255, 0.15)',
+      border: '1px solid rgba(255, 255, 255, 0.22)',
+      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)',
     },
   },
   light: {
     default: {
-      background: 'transparent',
-      border: '1px solid transparent',
-      boxShadow: 'none',
+      background: 'rgba(255, 255, 255, 0.08)',
+      border: '1px solid rgba(255, 255, 255, 0.15)',
+      boxShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
     },
     hover: {
-      background: 'transparent',
-      border: '1px solid transparent',
-      boxShadow: 'none',
+      background: 'rgba(255, 255, 255, 0.15)',
+      border: '1px solid rgba(255, 255, 255, 0.25)',
+      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.3)',
     },
     active: {
-      background: 'transparent',
-      border: '1px solid transparent',
-      boxShadow: 'none',
+      background: 'rgba(255, 255, 255, 0.18)',
+      border: '1px solid rgba(255, 255, 255, 0.3)',
+      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
     },
   },
 } as const;
