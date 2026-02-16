@@ -34,6 +34,7 @@ import {
 import { mapRowToMaintenanceRecord } from '../../types/entities/maintenanceRecord';
 import { mapRowToHazardAlert } from '../../types/entities/hazardAlert';
 import { mapRowToDepot } from '../../types/entities/depot';
+import { extractAssetInfo } from '../../utils/qrCode';
 
 // ── Join Result Types ──
 
@@ -419,44 +420,45 @@ export async function getAssetByQRCode(
   qrData: string
 ): Promise<ServiceResult<Asset>> {
   const supabase = getSupabaseClient();
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-  // Try exact qr_code_data match first
-  let { data, error } = await supabase
+  // 1. Try exact qr_code_data match (handles full QR strings like "rgr://asset/{UUID}")
+  const { data: exactMatch, error: exactError } = await supabase
     .from('assets')
     .select('*')
     .eq('qr_code_data', qrData)
     .is('deleted_at', null)
     .maybeSingle();
 
-  if (error) {
-    return { data: null, error: `Failed to lookup asset: ${error.message}` };
+  if (exactError) {
+    return { data: null, error: `Failed to lookup asset: ${exactError.message}` };
+  }
+  if (exactMatch) {
+    return { data: mapRowToAsset(exactMatch as AssetRow), error: null };
   }
 
-  // Fallback: parse asset number from QR data (e.g., "rgr://asset/TL001" → "TL001")
-  if (!data) {
-    const assetNumber = extractAssetNumber(qrData);
-    if (assetNumber) {
-      const result = await supabase
-        .from('assets')
-        .select('*')
-        .eq('asset_number', assetNumber)
-        .is('deleted_at', null)
-        .maybeSingle();
+  // 2. Parse the input using shared extractAssetInfo (handles QR URIs, raw UUIDs, asset numbers)
+  const info = extractAssetInfo(qrData);
+  if (info) {
+    const isUUID = UUID_RE.test(info.assetId);
+    const column = isUUID ? 'id' : 'asset_number';
 
-      data = result.data;
-      error = result.error;
+    const { data: parsed, error: parsedError } = await supabase
+      .from('assets')
+      .select('*')
+      .eq(column, info.assetId)
+      .is('deleted_at', null)
+      .maybeSingle();
 
-      if (error) {
-        return { data: null, error: `Failed to lookup asset: ${error.message}` };
-      }
+    if (parsedError) {
+      return { data: null, error: `Failed to lookup asset: ${parsedError.message}` };
+    }
+    if (parsed) {
+      return { data: mapRowToAsset(parsed as AssetRow), error: null };
     }
   }
 
-  if (!data) {
-    return { data: null, error: 'Asset not found for this QR code' };
-  }
-
-  return { data: mapRowToAsset(data as AssetRow), error: null };
+  return { data: null, error: 'Asset not found for this QR code' };
 }
 
 /**
@@ -623,18 +625,3 @@ export async function listDepots(): Promise<ServiceResult<Depot[]>> {
  * Extract asset number from QR code data.
  * Handles formats: "rgr://asset/TL001", "TL001", "asset:TL001"
  */
-function extractAssetNumber(qrData: string): string | null {
-  // rgr://asset/TL001
-  const uriMatch = qrData.match(/rgr:\/\/asset\/([A-Z]{2}\d{3,})/i);
-  if (uriMatch) return uriMatch[1].toUpperCase();
-
-  // asset:TL001
-  const colonMatch = qrData.match(/asset:([A-Z]{2}\d{3,})/i);
-  if (colonMatch) return colonMatch[1].toUpperCase();
-
-  // Plain asset number like TL001 or DL015
-  const plainMatch = qrData.match(/^([A-Z]{2}\d{3,})$/i);
-  if (plainMatch) return plainMatch[1].toUpperCase();
-
-  return null;
-}
