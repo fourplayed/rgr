@@ -11,14 +11,14 @@ export { BACKGROUND_STYLES };
  */
 export const NAV_BAR_STYLES = {
   dark: {
-    background: 'linear-gradient(to bottom, #5c69ff, #1e2ea4)',
+    background: 'linear-gradient(to bottom, #080b3a, #050828)',
     backdropFilter: 'blur(24px) saturate(180%)',
     WebkitBackdropFilter: 'blur(24px) saturate(180%)',
     borderBottom: '1px solid rgba(148, 163, 184, 0.2)',
     boxShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
   },
   light: {
-    background: 'linear-gradient(to bottom, #4785ff, #4e7adf)',
+    background: 'linear-gradient(to bottom, #0000cc, #000099)',
     backdropFilter: 'blur(24px)',
     WebkitBackdropFilter: 'blur(24px)',
     borderBottom: '1px solid rgba(148, 163, 184, 0.2)',

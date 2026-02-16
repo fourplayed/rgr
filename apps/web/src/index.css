@@ -746,6 +746,15 @@
                 box-shadow 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
+  /* Hidden scrollbar — scroll without visible bar */
+  .scrollbar-hidden {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+  }
+  .scrollbar-hidden::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+  }
+
   /* Custom scrollbar styles - Dark theme (default) */
   .custom-scrollbar::-webkit-scrollbar {
     width: 6px;

@@ -104,14 +104,14 @@ export function DashboardPresenter({ state, actions, children }: DashboardPresen
       <main
         id="main-content"
         aria-label={DASHBOARD_CONSTANTS.ARIA.CONTENT_LABEL}
-        className="relative z-10 flex-1 overflow-y-auto"
+        className="relative z-10 flex-1 overflow-hidden"
         style={{
           paddingTop: `${DASHBOARD_CONSTANTS.NAV_HEIGHT}px`,
           ...(fromLogin ? { opacity: 0, animation: 'dashContentFadeIn 600ms cubic-bezier(0.16, 1, 0.3, 1) 400ms forwards' } : {}),
         }}
       >
         {/* Glassmorphic content shader */}
-        <div className="relative mx-auto py-8" style={{ maxWidth: '1440px', minHeight: '100%' }}>
+        <div className="relative mx-auto h-full" style={{ maxWidth: '1440px' }}>
           <div
             className="absolute inset-0 pointer-events-none"
             style={{
@@ -122,14 +122,11 @@ export function DashboardPresenter({ state, actions, children }: DashboardPresen
               WebkitBackdropFilter: 'blur(20px)',
               border: 'none',
               boxShadow: 'none',
-              margin: '0 auto',
-              left: 0,
-              right: 0,
             }}
             aria-hidden="true"
           />
           <div
-            className="relative mx-auto"
+            className="relative mx-auto h-full"
             style={{ maxWidth: '1440px' }}
           >
             {children}

@@ -4,6 +4,7 @@
  * Composes: Toolbar (with integrated filters), Table view, Detail Slideout
  */
 import { useState } from 'react';
+import { AnimatePresence } from 'motion/react';
 import type { AssetsState, AssetsActions } from './useAssetsLogic';
 import { CONTENT_PANEL_STYLES } from '@/pages/dashboard/styles';
 import { AssetsToolbar } from '@/components/assets/AssetsToolbar';
@@ -22,7 +23,7 @@ export function AssetsPresenter({ state, actions }: AssetsPresenterProps) {
   const panelStyle = isDark ? CONTENT_PANEL_STYLES.dark : CONTENT_PANEL_STYLES.light;
 
   return (
-    <div className="flex flex-col gap-4 px-8 pt-4 pb-8 w-full" style={{ maxWidth: '1440px', margin: '0 auto' }}>
+    <div className="flex flex-col gap-4 pt-4 pb-8 h-full overflow-y-auto scrollbar-hidden" style={{ width: 'calc(100% - 48px)', maxWidth: '1360px', margin: '0 auto' }}>
       {/* Toolbar with integrated search and filters */}
       <AssetsToolbar
         isDark={isDark}
@@ -35,26 +36,25 @@ export function AssetsPresenter({ state, actions }: AssetsPresenterProps) {
         onCreateAsset={() => setShowCreateModal(true)}
       />
 
-      {/* Main content area with optional detail slideout */}
-      <div className="flex gap-4 flex-1 min-h-0">
-        {/* Table view in glassmorphic card */}
-        <div
-          className="flex-1 min-w-0 overflow-hidden"
-          style={panelStyle}
-        >
-          <AssetsTable
-            isDark={isDark}
-            filters={filters}
-            sort={sort}
-            pagination={pagination}
-            selectedAssetId={selectedAssetId}
-            onSort={actions.setSort}
-            onPageChange={actions.setPage}
-            onSelectAsset={actions.selectAsset}
-          />
-        </div>
+      {/* Table view in glassmorphic card */}
+      <div
+        className="flex-1 min-w-0 min-h-0 overflow-hidden"
+        style={panelStyle}
+      >
+        <AssetsTable
+          isDark={isDark}
+          filters={filters}
+          sort={sort}
+          pagination={pagination}
+          selectedAssetId={selectedAssetId}
+          onSort={actions.setSort}
+          onPageChange={actions.setPage}
+          onSelectAsset={actions.selectAsset}
+        />
+      </div>
 
-        {/* Right: detail slideout */}
+      {/* Detail slideout — fixed, slides from right edge of screen */}
+      <AnimatePresence>
         {selectedAssetId && (
           <AssetDetailSlideout
             isDark={isDark}
@@ -66,15 +66,17 @@ export function AssetsPresenter({ state, actions }: AssetsPresenterProps) {
             onClose={() => actions.selectAsset(null)}
           />
         )}
-      </div>
+      </AnimatePresence>
 
-      {/* Create asset modal */}
-      {showCreateModal && (
-        <CreateAssetModal
-          isDark={isDark}
-          onClose={() => setShowCreateModal(false)}
-        />
-      )}
+      {/* Create asset slideout */}
+      <AnimatePresence>
+        {showCreateModal && (
+          <CreateAssetModal
+            isDark={isDark}
+            onClose={() => setShowCreateModal(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
