@@ -7,7 +7,7 @@ export interface AssetFilters {
   search: string;
   categories: AssetCategory[];
   statuses: AssetStatus[];
-  depotId: string | null;
+  depotIds: string[];
   hasLocation: boolean | null;
 }
 
@@ -43,7 +43,7 @@ export const DEFAULT_ASSET_FILTERS: AssetFilters = {
   search: '',
   categories: [],
   statuses: [],
-  depotId: null,
+  depotIds: [],
   hasLocation: null,
 };
 

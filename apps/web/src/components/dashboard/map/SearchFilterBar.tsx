@@ -112,20 +112,25 @@ export const SearchFilterBar = React.memo<SearchFilterBarProps>(({
       <button
         type="button"
         onClick={onClick}
-        className="filter-pill relative text-center py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide"
+        className="filter-pill relative py-1.5 px-4 rounded-lg text-xs font-semibold uppercase tracking-wide"
         style={{
           fontFamily: "'Lato', sans-serif",
-          paddingLeft: '6px',
-          paddingRight: '6px',
-          background: `${accent}20`,
+          overflow: 'visible',
+          background: active ? `${accent}30` : `${accent}20`,
           border: `1px solid ${active ? accent : `${accent}50`}`,
           color: active ? (color ? color : '#f1f5f9') : accent,
         }}
       >
         {active && (
           <span
-            className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] leading-none"
-            style={{ backgroundColor: accent, color: '#0f172a' }}
+            className="absolute flex items-center justify-center w-3.5 h-3.5 rounded-full text-[8px] leading-none"
+            style={{
+              top: '-6px',
+              right: '-6px',
+              backgroundColor: accent,
+              color: '#0f172a',
+              zIndex: 1,
+            }}
           >
             ✓
           </span>
@@ -249,8 +254,7 @@ export const SearchFilterBar = React.memo<SearchFilterBarProps>(({
           transition: all 0.25s ease;
         }
         .filter-grid-locations .filter-pill {
-          padding-left: 21px;
-          padding-right: 21px;
+          /* padding handled inline by FilterPill */
         }
         .filter-pill:hover {
           transform: translateY(-2px);
@@ -310,7 +314,7 @@ export const SearchFilterBar = React.memo<SearchFilterBarProps>(({
         style={{
           width: 'calc(100% - 48px)',
           maxWidth: '1360px',
-          height: '46px',
+          height: '50px',
           position: 'fixed',
           top: '296px',
           left: '50%',
@@ -388,7 +392,7 @@ export const SearchFilterBar = React.memo<SearchFilterBarProps>(({
           width: 'calc(100% - 48px)',
           maxWidth: '1360px',
           position: 'fixed',
-          top: '342px',
+          top: '346px',
           bottom: '20px',
           left: '50%',
           transform: 'translateX(-50%)',
@@ -400,7 +404,7 @@ export const SearchFilterBar = React.memo<SearchFilterBarProps>(({
         <div
           className={`filter-panel ${showFilters ? 'filter-panel-open' : 'filter-panel-closed'}`}
           style={{
-            width: '340px',
+            width: '250px',
             position: 'absolute',
             top: 0,
             left: 0,
@@ -451,7 +455,10 @@ export const SearchFilterBar = React.memo<SearchFilterBarProps>(({
                 className={`map-header-btn ${isDark ? 'map-header-btn-dark' : 'map-header-btn-light'} relative overflow-hidden text-xs font-semibold px-3 py-2 rounded-lg transition-all duration-300 ease-out hover:-translate-y-0.5 text-white`}
                 style={{ fontFamily: "'Lato', sans-serif" }}
               >
-                <span className="relative z-[1]">Clear All Filters</span>
+                <span className="relative z-[1] flex items-center gap-1.5">
+                  <X className="w-3.5 h-3.5 text-white" />
+                  Clear All Filters
+                </span>
               </button>
             )}
           </div>
@@ -465,49 +472,26 @@ export const SearchFilterBar = React.memo<SearchFilterBarProps>(({
               >
                 Location
               </span>
-              <div className="filter-grid-locations" style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                <div style={{ display: 'flex', flexDirection: 'row', gap: '5px' }}>
-                  {DEPOT_LOCATIONS_ROW1.map((depot) => {
-                    const currentDepots = Array.isArray(filters.depot) ? filters.depot : [];
-                    const isActive = currentDepots.includes(depot.value);
-                    return (
-                      <FilterPill
-                        key={depot.value}
-                        active={isActive}
-                        label={depot.label}
-                        color={depot.color}
-                        onClick={() => {
-                          const next = isActive
-                            ? currentDepots.filter((v) => v !== depot.value)
-                            : [...currentDepots, depot.value];
-                          onFiltersChange({ ...filters, depot: next.length === 0 ? 'all' : next });
-                          if (!showDepotLabels && next.length > 0) onToggleDepotLabels();
-                        }}
-                      />
-                    );
-                  })}
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'row', gap: '5px' }}>
-                  {DEPOT_LOCATIONS_ROW2.map((depot) => {
-                    const currentDepots = Array.isArray(filters.depot) ? filters.depot : [];
-                    const isActive = currentDepots.includes(depot.value);
-                    return (
-                      <FilterPill
-                        key={depot.value}
-                        active={isActive}
-                        label={depot.label}
-                        color={depot.color}
-                        onClick={() => {
-                          const next = isActive
-                            ? currentDepots.filter((v) => v !== depot.value)
-                            : [...currentDepots, depot.value];
-                          onFiltersChange({ ...filters, depot: next.length === 0 ? 'all' : next });
-                          if (!showDepotLabels && next.length > 0) onToggleDepotLabels();
-                        }}
-                      />
-                    );
-                  })}
-                </div>
+              <div className="filter-grid-locations" style={{ display: 'flex', flexDirection: 'column', gap: '5px', alignItems: 'flex-start' }}>
+                {DEPOT_LOCATIONS.map((depot) => {
+                  const currentDepots = Array.isArray(filters.depot) ? filters.depot : [];
+                  const isActive = currentDepots.includes(depot.value);
+                  return (
+                    <FilterPill
+                      key={depot.value}
+                      active={isActive}
+                      label={depot.label}
+                      color={depot.color}
+                      onClick={() => {
+                        const next = isActive
+                          ? currentDepots.filter((v) => v !== depot.value)
+                          : [...currentDepots, depot.value];
+                        onFiltersChange({ ...filters, depot: next.length === 0 ? 'all' : next });
+                        if (!showDepotLabels && next.length > 0) onToggleDepotLabels();
+                      }}
+                    />
+                  );
+                })}
               </div>
             </div>
 
@@ -525,7 +509,7 @@ export const SearchFilterBar = React.memo<SearchFilterBarProps>(({
               >
                 Asset Type
               </span>
-              <div className="filter-grid-types" style={{ display: 'inline-flex', flexDirection: 'row' as const, gap: '5px' }}>
+              <div className="filter-grid-types" style={{ display: 'flex', flexDirection: 'column', gap: '5px', alignItems: 'flex-start' }}>
                 {FILTER_CATEGORIES.filter((c) => c.value !== 'all').map((cat) => {
                   const currentCats = Array.isArray(filters.category) ? filters.category : [];
                   const isActive = currentCats.includes(cat.value as 'trailer' | 'dolly');
@@ -609,7 +593,7 @@ export const SearchFilterBar = React.memo<SearchFilterBarProps>(({
               >
                 Service Status
               </span>
-              <div className="filter-grid-status" style={{ display: 'flex', flexDirection: 'row', flexWrap: 'nowrap', gap: '5px' }}>
+              <div className="filter-grid-status" style={{ display: 'flex', flexDirection: 'column', gap: '5px', alignItems: 'flex-start' }}>
                 {FILTER_STATUSES.filter((s) => s.value !== 'all').map((status) => {
                   const currentStatuses = Array.isArray(filters.status) ? filters.status : [];
                   const isActive = currentStatuses.includes(status.value as 'serviced' | 'maintenance' | 'out_of_service');

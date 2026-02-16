@@ -65,7 +65,8 @@ function parseSearchParams(params: URLSearchParams): {
   const search = params.get('search') ?? '';
   const statusParam = params.get('status');
   const categoryParam = params.get('category');
-  const depotId = params.get('depotId') ?? null;
+  const depotIdParam = params.get('depotId');
+  const depotIds = depotIdParam ? depotIdParam.split(',') : [];
 
   const statuses = statusParam
     ? (statusParam.split(',') as AssetStatus[])
@@ -92,7 +93,7 @@ function parseSearchParams(params: URLSearchParams): {
 
   return {
     viewMode,
-    filters: { search, categories, statuses, depotId, hasLocation: null },
+    filters: { search, categories, statuses, depotIds, hasLocation: null },
     sort: { field: sortField, direction: sortDirection },
     pagination: { page, pageSize: DEFAULT_ASSET_PAGINATION.pageSize },
     selectedAssetId,
@@ -149,8 +150,8 @@ export function useAssetsLogic(): { state: AssetsState; actions: AssetsActions }
         if (partial.categories !== undefined) {
           updates.category = partial.categories.length > 0 ? partial.categories.join(',') : null;
         }
-        if (partial.depotId !== undefined) {
-          updates.depotId = partial.depotId;
+        if (partial.depotIds !== undefined) {
+          updates.depotId = partial.depotIds.length > 0 ? partial.depotIds.join(',') : null;
         }
         updateParams(updates);
       },

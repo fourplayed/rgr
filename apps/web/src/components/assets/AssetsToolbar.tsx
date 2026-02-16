@@ -81,11 +81,10 @@ function FilterPill({
     <button
       type="button"
       onClick={onClick}
-      className="filter-pill flex items-center gap-1 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide"
+      className="filter-pill relative py-1.5 px-4 rounded-lg text-xs font-semibold uppercase tracking-wide"
       style={{
         fontFamily: "'Lato', sans-serif",
-        paddingLeft: active ? '5px' : '6px',
-        paddingRight: '6px',
+        overflow: 'visible',
         background: active ? `${accent}30` : `${accent}20`,
         border: `1px solid ${active ? accent : `${accent}50`}`,
         color: active ? (color ? color : '#f1f5f9') : accent,
@@ -93,8 +92,14 @@ function FilterPill({
     >
       {active && (
         <span
-          className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full text-[8px] leading-none flex-shrink-0"
-          style={{ backgroundColor: accent, color: '#0f172a' }}
+          className="absolute flex items-center justify-center w-3.5 h-3.5 rounded-full text-[8px] leading-none"
+          style={{
+            top: '-6px',
+            right: '-6px',
+            backgroundColor: accent,
+            color: '#0f172a',
+            zIndex: 1,
+          }}
         >
           ✓
         </span>
@@ -145,22 +150,22 @@ export const AssetsToolbar = React.memo<AssetsToolbarProps>(
       return new Map(depots.map((d) => [d.name, d.id]));
     }, [depots]);
 
-    // Track selected depot name locally so ticks show even before depot IDs load
-    const [selectedDepotName, setSelectedDepotName] = useState<string | null>(null);
+    // Track selected depot names locally so ticks show even before depot IDs load
+    const [selectedDepotNames, setSelectedDepotNames] = useState<string[]>([]);
 
-    // Sync local name when filters are reset externally (e.g. "Clear All")
+    // Sync local names when filters are reset externally (e.g. "Clear All")
     useEffect(() => {
-      if (!filters.depotId) {
-        setSelectedDepotName(null);
+      if (filters.depotIds.length === 0) {
+        setSelectedDepotNames([]);
       }
-    }, [filters.depotId]);
+    }, [filters.depotIds]);
 
     // ── Active filter detection ──────────────────────────────────────────────
     const hasActiveFilters =
       filters.categories.length > 0 ||
       filters.statuses.length > 0 ||
-      filters.depotId !== null ||
-      selectedDepotName !== null;
+      filters.depotIds.length > 0 ||
+      selectedDepotNames.length > 0;
 
     // ── Shared style values ──────────────────────────────────────────────────
     const mutedColor = '#94a3b8';
@@ -203,17 +208,20 @@ export const AssetsToolbar = React.memo<AssetsToolbarProps>(
       [filters.statuses, onFiltersChange],
     );
 
-    const selectDepot = useCallback(
+    const toggleDepot = useCallback(
       (depotName: string) => {
-        // Toggle: deselect if already selected, otherwise select
-        const newName = selectedDepotName === depotName ? null : depotName;
-        setSelectedDepotName(newName);
+        const nextNames = selectedDepotNames.includes(depotName)
+          ? selectedDepotNames.filter((n) => n !== depotName)
+          : [...selectedDepotNames, depotName];
+        setSelectedDepotNames(nextNames);
 
-        // Also set depot ID in filters for the actual query (if depot data is loaded)
-        const id = newName ? depotIdByName.get(newName) ?? null : null;
-        onFiltersChange({ depotId: id });
+        // Also set depot IDs in filters for the actual query (if depot data is loaded)
+        const ids = nextNames
+          .map((n) => depotIdByName.get(n))
+          .filter((id): id is string => !!id);
+        onFiltersChange({ depotIds: ids });
       },
-      [selectedDepotName, depotIdByName, onFiltersChange],
+      [selectedDepotNames, depotIdByName, onFiltersChange],
     );
 
     // ── Render ───────────────────────────────────────────────────────────────
@@ -363,7 +371,7 @@ export const AssetsToolbar = React.memo<AssetsToolbarProps>(
         {/* Glassmorphic card container */}
         <div
           style={{
-            background: isDark ? 'rgba(0, 0, 48, 0.45)' : 'rgba(0, 0, 120, 0.55)',
+            background: isDark ? 'rgba(0, 0, 48, 0.45)' : 'rgba(0, 0, 120, 0.45)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
             borderRadius: '12px',
@@ -395,6 +403,25 @@ export const AssetsToolbar = React.memo<AssetsToolbarProps>(
             {/* Spacer */}
             <div className="flex-1" />
 
+            {/* Clear All button */}
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={() => { onResetFilters(); setSelectedDepotNames([]); }}
+                className={`map-header-btn ${isDark ? 'map-header-btn-dark' : 'map-header-btn-light'} relative overflow-hidden px-3 py-2 rounded-lg transition-all duration-300 ease-out hover:-translate-y-0.5 flex items-center gap-1.5`}
+              >
+                <span className="relative z-[1] flex items-center gap-1.5">
+                  <X className="w-3.5 h-3.5 text-white" />
+                  <span
+                    className="text-xs font-semibold text-white whitespace-nowrap"
+                    style={{ fontFamily: "'Lato', sans-serif" }}
+                  >
+                    Clear All Filters
+                  </span>
+                </span>
+              </button>
+            )}
+
             {/* Add Asset button */}
             {canCreate && (
               <button
@@ -416,10 +443,10 @@ export const AssetsToolbar = React.memo<AssetsToolbarProps>(
           </div>
 
           {/* Row 2: Filter sections */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
             {/* Type */}
             <FilterSection label="Type">
-              <div style={{ display: 'flex', gap: '5px' }}>
+              <div style={{ display: 'flex', gap: '5px', justifyContent: 'space-between', width: '100%' }}>
                 {CATEGORY_PILLS.map((cat) => (
                   <FilterPill
                     key={cat.value}
@@ -439,7 +466,7 @@ export const AssetsToolbar = React.memo<AssetsToolbarProps>(
             {/* Sub-Type */}
             <FilterSection label="Sub-Type">
               <select
-                value={filters.depotId ? '' : 'all'}
+                value="all"
                 onChange={() => {/* subtype is not in AssetFilters yet, placeholder */}}
                 className="filter-select"
                 style={{
@@ -470,15 +497,15 @@ export const AssetsToolbar = React.memo<AssetsToolbarProps>(
 
             {/* Location */}
             <FilterSection label="Location">
-              <div className="filter-grid-locations" style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+              <div className="filter-grid-locations" style={{ display: 'flex', gap: '5px', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
                 {[...DEPOT_ROW1, ...DEPOT_ROW2].map((depot) => (
                   <FilterPill
                     key={depot.name}
-                    active={selectedDepotName === depot.name}
+                    active={selectedDepotNames.includes(depot.name)}
                     label={depot.name}
                     color={depot.color}
                     fallbackColor={pillDefaultColor}
-                    onClick={() => selectDepot(depot.name)}
+                    onClick={() => toggleDepot(depot.name)}
                   />
                 ))}
               </div>
@@ -489,7 +516,7 @@ export const AssetsToolbar = React.memo<AssetsToolbarProps>(
 
             {/* Service Status */}
             <FilterSection label="Service Status">
-              <div style={{ display: 'flex', gap: '5px' }}>
+              <div style={{ display: 'flex', gap: '5px', justifyContent: 'space-between', width: '100%' }}>
                 {STATUS_PILLS.map((s) => (
                   <FilterPill
                     key={s.value}
@@ -503,29 +530,6 @@ export const AssetsToolbar = React.memo<AssetsToolbarProps>(
               </div>
             </FilterSection>
 
-            {/* Divider + Clear All (only when filters active) */}
-            {hasActiveFilters && (
-              <>
-                <div className="w-px h-8 self-center" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }} />
-                <div className="flex items-center self-center">
-                  <button
-                    type="button"
-                    onClick={onResetFilters}
-                    className={`map-header-btn ${isDark ? 'map-header-btn-dark' : 'map-header-btn-light'} relative overflow-hidden px-3 py-2 rounded-lg transition-all duration-300 ease-out hover:-translate-y-0.5 flex items-center gap-1.5`}
-                  >
-                    <span className="relative z-[1] flex items-center gap-1.5">
-                      <X className="w-3.5 h-3.5 text-white" />
-                      <span
-                        className="text-xs font-semibold text-white whitespace-nowrap"
-                        style={{ fontFamily: "'Lato', sans-serif" }}
-                      >
-                        Clear All
-                      </span>
-                    </span>
-                  </button>
-                </div>
-              </>
-            )}
           </div>
         </div>
       </>

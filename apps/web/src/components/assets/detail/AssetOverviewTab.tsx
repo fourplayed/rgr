@@ -2,9 +2,8 @@
  * AssetOverviewTab — Info grid, location, QR code, edit/retire actions
  */
 import React, { useState } from 'react';
-import { MapPin, QrCode, Calendar, Truck, Hash, User, Building } from 'lucide-react';
-import type { AssetWithRelations, AssetStatus } from '@rgr/shared';
-import { AssetStatusLabels, AssetStatusColors, AssetCategoryLabels } from '@rgr/shared';
+import { MapPin, QrCode, Download, Printer } from 'lucide-react';
+import type { AssetWithRelations } from '@rgr/shared';
 import { EditAssetForm } from '../forms/EditAssetForm';
 
 interface AssetOverviewTabProps {
@@ -33,48 +32,27 @@ export const AssetOverviewTab = React.memo<AssetOverviewTabProps>(
       );
     }
 
-    const statusColor = AssetStatusColors[asset.status as AssetStatus] ?? '#6b7280';
-
     return (
       <div className="p-5 space-y-5">
-        {/* Status badge */}
-        <div className="flex items-center justify-between">
-          <span
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium"
-            style={{
-              background: `${statusColor}20`,
-              color: statusColor,
-              border: `1px solid ${statusColor}40`,
-            }}
-          >
-            <span className="w-2 h-2 rounded-full" style={{ background: statusColor }} />
-            {AssetStatusLabels[asset.status as AssetStatus] ?? asset.status}
-          </span>
-          <span className={`text-xs ${mutedColor}`}>
-            {AssetCategoryLabels[asset.category] ?? asset.category}
-          </span>
-        </div>
-
         {/* Info grid */}
         <div className="space-y-3">
-          <InfoRow icon={Hash} label="Asset #" value={asset.assetNumber} isDark={isDark} mono />
-          <InfoRow icon={Truck} label="Make / Model" value={[asset.make, asset.model].filter(Boolean).join(' ') || null} isDark={isDark} />
+          <InfoRow label="Asset #" value={asset.assetNumber} isDark={isDark} mono />
+          <InfoRow label="Make / Model" value={[asset.make, asset.model].filter(Boolean).join(' ') || null} isDark={isDark} />
           {asset.yearManufactured && (
-            <InfoRow icon={Calendar} label="Year" value={String(asset.yearManufactured)} isDark={isDark} />
+            <InfoRow label="Year" value={String(asset.yearManufactured)} isDark={isDark} />
           )}
           {asset.registrationNumber && (
-            <InfoRow icon={Hash} label="Rego" value={asset.registrationNumber} isDark={isDark} mono />
+            <InfoRow label="Rego" value={asset.registrationNumber} isDark={isDark} mono />
           )}
           {asset.registrationExpiry && (
             <InfoRow
-              icon={Calendar}
               label="Rego Expiry"
               value={new Date(asset.registrationExpiry).toLocaleDateString()}
               isDark={isDark}
             />
           )}
-          <InfoRow icon={Building} label="Depot" value={asset.depotName ? `${asset.depotName} (${asset.depotCode})` : null} isDark={isDark} />
-          <InfoRow icon={User} label="Driver" value={asset.driverName} isDark={isDark} />
+          <InfoRow label="Depot" value={asset.depotName ? `${asset.depotName} (${asset.depotCode})` : null} isDark={isDark} />
+          <InfoRow label="Driver" value={asset.driverName} isDark={isDark} />
         </div>
 
         {/* Location */}
@@ -103,19 +81,70 @@ export const AssetOverviewTab = React.memo<AssetOverviewTabProps>(
         )}
 
         {/* QR code */}
-        {asset.qrCodeData && (
-          <div className={`pt-4 border-t ${sectionBorder}`}>
-            <div className="flex items-center gap-2 mb-2">
-              <QrCode className={`w-4 h-4 ${mutedColor}`} />
-              <span className={`text-xs font-medium uppercase tracking-wider ${labelColor}`}>
-                QR Code
-              </span>
+        {asset.qrCodeData && (() => {
+          const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(asset.qrCodeData)}&bgcolor=000000&color=ffffff`;
+          const printQR = () => {
+            const win = window.open('', '_blank', 'width=400,height=500');
+            if (!win) return;
+            win.document.write(`
+              <html><head><title>QR — ${asset.assetNumber}</title>
+              <style>body{margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:#fff;font-family:'Lato',sans-serif}
+              img{width:250px;height:250px;image-rendering:pixelated}
+              h2{margin:20px 0 4px;font-size:24px;letter-spacing:0.05em}
+              p{margin:2px 0;color:#666;font-size:12px}
+              </style></head><body>
+              <img src="${qrUrl}" />
+              <h2>${asset.assetNumber}</h2>
+              <p>${asset.category.charAt(0).toUpperCase() + asset.category.slice(1)}${asset.depotName ? ' — ' + asset.depotName : ''}</p>
+              <p style="font-family:monospace;font-size:10px;margin-top:8px;color:#999">${asset.id}</p>
+              <script>window.onload=()=>{window.print()}</script>
+              </body></html>
+            `);
+            win.document.close();
+          };
+          return (
+            <div className={`pt-4 border-t ${sectionBorder}`}>
+              <div className="flex items-center gap-2 mb-3">
+                <QrCode className={`w-4 h-4 ${mutedColor}`} />
+                <span className={`text-xs font-medium uppercase tracking-wider ${labelColor}`}>
+                  QR Code
+                </span>
+              </div>
+              <div className="space-y-3">
+                <p className={`text-xs font-mono break-all ${mutedColor}`}>
+                  {asset.qrCodeData}
+                </p>
+                {/* Asset UUID */}
+                <div>
+                  <span className={`text-xs ${labelColor}`}>UUID</span>
+                  <p className={`text-xs font-mono break-all ${mutedColor}`}>{asset.id}</p>
+                </div>
+                <div className="flex gap-2">
+                  <a
+                    href={qrUrl}
+                    download={`QR-${asset.assetNumber}.png`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:bg-white/10 ${mutedColor}`}
+                    style={{ border: '1px solid rgba(255,255,255,0.15)' }}
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Download
+                  </a>
+                  <button
+                    type="button"
+                    onClick={printQR}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:bg-white/10 ${mutedColor}`}
+                    style={{ border: '1px solid rgba(255,255,255,0.15)' }}
+                  >
+                    <Printer className="w-3.5 h-3.5" />
+                    Print
+                  </button>
+                </div>
+              </div>
             </div>
-            <p className={`text-xs font-mono break-all ${mutedColor}`}>
-              {asset.qrCodeData}
-            </p>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Notes */}
         {asset.notes && (
@@ -127,16 +156,8 @@ export const AssetOverviewTab = React.memo<AssetOverviewTabProps>(
           </div>
         )}
 
-        {/* Actions */}
-        {canEdit && (
-          <div className={`pt-4 border-t ${sectionBorder} flex gap-2`}>
-            <button
-              onClick={() => setIsEditing(true)}
-              className="flex-1 px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white transition-colors"
-            >
-              Edit
-            </button>
-          </div>
+        {false && (
+          <div />
         )}
       </div>
     );
@@ -148,13 +169,11 @@ AssetOverviewTab.displayName = 'AssetOverviewTab';
 // ── InfoRow ──
 
 function InfoRow({
-  icon: Icon,
   label,
   value,
   isDark,
   mono,
 }: {
-  icon: React.ElementType;
   label: string;
   value: string | null;
   isDark: boolean;
@@ -165,14 +184,11 @@ function InfoRow({
   const labelColor = isDark ? 'text-slate-400' : 'text-white/60';
 
   return (
-    <div className="flex items-start gap-3">
-      <Icon className={`w-4 h-4 mt-0.5 ${mutedColor}`} />
-      <div className="flex-1 min-w-0">
-        <span className={`text-xs ${labelColor}`}>{label}</span>
-        <p className={`text-sm ${mono ? 'font-mono' : ''} ${value ? textColor : mutedColor}`}>
-          {value || '\u2014'}
-        </p>
-      </div>
+    <div className="min-w-0">
+      <span className={`text-xs ${labelColor}`}>{label}</span>
+      <p className={`text-sm ${mono ? 'font-mono' : ''} ${value ? textColor : mutedColor}`}>
+        {value || '\u2014'}
+      </p>
     </div>
   );
 }

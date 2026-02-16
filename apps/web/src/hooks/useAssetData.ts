@@ -79,7 +79,7 @@ export function useAssets(
         search: filters.search || undefined,
         statuses: filters.statuses.length > 0 ? filters.statuses : undefined,
         categories: filters.categories.length > 0 ? filters.categories : undefined,
-        depotId: filters.depotId,
+        depotIds: filters.depotIds.length > 0 ? filters.depotIds : undefined,
         hasLocation: filters.hasLocation ?? undefined,
         sortField: sort.field,
         sortDirection: sort.direction,

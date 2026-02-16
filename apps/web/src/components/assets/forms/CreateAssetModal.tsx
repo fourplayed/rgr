@@ -1,8 +1,12 @@
 /**
- * CreateAssetModal — Modal for creating a new asset
+ * CreateAssetSlideout — Right-side panel for creating a new asset
+ *
+ * Slides in from the right with glassmorphic dark blue styling,
+ * matching the AssetDetailSlideout pattern.
  */
 import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Plus } from 'lucide-react';
+import { motion } from 'motion/react';
 import {
   AssetCategory,
   AssetCategoryLabels,
@@ -53,32 +57,73 @@ export const CreateAssetModal = React.memo<CreateAssetModalProps>(
       setForm((prev) => ({ ...prev, [key]: value }));
     };
 
-    const overlayBg = 'rgba(0, 0, 0, 0.6)';
-    const modalBg = isDark ? 'rgba(15, 23, 42, 0.97)' : 'rgba(30, 30, 80, 0.97)';
+    const bg = isDark ? 'rgba(6, 11, 40, 0.92)' : 'rgba(0, 0, 100, 0.92)';
     const borderColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.15)';
     const textColor = isDark ? 'text-slate-200' : 'text-white';
     const mutedColor = isDark ? 'text-slate-400' : 'text-white/60';
-    const inputCls = isDark
-      ? 'bg-slate-800/60 border-slate-700/50 text-slate-200 focus:border-blue-500/50'
-      : 'bg-white/10 border-white/20 text-white focus:border-white/40';
+    const labelColor = isDark ? 'text-slate-400' : 'text-white/70';
+    const inputStyle: React.CSSProperties = isDark
+      ? {
+          backgroundColor: 'rgba(0, 0, 0, 0.3)',
+          border: '1px solid rgba(235, 235, 235, 0.12)',
+          color: '#e2e8f0',
+        }
+      : {
+          backgroundColor: 'rgba(255, 255, 255, 0.08)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          color: '#ffffff',
+        };
 
     return (
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center"
-        style={{ background: overlayBg, backdropFilter: 'blur(4px)' }}
-        onClick={(e) => e.target === e.currentTarget && onClose()}
-      >
-        <div
-          className="w-full max-w-lg rounded-xl overflow-hidden"
+      <>
+        {/* Backdrop */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-50"
+          style={{ background: 'rgba(0, 0, 0, 0.4)', backdropFilter: 'blur(2px)' }}
+          onClick={onClose}
+        />
+
+        {/* Slideout panel */}
+        <motion.div
+          initial={{ x: '100%' }}
+          animate={{ x: 0 }}
+          exit={{ x: '100%' }}
+          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          className="fixed top-0 right-0 bottom-0 z-50 w-full max-w-md flex flex-col"
           style={{
-            background: modalBg,
-            border: `1px solid ${borderColor}`,
-            backdropFilter: 'blur(20px)',
+            background: bg,
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
+            borderLeft: `1px solid ${borderColor}`,
+            boxShadow: '-8px 0 32px rgba(0, 0, 0, 0.4)',
           }}
         >
           {/* Header */}
-          <div className={`flex items-center justify-between px-6 py-4 border-b`} style={{ borderColor }}>
-            <h2 className={`text-lg font-bold ${textColor}`}>Add New Asset</h2>
+          <div
+            className="flex items-center justify-between px-6 py-5 flex-shrink-0"
+            style={{ borderBottom: `1px solid ${borderColor}` }}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className="w-9 h-9 rounded-lg flex items-center justify-center"
+                style={{
+                  background: 'rgba(59, 130, 246, 0.2)',
+                  border: '1px solid rgba(59, 130, 246, 0.3)',
+                }}
+              >
+                <Plus className="w-5 h-5 text-blue-400" />
+              </div>
+              <h2
+                className={`text-lg font-bold ${textColor}`}
+                style={{ fontFamily: "'Lato', sans-serif" }}
+              >
+                Add New Asset
+              </h2>
+            </div>
             <button
               onClick={onClose}
               className={`p-1.5 rounded-lg ${mutedColor} hover:text-white hover:bg-white/10 transition-colors`}
@@ -87,11 +132,14 @@ export const CreateAssetModal = React.memo<CreateAssetModalProps>(
             </button>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* Form — scrollable */}
+          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
             {/* Asset Number */}
             <div>
-              <label className={`block text-xs font-medium mb-1 ${mutedColor}`}>
+              <label
+                className={`block text-xs font-semibold uppercase tracking-wider mb-1.5 ${labelColor}`}
+                style={{ fontFamily: "'Lato', sans-serif" }}
+              >
                 Asset Number *
               </label>
               <input
@@ -100,51 +148,74 @@ export const CreateAssetModal = React.memo<CreateAssetModalProps>(
                 value={form.assetNumber}
                 onChange={(e) => updateField('assetNumber', e.target.value.toUpperCase())}
                 placeholder="TL001"
-                className={`w-full px-3 py-2 rounded-lg border text-sm outline-none transition-colors ${inputCls}`}
+                className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors"
+                style={inputStyle}
               />
             </div>
 
             {/* Category */}
             <div>
-              <label className={`block text-xs font-medium mb-1 ${mutedColor}`}>
+              <label
+                className={`block text-xs font-semibold uppercase tracking-wider mb-1.5 ${labelColor}`}
+                style={{ fontFamily: "'Lato', sans-serif" }}
+              >
                 Category *
               </label>
               <div className="flex gap-2">
-                {(Object.values(AssetCategory) as AssetCategory[]).map((cat) => (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => updateField('category', cat)}
-                    className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                      form.category === cat
-                        ? 'bg-blue-600/25 border-blue-500/40 text-blue-300'
-                        : `${inputCls}`
-                    }`}
-                  >
-                    {AssetCategoryLabels[cat]}
-                  </button>
-                ))}
+                {(Object.values(AssetCategory) as AssetCategory[]).map((cat) => {
+                  const isSelected = form.category === cat;
+                  return (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => updateField('category', cat)}
+                      className="flex-1 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200"
+                      style={{
+                        fontFamily: "'Lato', sans-serif",
+                        background: isSelected ? 'rgba(59, 130, 246, 0.25)' : inputStyle.backgroundColor,
+                        border: isSelected
+                          ? '1px solid rgba(59, 130, 246, 0.5)'
+                          : inputStyle.border,
+                        color: isSelected ? '#93c5fd' : (inputStyle.color as string),
+                      }}
+                    >
+                      {AssetCategoryLabels[cat]}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
             {/* Make / Model */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className={`block text-xs font-medium mb-1 ${mutedColor}`}>Make</label>
+                <label
+                  className={`block text-xs font-semibold uppercase tracking-wider mb-1.5 ${labelColor}`}
+                  style={{ fontFamily: "'Lato', sans-serif" }}
+                >
+                  Make
+                </label>
                 <input
                   type="text"
                   value={form.make ?? ''}
                   onChange={(e) => updateField('make', e.target.value || null)}
-                  className={`w-full px-3 py-2 rounded-lg border text-sm outline-none transition-colors ${inputCls}`}
+                  className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors"
+                  style={inputStyle}
                 />
               </div>
               <div>
-                <label className={`block text-xs font-medium mb-1 ${mutedColor}`}>Model</label>
+                <label
+                  className={`block text-xs font-semibold uppercase tracking-wider mb-1.5 ${labelColor}`}
+                  style={{ fontFamily: "'Lato', sans-serif" }}
+                >
+                  Model
+                </label>
                 <input
                   type="text"
                   value={form.model ?? ''}
                   onChange={(e) => updateField('model', e.target.value || null)}
-                  className={`w-full px-3 py-2 rounded-lg border text-sm outline-none transition-colors ${inputCls}`}
+                  className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors"
+                  style={inputStyle}
                 />
               </div>
             </div>
@@ -152,7 +223,12 @@ export const CreateAssetModal = React.memo<CreateAssetModalProps>(
             {/* Year / Rego */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className={`block text-xs font-medium mb-1 ${mutedColor}`}>Year</label>
+                <label
+                  className={`block text-xs font-semibold uppercase tracking-wider mb-1.5 ${labelColor}`}
+                  style={{ fontFamily: "'Lato', sans-serif" }}
+                >
+                  Year
+                </label>
                 <input
                   type="number"
                   min={1900}
@@ -161,28 +237,65 @@ export const CreateAssetModal = React.memo<CreateAssetModalProps>(
                   onChange={(e) =>
                     updateField('yearManufactured', e.target.value ? Number(e.target.value) : null)
                   }
-                  className={`w-full px-3 py-2 rounded-lg border text-sm outline-none transition-colors ${inputCls}`}
+                  className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors"
+                  style={inputStyle}
                 />
               </div>
               <div>
-                <label className={`block text-xs font-medium mb-1 ${mutedColor}`}>Registration #</label>
+                <label
+                  className={`block text-xs font-semibold uppercase tracking-wider mb-1.5 ${labelColor}`}
+                  style={{ fontFamily: "'Lato', sans-serif" }}
+                >
+                  Registration #
+                </label>
                 <input
                   type="text"
                   value={form.registrationNumber ?? ''}
                   onChange={(e) => updateField('registrationNumber', e.target.value || null)}
-                  className={`w-full px-3 py-2 rounded-lg border text-sm outline-none transition-colors ${inputCls}`}
+                  className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors"
+                  style={inputStyle}
                 />
               </div>
+            </div>
+
+            {/* Registration Expiry */}
+            <div>
+              <label
+                className={`block text-xs font-semibold uppercase tracking-wider mb-1.5 ${labelColor}`}
+                style={{ fontFamily: "'Lato', sans-serif" }}
+              >
+                Registration Expiry
+              </label>
+              <input
+                type="date"
+                value={form.registrationExpiry ?? ''}
+                onChange={(e) => updateField('registrationExpiry', e.target.value || null)}
+                className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors"
+                style={inputStyle}
+              />
             </div>
 
             {/* Depot */}
             {depots.length > 0 && (
               <div>
-                <label className={`block text-xs font-medium mb-1 ${mutedColor}`}>Depot</label>
+                <label
+                  className={`block text-xs font-semibold uppercase tracking-wider mb-1.5 ${labelColor}`}
+                  style={{ fontFamily: "'Lato', sans-serif" }}
+                >
+                  Depot
+                </label>
                 <select
                   value={form.assignedDepotId ?? ''}
                   onChange={(e) => updateField('assignedDepotId', e.target.value || null)}
-                  className={`w-full px-3 py-2 rounded-lg border text-sm outline-none transition-colors ${inputCls}`}
+                  className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors cursor-pointer"
+                  style={{
+                    ...inputStyle,
+                    appearance: 'none',
+                    WebkitAppearance: 'none',
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'right 12px center',
+                  }}
                 >
                   <option value="">No depot assigned</option>
                   {depots.map((d) => (
@@ -194,31 +307,64 @@ export const CreateAssetModal = React.memo<CreateAssetModalProps>(
               </div>
             )}
 
+            {/* Notes */}
+            <div>
+              <label
+                className={`block text-xs font-semibold uppercase tracking-wider mb-1.5 ${labelColor}`}
+                style={{ fontFamily: "'Lato', sans-serif" }}
+              >
+                Notes
+              </label>
+              <textarea
+                rows={3}
+                value={form.notes ?? ''}
+                onChange={(e) => updateField('notes', e.target.value || null)}
+                className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors resize-none"
+                style={inputStyle}
+              />
+            </div>
+
             {/* Error */}
             {error && (
-              <p className="text-sm text-red-400">{error}</p>
+              <div
+                className="px-3 py-2 rounded-lg text-sm text-red-300"
+                style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)' }}
+              >
+                {error}
+              </div>
             )}
-
-            {/* Actions */}
-            <div className="flex justify-end gap-3 pt-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className={`px-4 py-2 rounded-lg text-sm ${textColor} hover:bg-white/10 transition-colors`}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={createAsset.isPending || !form.assetNumber}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white transition-colors disabled:opacity-50"
-              >
-                {createAsset.isPending ? 'Creating...' : 'Create Asset'}
-              </button>
-            </div>
           </form>
-        </div>
-      </div>
+
+          {/* Footer — fixed at bottom */}
+          <div
+            className="flex justify-end gap-3 px-6 py-4 flex-shrink-0"
+            style={{ borderTop: `1px solid ${borderColor}` }}
+          >
+            <button
+              type="button"
+              onClick={onClose}
+              className={`px-5 py-2.5 rounded-lg text-sm font-medium ${textColor} hover:bg-white/10 transition-colors`}
+              style={{ fontFamily: "'Lato', sans-serif" }}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              form="create-asset-form"
+              disabled={createAsset.isPending || !form.assetNumber}
+              onClick={handleSubmit}
+              className="px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-all duration-200 disabled:opacity-40"
+              style={{
+                fontFamily: "'Lato', sans-serif",
+                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%)',
+                boxShadow: '0 2px 8px rgba(37, 99, 235, 0.4)',
+              }}
+            >
+              {createAsset.isPending ? 'Creating...' : 'Create Asset'}
+            </button>
+          </div>
+        </motion.div>
+      </>
     );
   }
 );

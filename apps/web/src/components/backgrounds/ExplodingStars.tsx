@@ -182,26 +182,26 @@ const KEYFRAMES = `
     100%  { opacity: 1; }
   }
 
-  /* Star core grows during warning — flickers transparent to blue */
+  /* Star core grows during warning — flickers transparent to violet */
   @keyframes explWarningGrow {
     0%   { transform: translate(-50%, -50%) scale(1); opacity: 0; }
-    10%  { opacity: 1; filter: brightness(1.5) hue-rotate(210deg); }
+    10%  { opacity: 1; filter: brightness(1.5) hue-rotate(270deg); }
     20%  { opacity: 0; }
-    30%  { opacity: 1; filter: brightness(1.5) hue-rotate(210deg); }
+    30%  { opacity: 1; filter: brightness(1.5) hue-rotate(270deg); }
     40%  { opacity: 0; }
-    50%  { transform: translate(-50%, -50%) scale(1.3); opacity: 1; filter: brightness(1.5) hue-rotate(210deg); }
+    50%  { transform: translate(-50%, -50%) scale(1.3); opacity: 1; filter: brightness(1.5) hue-rotate(270deg); }
     55%  { opacity: 0; }
-    60%  { opacity: 1; filter: brightness(1.5) hue-rotate(210deg); }
+    60%  { opacity: 1; filter: brightness(1.5) hue-rotate(270deg); }
     65%  { opacity: 0; }
-    70%  { opacity: 1; filter: brightness(1.5) hue-rotate(210deg); }
+    70%  { opacity: 1; filter: brightness(1.5) hue-rotate(270deg); }
     75%  { opacity: 0; }
-    80%  { opacity: 1; filter: brightness(1.8) hue-rotate(210deg); }
+    80%  { opacity: 1; filter: brightness(1.8) hue-rotate(270deg); }
     85%  { opacity: 0; }
-    88%  { opacity: 1; filter: brightness(1.8) hue-rotate(210deg); }
+    88%  { opacity: 1; filter: brightness(1.8) hue-rotate(270deg); }
     91%  { opacity: 0; }
-    94%  { opacity: 1; filter: brightness(2) hue-rotate(210deg); }
+    94%  { opacity: 1; filter: brightness(2) hue-rotate(270deg); }
     97%  { opacity: 0; }
-    100% { transform: translate(-50%, -50%) scale(2); opacity: 1; filter: brightness(2) hue-rotate(210deg); }
+    100% { transform: translate(-50%, -50%) scale(2); opacity: 1; filter: brightness(2) hue-rotate(270deg); }
   }
 
   @keyframes explSpeedBoost {
@@ -525,14 +525,14 @@ export const ExplodingStars = memo(function ExplodingStars({
                 <path
                   d={t.path}
                   fill="none"
-                  stroke="rgba(120,180,255,0.8)"
+                  stroke="rgba(200,100,255,0.8)"
                   strokeWidth="1.5"
                   strokeLinecap="round"
                 />
                 <path
                   d={t.path}
                   fill="none"
-                  stroke="rgba(60,130,255,0.3)"
+                  stroke="rgba(150,40,255,0.3)"
                   strokeWidth="5"
                   strokeLinecap="round"
                 />
@@ -548,11 +548,11 @@ export const ExplodingStars = memo(function ExplodingStars({
                 animation: `shockFlash ${SHOCK_BOLT_MS}ms ease-out forwards`,
               }}
             >
-              {/* Core — bright white-blue */}
+              {/* Core — bright neon violet */}
               <path
                 d={bolt.path}
                 fill="none"
-                stroke="rgba(200,225,255,1)"
+                stroke="rgba(220,160,255,1)"
                 strokeWidth="3"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -561,7 +561,7 @@ export const ExplodingStars = memo(function ExplodingStars({
               <path
                 d={bolt.path}
                 fill="none"
-                stroke="rgba(60,130,255,0.7)"
+                stroke="rgba(160,40,255,0.7)"
                 strokeWidth="8"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -570,7 +570,7 @@ export const ExplodingStars = memo(function ExplodingStars({
               <path
                 d={bolt.path}
                 fill="none"
-                stroke="rgba(40,100,255,0.25)"
+                stroke="rgba(120,0,200,0.25)"
                 strokeWidth="18"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -581,14 +581,14 @@ export const ExplodingStars = memo(function ExplodingStars({
                   <path
                     d={bp}
                     fill="none"
-                    stroke="rgba(200,225,255,0.8)"
+                    stroke="rgba(220,160,255,0.8)"
                     strokeWidth="1.5"
                     strokeLinecap="round"
                   />
                   <path
                     d={bp}
                     fill="none"
-                    stroke="rgba(60,130,255,0.4)"
+                    stroke="rgba(150,40,255,0.4)"
                     strokeWidth="5"
                     strokeLinecap="round"
                   />
@@ -655,7 +655,7 @@ export const ExplodingStars = memo(function ExplodingStars({
                     width: d * 12,
                     height: d * 12,
                     borderRadius: '50%',
-                    background: 'radial-gradient(circle, rgba(60,130,255,1) 0%, rgba(0,60,200,0.5) 40%, transparent 70%)',
+                    background: 'radial-gradient(circle, rgba(180,0,255,1) 0%, rgba(100,0,180,0.5) 40%, transparent 70%)',
                     transform: 'translate(-50%, -50%)',
                     animation: `explWarningBlink ${WARNING_MS}ms ease-in-out forwards`,
                     pointerEvents: 'none',
@@ -672,7 +672,7 @@ export const ExplodingStars = memo(function ExplodingStars({
                       width: d * 4,
                       height: d * 4,
                       borderRadius: '50%',
-                      background: 'radial-gradient(circle, rgba(60,130,255,1) 0%, rgba(0,60,200,0.8) 25%, rgba(0,10,40,0.4) 55%, transparent 100%)',
+                      background: 'radial-gradient(circle, rgba(160,0,255,0.9) 0%, rgba(75,0,130,0.7) 25%, rgba(20,0,30,0.4) 55%, transparent 100%)',
                       animation: `explFlash ${EXPLOSION_MS}ms ease-out forwards`,
                       pointerEvents: 'none',
                     }}
@@ -683,7 +683,7 @@ export const ExplodingStars = memo(function ExplodingStars({
                       width: 160,
                       height: 160,
                       borderRadius: '50%',
-                      border: '2px solid rgba(60,130,255,0.5)',
+                      border: '2px solid rgba(140,0,220,0.5)',
                       animation: `explBlastRing ${EXPLOSION_MS}ms ease-out forwards`,
                       pointerEvents: 'none',
                     }}
@@ -692,10 +692,11 @@ export const ExplodingStars = memo(function ExplodingStars({
                     const rad = (p.angle * Math.PI) / 180;
                     const tx = Math.cos(rad) * p.distance;
                     const ty = Math.sin(rad) * p.distance;
-                    const g = Math.round(60 + p.brightness * 70);
-                    const b = Math.round(180 + p.brightness * 75);
-                    const bg = `rgb(${Math.round(p.brightness * 60)}, ${g}, ${b})`;
-                    const glow = `0 0 4px 1px rgb(${Math.round(p.brightness * 40)}, ${Math.round(p.brightness * 100)}, ${Math.round(150 + p.brightness * 105)})`;
+                    const r = Math.round(40 + p.brightness * 120);
+                    const g = Math.round(p.brightness * 20);
+                    const b = Math.round(60 + p.brightness * 130);
+                    const bg = `rgb(${r}, ${g}, ${b})`;
+                    const glow = `0 0 4px 1px rgb(${Math.round(60 + p.brightness * 80)}, 0, ${Math.round(80 + p.brightness * 120)})`;
 
                     return (
                       <div

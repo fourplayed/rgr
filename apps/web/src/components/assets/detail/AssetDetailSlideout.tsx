@@ -2,7 +2,7 @@
  * AssetDetailSlideout — Right-side detail panel, tab-based
  */
 import React from 'react';
-import { X } from 'lucide-react';
+import { X, Pencil } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAsset } from '@/hooks/useAssetData';
 import type { AssetDetailTab } from '@/pages/assets/types';
@@ -32,25 +32,41 @@ export const AssetDetailSlideout = React.memo<AssetDetailSlideoutProps>(
   ({ isDark, assetId, activeTab, canEdit, canDelete, onTabChange, onClose }) => {
     const { data: asset, isLoading, isError } = useAsset(assetId);
 
-    const bg = isDark ? 'rgba(6, 11, 40, 0.85)' : 'rgba(0, 0, 100, 0.85)';
-    const borderColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.15)';
+    const bg = isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.7)';
+    const borderColor = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.25)';
     const textColor = isDark ? 'text-slate-200' : 'text-white';
     const mutedColor = isDark ? 'text-slate-400' : 'text-white/60';
 
     return (
-      <motion.div
-        initial={{ width: 0, opacity: 0 }}
-        animate={{ width: 400, opacity: 1 }}
-        exit={{ width: 0, opacity: 0 }}
-        transition={{ duration: 0.25, ease: 'easeInOut' }}
-        className="flex-shrink-0 overflow-hidden rounded-xl flex flex-col"
-        style={{
-          background: bg,
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          border: `1px solid ${borderColor}`,
-        }}
-      >
+      <>
+        {/* Backdrop */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-50"
+          style={{ background: 'rgba(0, 0, 0, 0.2)', backdropFilter: 'blur(2px)' }}
+          onClick={onClose}
+        />
+
+        {/* Slideout panel */}
+        <motion.div
+          initial={{ x: '100%' }}
+          animate={{ x: 0 }}
+          exit={{ x: '100%' }}
+          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          className="fixed right-0 bottom-0 z-50 w-full max-w-md flex flex-col"
+          style={{
+            top: '80px',
+            background: bg,
+            backdropFilter: 'blur(40px) saturate(1.8)',
+            WebkitBackdropFilter: 'blur(40px) saturate(1.8)',
+            border: 'none',
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08)',
+            borderRadius: 0,
+          }}
+        >
         {/* Header */}
         <div className={`flex items-center justify-between px-5 py-4 border-b`} style={{ borderColor }}>
           <div>
@@ -62,17 +78,29 @@ export const AssetDetailSlideout = React.memo<AssetDetailSlideoutProps>(
                   {asset?.assetNumber ?? 'Unknown'}
                 </h2>
                 <p className={`text-xs ${mutedColor}`}>
-                  {asset?.depotName ?? 'No depot assigned'}
+                  {asset?.category ? (asset.category.charAt(0).toUpperCase() + asset.category.slice(1)) : ''}{asset?.depotName ? ` — ${asset.depotName}` : ''}
                 </p>
               </>
             )}
           </div>
-          <button
-            onClick={onClose}
-            className={`p-1.5 rounded-lg ${mutedColor} hover:text-white hover:bg-white/10 transition-colors`}
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-1">
+            {canEdit && (
+              <button
+                onClick={() => onTabChange('overview')}
+                className={`p-1.5 rounded-lg ${mutedColor} hover:text-white hover:bg-white/10 transition-colors`}
+                aria-label="Edit asset"
+                data-edit-trigger
+              >
+                <Pencil className="w-4 h-4" />
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className={`p-1.5 rounded-lg ${mutedColor} hover:text-white hover:bg-white/10 transition-colors`}
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Tab bar */}
@@ -131,6 +159,7 @@ export const AssetDetailSlideout = React.memo<AssetDetailSlideoutProps>(
           ) : null}
         </div>
       </motion.div>
+      </>
     );
   }
 );

@@ -220,12 +220,13 @@ export const TopNavBar = React.memo<TopNavBarProps>(({
             type="button"
             onClick={onToggleTheme}
             className="group relative p-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 transition-all duration-200"
+            style={{ color: iconColor }}
             aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
             onMouseEnter={(e) => {
-              (e.currentTarget.querySelector('svg') as SVGElement).style.color = iconHoverColor;
+              e.currentTarget.style.color = iconHoverColor;
             }}
             onMouseLeave={(e) => {
-              (e.currentTarget.querySelector('svg') as SVGElement).style.color = iconColor;
+              e.currentTarget.style.color = iconColor;
             }}
           >
             <ThemeToggleIcon isDark={isDark} />

@@ -107,9 +107,9 @@ export const AssetFiltersPanel = React.memo<AssetFiltersPanelProps>(
               Depot
             </span>
             <select
-              value={filters.depotId ?? ''}
+              value={filters.depotIds[0] ?? ''}
               onChange={(e) =>
-                onFiltersChange({ depotId: e.target.value || null })
+                onFiltersChange({ depotIds: e.target.value ? [e.target.value] : [] })
               }
               className={`px-3 py-1.5 rounded-lg text-xs border outline-none transition-colors ${
                 isDark

@@ -41,6 +41,7 @@ export interface ListAssetsParams {
   statuses?: AssetStatus[];
   categories?: AssetCategory[];
   depotId?: string | null;
+  depotIds?: string[];
   hasLocation?: boolean;
   sortField?: string;
   sortDirection?: 'asc' | 'desc';
@@ -82,6 +83,7 @@ export async function listAssets(
     statuses,
     categories,
     depotId,
+    depotIds,
     hasLocation,
     sortField = 'assetNumber',
     sortDirection = 'asc',
@@ -111,7 +113,9 @@ export async function listAssets(
     query = query.in('category', categories);
   }
 
-  if (depotId) {
+  if (depotIds && depotIds.length > 0) {
+    query = query.in('assigned_depot_id', depotIds);
+  } else if (depotId) {
     query = query.eq('assigned_depot_id', depotId);
   }
 

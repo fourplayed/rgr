@@ -29,10 +29,11 @@ interface ColumnDef {
 const COLUMNS: ColumnDef[] = [
   { key: 'assetNumber', label: 'Asset #', sortable: true, width: '120px' },
   { key: 'category', label: 'Type', sortable: true, width: '100px' },
-  { key: 'status', label: 'Status', sortable: true, width: '140px' },
+  { key: 'status', label: 'Status', sortable: true, width: '160px' },
   { key: 'make', label: 'Make / Model', sortable: false },
   { key: 'registrationNumber', label: 'Rego', sortable: false, width: '120px' },
   { key: 'registrationExpiry', label: 'Rego Expiry', sortable: true, width: '120px' },
+  { key: 'depotName', label: 'Location', sortable: false, width: '140px' },
   { key: 'lastLocationUpdatedAt', label: 'Last Scan', sortable: true, width: '140px' },
 ];
 
@@ -42,10 +43,10 @@ export const AssetsTable = React.memo<AssetsTableProps>(
 
     const textColor = isDark ? 'text-slate-200' : 'text-white';
     const mutedColor = isDark ? 'text-slate-400' : 'text-white/70';
-    const headerBg = isDark ? 'bg-slate-800/40' : 'bg-white/5';
-    const rowHoverBg = isDark ? 'hover:bg-slate-800/30' : 'hover:bg-white/10';
-    const selectedBg = isDark ? 'bg-blue-900/20' : 'bg-white/15';
-    const borderColor = isDark ? 'border-slate-700/30' : 'border-white/10';
+    const headerBg = isDark ? 'bg-[rgba(0,0,48,0.5)]' : 'bg-[rgba(0,0,120,0.3)]';
+    const rowHoverBg = isDark ? 'hover:bg-[rgba(0,0,48,0.3)]' : 'hover:bg-[rgba(0,0,120,0.15)]';
+    const selectedBg = isDark ? 'bg-[rgba(0,0,48,0.45)]' : 'bg-[rgba(0,0,120,0.25)]';
+    const borderColor = isDark ? 'border-[rgba(255,255,255,0.06)]' : 'border-[rgba(255,255,255,0.1)]';
 
     if (isLoading) {
       return (
@@ -132,6 +133,9 @@ export const AssetsTable = React.memo<AssetsTableProps>(
                       {asset.registrationExpiry
                         ? new Date(asset.registrationExpiry).toLocaleDateString()
                         : '\u2014'}
+                    </td>
+                    <td className={`px-4 py-3 text-sm ${textColor}`}>
+                      {asset.depotName || '\u2014'}
                     </td>
                     <td className={`px-4 py-3 text-sm ${mutedColor}`}>
                       {asset.lastLocationUpdatedAt
