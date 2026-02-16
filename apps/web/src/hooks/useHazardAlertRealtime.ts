@@ -187,6 +187,7 @@ export function useHazardAlertRealtime(
 
   const channelRef = useRef<RealtimeChannel | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Use refs for all option values to prevent re-subscription thrashing.
   // Callbacks and filter arrays change identity on every parent render,
@@ -213,61 +214,70 @@ export function useHazardAlertRealtime(
   });
 
   // Handle incoming changes — stable callback (no deps that change per render)
+  // Debounced to batch rapid-fire DB changes (e.g. bulk operations)
   const handleChange = useCallback(
     (payload: RealtimePostgresChangesPayload<RealtimeHazardAlert>) => {
-      const { eventType, new: newRecord, old: oldRecord } = payload;
-
-      // Type assertion for the records
-      const alert = newRecord as RealtimeHazardAlert | undefined;
-      const oldAlert = oldRecord as RealtimeHazardAlert | undefined;
-
-      // Apply filters (read latest values from refs)
-      if (alert) {
-        const ids = assetIdsRef.current;
-        const sevs = severitiesRef.current;
-        const sts = statusesRef.current;
-        if (ids?.length && alert.asset_id && !ids.includes(alert.asset_id)) {
-          return;
-        }
-        if (sevs?.length && !sevs.includes(alert.severity)) {
-          return;
-        }
-        if (sts?.length && !sts.includes(alert.status)) {
-          return;
-        }
+      // Clear existing debounce timeout
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
       }
 
-      // Create event
-      const event: HazardRealtimeEvent = {
-        type: eventType as 'INSERT' | 'UPDATE' | 'DELETE',
-        alert: alert || (oldAlert as RealtimeHazardAlert),
-        oldAlert,
-        timestamp: new Date(),
-      };
+      // Debounce by 500ms
+      debounceTimeoutRef.current = setTimeout(() => {
+        const { eventType, new: newRecord, old: oldRecord } = payload;
 
-      // Update recent events (keep last 50)
-      setRecentEvents((prev) => [event, ...prev].slice(0, 50));
+        // Type assertion for the records
+        const alert = newRecord as RealtimeHazardAlert | undefined;
+        const oldAlert = oldRecord as RealtimeHazardAlert | undefined;
 
-      // Handle specific event types
-      if (eventType === 'INSERT' && alert) {
-        setNewAlertCount((prev) => prev + 1);
-        onNewAlertRef.current?.(alert);
-
-        // Play sound for new critical/high alerts
-        if (playSoundRef.current && (alert.severity === 'critical' || alert.severity === 'high')) {
-          playAlertSound(alert.severity);
+        // Apply filters (read latest values from refs)
+        if (alert) {
+          const ids = assetIdsRef.current;
+          const sevs = severitiesRef.current;
+          const sts = statusesRef.current;
+          if (ids?.length && alert.asset_id && !ids.includes(alert.asset_id)) {
+            return;
+          }
+          if (sevs?.length && !sevs.includes(alert.severity)) {
+            return;
+          }
+          if (sts?.length && !sts.includes(alert.status)) {
+            return;
+          }
         }
 
-        // Show browser notification
-        if (browserNotificationsRef.current) {
-          showBrowserNotification(alert);
-        }
-      } else if (eventType === 'UPDATE' && alert) {
-        onAlertUpdateRef.current?.(alert, oldAlert);
-      }
+        // Create event
+        const event: HazardRealtimeEvent = {
+          type: eventType as 'INSERT' | 'UPDATE' | 'DELETE',
+          alert: alert || (oldAlert as RealtimeHazardAlert),
+          oldAlert,
+          timestamp: new Date(),
+        };
 
-      // General callback
-      onEventRef.current?.(event);
+        // Update recent events (keep last 50)
+        setRecentEvents((prev) => [event, ...prev].slice(0, 50));
+
+        // Handle specific event types
+        if (eventType === 'INSERT' && alert) {
+          setNewAlertCount((prev) => prev + 1);
+          onNewAlertRef.current?.(alert);
+
+          // Play sound for new critical/high alerts
+          if (playSoundRef.current && (alert.severity === 'critical' || alert.severity === 'high')) {
+            playAlertSound(alert.severity);
+          }
+
+          // Show browser notification
+          if (browserNotificationsRef.current) {
+            showBrowserNotification(alert);
+          }
+        } else if (eventType === 'UPDATE' && alert) {
+          onAlertUpdateRef.current?.(alert, oldAlert);
+        }
+
+        // General callback
+        onEventRef.current?.(event);
+      }, 500);
     },
     [] // stable — all volatile values read from refs
   );
@@ -311,6 +321,10 @@ export function useHazardAlertRealtime(
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
+    }
+
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
     }
 
     if (channelRef.current) {

@@ -4,7 +4,7 @@
  * Extracted from MapHeader. Contains search input, filter toggle button,
  * active filter indicator, and the slide-out filter panel.
  */
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Search, Filter, ZoomIn, ZoomOut, Maximize2, X, ChevronLeft, Flag } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { AssetFilters } from './FleetMapWithData';
@@ -62,7 +62,7 @@ export const SearchFilterBar = React.memo<SearchFilterBarProps>(({
   showDepotLabels,
   onToggleDepotLabels,
 }) => {
-  const [query, setQuery] = useState('');
+  const [inputValue, setInputValue] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [hasOpenedFilters, setHasOpenedFilters] = useState(false);
 
@@ -72,9 +72,19 @@ export const SearchFilterBar = React.memo<SearchFilterBarProps>(({
     return Array.from(set).sort();
   }, [assets]);
 
+  // Debounce search input by 300ms
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      onSearch(inputValue.trim());
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [inputValue, onSearch]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSearch(query.trim());
+    // Immediate search on submit
+    onSearch(inputValue.trim());
   };
 
   const IconButton = ({ onClick, label, Icon }: { onClick: () => void; label: string; Icon: LucideIcon }) => (
@@ -362,8 +372,8 @@ export const SearchFilterBar = React.memo<SearchFilterBarProps>(({
             />
             <input
               type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
               placeholder="Search assets..."
               className={`w-full pl-9 pr-4 py-1.5 rounded-lg text-sm transition-all duration-200 ${isDark ? 'map-search-dark' : 'map-search-light'}`}
               style={{

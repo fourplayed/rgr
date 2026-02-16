@@ -280,6 +280,17 @@ export const ExplodingStars = memo(function ExplodingStars({
   glowColor,
   isDark,
 }: ExplodingStarsProps) {
+  // Page Visibility — pause all updates when tab is hidden ----------------
+  const isVisibleRef = useRef(document.visibilityState === 'visible');
+
+  useEffect(() => {
+    const handleVisibility = () => {
+      isVisibleRef.current = document.visibilityState === 'visible';
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, []);
+
   // Per-star phase ---------------------------------------------------------
   const [phases, setPhases] = useState<StarPhase[]>(() =>
     positions.map(() => 'normal'),
@@ -336,6 +347,7 @@ export const ExplodingStars = memo(function ExplodingStars({
   // Ambient tendril refresh loop -------------------------------------------
   useEffect(() => {
     const interval = setInterval(() => {
+      if (!isVisibleRef.current) return;
       setTendrils(
         positions.map((pos, i) => {
           // Only show tendrils for alive stars
@@ -438,6 +450,7 @@ export const ExplodingStars = memo(function ExplodingStars({
   // Proximity shock — stars within 150px zap each other periodically -------
   useEffect(() => {
     const interval = setInterval(() => {
+      if (!isVisibleRef.current) return;
       const pairs = proximityPairs.current;
       for (const [i, j] of pairs) {
         const pi = phasesRef.current[i];
@@ -469,6 +482,8 @@ export const ExplodingStars = memo(function ExplodingStars({
       const delay = MIN_TRIGGER_MS + Math.random() * (MAX_TRIGGER_MS - MIN_TRIGGER_MS);
       sched(() => {
         if (!alive) return;
+        // Skip trigger when tab is hidden — just reschedule
+        if (!isVisibleRef.current) { loop(); return; }
         const candidates: number[] = [];
         phasesRef.current.forEach((p, i) => {
           if (p === 'normal' && !busyRef.current.has(i)) candidates.push(i);
@@ -484,6 +499,7 @@ export const ExplodingStars = memo(function ExplodingStars({
       FIRST_TRIGGER_MIN_MS + Math.random() * (FIRST_TRIGGER_MAX_MS - FIRST_TRIGGER_MIN_MS);
     sched(() => {
       if (!alive) return;
+      if (!isVisibleRef.current) { loop(); return; }
       const candidates: number[] = [];
       phasesRef.current.forEach((p, i) => {
         if (p === 'normal' && !busyRef.current.has(i)) candidates.push(i);

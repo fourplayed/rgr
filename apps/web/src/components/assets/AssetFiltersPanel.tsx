@@ -1,7 +1,7 @@
 /**
  * AssetFiltersPanel — Category pills, status pills, depot dropdown
  */
-import React from 'react';
+import React, { useCallback } from 'react';
 import { X } from 'lucide-react';
 import {
   AssetStatus,
@@ -20,6 +20,10 @@ export interface AssetFiltersPanelProps {
   onReset: () => void;
 }
 
+/** Static enum-derived arrays — computed once outside the component */
+const ALL_STATUSES = Object.values(AssetStatus) as AssetStatus[];
+const ALL_CATEGORIES = Object.values(AssetCategory) as AssetCategory[];
+
 export const AssetFiltersPanel = React.memo<AssetFiltersPanelProps>(
   ({ isDark, filters, onFiltersChange, onReset }) => {
     const { data: depots = [] } = useDepots();
@@ -32,25 +36,31 @@ export const AssetFiltersPanel = React.memo<AssetFiltersPanelProps>(
       : 'bg-white/25 border-white/40 text-white';
     const mutedColor = isDark ? 'text-slate-400' : 'text-white/60';
 
-    function toggleStatus(status: AssetStatus) {
-      const current = filters.statuses;
-      const next = current.includes(status)
-        ? current.filter((s) => s !== status)
-        : [...current, status];
-      onFiltersChange({ statuses: next });
-    }
+    const toggleStatus = useCallback(
+      (status: AssetStatus) => {
+        const current = filters.statuses;
+        const next = current.includes(status)
+          ? current.filter((s) => s !== status)
+          : [...current, status];
+        onFiltersChange({ statuses: next });
+      },
+      [filters.statuses, onFiltersChange],
+    );
 
-    function toggleCategory(category: AssetCategory) {
-      const current = filters.categories;
-      const next = current.includes(category)
-        ? current.filter((c) => c !== category)
-        : [...current, category];
-      onFiltersChange({ categories: next });
-    }
+    const toggleCategory = useCallback(
+      (category: AssetCategory) => {
+        const current = filters.categories;
+        const next = current.includes(category)
+          ? current.filter((c) => c !== category)
+          : [...current, category];
+        onFiltersChange({ categories: next });
+      },
+      [filters.categories, onFiltersChange],
+    );
 
-    const statuses = Object.values(AssetStatus) as AssetStatus[];
+    const statuses = ALL_STATUSES;
 
-    const categories = Object.values(AssetCategory) as AssetCategory[];
+    const categories = ALL_CATEGORIES;
 
     return (
       <div

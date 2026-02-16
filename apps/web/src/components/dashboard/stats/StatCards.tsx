@@ -3,51 +3,54 @@
  *
  * Cards: Total Assets, Serviced Assets, Maintenance Tasks, AI Image Analysis, Out of Service
  * Each has a distinct background color, icon, count, title, and subtitle.
+ * Shows glassmorphic skeleton placeholders while data is loading.
  */
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Package, CheckCircle, Wrench, Camera, XCircle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { useFleetStatistics } from '@/hooks/useFleetData';
 
-interface StatCardData {
+interface StatCardDef {
   icon: LucideIcon;
-  count: number;
+  /** Key into FleetStatistics, or null for cards not yet wired to live data */
+  statKey: 'totalAssets' | 'activeAssets' | 'inMaintenance' | 'outOfService' | null;
   title: string;
   subtitle: string;
   bg: string;
 }
 
-const STAT_CARDS: StatCardData[] = [
+const STAT_CARD_DEFS: StatCardDef[] = [
   {
     icon: Package,
-    count: 22,
+    statKey: 'totalAssets',
     title: 'Total Assets',
     subtitle: 'registered and scanned',
     bg: '#2a8a9e',
   },
   {
     icon: CheckCircle,
-    count: 0,
+    statKey: 'activeAssets',
     title: 'Serviced Assets',
     subtitle: 'currently in service',
     bg: '#2bbb6e',
   },
   {
     icon: Wrench,
-    count: 0,
+    statKey: 'inMaintenance',
     title: 'Maintenance Tasks',
     subtitle: 'still pending',
     bg: '#e8a020',
   },
   {
     icon: Camera,
-    count: 0,
+    statKey: null,
     title: 'AI Image Analysis',
     subtitle: 'awaiting review',
     bg: '#e07020',
   },
   {
     icon: XCircle,
-    count: 1,
+    statKey: 'outOfService',
     title: 'Out of Service',
     subtitle: 'out of service',
     bg: '#d43050',
@@ -58,10 +61,54 @@ interface StatCardsProps {
   isDark: boolean;
 }
 
+/** Skeleton placeholder card shown while data is loading */
+function StatCardSkeleton({ bg }: { bg: string }) {
+  return (
+    <div
+      className="relative flex-1 min-w-[200px] rounded-xl p-5 flex flex-col justify-between"
+      style={{
+        background: bg,
+        minHeight: '130px',
+        opacity: 0.6,
+      }}
+    >
+      {/* Icon + count placeholder */}
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-8 h-8 rounded-lg bg-white/10 animate-pulse" />
+        <div className="w-12 h-8 rounded-lg bg-white/10 animate-pulse" />
+      </div>
+      {/* Title placeholder */}
+      <div className="w-28 h-4 rounded bg-white/10 animate-pulse mb-1" />
+      {/* Subtitle placeholder */}
+      <div className="w-36 h-3 rounded bg-white/10 animate-pulse" />
+    </div>
+  );
+}
+
 export const StatCards = React.memo<StatCardsProps>(({ isDark: _isDark }) => {
+  const { data, isLoading } = useFleetStatistics();
+
+  const cards = useMemo(() =>
+    STAT_CARD_DEFS.map((def) => ({
+      ...def,
+      count: def.statKey && data ? data[def.statKey] : 0,
+    })),
+    [data],
+  );
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-wrap gap-4">
+        {STAT_CARD_DEFS.map((def) => (
+          <StatCardSkeleton key={def.title} bg={def.bg} />
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-wrap gap-4">
-      {STAT_CARDS.map((card) => {
+      {cards.map((card) => {
         const Icon = card.icon;
         return (
           <div

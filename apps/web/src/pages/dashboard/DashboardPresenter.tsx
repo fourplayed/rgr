@@ -10,6 +10,7 @@ import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { DASHBOARD_CONSTANTS } from './types';
 import { TopNavBar } from './components/TopNavBar';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import type { DashboardState, DashboardActions } from './useDashboardLogic';
 
 export interface DashboardPresenterProps {
@@ -129,7 +130,9 @@ export function DashboardPresenter({ state, actions, children }: DashboardPresen
             className="relative mx-auto h-full"
             style={{ maxWidth: '1440px' }}
           >
-            {children}
+            <ErrorBoundary>
+              {children}
+            </ErrorBoundary>
           </div>
         </div>
       </main>

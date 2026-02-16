@@ -59,7 +59,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const { data: profile, error: profileError } = await fetchProfile(data.user.id);
 
       if (profileError) {
-        console.warn('[Auth] Could not fetch profile, falling back to user_metadata role:', profileError);
+        // Could not fetch profile, falling back to user_metadata role
       } else if (profile) {
         // Block deactivated users from logging in
         if (!profile.isActive) {
@@ -72,12 +72,6 @@ export const useAuthStore = create<AuthState>((set) => ({
         fullName = profile.fullName;
         avatarUrl = profile.avatarUrl;
       }
-
-      console.log('[Auth] Login successful:', {
-        userId: data.user.id,
-        email: data.user.email,
-      });
-      console.log(`[Auth] User role: "${role}" — routing will be based on this role`);
 
       set({
         user: { id: data.user.id, email: data.user.email || '', role, fullName, avatarUrl },
@@ -101,12 +95,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     if (!useAuthStore.getState().isAuthenticated) return;
 
     try {
-      console.log('[Auth] Logging out...');
-
       const supabase = getSupabaseClient();
       await supabase.auth.signOut();
-
-      console.log('[Auth] Logout successful');
     } catch (error) {
       console.error('[Auth] Logout error:', error);
     } finally {
@@ -121,7 +111,6 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   checkAuth: async () => {
     try {
-      console.log('[Auth] Checking authentication status...');
       const supabase = getSupabaseClient();
       const { data: { session }, error } = await supabase.auth.getSession();
 
@@ -144,7 +133,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         const { data: profile, error: profileError } = await fetchProfile(session.user.id);
 
         if (profileError) {
-          console.warn('[Auth] Could not fetch profile, falling back to user_metadata role:', profileError);
+          // Could not fetch profile, falling back to user_metadata role
         } else if (profile) {
           // Block deactivated users on session restore
           if (!profile.isActive) {
@@ -156,12 +145,6 @@ export const useAuthStore = create<AuthState>((set) => ({
           fullName = profile.fullName;
           avatarUrl = profile.avatarUrl;
         }
-
-        console.log('[Auth] Session valid:', {
-          userId: session.user.id,
-          email: session.user.email,
-        });
-        console.log(`[Auth] User role: "${role}" — routing will be based on this role`);
 
         set({
           user: {
@@ -176,7 +159,6 @@ export const useAuthStore = create<AuthState>((set) => ({
           error: null,
         });
       } else {
-        console.log('[Auth] No active session');
         set({
           user: null,
           isAuthenticated: false,

@@ -152,8 +152,11 @@ export async function listAssets(
   }
 
   // Sort
-  const dbSortField = SORT_FIELD_MAP[sortField] ?? 'asset_number';
-  query = query.order(dbSortField, { ascending: sortDirection === 'asc' });
+  const dbSortField = SORT_FIELD_MAP[sortField];
+  if (!dbSortField) {
+    console.warn(`[listAssets] Unknown sort field "${sortField}", falling back to asset_number`);
+  }
+  query = query.order(dbSortField || 'asset_number', { ascending: sortDirection === 'asc' });
 
   // Pagination
   query = query.range(from, to);
@@ -171,11 +174,12 @@ export async function listAssets(
   }
 
   const assets = (data || []).map((row: ListAssetRow) => {
-    const asset = mapRowToAsset(row as unknown as AssetRow);
+    const { depot, ...assetRow } = row;
+    const asset = mapRowToAsset(assetRow as AssetRow);
     return {
       ...asset,
-      depotName: row.depot?.name ?? null,
-      depotCode: row.depot?.code ?? null,
+      depotName: depot?.name ?? null,
+      depotCode: depot?.code ?? null,
       driverName: null,
       lastScannerName: null,
     } as AssetWithRelations;
@@ -220,16 +224,16 @@ export async function getAsset(
     return { data: null, error: 'Asset not found' };
   }
 
-  const row = data as unknown as AssetRowWithJoins;
-  const asset = mapRowToAsset(row as unknown as AssetRow);
+  const { depot, driver, scanner, ...assetRow } = data as unknown as AssetRowWithJoins;
+  const asset = mapRowToAsset(assetRow as AssetRow);
 
   return {
     data: {
       ...asset,
-      depotName: row.depot?.name ?? null,
-      depotCode: row.depot?.code ?? null,
-      driverName: row.driver?.full_name ?? null,
-      lastScannerName: row.scanner?.full_name ?? null,
+      depotName: depot?.name ?? null,
+      depotCode: depot?.code ?? null,
+      driverName: driver?.full_name ?? null,
+      lastScannerName: scanner?.full_name ?? null,
     },
     error: null,
   };
@@ -359,12 +363,13 @@ export async function getAssetScans(
 
   const total = count ?? 0;
   const scans = (data || []).map((row: ScanEventRowWithJoins) => {
-    const scan = mapRowToScanEvent(row as unknown as ScanEventRow);
+    const { profiles, assets, ...scanRow } = row;
+    const scan = mapRowToScanEvent(scanRow as ScanEventRow);
     return {
       ...scan,
-      scannerName: row.profiles?.full_name ?? null,
-      assetNumber: row.assets?.asset_number ?? null,
-      assetCategory: row.assets?.category ?? null,
+      scannerName: profiles?.full_name ?? null,
+      assetNumber: assets?.asset_number ?? null,
+      assetCategory: assets?.category ?? null,
     } as ScanEventWithScanner;
   });
 
@@ -479,12 +484,13 @@ export async function getMyRecentScans(
   }
 
   const scans = (data || []).map((row: ScanEventRowWithJoins) => {
-    const scan = mapRowToScanEvent(row as unknown as ScanEventRow);
+    const { profiles, assets, ...scanRow } = row;
+    const scan = mapRowToScanEvent(scanRow as ScanEventRow);
     return {
       ...scan,
-      scannerName: row.profiles?.full_name ?? null,
-      assetNumber: row.assets?.asset_number ?? null,
-      assetCategory: row.assets?.category ?? null,
+      scannerName: profiles?.full_name ?? null,
+      assetNumber: assets?.asset_number ?? null,
+      assetCategory: assets?.category ?? null,
     } as ScanEventWithScanner;
   });
 
@@ -525,11 +531,12 @@ export async function getAssetMaintenance(
 
   const total = count ?? 0;
   const records = (data || []).map((row: MaintenanceRowWithJoins) => {
-    const record = mapRowToMaintenanceRecord(row as unknown as MaintenanceRecordRow);
+    const { reporter, assignee, ...maintenanceRow } = row;
+    const record = mapRowToMaintenanceRecord(maintenanceRow as MaintenanceRecordRow);
     return {
       ...record,
-      reporterName: row.reporter?.full_name ?? null,
-      assigneeName: row.assignee?.full_name ?? null,
+      reporterName: reporter?.full_name ?? null,
+      assigneeName: assignee?.full_name ?? null,
     } as MaintenanceRecordWithNames;
   });
 
@@ -597,7 +604,8 @@ export async function listDepots(): Promise<ServiceResult<Depot[]>> {
     .from('depots')
     .select('*')
     .eq('is_active', true)
-    .order('name');
+    .order('name')
+    .limit(200);
 
   if (error) {
     return { data: null, error: `Failed to fetch depots: ${error.message}` };

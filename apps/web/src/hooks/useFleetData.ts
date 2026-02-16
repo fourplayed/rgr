@@ -92,28 +92,48 @@ export const FLEET_QUERY_KEYS = {
 async function fetchFleetStatistics(): Promise<FleetStatistics> {
   const supabase = getSupabaseClient();
 
+  // Try server-side RPC first
   const { data, error } = await supabase.rpc('get_fleet_statistics');
 
-  if (error) {
-    throw new Error(`Failed to fetch fleet statistics: ${error.message}`);
+  if (!error && data) {
+    // RPC succeeded, map the result
+    const stats = data as {
+      total_assets: number;
+      serviced: number;
+      maintenance: number;
+      out_of_service: number;
+      trailer_count: number;
+      dolly_count: number;
+    };
+
+    return {
+      totalAssets: stats.total_assets,
+      activeAssets: stats.serviced,
+      inMaintenance: stats.maintenance,
+      outOfService: stats.out_of_service,
+      trailerCount: stats.trailer_count,
+      dollyCount: stats.dolly_count,
+    };
   }
 
-  const stats = data as {
-    total_assets: number;
-    serviced: number;
-    maintenance: number;
-    out_of_service: number;
-    trailer_count: number;
-    dolly_count: number;
-  };
+  // Fallback: client-side aggregation
+  // This runs if the RPC function doesn't exist (migration not applied yet)
+  const { data: assets, error: fallbackError } = await supabase
+    .from('assets')
+    .select('status, category')
+    .is('deleted_at', null);
+
+  if (fallbackError) {
+    throw new Error(`Failed to fetch fleet statistics: ${fallbackError.message}`);
+  }
 
   return {
-    totalAssets: stats.total_assets,
-    activeAssets: stats.serviced,
-    inMaintenance: stats.maintenance,
-    outOfService: stats.out_of_service,
-    trailerCount: stats.trailer_count,
-    dollyCount: stats.dolly_count,
+    totalAssets: assets.length,
+    activeAssets: assets.filter((a) => a.status === 'serviced').length,
+    inMaintenance: assets.filter((a) => a.status === 'maintenance').length,
+    outOfService: assets.filter((a) => a.status === 'out_of_service').length,
+    trailerCount: assets.filter((a) => a.category === 'trailer').length,
+    dollyCount: assets.filter((a) => a.category === 'dolly').length,
   };
 }
 

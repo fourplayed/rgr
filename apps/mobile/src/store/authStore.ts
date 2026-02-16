@@ -35,8 +35,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       const profileResult = await fetchProfile(result.data.user.id);
 
       if (profileResult.error || !profileResult.data) {
-        console.log('Profile fetch error:', profileResult.error);
-        console.log('User ID:', result.data.user.id);
         set({ error: profileResult.error || 'Failed to load user profile', isLoading: false });
         return false;
       }

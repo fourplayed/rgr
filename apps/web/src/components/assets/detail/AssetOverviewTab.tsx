@@ -162,9 +162,6 @@ export const AssetOverviewTab = React.memo<AssetOverviewTabProps>(
           </div>
         )}
 
-        {false && (
-          <div />
-        )}
       </div>
     );
   }
