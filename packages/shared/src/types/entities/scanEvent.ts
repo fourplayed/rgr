@@ -91,7 +91,7 @@ export function mapRowToScanEvent(row: ScanEventRow): ScanEvent {
     id: row.id,
     assetId: row.asset_id,
     scannedBy: row.scanned_by,
-    scanType: row.scan_type as ScanType,
+    scanType: ScanTypeSchema.parse(row.scan_type),
     latitude: row.latitude,
     longitude: row.longitude,
     accuracy: row.accuracy,

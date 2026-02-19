@@ -141,9 +141,9 @@ export function mapRowToAsset(row: AssetRow): Asset {
   return {
     id: row.id,
     assetNumber: row.asset_number,
-    category: row.category as AssetCategory,
+    category: AssetCategorySchema.parse(row.category),
     subtype: row.subtype,
-    status: row.status as AssetStatus,
+    status: AssetStatusSchema.parse(row.status),
     description: row.description,
     yearManufactured: row.year_manufactured,
     make: row.make,
@@ -193,20 +193,20 @@ export function mapAssetToUpdate(
 ): Record<string, unknown> {
   const updates: Record<string, unknown> = {};
 
-  if (input.assetNumber !== undefined) updates.asset_number = input.assetNumber;
-  if (input.category !== undefined) updates.category = input.category;
-  if (input.subtype !== undefined) updates.subtype = input.subtype;
-  if (input.status !== undefined) updates.status = input.status;
-  if (input.description !== undefined) updates.description = input.description;
-  if (input.yearManufactured !== undefined) updates.year_manufactured = input.yearManufactured;
-  if (input.make !== undefined) updates.make = input.make;
-  if (input.model !== undefined) updates.model = input.model;
-  if (input.vin !== undefined) updates.vin = input.vin;
-  if (input.registrationNumber !== undefined) updates.registration_number = input.registrationNumber;
-  if (input.registrationExpiry !== undefined) updates.registration_expiry = input.registrationExpiry;
-  if (input.assignedDepotId !== undefined) updates.assigned_depot_id = input.assignedDepotId;
-  if (input.assignedDriverId !== undefined) updates.assigned_driver_id = input.assignedDriverId;
-  if (input.notes !== undefined) updates.notes = input.notes;
+  if (input.assetNumber !== undefined) updates['asset_number'] = input.assetNumber;
+  if (input.category !== undefined) updates['category'] = input.category;
+  if (input.subtype !== undefined) updates['subtype'] = input.subtype;
+  if (input.status !== undefined) updates['status'] = input.status;
+  if (input.description !== undefined) updates['description'] = input.description;
+  if (input.yearManufactured !== undefined) updates['year_manufactured'] = input.yearManufactured;
+  if (input.make !== undefined) updates['make'] = input.make;
+  if (input.model !== undefined) updates['model'] = input.model;
+  if (input.vin !== undefined) updates['vin'] = input.vin;
+  if (input.registrationNumber !== undefined) updates['registration_number'] = input.registrationNumber;
+  if (input.registrationExpiry !== undefined) updates['registration_expiry'] = input.registrationExpiry;
+  if (input.assignedDepotId !== undefined) updates['assigned_depot_id'] = input.assignedDepotId;
+  if (input.assignedDriverId !== undefined) updates['assigned_driver_id'] = input.assignedDriverId;
+  if (input.notes !== undefined) updates['notes'] = input.notes;
 
   return updates;
 }

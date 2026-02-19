@@ -75,6 +75,7 @@ export class AuthService {
     const validation = SignInCredentialsSchema.safeParse(credentials);
     if (!validation.success) {
       return {
+        success: false,
         data: null,
         error: validation.error.errors[0]?.message || 'Invalid credentials',
       };
@@ -82,10 +83,11 @@ export class AuthService {
 
     // Authenticate with Supabase
     const authResult = await signInWithEmail(credentials);
-    if (authResult.error || !authResult.data) {
+    if (!authResult.success) {
       return {
+        success: false,
         data: null,
-        error: authResult.error || 'Authentication failed',
+        error: authResult.error,
       };
     }
 
@@ -93,10 +95,11 @@ export class AuthService {
 
     // Fetch user profile
     const profileResult = await fetchProfile(user.id);
-    if (profileResult.error || !profileResult.data) {
+    if (!profileResult.success) {
       // User authenticated but no profile - shouldn't happen
       await supabaseSignOut();
       return {
+        success: false,
         data: null,
         error: 'User profile not found. Contact your administrator.',
       };
@@ -108,6 +111,7 @@ export class AuthService {
     if (!profile.isActive) {
       await supabaseSignOut();
       return {
+        success: false,
         data: null,
         error: 'Your account has been deactivated. Contact your administrator.',
       };
@@ -117,6 +121,7 @@ export class AuthService {
     updateLastLogin(user.id).catch(console.error);
 
     return {
+      success: true,
       data: {
         profile,
         accessToken: session.access_token,
@@ -139,6 +144,7 @@ export class AuthService {
     const validation = SignUpInputSchema.safeParse(input);
     if (!validation.success) {
       return {
+        success: false,
         data: null,
         error: validation.error.errors[0]?.message || 'Invalid input',
       };
@@ -146,10 +152,11 @@ export class AuthService {
 
     // Register with Supabase
     const authResult = await signUpWithEmail(input);
-    if (authResult.error || !authResult.data) {
+    if (!authResult.success) {
       return {
+        success: false,
         data: null,
-        error: authResult.error || 'Registration failed',
+        error: authResult.error,
       };
     }
 
@@ -160,6 +167,7 @@ export class AuthService {
     const profileResult = await fetchProfile(user.id);
 
     return {
+      success: true,
       data: {
         profile: profileResult.data,
         accessToken: session?.access_token ?? null,
@@ -184,14 +192,15 @@ export class AuthService {
   async getSessionInfo(): Promise<ServiceResult<SessionInfo>> {
     const sessionResult = await getSession();
 
-    if (sessionResult.error) {
-      return { data: null, error: sessionResult.error };
+    if (!sessionResult.success) {
+      return { success: false, data: null, error: sessionResult.error };
     }
 
     const session = sessionResult.data;
 
     if (!session) {
       return {
+        success: true,
         data: {
           isAuthenticated: false,
           profile: null,
@@ -206,6 +215,7 @@ export class AuthService {
     const profileResult = await fetchProfile(session.user.id);
 
     return {
+      success: true,
       data: {
         isAuthenticated: true,
         profile: profileResult.data,
@@ -222,12 +232,12 @@ export class AuthService {
   async getCurrentUser(): Promise<ServiceResult<Profile | null>> {
     const authResult = await getAuthUser();
 
-    if (authResult.error) {
-      return { data: null, error: authResult.error };
+    if (!authResult.success) {
+      return { success: false, data: null, error: authResult.error };
     }
 
     if (!authResult.data) {
-      return { data: null, error: null };
+      return { success: true, data: null, error: null };
     }
 
     return fetchProfile(authResult.data.id);
@@ -245,7 +255,7 @@ export class AuthService {
    */
   async resetPassword(email: string): Promise<ServiceResult<void>> {
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return { data: null, error: 'Invalid email address' };
+      return { success: false, data: null, error: 'Invalid email address' };
     }
 
     return sendPasswordResetEmail(email);
@@ -256,15 +266,15 @@ export class AuthService {
    */
   async updatePassword(newPassword: string): Promise<ServiceResult<void>> {
     if (!newPassword || newPassword.length < 8) {
-      return { data: null, error: 'Password must be at least 8 characters' };
+      return { success: false, data: null, error: 'Password must be at least 8 characters' };
     }
 
     const result = await updatePassword(newPassword);
-    if (result.error) {
-      return { data: null, error: result.error };
+    if (!result.success) {
+      return { success: false, data: null, error: result.error };
     }
 
-    return { data: undefined, error: null };
+    return { success: true, data: undefined, error: null };
   }
 
   /**
@@ -275,6 +285,7 @@ export class AuthService {
     const validation = UpdateProfileInputSchema.safeParse(updates);
     if (!validation.success) {
       return {
+        success: false,
         data: null,
         error: validation.error.errors[0]?.message || 'Invalid input',
       };
@@ -282,8 +293,12 @@ export class AuthService {
 
     // Get current user
     const authResult = await getAuthUser();
-    if (authResult.error || !authResult.data) {
-      return { data: null, error: 'Not authenticated' };
+    if (!authResult.success) {
+      return { success: false, data: null, error: 'Not authenticated' };
+    }
+
+    if (!authResult.data) {
+      return { success: false, data: null, error: 'Not authenticated' };
     }
 
     return updateProfileDb(authResult.data.id, updates);
@@ -358,22 +373,22 @@ export class AuthService {
         });
 
       if (authError) {
-        return { data: null, error: authError.message };
+        return { success: false, data: null, error: authError.message };
       }
 
       if (!authData.user) {
-        return { data: null, error: 'Failed to create user' };
+        return { success: false, data: null, error: 'Failed to create user' };
       }
 
       // Profile is created by database trigger — poll with backoff
-      let profileResult: ServiceResult<Profile | null> = { data: null, error: null };
+      let profileResult: ServiceResult<Profile> | null = null;
       for (const delay of [50, 150, 500]) {
         await new Promise((resolve) => setTimeout(resolve, delay));
         profileResult = await fetchProfile(authData.user.id);
-        if (profileResult.data) break;
+        if (profileResult.success) break;
       }
 
-      if (profileResult.error || !profileResult.data) {
+      if (!profileResult || !profileResult.success) {
         // Fallback: manually create profile if trigger failed
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
@@ -391,16 +406,16 @@ export class AuthService {
           .single();
 
         if (profileError) {
-          return { data: null, error: 'User created but profile setup failed' };
+          return { success: false, data: null, error: 'User created but profile setup failed' };
         }
 
-        return { data: mapRowToProfile(profile as ProfileRow), error: null };
+        return { success: true, data: mapRowToProfile(profile as ProfileRow), error: null };
       }
 
-      return { data: profileResult.data, error: null };
+      return { success: true, data: profileResult.data, error: null };
     } catch (error) {
       console.error('Create user error:', error);
-      return { data: null, error: 'Failed to create user' };
+      return { success: false, data: null, error: 'Failed to create user' };
     }
   }
 
@@ -416,10 +431,10 @@ export class AuthService {
       .eq('id', userId);
 
     if (error) {
-      return { data: null, error: error.message };
+      return { success: false, data: null, error: error.message };
     }
 
-    return { data: undefined, error: null };
+    return { success: true, data: undefined, error: null };
   }
 
   /**
@@ -434,10 +449,10 @@ export class AuthService {
       .eq('id', userId);
 
     if (error) {
-      return { data: null, error: error.message };
+      return { success: false, data: null, error: error.message };
     }
 
-    return { data: undefined, error: null };
+    return { success: true, data: undefined, error: null };
   }
 
   /**
@@ -457,14 +472,14 @@ export class AuthService {
       .single();
 
     if (error) {
-      return { data: null, error: error.message };
+      return { success: false, data: null, error: error.message };
     }
 
     if (!data) {
-      return { data: null, error: 'User not found' };
+      return { success: false, data: null, error: 'User not found' };
     }
 
-    return { data: mapRowToProfile(data as ProfileRow), error: null };
+    return { success: true, data: mapRowToProfile(data as ProfileRow), error: null };
   }
 }
 

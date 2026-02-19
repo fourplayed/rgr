@@ -10,10 +10,6 @@ import {
   getAssetHazards,
 } from '@rgr/shared';
 import type {
-  Asset,
-  ScanEvent,
-  MaintenanceRecord,
-  HazardAlert,
   AssetStatus,
   CreateScanEventInput,
 } from '@rgr/shared';
@@ -50,20 +46,34 @@ export function useAssetList(filters?: {
   return useQuery({
     queryKey: assetKeys.list(filters),
     queryFn: async () => {
-      const result = await listAssets({
+      const params: {
+        page: number;
+        pageSize: number;
+        statuses?: AssetStatus[];
+        search?: string;
+        sortField: string;
+        sortDirection: 'asc' | 'desc';
+      } = {
         page: filters?.page ?? 1,
         pageSize: filters?.pageSize ?? 20,
-        statuses: filters?.statuses,
-        search: filters?.search,
         sortField: 'assetNumber',
         sortDirection: 'asc',
-      });
+      };
 
-      if (result.error) {
+      if (filters?.statuses !== undefined) {
+        params.statuses = filters.statuses;
+      }
+      if (filters?.search !== undefined) {
+        params.search = filters.search;
+      }
+
+      const result = await listAssets(params);
+
+      if (!result.success) {
         throw new Error(result.error);
       }
 
-      return result.data!;
+      return result.data;
     },
   });
 }
@@ -79,11 +89,11 @@ export function useAsset(id: string | undefined) {
 
       const result = await getAsset(id);
 
-      if (result.error) {
+      if (!result.success) {
         throw new Error(result.error);
       }
 
-      return result.data!;
+      return result.data;
     },
     enabled: !!id,
   });
@@ -100,11 +110,11 @@ export function useAssetScans(assetId: string | undefined) {
 
       const result = await getAssetScans(assetId);
 
-      if (result.error) {
+      if (!result.success) {
         throw new Error(result.error);
       }
 
-      return result.data?.data ?? [];
+      return result.data.data;
     },
     enabled: !!assetId,
   });
@@ -121,11 +131,11 @@ export function useAssetMaintenance(assetId: string | undefined) {
 
       const result = await getAssetMaintenance(assetId);
 
-      if (result.error) {
+      if (!result.success) {
         throw new Error(result.error);
       }
 
-      return result.data?.data ?? [];
+      return result.data.data;
     },
     enabled: !!assetId,
   });
@@ -142,11 +152,11 @@ export function useAssetHazards(assetId: string | undefined) {
 
       const result = await getAssetHazards(assetId);
 
-      if (result.error) {
+      if (!result.success) {
         throw new Error(result.error);
       }
 
-      return result.data?.data ?? [];
+      return result.data.data;
     },
     enabled: !!assetId,
   });
@@ -163,11 +173,11 @@ export function useMyRecentScans(userId: string | undefined) {
 
       const result = await getMyRecentScans(userId);
 
-      if (result.error) {
+      if (!result.success) {
         throw new Error(result.error);
       }
 
-      return result.data ?? [];
+      return result.data;
     },
     enabled: !!userId,
   });
@@ -181,12 +191,8 @@ export function useAssetByQRCode() {
     mutationFn: async (qrData: string) => {
       const result = await getAssetByQRCode(qrData);
 
-      if (result.error) {
+      if (!result.success) {
         throw new Error(result.error);
-      }
-
-      if (!result.data) {
-        throw new Error('Asset not found');
       }
 
       return result.data;
@@ -204,17 +210,19 @@ export function useCreateScanEvent() {
     mutationFn: async (input: CreateScanEventInput) => {
       const result = await createScanEvent(input);
 
-      if (result.error) {
+      if (!result.success) {
         throw new Error(result.error);
       }
 
-      return result.data!;
+      return result.data;
     },
     onSuccess: (data, variables) => {
       // Invalidate related queries to refresh data
       queryClient.invalidateQueries({ queryKey: assetKeys.detail(variables.assetId) });
       queryClient.invalidateQueries({ queryKey: assetKeys.scans(variables.assetId) });
-      queryClient.invalidateQueries({ queryKey: assetKeys.myScans(variables.scannedBy) });
+      if (variables.scannedBy) {
+        queryClient.invalidateQueries({ queryKey: assetKeys.myScans(variables.scannedBy) });
+      }
       queryClient.invalidateQueries({ queryKey: assetKeys.lists() });
     },
   });

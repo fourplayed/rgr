@@ -14,27 +14,48 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import type { AssetStatus, Asset } from '@rgr/shared';
 import { useAssetList } from '../../../hooks/useAssetData';
+import { useDebounce } from '../../../hooks/useDebounce';
 import { AssetListItem } from '../../../components/assets/AssetListItem';
 import { FilterChips } from '../../../components/common/FilterChips';
 import { useAuthStore } from '../../../store/authStore';
 import { colors } from '../../../theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../../theme/spacing';
 
+// Approximate height calculation for getItemLayout optimization
+// padding (16*2) + header/titleRow margin (8) + assetNumber line (~24) +
+// description line (~20) + footer line (~18) + marginBottom (12) + border (2)
+const ASSET_ITEM_HEIGHT = 132;
+
 export default function AssetListScreen() {
   const router = useRouter();
   const { logout } = useAuthStore();
-  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [selectedStatuses, setSelectedStatuses] = useState<AssetStatus[]>([
     'serviced',
     'maintenance',
   ]);
 
-  const { data, isLoading, error, refetch, isRefetching } = useAssetList({
-    search: search || undefined,
-    statuses: selectedStatuses.length > 0 ? selectedStatuses : undefined,
+  // Debounce search input to avoid triggering queries on every keystroke
+  const debouncedSearch = useDebounce(searchInput, 300);
+
+  const filters: {
+    page: number;
+    pageSize: number;
+    search?: string;
+    statuses?: AssetStatus[];
+  } = {
     page: 1,
     pageSize: 50,
-  });
+  };
+
+  if (debouncedSearch) {
+    filters.search = debouncedSearch;
+  }
+  if (selectedStatuses.length > 0) {
+    filters.statuses = selectedStatuses;
+  }
+
+  const { data, isLoading, error, refetch, isRefetching } = useAssetList(filters);
 
   const handleToggleStatus = (status: AssetStatus) => {
     setSelectedStatuses((prev) =>
@@ -54,11 +75,17 @@ export default function AssetListScreen() {
   };
 
   return (
-    <LinearGradient colors={[...colors.gradientLight]} style={styles.container}>
+    <LinearGradient colors={[...colors.gradientColors]} locations={[...colors.gradientLocations]} start={colors.gradientStart} end={colors.gradientEnd} style={styles.container}>
     <SafeAreaView style={styles.containerInner}>
       <View style={styles.header}>
         <Text style={styles.title}>Fleet Assets</Text>
-        <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+        <TouchableOpacity
+          onPress={handleLogout}
+          style={styles.logoutButton}
+          accessibilityRole="button"
+          accessibilityLabel="Logout"
+          accessibilityHint="Double tap to sign out of your account"
+        >
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
       </View>
@@ -68,10 +95,13 @@ export default function AssetListScreen() {
           style={styles.searchInput}
           placeholder="Search by asset number, VIN, or license plate..."
           placeholderTextColor={colors.textSecondary}
-          value={search}
-          onChangeText={setSearch}
+          value={searchInput}
+          onChangeText={setSearchInput}
           autoCapitalize="none"
           autoCorrect={false}
+          accessibilityRole="search"
+          accessibilityLabel="Search assets"
+          accessibilityHint="Search by asset number, VIN, or license plate"
         />
       </View>
 
@@ -87,7 +117,13 @@ export default function AssetListScreen() {
       ) : error ? (
         <View style={styles.centerContent}>
           <Text style={styles.errorText}>Failed to load assets</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={() => refetch()}
+            accessibilityRole="button"
+            accessibilityLabel="Retry loading assets"
+            accessibilityHint="Double tap to try loading the asset list again"
+          >
             <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
         </View>
@@ -111,6 +147,16 @@ export default function AssetListScreen() {
               <Text style={styles.emptyText}>No assets found</Text>
             </View>
           }
+          getItemLayout={(data, index) => ({
+            length: ASSET_ITEM_HEIGHT,
+            offset: ASSET_ITEM_HEIGHT * index,
+            index,
+          })}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          initialNumToRender={10}
+          updateCellsBatchingPeriod={50}
         />
       )}
     </SafeAreaView>
@@ -131,13 +177,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: spacing.base,
     paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   title: {
     fontSize: fontSize['2xl'],
     fontWeight: fontWeight.bold,
-    color: colors.text,
+    color: colors.textInverse,
   },
   logoutButton: {
     paddingHorizontal: spacing.md,
@@ -146,7 +190,7 @@ const styles = StyleSheet.create({
   logoutText: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
-    color: colors.electricBlue,
+    color: colors.textInverse,
   },
   searchContainer: {
     paddingHorizontal: spacing.base,

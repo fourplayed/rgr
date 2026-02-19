@@ -101,12 +101,12 @@ export function mapDepotToUpdate(
 ): Record<string, unknown> {
   const updates: Record<string, unknown> = {};
 
-  if (input.name !== undefined) updates.name = input.name;
-  if (input.code !== undefined) updates.code = input.code;
-  if (input.address !== undefined) updates.address = input.address;
-  if (input.latitude !== undefined) updates.latitude = input.latitude;
-  if (input.longitude !== undefined) updates.longitude = input.longitude;
-  if (input.isActive !== undefined) updates.is_active = input.isActive;
+  if (input.name !== undefined) updates['name'] = input.name;
+  if (input.code !== undefined) updates['code'] = input.code;
+  if (input.address !== undefined) updates['address'] = input.address;
+  if (input.latitude !== undefined) updates['latitude'] = input.latitude;
+  if (input.longitude !== undefined) updates['longitude'] = input.longitude;
+  if (input.isActive !== undefined) updates['is_active'] = input.isActive;
 
   return updates;
 }

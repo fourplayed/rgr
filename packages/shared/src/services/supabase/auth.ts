@@ -33,14 +33,14 @@ export async function signInWithEmail(
   });
 
   if (error) {
-    return { data: null, error: mapAuthError(error.message) };
+    return { success: false, data: null, error: mapAuthError(error.message) };
   }
 
   if (!data.user || !data.session) {
-    return { data: null, error: 'Authentication failed' };
+    return { success: false, data: null, error: 'Authentication failed' };
   }
 
-  return { data: { user: data.user, session: data.session }, error: null };
+  return { success: true, data: { user: data.user, session: data.session }, error: null };
 }
 
 /**
@@ -65,14 +65,14 @@ export async function signUpWithEmail(
   });
 
   if (error) {
-    return { data: null, error: mapAuthError(error.message) };
+    return { success: false, data: null, error: mapAuthError(error.message) };
   }
 
   if (!data.user) {
-    return { data: null, error: 'Registration failed' };
+    return { success: false, data: null, error: 'Registration failed' };
   }
 
-  return { data: { user: data.user, session: data.session }, error: null };
+  return { success: true, data: { user: data.user, session: data.session }, error: null };
 }
 
 /**
@@ -84,10 +84,10 @@ export async function signOut(): Promise<ServiceResult<void>> {
   const { error } = await supabase.auth.signOut();
 
   if (error) {
-    return { data: null, error: error.message };
+    return { success: false, data: null, error: error.message };
   }
 
-  return { data: undefined, error: null };
+  return { success: true, data: undefined, error: null };
 }
 
 /**
@@ -99,10 +99,10 @@ export async function getSession(): Promise<ServiceResult<Session | null>> {
   const { data, error } = await supabase.auth.getSession();
 
   if (error) {
-    return { data: null, error: error.message };
+    return { success: false, data: null, error: error.message };
   }
 
-  return { data: data.session, error: null };
+  return { success: true, data: data.session, error: null };
 }
 
 /**
@@ -117,10 +117,10 @@ export async function getAuthUser(): Promise<ServiceResult<AuthUser | null>> {
   } = await supabase.auth.getUser();
 
   if (error) {
-    return { data: null, error: error.message };
+    return { success: false, data: null, error: error.message };
   }
 
-  return { data: user, error: null };
+  return { success: true, data: user, error: null };
 }
 
 /**
@@ -132,14 +132,14 @@ export async function refreshSession(): Promise<ServiceResult<Session>> {
   const { data, error } = await supabase.auth.refreshSession();
 
   if (error) {
-    return { data: null, error: error.message };
+    return { success: false, data: null, error: error.message };
   }
 
   if (!data.session) {
-    return { data: null, error: 'Failed to refresh session' };
+    return { success: false, data: null, error: 'Failed to refresh session' };
   }
 
-  return { data: data.session, error: null };
+  return { success: true, data: data.session, error: null };
 }
 
 /**
@@ -155,10 +155,10 @@ export async function sendPasswordResetEmail(
   const { error } = await supabase.auth.resetPasswordForEmail(email, options);
 
   if (error) {
-    return { data: null, error: error.message };
+    return { success: false, data: null, error: error.message };
   }
 
-  return { data: undefined, error: null };
+  return { success: true, data: undefined, error: null };
 }
 
 /**
@@ -174,14 +174,14 @@ export async function updatePassword(
   });
 
   if (error) {
-    return { data: null, error: error.message };
+    return { success: false, data: null, error: error.message };
   }
 
   if (!data.user) {
-    return { data: null, error: 'Failed to update password' };
+    return { success: false, data: null, error: 'Failed to update password' };
   }
 
-  return { data: data.user, error: null };
+  return { success: true, data: data.user, error: null };
 }
 
 /**
@@ -216,14 +216,14 @@ export async function fetchProfile(
     .maybeSingle();
 
   if (error) {
-    return { data: null, error: error.message };
+    return { success: false, data: null, error: error.message };
   }
 
   if (!data) {
-    return { data: null, error: 'Profile not found' };
+    return { success: false, data: null, error: 'Profile not found' };
   }
 
-  return { data: mapRowToProfile(data as ProfileRow), error: null };
+  return { success: true, data: mapRowToProfile(data as ProfileRow), error: null };
 }
 
 /**
@@ -245,14 +245,14 @@ export async function updateProfile(
     .single();
 
   if (error) {
-    return { data: null, error: error.message };
+    return { success: false, data: null, error: error.message };
   }
 
   if (!data) {
-    return { data: null, error: 'Failed to update profile' };
+    return { success: false, data: null, error: 'Failed to update profile' };
   }
 
-  return { data: mapRowToProfile(data as ProfileRow), error: null };
+  return { success: true, data: mapRowToProfile(data as ProfileRow), error: null };
 }
 
 /**
@@ -269,10 +269,10 @@ export async function updateLastLogin(
     .eq('id', userId);
 
   if (error) {
-    return { data: null, error: error.message };
+    return { success: false, data: null, error: error.message };
   }
 
-  return { data: undefined, error: null };
+  return { success: true, data: undefined, error: null };
 }
 
 /**

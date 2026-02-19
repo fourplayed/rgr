@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,21 +7,125 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
   Alert,
-  Image,
+  Animated,
+  Easing,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { useFonts, Lato_700Bold } from '@expo-google-fonts/lato';
 import { useAuthStore } from '../../store/authStore';
+import { SaveCredentialsModal } from '../../components/auth/SaveCredentialsModal';
+import { isAutoLoginEnabled } from '../../utils/secureStorage';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
 
+// Custom loading spinner component
+function LoadingDots() {
+  const dot1 = useRef(new Animated.Value(0)).current;
+  const dot2 = useRef(new Animated.Value(0)).current;
+  const dot3 = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const animateDot = (dot: Animated.Value, delay: number) => {
+      return Animated.loop(
+        Animated.sequence([
+          Animated.delay(delay),
+          Animated.timing(dot, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+          Animated.timing(dot, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+          Animated.delay(600 - delay),
+        ])
+      );
+    };
+
+    const anim1 = animateDot(dot1, 0);
+    const anim2 = animateDot(dot2, 150);
+    const anim3 = animateDot(dot3, 300);
+
+    anim1.start();
+    anim2.start();
+    anim3.start();
+
+    return () => {
+      anim1.stop();
+      anim2.stop();
+      anim3.stop();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const dotStyle = (anim: Animated.Value) => ({
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.textInverse,
+    marginHorizontal: 4,
+    transform: [
+      {
+        scale: anim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0.6, 1.2],
+        }),
+      },
+    ],
+    opacity: anim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0.4, 1],
+    }),
+  });
+
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+      <Animated.View style={dotStyle(dot1)} />
+      <Animated.View style={dotStyle(dot2)} />
+      <Animated.View style={dotStyle(dot3)} />
+    </View>
+  );
+}
+
 export default function LoginScreen() {
   const router = useRouter();
-  const { login, isLoading, error, clearError } = useAuthStore();
+  const { login, isLoading, clearError, clearSavedSession } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const tiltAnim = useRef(new Animated.Value(-1)).current;
+
+  useEffect(() => {
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(tiltAnim, {
+          toValue: 1,
+          duration: 3000,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(tiltAnim, {
+          toValue: -1,
+          duration: 3000,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    animation.start();
+
+    return () => animation.stop();
+  }, [tiltAnim]);
+
+  const [fontsLoaded] = useFonts({
+    Lato_700Bold,
+  });
+
+  const isFormValid = email.trim().length > 0 && password.trim().length > 0;
 
   const handleLogin = async () => {
     // Clear previous errors
@@ -34,29 +138,71 @@ export default function LoginScreen() {
     }
 
     // Attempt login
-    const success = await login(email.trim(), password);
+    const result = await login(email.trim(), password);
 
-    if (success) {
-      // Navigation is handled by the auth gate in _layout.tsx
-      router.replace('/(tabs)');
-    } else if (error) {
-      Alert.alert('Login Failed', error);
+    if (result.success) {
+      // Check if auto-login is already enabled
+      const autoLoginAlreadyEnabled = await isAutoLoginEnabled();
+
+      if (autoLoginAlreadyEnabled) {
+        // Skip modal, go directly to tabs
+        router.replace('/(tabs)');
+      } else {
+        // Show modal to ask about saving credentials
+        setShowSaveModal(true);
+      }
+    } else if (result.error) {
+      Alert.alert('Login Failed', result.error);
     }
   };
 
+  const handleSaveCredentials = () => {
+    // Session tokens are already saved during login, just navigate
+    setShowSaveModal(false);
+    router.replace('/(tabs)');
+  };
+
+  const handleSkipSave = async () => {
+    // User doesn't want auto-login, clear the saved session tokens
+    await clearSavedSession();
+    setShowSaveModal(false);
+    router.replace('/(tabs)');
+  };
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
-    <LinearGradient colors={[...colors.gradientDark]} style={styles.container}>
+    <LinearGradient colors={[...colors.gradientColors]} locations={[...colors.gradientLocations]} start={colors.gradientStart} end={colors.gradientEnd} style={styles.container}>
     <KeyboardAvoidingView
       style={styles.containerInner}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.content}>
         <View style={styles.header}>
-          <Image
-            source={require('../../assets/logo.png')}
-            style={styles.logo}
-            resizeMode="contain"
-          />
+          <Animated.View
+            style={[
+              styles.logoShadow,
+              {
+                transform: [
+                  { perspective: 1000 },
+                  {
+                    rotateY: tiltAnim.interpolate({
+                      inputRange: [-1, 1],
+                      outputRange: ['-4deg', '4deg'],
+                    }),
+                  },
+                ],
+              },
+            ]}
+          >
+            <Animated.Image
+              source={require('../../assets/logo.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          </Animated.View>
         </View>
 
         <View style={styles.form}>
@@ -64,7 +210,7 @@ export default function LoginScreen() {
             <Text style={styles.label}>Email</Text>
             <TextInput
               style={styles.input}
-              placeholder="driver@rgr.com"
+              placeholder="you@rgrroadhaulage.com.au"
               placeholderTextColor={colors.textSecondary}
               value={email}
               onChangeText={setEmail}
@@ -72,6 +218,8 @@ export default function LoginScreen() {
               autoCorrect={false}
               keyboardType="email-address"
               editable={!isLoading}
+              accessibilityLabel="Email address"
+              accessibilityHint="Enter your email address to sign in"
             />
           </View>
 
@@ -85,16 +233,22 @@ export default function LoginScreen() {
               onChangeText={setPassword}
               secureTextEntry
               editable={!isLoading}
+              accessibilityLabel="Password"
+              accessibilityHint="Enter your password to sign in"
             />
           </View>
 
           <TouchableOpacity
-            style={[styles.button, isLoading && styles.buttonDisabled]}
+            style={[styles.button, (!isFormValid || isLoading) && styles.buttonDisabled]}
             onPress={handleLogin}
-            disabled={isLoading}
+            disabled={!isFormValid || isLoading}
+            accessibilityRole="button"
+            accessibilityLabel={isLoading ? "Signing in" : "Sign in"}
+            accessibilityHint="Double tap to sign in to your account"
+            accessibilityState={{ disabled: !isFormValid || isLoading }}
           >
             {isLoading ? (
-              <ActivityIndicator color={colors.textInverse} />
+              <LoadingDots />
             ) : (
               <Text style={styles.buttonText}>Sign In</Text>
             )}
@@ -102,6 +256,12 @@ export default function LoginScreen() {
         </View>
       </View>
     </KeyboardAvoidingView>
+
+    <SaveCredentialsModal
+      visible={showSaveModal}
+      onSave={handleSaveCredentials}
+      onSkip={handleSkipSave}
+    />
     </LinearGradient>
   );
 }
@@ -117,15 +277,27 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: spacing.xl,
+    marginTop: -120,
+    overflow: 'visible',
   },
   header: {
     alignItems: 'center',
-    marginBottom: spacing['3xl'],
+    marginBottom: spacing.xl,
+    paddingBottom: spacing.lg,
+    overflow: 'visible',
+    zIndex: 10,
+  },
+  logoShadow: {
+    shadowColor: colors.navy,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    zIndex: 10,
+    elevation: 10,
   },
   logo: {
-    width: 320,
-    height: 160,
-    marginBottom: spacing['2xl'],
+    width: 360,
+    height: 180,
   },
   title: {
     fontSize: fontSize['4xl'],
@@ -145,8 +317,11 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.semibold,
-    color: colors.text,
+    fontFamily: 'Lato_700Bold',
+    fontWeight: fontWeight.bold,
+    color: colors.navy,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   input: {
     backgroundColor: colors.background,
@@ -159,20 +334,29 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   button: {
-    backgroundColor: '#0000ff',
+    backgroundColor: colors.electricBlue,
     paddingVertical: spacing.base,
     borderRadius: borderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: spacing.lg,
     minHeight: 48,
+    shadowColor: colors.navy,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
   },
   buttonDisabled: {
-    opacity: 0.6,
+    backgroundColor: colors.textSecondary,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   buttonText: {
     fontSize: fontSize.lg,
+    fontFamily: 'Lato_700Bold',
     fontWeight: fontWeight.bold,
     color: colors.textInverse,
+    textTransform: 'uppercase',
   },
 });

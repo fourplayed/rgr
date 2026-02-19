@@ -43,15 +43,15 @@ export const colors = {
 
   // UI elements
   background: '#FFFFFF',
-  backgroundDark: '#000030',
-  surface: '#F9FAFB',
-  surfaceDark: '#0F172A',
-  border: '#E5E7EB',
+  backgroundDark: '#0000CC',
+  surface: '#F8FAFC',
+  surfaceDark: '#1E3A8A',
+  border: '#E2E8F0',
   borderDark: '#334155',
 
   // Text
-  text: '#111827',
-  textSecondary: '#6B7280',
+  text: '#1E293B',
+  textSecondary: '#64748B',
   textInverse: '#FFFFFF',
 
   // Semantic colors
@@ -65,9 +65,14 @@ export const colors = {
   scanCorner: '#00A8FF',
   scanSuccess: '#22C55E',
 
-  // Background gradients
-  gradientLight: ['#4785ff', '#9eb1ff', '#9ec8ff', '#4e7adf'] as const,
-  gradientDark: ['#5c69ff', '#1e2ea4', '#15186f', '#0d1359'] as const,
+  // Background gradients (chrome gradient)
+  gradientColors: ['#C0C0C0', '#E8E8E8', '#F5F5F5'] as const,
+  gradientLocations: [0, 0.5, 1] as const,
+  gradientStart: { x: 0, y: 0 } as const,
+  gradientEnd: { x: 1, y: 1 } as const,
+  // Legacy arrays for backwards compatibility
+  gradientLight: ['#C0C0C0', '#E8E8E8', '#F5F5F5'] as const,
+  gradientDark: ['#C0C0C0', '#E8E8E8', '#F5F5F5'] as const,
 
   // Opacity variants
   overlay: 'rgba(0, 0, 0, 0.5)',

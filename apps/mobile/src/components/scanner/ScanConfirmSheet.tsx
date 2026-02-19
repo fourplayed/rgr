@@ -33,12 +33,12 @@ export function ScanConfirmSheet({
 }: ScanConfirmSheetProps) {
   if (!asset) return null;
 
-  const lastScanText = asset.lastScannedAt
-    ? `Last scanned ${formatRelativeTime(asset.lastScannedAt)}`
+  const lastScanText = asset.lastLocationUpdatedAt
+    ? `Last scanned ${formatRelativeTime(asset.lastLocationUpdatedAt)}`
     : 'Never scanned';
 
-  const lastLocationText = asset.depot?.name
-    ? `at ${asset.depot.name}`
+  const lastLocationText = asset.assignedDepotId
+    ? 'location tracked'
     : 'location unknown';
 
   return (
@@ -95,6 +95,10 @@ export function ScanConfirmSheet({
                 style={[styles.button, styles.cancelButton]}
                 onPress={onCancel}
                 disabled={isSubmitting}
+                accessibilityRole="button"
+                accessibilityLabel="Cancel scan"
+                accessibilityHint="Double tap to cancel and return to scanning"
+                accessibilityState={{ disabled: isSubmitting }}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
@@ -103,6 +107,10 @@ export function ScanConfirmSheet({
                 style={[styles.button, styles.confirmButton]}
                 onPress={onConfirm}
                 disabled={isSubmitting}
+                accessibilityRole="button"
+                accessibilityLabel={isSubmitting ? "Submitting scan" : "Confirm scan"}
+                accessibilityHint="Double tap to confirm and submit the scan"
+                accessibilityState={{ disabled: isSubmitting }}
               >
                 {isSubmitting ? (
                   <ActivityIndicator color={colors.textInverse} />

@@ -31,7 +31,7 @@ export default function ActivityScreen() {
 
   if (isLoading) {
     return (
-      <LinearGradient colors={[...colors.gradientLight]} style={styles.container}>
+      <LinearGradient colors={[...colors.gradientColors]} locations={[...colors.gradientLocations]} start={colors.gradientStart} end={colors.gradientEnd} style={styles.container}>
       <SafeAreaView style={styles.containerInner}>
         <View style={styles.header}>
           <Text style={styles.title}>My Activity</Text>
@@ -46,7 +46,7 @@ export default function ActivityScreen() {
 
   if (error) {
     return (
-      <LinearGradient colors={[...colors.gradientLight]} style={styles.container}>
+      <LinearGradient colors={[...colors.gradientColors]} locations={[...colors.gradientLocations]} start={colors.gradientStart} end={colors.gradientEnd} style={styles.container}>
       <SafeAreaView style={styles.containerInner}>
         <View style={styles.header}>
           <Text style={styles.title}>My Activity</Text>
@@ -63,7 +63,7 @@ export default function ActivityScreen() {
   }
 
   return (
-    <LinearGradient colors={[...colors.gradientLight]} style={styles.container}>
+    <LinearGradient colors={[...colors.gradientColors]} locations={[...colors.gradientLocations]} start={colors.gradientStart} end={colors.gradientEnd} style={styles.container}>
     <SafeAreaView style={styles.containerInner}>
       <View style={styles.header}>
         <Text style={styles.title}>My Activity</Text>
@@ -122,6 +122,11 @@ export default function ActivityScreen() {
             </Text>
           </View>
         }
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+        initialNumToRender={10}
+        updateCellsBatchingPeriod={50}
       />
     </SafeAreaView>
     </LinearGradient>
@@ -138,17 +143,15 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: spacing.base,
     paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   title: {
     fontSize: fontSize['2xl'],
     fontWeight: fontWeight.bold,
-    color: colors.text,
+    color: colors.textInverse,
   },
   subtitle: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
+    color: colors.chrome,
     marginTop: spacing.xs,
   },
   centerContent: {

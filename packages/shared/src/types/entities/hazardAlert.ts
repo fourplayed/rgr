@@ -104,20 +104,20 @@ export function mapRowToHazardAlert(row: HazardAlertRow): HazardAlert {
     scanEventId: row.scan_event_id,
     hazardRuleId: row.hazard_rule_id,
     hazardType: row.hazard_type,
-    severity: row.severity as HazardSeverity,
+    severity: HazardSeveritySchema.parse(row.severity),
     confidenceScore: row.confidence_score,
     description: row.description,
     evidencePoints: row.evidence_points ?? [],
     recommendedActions: row.recommended_actions ?? [],
     locationInImage: row.location_in_image,
     boundingBox: row.bounding_box,
-    status: row.status as HazardStatus,
+    status: HazardStatusSchema.parse(row.status),
     acknowledgedBy: row.acknowledged_by,
     acknowledgedAt: row.acknowledged_at,
     acknowledgmentType: row.acknowledgment_type,
     managerReviewBy: row.manager_review_by,
     managerReviewAt: row.manager_review_at,
-    reviewOutcome: row.review_outcome as ReviewOutcome | null,
+    reviewOutcome: row.review_outcome === null ? null : ReviewOutcomeSchema.parse(row.review_outcome),
     reviewNotes: row.review_notes,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -129,14 +129,14 @@ export function mapHazardAlertToUpdate(
 ): Record<string, unknown> {
   const updates: Record<string, unknown> = {};
 
-  if (input.status !== undefined) updates.status = input.status;
-  if (input.acknowledgedBy !== undefined) updates.acknowledged_by = input.acknowledgedBy;
-  if (input.acknowledgedAt !== undefined) updates.acknowledged_at = input.acknowledgedAt;
-  if (input.acknowledgmentType !== undefined) updates.acknowledgment_type = input.acknowledgmentType;
-  if (input.managerReviewBy !== undefined) updates.manager_review_by = input.managerReviewBy;
-  if (input.managerReviewAt !== undefined) updates.manager_review_at = input.managerReviewAt;
-  if (input.reviewOutcome !== undefined) updates.review_outcome = input.reviewOutcome;
-  if (input.reviewNotes !== undefined) updates.review_notes = input.reviewNotes;
+  if (input.status !== undefined) updates['status'] = input.status;
+  if (input.acknowledgedBy !== undefined) updates['acknowledged_by'] = input.acknowledgedBy;
+  if (input.acknowledgedAt !== undefined) updates['acknowledged_at'] = input.acknowledgedAt;
+  if (input.acknowledgmentType !== undefined) updates['acknowledgment_type'] = input.acknowledgmentType;
+  if (input.managerReviewBy !== undefined) updates['manager_review_by'] = input.managerReviewBy;
+  if (input.managerReviewAt !== undefined) updates['manager_review_at'] = input.managerReviewAt;
+  if (input.reviewOutcome !== undefined) updates['review_outcome'] = input.reviewOutcome;
+  if (input.reviewNotes !== undefined) updates['review_notes'] = input.reviewNotes;
 
   return updates;
 }

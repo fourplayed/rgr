@@ -209,7 +209,7 @@ export function mapRowToProfile(row: ProfileRow): Profile {
     id: row.id,
     email: row.email,
     fullName: row.full_name,
-    role: row.role as UserRole,
+    role: UserRoleSchema.parse(row.role),
     phone: row.phone,
     avatarUrl: row.avatar_url,
     isActive: row.is_active,
@@ -230,11 +230,11 @@ export function mapProfileToUpdate(
 ): Record<string, unknown> {
   const updates: Record<string, unknown> = {};
 
-  if (profile.fullName !== undefined) updates.full_name = profile.fullName;
-  if (profile.phone !== undefined) updates.phone = profile.phone;
-  if (profile.avatarUrl !== undefined) updates.avatar_url = profile.avatarUrl;
-  if (profile.employeeId !== undefined) updates.employee_id = profile.employeeId;
-  if (profile.depot !== undefined) updates.depot = profile.depot;
+  if (profile.fullName !== undefined) updates['full_name'] = profile.fullName;
+  if (profile.phone !== undefined) updates['phone'] = profile.phone;
+  if (profile.avatarUrl !== undefined) updates['avatar_url'] = profile.avatarUrl;
+  if (profile.employeeId !== undefined) updates['employee_id'] = profile.employeeId;
+  if (profile.depot !== undefined) updates['depot'] = profile.depot;
 
   return updates;
 }

@@ -8,6 +8,6 @@
       "@rgr/config": ["../../packages/config/src"]
     }
   },
-  "include": ["src/**/*", "app.json"],
+  "include": ["src/**/*", "app.json", "../../packages/shared/src/**/*", "../../packages/ui/src/**/*", "../../packages/config/src/**/*"],
   "exclude": ["node_modules"]
 }

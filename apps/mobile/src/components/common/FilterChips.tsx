@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { AssetStatusColors, AssetStatusLabels } from '@rgr/shared';
 import type { AssetStatus } from '@rgr/shared';
 import { colors } from '../../theme/colors';
@@ -37,6 +37,10 @@ export function FilterChips({ selectedStatuses, onToggleStatus }: FilterChipsPro
             ]}
             onPress={() => onToggleStatus(status)}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={`${label} filter`}
+            accessibilityHint={isSelected ? `Double tap to remove ${label} filter` : `Double tap to add ${label} filter`}
+            accessibilityState={{ selected: isSelected }}
           >
             <Text
               style={[

@@ -160,8 +160,8 @@ export function mapRowToMaintenanceRecord(
     completedBy: row.completed_by,
     title: row.title,
     description: row.description,
-    priority: row.priority as MaintenancePriority,
-    status: row.status as MaintenanceStatus,
+    priority: MaintenancePrioritySchema.parse(row.priority),
+    status: MaintenanceStatusSchema.parse(row.status),
     maintenanceType: row.maintenance_type,
     scheduledDate: row.scheduled_date,
     startedAt: row.started_at,
@@ -204,21 +204,21 @@ export function mapMaintenanceToUpdate(
 ): Record<string, unknown> {
   const updates: Record<string, unknown> = {};
 
-  if (input.assignedTo !== undefined) updates.assigned_to = input.assignedTo;
-  if (input.completedBy !== undefined) updates.completed_by = input.completedBy;
-  if (input.title !== undefined) updates.title = input.title;
-  if (input.description !== undefined) updates.description = input.description;
-  if (input.priority !== undefined) updates.priority = input.priority;
-  if (input.status !== undefined) updates.status = input.status;
-  if (input.maintenanceType !== undefined) updates.maintenance_type = input.maintenanceType;
-  if (input.scheduledDate !== undefined) updates.scheduled_date = input.scheduledDate;
-  if (input.startedAt !== undefined) updates.started_at = input.startedAt;
-  if (input.completedAt !== undefined) updates.completed_at = input.completedAt;
-  if (input.dueDate !== undefined) updates.due_date = input.dueDate;
-  if (input.estimatedCost !== undefined) updates.estimated_cost = input.estimatedCost;
-  if (input.actualCost !== undefined) updates.actual_cost = input.actualCost;
-  if (input.partsUsed !== undefined) updates.parts_used = input.partsUsed;
-  if (input.notes !== undefined) updates.notes = input.notes;
+  if (input.assignedTo !== undefined) updates['assigned_to'] = input.assignedTo;
+  if (input.completedBy !== undefined) updates['completed_by'] = input.completedBy;
+  if (input.title !== undefined) updates['title'] = input.title;
+  if (input.description !== undefined) updates['description'] = input.description;
+  if (input.priority !== undefined) updates['priority'] = input.priority;
+  if (input.status !== undefined) updates['status'] = input.status;
+  if (input.maintenanceType !== undefined) updates['maintenance_type'] = input.maintenanceType;
+  if (input.scheduledDate !== undefined) updates['scheduled_date'] = input.scheduledDate;
+  if (input.startedAt !== undefined) updates['started_at'] = input.startedAt;
+  if (input.completedAt !== undefined) updates['completed_at'] = input.completedAt;
+  if (input.dueDate !== undefined) updates['due_date'] = input.dueDate;
+  if (input.estimatedCost !== undefined) updates['estimated_cost'] = input.estimatedCost;
+  if (input.actualCost !== undefined) updates['actual_cost'] = input.actualCost;
+  if (input.partsUsed !== undefined) updates['parts_used'] = input.partsUsed;
+  if (input.notes !== undefined) updates['notes'] = input.notes;
 
   return updates;
 }

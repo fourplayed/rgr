@@ -20,6 +20,9 @@ export function StatusBadge({ status, size = 'medium' }: StatusBadgeProps) {
         { backgroundColor: color },
         size === 'small' && styles.badgeSmall,
       ]}
+      accessible={true}
+      accessibilityRole="text"
+      accessibilityLabel={`Status: ${label}`}
     >
       <Text
         style={[

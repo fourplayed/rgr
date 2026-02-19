@@ -165,7 +165,7 @@ export async function listAssets(
   const { data, error, count } = await query;
 
   if (error) {
-    return { data: null, error: `Failed to list assets: ${error.message}` };
+    return { success: false, data: null, error: `Failed to list assets: ${error.message}` };
   }
 
   const total = count ?? 0;
@@ -187,6 +187,7 @@ export async function listAssets(
   });
 
   return {
+    success: true,
     data: {
       data: assets,
       total,
@@ -218,17 +219,18 @@ export async function getAsset(
     .maybeSingle();
 
   if (error) {
-    return { data: null, error: `Failed to fetch asset: ${error.message}` };
+    return { success: false, data: null, error: `Failed to fetch asset: ${error.message}` };
   }
 
   if (!data) {
-    return { data: null, error: 'Asset not found' };
+    return { success: false, data: null, error: 'Asset not found' };
   }
 
   const { depot, driver, scanner, ...assetRow } = data as unknown as AssetRowWithJoins;
   const asset = mapRowToAsset(assetRow as AssetRow);
 
   return {
+    success: true,
     data: {
       ...asset,
       depotName: depot?.name ?? null,
@@ -248,7 +250,7 @@ export async function createAsset(
 ): Promise<ServiceResult<Asset>> {
   const parsed = CreateAssetInputSchema.safeParse(input);
   if (!parsed.success) {
-    return { data: null, error: parsed.error.errors[0]?.message ?? 'Invalid input' };
+    return { success: false, data: null, error: parsed.error.errors[0]?.message ?? 'Invalid input' };
   }
 
   const supabase = getSupabaseClient();
@@ -262,12 +264,12 @@ export async function createAsset(
 
   if (error) {
     if (error.message.includes('duplicate') || error.code === '23505') {
-      return { data: null, error: 'An asset with this number already exists' };
+      return { success: false, data: null, error: 'An asset with this number already exists' };
     }
-    return { data: null, error: `Failed to create asset: ${error.message}` };
+    return { success: false, data: null, error: `Failed to create asset: ${error.message}` };
   }
 
-  return { data: mapRowToAsset(data as AssetRow), error: null };
+  return { success: true, data: mapRowToAsset(data as AssetRow), error: null };
 }
 
 /**
@@ -279,14 +281,14 @@ export async function updateAsset(
 ): Promise<ServiceResult<Asset>> {
   const parsed = UpdateAssetInputSchema.safeParse(input);
   if (!parsed.success) {
-    return { data: null, error: parsed.error.errors[0]?.message ?? 'Invalid input' };
+    return { success: false, data: null, error: parsed.error.errors[0]?.message ?? 'Invalid input' };
   }
 
   const supabase = getSupabaseClient();
   const dbData = mapAssetToUpdate(parsed.data as UpdateAssetInput);
 
   if (Object.keys(dbData).length === 0) {
-    return { data: null, error: 'No fields to update' };
+    return { success: false, data: null, error: 'No fields to update' };
   }
 
   const { data, error } = await supabase
@@ -298,10 +300,10 @@ export async function updateAsset(
     .single();
 
   if (error) {
-    return { data: null, error: `Failed to update asset: ${error.message}` };
+    return { success: false, data: null, error: `Failed to update asset: ${error.message}` };
   }
 
-  return { data: mapRowToAsset(data as AssetRow), error: null };
+  return { success: true, data: mapRowToAsset(data as AssetRow), error: null };
 }
 
 /**
@@ -322,12 +324,12 @@ export async function softDeleteAsset(
 
   if (error) {
     if (error.code === 'PGRST116') {
-      return { data: null, error: 'Asset not found or already retired' };
+      return { success: false, data: null, error: 'Asset not found or already retired' };
     }
-    return { data: null, error: `Failed to retire asset: ${error.message}` };
+    return { success: false, data: null, error: `Failed to retire asset: ${error.message}` };
   }
 
-  return { data: undefined, error: null };
+  return { success: true, data: undefined, error: null };
 }
 
 // ── Scan Events ──
@@ -359,7 +361,7 @@ export async function getAssetScans(
     .range(from, to);
 
   if (error) {
-    return { data: null, error: `Failed to fetch scans: ${error.message}` };
+    return { success: false, data: null, error: `Failed to fetch scans: ${error.message}` };
   }
 
   const total = count ?? 0;
@@ -375,6 +377,7 @@ export async function getAssetScans(
   });
 
   return {
+    success: true,
     data: {
       data: scans,
       total,
@@ -394,7 +397,7 @@ export async function createScanEvent(
 ): Promise<ServiceResult<ScanEvent>> {
   const parsed = CreateScanEventInputSchema.safeParse(input);
   if (!parsed.success) {
-    return { data: null, error: parsed.error.errors[0]?.message ?? 'Invalid input' };
+    return { success: false, data: null, error: parsed.error.errors[0]?.message ?? 'Invalid input' };
   }
 
   const supabase = getSupabaseClient();
@@ -407,10 +410,10 @@ export async function createScanEvent(
     .single();
 
   if (error) {
-    return { data: null, error: `Failed to create scan event: ${error.message}` };
+    return { success: false, data: null, error: `Failed to create scan event: ${error.message}` };
   }
 
-  return { data: mapRowToScanEvent(data), error: null };
+  return { success: true, data: mapRowToScanEvent(data), error: null };
 }
 
 /**
@@ -431,10 +434,10 @@ export async function getAssetByQRCode(
     .maybeSingle();
 
   if (exactError) {
-    return { data: null, error: `Failed to lookup asset: ${exactError.message}` };
+    return { success: false, data: null, error: `Failed to lookup asset: ${exactError.message}` };
   }
   if (exactMatch) {
-    return { data: mapRowToAsset(exactMatch as AssetRow), error: null };
+    return { success: true, data: mapRowToAsset(exactMatch as AssetRow), error: null };
   }
 
   // 2. Parse the input using shared extractAssetInfo (handles QR URIs, raw UUIDs, asset numbers)
@@ -451,14 +454,14 @@ export async function getAssetByQRCode(
       .maybeSingle();
 
     if (parsedError) {
-      return { data: null, error: `Failed to lookup asset: ${parsedError.message}` };
+      return { success: false, data: null, error: `Failed to lookup asset: ${parsedError.message}` };
     }
     if (parsed) {
-      return { data: mapRowToAsset(parsed as AssetRow), error: null };
+      return { success: true, data: mapRowToAsset(parsed as AssetRow), error: null };
     }
   }
 
-  return { data: null, error: 'Asset not found for this QR code' };
+  return { success: false, data: null, error: 'Asset not found for this QR code' };
 }
 
 /**
@@ -482,7 +485,7 @@ export async function getMyRecentScans(
     .limit(limit);
 
   if (error) {
-    return { data: null, error: `Failed to fetch recent scans: ${error.message}` };
+    return { success: false, data: null, error: `Failed to fetch recent scans: ${error.message}` };
   }
 
   const scans = (data || []).map((row: ScanEventRowWithJoins) => {
@@ -496,7 +499,7 @@ export async function getMyRecentScans(
     } as ScanEventWithScanner;
   });
 
-  return { data: scans, error: null };
+  return { success: true, data: scans, error: null };
 }
 
 // ── Maintenance Records ──
@@ -528,7 +531,7 @@ export async function getAssetMaintenance(
     .range(from, to);
 
   if (error) {
-    return { data: null, error: `Failed to fetch maintenance: ${error.message}` };
+    return { success: false, data: null, error: `Failed to fetch maintenance: ${error.message}` };
   }
 
   const total = count ?? 0;
@@ -543,6 +546,7 @@ export async function getAssetMaintenance(
   });
 
   return {
+    success: true,
     data: {
       data: records,
       total,
@@ -576,13 +580,14 @@ export async function getAssetHazards(
     .range(from, to);
 
   if (error) {
-    return { data: null, error: `Failed to fetch hazards: ${error.message}` };
+    return { success: false, data: null, error: `Failed to fetch hazards: ${error.message}` };
   }
 
   const total = count ?? 0;
   const alerts = (data || []).map((row: HazardAlertRow) => mapRowToHazardAlert(row));
 
   return {
+    success: true,
     data: {
       data: alerts,
       total,
@@ -610,10 +615,11 @@ export async function listDepots(): Promise<ServiceResult<Depot[]>> {
     .limit(200);
 
   if (error) {
-    return { data: null, error: `Failed to fetch depots: ${error.message}` };
+    return { success: false, data: null, error: `Failed to fetch depots: ${error.message}` };
   }
 
   return {
+    success: true,
     data: (data || []).map((row: DepotRow) => mapRowToDepot(row)),
     error: null,
   };

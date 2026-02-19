@@ -31,7 +31,7 @@ export default function ScanScreen() {
     hasPermission: hasLocationPermission,
   } = useLocation();
 
-  const { mutateAsync: lookupAsset, isPending: isLookingUp } = useAssetByQRCode();
+  const { mutateAsync: lookupAsset } = useAssetByQRCode();
   const { mutateAsync: createScan, isPending: isCreatingScan } = useCreateScanEvent();
 
   const { handleBarCodeScanned, resetScanner } = useQRScanner(
@@ -106,11 +106,12 @@ export default function ScanScreen() {
     if (!permission?.granted) {
       requestPermission();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!permission) {
     return (
-      <LinearGradient colors={[...colors.gradientDark]} style={styles.container}>
+      <LinearGradient colors={[...colors.gradientColors]} locations={[...colors.gradientLocations]} start={colors.gradientStart} end={colors.gradientEnd} style={styles.container}>
       <SafeAreaView style={styles.containerInner}>
         <View style={styles.centerContent}>
           <Text style={styles.messageText}>Checking camera permission...</Text>
@@ -122,11 +123,17 @@ export default function ScanScreen() {
 
   if (!permission.granted) {
     return (
-      <LinearGradient colors={[...colors.gradientDark]} style={styles.container}>
+      <LinearGradient colors={[...colors.gradientColors]} locations={[...colors.gradientLocations]} start={colors.gradientStart} end={colors.gradientEnd} style={styles.container}>
       <SafeAreaView style={styles.containerInner}>
         <View style={styles.centerContent}>
           <Text style={styles.messageText}>Camera permission is required to scan QR codes</Text>
-          <TouchableOpacity style={styles.button} onPress={requestPermission}>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={requestPermission}
+            accessibilityRole="button"
+            accessibilityLabel="Grant camera permission"
+            accessibilityHint="Double tap to allow camera access for scanning QR codes"
+          >
             <Text style={styles.buttonText}>Grant Permission</Text>
           </TouchableOpacity>
         </View>
@@ -284,7 +291,7 @@ const styles = StyleSheet.create({
   },
   messageText: {
     fontSize: fontSize.base,
-    color: colors.textInverse,
+    color: colors.text,
     textAlign: 'center',
     marginBottom: spacing.lg,
   },
@@ -297,6 +304,6 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.bold,
-    color: colors.textInverse,
+    color: colors.text,
   },
 });

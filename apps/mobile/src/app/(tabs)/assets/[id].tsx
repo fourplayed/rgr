@@ -33,12 +33,11 @@ export default function AssetDetailScreen() {
 
   const {
     data: maintenance = [],
-    isLoading: maintenanceLoading,
   } = useAssetMaintenance(id);
 
   if (assetLoading) {
     return (
-      <LinearGradient colors={[...colors.gradientLight]} style={styles.container}>
+      <LinearGradient colors={[...colors.gradientColors]} locations={[...colors.gradientLocations]} start={colors.gradientStart} end={colors.gradientEnd} style={styles.container}>
       <SafeAreaView style={styles.containerInner}>
         <View style={styles.centerContent}>
           <ActivityIndicator size="large" color={colors.electricBlue} />
@@ -50,7 +49,7 @@ export default function AssetDetailScreen() {
 
   if (assetError || !asset) {
     return (
-      <LinearGradient colors={[...colors.gradientLight]} style={styles.container}>
+      <LinearGradient colors={[...colors.gradientColors]} locations={[...colors.gradientLocations]} start={colors.gradientStart} end={colors.gradientEnd} style={styles.container}>
       <SafeAreaView style={styles.containerInner}>
         <View style={styles.centerContent}>
           <Text style={styles.errorText}>Failed to load asset</Text>
@@ -72,7 +71,7 @@ export default function AssetDetailScreen() {
   );
 
   return (
-    <LinearGradient colors={[...colors.gradientLight]} style={styles.container}>
+    <LinearGradient colors={[...colors.gradientColors]} locations={[...colors.gradientLocations]} start={colors.gradientStart} end={colors.gradientEnd} style={styles.container}>
     <SafeAreaView style={styles.containerInner}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
@@ -127,7 +126,7 @@ export default function AssetDetailScreen() {
               {activeMaintenance.map((record) => (
                 <View key={record.id} style={styles.maintenanceItem}>
                   <Text style={styles.maintenanceTitle}>
-                    {record.maintenanceType.replace(/_/g, ' ')}
+                    {record.maintenanceType?.replace(/_/g, ' ') ?? 'Maintenance'}
                   </Text>
                   <Text style={styles.maintenanceDescription}>
                     {record.description}
@@ -164,8 +163,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: spacing.base,
     paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   backButton: {
     paddingVertical: spacing.sm,
@@ -173,10 +170,10 @@ const styles = StyleSheet.create({
   backText: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
-    color: colors.electricBlue,
+    color: colors.textInverse,
   },
   scanButton: {
-    backgroundColor: colors.electricBlue,
+    backgroundColor: colors.chrome,
     paddingHorizontal: spacing.base,
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.md,
@@ -184,7 +181,7 @@ const styles = StyleSheet.create({
   scanButtonText: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.bold,
-    color: colors.textInverse,
+    color: colors.backgroundDark,
   },
   content: {
     padding: spacing.base,
