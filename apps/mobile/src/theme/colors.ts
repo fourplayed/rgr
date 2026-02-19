@@ -69,7 +69,7 @@ export const colors = {
   gradientColors: ['#C0C0C0', '#E8E8E8', '#F5F5F5'] as const,
   gradientLocations: [0, 0.5, 1] as const,
   gradientStart: { x: 0, y: 0 } as const,
-  gradientEnd: { x: 1, y: 1 } as const,
+  gradientEnd: { x: 0, y: 1 } as const,
   // Legacy arrays for backwards compatibility
   gradientLight: ['#C0C0C0', '#E8E8E8', '#F5F5F5'] as const,
   gradientDark: ['#C0C0C0', '#E8E8E8', '#F5F5F5'] as const,

@@ -50,3 +50,6 @@ packages/shared/fonts/
 # Supabase
 supabase/.branches/
 supabase/.temp/
+
+# Documentation
+*.md

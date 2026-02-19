@@ -1,30 +1,10 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { fontSize } from '../../theme/spacing';
 
 const TAB_BAR_BACKGROUND = '#0000CC';
 const TAB_ACTIVE_COLOR = '#FFFFFF';
 const TAB_INACTIVE_COLOR = '#D1D5DB';
-const SEPARATOR_COLOR = 'rgba(255, 255, 255, 0.2)';
-
-type IoniconsName = keyof typeof Ionicons.glyphMap;
-
-interface TabIconProps {
-  name: IoniconsName;
-  color: string;
-  size: number;
-  isFirst?: boolean;
-}
-
-function TabIcon({ name, color, size, isFirst }: TabIconProps) {
-  return (
-    <View style={[styles.iconContainer, !isFirst && styles.iconWithSeparator]}>
-      <Ionicons name={name} size={size} color={color} />
-    </View>
-  );
-}
 
 export default function TabsLayout() {
   return (
@@ -45,9 +25,9 @@ export default function TabsLayout() {
           shadowRadius: 8,
           elevation: 10,
         },
-        tabBarLabelStyle: {
-          fontSize: fontSize.xs,
-          fontWeight: '600',
+        tabBarShowLabel: false,
+        tabBarIconStyle: {
+          marginTop: 4,
         },
       }}
     >
@@ -61,8 +41,8 @@ export default function TabsLayout() {
         name="scan"
         options={{
           title: 'Scan',
-          tabBarIcon: ({ color, size }) => (
-            <TabIcon name="qr-code-outline" color={color} size={size} isFirst />
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="qr-code-outline" color={color} size={32} />
           ),
         }}
       />
@@ -70,8 +50,8 @@ export default function TabsLayout() {
         name="assets"
         options={{
           title: 'Assets',
-          tabBarIcon: ({ color, size }) => (
-            <TabIcon name="cube-outline" color={color} size={size} />
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="cube-outline" color={color} size={32} />
           ),
         }}
       />
@@ -79,8 +59,8 @@ export default function TabsLayout() {
         name="maintenance"
         options={{
           title: 'Maintenance',
-          tabBarIcon: ({ color, size }) => (
-            <TabIcon name="construct-outline" color={color} size={size} />
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="construct-outline" color={color} size={32} />
           ),
         }}
       />
@@ -88,24 +68,11 @@ export default function TabsLayout() {
         name="activity"
         options={{
           title: 'Activity',
-          tabBarIcon: ({ color, size }) => (
-            <TabIcon name="time-outline" color={color} size={size} />
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="time-outline" color={color} size={32} />
           ),
         }}
       />
     </Tabs>
   );
 }
-
-const styles = StyleSheet.create({
-  iconContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100%',
-    paddingHorizontal: 8,
-  },
-  iconWithSeparator: {
-    borderLeftWidth: 1,
-    borderLeftColor: SEPARATOR_COLOR,
-  },
-});

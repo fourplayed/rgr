@@ -239,9 +239,9 @@ export default function LoginScreen() {
           </View>
 
           <TouchableOpacity
-            style={[styles.button, (!isFormValid || isLoading) && styles.buttonDisabled]}
+            style={styles.button}
             onPress={handleLogin}
-            disabled={!isFormValid || isLoading}
+            disabled={isLoading}
             accessibilityRole="button"
             accessibilityLabel={isLoading ? "Signing in" : "Sign in"}
             accessibilityHint="Double tap to sign in to your account"
@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   button: {
-    backgroundColor: colors.electricBlue,
+    backgroundColor: '#0000FF',
     paddingVertical: spacing.base,
     borderRadius: borderRadius.md,
     alignItems: 'center',
@@ -346,11 +346,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 8,
-  },
-  buttonDisabled: {
-    backgroundColor: colors.textSecondary,
-    shadowOpacity: 0,
-    elevation: 0,
   },
   buttonText: {
     fontSize: fontSize.lg,
