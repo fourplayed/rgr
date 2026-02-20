@@ -209,8 +209,8 @@ export default function LoginScreen() {
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Email</Text>
             <TextInput
-              style={styles.input}
-              placeholder="you@rgrroadhaulage.com.au"
+              style={[styles.input, !email && { fontStyle: 'italic' }]}
+              placeholder="Enter your email address"
               placeholderTextColor={colors.textSecondary}
               value={email}
               onChangeText={setEmail}
@@ -226,7 +226,7 @@ export default function LoginScreen() {
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Password</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, !password && { fontStyle: 'italic' }]}
               placeholder="Enter your password"
               placeholderTextColor={colors.textSecondary}
               value={password}
@@ -289,9 +289,9 @@ const styles = StyleSheet.create({
   },
   logoShadow: {
     shadowColor: colors.navy,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.5,
+    shadowRadius: 1,
     zIndex: 10,
     elevation: 10,
   },
@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontFamily: 'Lato_700Bold',
     fontWeight: fontWeight.bold,
-    color: colors.navy,
+    color: '#000000',
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
@@ -335,17 +335,16 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: '#0000FF',
-    paddingVertical: spacing.base,
     borderRadius: borderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: spacing.lg,
-    minHeight: 48,
+    height: 48,
     shadowColor: colors.navy,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.5,
+    shadowRadius: 0,
+    elevation: 3,
   },
   buttonText: {
     fontSize: fontSize.lg,

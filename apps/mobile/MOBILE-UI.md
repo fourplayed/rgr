@@ -5,12 +5,14 @@ This document defines the UI standards and patterns for the RGR Fleet mobile app
 ## Table of Contents
 
 1. [Background & Layout](#background--layout)
-2. [Typography](#typography)
-3. [Buttons](#buttons)
-4. [Input Fields](#input-fields)
-5. [Loading States](#loading-states)
-6. [Spacing Scale](#spacing-scale)
-7. [Color Palette](#color-palette)
+2. [Logo & Branding](#logo--branding)
+3. [Typography](#typography)
+4. [Buttons](#buttons)
+5. [Tab Bar](#tab-bar)
+6. [Input Fields](#input-fields)
+7. [Loading States](#loading-states)
+8. [Spacing Scale](#spacing-scale)
+9. [Color Palette](#color-palette)
 
 ---
 
@@ -37,10 +39,98 @@ import { colors } from '../theme/colors';
 
 | Property | Value |
 |----------|-------|
-| Colors | `['#0000CC', '#0000CC', '#E8E8E8', '#E8E8E8']` |
-| Locations | `[0, 0.01, 0.5, 1]` |
+| Colors | `['#C0C0C0', '#E8E8E8', '#F5F5F5']` |
+| Locations | `[0, 0.5, 1]` |
+| Direction | Top to bottom (`start: {x: 0, y: 0}`, `end: {x: 0, y: 1}`) |
 
-**Behavior**: Solid blue for first 1%, transition from 1% to 50%, solid chrome from 50% to 100%.
+**Behavior**: Chrome gradient flowing from top to bottom.
+
+---
+
+## Logo & Branding
+
+### Animated Logo
+
+The logo features a subtle 3D tilt animation that rotates side to side.
+
+```tsx
+const tiltAnim = useRef(new Animated.Value(-1)).current;
+
+useEffect(() => {
+  const animation = Animated.loop(
+    Animated.sequence([
+      Animated.timing(tiltAnim, {
+        toValue: 1,
+        duration: 3000,
+        easing: Easing.inOut(Easing.sin),
+        useNativeDriver: true,
+      }),
+      Animated.timing(tiltAnim, {
+        toValue: -1,
+        duration: 3000,
+        easing: Easing.inOut(Easing.sin),
+        useNativeDriver: true,
+      }),
+    ])
+  );
+  animation.start();
+  return () => animation.stop();
+}, [tiltAnim]);
+
+<Animated.View
+  style={[
+    styles.logoShadow,
+    {
+      transform: [
+        { perspective: 1000 },
+        {
+          rotateY: tiltAnim.interpolate({
+            inputRange: [-1, 1],
+            outputRange: ['-4deg', '4deg'],
+          }),
+        },
+      ],
+    },
+  ]}
+>
+  <Animated.Image
+    source={require('../../assets/logo.png')}
+    style={styles.logo}
+    resizeMode="contain"
+  />
+</Animated.View>
+```
+
+### Logo Shadow
+
+Hard shadow style for the logo container:
+
+```tsx
+logoShadow: {
+  shadowColor: colors.navy,
+  shadowOffset: { width: 0, height: 6 },
+  shadowOpacity: 0.5,
+  shadowRadius: 1,              // Hard shadow (low blur)
+  zIndex: 10,
+  elevation: 10,
+}
+```
+
+### Logo Dimensions
+
+```tsx
+logo: {
+  width: 360,
+  height: 180,
+}
+```
+
+| Property | Value |
+|----------|-------|
+| Animation duration | 3000ms per direction (6s full cycle) |
+| Tilt range | -4° to +4° |
+| Shadow blur | 1px (hard) |
+| Shadow opacity | 0.5 |
 
 ---
 
@@ -107,26 +197,16 @@ buttonText: {
 ```tsx
 button: {
   backgroundColor: '#0000FF',
-  paddingVertical: spacing.base,    // 16
   borderRadius: borderRadius.md,    // 12
   alignItems: 'center',
   justifyContent: 'center',
-  minHeight: 48,
-  shadowColor: '#000000',
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.3,
-  shadowRadius: 6,
-  elevation: 8,  // Android
-}
-```
-
-### Disabled State
-
-```tsx
-buttonDisabled: {
-  backgroundColor: '#D1D5DB',
-  shadowOpacity: 0,
-  elevation: 0,
+  marginTop: spacing.lg,
+  height: 48,                       // Fixed height for consistent loading state
+  shadowColor: colors.navy,
+  shadowOffset: { width: 0, height: 3 },
+  shadowOpacity: 0.5,
+  shadowRadius: 0,                  // Hard shadow
+  elevation: 3,  // Android
 }
 ```
 
@@ -134,13 +214,47 @@ buttonDisabled: {
 
 ```tsx
 <TouchableOpacity
-  style={[styles.button, disabled && styles.buttonDisabled]}
+  style={styles.button}
   onPress={handlePress}
-  disabled={disabled}
+  disabled={isLoading}
 >
   <Text style={styles.buttonText}>BUTTON TEXT</Text>
 </TouchableOpacity>
 ```
+
+**Note**: Buttons maintain their visual appearance regardless of disabled state. Only disable during loading to prevent double-submission.
+
+---
+
+## Tab Bar
+
+The bottom tab bar uses icon-only navigation with no labels.
+
+### Tab Bar Configuration
+
+```tsx
+tabBarStyle: {
+  backgroundColor: '#0000CC',
+  borderTopWidth: 0,
+  height: 70,
+  paddingBottom: 10,
+  paddingTop: 10,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: -4 },
+  shadowOpacity: 0.15,
+  shadowRadius: 8,
+  elevation: 10,
+}
+```
+
+### Tab Icons
+
+| Property | Value |
+|----------|-------|
+| Size | 32px |
+| Active color | `#FFFFFF` |
+| Inactive color | `#D1D5DB` |
+| Labels | Hidden (`tabBarShowLabel: false`) |
 
 ---
 
@@ -170,14 +284,28 @@ input: {
 />
 ```
 
+### Placeholder Style
+
+Placeholder text is displayed in italic. When the user enters text, the font style returns to normal.
+
+```tsx
+<TextInput
+  style={[styles.input, !value && { fontStyle: 'italic' }]}
+  placeholder="Enter your email address"
+  placeholderTextColor="#6B7280"
+  value={value}
+  onChangeText={setValue}
+/>
+```
+
 ### Complete Input Group
 
 ```tsx
 <View style={styles.inputGroup}>
   <Text style={styles.label}>Label</Text>
   <TextInput
-    style={styles.input}
-    placeholder="Placeholder text"
+    style={[styles.input, !value && { fontStyle: 'italic' }]}
+    placeholder="Enter your email address"
     placeholderTextColor="#6B7280"
     value={value}
     onChangeText={setValue}
@@ -284,7 +412,7 @@ function LoadingDots() {
 
 ```tsx
 <TouchableOpacity
-  style={[styles.button, isLoading && styles.buttonDisabled]}
+  style={styles.button}
   onPress={handlePress}
   disabled={isLoading}
 >
@@ -407,39 +535,43 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   input: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: colors.border,
     borderRadius: borderRadius.md,
     paddingHorizontal: spacing.base,
     paddingVertical: spacing.md,
     fontSize: fontSize.base,
-    color: '#111827',
+    color: colors.text,
   },
   button: {
     backgroundColor: '#0000FF',
-    paddingVertical: spacing.base,
     borderRadius: borderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 48,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 8,
-  },
-  buttonDisabled: {
-    backgroundColor: '#D1D5DB',
-    shadowOpacity: 0,
-    elevation: 0,
+    marginTop: spacing.lg,
+    height: 48,
+    shadowColor: colors.navy,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.5,
+    shadowRadius: 0,
+    elevation: 3,
   },
   buttonText: {
     fontSize: fontSize.lg,
     fontFamily: 'Lato_700Bold',
     fontWeight: fontWeight.bold,
-    color: '#FFFFFF',
+    color: colors.textInverse,
     textTransform: 'uppercase',
   },
 });
+
+// Input with italic placeholder
+<TextInput
+  style={[styles.input, !email && { fontStyle: 'italic' }]}
+  placeholder="Enter your email address"
+  placeholderTextColor={colors.textSecondary}
+  value={email}
+  onChangeText={setEmail}
+/>
 ```
