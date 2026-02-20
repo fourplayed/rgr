@@ -27,7 +27,10 @@ const TOKEN_LIFETIME_MS = 60 * 60 * 1000; // 1 hour
  * Detect if running in React Native environment
  */
 function isReactNative(): boolean {
-  return typeof navigator !== 'undefined' && navigator.product === 'ReactNative';
+  return (
+    typeof navigator !== 'undefined' &&
+    (navigator as { product?: string }).product === 'ReactNative'
+  );
 }
 
 /**
@@ -35,8 +38,9 @@ function isReactNative(): boolean {
  */
 function hasBrowserAPIs(): boolean {
   return (
-    typeof window !== 'undefined' &&
-    typeof localStorage !== 'undefined' &&
+    typeof globalThis !== 'undefined' &&
+    typeof (globalThis as { window?: unknown }).window !== 'undefined' &&
+    typeof (globalThis as { localStorage?: unknown }).localStorage !== 'undefined' &&
     typeof crypto !== 'undefined' &&
     typeof crypto.getRandomValues === 'function'
   );

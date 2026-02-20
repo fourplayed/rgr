@@ -5,7 +5,6 @@ import {
   FlatList,
   TextInput,
   StyleSheet,
-  SafeAreaView,
   RefreshControl,
   ActivityIndicator,
   TouchableOpacity,
@@ -17,7 +16,6 @@ import { useAssetList } from '../../../hooks/useAssetData';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { AssetListItem } from '../../../components/assets/AssetListItem';
 import { FilterChips } from '../../../components/common/FilterChips';
-import { useAuthStore } from '../../../store/authStore';
 import { colors } from '../../../theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../../theme/spacing';
 
@@ -28,7 +26,6 @@ const ASSET_ITEM_HEIGHT = 132;
 
 export default function AssetListScreen() {
   const router = useRouter();
-  const { logout } = useAuthStore();
   const [searchInput, setSearchInput] = useState('');
   const [selectedStatuses, setSelectedStatuses] = useState<AssetStatus[]>([
     'serviced',
@@ -69,25 +66,10 @@ export default function AssetListScreen() {
     router.push(`/(tabs)/assets/${asset.id}`);
   };
 
-  const handleLogout = async () => {
-    await logout();
-    router.replace('/(auth)/login');
-  };
-
   return (
     <LinearGradient colors={[...colors.gradientColors]} locations={[...colors.gradientLocations]} start={colors.gradientStart} end={colors.gradientEnd} style={styles.container}>
-    <SafeAreaView style={styles.containerInner}>
       <View style={styles.header}>
         <Text style={styles.title}>Fleet Assets</Text>
-        <TouchableOpacity
-          onPress={handleLogout}
-          style={styles.logoutButton}
-          accessibilityRole="button"
-          accessibilityLabel="Logout"
-          accessibilityHint="Double tap to sign out of your account"
-        >
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
       </View>
 
       <View style={styles.searchContainer}>
@@ -159,7 +141,6 @@ export default function AssetListScreen() {
           updateCellsBatchingPeriod={50}
         />
       )}
-    </SafeAreaView>
     </LinearGradient>
   );
 }
@@ -168,29 +149,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  containerInner: {
-    flex: 1,
-  },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     paddingHorizontal: spacing.base,
-    paddingVertical: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
   },
   title: {
     fontSize: fontSize['2xl'],
     fontWeight: fontWeight.bold,
-    color: colors.textInverse,
-  },
-  logoutButton: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  logoutText: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.semibold,
-    color: colors.textInverse,
+    color: colors.text,
   },
   searchContainer: {
     paddingHorizontal: spacing.base,

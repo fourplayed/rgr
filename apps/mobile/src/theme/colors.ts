@@ -41,6 +41,15 @@ export const colors = {
     critical: '#DC2626',
   },
 
+  // User role colors
+  userRole: {
+    driver: '#00A8FF',     // Light blue
+    mechanic: '#F59E0B',   // Orange
+    manager: '#22C55E',    // Green
+    yardie: '#EAB308',     // Yellow
+    superuser: '#A855F7',  // Purple
+  },
+
   // UI elements
   background: '#FFFFFF',
   backgroundDark: '#0000CC',
