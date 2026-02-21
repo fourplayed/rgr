@@ -87,10 +87,12 @@ const styles = StyleSheet.create({
   assetNumber: {
     fontSize: fontSize['3xl'],
     fontWeight: fontWeight.bold,
+    fontFamily: 'Lato_700Bold',
     color: colors.text,
   },
   description: {
     fontSize: fontSize.base,
+    fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
     marginBottom: spacing.lg,
   },
@@ -108,11 +110,13 @@ const styles = StyleSheet.create({
   infoLabel: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
+    fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
   },
   infoValue: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
+    fontFamily: 'Lato_700Bold',
     color: colors.text,
     textTransform: 'capitalize',
   },
@@ -125,6 +129,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
+    fontFamily: 'Lato_700Bold',
     color: colors.text,
     marginBottom: spacing.xs,
   },
@@ -136,6 +141,7 @@ const styles = StyleSheet.create({
   },
   accuracy: {
     fontSize: fontSize.xs,
+    fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
     marginTop: spacing.xs,
   },

@@ -51,6 +51,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
+    fontFamily: 'Lato_700Bold',
     textTransform: 'uppercase',
   },
   labelSmall: {

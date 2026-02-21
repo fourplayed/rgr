@@ -1,8 +1,8 @@
 import { Redirect } from 'expo-router';
 
 /**
- * Redirect from root tab to assets tab
+ * Redirect from root tab to home tab
  */
 export default function TabsIndex() {
-  return <Redirect href="/(tabs)/assets" />;
+  return <Redirect href="/(tabs)/home" />;
 }

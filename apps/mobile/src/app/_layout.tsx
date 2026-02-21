@@ -1,16 +1,49 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Text, ActivityIndicator } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+  useFonts,
+  Lato_100Thin,
+  Lato_100Thin_Italic,
+  Lato_300Light,
+  Lato_300Light_Italic,
+  Lato_400Regular,
+  Lato_400Regular_Italic,
+  Lato_700Bold,
+  Lato_700Bold_Italic,
+  Lato_900Black,
+  Lato_900Black_Italic,
+} from '@expo-google-fonts/lato';
 import { initializeMobileSupabase } from '../config/supabase';
 import { useAuthStore } from '../store/authStore';
 import { ErrorBoundary } from '../components/common/ErrorBoundary';
 import { OfflineBanner } from '../components/common/OfflineBanner';
 
+// Set default text style
+const defaultTextStyle = { fontFamily: 'Lato_400Regular' };
+// @ts-ignore - Override default text style
+Text.defaultProps = Text.defaultProps || {};
+// @ts-ignore
+Text.defaultProps.style = defaultTextStyle;
+
 // Initialize Supabase client
 initializeMobileSupabase();
 
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    Lato_100Thin,
+    Lato_100Thin_Italic,
+    Lato_300Light,
+    Lato_300Light_Italic,
+    Lato_400Regular,
+    Lato_400Regular_Italic,
+    Lato_700Bold,
+    Lato_700Bold_Italic,
+    Lato_900Black,
+    Lato_900Black_Italic,
+  });
+
   // Create React Query client inside component to prevent HMR issues
   const [queryClient] = useState(
     () =>
@@ -60,6 +93,14 @@ export default function RootLayout() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, isLoading, segments]);
 
+  if (!fontsLoaded) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0000CC" />
+      </View>
+    );
+  }
+
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
@@ -85,5 +126,12 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#E8E8E8',
+  },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: '#E8E8E8',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

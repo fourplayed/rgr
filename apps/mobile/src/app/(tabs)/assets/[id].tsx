@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAsset, useAssetScans, useAssetMaintenance } from '../../../hooks/useAssetData';
 import { AssetInfoCard } from '../../../components/assets/AssetInfoCard';
@@ -37,19 +36,19 @@ export default function AssetDetailScreen() {
 
   if (assetLoading) {
     return (
-      <LinearGradient colors={[...colors.gradientColors]} locations={[...colors.gradientLocations]} start={colors.gradientStart} end={colors.gradientEnd} style={styles.container}>
+      <View style={styles.container}>
       <SafeAreaView style={styles.containerInner}>
         <View style={styles.centerContent}>
           <ActivityIndicator size="large" color={colors.electricBlue} />
         </View>
       </SafeAreaView>
-      </LinearGradient>
+      </View>
     );
   }
 
   if (assetError || !asset) {
     return (
-      <LinearGradient colors={[...colors.gradientColors]} locations={[...colors.gradientLocations]} start={colors.gradientStart} end={colors.gradientEnd} style={styles.container}>
+      <View style={styles.container}>
       <SafeAreaView style={styles.containerInner}>
         <View style={styles.centerContent}>
           <Text style={styles.errorText}>Failed to load asset</Text>
@@ -61,7 +60,7 @@ export default function AssetDetailScreen() {
           </TouchableOpacity>
         </View>
       </SafeAreaView>
-      </LinearGradient>
+      </View>
     );
   }
 
@@ -71,7 +70,7 @@ export default function AssetDetailScreen() {
   );
 
   return (
-    <LinearGradient colors={[...colors.gradientColors]} locations={[...colors.gradientLocations]} start={colors.gradientStart} end={colors.gradientEnd} style={styles.container}>
+    <View style={styles.container}>
     <SafeAreaView style={styles.containerInner}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
@@ -146,13 +145,14 @@ export default function AssetDetailScreen() {
         )}
       </ScrollView>
     </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#E8E8E8',
   },
   containerInner: {
     flex: 1,
@@ -170,7 +170,8 @@ const styles = StyleSheet.create({
   backText: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
-    color: colors.textInverse,
+    fontFamily: 'Lato_700Bold',
+    color: colors.text,
   },
   scanButton: {
     backgroundColor: colors.chrome,
@@ -181,6 +182,7 @@ const styles = StyleSheet.create({
   scanButtonText: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.bold,
+    fontFamily: 'Lato_700Bold',
     color: colors.backgroundDark,
   },
   content: {
@@ -194,6 +196,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: fontSize.base,
+    fontFamily: 'Lato_400Regular',
     color: colors.error,
     marginBottom: spacing.md,
   },
@@ -206,6 +209,7 @@ const styles = StyleSheet.create({
   retryButtonText: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
+    fontFamily: 'Lato_700Bold',
     color: colors.textInverse,
   },
   section: {
@@ -218,11 +222,13 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.bold,
+    fontFamily: 'Lato_700Bold',
     color: colors.text,
     marginBottom: spacing.md,
   },
   emptyText: {
     fontSize: fontSize.sm,
+    fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
     fontStyle: 'italic',
   },
@@ -240,11 +246,13 @@ const styles = StyleSheet.create({
   scanType: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
+    fontFamily: 'Lato_700Bold',
     color: colors.text,
     textTransform: 'capitalize',
   },
   scanTime: {
     fontSize: fontSize.xs,
+    fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
   },
   scanLocation: {
@@ -263,12 +271,14 @@ const styles = StyleSheet.create({
   maintenanceTitle: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
+    fontFamily: 'Lato_700Bold',
     color: colors.text,
     textTransform: 'capitalize',
     marginBottom: spacing.xs,
   },
   maintenanceDescription: {
     fontSize: fontSize.sm,
+    fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
     marginBottom: spacing.sm,
   },
@@ -280,12 +290,14 @@ const styles = StyleSheet.create({
   maintenancePriority: {
     fontSize: fontSize.xs,
     fontWeight: fontWeight.medium,
+    fontFamily: 'Lato_400Regular',
     color: colors.warning,
     textTransform: 'capitalize',
   },
   maintenanceStatus: {
     fontSize: fontSize.xs,
     fontWeight: fontWeight.medium,
+    fontFamily: 'Lato_400Regular',
     color: colors.info,
     textTransform: 'capitalize',
   },

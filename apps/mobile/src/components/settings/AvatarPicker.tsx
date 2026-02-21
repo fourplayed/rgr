@@ -143,6 +143,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.bold,
+    fontFamily: 'Lato_700Bold',
     color: colors.text,
   },
   closeButton: {
@@ -184,6 +185,7 @@ const styles = StyleSheet.create({
   },
   avatarLabel: {
     fontSize: fontSize.xs,
+    fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
     marginTop: spacing.xs,
     textAlign: 'center',
@@ -191,5 +193,6 @@ const styles = StyleSheet.create({
   avatarLabelSelected: {
     color: colors.backgroundDark,
     fontWeight: fontWeight.semibold,
+    fontFamily: 'Lato_700Bold',
   },
 });

@@ -53,3 +53,15 @@ export async function isAutoLoginEnabled(): Promise<boolean> {
   const enabled = await SecureStore.getItemAsync(KEYS.AUTO_LOGIN_ENABLED);
   return enabled === 'true';
 }
+
+/**
+ * Enable or disable auto-login
+ * Does not clear session tokens - just controls whether they're used
+ */
+export async function setAutoLoginEnabled(enabled: boolean): Promise<void> {
+  if (enabled) {
+    await SecureStore.setItemAsync(KEYS.AUTO_LOGIN_ENABLED, 'true');
+  } else {
+    await SecureStore.deleteItemAsync(KEYS.AUTO_LOGIN_ENABLED);
+  }
+}

@@ -1,25 +1,16 @@
-import React, { useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React from 'react';
+import { View, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
-import { useAvatarStore } from '../../store/avatarStore';
-import { UserRoleLabels } from '@rgr/shared';
-import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
 
-const HEADER_GRADIENT_START = '#0000CC';
-const HEADER_GRADIENT_END = '#0000AA';
+const HEADER_GRADIENT_COLORS = ['#000099', '#0000CC', '#000099'] as const;
 
 export function UserProfileHeader() {
   const router = useRouter();
-  const { user, logout } = useAuthStore();
-  const { loadAvatar, getSelectedAvatar } = useAvatarStore();
-
-  useEffect(() => {
-    loadAvatar();
-  }, [loadAvatar]);
+  const { logout } = useAuthStore();
 
   const handleSettings = () => {
     router.push('/settings');
@@ -30,119 +21,93 @@ export function UserProfileHeader() {
     router.replace('/(auth)/login');
   };
 
-  if (!user) {
-    return null;
-  }
-
-  const roleLabel = UserRoleLabels[user.role] || user.role;
-  const selectedAvatar = getSelectedAvatar();
-
   return (
-    <SafeAreaView edges={['top']} style={styles.safeArea}>
+    <View style={styles.wrapper}>
       <LinearGradient
-        colors={[HEADER_GRADIENT_START, HEADER_GRADIENT_END]}
+        colors={[...HEADER_GRADIENT_COLORS]}
+        locations={[0, 0.5, 1]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
         style={styles.gradient}
       >
-        <View style={styles.container}>
-          {/* Avatar */}
-          <View style={styles.avatar}>
-            <Ionicons name={selectedAvatar.icon} size={28} color="#FFFFFF" />
-          </View>
-
-          {/* User Info: Name + Role */}
-          <View style={styles.userInfo}>
-            <Text style={styles.name} numberOfLines={1}>
-              {user.fullName}
-            </Text>
-            <View style={styles.roleBadge}>
-              <Text style={styles.roleText}>{roleLabel}</Text>
+        <SafeAreaView edges={['top']} style={styles.safeArea}>
+          <View style={styles.container}>
+            <Image
+              source={require('../../assets/logo.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+            <View style={styles.actions}>
+              <TouchableOpacity
+                onPress={handleSettings}
+                style={styles.actionButton}
+                accessibilityRole="button"
+                accessibilityLabel="Settings"
+                accessibilityHint="Open settings screen"
+              >
+                <Ionicons name="settings-outline" size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleLogout}
+                style={styles.actionButton}
+                accessibilityRole="button"
+                accessibilityLabel="Logout"
+                accessibilityHint="Sign out of your account"
+              >
+                <Ionicons name="log-out-outline" size={24} color="#FFFFFF" />
+              </TouchableOpacity>
             </View>
           </View>
-
-          {/* Right side: Action buttons */}
-          <View style={styles.actions}>
-            <TouchableOpacity
-              onPress={handleSettings}
-              style={styles.actionButton}
-              accessibilityRole="button"
-              accessibilityLabel="Settings"
-              accessibilityHint="Open settings screen"
-            >
-              <Ionicons name="settings-outline" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={handleLogout}
-              style={styles.actionButton}
-              accessibilityRole="button"
-              accessibilityLabel="Logout"
-              accessibilityHint="Sign out of your account"
-            >
-              <Ionicons name="log-out-outline" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-          </View>
-        </View>
+        </SafeAreaView>
       </LinearGradient>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    zIndex: 999,
+    overflow: 'visible',
+    marginTop: 85,
+  },
   safeArea: {
-    backgroundColor: HEADER_GRADIENT_START,
+    backgroundColor: 'transparent',
   },
   gradient: {
     width: '100%',
+    height: 50,
+    overflow: 'visible',
+    zIndex: 999,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 9,
+    elevation: 16,
   },
   container: {
+    height: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.base,
-    paddingVertical: spacing.md,
+    paddingRight: 16,
+    overflow: 'visible',
+    zIndex: 999,
   },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: spacing.md,
-  },
-  userInfo: {
-    flex: 1,
-    marginRight: spacing.md,
-  },
-  name: {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.bold,
-    color: '#FFFFFF',
-    marginBottom: spacing.xs,
-  },
-  roleBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm,
-  },
-  roleText: {
-    fontSize: fontSize.xs,
-    fontWeight: fontWeight.semibold,
-    color: '#FFFFFF',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+  logo: {
+    height: 80,
+    width: 200,
+    marginTop: -75,
+    marginBottom: -10,
+    marginLeft: -5,
+    zIndex: 999,
   },
   actions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: 20,
+    marginTop: -75,
   },
   actionButton: {
-    padding: spacing.sm,
-    borderRadius: borderRadius.full,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    padding: 8,
   },
 });

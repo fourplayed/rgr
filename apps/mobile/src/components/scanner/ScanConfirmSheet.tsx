@@ -156,6 +156,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize['2xl'],
     fontWeight: fontWeight.bold,
+    fontFamily: 'Lato_700Bold',
     color: colors.text,
     marginBottom: spacing.lg,
   },
@@ -174,15 +175,18 @@ const styles = StyleSheet.create({
   assetNumber: {
     fontSize: fontSize.xl,
     fontWeight: fontWeight.bold,
+    fontFamily: 'Lato_700Bold',
     color: colors.text,
   },
   description: {
     fontSize: fontSize.sm,
+    fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
     marginBottom: spacing.sm,
   },
   lastScan: {
     fontSize: fontSize.xs,
+    fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
   },
   locationInfo: {
@@ -194,6 +198,7 @@ const styles = StyleSheet.create({
   locationTitle: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
+    fontFamily: 'Lato_700Bold',
     color: colors.text,
     marginBottom: spacing.xs,
   },
@@ -205,6 +210,7 @@ const styles = StyleSheet.create({
   },
   accuracy: {
     fontSize: fontSize.xs,
+    fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
     marginTop: spacing.xs,
   },
@@ -227,6 +233,7 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
+    fontFamily: 'Lato_700Bold',
     color: colors.text,
   },
   confirmButton: {
@@ -235,6 +242,7 @@ const styles = StyleSheet.create({
   confirmButtonText: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.bold,
+    fontFamily: 'Lato_700Bold',
     color: colors.textInverse,
   },
 });

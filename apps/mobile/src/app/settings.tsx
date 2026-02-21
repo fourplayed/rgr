@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -11,11 +11,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../store/authStore';
-import { useAvatarStore } from '../store/avatarStore';
 import { UserRoleLabels } from '@rgr/shared';
 import { colors } from '../theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../theme/spacing';
-import { AvatarPicker } from '../components/settings/AvatarPicker';
+import { EditProfileModal } from '../components/settings/EditProfileModal';
+import { NotificationsModal } from '../components/settings/NotificationsModal';
+import { SecurityModal } from '../components/settings/SecurityModal';
 
 interface SettingsItemProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -51,12 +52,9 @@ function SettingsItem({ icon, title, subtitle, onPress, showChevron = true }: Se
 export default function SettingsScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { loadAvatar, getSelectedAvatar } = useAvatarStore();
-  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
-
-  useEffect(() => {
-    loadAvatar();
-  }, [loadAvatar]);
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showSecurity, setShowSecurity] = useState(false);
 
   const handleBack = () => {
     router.back();
@@ -65,8 +63,6 @@ export default function SettingsScreen() {
   if (!user) {
     return null;
   }
-
-  const selectedAvatar = getSelectedAvatar();
 
   const roleLabel = UserRoleLabels[user.role] || user.role;
 
@@ -99,18 +95,9 @@ export default function SettingsScreen() {
             <Text style={styles.sectionTitle}>Profile</Text>
             <View style={styles.card}>
               <View style={styles.profileHeader}>
-                <TouchableOpacity
-                  style={styles.avatar}
-                  onPress={() => setShowAvatarPicker(true)}
-                  accessibilityRole="button"
-                  accessibilityLabel="Change avatar"
-                  accessibilityHint="Tap to select a different avatar"
-                >
-                  <Ionicons name={selectedAvatar.icon} size={32} color={colors.textInverse} />
-                  <View style={styles.avatarEditBadge}>
-                    <Ionicons name="pencil" size={12} color={colors.textInverse} />
-                  </View>
-                </TouchableOpacity>
+                <View style={styles.avatar}>
+                  <Ionicons name="person" size={32} color={colors.textInverse} />
+                </View>
                 <View style={styles.profileInfo}>
                   <Text style={styles.profileName}>{user.fullName}</Text>
                   <Text style={styles.profileEmail}>{user.email}</Text>
@@ -130,18 +117,21 @@ export default function SettingsScreen() {
                 icon="person-outline"
                 title="Edit Profile"
                 subtitle="Update your name and contact info"
+                onPress={() => setShowEditProfile(true)}
               />
               <View style={styles.divider} />
               <SettingsItem
                 icon="notifications-outline"
                 title="Notifications"
                 subtitle="Manage notification preferences"
+                onPress={() => setShowNotifications(true)}
               />
               <View style={styles.divider} />
               <SettingsItem
                 icon="lock-closed-outline"
                 title="Security"
                 subtitle="Password and authentication"
+                onPress={() => setShowSecurity(true)}
               />
             </View>
           </View>
@@ -209,9 +199,19 @@ export default function SettingsScreen() {
           </View>
         </ScrollView>
 
-        <AvatarPicker
-          visible={showAvatarPicker}
-          onClose={() => setShowAvatarPicker(false)}
+        <EditProfileModal
+          visible={showEditProfile}
+          onClose={() => setShowEditProfile(false)}
+        />
+
+        <NotificationsModal
+          visible={showNotifications}
+          onClose={() => setShowNotifications(false)}
+        />
+
+        <SecurityModal
+          visible={showSecurity}
+          onClose={() => setShowSecurity(false)}
         />
       </SafeAreaView>
     </LinearGradient>
@@ -238,6 +238,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: fontSize.xl,
     fontWeight: fontWeight.bold,
+    fontFamily: 'Lato_700Bold',
     color: colors.text,
   },
   headerSpacer: {
@@ -256,6 +257,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
+    fontFamily: 'Lato_700Bold',
     color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -303,10 +305,12 @@ const styles = StyleSheet.create({
   profileName: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.bold,
+    fontFamily: 'Lato_700Bold',
     color: colors.text,
   },
   profileEmail: {
     fontSize: fontSize.sm,
+    fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
     marginTop: spacing.xs,
   },
@@ -320,6 +324,7 @@ const styles = StyleSheet.create({
   roleText: {
     fontSize: fontSize.xs,
     fontWeight: fontWeight.semibold,
+    fontFamily: 'Lato_700Bold',
     color: colors.textInverse,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -344,10 +349,12 @@ const styles = StyleSheet.create({
   settingsItemTitle: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.medium,
+    fontFamily: 'Lato_400Regular',
     color: colors.text,
   },
   settingsItemSubtitle: {
     fontSize: fontSize.sm,
+    fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
     marginTop: spacing.xs,
   },

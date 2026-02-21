@@ -75,10 +75,12 @@ const styles = StyleSheet.create({
   label: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
+    fontFamily: 'Lato_400Regular',
     color: colors.text,
   },
   labelSelected: {
     color: colors.textInverse,
     fontWeight: fontWeight.semibold,
+    fontFamily: 'Lato_700Bold',
   },
 });

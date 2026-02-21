@@ -7,7 +7,6 @@ import {
   Alert,
   TouchableOpacity,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { useAssetByQRCode, useCreateScanEvent } from '../../hooks/useAssetData';
@@ -111,19 +110,19 @@ export default function ScanScreen() {
 
   if (!permission) {
     return (
-      <LinearGradient colors={[...colors.gradientColors]} locations={[...colors.gradientLocations]} start={colors.gradientStart} end={colors.gradientEnd} style={styles.container}>
+      <View style={styles.container}>
       <SafeAreaView style={styles.containerInner}>
         <View style={styles.centerContent}>
           <Text style={styles.messageText}>Checking camera permission...</Text>
         </View>
       </SafeAreaView>
-      </LinearGradient>
+      </View>
     );
   }
 
   if (!permission.granted) {
     return (
-      <LinearGradient colors={[...colors.gradientColors]} locations={[...colors.gradientLocations]} start={colors.gradientStart} end={colors.gradientEnd} style={styles.container}>
+      <View style={styles.container}>
       <SafeAreaView style={styles.containerInner}>
         <View style={styles.centerContent}>
           <Text style={styles.messageText}>Camera permission is required to scan QR codes</Text>
@@ -138,7 +137,7 @@ export default function ScanScreen() {
           </TouchableOpacity>
         </View>
       </SafeAreaView>
-      </LinearGradient>
+      </View>
     );
   }
 
@@ -198,6 +197,7 @@ const CORNER_THICKNESS = 4;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#E8E8E8',
   },
   containerInner: {
     flex: 1,
@@ -211,18 +211,24 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xl,
+    paddingTop: 35,
     alignItems: 'center',
   },
   title: {
-    fontSize: fontSize['2xl'],
+    fontSize: fontSize.sm,
     fontWeight: fontWeight.bold,
+    fontFamily: 'Lato_700Bold',
     color: colors.textInverse,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
     marginBottom: spacing.xs,
   },
   subtitle: {
-    fontSize: fontSize.base,
-    color: colors.chrome,
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_400Regular',
+    color: colors.textInverse,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   scanFrame: {
     flex: 1,
@@ -275,12 +281,14 @@ const styles = StyleSheet.create({
   statusLabel: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
+    fontFamily: 'Lato_700Bold',
     color: colors.chrome,
     marginRight: spacing.sm,
   },
   statusValue: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.bold,
+    fontFamily: 'Lato_700Bold',
     color: colors.scanSuccess,
   },
   centerContent: {
@@ -291,6 +299,7 @@ const styles = StyleSheet.create({
   },
   messageText: {
     fontSize: fontSize.base,
+    fontFamily: 'Lato_400Regular',
     color: colors.text,
     textAlign: 'center',
     marginBottom: spacing.lg,
@@ -304,6 +313,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.bold,
+    fontFamily: 'Lato_700Bold',
     color: colors.text,
   },
 });

@@ -68,8 +68,10 @@ const TabIcon = ({
 
 export default function TabsLayout() {
   return (
-    <View style={{ flex: 1 }}>
-      <UserProfileHeader />
+    <View style={{ flex: 1, backgroundColor: '#E8E8E8' }}>
+      <View style={{ zIndex: 999, overflow: 'visible' }}>
+        <UserProfileHeader />
+      </View>
       <Tabs
       screenOptions={{
         headerShown: false,
@@ -81,14 +83,13 @@ export default function TabsLayout() {
           height: 70,
           paddingBottom: 0,
           paddingTop: 0,
-          // Enhanced shadow for more depth
+          // Black glow surrounding the tab bar
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: -6 },
-          shadowOpacity: 0.3,
-          shadowRadius: 12,
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.5,
+          shadowRadius: 9,
           elevation: 16,
-          // Add subtle gradient effect via overlay (handled by LinearGradient in background)
-          overflow: 'hidden',
+          overflow: 'visible',
         },
         tabBarShowLabel: false,
         tabBarItemStyle: {
@@ -97,7 +98,8 @@ export default function TabsLayout() {
         // Custom tab bar background with gradient
         tabBarBackground: () => (
           <LinearGradient
-            colors={['#0000CC', '#0000AA']} // Subtle gradient from top to bottom
+            colors={['#000099', '#0000CC', '#000099']}
+            locations={[0, 0.5, 1]}
             start={{ x: 0, y: 0 }}
             end={{ x: 0, y: 1 }}
             style={{
@@ -107,19 +109,7 @@ export default function TabsLayout() {
               top: 0,
               bottom: 0,
             }}
-          >
-            {/* Inner shadow effect at top */}
-            <View
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: 4,
-                backgroundColor: 'rgba(0, 0, 0, 0.15)',
-              }}
-            />
-          </LinearGradient>
+          />
         ),
       }}
     >
@@ -127,6 +117,15 @@ export default function TabsLayout() {
         name="index"
         options={{
           href: null, // Hide from tab bar (redirect only)
+        }}
+      />
+      <Tabs.Screen
+        name="home"
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name="home-outline" focused={focused} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -153,15 +152,6 @@ export default function TabsLayout() {
           title: 'Maintenance',
           tabBarIcon: ({ focused }) => (
             <TabIcon name="construct-outline" focused={focused} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="activity"
-        options={{
-          title: 'Activity',
-          tabBarIcon: ({ focused }) => (
-            <TabIcon name="time-outline" focused={focused} />
           ),
         }}
       />

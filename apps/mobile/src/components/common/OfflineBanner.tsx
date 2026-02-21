@@ -45,5 +45,6 @@ const styles = StyleSheet.create({
     color: colors.textInverse,
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
+    fontFamily: 'Lato_700Bold',
   },
 });

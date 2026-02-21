@@ -11,7 +11,6 @@ import {
   Animated,
   Easing,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useFonts, Lato_700Bold } from '@expo-google-fonts/lato';
 import { useAuthStore } from '../../store/authStore';
@@ -174,7 +173,7 @@ export default function LoginScreen() {
   }
 
   return (
-    <LinearGradient colors={[...colors.gradientColors]} locations={[...colors.gradientLocations]} start={colors.gradientStart} end={colors.gradientEnd} style={styles.container}>
+    <View style={styles.container}>
     <KeyboardAvoidingView
       style={styles.containerInner}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -262,13 +261,14 @@ export default function LoginScreen() {
       onSave={handleSaveCredentials}
       onSkip={handleSkipSave}
     />
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#E8E8E8',
   },
   containerInner: {
     flex: 1,
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
     shadowColor: colors.navy,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.5,
-    shadowRadius: 1,
+    shadowRadius: 8,
     zIndex: 10,
     elevation: 10,
   },
@@ -340,11 +340,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: spacing.lg,
     height: 48,
-    shadowColor: colors.navy,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.5,
-    shadowRadius: 0,
-    elevation: 3,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.6,
+    shadowRadius: 6,
+    elevation: 6,
   },
   buttonText: {
     fontSize: fontSize.lg,

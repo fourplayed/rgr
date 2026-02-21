@@ -53,3 +53,19 @@ export const fontWeight = {
   bold: '700' as const,
   extrabold: '800' as const,
 };
+
+/**
+ * Font families
+ */
+export const fontFamily = {
+  regular: 'Lato_400Regular',
+  italic: 'Lato_400Regular_Italic',
+  light: 'Lato_300Light',
+  lightItalic: 'Lato_300Light_Italic',
+  bold: 'Lato_700Bold',
+  boldItalic: 'Lato_700Bold_Italic',
+  black: 'Lato_900Black',
+  blackItalic: 'Lato_900Black_Italic',
+  thin: 'Lato_100Thin',
+  thinItalic: 'Lato_100Thin_Italic',
+};

@@ -52,11 +52,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.xl,
     fontWeight: fontWeight.bold,
+    fontFamily: 'Lato_700Bold',
     color: colors.text,
     marginBottom: spacing.md,
   },
   message: {
     fontSize: fontSize.sm,
+    fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: spacing.xl,
@@ -70,6 +72,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
+    fontFamily: 'Lato_700Bold',
     color: colors.textInverse,
   },
 });

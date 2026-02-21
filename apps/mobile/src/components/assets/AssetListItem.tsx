@@ -64,10 +64,12 @@ const styles = StyleSheet.create({
   assetNumber: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.bold,
+    fontFamily: 'Lato_700Bold',
     color: colors.text,
   },
   description: {
     fontSize: fontSize.sm,
+    fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
     marginBottom: spacing.sm,
   },
@@ -79,11 +81,13 @@ const styles = StyleSheet.create({
   category: {
     fontSize: fontSize.xs,
     fontWeight: fontWeight.medium,
+    fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
     textTransform: 'capitalize',
   },
   lastScan: {
     fontSize: fontSize.xs,
+    fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
   },
 });

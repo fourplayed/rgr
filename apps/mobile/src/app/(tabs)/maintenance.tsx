@@ -1,19 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, fontWeight } from '../../theme/spacing';
 
 export default function MaintenanceScreen() {
   return (
-    <LinearGradient
-      colors={[...colors.gradientColors]}
-      locations={[...colors.gradientLocations]}
-      start={colors.gradientStart}
-      end={colors.gradientEnd}
-      style={styles.container}
-    >
+    <View style={styles.container}>
       <SafeAreaView style={styles.containerInner}>
         <View style={styles.header}>
           <Text style={styles.title}>Maintenance</Text>
@@ -22,7 +15,7 @@ export default function MaintenanceScreen() {
 
         <View style={styles.centerContent}>
           <View style={styles.iconContainer}>
-            <Ionicons name="construct-outline" size={64} color={colors.chrome} />
+            <Ionicons name="construct-outline" size={64} color={colors.textSecondary} />
           </View>
           <Text style={styles.emptyText}>Coming Soon</Text>
           <Text style={styles.emptySubtext}>
@@ -30,29 +23,37 @@ export default function MaintenanceScreen() {
           </Text>
         </View>
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#E8E8E8',
   },
   containerInner: {
     flex: 1,
   },
   header: {
     paddingHorizontal: spacing.base,
-    paddingVertical: spacing.md,
+    paddingTop: 35,
+    paddingBottom: spacing.md,
   },
   title: {
-    fontSize: fontSize['2xl'],
+    fontSize: fontSize.sm,
     fontWeight: fontWeight.bold,
-    color: colors.textInverse,
+    fontFamily: 'Lato_700Bold',
+    color: '#000000',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   subtitle: {
-    fontSize: fontSize.sm,
-    color: colors.chrome,
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_400Regular',
+    color: '#000000',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
     marginTop: spacing.xs,
   },
   centerContent: {
@@ -65,7 +66,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.lg,
@@ -73,13 +74,15 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: fontSize.xl,
     fontWeight: fontWeight.semibold,
-    color: colors.textInverse,
+    fontFamily: 'Lato_700Bold',
+    color: colors.text,
     marginBottom: spacing.sm,
     textAlign: 'center',
   },
   emptySubtext: {
     fontSize: fontSize.sm,
-    color: colors.chrome,
+    fontFamily: 'Lato_400Regular',
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
   },

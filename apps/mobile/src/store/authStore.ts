@@ -4,8 +4,10 @@ import {
   signOut,
   getSession as getSupabaseSession,
   fetchProfile,
+  updateProfile,
   getSupabaseClient,
 } from '@rgr/shared';
+import type { UpdateProfileInput } from '@rgr/shared';
 import type { Profile } from '@rgr/shared';
 import {
   saveSession,
@@ -28,6 +30,7 @@ interface AuthState {
   clearError: () => void;
   attemptAutoLogin: () => Promise<boolean>;
   clearSavedSession: () => Promise<void>;
+  updateUserProfile: (updates: UpdateProfileInput) => Promise<{ success: boolean; error?: string }>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -215,5 +218,26 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   clearSavedSession: async () => {
     await clearSession();
+  },
+
+  updateUserProfile: async (updates: UpdateProfileInput) => {
+    const user = get().user;
+    if (!user) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    try {
+      const result = await updateProfile(user.id, updates);
+
+      if (!result.success) {
+        return { success: false, error: result.error };
+      }
+
+      set({ user: result.data });
+      return { success: true };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to update profile';
+      return { success: false, error: message };
+    }
   },
 }));

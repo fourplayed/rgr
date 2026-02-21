@@ -9,7 +9,6 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import type { AssetStatus, Asset } from '@rgr/shared';
 import { useAssetList } from '../../../hooks/useAssetData';
@@ -67,7 +66,7 @@ export default function AssetListScreen() {
   };
 
   return (
-    <LinearGradient colors={[...colors.gradientColors]} locations={[...colors.gradientLocations]} start={colors.gradientStart} end={colors.gradientEnd} style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Fleet Assets</Text>
       </View>
@@ -141,23 +140,27 @@ export default function AssetListScreen() {
           updateCellsBatchingPeriod={50}
         />
       )}
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#E8E8E8',
   },
   header: {
     paddingHorizontal: spacing.base,
-    paddingTop: spacing.md,
+    paddingTop: 35,
     paddingBottom: spacing.sm,
   },
   title: {
-    fontSize: fontSize['2xl'],
+    fontSize: fontSize.sm,
     fontWeight: fontWeight.bold,
-    color: colors.text,
+    fontFamily: 'Lato_700Bold',
+    color: '#000000',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   searchContainer: {
     paddingHorizontal: spacing.base,
@@ -171,6 +174,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.base,
     paddingVertical: spacing.md,
     fontSize: fontSize.base,
+    fontFamily: 'Lato_400Regular',
     color: colors.text,
   },
   listContent: {
@@ -183,6 +187,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: fontSize.base,
+    fontFamily: 'Lato_400Regular',
     color: colors.error,
     marginBottom: spacing.md,
   },
@@ -195,6 +200,7 @@ const styles = StyleSheet.create({
   retryButtonText: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
+    fontFamily: 'Lato_700Bold',
     color: colors.textInverse,
   },
   emptyState: {
@@ -203,6 +209,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: fontSize.base,
+    fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
   },
 });
