@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Text, ActivityIndicator } from 'react-native';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   useFonts,
@@ -77,8 +77,13 @@ export default function RootLayout() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Check if navigation state is ready
+  const navigationState = useRootNavigationState();
+
   // Auth gate: redirect based on authentication status
   useEffect(() => {
+    // Wait for navigation to be ready
+    if (!navigationState?.key) return;
     if (isLoading) return; // Wait for auth check to finish
 
     const inAuthGroup = segments[0] === '(auth)';
@@ -91,7 +96,7 @@ export default function RootLayout() {
       router.replace('/(tabs)');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, isLoading, segments]);
+  }, [isAuthenticated, isLoading, segments, navigationState?.key]);
 
   if (!fontsLoaded) {
     return (
