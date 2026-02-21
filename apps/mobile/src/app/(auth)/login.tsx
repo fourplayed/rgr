@@ -256,6 +256,8 @@ export default function LoginScreen() {
       </View>
     </KeyboardAvoidingView>
 
+    <Text style={styles.versionText}>v1.0.0 (30)</Text>
+
     <SaveCredentialsModal
       visible={showSaveModal}
       onSave={handleSaveCredentials}
@@ -352,5 +354,13 @@ const styles = StyleSheet.create({
     fontWeight: fontWeight.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
+  },
+  versionText: {
+    position: 'absolute',
+    bottom: spacing.xl,
+    alignSelf: 'center',
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_400Regular',
+    color: colors.textSecondary,
   },
 });

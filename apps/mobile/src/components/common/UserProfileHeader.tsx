@@ -1,16 +1,18 @@
 import React from 'react';
 import { View, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
 
 const HEADER_GRADIENT_COLORS = ['#000099', '#0000CC', '#000099'] as const;
+const STATUS_BAR_GAP = 10; // Extra gap below status bar
 
 export function UserProfileHeader() {
   const router = useRouter();
   const { logout } = useAuthStore();
+  const insets = useSafeAreaInsets();
 
   const handleSettings = () => {
     router.push('/settings');
@@ -22,7 +24,7 @@ export function UserProfileHeader() {
   };
 
   return (
-    <View style={styles.wrapper}>
+    <View style={[styles.wrapper, { marginTop: insets.top + STATUS_BAR_GAP }]}>
       <LinearGradient
         colors={[...HEADER_GRADIENT_COLORS]}
         locations={[0, 0.5, 1]}
@@ -30,52 +32,48 @@ export function UserProfileHeader() {
         end={{ x: 0, y: 1 }}
         style={styles.gradient}
       >
-        <SafeAreaView edges={['top']} style={styles.safeArea}>
-          <View style={styles.container}>
-            <Image
-              source={require('../../assets/logo.png')}
-              style={styles.logo}
-              resizeMode="contain"
-            />
-            <View style={styles.actions}>
-              <TouchableOpacity
-                onPress={handleSettings}
-                style={styles.actionButton}
-                accessibilityRole="button"
-                accessibilityLabel="Settings"
-                accessibilityHint="Open settings screen"
-              >
-                <Ionicons name="settings-outline" size={24} color="#FFFFFF" />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleLogout}
-                style={styles.actionButton}
-                accessibilityRole="button"
-                accessibilityLabel="Logout"
-                accessibilityHint="Sign out of your account"
-              >
-                <Ionicons name="log-out-outline" size={24} color="#FFFFFF" />
-              </TouchableOpacity>
-            </View>
+        <View style={styles.container}>
+          <Image
+            source={require('../../assets/logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <View style={styles.actions}>
+            <TouchableOpacity
+              onPress={handleSettings}
+              style={styles.actionButton}
+              accessibilityRole="button"
+              accessibilityLabel="Settings"
+              accessibilityHint="Open settings screen"
+            >
+              <Ionicons name="settings-outline" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleLogout}
+              style={styles.actionButton}
+              accessibilityRole="button"
+              accessibilityLabel="Logout"
+              accessibilityHint="Sign out of your account"
+            >
+              <Ionicons name="log-out-outline" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
           </View>
-        </SafeAreaView>
+        </View>
       </LinearGradient>
     </View>
   );
 }
 
+const GRADIENT_HEIGHT = 50;
+
 const styles = StyleSheet.create({
   wrapper: {
     zIndex: 999,
     overflow: 'visible',
-    marginTop: 85,
-  },
-  safeArea: {
-    backgroundColor: 'transparent',
   },
   gradient: {
     width: '100%',
-    height: 50,
+    height: GRADIENT_HEIGHT,
     overflow: 'visible',
     zIndex: 999,
     shadowColor: '#000',
@@ -83,9 +81,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     shadowRadius: 9,
     elevation: 16,
+    justifyContent: 'center',
   },
   container: {
-    height: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -96,8 +94,6 @@ const styles = StyleSheet.create({
   logo: {
     height: 80,
     width: 200,
-    marginTop: -75,
-    marginBottom: -10,
     marginLeft: -5,
     zIndex: 999,
   },
@@ -105,7 +101,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 20,
-    marginTop: -75,
   },
   actionButton: {
     padding: 8,
