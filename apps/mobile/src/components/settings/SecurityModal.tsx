@@ -186,7 +186,7 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
                     <Switch
                       value={autoLogin}
                       onValueChange={handleAutoLoginToggle}
-                      trackColor={{ false: colors.border, true: colors.electricBlue }}
+                      trackColor={{ false: colors.border, true: '#0000FF' }}
                       thumbColor={colors.background}
                     />
                   )}
@@ -392,10 +392,12 @@ const styles = StyleSheet.create({
     paddingBottom: spacing['2xl'],
   },
   title: {
-    fontSize: fontSize['2xl'],
+    fontSize: fontSize.lg,
     fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
-    color: colors.text,
+    color: '#000000',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
     marginBottom: spacing.lg,
   },
   section: {
@@ -403,11 +405,11 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.semibold,
+    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
-    color: colors.textSecondary,
+    color: '#000000',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 1,
     marginBottom: spacing.sm,
   },
   toggleRow: {
@@ -426,10 +428,12 @@ const styles = StyleSheet.create({
     marginRight: spacing.md,
   },
   toggleTitle: {
-    fontSize: fontSize.base,
-    fontWeight: fontWeight.medium,
-    fontFamily: 'Lato_400Regular',
-    color: colors.text,
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.bold,
+    fontFamily: 'Lato_700Bold',
+    color: '#000000',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   toggleSubtitle: {
     fontSize: fontSize.sm,
@@ -466,9 +470,11 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium,
-    fontFamily: 'Lato_400Regular',
-    color: colors.textSecondary,
+    fontWeight: fontWeight.bold,
+    fontFamily: 'Lato_700Bold',
+    color: '#000000',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
     marginBottom: spacing.xs,
   },
   passwordInputWrapper: {
@@ -553,13 +559,19 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   saveButton: {
-    backgroundColor: colors.electricBlue,
+    backgroundColor: '#0000FF',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.6,
+    shadowRadius: 6,
+    elevation: 6,
   },
   saveButtonText: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.textInverse,
+    textTransform: 'uppercase',
   },
   buttonDisabled: {
     opacity: 0.6,
@@ -576,15 +588,21 @@ const styles = StyleSheet.create({
     color: colors.success,
   },
   doneButton: {
-    backgroundColor: colors.electricBlue,
+    backgroundColor: '#0000FF',
     paddingVertical: spacing.base,
     borderRadius: borderRadius.md,
     alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.6,
+    shadowRadius: 6,
+    elevation: 6,
   },
   doneButtonText: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.textInverse,
+    textTransform: 'uppercase',
   },
 });

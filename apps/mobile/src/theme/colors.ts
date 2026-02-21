@@ -45,9 +45,17 @@ export const colors = {
   userRole: {
     driver: '#00A8FF',     // Light blue
     mechanic: '#F59E0B',   // Orange
-    manager: '#22C55E',    // Green
+    manager: '#8B5CF6',    // Violet
     yardie: '#EAB308',     // Yellow
     superuser: '#A855F7',  // Purple
+  },
+
+  // Depot colors
+  depot: {
+    perth: '#32CD32',      // Lime green
+    newman: '#0066FF',     // Blue
+    hedland: '#FF1493',    // Neon pink
+    karratha: '#DFFF00',   // Fluro yellow
   },
 
   // UI elements

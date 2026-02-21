@@ -164,10 +164,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   title: {
-    fontSize: fontSize['2xl'],
+    fontSize: fontSize.lg,
     fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
-    color: colors.text,
+    color: '#000000',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
     marginBottom: spacing.lg,
   },
   inputGroup: {
@@ -175,9 +177,11 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium,
-    fontFamily: 'Lato_400Regular',
-    color: colors.textSecondary,
+    fontWeight: fontWeight.bold,
+    fontFamily: 'Lato_700Bold',
+    color: '#000000',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
     marginBottom: spacing.xs,
   },
   input: {
@@ -221,13 +225,19 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   saveButton: {
-    backgroundColor: colors.electricBlue,
+    backgroundColor: '#0000FF',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.6,
+    shadowRadius: 6,
+    elevation: 6,
   },
   saveButtonText: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.textInverse,
+    textTransform: 'uppercase',
   },
   buttonDisabled: {
     opacity: 0.6,

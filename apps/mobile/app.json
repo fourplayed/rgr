@@ -2,7 +2,7 @@
   "expo": {
     "name": "RGR Fleet",
     "slug": "rgr-mobile",
-    "version": "1.0.0",
+    "version": "2.0.1",
     "orientation": "portrait",
     "scheme": "rgr",
     "icon": "./src/assets/icon.png",
@@ -13,6 +13,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.rgr.fleetmanager",
+      "buildNumber": "1",
       "infoPlist": {
         "NSCameraUsageDescription": "Camera is used to scan QR codes on fleet assets",
         "NSLocationWhenInUseUsageDescription": "Location is captured during asset scans for fleet tracking"

@@ -51,6 +51,38 @@ const TabIcon = ({
         }}
       />
 
+      {/* Internal white shadow - left edge */}
+      {focused && (
+        <LinearGradient
+          colors={['rgba(255, 255, 255, 0.10)', 'transparent']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 6,
+          }}
+        />
+      )}
+
+      {/* Internal white shadow - right edge */}
+      {focused && (
+        <LinearGradient
+          colors={['transparent', 'rgba(255, 255, 255, 0.10)']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={{
+            position: 'absolute',
+            right: 0,
+            top: 0,
+            bottom: 0,
+            width: 6,
+          }}
+        />
+      )}
+
       {/* Subtle separator on right edge (except last tab) */}
       <View
         style={{

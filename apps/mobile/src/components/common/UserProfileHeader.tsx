@@ -7,7 +7,7 @@ import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
 
 const HEADER_GRADIENT_COLORS = ['#000099', '#0000CC', '#000099'] as const;
-const STATUS_BAR_GAP = 10; // Extra gap below status bar
+const STATUS_BAR_GAP = 20; // Extra gap below status bar
 
 export function UserProfileHeader() {
   const router = useRouter();
@@ -95,6 +95,7 @@ const styles = StyleSheet.create({
     height: 80,
     width: 200,
     marginLeft: -5,
+    marginTop: 10,
     zIndex: 999,
   },
   actions: {

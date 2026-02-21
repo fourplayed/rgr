@@ -13,11 +13,15 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFonts, Lato_700Bold } from '@expo-google-fonts/lato';
+import Constants from 'expo-constants';
 import { useAuthStore } from '../../store/authStore';
 import { SaveCredentialsModal } from '../../components/auth/SaveCredentialsModal';
 import { isAutoLoginEnabled } from '../../utils/secureStorage';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
+
+const APP_VERSION = Constants.expoConfig?.version || '1.0.0';
+const BUILD_NUMBER = Constants.expoConfig?.ios?.buildNumber || Constants.expoConfig?.android?.versionCode || '0';
 
 // Custom loading spinner component
 function LoadingDots() {
@@ -256,7 +260,7 @@ export default function LoginScreen() {
       </View>
     </KeyboardAvoidingView>
 
-    <Text style={styles.versionText}>v1.0.0 (30)</Text>
+    <Text style={styles.versionText}>v{APP_VERSION} ({BUILD_NUMBER})</Text>
 
     <SaveCredentialsModal
       visible={showSaveModal}

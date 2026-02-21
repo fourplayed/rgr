@@ -49,6 +49,10 @@ export default function HomeScreen() {
   const roleLabel = UserRoleLabels[user.role] || user.role;
   const recentScans = scans.slice(0, 5);
 
+  // Get time-based greeting
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+
   const totalAssets = allAssets?.total ?? 0;
   const servicedCount = servicedAssets?.total ?? 0;
   const outOfServiceCount = outOfServiceAssets?.total ?? 0;
@@ -82,17 +86,20 @@ export default function HomeScreen() {
             <>
               {/* User Profile Section */}
               <View style={styles.profileSection}>
-                <View style={styles.profileRow}>
-                  <View style={styles.avatar}>
-                    <Ionicons name="person" size={32} color="#FFFFFF" />
+                <View style={styles.profileHeader}>
+                  <View>
+                    <Text style={styles.greeting}>{greeting},</Text>
+                    <Text style={styles.userName}>{user.fullName}</Text>
                   </View>
-                  <View style={styles.userInfo}>
-                    <Text style={styles.userName} numberOfLines={1}>
-                      {user.fullName}
-                    </Text>
+                  <View style={styles.badgesContainer}>
                     <View style={[styles.roleBadge, { backgroundColor: colors.userRole[user.role as keyof typeof colors.userRole] || colors.electricBlue }]}>
                       <Text style={styles.roleText}>{roleLabel}</Text>
                     </View>
+                    {user.depot && (
+                      <View style={[styles.depotBadge, { backgroundColor: colors.depot[user.depot.toLowerCase() as keyof typeof colors.depot] || colors.chrome }]}>
+                        <Text style={[styles.depotText, { color: user.depot.toLowerCase() === 'karratha' ? colors.text : colors.textInverse }]}>{user.depot}</Text>
+                      </View>
+                    )}
                   </View>
                 </View>
               </View>
@@ -182,39 +189,31 @@ const styles = StyleSheet.create({
 
   // Profile Section
   profileSection: {
-    backgroundColor: colors.background,
-    borderRadius: borderRadius.lg,
-    padding: spacing.base,
     marginTop: 20,
-    marginBottom: spacing.base,
-    borderWidth: 1,
-    borderColor: colors.border,
+    marginBottom: spacing.lg,
   },
-  profileRow: {
+  profileHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
-  avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#0000FF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: spacing.md,
-  },
-  userInfo: {
-    flex: 1,
+  greeting: {
+    fontSize: fontSize.base,
+    fontFamily: 'Lato_400Regular',
+    color: colors.textSecondary,
   },
   userName: {
-    fontSize: fontSize.lg,
+    fontSize: fontSize['3xl'],
     fontFamily: 'Lato_700Bold',
     fontWeight: fontWeight.bold,
     color: colors.text,
-    marginBottom: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  badgesContainer: {
+    alignItems: 'flex-end',
+    gap: spacing.xs,
   },
   roleBadge: {
-    alignSelf: 'flex-start',
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.sm,
@@ -224,6 +223,18 @@ const styles = StyleSheet.create({
     fontFamily: 'Lato_700Bold',
     fontWeight: fontWeight.semibold,
     color: colors.textInverse,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  depotBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+  },
+  depotText: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_700Bold',
+    fontWeight: fontWeight.semibold,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },

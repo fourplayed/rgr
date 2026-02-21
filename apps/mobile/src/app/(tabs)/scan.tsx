@@ -28,6 +28,8 @@ export default function ScanScreen() {
     location,
     requestLocation,
     hasPermission: hasLocationPermission,
+    requestPermission: requestLocationPermission,
+    isLoading: isLocationLoading,
   } = useLocation();
 
   const { mutateAsync: lookupAsset } = useAssetByQRCode();
@@ -100,10 +102,13 @@ export default function ScanScreen() {
     resetScanner();
   };
 
-  // Request camera permission on mount
+  // Request camera and location permissions on mount
   useEffect(() => {
     if (!permission?.granted) {
       requestPermission();
+    }
+    if (!hasLocationPermission) {
+      requestLocationPermission();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -170,10 +175,27 @@ export default function ScanScreen() {
           <View style={styles.footer}>
             <View style={styles.statusRow}>
               <Text style={styles.statusLabel}>Location:</Text>
-              <Text style={styles.statusValue}>
-                {hasLocationPermission ? 'Ready' : 'Not available'}
+              <Text style={[
+                styles.statusValue,
+                !hasLocationPermission && styles.statusValueError
+              ]}>
+                {isLocationLoading
+                  ? 'Getting location...'
+                  : hasLocationPermission
+                    ? (location
+                        ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`
+                        : 'Ready')
+                    : 'Permission required'}
               </Text>
             </View>
+            {!hasLocationPermission && (
+              <TouchableOpacity
+                style={styles.permissionButton}
+                onPress={requestLocationPermission}
+              >
+                <Text style={styles.permissionButtonText}>Enable Location</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </SafeAreaView>
       </CameraView>
@@ -290,6 +312,24 @@ const styles = StyleSheet.create({
     fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.scanSuccess,
+  },
+  statusValueError: {
+    color: colors.error,
+  },
+  permissionButton: {
+    marginTop: spacing.sm,
+    backgroundColor: '#0000FF',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.md,
+    alignSelf: 'center',
+  },
+  permissionButtonText: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.bold,
+    fontFamily: 'Lato_700Bold',
+    color: colors.textInverse,
+    textTransform: 'uppercase',
   },
   centerContent: {
     flex: 1,

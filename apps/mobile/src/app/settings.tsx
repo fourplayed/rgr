@@ -1,22 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import Constants from 'expo-constants';
 import { useAuthStore } from '../store/authStore';
-import { UserRoleLabels } from '@rgr/shared';
+import { UserRoleLabels, fetchProfile, getSupabaseClient } from '@rgr/shared';
 import { colors } from '../theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../theme/spacing';
 import { EditProfileModal } from '../components/settings/EditProfileModal';
 import { NotificationsModal } from '../components/settings/NotificationsModal';
 import { SecurityModal } from '../components/settings/SecurityModal';
+import { getSession as getStoredSession } from '../utils/secureStorage';
+import type { Profile } from '@rgr/shared';
+
+const SUPABASE_URL = Constants.expoConfig?.extra?.['supabaseUrl'] || process.env['EXPO_PUBLIC_SUPABASE_URL'] || 'Unknown';
+const LOCAL_STORAGE_NAME = 'AsyncStorage (SecureStore)';
 
 interface SettingsItemProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -49,12 +56,119 @@ function SettingsItem({ icon, title, subtitle, onPress, showChevron = true }: Se
   );
 }
 
+interface DebugInfo {
+  localProfile: Profile | null;
+  remoteProfile: Profile | null;
+  localConnectionStatus: 'connected' | 'disconnected' | 'checking';
+  remoteConnectionStatus: 'connected' | 'disconnected' | 'checking';
+  syncStatus: 'synced' | 'out-of-sync' | 'checking' | 'error';
+  lastSyncTime: string | null;
+  storedSessionExists: boolean;
+}
+
 export default function SettingsScreen() {
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, checkAuth } = useAuthStore();
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSecurity, setShowSecurity] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<DebugInfo>({
+    localProfile: null,
+    remoteProfile: null,
+    localConnectionStatus: 'checking',
+    remoteConnectionStatus: 'checking',
+    syncStatus: 'checking',
+    lastSyncTime: null,
+    storedSessionExists: false,
+  });
+
+  const fetchDebugInfo = useCallback(async () => {
+    if (!user) return;
+
+    setDebugInfo(prev => ({
+      ...prev,
+      localConnectionStatus: 'checking',
+      remoteConnectionStatus: 'checking',
+      syncStatus: 'checking',
+    }));
+
+    try {
+      // Check local storage
+      const storedSession = await getStoredSession();
+      const localProfile = user;
+
+      setDebugInfo(prev => ({
+        ...prev,
+        localProfile,
+        localConnectionStatus: 'connected',
+        storedSessionExists: !!storedSession,
+      }));
+
+      // Check remote connection and fetch remote profile
+      try {
+        const supabase = getSupabaseClient();
+        const { data: sessionData } = await supabase.auth.getSession();
+
+        if (sessionData?.session) {
+          const remoteResult = await fetchProfile(user.id);
+
+          if (remoteResult.success) {
+            const remoteProfile = remoteResult.data;
+
+            // Compare local and remote
+            const isInSync = JSON.stringify(localProfile) === JSON.stringify(remoteProfile);
+
+            setDebugInfo(prev => ({
+              ...prev,
+              remoteProfile,
+              remoteConnectionStatus: 'connected',
+              syncStatus: isInSync ? 'synced' : 'out-of-sync',
+              lastSyncTime: new Date().toLocaleTimeString(),
+            }));
+          } else {
+            setDebugInfo(prev => ({
+              ...prev,
+              remoteConnectionStatus: 'disconnected',
+              syncStatus: 'error',
+            }));
+          }
+        } else {
+          setDebugInfo(prev => ({
+            ...prev,
+            remoteConnectionStatus: 'disconnected',
+            syncStatus: 'error',
+          }));
+        }
+      } catch {
+        setDebugInfo(prev => ({
+          ...prev,
+          remoteConnectionStatus: 'disconnected',
+          syncStatus: 'error',
+        }));
+      }
+    } catch {
+      setDebugInfo(prev => ({
+        ...prev,
+        localConnectionStatus: 'disconnected',
+        syncStatus: 'error',
+      }));
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchDebugInfo();
+  }, [fetchDebugInfo]);
+
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      await checkAuth();
+      await fetchDebugInfo();
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const handleBack = () => {
     router.back();
@@ -65,6 +179,20 @@ export default function SettingsScreen() {
   }
 
   const roleLabel = UserRoleLabels[user.role] || user.role;
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'connected':
+      case 'synced':
+        return colors.success;
+      case 'disconnected':
+      case 'out-of-sync':
+      case 'error':
+        return colors.error;
+      default:
+        return colors.warning;
+    }
+  };
 
   return (
     <LinearGradient
@@ -95,15 +223,19 @@ export default function SettingsScreen() {
             <Text style={styles.sectionTitle}>Profile</Text>
             <View style={styles.card}>
               <View style={styles.profileHeader}>
-                <View style={styles.avatar}>
-                  <Ionicons name="person" size={32} color={colors.textInverse} />
-                </View>
                 <View style={styles.profileInfo}>
                   <Text style={styles.profileName}>{user.fullName}</Text>
                   <Text style={styles.profileEmail}>{user.email}</Text>
+                </View>
+                <View style={styles.badgesRow}>
                   <View style={[styles.roleBadge, { backgroundColor: colors.userRole[user.role as keyof typeof colors.userRole] || colors.backgroundDark }]}>
                     <Text style={styles.roleText}>{roleLabel}</Text>
                   </View>
+                  {user.depot && (
+                    <View style={[styles.depotBadge, { backgroundColor: colors.depot[user.depot.toLowerCase() as keyof typeof colors.depot] || colors.chrome }]}>
+                      <Text style={[styles.depotText, { color: user.depot.toLowerCase() === 'karratha' ? colors.text : colors.textInverse }]}>{user.depot}</Text>
+                    </View>
+                  )}
                 </View>
               </View>
             </View>
@@ -114,21 +246,21 @@ export default function SettingsScreen() {
             <Text style={styles.sectionTitle}>Account</Text>
             <View style={styles.card}>
               <SettingsItem
-                icon="person-outline"
+                icon="person"
                 title="Edit Profile"
                 subtitle="Update your name and contact info"
                 onPress={() => setShowEditProfile(true)}
               />
               <View style={styles.divider} />
               <SettingsItem
-                icon="notifications-outline"
+                icon="notifications"
                 title="Notifications"
                 subtitle="Manage notification preferences"
                 onPress={() => setShowNotifications(true)}
               />
               <View style={styles.divider} />
               <SettingsItem
-                icon="lock-closed-outline"
+                icon="lock-closed"
                 title="Security"
                 subtitle="Password and authentication"
                 onPress={() => setShowSecurity(true)}
@@ -136,67 +268,112 @@ export default function SettingsScreen() {
             </View>
           </View>
 
-          {/* App Section */}
+          {/* Debug Section */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>App</Text>
+            <Text style={styles.sectionTitle}>Debug</Text>
             <View style={styles.card}>
-              <SettingsItem
-                icon="information-circle-outline"
-                title="About"
-                subtitle="Version 1.0.0"
-              />
-              <View style={styles.divider} />
-              <SettingsItem
-                icon="help-circle-outline"
-                title="Help & Support"
-                subtitle="Get help with the app"
-              />
+              {/* Connection Status */}
+              <View style={styles.debugRow}>
+                <Text style={styles.debugLabel}>Local Storage</Text>
+                <View style={styles.debugStatusRow}>
+                  <View style={[styles.statusDot, { backgroundColor: getStatusColor(debugInfo.localConnectionStatus) }]} />
+                  <Text style={styles.debugValue}>{debugInfo.localConnectionStatus}</Text>
+                </View>
+              </View>
+              <View style={styles.debugDivider} />
+
+              <View style={styles.debugRow}>
+                <Text style={styles.debugLabel}>Remote Database</Text>
+                <View style={styles.debugStatusRow}>
+                  <View style={[styles.statusDot, { backgroundColor: getStatusColor(debugInfo.remoteConnectionStatus) }]} />
+                  <Text style={styles.debugValue}>{debugInfo.remoteConnectionStatus}</Text>
+                </View>
+              </View>
+              <View style={styles.debugDivider} />
+
+              <View style={styles.debugRow}>
+                <Text style={styles.debugLabel}>Sync Status</Text>
+                <View style={styles.debugStatusRow}>
+                  <View style={[styles.statusDot, { backgroundColor: getStatusColor(debugInfo.syncStatus) }]} />
+                  <Text style={styles.debugValue}>{debugInfo.syncStatus}</Text>
+                </View>
+              </View>
+              <View style={styles.debugDivider} />
+
+              <View style={styles.debugRow}>
+                <Text style={styles.debugLabel}>Session Token</Text>
+                <Text style={styles.debugValue}>{debugInfo.storedSessionExists ? 'Stored' : 'None'}</Text>
+              </View>
+              <View style={styles.debugDivider} />
+
+              {debugInfo.lastSyncTime && (
+                <>
+                  <View style={styles.debugRow}>
+                    <Text style={styles.debugLabel}>Last Checked</Text>
+                    <Text style={styles.debugValue}>{debugInfo.lastSyncTime}</Text>
+                  </View>
+                  <View style={styles.debugDivider} />
+                </>
+              )}
+
+              {/* Local Profile Data */}
+              <View style={styles.debugDataSection}>
+                <Text style={styles.debugSubtitle}>Local Profile</Text>
+                <View style={styles.debugDataBox}>
+                  <Text style={styles.debugDataTextBold}>Storage: {LOCAL_STORAGE_NAME}</Text>
+                  {debugInfo.localProfile ? (
+                    <>
+                      <Text style={styles.debugDataText}>ID: {debugInfo.localProfile.id}</Text>
+                      <Text style={styles.debugDataText}>Name: {debugInfo.localProfile.fullName}</Text>
+                      <Text style={styles.debugDataText}>Email: {debugInfo.localProfile.email}</Text>
+                      <Text style={styles.debugDataText}>Role: {debugInfo.localProfile.role}</Text>
+                      <Text style={styles.debugDataText}>Depot: {debugInfo.localProfile.depot || 'None'}</Text>
+                      <Text style={styles.debugDataText}>Updated: {debugInfo.localProfile.updatedAt}</Text>
+                    </>
+                  ) : (
+                    <Text style={styles.debugDataText}>No local data</Text>
+                  )}
+                </View>
+              </View>
+
+              {/* Remote Profile Data */}
+              <View style={styles.debugDataSection}>
+                <Text style={styles.debugSubtitle}>Remote Profile</Text>
+                <View style={styles.debugDataBox}>
+                  <Text style={styles.debugDataTextBold} numberOfLines={1}>Database: {SUPABASE_URL}</Text>
+                  {debugInfo.remoteProfile ? (
+                    <>
+                      <Text style={styles.debugDataText}>ID: {debugInfo.remoteProfile.id}</Text>
+                      <Text style={styles.debugDataText}>Name: {debugInfo.remoteProfile.fullName}</Text>
+                      <Text style={styles.debugDataText}>Email: {debugInfo.remoteProfile.email}</Text>
+                      <Text style={styles.debugDataText}>Role: {debugInfo.remoteProfile.role}</Text>
+                      <Text style={styles.debugDataText}>Depot: {debugInfo.remoteProfile.depot || 'None'}</Text>
+                      <Text style={styles.debugDataText}>Updated: {debugInfo.remoteProfile.updatedAt}</Text>
+                    </>
+                  ) : (
+                    <Text style={styles.debugDataText}>No remote data</Text>
+                  )}
+                </View>
+              </View>
+
+              {/* Sync Button */}
+              <TouchableOpacity
+                style={styles.syncButton}
+                onPress={handleSync}
+                disabled={isSyncing}
+              >
+                {isSyncing ? (
+                  <ActivityIndicator size="small" color={colors.textInverse} />
+                ) : (
+                  <>
+                    <Ionicons name="sync" size={20} color={colors.textInverse} />
+                    <Text style={styles.syncButtonText}>Sync Now</Text>
+                  </>
+                )}
+              </TouchableOpacity>
             </View>
           </View>
 
-          {/* User Details Section */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Details</Text>
-            <View style={styles.card}>
-              {user.employeeId && (
-                <>
-                  <SettingsItem
-                    icon="id-card-outline"
-                    title="Employee ID"
-                    subtitle={user.employeeId}
-                    showChevron={false}
-                  />
-                  <View style={styles.divider} />
-                </>
-              )}
-              {user.depot && (
-                <>
-                  <SettingsItem
-                    icon="location-outline"
-                    title="Depot"
-                    subtitle={user.depot}
-                    showChevron={false}
-                  />
-                  <View style={styles.divider} />
-                </>
-              )}
-              {user.phone && (
-                <SettingsItem
-                  icon="call-outline"
-                  title="Phone"
-                  subtitle={user.phone}
-                  showChevron={false}
-                />
-              )}
-              {!user.employeeId && !user.depot && !user.phone && (
-                <SettingsItem
-                  icon="information-outline"
-                  title="No additional details"
-                  showChevron={false}
-                />
-              )}
-            </View>
-          </View>
         </ScrollView>
 
         <EditProfileModal
@@ -236,10 +413,12 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
   },
   headerTitle: {
-    fontSize: fontSize.xl,
+    fontSize: fontSize.lg,
     fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
-    color: colors.text,
+    color: '#000000',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   headerSpacer: {
     width: 40,
@@ -249,18 +428,18 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: spacing.base,
-    paddingBottom: spacing['2xl'],
+    paddingBottom: spacing.lg,
   },
   section: {
     marginBottom: spacing.lg,
   },
   sectionTitle: {
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.semibold,
+    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
-    color: colors.textSecondary,
+    color: '#000000',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 1,
     marginBottom: spacing.sm,
     marginLeft: spacing.xs,
   },
@@ -273,40 +452,18 @@ const styles = StyleSheet.create({
   },
   profileHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     padding: spacing.base,
-  },
-  avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: colors.backgroundDark,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  avatarEditBadge: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: colors.navy,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: colors.background,
   },
   profileInfo: {
     flex: 1,
-    marginLeft: spacing.md,
   },
   profileName: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
-    color: colors.text,
+    color: '#000000',
   },
   profileEmail: {
     fontSize: fontSize.sm,
@@ -314,18 +471,33 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: spacing.xs,
   },
+  badgesRow: {
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    gap: spacing.xs,
+  },
   roleBadge: {
-    alignSelf: 'flex-start',
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.sm,
-    marginTop: spacing.sm,
   },
   roleText: {
     fontSize: fontSize.xs,
     fontWeight: fontWeight.semibold,
     fontFamily: 'Lato_700Bold',
     color: colors.textInverse,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  depotBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+  },
+  depotText: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.semibold,
+    fontFamily: 'Lato_700Bold',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -347,10 +519,12 @@ const styles = StyleSheet.create({
     marginLeft: spacing.md,
   },
   settingsItemTitle: {
-    fontSize: fontSize.base,
-    fontWeight: fontWeight.medium,
-    fontFamily: 'Lato_400Regular',
-    color: colors.text,
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.bold,
+    fontFamily: 'Lato_700Bold',
+    color: '#000000',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   settingsItemSubtitle: {
     fontSize: fontSize.sm,
@@ -362,5 +536,96 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: colors.border,
     marginLeft: spacing.base + 40 + spacing.md,
+  },
+  // Debug Section Styles
+  debugRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.base,
+    paddingVertical: spacing.sm,
+  },
+  debugLabel: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.bold,
+    fontFamily: 'Lato_700Bold',
+    color: '#000000',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  debugValue: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_400Regular',
+    color: colors.textSecondary,
+    textTransform: 'capitalize',
+  },
+  debugStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  debugDivider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginHorizontal: spacing.base,
+  },
+  debugDataSection: {
+    paddingHorizontal: spacing.base,
+    paddingVertical: spacing.sm,
+  },
+  debugSubtitle: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.bold,
+    fontFamily: 'Lato_700Bold',
+    color: '#000000',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: spacing.xs,
+  },
+  debugDataBox: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.sm,
+    padding: spacing.sm,
+  },
+  debugDataText: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_400Regular',
+    color: colors.textSecondary,
+    marginBottom: 2,
+  },
+  debugDataTextBold: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_700Bold',
+    fontWeight: fontWeight.bold,
+    color: colors.text,
+    marginBottom: spacing.xs,
+  },
+  syncButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#0000FF',
+    marginHorizontal: spacing.base,
+    marginVertical: spacing.base,
+    paddingVertical: spacing.base,
+    borderRadius: borderRadius.md,
+    gap: spacing.sm,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.6,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  syncButtonText: {
+    fontSize: fontSize.base,
+    fontWeight: fontWeight.bold,
+    fontFamily: 'Lato_700Bold',
+    color: colors.textInverse,
+    textTransform: 'uppercase',
   },
 });

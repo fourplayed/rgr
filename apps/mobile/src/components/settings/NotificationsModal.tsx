@@ -34,7 +34,7 @@ function ToggleRow({ title, subtitle, value, onValueChange, disabled }: ToggleRo
       <Switch
         value={value}
         onValueChange={onValueChange}
-        trackColor={{ false: colors.border, true: colors.electricBlue }}
+        trackColor={{ false: colors.border, true: '#0000FF' }}
         thumbColor={colors.background}
         disabled={disabled}
       />
@@ -149,10 +149,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   title: {
-    fontSize: fontSize['2xl'],
+    fontSize: fontSize.lg,
     fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
-    color: colors.text,
+    color: '#000000',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
     marginBottom: spacing.sm,
   },
   description: {
@@ -183,10 +185,12 @@ const styles = StyleSheet.create({
     marginRight: spacing.md,
   },
   toggleTitle: {
-    fontSize: fontSize.base,
-    fontWeight: fontWeight.medium,
-    fontFamily: 'Lato_400Regular',
-    color: colors.text,
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.bold,
+    fontFamily: 'Lato_700Bold',
+    color: '#000000',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   toggleTitleDisabled: {
     color: colors.textSecondary,
@@ -202,15 +206,21 @@ const styles = StyleSheet.create({
     backgroundColor: colors.border,
   },
   doneButton: {
-    backgroundColor: colors.electricBlue,
+    backgroundColor: '#0000FF',
     paddingVertical: spacing.base,
     borderRadius: borderRadius.md,
     alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.6,
+    shadowRadius: 6,
+    elevation: 6,
   },
   doneButtonText: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.textInverse,
+    textTransform: 'uppercase',
   },
 });
