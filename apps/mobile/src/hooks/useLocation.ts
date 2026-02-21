@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import * as Location from 'expo-location';
 
 export interface LocationData {
@@ -27,18 +27,28 @@ export function useLocation(): UseLocationResult {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [hasPermission, setHasPermission] = useState(false);
+  // Track if component is mounted to prevent state updates after unmount
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
+    isMountedRef.current = true;
     checkPermission();
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
 
   const checkPermission = async () => {
     try {
       const { status } = await Location.getForegroundPermissionsAsync();
-      setHasPermission(status === 'granted');
+      if (isMountedRef.current) {
+        setHasPermission(status === 'granted');
+      }
     } catch (err) {
       console.error('Error checking location permission:', err);
-      setHasPermission(false);
+      if (isMountedRef.current) {
+        setHasPermission(false);
+      }
     }
   };
 
@@ -46,18 +56,24 @@ export function useLocation(): UseLocationResult {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       const granted = status === 'granted';
-      setHasPermission(granted);
+      if (isMountedRef.current) {
+        setHasPermission(granted);
+      }
       return granted;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to request location permission';
-      setError(message);
+      if (isMountedRef.current) {
+        setError(message);
+      }
       return false;
     }
   }, []);
 
   const requestLocation = useCallback(async (): Promise<LocationData | null> => {
-    setIsLoading(true);
-    setError(null);
+    if (isMountedRef.current) {
+      setIsLoading(true);
+      setError(null);
+    }
 
     try {
       // Check permission first
@@ -68,10 +84,16 @@ export function useLocation(): UseLocationResult {
         }
       }
 
-      // Get current location with high accuracy
-      const result = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-      });
+      // Get current location with high accuracy and timeout
+      // Timeout prevents iOS from killing the app if GPS hangs
+      const result = await Promise.race([
+        Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.High,
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Location request timed out')), 15000)
+        ),
+      ]);
 
       const locationData: LocationData = {
         latitude: result.coords.latitude,
@@ -82,13 +104,17 @@ export function useLocation(): UseLocationResult {
         speed: result.coords.speed,
       };
 
-      setLocation(locationData);
-      setIsLoading(false);
+      if (isMountedRef.current) {
+        setLocation(locationData);
+        setIsLoading(false);
+      }
       return locationData;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to get location';
-      setError(message);
-      setIsLoading(false);
+      if (isMountedRef.current) {
+        setError(message);
+        setIsLoading(false);
+      }
       return null;
     }
   }, [hasPermission, requestPermission]);

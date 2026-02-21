@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import type { BarcodeScanningResult } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { isValidQRCode } from '@rgr/shared';
@@ -29,8 +29,17 @@ export function useQRScanner(
   const lastScanRef = useRef<{ data: string; timestamp: number } | null>(null);
   // Ref-based lock to prevent race conditions in async callback execution
   const isProcessingRef = useRef(false);
+  // Track if component is mounted to prevent state updates after unmount
+  const isMountedRef = useRef(true);
 
-  const handleBarCodeScanned = async (result: BarcodeScanningResult) => {
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  const handleBarCodeScanned = useCallback(async (result: BarcodeScanningResult) => {
     // Prevent processing if already processing (use ref for immediate check)
     if (isProcessingRef.current || isProcessing) {
       return;
@@ -60,7 +69,12 @@ export function useQRScanner(
     // Trigger haptic feedback
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    // Update state
+    // Update state only if still mounted
+    if (!isMountedRef.current) {
+      isProcessingRef.current = false;
+      return;
+    }
+
     const scanResult: QRScanResult = {
       data,
       timestamp: now,
@@ -75,19 +89,22 @@ export function useQRScanner(
       try {
         await onScan(data);
       } catch {
-        // If callback fails, reset the lock so user can retry
-        isProcessingRef.current = false;
-        setIsProcessing(false);
+        // If callback fails, reset the lock so user can retry (only if mounted)
+        if (isMountedRef.current) {
+          isProcessingRef.current = false;
+          setIsProcessing(false);
+        }
       }
     }
-  };
+  }, [isProcessing, debounceMs, onScan]);
 
-  const resetScanner = () => {
+  const resetScanner = useCallback(() => {
+    if (!isMountedRef.current) return;
     setScannedData(null);
     setIsProcessing(false);
     isProcessingRef.current = false;
     lastScanRef.current = null;
-  };
+  }, []);
 
   return {
     scannedData,
