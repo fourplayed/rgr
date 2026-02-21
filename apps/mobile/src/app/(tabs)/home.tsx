@@ -11,9 +11,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useMyRecentScans, useAssetList } from '../../hooks/useAssetData';
+import { useMyRecentScans, useAssetCountsByStatus } from '../../hooks/useAssetData';
 import { useAuthStore } from '../../store/authStore';
-import { formatRelativeTime, UserRoleLabels, AssetStatus } from '@rgr/shared';
+import { formatRelativeTime, UserRoleLabels } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
 
@@ -29,17 +29,20 @@ export default function HomeScreen() {
     isRefetching: scansRefetching,
   } = useMyRecentScans(user?.id);
 
-  // Asset counts by status
-  const { data: allAssets, isLoading: assetsLoading, refetch: refetchAssets, isRefetching: assetsRefetching } = useAssetList({ pageSize: 1000 });
-  const { data: servicedAssets } = useAssetList({ statuses: [AssetStatus.SERVICED], pageSize: 1 });
-  const { data: outOfServiceAssets } = useAssetList({ statuses: [AssetStatus.OUT_OF_SERVICE], pageSize: 1 });
+  // Asset counts by status using efficient RPC call (single query instead of 3)
+  const {
+    data: assetStats,
+    isLoading: statsLoading,
+    refetch: refetchStats,
+    isRefetching: statsRefetching,
+  } = useAssetCountsByStatus();
 
-  const isLoading = scansLoading || assetsLoading;
-  const isRefetching = scansRefetching || assetsRefetching;
+  const isLoading = scansLoading || statsLoading;
+  const isRefetching = scansRefetching || statsRefetching;
 
   const handleRefresh = () => {
     refetchScans();
-    refetchAssets();
+    refetchStats();
   };
 
   if (!user) {
@@ -53,9 +56,9 @@ export default function HomeScreen() {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
-  const totalAssets = allAssets?.total ?? 0;
-  const servicedCount = servicedAssets?.total ?? 0;
-  const outOfServiceCount = outOfServiceAssets?.total ?? 0;
+  const totalAssets = assetStats?.total ?? 0;
+  const servicedCount = assetStats?.serviced ?? 0;
+  const outOfServiceCount = assetStats?.outOfService ?? 0;
 
   const statsCards = [
     { label: 'Total Assets', value: totalAssets, color: colors.electricBlue, icon: 'cube-outline' as const },

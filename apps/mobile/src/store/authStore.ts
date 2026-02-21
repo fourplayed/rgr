@@ -22,12 +22,15 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  authError: string | null;
   autoLoginAttempted: boolean;
 
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
   clearError: () => void;
+  clearAuthError: () => void;
+  setAuthError: (error: string | null) => void;
   attemptAutoLogin: () => Promise<boolean>;
   clearSavedSession: () => Promise<void>;
   updateUserProfile: (updates: UpdateProfileInput) => Promise<{ success: boolean; error?: string }>;
@@ -38,6 +41,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isAuthenticated: false,
   isLoading: true,
   error: null,
+  authError: null,
   autoLoginAttempted: false,
 
   login: async (email: string, password: string) => {
@@ -178,6 +182,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (error || !data.session || !data.user) {
         // Clear invalid session tokens
         await clearSession();
+        set({ authError: 'Session expired. Please log in again.' });
         return false;
       }
 
@@ -196,6 +201,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       if (!profileResult.success) {
         await clearSession();
+        set({ authError: 'Failed to load profile. Please log in again.' });
         return false;
       }
 
@@ -204,17 +210,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isAuthenticated: true,
         isLoading: false,
         error: null,
+        authError: null,
       });
 
       return true;
     } catch (error) {
-      // If auto-login fails, clear session tokens and continue
+      // If auto-login fails, clear session tokens and set error
       await clearSession();
+      set({ authError: 'Session expired. Please log in again.' });
       return false;
     }
   },
 
   clearError: () => set({ error: null }),
+
+  clearAuthError: () => set({ authError: null }),
+
+  setAuthError: (error: string | null) => set({ authError: error }),
 
   clearSavedSession: async () => {
     await clearSession();

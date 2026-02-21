@@ -63,12 +63,12 @@ export function ScanConfirmSheet({
 
             <View style={styles.assetInfo}>
               <View style={styles.assetHeader}>
-                <Text style={styles.assetNumber}>{asset.assetNumber}</Text>
-                <StatusBadge status={asset.status} size="small" />
+                <Text style={styles.assetNumber}>{asset.assetNumber ?? 'Unknown'}</Text>
+                {asset.status && <StatusBadge status={asset.status} size="small" />}
               </View>
 
               <Text style={styles.description} numberOfLines={2}>
-                {asset.description || 'No description'}
+                {asset.description ?? 'No description'}
               </Text>
 
               <Text style={styles.lastScan}>

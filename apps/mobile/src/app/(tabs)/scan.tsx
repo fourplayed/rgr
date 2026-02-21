@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -102,16 +102,21 @@ export default function ScanScreen() {
     resetScanner();
   };
 
+  // Track if initial permission requests have been made
+  const hasRequestedPermissions = useRef(false);
+
   // Request camera and location permissions on mount
   useEffect(() => {
+    if (hasRequestedPermissions.current) return;
+    hasRequestedPermissions.current = true;
+
     if (!permission?.granted) {
       requestPermission();
     }
     if (!hasLocationPermission) {
       requestLocationPermission();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [permission?.granted, hasLocationPermission, requestPermission, requestLocationPermission]);
 
   if (!permission) {
     return (

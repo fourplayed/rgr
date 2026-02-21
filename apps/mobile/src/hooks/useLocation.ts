@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import * as Location from 'expo-location';
 
 export interface LocationData {
@@ -42,7 +42,7 @@ export function useLocation(): UseLocationResult {
     }
   };
 
-  const requestPermission = async (): Promise<boolean> => {
+  const requestPermission = useCallback(async (): Promise<boolean> => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       const granted = status === 'granted';
@@ -53,9 +53,9 @@ export function useLocation(): UseLocationResult {
       setError(message);
       return false;
     }
-  };
+  }, []);
 
-  const requestLocation = async (): Promise<LocationData | null> => {
+  const requestLocation = useCallback(async (): Promise<LocationData | null> => {
     setIsLoading(true);
     setError(null);
 
@@ -91,7 +91,7 @@ export function useLocation(): UseLocationResult {
       setIsLoading(false);
       return null;
     }
-  };
+  }, [hasPermission, requestPermission]);
 
   return {
     location,

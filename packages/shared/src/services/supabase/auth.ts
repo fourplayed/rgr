@@ -162,6 +162,28 @@ export async function sendPasswordResetEmail(
 }
 
 /**
+ * Verify current password by attempting to sign in
+ * Used for reauthentication before sensitive operations like password change
+ */
+export async function verifyCurrentPassword(
+  email: string,
+  currentPassword: string
+): Promise<ServiceResult<void>> {
+  const supabase = getSupabaseClient();
+
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password: currentPassword,
+  });
+
+  if (error) {
+    return { success: false, data: null, error: 'Current password is incorrect' };
+  }
+
+  return { success: true, data: undefined, error: null };
+}
+
+/**
  * Update user password (after reset or while authenticated)
  */
 export async function updatePassword(

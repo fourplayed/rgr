@@ -8,6 +8,7 @@ import {
   createScanEvent,
   getAssetMaintenance,
   getAssetHazards,
+  getAssetCountsByStatus,
 } from '@rgr/shared';
 import type {
   AssetStatus,
@@ -32,6 +33,7 @@ export const assetKeys = {
   maintenance: (id: string) => [...assetKeys.detail(id), 'maintenance'] as const,
   hazards: (id: string) => [...assetKeys.detail(id), 'hazards'] as const,
   myScans: (userId: string) => ['scans', 'my', userId] as const,
+  countsByStatus: () => [...assetKeys.all, 'countsByStatus'] as const,
 };
 
 /**
@@ -225,5 +227,39 @@ export function useCreateScanEvent() {
       }
       queryClient.invalidateQueries({ queryKey: assetKeys.lists() });
     },
+  });
+}
+
+/**
+ * Fetch asset counts by status using server-side RPC
+ * More efficient than multiple filtered queries
+ */
+export function useAssetCountsByStatus() {
+  return useQuery({
+    queryKey: assetKeys.countsByStatus(),
+    queryFn: async () => {
+      const result = await getAssetCountsByStatus();
+
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+
+      // Convert to a map for easy access
+      const counts: Record<string, number> = {};
+      let total = 0;
+      for (const item of result.data) {
+        counts[item.status] = item.count;
+        total += item.count;
+      }
+
+      return {
+        counts,
+        total,
+        serviced: counts['serviced'] ?? 0,
+        maintenance: counts['maintenance'] ?? 0,
+        outOfService: counts['out_of_service'] ?? 0,
+      };
+    },
+    staleTime: 30000, // Cache for 30 seconds
   });
 }

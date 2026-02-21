@@ -22,9 +22,9 @@ import { OfflineBanner } from '../components/common/OfflineBanner';
 
 // Set default text style
 const defaultTextStyle = { fontFamily: 'Lato_400Regular' };
-// @ts-ignore - Override default text style
+// @ts-expect-error - Override default text style (defaultProps is deprecated but still works)
 Text.defaultProps = Text.defaultProps || {};
-// @ts-ignore
+// @ts-expect-error - Setting default style on Text component
 Text.defaultProps.style = defaultTextStyle;
 
 // Initialize Supabase client

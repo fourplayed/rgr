@@ -16,7 +16,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
 import { isAutoLoginEnabled, setAutoLoginEnabled } from '../../utils/secureStorage';
-import { updatePassword } from '@rgr/shared';
+import { updatePassword, verifyCurrentPassword } from '@rgr/shared';
+import { useAuthStore } from '../../store/authStore';
 
 interface SecurityModalProps {
   visible: boolean;
@@ -64,6 +65,7 @@ function ValidationRow({ label, isValid }: ValidationRowProps) {
 }
 
 export function SecurityModal({ visible, onClose }: SecurityModalProps) {
+  const { user } = useAuthStore();
   const [autoLogin, setAutoLogin] = useState(false);
   const [autoLoginLoading, setAutoLoginLoading] = useState(true);
 
@@ -131,7 +133,20 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
       return;
     }
 
+    if (!user?.email) {
+      setError('Unable to verify user. Please log in again.');
+      return;
+    }
+
     setIsLoading(true);
+
+    // Verify current password before allowing change
+    const verifyResult = await verifyCurrentPassword(user.email, currentPassword);
+    if (!verifyResult.success) {
+      setIsLoading(false);
+      setError('Current password is incorrect');
+      return;
+    }
 
     const result = await updatePassword(newPassword);
 

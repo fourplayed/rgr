@@ -625,6 +625,39 @@ export async function listDepots(): Promise<ServiceResult<Depot[]>> {
   };
 }
 
+// ── Asset Statistics ──
+
+/**
+ * Asset count by status from RPC function
+ */
+export interface AssetCountByStatus {
+  status: string;
+  count: number;
+}
+
+/**
+ * Get asset counts grouped by status using server-side RPC.
+ * More efficient than fetching all assets and counting client-side.
+ */
+export async function getAssetCountsByStatus(): Promise<ServiceResult<AssetCountByStatus[]>> {
+  const supabase = getSupabaseClient();
+
+  const { data, error } = await supabase.rpc('get_asset_counts_by_status');
+
+  if (error) {
+    return { success: false, data: null, error: `Failed to fetch asset counts: ${error.message}` };
+  }
+
+  return {
+    success: true,
+    data: (data || []).map((row: { status: string; count: string | number }) => ({
+      status: row.status,
+      count: typeof row.count === 'string' ? parseInt(row.count, 10) : row.count,
+    })),
+    error: null,
+  };
+}
+
 // ── Helpers ──
 
 /**

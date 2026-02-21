@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import type { Asset } from '@rgr/shared';
 import { formatRelativeTime } from '@rgr/shared';
@@ -11,7 +11,7 @@ interface AssetListItemProps {
   onPress: (asset: Asset) => void;
 }
 
-export function AssetListItem({ asset, onPress }: AssetListItemProps) {
+function AssetListItemComponent({ asset, onPress }: AssetListItemProps) {
   const lastScanText = asset.lastLocationUpdatedAt
     ? `Scanned ${formatRelativeTime(asset.lastLocationUpdatedAt)}`
     : 'Never scanned';
@@ -42,6 +42,11 @@ export function AssetListItem({ asset, onPress }: AssetListItemProps) {
     </TouchableOpacity>
   );
 }
+
+export const AssetListItem = memo(
+  AssetListItemComponent,
+  (prevProps, nextProps) => prevProps.asset.id === nextProps.asset.id
+);
 
 const styles = StyleSheet.create({
   container: {

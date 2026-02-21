@@ -39,11 +39,5 @@
     "node": ">=20.0.0",
     "npm": ">=10.0.0"
   },
-  "dependencies": {
-    "@types/mapbox-gl": "^3.4.1",
-    "html5-qrcode": "^2.3.8",
-    "lucide-react": "^0.564.0",
-    "mapbox-gl": "^3.18.1",
-    "recharts": "^3.7.0"
-  }
+  "dependencies": {}
 }

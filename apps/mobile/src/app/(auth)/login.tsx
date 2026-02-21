@@ -62,8 +62,7 @@ function LoadingDots() {
       anim2.stop();
       anim3.stop();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [dot1, dot2, dot3]);
 
   const dotStyle = (anim: Animated.Value) => ({
     width: 10,
