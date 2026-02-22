@@ -5,10 +5,10 @@ import {
   ScrollView,
   StyleSheet,
   SafeAreaView,
-  ActivityIndicator,
   TouchableOpacity,
   Modal,
 } from 'react-native';
+import { LoadingDots } from '../../../components/common/LoadingDots';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
@@ -47,7 +47,7 @@ export default function AssetDetailScreen() {
       <View style={styles.container}>
       <SafeAreaView style={styles.containerInner}>
         <View style={styles.centerContent}>
-          <ActivityIndicator size="large" color={colors.electricBlue} />
+          <LoadingDots color={colors.electricBlue} size={12} />
         </View>
       </SafeAreaView>
       </View>
@@ -110,7 +110,7 @@ export default function AssetDetailScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Recent Scans</Text>
           {scansLoading ? (
-            <ActivityIndicator color={colors.electricBlue} />
+            <LoadingDots color={colors.electricBlue} size={6} />
           ) : recentScans.length === 0 ? (
             <Text style={styles.emptyText}>No scans recorded</Text>
           ) : (

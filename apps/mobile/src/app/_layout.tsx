@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Text, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Text } from 'react-native';
+import { LoadingDots } from '../components/common/LoadingDots';
 import { StatusBar } from 'expo-status-bar';
 import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -102,7 +103,7 @@ export default function RootLayout() {
   if (!fontsLoaded) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0000CC" />
+        <LoadingDots color="#0000FF" size={12} />
       </View>
     );
   }

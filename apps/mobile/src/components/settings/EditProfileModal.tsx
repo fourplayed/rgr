@@ -6,10 +6,10 @@ import {
   TouchableOpacity,
   TextInput,
   StyleSheet,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { LoadingDots } from '../common/LoadingDots';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
 import { useAuthStore } from '../../store/authStore';
@@ -123,7 +123,7 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
                 disabled={isLoading}
               >
                 {isLoading ? (
-                  <ActivityIndicator size="small" color={colors.textInverse} />
+                  <LoadingDots color={colors.textInverse} size={8} />
                 ) : (
                   <Text style={styles.saveButtonText}>Save</Text>
                 )}

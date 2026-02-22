@@ -5,8 +5,8 @@ import {
   Modal,
   TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
 } from 'react-native';
+import { LoadingDots } from '../common/LoadingDots';
 import type { Asset, Depot } from '@rgr/shared';
 import { formatRelativeTime } from '@rgr/shared';
 import { StatusBadge } from '../common/StatusBadge';
@@ -133,7 +133,7 @@ export function ScanConfirmSheet({
                 accessibilityState={{ disabled: isSubmitting }}
               >
                 {isSubmitting ? (
-                  <ActivityIndicator color={colors.textInverse} />
+                  <LoadingDots color={colors.textInverse} size={8} />
                 ) : (
                   <Text style={styles.confirmButtonText}>Confirm Scan</Text>
                 )}

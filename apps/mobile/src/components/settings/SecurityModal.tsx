@@ -7,11 +7,11 @@ import {
   TextInput,
   Switch,
   StyleSheet,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
 } from 'react-native';
+import { LoadingDots } from '../common/LoadingDots';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
@@ -196,7 +196,7 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
                     </Text>
                   </View>
                   {autoLoginLoading ? (
-                    <ActivityIndicator size="small" color={colors.electricBlue} />
+                    <LoadingDots color={colors.electricBlue} size={8} />
                   ) : (
                     <Switch
                       value={autoLogin}
@@ -352,7 +352,7 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
                             disabled={isLoading}
                           >
                             {isLoading ? (
-                              <ActivityIndicator size="small" color={colors.textInverse} />
+                              <LoadingDots color={colors.textInverse} size={8} />
                             ) : (
                               <Text style={styles.saveButtonText}>Update Password</Text>
                             )}

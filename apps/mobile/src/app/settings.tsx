@@ -5,8 +5,8 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
 } from 'react-native';
+import { LoadingDots } from '../components/common/LoadingDots';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -363,7 +363,7 @@ export default function SettingsScreen() {
                 disabled={isSyncing}
               >
                 {isSyncing ? (
-                  <ActivityIndicator size="small" color={colors.textInverse} />
+                  <LoadingDots color={colors.textInverse} size={8} />
                 ) : (
                   <>
                     <Ionicons name="sync" size={20} color={colors.textInverse} />

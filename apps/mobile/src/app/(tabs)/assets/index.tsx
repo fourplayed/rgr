@@ -6,9 +6,9 @@ import {
   TextInput,
   StyleSheet,
   RefreshControl,
-  ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
+import { LoadingDots } from '../../../components/common/LoadingDots';
 import { useRouter } from 'expo-router';
 import type { AssetStatus, Asset } from '@rgr/shared';
 import { useAssetList } from '../../../hooks/useAssetData';
@@ -93,7 +93,7 @@ export default function AssetListScreen() {
 
       {isLoading && !isRefetching ? (
         <View style={styles.centerContent}>
-          <ActivityIndicator size="large" color={colors.electricBlue} />
+          <LoadingDots color={colors.electricBlue} size={12} />
         </View>
       ) : error ? (
         <View style={styles.centerContent}>
