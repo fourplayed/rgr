@@ -1,13 +1,23 @@
-import React from 'react';
-import { View } from 'react-native';
-import { Tabs } from 'expo-router';
+import React, { useEffect, useRef } from 'react';
+import { View, Animated } from 'react-native';
+import { Tabs, usePathname } from 'expo-router';
+import { BottomTabBar, BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { UserProfileHeader } from '../../components/common/UserProfileHeader';
+import { useNavigationAnimation } from '../../contexts/NavigationAnimationContext';
 
 const TAB_BAR_BACKGROUND = '#0000CC';
 const TAB_ACTIVE_BACKGROUND = '#000099';
 const TAB_ICON_COLOR = '#FFFFFF';
+
+function AnimatedTabBar({ footerTranslateY, ...props }: BottomTabBarProps & { footerTranslateY: Animated.Value }) {
+  return (
+    <Animated.View style={{ transform: [{ translateY: footerTranslateY }] }}>
+      <BottomTabBar {...props} />
+    </Animated.View>
+  );
+}
 
 // Custom tab icon with enhanced visual depth
 const TabIcon = ({
@@ -99,12 +109,45 @@ const TabIcon = ({
 );
 
 export default function TabsLayout() {
+  const pathname = usePathname();
+  const previousPathname = useRef(pathname);
+  const {
+    headerTranslateY,
+    footerTranslateY,
+    hideHeaderAndFooter,
+    showHeaderAndFooter,
+    animateIn,
+    isInitialMount,
+    setInitialMountComplete,
+  } = useNavigationAnimation();
+
+  // Animate in on first mount (after login)
+  useEffect(() => {
+    if (isInitialMount) {
+      animateIn();
+      setInitialMountComplete();
+    }
+  }, [isInitialMount, animateIn, setInitialMountComplete]);
+
+  // Handle tab transitions
+  useEffect(() => {
+    if (previousPathname.current !== pathname) {
+      hideHeaderAndFooter();
+      const timer = setTimeout(() => {
+        showHeaderAndFooter();
+      }, 150);
+      previousPathname.current = pathname;
+      return () => clearTimeout(timer);
+    }
+  }, [pathname, hideHeaderAndFooter, showHeaderAndFooter]);
+
   return (
     <View style={{ flex: 1, backgroundColor: '#E8E8E8' }}>
-      <View style={{ zIndex: 999, overflow: 'visible' }}>
+      <Animated.View style={{ zIndex: 999, overflow: 'visible', transform: [{ translateY: headerTranslateY }] }}>
         <UserProfileHeader />
-      </View>
+      </Animated.View>
       <Tabs
+      tabBar={(props) => <AnimatedTabBar {...props} footerTranslateY={footerTranslateY} />}
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: TAB_ICON_COLOR,

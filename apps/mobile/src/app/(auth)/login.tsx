@@ -10,6 +10,7 @@ import {
   Alert,
   Animated,
   Easing,
+  Keyboard,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -105,6 +106,32 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [showSaveModal, setShowSaveModal] = useState(false);
   const tiltAnim = useRef(new Animated.Value(-1)).current;
+  const keyboardOffset = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (Platform.OS !== 'ios') return;
+
+    const showSub = Keyboard.addListener('keyboardWillShow', () => {
+      Animated.timing(keyboardOffset, {
+        toValue: -40,
+        duration: 250,
+        useNativeDriver: true,
+      }).start();
+    });
+
+    const hideSub = Keyboard.addListener('keyboardWillHide', () => {
+      Animated.timing(keyboardOffset, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }).start();
+    });
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, [keyboardOffset]);
 
   useEffect(() => {
     const animation = Animated.loop(
@@ -184,9 +211,10 @@ export default function LoginScreen() {
     <View style={styles.container}>
     <KeyboardAvoidingView
       style={styles.containerInner}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? undefined : 'height'}
+      enabled={Platform.OS !== 'ios'}
     >
-      <View style={styles.content}>
+      <Animated.View style={[styles.content, { transform: [{ translateY: keyboardOffset }] }]}>
         <View style={styles.header}>
           <View style={styles.loginStripeContainer}>
             <View style={styles.loginAccentLine} />
@@ -272,7 +300,7 @@ export default function LoginScreen() {
             )}
           </TouchableOpacity>
         </View>
-      </View>
+      </Animated.View>
     </KeyboardAvoidingView>
 
     <Text style={styles.versionText}>v{APP_VERSION} ({BUILD_NUMBER})</Text>
