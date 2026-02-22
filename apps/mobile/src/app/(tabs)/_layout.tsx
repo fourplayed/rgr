@@ -54,7 +54,7 @@ const TabIcon = ({
       {/* Internal white shadow - left edge */}
       {focused && (
         <LinearGradient
-          colors={['rgba(255, 255, 255, 0.10)', 'transparent']}
+          colors={['rgba(255, 255, 255, 0.25)', 'transparent']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={{
@@ -70,7 +70,7 @@ const TabIcon = ({
       {/* Internal white shadow - right edge */}
       {focused && (
         <LinearGradient
-          colors={['transparent', 'rgba(255, 255, 255, 0.10)']}
+          colors={['transparent', 'rgba(255, 255, 255, 0.25)']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={{

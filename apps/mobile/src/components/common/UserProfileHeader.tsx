@@ -6,8 +6,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
 
-const HEADER_GRADIENT_COLORS = ['#000099', '#0000CC', '#000099'] as const;
+const HEADER_GRADIENT_COLORS = ['#0000DD', '#000099'] as const;
 const STATUS_BAR_GAP = 20; // Extra gap below status bar
+const ACCENT_LINE_HEIGHT = 6;
+const ACCENT_LINE_GAP = 3;
 
 export function UserProfileHeader() {
   const router = useRouter();
@@ -25,9 +27,9 @@ export function UserProfileHeader() {
 
   return (
     <View style={[styles.wrapper, { marginTop: insets.top + STATUS_BAR_GAP }]}>
+      <View style={styles.accentLine} />
       <LinearGradient
         colors={[...HEADER_GRADIENT_COLORS]}
-        locations={[0, 0.5, 1]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
         style={styles.gradient}
@@ -64,23 +66,24 @@ export function UserProfileHeader() {
   );
 }
 
-const GRADIENT_HEIGHT = 50;
+const GRADIENT_HEIGHT = 45;
 
 const styles = StyleSheet.create({
   wrapper: {
     zIndex: 999,
     overflow: 'visible',
   },
+  accentLine: {
+    width: '100%',
+    height: ACCENT_LINE_HEIGHT,
+    backgroundColor: '#00A4E4',
+    marginBottom: ACCENT_LINE_GAP,
+  },
   gradient: {
     width: '100%',
     height: GRADIENT_HEIGHT,
     overflow: 'visible',
     zIndex: 999,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 9,
-    elevation: 16,
     justifyContent: 'center',
   },
   container: {
@@ -92,10 +95,10 @@ const styles = StyleSheet.create({
     zIndex: 999,
   },
   logo: {
-    height: 80,
-    width: 200,
+    height: 88,
+    width: 221,
     marginLeft: -5,
-    marginTop: 10,
+    marginTop: 6,
     zIndex: 999,
   },
   actions: {

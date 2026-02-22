@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   SafeAreaView,
   Alert,
   TouchableOpacity,
+  ScrollView,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
@@ -19,12 +20,25 @@ import type { Asset, Depot } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
 
+type LogEntry = {
+  timestamp: Date;
+  message: string;
+  type: 'info' | 'success' | 'error' | 'warning';
+};
+
 export default function ScanScreen() {
   const { user } = useAuthStore();
   const [permission, requestPermission] = useCameraPermissions();
   const [scannedAsset, setScannedAsset] = useState<Asset | null>(null);
   const [showConfirmSheet, setShowConfirmSheet] = useState(false);
   const [matchedDepot, setMatchedDepot] = useState<{ depot: Depot; distanceKm: number } | null>(null);
+  const [workflowLog, setWorkflowLog] = useState<LogEntry[]>([]);
+  const logScrollRef = useRef<ScrollView>(null);
+
+  const addLog = useCallback((message: string, type: LogEntry['type'] = 'info') => {
+    setWorkflowLog(prev => [...prev, { timestamp: new Date(), message, type }]);
+    setTimeout(() => logScrollRef.current?.scrollToEnd({ animated: true }), 100);
+  }, []);
 
   const {
     location,
@@ -44,16 +58,22 @@ export default function ScanScreen() {
   const { handleBarCodeScanned, resetScanner } = useQRScanner(
     async (qrData) => {
       try {
+        addLog(`QR code detected: ${qrData.substring(0, 30)}...`, 'info');
+
         // Get location first
+        addLog('Requesting current location...', 'info');
         const currentLocation = await requestLocation();
 
         if (!currentLocation) {
+          addLog('Failed to get location', 'error');
           Alert.alert('Location Required', 'Unable to get current location');
           resetScanner();
           return;
         }
+        addLog(`Location acquired: ${currentLocation.latitude.toFixed(4)}, ${currentLocation.longitude.toFixed(4)}`, 'success');
 
         // Find nearest depot to current location
+        addLog('Searching for nearest depot...', 'info');
         let nearestDepot = null;
         if (depots && depots.length > 0) {
           nearestDepot = findNearestDepot(
@@ -63,15 +83,24 @@ export default function ScanScreen() {
           );
         }
         setMatchedDepot(nearestDepot);
+        if (nearestDepot) {
+          addLog(`Matched depot: ${nearestDepot.depot.name} (${nearestDepot.distanceKm.toFixed(2)} km)`, 'success');
+        } else {
+          addLog('No depot matched', 'warning');
+        }
 
         // Lookup asset from QR code
+        addLog('Looking up asset...', 'info');
         const asset = await lookupAsset(qrData);
+        addLog(`Asset found: ${asset.assetNumber}`, 'success');
 
         // Show confirmation sheet
+        addLog('Showing confirmation sheet', 'info');
         setScannedAsset(asset);
         setShowConfirmSheet(true);
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to scan QR code';
+        addLog(`Error: ${message}`, 'error');
         Alert.alert('Scan Failed', message);
         resetScanner();
       }
@@ -80,11 +109,13 @@ export default function ScanScreen() {
 
   const handleConfirmScan = async () => {
     if (!scannedAsset || !location || !user) {
+      addLog('Missing required information', 'error');
       Alert.alert('Error', 'Missing required information');
       return;
     }
 
     try {
+      addLog('Submitting scan event...', 'info');
       // Create the scan event
       await createScan({
         assetId: scannedAsset.id,
@@ -98,17 +129,21 @@ export default function ScanScreen() {
         speed: location.speed,
         locationDescription: matchedDepot ? matchedDepot.depot.name : null,
       });
+      addLog('Scan event created successfully', 'success');
 
       // Update asset's assigned depot if we matched one
       if (matchedDepot) {
+        addLog(`Updating asset depot to ${matchedDepot.depot.name}...`, 'info');
         await updateAssetMutation({
           id: scannedAsset.id,
           input: { assignedDepotId: matchedDepot.depot.id },
         });
+        addLog('Asset depot updated', 'success');
       }
 
       // Success haptic and animation
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      addLog('Scan completed successfully!', 'success');
 
       // Close sheet and reset
       setShowConfirmSheet(false);
@@ -123,6 +158,7 @@ export default function ScanScreen() {
       Alert.alert('Success', `Asset ${scannedAsset.assetNumber} scanned${depotInfo}`);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to submit scan';
+      addLog(`Submit failed: ${message}`, 'error');
       Alert.alert('Scan Failed', message);
     }
   };
@@ -233,7 +269,43 @@ export default function ScanScreen() {
                 <Text style={styles.permissionButtonText}>Enable Location</Text>
               </TouchableOpacity>
             )}
+
           </View>
+
+          {/* Workflow Log Overlay */}
+          {workflowLog.length > 0 && (
+            <View style={styles.logOverlay}>
+              <View style={styles.logContainer}>
+                <View style={styles.logHeader}>
+                  <Text style={styles.logTitle}>Workflow Log</Text>
+                  <TouchableOpacity onPress={() => setWorkflowLog([])}>
+                    <Text style={styles.logClear}>Clear</Text>
+                  </TouchableOpacity>
+                </View>
+                <ScrollView
+                  ref={logScrollRef}
+                  style={styles.logScroll}
+                  showsVerticalScrollIndicator={true}
+                >
+                  {workflowLog.map((entry, index) => (
+                    <View key={index} style={styles.logEntry}>
+                      <Text style={styles.logTime}>
+                        {entry.timestamp.toLocaleTimeString()}
+                      </Text>
+                      <Text style={[
+                        styles.logMessage,
+                        entry.type === 'success' && styles.logSuccess,
+                        entry.type === 'error' && styles.logError,
+                        entry.type === 'warning' && styles.logWarning,
+                      ]}>
+                        {entry.message}
+                      </Text>
+                    </View>
+                  ))}
+                </ScrollView>
+              </View>
+            </View>
+          )}
         </SafeAreaView>
       </CameraView>
 
@@ -393,5 +465,70 @@ const styles = StyleSheet.create({
     fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
+  },
+
+  // Workflow Log
+  logOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    padding: spacing.lg,
+    paddingTop: 80,
+  },
+  logContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+  },
+  logHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  logTitle: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_700Bold',
+    color: colors.chrome,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  logClear: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_400Regular',
+    color: colors.electricBlue,
+  },
+  logScroll: {
+    flex: 1,
+  },
+  logEntry: {
+    flexDirection: 'row',
+    marginBottom: 2,
+  },
+  logTime: {
+    fontSize: 10,
+    fontFamily: 'Lato_400Regular',
+    color: colors.textSecondary,
+    marginRight: spacing.xs,
+    width: 65,
+  },
+  logMessage: {
+    fontSize: 11,
+    fontFamily: 'Lato_400Regular',
+    color: colors.textInverse,
+    flex: 1,
+  },
+  logSuccess: {
+    color: colors.scanSuccess,
+  },
+  logError: {
+    color: colors.error,
+  },
+  logWarning: {
+    color: colors.warning,
   },
 });

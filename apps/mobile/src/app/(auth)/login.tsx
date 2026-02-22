@@ -12,6 +12,7 @@ import {
   Easing,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useFonts, Lato_700Bold } from '@expo-google-fonts/lato';
 import Constants from 'expo-constants';
 import { useAuthStore } from '../../store/authStore';
@@ -22,6 +23,10 @@ import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing
 
 const APP_VERSION = Constants.expoConfig?.version || '1.0.0';
 const BUILD_NUMBER = Constants.expoConfig?.ios?.buildNumber || Constants.expoConfig?.android?.versionCode || '0';
+
+const LOGIN_STRIPE_HEIGHT = 93;
+const ACCENT_LINE_HEIGHT = 13;
+const ACCENT_LINE_GAP = 6;
 
 // Custom loading spinner component
 function LoadingDots() {
@@ -183,28 +188,39 @@ export default function LoginScreen() {
     >
       <View style={styles.content}>
         <View style={styles.header}>
-          <Animated.View
-            style={[
-              styles.logoShadow,
-              {
-                transform: [
-                  { perspective: 1000 },
-                  {
-                    rotateY: tiltAnim.interpolate({
-                      inputRange: [-1, 1],
-                      outputRange: ['-4deg', '4deg'],
-                    }),
-                  },
-                ],
-              },
-            ]}
-          >
-            <Animated.Image
-              source={require('../../assets/logo.png')}
-              style={styles.logo}
-              resizeMode="contain"
+          <View style={styles.loginStripeContainer}>
+            <View style={styles.loginAccentLine} />
+            <LinearGradient
+              colors={['#0000DD', '#000099']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+              style={styles.loginStripe}
             />
-          </Animated.View>
+          </View>
+          <View style={styles.logoContainer}>
+            <Animated.View
+              style={[
+                styles.logoShadow,
+                {
+                  transform: [
+                    { perspective: 1000 },
+                    {
+                      rotateY: tiltAnim.interpolate({
+                        inputRange: [-1, 1],
+                        outputRange: ['-4deg', '4deg'],
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            >
+              <Animated.Image
+                source={require('../../assets/logo.png')}
+                style={styles.logo}
+                resizeMode="contain"
+              />
+            </Animated.View>
+          </View>
         </View>
 
         <View style={styles.form}>
@@ -282,7 +298,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: spacing.xl,
-    marginTop: -120,
+    marginTop: -160,
     overflow: 'visible',
   },
   header: {
@@ -291,6 +307,37 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.lg,
     overflow: 'visible',
     zIndex: 10,
+    marginTop: -30,
+  },
+  loginStripeContainer: {
+    position: 'absolute',
+    left: -spacing.xl,
+    right: -spacing.xl,
+    top: 34,
+    height: LOGIN_STRIPE_HEIGHT,
+    zIndex: 1,
+  },
+  loginAccentLine: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    height: ACCENT_LINE_HEIGHT,
+    backgroundColor: '#00A4E4',
+    top: -(ACCENT_LINE_HEIGHT + ACCENT_LINE_GAP),
+  },
+  loginStripe: {
+    flex: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 2,
+    elevation: 8,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+    marginTop: -2,
   },
   logoShadow: {
     shadowColor: colors.navy,
@@ -316,6 +363,7 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: spacing.lg,
+    marginTop: -40,
   },
   inputGroup: {
     gap: spacing.sm,

@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    minWidth: '45%',
+    minWidth: '38%',
     borderRadius: borderRadius.md,
     padding: spacing.base,
     alignItems: 'center',

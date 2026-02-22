@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Text, ActivityIndicator } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
@@ -109,6 +110,7 @@ export default function RootLayout() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
+        <StatusBar style="dark" />
         <View style={styles.container}>
           <OfflineBanner />
           <Stack screenOptions={{ headerShown: false }}>
