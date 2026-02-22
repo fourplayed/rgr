@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.base,
     fontWeight: fontWeight.medium,
     color: colors.electricBlue,
-    fontFamily: 'monospace',
+    fontFamily: 'Lato_400Regular',
   },
   accuracy: {
     fontSize: fontSize.xs,

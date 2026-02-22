@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -13,17 +13,90 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
 import { useAsset, useAssetScans, useAssetMaintenance } from '../../../hooks/useAssetData';
+import type { ScanEventWithScanner, MaintenanceRecord } from '@rgr/shared';
 import { AssetInfoCard } from '../../../components/assets/AssetInfoCard';
 import { useAuthStore } from '../../../store/authStore';
 import { formatRelativeTime } from '@rgr/shared';
 import { colors } from '../../../theme/colors';
-import { spacing, fontSize, fontWeight, borderRadius } from '../../../theme/spacing';
+import { spacing, fontSize, borderRadius } from '../../../theme/spacing';
+
+const formatScanTypeLabel = (scanType: string): string => {
+  return scanType
+    .replace(/_/g, ' ')
+    .split(' ')
+    .map(word => {
+      const upper = word.toUpperCase();
+      if (upper === 'QR' || upper === 'NFC' || upper === 'GPS') {
+        return upper;
+      }
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    })
+    .join(' ');
+};
+
+const getActivityIcon = (activityType: string): keyof typeof Ionicons.glyphMap => {
+  switch (activityType) {
+    case 'qr_scan':
+    case 'nfc_scan':
+    case 'gps_auto':
+    case 'manual_entry':
+      return 'qr-code-outline';
+    case 'photo_upload':
+      return 'camera-outline';
+    case 'maintenance':
+      return 'construct-outline';
+    default:
+      return 'scan-outline';
+  }
+};
+
+const getActivityColor = (activityType: string): string => {
+  switch (activityType) {
+    case 'qr_scan':
+    case 'nfc_scan':
+    case 'gps_auto':
+    case 'manual_entry':
+      return colors.electricBlue;
+    case 'photo_upload':
+      return '#34C759';
+    case 'maintenance':
+      return '#FF9500';
+    default:
+      return colors.electricBlue;
+  }
+};
+
+const getDepotCodeFromLocation = (locationDescription: string): keyof typeof colors.depot | null => {
+  const location = locationDescription.toLowerCase();
+  if (location.includes('karratha')) return 'kar';
+  if (location.includes('perth')) return 'per';
+  if (location.includes('wubin')) return 'wub';
+  if (location.includes('newman')) return 'new';
+  if (location.includes('hedland')) return 'hed';
+  if (location.includes('carnarvon')) return 'car';
+  return null;
+};
+
+const getLocationBadgeColors = (locationDescription: string): { bg: string; text: string } => {
+  const depotCode = getDepotCodeFromLocation(locationDescription);
+  if (!depotCode) {
+    return { bg: colors.chrome, text: colors.text };
+  }
+  const bg = colors.depot[depotCode];
+  const text = depotCode === 'kar' ? colors.text : colors.textInverse;
+  return { bg, text };
+};
+
+type ActivityItem =
+  | { type: 'scan'; data: ScanEventWithScanner; timestamp: Date }
+  | { type: 'maintenance'; data: MaintenanceRecord; timestamp: Date };
 
 export default function AssetDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuthStore();
   const [showQRModal, setShowQRModal] = useState(false);
+  const [activityExpanded, setActivityExpanded] = useState(true);
 
   const isSuperuser = user?.role === 'superuser';
 
@@ -41,6 +114,30 @@ export default function AssetDetailScreen() {
   const {
     data: maintenance = [],
   } = useAssetMaintenance(id);
+
+  // Merge scans and maintenance into a unified activity feed
+  const recentActivity: ActivityItem[] = useMemo(() => {
+    const scanItems: ActivityItem[] = scans.map(scan => ({
+      type: 'scan' as const,
+      data: scan,
+      timestamp: new Date(scan.createdAt),
+    }));
+
+    const maintenanceItems: ActivityItem[] = maintenance.map(m => ({
+      type: 'maintenance' as const,
+      data: m,
+      timestamp: new Date(m.updatedAt || m.createdAt),
+    }));
+
+    return [...scanItems, ...maintenanceItems]
+      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+      .slice(0, 10);
+  }, [scans, maintenance]);
+
+  // Compute next service date from scheduled maintenance
+  const nextService = maintenance
+    .filter(m => m.status === 'scheduled' && m.scheduledDate)
+    .sort((a, b) => new Date(a.scheduledDate!).getTime() - new Date(b.scheduledDate!).getTime())[0];
 
   if (assetLoading) {
     return (
@@ -72,95 +169,89 @@ export default function AssetDetailScreen() {
     );
   }
 
-  const recentScans = scans.slice(0, 5);
-  const activeMaintenance = maintenance.filter(
-    (m) => m.status === 'scheduled' || m.status === 'in_progress'
-  );
-
   return (
     <View style={styles.container}>
     <SafeAreaView style={styles.containerInner}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Text style={styles.backText}>← Back</Text>
-        </TouchableOpacity>
-        <View style={styles.headerButtons}>
-          {isSuperuser && asset.qrCodeData && (
-            <TouchableOpacity
-              style={styles.qrButton}
-              onPress={() => setShowQRModal(true)}
-            >
-              <Ionicons name="qr-code-outline" size={18} color={colors.textInverse} />
-              <Text style={styles.qrButtonText}>View QR</Text>
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity
-            style={styles.scanButton}
-            onPress={() => router.push('/(tabs)/scan')}
-          >
-            <Text style={styles.scanButtonText}>Scan This Asset</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
       <ScrollView contentContainerStyle={styles.content}>
-        <AssetInfoCard asset={asset} />
+        <AssetInfoCard
+          asset={asset}
+          nextServiceDate={nextService?.scheduledDate}
+          onShowQR={isSuperuser && asset.qrCodeData ? () => setShowQRModal(true) : undefined}
+        />
 
-        {/* Recent Scans */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recent Scans</Text>
-          {scansLoading ? (
+        {/* Recent Activity */}
+        <TouchableOpacity
+          style={styles.activitySectionHeader}
+          onPress={() => setActivityExpanded(!activityExpanded)}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.activitySectionTitle}>Recent Activity</Text>
+          <Ionicons
+            name={activityExpanded ? 'chevron-up' : 'chevron-down'}
+            size={20}
+            color={colors.textSecondary}
+          />
+        </TouchableOpacity>
+
+        {activityExpanded && (
+          scansLoading ? (
             <LoadingDots color={colors.electricBlue} size={6} />
-          ) : recentScans.length === 0 ? (
-            <Text style={styles.emptyText}>No scans recorded</Text>
+          ) : recentActivity.length === 0 ? (
+            <Text style={styles.emptyText}>No activity recorded</Text>
           ) : (
-            <View style={styles.scanList}>
-              {recentScans.map((scan) => (
-                <View key={scan.id} style={styles.scanItem}>
-                  <View>
-                    <Text style={styles.scanType}>
-                      {scan.scanType.replace(/_/g, ' ')}
-                    </Text>
-                    <Text style={styles.scanTime}>
-                      {formatRelativeTime(scan.createdAt)}
-                    </Text>
-                  </View>
-                  {scan.latitude && scan.longitude && (
-                    <Text style={styles.scanLocation}>
-                      {scan.latitude.toFixed(4)}, {scan.longitude.toFixed(4)}
-                    </Text>
-                  )}
-                </View>
-              ))}
-            </View>
-          )}
-        </View>
+            <View style={styles.activityList}>
+            {recentActivity.map((item) => {
+              const activityColor = getActivityColor(item.type === 'scan' ? item.data.scanType : 'maintenance');
 
-        {/* Active Maintenance */}
-        {activeMaintenance.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Active Maintenance</Text>
-            <View style={styles.maintenanceList}>
-              {activeMaintenance.map((record) => (
-                <View key={record.id} style={styles.maintenanceItem}>
-                  <Text style={styles.maintenanceTitle}>
-                    {record.maintenanceType?.replace(/_/g, ' ') ?? 'Maintenance'}
-                  </Text>
-                  <Text style={styles.maintenanceDescription}>
-                    {record.description}
-                  </Text>
-                  <View style={styles.maintenanceFooter}>
-                    <Text style={styles.maintenancePriority}>
-                      {record.priority} priority
-                    </Text>
-                    <Text style={styles.maintenanceStatus}>
-                      {record.status.replace(/_/g, ' ')}
-                    </Text>
+              return (
+              <View key={item.data.id} style={[styles.activityCard, { borderLeftWidth: 4, borderLeftColor: activityColor }]}>
+                <View style={styles.activityCardContent}>
+                  <View style={styles.activityIconContainer}>
+                    <Ionicons
+                      name={getActivityIcon(item.type === 'scan' ? item.data.scanType : 'maintenance')}
+                      size={31}
+                      color={getActivityColor(item.type === 'scan' ? item.data.scanType : 'maintenance')}
+                    />
+                  </View>
+                  <View style={styles.activityDetails}>
+                    <View style={styles.activityHeader}>
+                      <Text style={styles.activityTitle}>
+                        {item.type === 'scan'
+                          ? formatScanTypeLabel(item.data.scanType)
+                          : item.data.maintenanceType?.replace(/_/g, ' ') || 'Maintenance'}
+                      </Text>
+                      {item.type === 'scan' && item.data.locationDescription && (() => {
+                        const depotCode = getDepotCodeFromLocation(item.data.locationDescription);
+                        if (!depotCode) return null;
+                        const badgeColors = getLocationBadgeColors(item.data.locationDescription);
+                        const depotNames: Record<string, string> = {
+                          kar: 'Karratha', per: 'Perth', wub: 'Wubin',
+                          new: 'Newman', hed: 'Hedland', car: 'Carnarvon',
+                        };
+                        return (
+                          <View style={[styles.locationBadge, { backgroundColor: badgeColors.bg }]}>
+                            <Text style={[styles.locationText, { color: badgeColors.text }]}>{depotNames[depotCode]}</Text>
+                          </View>
+                        );
+                      })()}
+                    </View>
+                    <View style={styles.activityFooter}>
+                      <Text style={styles.activityType}>
+                        {item.type === 'scan'
+                          ? item.data.scannerName || 'Unknown'
+                          : item.data.description || item.data.status.replace(/_/g, ' ')}
+                      </Text>
+                      <Text style={styles.activityTime}>
+                        {formatRelativeTime(item.type === 'scan' ? item.data.createdAt : item.data.updatedAt || item.data.createdAt)}
+                      </Text>
+                    </View>
                   </View>
                 </View>
-              ))}
+              </View>
+              );
+            })}
             </View>
-          </View>
+          )
         )}
       </ScrollView>
 
@@ -205,61 +296,14 @@ export default function AssetDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E8E8E8',
+    backgroundColor: colors.chrome,
   },
   containerInner: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.base,
-    paddingVertical: spacing.md,
-  },
-  backButton: {
-    paddingVertical: spacing.sm,
-  },
-  backText: {
-    fontSize: fontSize.base,
-    fontWeight: fontWeight.semibold,
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-  },
-  headerButtons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  qrButton: {
-    backgroundColor: colors.electricBlue,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  qrButtonText: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.bold,
-    fontFamily: 'Lato_700Bold',
-    color: colors.textInverse,
-  },
-  scanButton: {
-    backgroundColor: colors.chrome,
-    paddingHorizontal: spacing.base,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
-  },
-  scanButtonText: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.bold,
-    fontFamily: 'Lato_700Bold',
-    color: colors.backgroundDark,
-  },
   content: {
     padding: spacing.base,
+    paddingTop: spacing.base + 20,
     gap: spacing.lg,
   },
   centerContent: {
@@ -272,6 +316,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Lato_400Regular',
     color: colors.error,
     marginBottom: spacing.md,
+    textTransform: 'uppercase',
   },
   retryButton: {
     paddingHorizontal: spacing.lg,
@@ -281,98 +326,93 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     fontSize: fontSize.base,
-    fontWeight: fontWeight.semibold,
     fontFamily: 'Lato_700Bold',
     color: colors.textInverse,
-  },
-  section: {
-    backgroundColor: colors.background,
-    borderRadius: borderRadius.lg,
-    padding: spacing.base,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  sectionTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.bold,
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    marginBottom: spacing.md,
+    textTransform: 'uppercase',
   },
   emptyText: {
     fontSize: fontSize.sm,
     fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
     fontStyle: 'italic',
+    textTransform: 'uppercase',
   },
-  scanList: {
-    gap: spacing.md,
-  },
-  scanItem: {
+  activitySectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
-  scanType: {
+  activitySectionTitle: {
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.semibold,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
-    textTransform: 'capitalize',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginTop: 5,
   },
-  scanTime: {
-    fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
-    color: colors.textSecondary,
+  activityList: {
+    gap: spacing.sm,
+    marginTop: -5,
   },
-  scanLocation: {
-    fontSize: fontSize.xs,
-    color: colors.textSecondary,
-    fontFamily: 'monospace',
-  },
-  maintenanceList: {
-    gap: spacing.md,
-  },
-  maintenanceItem: {
-    backgroundColor: colors.surface,
-    padding: spacing.md,
+  activityCard: {
+    backgroundColor: colors.background,
+    padding: spacing.base,
     borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  maintenanceTitle: {
-    fontSize: fontSize.base,
-    fontWeight: fontWeight.semibold,
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    textTransform: 'capitalize',
+  activityCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  activityIconContainer: {
+    width: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  activityDetails: {
+    flex: 1,
+  },
+  activityHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     marginBottom: spacing.xs,
   },
-  maintenanceDescription: {
-    fontSize: fontSize.sm,
+  activityTitle: {
+    fontSize: fontSize.base,
+    fontFamily: 'Lato_700Bold',
+    color: colors.electricBlue,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  activityTime: {
+    fontSize: fontSize.xs,
     fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
-    marginBottom: spacing.sm,
+    textTransform: 'uppercase',
   },
-  maintenanceFooter: {
+  locationBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: borderRadius.sm,
+  },
+  locationText: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_700Bold',
+    textTransform: 'uppercase',
+  },
+  activityFooter: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  maintenancePriority: {
+  activityType: {
     fontSize: fontSize.xs,
-    fontWeight: fontWeight.medium,
     fontFamily: 'Lato_400Regular',
-    color: colors.warning,
-    textTransform: 'capitalize',
-  },
-  maintenanceStatus: {
-    fontSize: fontSize.xs,
-    fontWeight: fontWeight.medium,
-    fontFamily: 'Lato_400Regular',
-    color: colors.info,
-    textTransform: 'capitalize',
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
   },
 
   // QR Code Modal
@@ -399,19 +439,19 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: fontSize.lg,
-    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
+    textTransform: 'uppercase',
   },
   modalCloseButton: {
     padding: spacing.xs,
   },
   modalAssetNumber: {
     fontSize: fontSize.xl,
-    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.electricBlue,
     marginBottom: spacing.lg,
+    textTransform: 'uppercase',
   },
   qrContainer: {
     padding: spacing.lg,
@@ -426,5 +466,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
     textAlign: 'center',
+    textTransform: 'uppercase',
   },
 });

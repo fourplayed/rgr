@@ -1,62 +1,77 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import type { Asset } from '@rgr/shared';
-import { formatDate } from '@rgr/shared';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import type { AssetWithRelations } from '@rgr/shared';
+import { formatDate, AssetStatusColors } from '@rgr/shared';
 import { StatusBadge } from '../common/StatusBadge';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 
 interface AssetInfoCardProps {
-  asset: Asset;
+  asset: AssetWithRelations;
+  nextServiceDate?: string | null | undefined;
+  onShowQR?: (() => void) | undefined;
 }
 
-export function AssetInfoCard({ asset }: AssetInfoCardProps) {
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.assetNumber}>{asset.assetNumber}</Text>
-        <StatusBadge status={asset.status} />
-      </View>
+export function AssetInfoCard({ asset, nextServiceDate, onShowQR }: AssetInfoCardProps) {
+  const depotCode = asset.depotCode?.toLowerCase() as keyof typeof colors.depot | undefined;
+  const depotColor = depotCode ? colors.depot[depotCode] : colors.chrome;
+  // Karratha (kar) uses fluro yellow which needs dark text
+  const depotTextColor = depotCode === 'kar' ? colors.text : colors.textInverse;
+  const statusColor = AssetStatusColors[asset.status];
 
-      <Text style={styles.description}>
-        {asset.description || 'No description'}
-      </Text>
+  return (
+    <View style={[styles.container, { borderLeftWidth: 4, borderLeftColor: statusColor }]}>
+      <View style={styles.header}>
+        <View style={styles.assetColumn}>
+          <View style={styles.assetRow}>
+            <Ionicons name="cube-outline" size={28} color={colors.electricBlue} />
+            <Text style={styles.assetNumber}>{asset.assetNumber}</Text>
+          </View>
+          {asset.lastLatitude && asset.lastLongitude && (
+            <Text style={styles.coordsText}>
+              {asset.lastLatitude.toFixed(4)}, {asset.lastLongitude.toFixed(4)}
+            </Text>
+          )}
+        </View>
+        <View style={styles.headerRight}>
+          {onShowQR && (
+            <TouchableOpacity style={styles.qrIconButton} onPress={onShowQR}>
+              <Ionicons name="qr-code-outline" size={20} color={colors.electricBlue} />
+            </TouchableOpacity>
+          )}
+          <View style={styles.badgeStack}>
+            <StatusBadge status={asset.status} />
+            {asset.depotName && (
+              <View style={[styles.depotBadge, { backgroundColor: depotColor }]}>
+                <Text style={[styles.depotText, { color: depotTextColor }]}>{asset.depotName}</Text>
+              </View>
+            )}
+          </View>
+        </View>
+      </View>
 
       <View style={styles.infoGrid}>
         <InfoRow label="Category" value={asset.category.replace(/_/g, ' ')} />
-        <InfoRow
-          label="Depot"
-          value={asset.assignedDepotId || 'Not assigned'}
-        />
-        <InfoRow
-          label="VIN"
-          value={asset.vin || 'N/A'}
-        />
-        <InfoRow
-          label="Registration"
-          value={asset.registrationNumber || 'N/A'}
-        />
+        {asset.vin && (
+          <InfoRow label="VIN" value={asset.vin} />
+        )}
+        {asset.registrationNumber && (
+          <InfoRow label="Registration" value={asset.registrationNumber} />
+        )}
         {asset.lastLocationUpdatedAt && (
           <InfoRow
             label="Last Scanned"
             value={formatDate(asset.lastLocationUpdatedAt)}
           />
         )}
+        {asset.lastScannerName && (
+          <InfoRow label="Last Scanned By" value={asset.lastScannerName} />
+        )}
+        {nextServiceDate && (
+          <InfoRow label="Next Service" value={formatDate(nextServiceDate)} />
+        )}
       </View>
-
-      {(asset.lastLatitude && asset.lastLongitude) && (
-        <View style={styles.locationSection}>
-          <Text style={styles.sectionTitle}>Last Known Location</Text>
-          <Text style={styles.coordinates}>
-            {asset.lastLatitude.toFixed(6)}, {asset.lastLongitude.toFixed(6)}
-          </Text>
-          {asset.lastLocationAccuracy && (
-            <Text style={styles.accuracy}>
-              Accuracy: ±{Math.round(asset.lastLocationAccuracy)}m
-            </Text>
-          )}
-        </View>
-      )}
     </View>
   );
 }
@@ -84,17 +99,41 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.md,
   },
+  assetColumn: {
+    gap: spacing.xs,
+  },
+  assetRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  badgeStack: {
+    alignItems: 'flex-end',
+    gap: spacing.xs,
+  },
+  qrIconButton: {
+    padding: spacing.sm,
+  },
   assetNumber: {
     fontSize: fontSize['3xl'],
-    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
+    textTransform: 'uppercase',
   },
-  description: {
-    fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
-    color: colors.textSecondary,
-    marginBottom: spacing.lg,
+  depotBadge: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.base,
+  },
+  depotText: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_700Bold',
+    textTransform: 'uppercase',
   },
   infoGrid: {
     gap: spacing.md,
@@ -109,40 +148,20 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium,
     fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
+    textTransform: 'uppercase',
   },
   infoValue: {
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.semibold,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
-    textTransform: 'capitalize',
+    textTransform: 'uppercase',
   },
-  locationSection: {
-    marginTop: spacing.lg,
-    paddingTop: spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  sectionTitle: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.semibold,
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    marginBottom: spacing.xs,
-  },
-  coordinates: {
-    fontSize: fontSize.base,
-    fontWeight: fontWeight.medium,
-    color: colors.electricBlue,
-    fontFamily: 'monospace',
-  },
-  accuracy: {
+  coordsText: {
     fontSize: fontSize.xs,
     fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
-    marginTop: spacing.xs,
+    textTransform: 'uppercase',
   },
 });
