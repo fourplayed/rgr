@@ -50,12 +50,14 @@ export const colors = {
     superuser: '#A855F7',  // Purple
   },
 
-  // Depot colors
+  // Depot colors (keyed by depot code lowercase)
   depot: {
-    perth: '#32CD32',      // Lime green
-    newman: '#0066FF',     // Blue
-    hedland: '#FF1493',    // Neon pink
-    karratha: '#DFFF00',   // Fluro yellow
+    per: '#32CD32',        // Perth - Lime green
+    wub: '#FF8C00',        // Wubin - Orange
+    new: '#0066FF',        // Newman - Blue
+    hed: '#FF1493',        // Hedland - Neon pink
+    kar: '#DFFF00',        // Karratha - Fluro yellow
+    car: '#00CED1',        // Carnarvon - Cyan
   },
 
   // UI elements

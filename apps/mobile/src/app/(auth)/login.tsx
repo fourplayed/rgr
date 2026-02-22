@@ -25,7 +25,7 @@ import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing
 import { LoadingDots } from '../../components/common/LoadingDots';
 
 const APP_VERSION = Constants.expoConfig?.version || '1.0.0';
-const BUILD_NUMBER = Constants.nativeBuildVersion || Constants.expoConfig?.ios?.buildNumber || Constants.expoConfig?.android?.versionCode || '0';
+const BUILD_NUMBER = Constants['nativeBuildVersion'] || Constants.expoConfig?.ios?.buildNumber || Constants.expoConfig?.android?.versionCode || '0';
 
 const LOGIN_STRIPE_HEIGHT = 84;
 const ACCENT_LINE_HEIGHT = 13;

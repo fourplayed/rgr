@@ -41,6 +41,10 @@ export const fontSize = {
   '2xl': 24,
   '3xl': 30,
   '4xl': 36,
+  // Dashboard-specific
+  userName: 28,
+  statValue: 35,
+  statLabel: 14,
 } as const;
 
 /**

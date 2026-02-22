@@ -21,14 +21,19 @@ export function useGeolocation() {
     return new Promise((resolve) => {
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          // Sanitize GPS values: browsers may return negative values when unavailable
+          // Convert negative values to null to avoid Zod validation failures (min: 0)
+          const sanitizeNonNegative = (val: number | null): number | null =>
+            val !== null && val >= 0 ? val : null;
+
           const loc: LocationData = {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy,
+            accuracy: sanitizeNonNegative(position.coords.accuracy),
             altitude: position.coords.altitude,
             altitudeAccuracy: position.coords.altitudeAccuracy,
-            heading: position.coords.heading,
-            speed: position.coords.speed,
+            heading: sanitizeNonNegative(position.coords.heading),
+            speed: sanitizeNonNegative(position.coords.speed),
             timestamp: position.timestamp,
           };
           setLocation(loc);

@@ -2,7 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { AssetStatusColors, AssetStatusLabels } from '@rgr/shared';
 import type { AssetStatus } from '@rgr/shared';
-import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
+import { colors } from '../../theme/colors';
+import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 
 interface StatusBadgeProps {
   status: AssetStatus;
@@ -48,9 +49,8 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   label: {
-    color: '#FFFFFF',
+    color: colors.textInverse,
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.semibold,
     fontFamily: 'Lato_700Bold',
     textTransform: 'uppercase',
   },

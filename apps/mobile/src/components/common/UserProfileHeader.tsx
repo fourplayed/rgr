@@ -3,7 +3,7 @@ import { View, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useSegments } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
 
 const HEADER_GRADIENT_COLORS = ['#0000DD', '#000099'] as const;
@@ -13,8 +13,16 @@ const ACCENT_LINE_GAP = 3;
 
 export function UserProfileHeader() {
   const router = useRouter();
+  const segments = useSegments();
   const { logout } = useAuthStore();
   const insets = useSafeAreaInsets();
+
+  // Show back button on detail pages (e.g., assets/[id])
+  const isDetailPage = segments.length > 2 && segments[1] === 'assets' && segments[2] !== 'index';
+
+  const handleBack = () => {
+    router.back();
+  };
 
   const handleSettings = () => {
     router.push('/settings');
@@ -41,6 +49,16 @@ export function UserProfileHeader() {
             resizeMode="contain"
           />
           <View style={styles.actions}>
+            {isDetailPage && (
+              <TouchableOpacity
+                onPress={handleBack}
+                style={styles.actionButton}
+                accessibilityRole="button"
+                accessibilityLabel="Go back"
+              >
+                <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+            )}
             <TouchableOpacity
               onPress={handleSettings}
               style={styles.actionButton}

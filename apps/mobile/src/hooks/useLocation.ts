@@ -95,13 +95,18 @@ export function useLocation(): UseLocationResult {
         ),
       ]);
 
+      // Sanitize GPS values: expo-location returns -1 for heading/speed when unavailable
+      // Convert negative values to null to avoid Zod validation failures (min: 0)
+      const sanitizeNonNegative = (val: number | null): number | null =>
+        val !== null && val >= 0 ? val : null;
+
       const locationData: LocationData = {
         latitude: result.coords.latitude,
         longitude: result.coords.longitude,
-        accuracy: result.coords.accuracy,
+        accuracy: sanitizeNonNegative(result.coords.accuracy),
         altitude: result.coords.altitude,
-        heading: result.coords.heading,
-        speed: result.coords.speed,
+        heading: sanitizeNonNegative(result.coords.heading),
+        speed: sanitizeNonNegative(result.coords.speed),
       };
 
       if (isMountedRef.current) {

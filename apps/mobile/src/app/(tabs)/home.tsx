@@ -15,7 +15,7 @@ import { useAuthStore } from '../../store/authStore';
 import { useLocationStore } from '../../store/locationStore';
 import { formatRelativeTime, UserRoleLabels } from '@rgr/shared';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 import { LoadingDots } from '../../components/common/LoadingDots';
 
 // Map scan types to icons
@@ -63,6 +63,32 @@ const formatScanTypeLabel = (scanType: string): string => {
       return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
     })
     .join(' ');
+};
+
+const getDepotCodeFromLocation = (locationDescription: string): keyof typeof colors.depot | null => {
+  const location = locationDescription.toLowerCase();
+  if (location.includes('karratha')) return 'kar';
+  if (location.includes('perth')) return 'per';
+  if (location.includes('wubin')) return 'wub';
+  if (location.includes('newman')) return 'new';
+  if (location.includes('hedland')) return 'hed';
+  if (location.includes('carnarvon')) return 'car';
+  return null;
+};
+
+const getLocationBadgeColors = (locationDescription: string): { bg: string; text: string } => {
+  const depotCode = getDepotCodeFromLocation(locationDescription);
+  if (!depotCode) {
+    return { bg: colors.chrome, text: colors.text };
+  }
+  const bg = colors.depot[depotCode];
+  const text = depotCode === 'kar' ? colors.text : colors.textInverse;
+  return { bg, text };
+};
+
+const depotNames: Record<string, string> = {
+  kar: 'Karratha', per: 'Perth', wub: 'Wubin',
+  new: 'Newman', hed: 'Hedland', car: 'Carnarvon',
 };
 
 export default function HomeScreen() {
@@ -144,20 +170,22 @@ export default function HomeScreen() {
                     <Text style={styles.userName}>{user.fullName}</Text>
                   </View>
                   <View style={styles.badgesContainer}>
-                    <View style={[styles.roleBadge, { backgroundColor: colors.userRole[user.role as keyof typeof colors.userRole] || colors.electricBlue }]}>
-                      <Text style={styles.roleText}>{roleLabel}</Text>
+                    <View style={[styles.badgeBase, styles.roleBadge, { backgroundColor: colors.userRole[user.role as keyof typeof colors.userRole] || colors.electricBlue }]}>
+                      <Text style={[styles.badgeText, { color: colors.textInverse }]}>{roleLabel}</Text>
                     </View>
                     {isResolvingDepot ? (
-                      <View style={[styles.depotBadge, { backgroundColor: colors.chrome }]}>
+                      <View style={[styles.badgeBase, styles.depotBadge, { backgroundColor: colors.chrome }]}>
                         <LoadingDots color={colors.textInverse} size={5} />
                       </View>
                     ) : resolvedDepot ? (
-                      <View style={[styles.depotBadge, { backgroundColor: colors.depot[resolvedDepot.depot.name.toLowerCase() as keyof typeof colors.depot] || colors.chrome }]}>
-                        <Text style={[styles.depotText, { color: resolvedDepot.depot.name.toLowerCase() === 'karratha' ? colors.text : colors.textInverse }]}>{resolvedDepot.depot.name}</Text>
+                      <View style={[styles.badgeBase, styles.depotBadge, { backgroundColor: colors.depot[resolvedDepot.depot.code?.toLowerCase() as keyof typeof colors.depot] || colors.chrome }]}>
+                        <Text style={[styles.badgeText, { color: resolvedDepot.depot.code?.toLowerCase() === 'kar' ? colors.text : colors.textInverse }]}>
+                          {resolvedDepot.depot.name}
+                        </Text>
                       </View>
                     ) : (
-                      <View style={[styles.depotBadge, { backgroundColor: colors.textSecondary }]}>
-                        <Text style={[styles.depotText, { color: colors.textInverse }]}>No depot</Text>
+                      <View style={[styles.badgeBase, styles.depotBadge, { backgroundColor: colors.textSecondary }]}>
+                        <Text style={[styles.badgeText, { color: colors.textInverse }]}>No depot</Text>
                       </View>
                     )}
                   </View>
@@ -187,42 +215,45 @@ export default function HomeScreen() {
               </View>
             </>
           }
-          renderItem={({ item }) => (
+          renderItem={({ item }) => {
+            const activityColor = getScanTypeColor(item.scanType);
+            const depotCode = item.locationDescription ? getDepotCodeFromLocation(item.locationDescription) : null;
+            const badgeColors = item.locationDescription ? getLocationBadgeColors(item.locationDescription) : null;
+
+            return (
             <TouchableOpacity
-              style={styles.scanCard}
+              style={[styles.scanCard, { borderLeftWidth: 4, borderLeftColor: activityColor }]}
               onPress={() => router.push(`/(tabs)/assets/${item.assetId}`)}
               activeOpacity={0.7}
             >
               <View style={styles.scanCardContent}>
                 <View style={styles.scanIconContainer}>
-                  <Ionicons name={getScanTypeIcon(item.scanType)} size={31} color={getScanTypeColor(item.scanType)} />
+                  <Ionicons name={getScanTypeIcon(item.scanType)} size={31} color={activityColor} />
                 </View>
                 <View style={styles.scanDetails}>
                   <View style={styles.scanHeader}>
                     <Text style={styles.assetNumber}>
                       {item.assetNumber || 'Unknown Asset'}
                     </Text>
-                    <View style={styles.scanHeaderRight}>
-                      {item.locationDescription && (
-                        <View style={styles.locationBadge}>
-                          <Ionicons name="location-outline" size={12} color={colors.textSecondary} />
-                          <Text style={styles.locationText}>{item.locationDescription}</Text>
-                        </View>
-                      )}
-                      <Text style={styles.scanTime}>
-                        {formatRelativeTime(item.createdAt)}
-                      </Text>
-                    </View>
+                    {depotCode && badgeColors && (
+                      <View style={[styles.depotLocationBadge, { backgroundColor: badgeColors.bg }]}>
+                        <Text style={[styles.depotLocationText, { color: badgeColors.text }]}>{depotNames[depotCode]}</Text>
+                      </View>
+                    )}
                   </View>
                   <View style={styles.scanFooter}>
-                    <Text style={styles.scanType}>
+                    <Text style={styles.scanTypeLabel}>
                       {formatScanTypeLabel(item.scanType)}
+                    </Text>
+                    <Text style={styles.scanTime}>
+                      {formatRelativeTime(item.createdAt)}
                     </Text>
                   </View>
                 </View>
               </View>
             </TouchableOpacity>
-          )}
+            );
+          }}
           contentContainerStyle={styles.listContent}
           refreshControl={
             <RefreshControl
@@ -248,7 +279,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E8E8E8',
+    backgroundColor: colors.chrome,
   },
   containerInner: {
     flex: 1,
@@ -264,7 +295,7 @@ const styles = StyleSheet.create({
 
   // Profile Section
   profileSection: {
-    marginTop: 20,
+    marginTop: spacing.lg,
     marginBottom: spacing.lg,
   },
   profileHeader: {
@@ -278,9 +309,8 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   userName: {
-    fontSize: fontSize['3xl'] - 2,
+    fontSize: fontSize.userName,
     fontFamily: 'Lato_700Bold',
-    fontWeight: fontWeight.bold,
     color: colors.text,
     marginBottom: spacing.sm,
   },
@@ -288,46 +318,34 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     gap: spacing.xs,
   },
-  roleBadge: {
+  badgeBase: {
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.sm,
   },
-  roleText: {
+  badgeText: {
     fontSize: fontSize.xs,
     fontFamily: 'Lato_700Bold',
-    fontWeight: fontWeight.semibold,
-    color: colors.textInverse,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
+  roleBadge: {},
   depotBadge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm,
     minWidth: 60,
     minHeight: 24,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  depotText: {
-    fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
-    fontWeight: fontWeight.semibold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
 
   // Stats Section
   statsSection: {
-    marginTop: 10,
+    marginTop: spacing.sm,
     marginBottom: spacing.base,
   },
   sectionTitle: {
     fontSize: fontSize.sm,
     fontFamily: 'Lato_700Bold',
-    fontWeight: fontWeight.bold,
-    color: '#000000',
+    color: colors.text,
     marginBottom: spacing.md,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -342,7 +360,7 @@ const styles = StyleSheet.create({
     minWidth: '38%',
     borderRadius: borderRadius.md,
     paddingHorizontal: spacing.base,
-    paddingVertical: spacing.base * 1.2,
+    paddingVertical: spacing.lg,
     alignItems: 'center',
   },
   statRow: {
@@ -354,16 +372,15 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
   },
   statValue: {
-    fontSize: fontSize['3xl'] * 1.15,
+    fontSize: fontSize.statValue,
     fontFamily: 'Lato_700Bold',
-    fontWeight: fontWeight.bold,
     marginBottom: spacing.xs,
-    color: '#FFFFFF',
+    color: colors.textInverse,
   },
   statLabel: {
-    fontSize: fontSize.xs * 1.15,
+    fontSize: fontSize.statLabel,
     fontFamily: 'Lato_400Regular',
-    color: '#FFFFFF',
+    color: colors.textInverse,
     textAlign: 'center',
   },
 
@@ -372,7 +389,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'baseline',
-    marginTop: 30,
+    marginTop: spacing['2xl'] - 5,
     marginBottom: spacing.xs,
   },
   activitySubtitle: {
@@ -409,46 +426,37 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: spacing.xs,
   },
-  scanHeaderRight: {
-    alignItems: 'flex-end',
-  },
   assetNumber: {
     fontSize: fontSize.base,
     fontFamily: 'Lato_700Bold',
-    fontWeight: fontWeight.bold,
     color: colors.text,
+  },
+  depotLocationBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: borderRadius.sm,
+  },
+  depotLocationText: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_700Bold',
+    textTransform: 'uppercase',
+  },
+  scanFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  scanTypeLabel: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_700Bold',
+    color: colors.electricBlue,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   scanTime: {
     fontSize: fontSize.xs,
     fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
-    marginTop: 4,
-  },
-  locationBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm,
-  },
-  locationText: {
-    fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
-    color: colors.textSecondary,
-    marginLeft: 4,
-  },
-  scanFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  scanType: {
-    fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
-    fontWeight: fontWeight.bold,
-    color: colors.electricBlue,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
 
   // Empty State
@@ -459,7 +467,6 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: fontSize.base,
     fontFamily: 'Lato_700Bold',
-    fontWeight: fontWeight.semibold,
     color: colors.text,
     marginBottom: spacing.sm,
     textAlign: 'center',

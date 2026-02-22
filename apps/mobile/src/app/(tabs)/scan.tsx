@@ -49,7 +49,6 @@ export default function ScanScreen() {
   }, []);
 
   const {
-    location,
     requestLocation,
     hasPermission: hasLocationPermission,
     requestPermission: requestLocationPermission,
@@ -273,30 +272,29 @@ export default function ScanScreen() {
           </View>
 
           <View style={styles.footer}>
-            <View style={styles.statusRow}>
-              <Text style={styles.statusLabel}>Location:</Text>
-              <Text style={[
-                styles.statusValue,
-                !hasLocationPermission && styles.statusValueError
-              ]}>
-                {isLocationLoading
-                  ? 'Getting location...'
-                  : hasLocationPermission
-                    ? (location
-                        ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`
-                        : 'Ready')
-                    : 'Permission required'}
-              </Text>
-            </View>
-            {!hasLocationPermission && (
+            {!hasLocationPermission ? (
               <TouchableOpacity
                 style={styles.permissionButton}
                 onPress={requestLocationPermission}
               >
                 <Text style={styles.permissionButtonText}>Enable Location</Text>
               </TouchableOpacity>
+            ) : cachedLocation && cachedDepot ? (
+              <View style={styles.locationInfo}>
+                <Text style={styles.coordsText}>
+                  {cachedLocation.latitude.toFixed(4)}, {cachedLocation.longitude.toFixed(4)}
+                </Text>
+                <Text style={styles.depotInfoText}>
+                  {cachedDepot.depot.name} • {cachedDepot.distanceKm.toFixed(1)} km away
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.locationInfo}>
+                <Text style={styles.coordsText}>
+                  {isLocationLoading ? 'Getting location...' : 'Ready to scan'}
+                </Text>
+              </View>
             )}
-
           </View>
 
           {/* Workflow Log Overlay */}
@@ -467,6 +465,24 @@ const styles = StyleSheet.create({
     fontFamily: 'Lato_700Bold',
     color: colors.textInverse,
     textTransform: 'uppercase',
+  },
+  locationInfo: {
+    backgroundColor: colors.overlayLight,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.md,
+    alignItems: 'center',
+  },
+  coordsText: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_700Bold',
+    color: colors.chrome,
+    marginBottom: spacing.xs,
+  },
+  depotInfoText: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_400Regular',
+    color: colors.scanSuccess,
   },
   centerContent: {
     flex: 1,
