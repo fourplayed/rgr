@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useMyRecentScans, useAssetCountsByStatus } from '../../hooks/useAssetData';
 import { useAuthStore } from '../../store/authStore';
+import { useLocationStore } from '../../store/locationStore';
 import { formatRelativeTime, UserRoleLabels } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
@@ -67,6 +68,7 @@ const formatScanTypeLabel = (scanType: string): string => {
 export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
+  const { resolvedDepot, isResolvingDepot } = useLocationStore();
 
   // Recent scans (last 5)
   const {
@@ -145,9 +147,17 @@ export default function HomeScreen() {
                     <View style={[styles.roleBadge, { backgroundColor: colors.userRole[user.role as keyof typeof colors.userRole] || colors.electricBlue }]}>
                       <Text style={styles.roleText}>{roleLabel}</Text>
                     </View>
-                    {user.depot && (
-                      <View style={[styles.depotBadge, { backgroundColor: colors.depot[user.depot.toLowerCase() as keyof typeof colors.depot] || colors.chrome }]}>
-                        <Text style={[styles.depotText, { color: user.depot.toLowerCase() === 'karratha' ? colors.text : colors.textInverse }]}>{user.depot}</Text>
+                    {isResolvingDepot ? (
+                      <View style={[styles.depotBadge, { backgroundColor: colors.chrome }]}>
+                        <LoadingDots color={colors.textInverse} size={5} />
+                      </View>
+                    ) : resolvedDepot ? (
+                      <View style={[styles.depotBadge, { backgroundColor: colors.depot[resolvedDepot.depot.name.toLowerCase() as keyof typeof colors.depot] || colors.chrome }]}>
+                        <Text style={[styles.depotText, { color: resolvedDepot.depot.name.toLowerCase() === 'karratha' ? colors.text : colors.textInverse }]}>{resolvedDepot.depot.name}</Text>
+                      </View>
+                    ) : (
+                      <View style={[styles.depotBadge, { backgroundColor: colors.textSecondary }]}>
+                        <Text style={[styles.depotText, { color: colors.textInverse }]}>No depot</Text>
                       </View>
                     )}
                   </View>
@@ -295,6 +305,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.sm,
+    minWidth: 60,
+    minHeight: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   depotText: {
     fontSize: fontSize.xs,

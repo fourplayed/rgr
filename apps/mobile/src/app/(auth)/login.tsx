@@ -17,6 +17,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useFonts, Lato_700Bold } from '@expo-google-fonts/lato';
 import Constants from 'expo-constants';
 import { useAuthStore } from '../../store/authStore';
+import { useLocationStore } from '../../store/locationStore';
 import { SaveCredentialsModal } from '../../components/auth/SaveCredentialsModal';
 import { isAutoLoginEnabled } from '../../utils/secureStorage';
 import { colors } from '../../theme/colors';
@@ -33,6 +34,7 @@ const ACCENT_LINE_GAP = 6;
 export default function LoginScreen() {
   const router = useRouter();
   const { login, isLoading, clearError, clearSavedSession } = useAuthStore();
+  const { resolveDepot } = useLocationStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -128,6 +130,9 @@ export default function LoginScreen() {
     const result = await login(email.trim(), password);
 
     if (result.success) {
+      // Fire and forget: resolve depot based on GPS location
+      resolveDepot();
+
       // Check if auto-login is already enabled
       const autoLoginAlreadyEnabled = await isAutoLoginEnabled();
 

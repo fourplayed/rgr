@@ -19,6 +19,7 @@ import {
 } from '@expo-google-fonts/lato';
 import { initializeMobileSupabase } from '../config/supabase';
 import { useAuthStore } from '../store/authStore';
+import { useLocationStore } from '../store/locationStore';
 import { ErrorBoundary } from '../components/common/ErrorBoundary';
 import { OfflineBanner } from '../components/common/OfflineBanner';
 
@@ -62,6 +63,7 @@ export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
   const { isAuthenticated, isLoading, checkAuth, attemptAutoLogin } = useAuthStore();
+  const { resolveDepot } = useLocationStore();
 
   // Check auth on mount - try auto-login first, then fall back to session check
   useEffect(() => {
@@ -69,8 +71,11 @@ export default function RootLayout() {
       // Try auto-login with saved credentials first
       const autoLoginSuccess = await attemptAutoLogin();
 
-      // If auto-login didn't succeed, check for existing session
-      if (!autoLoginSuccess) {
+      if (autoLoginSuccess) {
+        // Fire and forget: resolve depot based on GPS location
+        resolveDepot();
+      } else {
+        // If auto-login didn't succeed, check for existing session
         await checkAuth();
       }
     };

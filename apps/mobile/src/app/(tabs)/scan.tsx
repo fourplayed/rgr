@@ -15,8 +15,10 @@ import { useLocation } from '../../hooks/useLocation';
 import { useQRScanner } from '../../hooks/useQRScanner';
 import { useDepots, findNearestDepot } from '../../hooks/useDepots';
 import { useAuthStore } from '../../store/authStore';
+import { useLocationStore } from '../../store/locationStore';
 import { ScanConfirmSheet } from '../../components/scanner/ScanConfirmSheet';
 import type { Asset, Depot } from '@rgr/shared';
+import type { CachedLocationData } from '../../store/locationStore';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
 
@@ -28,10 +30,16 @@ type LogEntry = {
 
 export default function ScanScreen() {
   const { user } = useAuthStore();
+  const {
+    resolvedDepot: cachedDepot,
+    lastLocation: cachedLocation,
+    isLocationStale,
+  } = useLocationStore();
   const [permission, requestPermission] = useCameraPermissions();
   const [scannedAsset, setScannedAsset] = useState<Asset | null>(null);
   const [showConfirmSheet, setShowConfirmSheet] = useState(false);
   const [matchedDepot, setMatchedDepot] = useState<{ depot: Depot; distanceKm: number } | null>(null);
+  const [effectiveLocation, setEffectiveLocation] = useState<CachedLocationData | null>(null);
   const [workflowLog, setWorkflowLog] = useState<LogEntry[]>([]);
   const logScrollRef = useRef<ScrollView>(null);
 
@@ -60,34 +68,51 @@ export default function ScanScreen() {
       try {
         addLog(`QR code detected: ${qrData.substring(0, 30)}...`, 'info');
 
-        // Get location first
-        addLog('Requesting current location...', 'info');
-        const currentLocation = await requestLocation();
+        // Check if we have a cached location/depot from sign-in that's still fresh
+        const useCachedLocation = cachedLocation && !isLocationStale() && cachedDepot;
 
-        if (!currentLocation) {
-          addLog('Failed to get location', 'error');
-          Alert.alert('Location Required', 'Unable to get current location');
-          resetScanner();
-          return;
-        }
-        addLog(`Location acquired: ${currentLocation.latitude.toFixed(4)}, ${currentLocation.longitude.toFixed(4)}`, 'success');
+        let scanLocation: CachedLocationData | null = null;
+        let nearestDepot: { depot: Depot; distanceKm: number } | null = null;
 
-        // Find nearest depot to current location
-        addLog('Searching for nearest depot...', 'info');
-        let nearestDepot = null;
-        if (depots && depots.length > 0) {
-          nearestDepot = findNearestDepot(
-            currentLocation.latitude,
-            currentLocation.longitude,
-            depots
-          );
-        }
-        setMatchedDepot(nearestDepot);
-        if (nearestDepot) {
-          addLog(`Matched depot: ${nearestDepot.depot.name} (${nearestDepot.distanceKm.toFixed(2)} km)`, 'success');
+        if (useCachedLocation) {
+          // Use cached location and depot - skip GPS request
+          addLog('Using cached location from sign-in', 'info');
+          scanLocation = cachedLocation;
+          nearestDepot = cachedDepot;
+          addLog(`Cached location: ${scanLocation.latitude.toFixed(4)}, ${scanLocation.longitude.toFixed(4)}`, 'success');
+          addLog(`Cached depot: ${nearestDepot.depot.name} (${nearestDepot.distanceKm.toFixed(2)} km)`, 'success');
         } else {
-          addLog('No depot matched', 'warning');
+          // Get fresh location
+          addLog('Requesting current location...', 'info');
+          const freshLocation = await requestLocation();
+
+          if (!freshLocation) {
+            addLog('Failed to get location', 'error');
+            Alert.alert('Location Required', 'Unable to get current location');
+            resetScanner();
+            return;
+          }
+          scanLocation = freshLocation;
+          addLog(`Location acquired: ${scanLocation.latitude.toFixed(4)}, ${scanLocation.longitude.toFixed(4)}`, 'success');
+
+          // Find nearest depot to current location
+          addLog('Searching for nearest depot...', 'info');
+          if (depots && depots.length > 0) {
+            nearestDepot = findNearestDepot(
+              scanLocation.latitude,
+              scanLocation.longitude,
+              depots
+            );
+          }
+          if (nearestDepot) {
+            addLog(`Matched depot: ${nearestDepot.depot.name} (${nearestDepot.distanceKm.toFixed(2)} km)`, 'success');
+          } else {
+            addLog('No depot matched', 'warning');
+          }
         }
+
+        setEffectiveLocation(scanLocation);
+        setMatchedDepot(nearestDepot);
 
         // Lookup asset from QR code
         addLog('Looking up asset...', 'info');
@@ -108,7 +133,7 @@ export default function ScanScreen() {
   );
 
   const handleConfirmScan = async () => {
-    if (!scannedAsset || !location || !user) {
+    if (!scannedAsset || !effectiveLocation || !user) {
       addLog('Missing required information', 'error');
       Alert.alert('Error', 'Missing required information');
       return;
@@ -121,12 +146,12 @@ export default function ScanScreen() {
         assetId: scannedAsset.id,
         scannedBy: user.id,
         scanType: 'qr_scan',
-        latitude: location.latitude,
-        longitude: location.longitude,
-        accuracy: location.accuracy,
-        altitude: location.altitude,
-        heading: location.heading,
-        speed: location.speed,
+        latitude: effectiveLocation.latitude,
+        longitude: effectiveLocation.longitude,
+        accuracy: effectiveLocation.accuracy,
+        altitude: effectiveLocation.altitude,
+        heading: effectiveLocation.heading,
+        speed: effectiveLocation.speed,
         locationDescription: matchedDepot ? matchedDepot.depot.name : null,
       });
       addLog('Scan event created successfully', 'success');
@@ -149,6 +174,7 @@ export default function ScanScreen() {
       setShowConfirmSheet(false);
       setScannedAsset(null);
       setMatchedDepot(null);
+      setEffectiveLocation(null);
       resetScanner();
 
       // Show success message with depot info
@@ -167,6 +193,7 @@ export default function ScanScreen() {
     setShowConfirmSheet(false);
     setScannedAsset(null);
     setMatchedDepot(null);
+    setEffectiveLocation(null);
     resetScanner();
   };
 
@@ -312,7 +339,7 @@ export default function ScanScreen() {
       <ScanConfirmSheet
         visible={showConfirmSheet}
         asset={scannedAsset}
-        location={location}
+        location={effectiveLocation}
         matchedDepot={matchedDepot}
         isSubmitting={isCreatingScan}
         onConfirm={handleConfirmScan}

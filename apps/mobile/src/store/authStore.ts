@@ -16,6 +16,7 @@ import {
   isAutoLoginEnabled,
   type StoredSession,
 } from '../utils/secureStorage';
+import { useLocationStore } from './locationStore';
 
 interface AuthState {
   user: Profile | null;
@@ -97,6 +98,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       // Clear session tokens on logout
       await clearSession();
+
+      // Clear resolved depot
+      useLocationStore.getState().clearResolvedDepot();
 
       await signOut();
       set({
