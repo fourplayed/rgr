@@ -7,7 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
-import type { Asset } from '@rgr/shared';
+import type { Asset, Depot } from '@rgr/shared';
 import { formatRelativeTime } from '@rgr/shared';
 import { StatusBadge } from '../common/StatusBadge';
 import { colors } from '../../theme/colors';
@@ -18,6 +18,7 @@ interface ScanConfirmSheetProps {
   visible: boolean;
   asset: Asset | null;
   location: LocationData | null;
+  matchedDepot: { depot: Depot; distanceKm: number } | null;
   isSubmitting: boolean;
   onConfirm: () => void;
   onCancel: () => void;
@@ -27,6 +28,7 @@ export function ScanConfirmSheet({
   visible,
   asset,
   location,
+  matchedDepot,
   isSubmitting,
   onConfirm,
   onCancel,
@@ -87,6 +89,24 @@ export function ScanConfirmSheet({
                     Accuracy: ±{Math.round(location.accuracy)}m
                   </Text>
                 )}
+              </View>
+            )}
+
+            {matchedDepot && (
+              <View style={styles.depotInfo}>
+                <Text style={styles.depotTitle}>Assigned Depot</Text>
+                <Text style={styles.depotName}>{matchedDepot.depot.name}</Text>
+                <Text style={styles.depotDistance}>
+                  {matchedDepot.distanceKm.toFixed(1)} km away
+                </Text>
+              </View>
+            )}
+
+            {!matchedDepot && location && (
+              <View style={styles.depotWarning}>
+                <Text style={styles.depotWarningText}>
+                  No depot within range
+                </Text>
               </View>
             )}
 
@@ -213,6 +233,46 @@ const styles = StyleSheet.create({
     fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
     marginTop: spacing.xs,
+  },
+  depotInfo: {
+    backgroundColor: colors.surface,
+    padding: spacing.base,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.lg,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.success,
+  },
+  depotTitle: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+    fontFamily: 'Lato_700Bold',
+    color: colors.text,
+    marginBottom: spacing.xs,
+  },
+  depotName: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.bold,
+    fontFamily: 'Lato_700Bold',
+    color: colors.success,
+  },
+  depotDistance: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_400Regular',
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
+  },
+  depotWarning: {
+    backgroundColor: colors.surface,
+    padding: spacing.base,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.lg,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.warning,
+  },
+  depotWarningText: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_400Regular',
+    color: colors.warning,
   },
   buttonRow: {
     flexDirection: 'row',

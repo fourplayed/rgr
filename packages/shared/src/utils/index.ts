@@ -5,6 +5,7 @@
  */
 
 export * from './qrCode';
+export * from './location';
 
 /**
  * Validate email format

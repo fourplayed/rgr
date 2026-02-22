@@ -9,10 +9,12 @@ import {
   getAssetMaintenance,
   getAssetHazards,
   getAssetCountsByStatus,
+  updateAsset,
 } from '@rgr/shared';
 import type {
   AssetStatus,
   CreateScanEventInput,
+  UpdateAssetInput,
 } from '@rgr/shared';
 
 /**
@@ -261,5 +263,29 @@ export function useAssetCountsByStatus() {
       };
     },
     staleTime: 30000, // Cache for 30 seconds
+  });
+}
+
+/**
+ * Update asset
+ */
+export function useUpdateAsset() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, input }: { id: string; input: UpdateAssetInput }) => {
+      const result = await updateAsset(id, input);
+
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+
+      return result.data;
+    },
+    onSuccess: (data) => {
+      // Invalidate related queries to refresh data
+      queryClient.invalidateQueries({ queryKey: assetKeys.detail(data.id) });
+      queryClient.invalidateQueries({ queryKey: assetKeys.lists() });
+    },
   });
 }

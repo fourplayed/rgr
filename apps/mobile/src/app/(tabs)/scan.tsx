@@ -9,12 +9,13 @@ import {
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
-import { useAssetByQRCode, useCreateScanEvent } from '../../hooks/useAssetData';
+import { useAssetByQRCode, useCreateScanEvent, useUpdateAsset } from '../../hooks/useAssetData';
 import { useLocation } from '../../hooks/useLocation';
 import { useQRScanner } from '../../hooks/useQRScanner';
+import { useDepots, findNearestDepot } from '../../hooks/useDepots';
 import { useAuthStore } from '../../store/authStore';
 import { ScanConfirmSheet } from '../../components/scanner/ScanConfirmSheet';
-import type { Asset } from '@rgr/shared';
+import type { Asset, Depot } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
 
@@ -23,6 +24,7 @@ export default function ScanScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [scannedAsset, setScannedAsset] = useState<Asset | null>(null);
   const [showConfirmSheet, setShowConfirmSheet] = useState(false);
+  const [matchedDepot, setMatchedDepot] = useState<{ depot: Depot; distanceKm: number } | null>(null);
 
   const {
     location,
@@ -32,8 +34,12 @@ export default function ScanScreen() {
     isLoading: isLocationLoading,
   } = useLocation();
 
+  // Fetch depots for location matching
+  const { data: depots } = useDepots();
+
   const { mutateAsync: lookupAsset } = useAssetByQRCode();
   const { mutateAsync: createScan, isPending: isCreatingScan } = useCreateScanEvent();
+  const { mutateAsync: updateAssetMutation } = useUpdateAsset();
 
   const { handleBarCodeScanned, resetScanner } = useQRScanner(
     async (qrData) => {
@@ -46,6 +52,17 @@ export default function ScanScreen() {
           resetScanner();
           return;
         }
+
+        // Find nearest depot to current location
+        let nearestDepot = null;
+        if (depots && depots.length > 0) {
+          nearestDepot = findNearestDepot(
+            currentLocation.latitude,
+            currentLocation.longitude,
+            depots
+          );
+        }
+        setMatchedDepot(nearestDepot);
 
         // Lookup asset from QR code
         const asset = await lookupAsset(qrData);
@@ -68,6 +85,7 @@ export default function ScanScreen() {
     }
 
     try {
+      // Create the scan event
       await createScan({
         assetId: scannedAsset.id,
         scannedBy: user.id,
@@ -78,7 +96,16 @@ export default function ScanScreen() {
         altitude: location.altitude,
         heading: location.heading,
         speed: location.speed,
+        locationDescription: matchedDepot ? matchedDepot.depot.name : null,
       });
+
+      // Update asset's assigned depot if we matched one
+      if (matchedDepot) {
+        await updateAssetMutation({
+          id: scannedAsset.id,
+          input: { assignedDepotId: matchedDepot.depot.id },
+        });
+      }
 
       // Success haptic and animation
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -86,10 +113,14 @@ export default function ScanScreen() {
       // Close sheet and reset
       setShowConfirmSheet(false);
       setScannedAsset(null);
+      setMatchedDepot(null);
       resetScanner();
 
-      // Show success message
-      Alert.alert('Success', `Asset ${scannedAsset.assetNumber} scanned successfully`);
+      // Show success message with depot info
+      const depotInfo = matchedDepot
+        ? ` → ${matchedDepot.depot.name}`
+        : '';
+      Alert.alert('Success', `Asset ${scannedAsset.assetNumber} scanned${depotInfo}`);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to submit scan';
       Alert.alert('Scan Failed', message);
@@ -99,6 +130,7 @@ export default function ScanScreen() {
   const handleCancelScan = () => {
     setShowConfirmSheet(false);
     setScannedAsset(null);
+    setMatchedDepot(null);
     resetScanner();
   };
 
@@ -209,6 +241,7 @@ export default function ScanScreen() {
         visible={showConfirmSheet}
         asset={scannedAsset}
         location={location}
+        matchedDepot={matchedDepot}
         isSubmitting={isCreatingScan}
         onConfirm={handleConfirmScan}
         onCancel={handleCancelScan}
