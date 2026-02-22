@@ -26,6 +26,6 @@ $$;
 GRANT EXECUTE ON FUNCTION get_asset_counts_by_status() TO authenticated;
 
 -- Index on assets.created_at for time-based queries (newest assets, reporting, etc.)
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_assets_created_at
+CREATE INDEX IF NOT EXISTS idx_assets_created_at
   ON assets (created_at DESC)
   WHERE deleted_at IS NULL;

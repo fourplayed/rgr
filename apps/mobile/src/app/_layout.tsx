@@ -20,7 +20,6 @@ import { initializeMobileSupabase } from '../config/supabase';
 import { useAuthStore } from '../store/authStore';
 import { ErrorBoundary } from '../components/common/ErrorBoundary';
 import { OfflineBanner } from '../components/common/OfflineBanner';
-import { NavigationAnimationProvider } from '../contexts/NavigationAnimationContext';
 
 // Set default text style
 const defaultTextStyle = { fontFamily: 'Lato_400Regular' };
@@ -111,23 +110,21 @@ export default function RootLayout() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <NavigationAnimationProvider>
-          <StatusBar style="dark" />
-          <View style={styles.container}>
-            <OfflineBanner />
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="(auth)" />
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen
-                name="settings"
-                options={{
-                  presentation: 'modal',
-                  animation: 'slide_from_bottom',
-                }}
-              />
-            </Stack>
-          </View>
-        </NavigationAnimationProvider>
+        <StatusBar style="dark" />
+        <View style={styles.container}>
+          <OfflineBanner />
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(auth)" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen
+              name="settings"
+              options={{
+                presentation: 'modal',
+                animation: 'slide_from_bottom',
+              }}
+            />
+          </Stack>
+        </View>
       </QueryClientProvider>
     </ErrorBoundary>
   );

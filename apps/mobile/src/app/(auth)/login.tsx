@@ -21,83 +21,14 @@ import { SaveCredentialsModal } from '../../components/auth/SaveCredentialsModal
 import { isAutoLoginEnabled } from '../../utils/secureStorage';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
+import { LoadingDots } from '../../components/common/LoadingDots';
 
 const APP_VERSION = Constants.expoConfig?.version || '1.0.0';
-const BUILD_NUMBER = Constants.expoConfig?.ios?.buildNumber || Constants.expoConfig?.android?.versionCode || '0';
+const BUILD_NUMBER = Constants.nativeBuildVersion || Constants.expoConfig?.ios?.buildNumber || Constants.expoConfig?.android?.versionCode || '0';
 
-const LOGIN_STRIPE_HEIGHT = 93;
+const LOGIN_STRIPE_HEIGHT = 84;
 const ACCENT_LINE_HEIGHT = 13;
 const ACCENT_LINE_GAP = 6;
-
-// Custom loading spinner component
-function LoadingDots() {
-  const dot1 = useRef(new Animated.Value(0)).current;
-  const dot2 = useRef(new Animated.Value(0)).current;
-  const dot3 = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const animateDot = (dot: Animated.Value, delay: number) => {
-      return Animated.loop(
-        Animated.sequence([
-          Animated.delay(delay),
-          Animated.timing(dot, {
-            toValue: 1,
-            duration: 300,
-            useNativeDriver: true,
-          }),
-          Animated.timing(dot, {
-            toValue: 0,
-            duration: 300,
-            useNativeDriver: true,
-          }),
-          Animated.delay(600 - delay),
-        ])
-      );
-    };
-
-    const anim1 = animateDot(dot1, 0);
-    const anim2 = animateDot(dot2, 150);
-    const anim3 = animateDot(dot3, 300);
-
-    anim1.start();
-    anim2.start();
-    anim3.start();
-
-    return () => {
-      anim1.stop();
-      anim2.stop();
-      anim3.stop();
-    };
-  }, [dot1, dot2, dot3]);
-
-  const dotStyle = (anim: Animated.Value) => ({
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: colors.textInverse,
-    marginHorizontal: 4,
-    transform: [
-      {
-        scale: anim.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0.6, 1.2],
-        }),
-      },
-    ],
-    opacity: anim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0.4, 1],
-    }),
-  });
-
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-      <Animated.View style={dotStyle(dot1)} />
-      <Animated.View style={dotStyle(dot2)} />
-      <Animated.View style={dotStyle(dot3)} />
-    </View>
-  );
-}
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -107,13 +38,14 @@ export default function LoginScreen() {
   const [showSaveModal, setShowSaveModal] = useState(false);
   const tiltAnim = useRef(new Animated.Value(-1)).current;
   const keyboardOffset = useRef(new Animated.Value(0)).current;
+  const accentAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (Platform.OS !== 'ios') return;
 
     const showSub = Keyboard.addListener('keyboardWillShow', () => {
       Animated.timing(keyboardOffset, {
-        toValue: -40,
+        toValue: -100,
         duration: 250,
         useNativeDriver: true,
       }).start();
@@ -132,6 +64,27 @@ export default function LoginScreen() {
       hideSub.remove();
     };
   }, [keyboardOffset]);
+
+  useEffect(() => {
+    const accentAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(accentAnim, {
+          toValue: 1,
+          duration: 2000,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(accentAnim, {
+          toValue: 0,
+          duration: 2000,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    accentAnimation.start();
+    return () => accentAnimation.stop();
+  }, [accentAnim]);
 
   useEffect(() => {
     const animation = Animated.loop(
@@ -217,13 +170,54 @@ export default function LoginScreen() {
       <Animated.View style={[styles.content, { transform: [{ translateY: keyboardOffset }] }]}>
         <View style={styles.header}>
           <View style={styles.loginStripeContainer}>
-            <View style={styles.loginAccentLine} />
-            <LinearGradient
-              colors={['#0000DD', '#000099']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 1 }}
-              style={styles.loginStripe}
-            />
+            <View style={styles.loginAccentLine}>
+              <Animated.View
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  top: 0,
+                  bottom: 0,
+                  transform: [{
+                    translateX: accentAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [-100, 100],
+                    }),
+                  }],
+                }}
+              >
+                <LinearGradient
+                  colors={['#00A4E4', '#00D4FF', '#00A4E4']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={{ flex: 1, width: '200%', marginLeft: '-50%' }}
+                />
+              </Animated.View>
+            </View>
+            <View style={styles.loginStripe}>
+              <Animated.View
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  top: 0,
+                  bottom: 0,
+                  transform: [{
+                    translateX: accentAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [-50, 50],
+                    }),
+                  }],
+                }}
+              >
+                <LinearGradient
+                  colors={['#0000DD', '#0000FF', '#0000DD']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={{ flex: 1, width: '200%', marginLeft: '-50%' }}
+                />
+              </Animated.View>
+            </View>
           </View>
           <View style={styles.logoContainer}>
             <Animated.View
@@ -294,7 +288,7 @@ export default function LoginScreen() {
             accessibilityState={{ disabled: !isFormValid || isLoading }}
           >
             {isLoading ? (
-              <LoadingDots />
+              <LoadingDots color={colors.textInverse} />
             ) : (
               <Text style={styles.buttonText}>Sign In</Text>
             )}
@@ -326,7 +320,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: spacing.xl,
-    marginTop: -160,
+    marginTop: -20,
     overflow: 'visible',
   },
   header: {
@@ -335,7 +329,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.lg,
     overflow: 'visible',
     zIndex: 10,
-    marginTop: -30,
+    marginTop: -60,
   },
   loginStripeContainer: {
     position: 'absolute',
@@ -350,8 +344,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: ACCENT_LINE_HEIGHT,
-    backgroundColor: '#00A4E4',
     top: -(ACCENT_LINE_HEIGHT + ACCENT_LINE_GAP),
+    overflow: 'hidden',
   },
   loginStripe: {
     flex: 1,
@@ -360,12 +354,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowRadius: 2,
     elevation: 8,
+    overflow: 'hidden',
   },
   logoContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 2,
-    marginTop: -2,
+    marginTop: -12,
   },
   logoShadow: {
     shadowColor: colors.navy,
@@ -391,7 +386,7 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: spacing.lg,
-    marginTop: -40,
+    marginTop: -10,
   },
   inputGroup: {
     gap: spacing.sm,
