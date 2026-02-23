@@ -5,11 +5,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useSegments } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
+import {
+  HEADER_STATUS_BAR_GAP,
+  HEADER_ACCENT_LINE_HEIGHT,
+  HEADER_ACCENT_LINE_GAP,
+  HEADER_GRADIENT_HEIGHT,
+} from '../../theme/layout';
 
 const HEADER_GRADIENT_COLORS = ['#0000DD', '#000099'] as const;
-const STATUS_BAR_GAP = 20; // Extra gap below status bar
-const ACCENT_LINE_HEIGHT = 6;
-const ACCENT_LINE_GAP = 3;
 
 export function UserProfileHeader() {
   const router = useRouter();
@@ -18,10 +21,12 @@ export function UserProfileHeader() {
   const insets = useSafeAreaInsets();
 
   // Show back button on detail pages (e.g., assets/[id])
-  const isDetailPage = segments.length > 2 && segments[1] === 'assets' && segments[2] !== 'index';
+  const segmentArray = segments as string[];
+  const isDetailPage = segmentArray.length > 2 && segmentArray[1] === 'assets' && segmentArray[2] !== 'index';
 
   const handleBack = () => {
-    router.back();
+    // Navigate to assets list explicitly to handle cross-tab navigation
+    router.navigate('/(tabs)/assets');
   };
 
   const handleSettings = () => {
@@ -34,7 +39,7 @@ export function UserProfileHeader() {
   };
 
   return (
-    <View style={[styles.wrapper, { marginTop: insets.top + STATUS_BAR_GAP }]}>
+    <View style={[styles.wrapper, { marginTop: insets.top + HEADER_STATUS_BAR_GAP }]}>
       <View style={styles.accentLine} />
       <LinearGradient
         colors={[...HEADER_GRADIENT_COLORS]}
@@ -43,11 +48,7 @@ export function UserProfileHeader() {
         style={styles.gradient}
       >
         <View style={styles.container}>
-          <Image
-            source={require('../../assets/logo.png')}
-            style={styles.logo}
-            resizeMode="contain"
-          />
+          <View style={{ width: 221 }} />
           <View style={styles.actions}>
             {isDetailPage && (
               <TouchableOpacity
@@ -80,29 +81,36 @@ export function UserProfileHeader() {
           </View>
         </View>
       </LinearGradient>
+      <Image
+        source={require('../../assets/logo.png')}
+        style={styles.logo}
+        resizeMode="contain"
+      />
     </View>
   );
 }
 
-const GRADIENT_HEIGHT = 45;
-
 const styles = StyleSheet.create({
   wrapper: {
-    zIndex: 999,
     overflow: 'visible',
   },
   accentLine: {
     width: '100%',
-    height: ACCENT_LINE_HEIGHT,
+    height: HEADER_ACCENT_LINE_HEIGHT,
     backgroundColor: '#00A4E4',
-    marginBottom: ACCENT_LINE_GAP,
+    marginBottom: HEADER_ACCENT_LINE_GAP,
+    zIndex: 1,
   },
   gradient: {
     width: '100%',
-    height: GRADIENT_HEIGHT,
+    height: HEADER_GRADIENT_HEIGHT,
     overflow: 'visible',
-    zIndex: 999,
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+    elevation: 16,
   },
   container: {
     flexDirection: 'row',
@@ -110,13 +118,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingRight: 16,
     overflow: 'visible',
-    zIndex: 999,
   },
   logo: {
+    position: 'absolute',
     height: 88,
     width: 221,
-    marginLeft: -5,
-    marginTop: 6,
+    left: -5,
+    top: -8,
     zIndex: 999,
   },
   actions: {
