@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useIsFocused } from '@react-navigation/native';
 import { useMyRecentScans, useAssetCountsByStatus } from '../../src/hooks/useAssetData';
 import { useAuthStore } from '../../src/store/authStore';
 import { useLocationStore } from '../../src/store/locationStore';
@@ -33,6 +34,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
   const { resolvedDepot, isResolvingDepot } = useLocationStore();
+  const isFocused = useIsFocused();
 
   // Recent scans (last 5)
   const {
@@ -68,7 +70,14 @@ export default function HomeScreen() {
   const geofenceOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    // Don't run animation when screen isn't focused (saves CPU/battery)
+    if (!isFocused) return;
+
+    let cancelled = false;
+
     const runAnimation = () => {
+      if (cancelled) return;
+
       // Reset
       greetingOpacity.setValue(0);
       usernameOpacity.setValue(0);
@@ -113,11 +122,18 @@ export default function HomeScreen() {
             useNativeDriver: true,
           }),
         ]),
-      ]).start(() => runAnimation());
+      ]).start(() => {
+        if (!cancelled) runAnimation();
+      });
     };
 
     runAnimation();
-  }, [greetingOpacity, usernameOpacity, geofenceOpacity]);
+
+    // Cleanup: stop animation loop when unmounted or unfocused
+    return () => {
+      cancelled = true;
+    };
+  }, [isFocused, greetingOpacity, usernameOpacity, geofenceOpacity]);
 
   const totalAssets = assetStats?.total ?? 0;
   const servicedCount = assetStats?.serviced ?? 0;

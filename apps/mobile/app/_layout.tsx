@@ -25,11 +25,12 @@ import { OfflineBanner } from '../src/components/common/OfflineBanner';
 import { colors } from '../src/theme/colors';
 
 // Set default text style globally
-// Note: defaultProps is deprecated in React 18.3+ but still works in React Native.
-// This is a pragmatic solution to avoid wrapping every Text component.
-// TODO: Consider migrating to a custom AppText component in future refactoring.
+// DEPRECATION WARNING: Text.defaultProps is deprecated in React 18.3+ and will break in React 19.
+// Migration path: Use <AppText> from 'src/components/common/AppText' for new components.
+// This fallback remains for existing code compatibility during gradual migration.
+// See: https://react.dev/blog/2024/04/25/react-19-upgrade-guide#removed-proptypes-and-defaultprops
 const defaultTextStyle = { fontFamily: 'Lato_400Regular' };
-// @ts-expect-error - defaultProps is deprecated but functional in RN; avoids wrapping every Text
+// @ts-expect-error - defaultProps is deprecated but functional in RN; temporary fallback
 Text.defaultProps = Text.defaultProps || {};
 // @ts-expect-error - Setting default font family on all Text components
 Text.defaultProps.style = defaultTextStyle;
@@ -149,11 +150,11 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E8E8E8',
+    backgroundColor: colors.chrome,
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#E8E8E8',
+    backgroundColor: colors.chrome,
     justifyContent: 'center',
     alignItems: 'center',
   },

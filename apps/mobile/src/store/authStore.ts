@@ -16,7 +16,7 @@ import {
   isAutoLoginEnabled,
   type StoredSession,
 } from '../utils/secureStorage';
-import { useLocationStore } from './locationStore';
+import { eventBus, AppEvents } from '../utils/eventBus';
 
 interface AuthState {
   user: Profile | null;
@@ -99,8 +99,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       // Clear session tokens on logout
       await clearSession();
 
-      // Clear resolved depot
-      useLocationStore.getState().clearResolvedDepot();
+      // Emit logout event for other stores to react (e.g., locationStore clears depot)
+      eventBus.emit(AppEvents.USER_LOGOUT);
 
       await signOut();
       set({

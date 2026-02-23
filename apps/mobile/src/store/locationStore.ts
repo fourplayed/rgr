@@ -2,9 +2,12 @@ import { create } from 'zustand';
 import * as Location from 'expo-location';
 import { listDepots, findNearestLocation } from '@rgr/shared';
 import type { Depot } from '@rgr/shared';
+import { eventBus, AppEvents } from '../utils/eventBus';
 
+// Configuration constants
 const MAX_DEPOT_DISTANCE_KM = 100;
 const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+const LOCATION_TIMEOUT_MS = 15000; // 15 seconds - GPS timeout for indoor environments
 
 export interface CachedLocationData {
   latitude: number;
@@ -63,7 +66,7 @@ export const useLocationStore = create<LocationState>((set, get) => ({
           accuracy: Location.Accuracy.High,
         }),
         new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Location request timed out')), 15000)
+          setTimeout(() => reject(new Error('Location request timed out')), LOCATION_TIMEOUT_MS)
         ),
       ]);
 
@@ -139,3 +142,9 @@ export const useLocationStore = create<LocationState>((set, get) => ({
     return Date.now() - lastResolvedAt.getTime() > CACHE_DURATION_MS;
   },
 }));
+
+// Subscribe to app events for cross-store coordination
+// This decouples locationStore from authStore
+eventBus.on(AppEvents.USER_LOGOUT, () => {
+  useLocationStore.getState().clearResolvedDepot();
+});

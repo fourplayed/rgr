@@ -44,8 +44,11 @@ type ActivityItem =
 
 export default function AssetDetailScreen() {
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const params = useLocalSearchParams<{ id: string }>();
   const { user } = useAuthStore();
+
+  // Validate route params - handle array case from Expo Router
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const [showQRModal, setShowQRModal] = useState(false);
   const [activityExpanded, setActivityExpanded] = useState(true);
   const rotateAnim = useRef(new Animated.Value(1)).current;
@@ -86,28 +89,55 @@ export default function AssetDetailScreen() {
   } = useAssetMaintenance(id);
 
   // Merge scans and maintenance into a unified activity feed
+  // Optimization: Sort by timestamp string first, slice, then create Date objects
+  // This avoids creating Date objects for items we won't display
   const recentActivity: ActivityItem[] = useMemo(() => {
-    const scanItems: ActivityItem[] = scans.map(scan => ({
-      type: 'scan' as const,
-      data: scan,
-      timestamp: new Date(scan.createdAt),
-    }));
-
-    const maintenanceItems: ActivityItem[] = maintenance.map(m => ({
-      type: 'maintenance' as const,
-      data: m,
-      timestamp: new Date(m.updatedAt || m.createdAt),
-    }));
-
-    return [...scanItems, ...maintenanceItems]
-      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+    const allItems = [
+      ...scans.map(scan => ({
+        type: 'scan' as const,
+        data: scan,
+        timestampStr: scan.createdAt,
+      })),
+      ...maintenance.map(m => ({
+        type: 'maintenance' as const,
+        data: m,
+        timestampStr: m.updatedAt || m.createdAt,
+      })),
+    ]
+      .sort((a, b) => b.timestampStr.localeCompare(a.timestampStr))
       .slice(0, 10);
+
+    // Create Date objects only for items we'll render
+    return allItems.map(item => ({
+      type: item.type,
+      data: item.data,
+      timestamp: new Date(item.timestampStr),
+    })) as ActivityItem[];
   }, [scans, maintenance]);
 
   // Compute next service date from scheduled maintenance
   const nextService = maintenance
     .filter(m => m.status === 'scheduled' && m.scheduledDate)
     .sort((a, b) => new Date(a.scheduledDate!).getTime() - new Date(b.scheduledDate!).getTime())[0];
+
+  // Validate required route param
+  if (!id) {
+    return (
+      <View style={styles.container}>
+      <SafeAreaView style={styles.containerInner}>
+        <View style={styles.centerContent}>
+          <Text style={styles.errorText}>Asset ID is required</Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.retryButtonText}>Go Back</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+      </View>
+    );
+  }
 
   if (assetLoading) {
     return (
