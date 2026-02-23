@@ -27,6 +27,13 @@ import type { ScanEventWithScanner, MaintenanceRecord, PhotoListItem } from '@rg
 import { AssetInfoCard } from '../../../src/components/assets/AssetInfoCard';
 import { PhotoGallery, PhotoDetailModal, CameraCapture } from '../../../src/components/photos';
 import { CollapsibleSection } from '../../../src/components/common/CollapsibleSection';
+import {
+  MaintenanceListItem,
+  MaintenanceStatusBadge,
+  MaintenancePriorityBadge,
+  CreateMaintenanceModal,
+  MaintenanceDetailModal,
+} from '../../../src/components/maintenance';
 import { useAuthStore } from '../../../src/store/authStore';
 import { formatRelativeTime } from '@rgr/shared';
 import { colors } from '../../../src/theme/colors';
@@ -58,6 +65,8 @@ export default function AssetDetailScreen() {
   const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
   const [showPhotoDetail, setShowPhotoDetail] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
+  const [showCreateMaintenance, setShowCreateMaintenance] = useState(false);
+  const [selectedMaintenanceId, setSelectedMaintenanceId] = useState<string | null>(null);
   const rotateAnim = useRef(new Animated.Value(1)).current;
 
   const isSuperuser = user?.role === 'superuser';
@@ -91,6 +100,22 @@ export default function AssetDetailScreen() {
 
   const handleCloseCamera = useCallback(() => {
     setShowCamera(false);
+  }, []);
+
+  const handleOpenCreateMaintenance = useCallback(() => {
+    setShowCreateMaintenance(true);
+  }, []);
+
+  const handleCloseCreateMaintenance = useCallback(() => {
+    setShowCreateMaintenance(false);
+  }, []);
+
+  const handleMaintenancePress = useCallback((item: MaintenanceRecord) => {
+    setSelectedMaintenanceId(item.id);
+  }, []);
+
+  const handleCloseMaintenanceDetail = useCallback(() => {
+    setSelectedMaintenanceId(null);
   }, []);
 
   const chevronRotate = rotateAnim.interpolate({
@@ -231,6 +256,50 @@ export default function AssetDetailScreen() {
             onPhotoPress={handlePhotoPress}
             onAddPhoto={handleAddPhoto}
           />
+        </CollapsibleSection>
+
+        {/* Maintenance Section */}
+        <CollapsibleSection title="Maintenance" defaultExpanded={true} variant="flat">
+          <View style={styles.maintenanceSection}>
+            {maintenance.length === 0 ? (
+              <Text style={styles.emptyText}>No maintenance records</Text>
+            ) : (
+              <View style={styles.maintenanceList}>
+                {maintenance.slice(0, 5).map((item) => (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={[
+                      styles.maintenanceCard,
+                      { borderLeftColor: colors.maintenancePriority[item.priority as keyof typeof colors.maintenancePriority] || colors.border },
+                    ]}
+                    onPress={() => handleMaintenancePress(item)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.maintenanceCardContent}>
+                      <Text style={styles.maintenanceTitle} numberOfLines={1}>
+                        {item.title}
+                      </Text>
+                      <View style={styles.maintenanceBadges}>
+                        <MaintenanceStatusBadge status={item.status} />
+                        <MaintenancePriorityBadge priority={item.priority} />
+                      </View>
+                    </View>
+                    <Text style={styles.maintenanceDate}>
+                      {item.dueDate ? `Due ${formatRelativeTime(item.dueDate)}` : formatRelativeTime(item.createdAt)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+            <TouchableOpacity
+              style={styles.scheduleButton}
+              onPress={handleOpenCreateMaintenance}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="add" size={18} color={colors.textInverse} />
+              <Text style={styles.scheduleButtonText}>Schedule Maintenance</Text>
+            </TouchableOpacity>
+          </View>
         </CollapsibleSection>
 
         {/* Recent Activity */}
@@ -378,6 +447,21 @@ export default function AssetDetailScreen() {
         visible={showCamera}
         assetId={id}
         onClose={handleCloseCamera}
+      />
+
+      {/* Create Maintenance Modal */}
+      <CreateMaintenanceModal
+        visible={showCreateMaintenance}
+        onClose={handleCloseCreateMaintenance}
+        assetId={id}
+        assetNumber={asset.assetNumber}
+      />
+
+      {/* Maintenance Detail Modal */}
+      <MaintenanceDetailModal
+        visible={selectedMaintenanceId !== null}
+        maintenanceId={selectedMaintenanceId}
+        onClose={handleCloseMaintenanceDetail}
       />
     </SafeAreaView>
     </View>
@@ -582,6 +666,60 @@ const styles = StyleSheet.create({
     fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
     textAlign: 'center',
+    textTransform: 'uppercase',
+  },
+
+  // Maintenance Section
+  maintenanceSection: {
+    gap: spacing.sm,
+  },
+  maintenanceList: {
+    gap: spacing.sm,
+  },
+  maintenanceCard: {
+    backgroundColor: colors.background,
+    padding: spacing.md,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderLeftWidth: 4,
+  },
+  maintenanceCardContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  maintenanceTitle: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_700Bold',
+    color: colors.text,
+    flex: 1,
+  },
+  maintenanceBadges: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  maintenanceDate: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_400Regular',
+    color: colors.textSecondary,
+  },
+  scheduleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.electricBlue,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
+    marginTop: spacing.sm,
+  },
+  scheduleButtonText: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_700Bold',
+    color: colors.textInverse,
     textTransform: 'uppercase',
   },
 });

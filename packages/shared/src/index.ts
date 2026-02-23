@@ -3,6 +3,7 @@ export * from './services/supabase/client';
 export * from './services/supabase/auth';
 export * from './services/supabase/assets';
 export * from './services/supabase/photos';
+export * from './services/supabase/maintenance';
 export * from './services/api/AuthService';
 export * from './services/csrf.service';
 
