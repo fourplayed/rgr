@@ -1,0 +1,301 @@
+import React, { memo, useCallback } from 'react';
+import {
+  View,
+  Text,
+  Modal,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  SafeAreaView,
+  Alert,
+} from 'react-native';
+import { Image } from 'expo-image';
+import { Ionicons } from '@expo/vector-icons';
+import { usePhoto, useDeletePhoto, useSignedUrl } from '../../hooks/usePhotos';
+import { FreightAnalysisCard } from './FreightAnalysisCard';
+import { LoadingDots } from '../common/LoadingDots';
+import { formatRelativeTime } from '@rgr/shared';
+import { colors } from '../../theme/colors';
+import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+
+interface PhotoDetailModalProps {
+  visible: boolean;
+  photoId: string | null;
+  assetId: string;
+  onClose: () => void;
+}
+
+function PhotoDetailModalComponent({
+  visible,
+  photoId,
+  assetId,
+  onClose,
+}: PhotoDetailModalProps) {
+  const { data: photoData, isLoading } = usePhoto(photoId ?? undefined);
+  const { data: signedUrl } = useSignedUrl(photoData?.storagePath);
+  const { mutateAsync: deletePhotoMutation, isPending: isDeleting } = useDeletePhoto();
+
+  const handleDelete = useCallback(() => {
+    if (!photoId) return;
+
+    Alert.alert(
+      'Delete Photo',
+      'Are you sure you want to delete this photo? This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deletePhotoMutation({ photoId, assetId });
+              onClose();
+            } catch (error) {
+              const message = error instanceof Error ? error.message : 'Failed to delete photo';
+              Alert.alert('Error', message);
+            }
+          },
+        },
+      ]
+    );
+  }, [photoId, assetId, deletePhotoMutation, onClose]);
+
+  const formatPhotoType = (type: string): string => {
+    return type.charAt(0).toUpperCase() + type.slice(1).replace(/_/g, ' ');
+  };
+
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      onRequestClose={onClose}
+    >
+      <View style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity style={styles.headerButton} onPress={onClose}>
+              <Ionicons name="close" size={28} color={colors.text} />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Photo Details</Text>
+            <TouchableOpacity
+              style={styles.headerButton}
+              onPress={handleDelete}
+              disabled={isDeleting || isLoading}
+            >
+              {isDeleting ? (
+                <LoadingDots color={colors.error} size={6} />
+              ) : (
+                <Ionicons name="trash-outline" size={24} color={colors.error} />
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <LoadingDots color={colors.electricBlue} size={12} />
+            </View>
+          ) : photoData ? (
+            <ScrollView
+              style={styles.content}
+              contentContainerStyle={styles.contentContainer}
+              showsVerticalScrollIndicator={false}
+            >
+              {/* Photo */}
+              <View style={styles.imageContainer}>
+                <Image
+                  source={{ uri: signedUrl || '' }}
+                  style={styles.image}
+                  contentFit="contain"
+                  transition={300}
+                />
+              </View>
+
+              {/* Photo metadata */}
+              <View style={styles.metadataSection}>
+                <View style={styles.metadataRow}>
+                  <View style={styles.metadataItem}>
+                    <Text style={styles.metadataLabel}>Type</Text>
+                    <Text style={styles.metadataValue}>
+                      {formatPhotoType(photoData.photoType)}
+                    </Text>
+                  </View>
+                  <View style={styles.metadataItem}>
+                    <Text style={styles.metadataLabel}>Captured</Text>
+                    <Text style={styles.metadataValue}>
+                      {formatRelativeTime(photoData.createdAt)}
+                    </Text>
+                  </View>
+                </View>
+
+                {(photoData.width || photoData.fileSize) && (
+                  <View style={styles.metadataRow}>
+                    {photoData.width && photoData.height && (
+                      <View style={styles.metadataItem}>
+                        <Text style={styles.metadataLabel}>Resolution</Text>
+                        <Text style={styles.metadataValue}>
+                          {photoData.width} × {photoData.height}
+                        </Text>
+                      </View>
+                    )}
+                    {photoData.fileSize && (
+                      <View style={styles.metadataItem}>
+                        <Text style={styles.metadataLabel}>Size</Text>
+                        <Text style={styles.metadataValue}>
+                          {(photoData.fileSize / 1024 / 1024).toFixed(2)} MB
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                )}
+
+                {/* Analysis status */}
+                <View style={styles.analysisStatus}>
+                  {photoData.isAnalyzed ? (
+                    <View style={styles.statusBadge}>
+                      <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+                      <Text style={styles.statusText}>Analyzed</Text>
+                    </View>
+                  ) : (
+                    <View style={styles.statusBadge}>
+                      <Ionicons name="hourglass-outline" size={16} color={colors.warning} />
+                      <Text style={styles.statusTextPending}>Pending Analysis</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+
+              {/* Freight Analysis */}
+              {photoData.freightAnalysis && (
+                <FreightAnalysisCard
+                  analysis={photoData.freightAnalysis}
+                  hazards={photoData.hazardAlerts}
+                />
+              )}
+            </ScrollView>
+          ) : (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>Photo not found</Text>
+            </View>
+          )}
+        </SafeAreaView>
+      </View>
+    </Modal>
+  );
+}
+
+export const PhotoDetailModal = memo(PhotoDetailModalComponent);
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.chrome,
+  },
+  safeArea: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.base,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    backgroundColor: colors.background,
+  },
+  headerButton: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: fontSize.lg,
+    fontFamily: 'Lato_700Bold',
+    color: colors.text,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    fontSize: fontSize.base,
+    fontFamily: 'Lato_400Regular',
+    color: colors.error,
+    textTransform: 'uppercase',
+  },
+  content: {
+    flex: 1,
+  },
+  contentContainer: {
+    padding: spacing.base,
+    gap: spacing.lg,
+  },
+  imageContainer: {
+    aspectRatio: 4 / 3,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    overflow: 'hidden',
+  },
+  image: {
+    flex: 1,
+  },
+  metadataSection: {
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.md,
+    padding: spacing.base,
+    gap: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  metadataRow: {
+    flexDirection: 'row',
+    gap: spacing.lg,
+  },
+  metadataItem: {
+    flex: 1,
+  },
+  metadataLabel: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_400Regular',
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    marginBottom: 2,
+  },
+  metadataValue: {
+    fontSize: fontSize.base,
+    fontFamily: 'Lato_700Bold',
+    color: colors.text,
+  },
+  analysisStatus: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingTop: spacing.md,
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  statusText: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_700Bold',
+    color: colors.success,
+    textTransform: 'uppercase',
+  },
+  statusTextPending: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_700Bold',
+    color: colors.warning,
+    textTransform: 'uppercase',
+  },
+});

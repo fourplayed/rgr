@@ -17,7 +17,8 @@ import { useDepots, findNearestDepot } from '../../src/hooks/useDepots';
 import { useAuthStore } from '../../src/store/authStore';
 import { useLocationStore } from '../../src/store/locationStore';
 import { ScanConfirmSheet } from '../../src/components/scanner/ScanConfirmSheet';
-import type { Asset, Depot } from '@rgr/shared';
+import { PhotoPromptSheet, CameraCapture } from '../../src/components/photos';
+import type { Asset, Depot, ScanEvent } from '@rgr/shared';
 import type { CachedLocationData } from '../../src/store/locationStore';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../src/theme/spacing';
@@ -42,6 +43,10 @@ export default function ScanScreen() {
   const [matchedDepot, setMatchedDepot] = useState<{ depot: Depot; distanceKm: number } | null>(null);
   const [effectiveLocation, setEffectiveLocation] = useState<CachedLocationData | null>(null);
   const [workflowLog, setWorkflowLog] = useState<LogEntry[]>([]);
+  const [showPhotoPrompt, setShowPhotoPrompt] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
+  const [lastScanEventId, setLastScanEventId] = useState<string | null>(null);
+  const [completedAsset, setCompletedAsset] = useState<Asset | null>(null);
   const logScrollRef = useRef<ScrollView>(null);
 
   const addLog = useCallback((message: string, type: LogEntry['type'] = 'info') => {
@@ -142,7 +147,7 @@ export default function ScanScreen() {
     try {
       addLog('Submitting scan event...', 'info');
       // Create the scan event
-      await createScan({
+      const scanEvent = await createScan({
         assetId: scannedAsset.id,
         scannedBy: user.id,
         scanType: 'qr_scan',
@@ -170,18 +175,11 @@ export default function ScanScreen() {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       addLog('Scan completed successfully!', 'success');
 
-      // Close sheet and reset
+      // Close confirm sheet and show photo prompt
       setShowConfirmSheet(false);
-      setScannedAsset(null);
-      setMatchedDepot(null);
-      setEffectiveLocation(null);
-      resetScanner();
-
-      // Show success message with depot info
-      const depotInfo = matchedDepot
-        ? ` → ${matchedDepot.depot.name}`
-        : '';
-      Alert.alert('Success', `Asset ${scannedAsset.assetNumber} scanned${depotInfo}`);
+      setLastScanEventId(scanEvent.id);
+      setCompletedAsset(scannedAsset);
+      setShowPhotoPrompt(true);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to submit scan';
       addLog(`Submit failed: ${message}`, 'error');
@@ -196,6 +194,49 @@ export default function ScanScreen() {
     setEffectiveLocation(null);
     resetScanner();
   };
+
+  const handlePhotoPromptAddPhoto = useCallback(() => {
+    setShowPhotoPrompt(false);
+    setShowCamera(true);
+  }, []);
+
+  const handlePhotoPromptSkip = useCallback(() => {
+    // Complete the flow without photo
+    const depotInfo = matchedDepot
+      ? ` → ${matchedDepot.depot.name}`
+      : '';
+    Alert.alert('Success', `Asset ${completedAsset?.assetNumber ?? ''} scanned${depotInfo}`);
+
+    // Reset all state
+    setShowPhotoPrompt(false);
+    setScannedAsset(null);
+    setCompletedAsset(null);
+    setMatchedDepot(null);
+    setEffectiveLocation(null);
+    setLastScanEventId(null);
+    resetScanner();
+  }, [completedAsset, matchedDepot, resetScanner]);
+
+  const handleCameraClose = useCallback(() => {
+    setShowCamera(false);
+    // Complete the flow after camera closes (whether photo was taken or not)
+    const depotInfo = matchedDepot
+      ? ` → ${matchedDepot.depot.name}`
+      : '';
+    Alert.alert('Success', `Asset ${completedAsset?.assetNumber ?? ''} scanned${depotInfo}`);
+
+    // Reset all state
+    setScannedAsset(null);
+    setCompletedAsset(null);
+    setMatchedDepot(null);
+    setEffectiveLocation(null);
+    setLastScanEventId(null);
+    resetScanner();
+  }, [completedAsset, matchedDepot, resetScanner]);
+
+  const handlePhotoUploaded = useCallback(() => {
+    addLog('Photo uploaded successfully', 'success');
+  }, [addLog]);
 
   // Track if initial permission requests have been made
   const hasRequestedPermissions = useRef(false);
@@ -344,6 +385,23 @@ export default function ScanScreen() {
         onConfirm={handleConfirmScan}
         onCancel={handleCancelScan}
       />
+
+      <PhotoPromptSheet
+        visible={showPhotoPrompt}
+        assetNumber={completedAsset?.assetNumber ?? ''}
+        onAddPhoto={handlePhotoPromptAddPhoto}
+        onSkip={handlePhotoPromptSkip}
+      />
+
+      {completedAsset && (
+        <CameraCapture
+          visible={showCamera}
+          assetId={completedAsset.id}
+          scanEventId={lastScanEventId}
+          onClose={handleCameraClose}
+          onPhotoUploaded={handlePhotoUploaded}
+        />
+      )}
     </View>
   );
 }

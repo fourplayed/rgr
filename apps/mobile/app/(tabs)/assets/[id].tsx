@@ -22,8 +22,11 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
 import { useAsset, useAssetScans, useAssetMaintenance } from '../../../src/hooks/useAssetData';
-import type { ScanEventWithScanner, MaintenanceRecord } from '@rgr/shared';
+import { useAssetPhotos } from '../../../src/hooks/usePhotos';
+import type { ScanEventWithScanner, MaintenanceRecord, PhotoListItem } from '@rgr/shared';
 import { AssetInfoCard } from '../../../src/components/assets/AssetInfoCard';
+import { PhotoGallery, PhotoDetailModal, CameraCapture } from '../../../src/components/photos';
+import { CollapsibleSection } from '../../../src/components/common/CollapsibleSection';
 import { useAuthStore } from '../../../src/store/authStore';
 import { formatRelativeTime } from '@rgr/shared';
 import { colors } from '../../../src/theme/colors';
@@ -40,7 +43,8 @@ import {
 
 type ActivityItem =
   | { type: 'scan'; data: ScanEventWithScanner; timestamp: Date }
-  | { type: 'maintenance'; data: MaintenanceRecord; timestamp: Date };
+  | { type: 'maintenance'; data: MaintenanceRecord; timestamp: Date }
+  | { type: 'photo'; data: PhotoListItem; timestamp: Date };
 
 export default function AssetDetailScreen() {
   const router = useRouter();
@@ -51,6 +55,9 @@ export default function AssetDetailScreen() {
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const [showQRModal, setShowQRModal] = useState(false);
   const [activityExpanded, setActivityExpanded] = useState(true);
+  const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
+  const [showPhotoDetail, setShowPhotoDetail] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
   const rotateAnim = useRef(new Animated.Value(1)).current;
 
   const isSuperuser = user?.role === 'superuser';
@@ -66,6 +73,24 @@ export default function AssetDetailScreen() {
   const handleToggleActivity = useCallback(() => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setActivityExpanded(prev => !prev);
+  }, []);
+
+  const handlePhotoPress = useCallback((photo: PhotoListItem) => {
+    setSelectedPhotoId(photo.id);
+    setShowPhotoDetail(true);
+  }, []);
+
+  const handleClosePhotoDetail = useCallback(() => {
+    setShowPhotoDetail(false);
+    setSelectedPhotoId(null);
+  }, []);
+
+  const handleAddPhoto = useCallback(() => {
+    setShowCamera(true);
+  }, []);
+
+  const handleCloseCamera = useCallback(() => {
+    setShowCamera(false);
   }, []);
 
   const chevronRotate = rotateAnim.interpolate({
@@ -88,7 +113,11 @@ export default function AssetDetailScreen() {
     data: maintenance = [],
   } = useAssetMaintenance(id);
 
-  // Merge scans and maintenance into a unified activity feed
+  const {
+    data: photos = [],
+  } = useAssetPhotos(id);
+
+  // Merge scans, maintenance, and photos into a unified activity feed
   // Optimization: Sort by timestamp string first, slice, then create Date objects
   // This avoids creating Date objects for items we won't display
   const recentActivity: ActivityItem[] = useMemo(() => {
@@ -103,6 +132,11 @@ export default function AssetDetailScreen() {
         data: m,
         timestampStr: m.updatedAt || m.createdAt,
       })),
+      ...photos.map(photo => ({
+        type: 'photo' as const,
+        data: photo,
+        timestampStr: photo.createdAt,
+      })),
     ]
       .sort((a, b) => b.timestampStr.localeCompare(a.timestampStr))
       .slice(0, 10);
@@ -113,7 +147,7 @@ export default function AssetDetailScreen() {
       data: item.data,
       timestamp: new Date(item.timestampStr),
     })) as ActivityItem[];
-  }, [scans, maintenance]);
+  }, [scans, maintenance, photos]);
 
   // Compute next service date from scheduled maintenance
   const nextService = maintenance
@@ -190,6 +224,15 @@ export default function AssetDetailScreen() {
           nextServiceDate={nextService?.scheduledDate}
         />
 
+        {/* Photos Section */}
+        <CollapsibleSection title="Photos" defaultExpanded={true} variant="flat">
+          <PhotoGallery
+            assetId={id}
+            onPhotoPress={handlePhotoPress}
+            onAddPhoto={handleAddPhoto}
+          />
+        </CollapsibleSection>
+
         {/* Recent Activity */}
         <View style={styles.activitySectionHeader}>
           <Text style={styles.activitySectionTitle}>Recent Activity</Text>
@@ -217,16 +260,22 @@ export default function AssetDetailScreen() {
           ) : (
             <View style={styles.activityList}>
             {recentActivity.map((item) => {
-              const activityColor = getScanTypeColor(item.type === 'scan' ? item.data.scanType : 'maintenance');
+              // Determine activity type for styling
+              const activityType = item.type === 'scan'
+                ? item.data.scanType
+                : item.type === 'photo'
+                  ? 'photo_upload'
+                  : 'maintenance';
+              const activityColor = getScanTypeColor(activityType);
 
               return (
               <View key={item.data.id} style={[styles.activityCard, { borderLeftWidth: 4, borderLeftColor: activityColor }]}>
                 <View style={styles.activityCardContent}>
                   <View style={styles.activityIconContainer}>
                     <Ionicons
-                      name={getScanTypeIcon(item.type === 'scan' ? item.data.scanType : 'maintenance')}
+                      name={getScanTypeIcon(activityType)}
                       size={31}
-                      color={getScanTypeColor(item.type === 'scan' ? item.data.scanType : 'maintenance')}
+                      color={activityColor}
                     />
                   </View>
                   <View style={styles.activityDetails}>
@@ -234,7 +283,9 @@ export default function AssetDetailScreen() {
                       <Text style={styles.activityTitle}>
                         {item.type === 'scan'
                           ? formatScanTypeLabel(item.data.scanType)
-                          : item.data.maintenanceType?.replace(/_/g, ' ') || 'Maintenance'}
+                          : item.type === 'photo'
+                            ? 'Photo Upload'
+                            : item.data.maintenanceType?.replace(/_/g, ' ') || 'Maintenance'}
                       </Text>
                       {item.type === 'scan' && item.data.locationDescription && (() => {
                         const depotCode = getDepotCodeFromLocation(item.data.locationDescription);
@@ -246,15 +297,28 @@ export default function AssetDetailScreen() {
                           </View>
                         );
                       })()}
+                      {item.type === 'photo' && item.data.hazardCount > 0 && (
+                        <View style={[styles.locationBadge, { backgroundColor: item.data.maxSeverity === 'critical' || item.data.maxSeverity === 'high' ? colors.error : colors.warning }]}>
+                          <Text style={[styles.locationText, { color: colors.textInverse }]}>
+                            {item.data.hazardCount} Hazard{item.data.hazardCount !== 1 ? 's' : ''}
+                          </Text>
+                        </View>
+                      )}
                     </View>
                     <View style={styles.activityFooter}>
                       <Text style={styles.activityType}>
                         {item.type === 'scan'
                           ? item.data.scannerName || 'Unknown'
-                          : item.data.description || item.data.status.replace(/_/g, ' ')}
+                          : item.type === 'photo'
+                            ? item.data.primaryCategory?.replace(/_/g, ' ') || item.data.photoType.replace(/_/g, ' ')
+                            : item.data.description || item.data.status.replace(/_/g, ' ')}
                       </Text>
                       <Text style={styles.activityTime}>
-                        {formatRelativeTime(item.type === 'scan' ? item.data.createdAt : item.data.updatedAt || item.data.createdAt)}
+                        {formatRelativeTime(
+                          item.type === 'maintenance'
+                            ? (item.data.updatedAt || item.data.createdAt)
+                            : item.data.createdAt
+                        )}
                       </Text>
                     </View>
                   </View>
@@ -300,6 +364,21 @@ export default function AssetDetailScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Photo Detail Modal */}
+      <PhotoDetailModal
+        visible={showPhotoDetail}
+        photoId={selectedPhotoId}
+        assetId={id}
+        onClose={handleClosePhotoDetail}
+      />
+
+      {/* Camera Capture Modal */}
+      <CameraCapture
+        visible={showCamera}
+        assetId={id}
+        onClose={handleCloseCamera}
+      />
     </SafeAreaView>
     </View>
   );

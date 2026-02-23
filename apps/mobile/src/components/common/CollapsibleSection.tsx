@@ -14,9 +14,11 @@ interface CollapsibleSectionProps {
   children: React.ReactNode;
   defaultExpanded?: boolean;
   badge?: React.ReactNode;
+  /** Use 'flat' for no container styling (title on background) */
+  variant?: 'contained' | 'flat';
 }
 
-export function CollapsibleSection({ title, children, defaultExpanded = true, badge }: CollapsibleSectionProps) {
+export function CollapsibleSection({ title, children, defaultExpanded = true, badge, variant = 'contained' }: CollapsibleSectionProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   const toggle = () => {
@@ -24,20 +26,24 @@ export function CollapsibleSection({ title, children, defaultExpanded = true, ba
     setExpanded(!expanded);
   };
 
+  const isFlat = variant === 'flat';
+
   return (
-    <View style={styles.container}>
-      <TouchableOpacity style={styles.header} onPress={toggle} activeOpacity={0.7}>
+    <View style={isFlat ? styles.containerFlat : styles.container}>
+      <View style={isFlat ? styles.headerFlat : styles.header}>
         <View style={styles.titleRow}>
-          <Text style={styles.title}>{title}</Text>
+          <Text style={isFlat ? styles.titleFlat : styles.title}>{title}</Text>
           {badge}
         </View>
-        <Ionicons
-          name={expanded ? 'chevron-up' : 'chevron-down'}
-          size={20}
-          color={colors.textSecondary}
-        />
-      </TouchableOpacity>
-      {expanded && <View style={styles.content}>{children}</View>}
+        <TouchableOpacity style={styles.chevronButton} onPress={toggle} activeOpacity={0.7}>
+          <Ionicons
+            name={expanded ? 'chevron-up' : 'chevron-down'}
+            size={20}
+            color={colors.text}
+          />
+        </TouchableOpacity>
+      </View>
+      {expanded && <View style={isFlat ? styles.contentFlat : styles.content}>{children}</View>}
     </View>
   );
 }
@@ -50,11 +56,19 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     overflow: 'hidden',
   },
+  containerFlat: {
+    // No background or border - sits on page background
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: spacing.base,
+  },
+  headerFlat: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   titleRow: {
     flexDirection: 'row',
@@ -66,8 +80,31 @@ const styles = StyleSheet.create({
     fontFamily: 'Lato_700Bold',
     color: colors.text,
   },
+  titleFlat: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_700Bold',
+    color: colors.text,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  chevronButton: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 3,
+  },
   content: {
     paddingHorizontal: spacing.base,
     paddingBottom: spacing.base,
+  },
+  contentFlat: {
+    marginTop: spacing.sm,
   },
 });
