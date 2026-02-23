@@ -181,7 +181,7 @@ export const AssetFilterPanel = memo(function AssetFilterPanel({
             </View>
           )}
         </View>
-        <TouchableOpacity style={styles.chevronButton} onPress={handleToggle} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.chevronButton} onPress={handleToggle} activeOpacity={0.7} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <Animated.View style={{ transform: [{ rotate: chevronRotate }] }}>
             <Ionicons name="chevron-down" size={20} color={colors.text} />
           </Animated.View>

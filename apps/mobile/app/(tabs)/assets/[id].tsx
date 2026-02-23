@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -29,73 +29,14 @@ import { formatRelativeTime } from '@rgr/shared';
 import { colors } from '../../../src/theme/colors';
 import { spacing, fontSize, borderRadius } from '../../../src/theme/spacing';
 import { CONTENT_TOP_OFFSET } from '../../../src/theme/layout';
-
-const formatScanTypeLabel = (scanType: string): string => {
-  return scanType
-    .replace(/_/g, ' ')
-    .split(' ')
-    .map(word => {
-      const upper = word.toUpperCase();
-      if (upper === 'QR' || upper === 'NFC' || upper === 'GPS') {
-        return upper;
-      }
-      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-    })
-    .join(' ');
-};
-
-const getActivityIcon = (activityType: string): keyof typeof Ionicons.glyphMap => {
-  switch (activityType) {
-    case 'qr_scan':
-    case 'nfc_scan':
-    case 'gps_auto':
-    case 'manual_entry':
-      return 'qr-code-outline';
-    case 'photo_upload':
-      return 'camera-outline';
-    case 'maintenance':
-      return 'construct-outline';
-    default:
-      return 'scan-outline';
-  }
-};
-
-const getActivityColor = (activityType: string): string => {
-  switch (activityType) {
-    case 'qr_scan':
-    case 'nfc_scan':
-    case 'gps_auto':
-    case 'manual_entry':
-      return colors.electricBlue;
-    case 'photo_upload':
-      return '#34C759';
-    case 'maintenance':
-      return '#FF9500';
-    default:
-      return colors.electricBlue;
-  }
-};
-
-const getDepotCodeFromLocation = (locationDescription: string): keyof typeof colors.depot | null => {
-  const location = locationDescription.toLowerCase();
-  if (location.includes('karratha')) return 'kar';
-  if (location.includes('perth')) return 'per';
-  if (location.includes('wubin')) return 'wub';
-  if (location.includes('newman')) return 'new';
-  if (location.includes('hedland')) return 'hed';
-  if (location.includes('carnarvon')) return 'car';
-  return null;
-};
-
-const getLocationBadgeColors = (locationDescription: string): { bg: string; text: string } => {
-  const depotCode = getDepotCodeFromLocation(locationDescription);
-  if (!depotCode) {
-    return { bg: colors.chrome, text: colors.text };
-  }
-  const bg = colors.depot[depotCode];
-  const text = depotCode === 'kar' ? colors.text : colors.textInverse;
-  return { bg, text };
-};
+import {
+  getScanTypeIcon,
+  getScanTypeColor,
+  formatScanTypeLabel,
+  getDepotCodeFromLocation,
+  getLocationBadgeColors,
+  DEPOT_NAMES,
+} from '../../../src/utils/scanFormatters';
 
 type ActivityItem =
   | { type: 'scan'; data: ScanEventWithScanner; timestamp: Date }
@@ -119,10 +60,10 @@ export default function AssetDetailScreen() {
     }).start();
   }, [activityExpanded, rotateAnim]);
 
-  const handleToggleActivity = () => {
+  const handleToggleActivity = useCallback(() => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setActivityExpanded(!activityExpanded);
-  };
+    setActivityExpanded(prev => !prev);
+  }, []);
 
   const chevronRotate = rotateAnim.interpolate({
     inputRange: [0, 1],
@@ -226,6 +167,7 @@ export default function AssetDetailScreen() {
             style={styles.chevronButton}
             onPress={handleToggleActivity}
             activeOpacity={0.7}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <Animated.View style={{ transform: [{ rotate: chevronRotate }] }}>
               <Ionicons
@@ -245,16 +187,16 @@ export default function AssetDetailScreen() {
           ) : (
             <View style={styles.activityList}>
             {recentActivity.map((item) => {
-              const activityColor = getActivityColor(item.type === 'scan' ? item.data.scanType : 'maintenance');
+              const activityColor = getScanTypeColor(item.type === 'scan' ? item.data.scanType : 'maintenance');
 
               return (
               <View key={item.data.id} style={[styles.activityCard, { borderLeftWidth: 4, borderLeftColor: activityColor }]}>
                 <View style={styles.activityCardContent}>
                   <View style={styles.activityIconContainer}>
                     <Ionicons
-                      name={getActivityIcon(item.type === 'scan' ? item.data.scanType : 'maintenance')}
+                      name={getScanTypeIcon(item.type === 'scan' ? item.data.scanType : 'maintenance')}
                       size={31}
-                      color={getActivityColor(item.type === 'scan' ? item.data.scanType : 'maintenance')}
+                      color={getScanTypeColor(item.type === 'scan' ? item.data.scanType : 'maintenance')}
                     />
                   </View>
                   <View style={styles.activityDetails}>
@@ -268,13 +210,9 @@ export default function AssetDetailScreen() {
                         const depotCode = getDepotCodeFromLocation(item.data.locationDescription);
                         if (!depotCode) return null;
                         const badgeColors = getLocationBadgeColors(item.data.locationDescription);
-                        const depotNames: Record<string, string> = {
-                          kar: 'Karratha', per: 'Perth', wub: 'Wubin',
-                          new: 'Newman', hed: 'Hedland', car: 'Carnarvon',
-                        };
                         return (
                           <View style={[styles.locationBadge, { backgroundColor: badgeColors.bg }]}>
-                            <Text style={[styles.locationText, { color: badgeColors.text }]}>{depotNames[depotCode]}</Text>
+                            <Text style={[styles.locationText, { color: badgeColors.text }]}>{DEPOT_NAMES[depotCode]}</Text>
                           </View>
                         );
                       })()}

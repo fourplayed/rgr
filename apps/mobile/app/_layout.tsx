@@ -22,12 +22,16 @@ import { useAuthStore } from '../src/store/authStore';
 import { useLocationStore } from '../src/store/locationStore';
 import { ErrorBoundary } from '../src/components/common/ErrorBoundary';
 import { OfflineBanner } from '../src/components/common/OfflineBanner';
+import { colors } from '../src/theme/colors';
 
-// Set default text style
+// Set default text style globally
+// Note: defaultProps is deprecated in React 18.3+ but still works in React Native.
+// This is a pragmatic solution to avoid wrapping every Text component.
+// TODO: Consider migrating to a custom AppText component in future refactoring.
 const defaultTextStyle = { fontFamily: 'Lato_400Regular' };
-// @ts-expect-error - Override default text style (defaultProps is deprecated but still works)
+// @ts-expect-error - defaultProps is deprecated but functional in RN; avoids wrapping every Text
 Text.defaultProps = Text.defaultProps || {};
-// @ts-expect-error - Setting default style on Text component
+// @ts-expect-error - Setting default font family on all Text components
 Text.defaultProps.style = defaultTextStyle;
 
 // Initialize Supabase client
@@ -84,6 +88,8 @@ export default function RootLayout() {
     };
 
     initAuth();
+    // Intentionally run only on mount - attemptAutoLogin, checkAuth, and resolveDepot
+    // are stable store functions that should not trigger re-runs
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -105,13 +111,14 @@ export default function RootLayout() {
       // User is authenticated and on auth screens
       router.replace('/(tabs)');
     }
+    // router.replace is stable and should not be in deps to avoid navigation loops
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, isLoading, segments, navigationState?.key]);
 
   if (!fontsLoaded) {
     return (
       <View style={styles.loadingContainer}>
-        <LoadingDots color="#0000FF" size={12} />
+        <LoadingDots color={colors.electricBlue} size={12} />
       </View>
     );
   }

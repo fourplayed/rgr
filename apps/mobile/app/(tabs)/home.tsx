@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -15,83 +15,19 @@ import { useMyRecentScans, useAssetCountsByStatus } from '../../src/hooks/useAss
 import { useAuthStore } from '../../src/store/authStore';
 import { useLocationStore } from '../../src/store/locationStore';
 import { formatRelativeTime, UserRoleLabels } from '@rgr/shared';
+import type { ScanEventWithScanner } from '@rgr/shared';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, borderRadius } from '../../src/theme/spacing';
 import { CONTENT_TOP_OFFSET } from '../../src/theme/layout';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
-
-// Map scan types to icons
-const getScanTypeIcon = (scanType: string): keyof typeof Ionicons.glyphMap => {
-  switch (scanType) {
-    case 'qr_scan':
-    case 'nfc_scan':
-    case 'gps_auto':
-    case 'manual_entry':
-      return 'qr-code-outline';
-    case 'photo_upload':
-      return 'camera-outline';
-    case 'maintenance':
-      return 'construct-outline';
-    default:
-      return 'scan-outline';
-  }
-};
-
-const getScanTypeColor = (scanType: string): string => {
-  switch (scanType) {
-    case 'qr_scan':
-    case 'nfc_scan':
-    case 'gps_auto':
-    case 'manual_entry':
-      return colors.electricBlue; // Match Total Assets stat card
-    case 'photo_upload':
-      return '#34C759'; // Green for photo upload
-    case 'maintenance':
-      return '#FF9500'; // Orange for maintenance
-    default:
-      return colors.electricBlue;
-  }
-};
-
-const formatScanTypeLabel = (scanType: string): string => {
-  return scanType
-    .replace(/_/g, ' ')
-    .split(' ')
-    .map(word => {
-      const upper = word.toUpperCase();
-      if (upper === 'QR' || upper === 'NFC' || upper === 'GPS') {
-        return upper;
-      }
-      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-    })
-    .join(' ');
-};
-
-const getDepotCodeFromLocation = (locationDescription: string): keyof typeof colors.depot | null => {
-  const location = locationDescription.toLowerCase();
-  if (location.includes('karratha')) return 'kar';
-  if (location.includes('perth')) return 'per';
-  if (location.includes('wubin')) return 'wub';
-  if (location.includes('newman')) return 'new';
-  if (location.includes('hedland')) return 'hed';
-  if (location.includes('carnarvon')) return 'car';
-  return null;
-};
-
-const getLocationBadgeColors = (locationDescription: string): { bg: string; text: string } => {
-  const depotCode = getDepotCodeFromLocation(locationDescription);
-  if (!depotCode) {
-    return { bg: colors.chrome, text: colors.text };
-  }
-  const bg = colors.depot[depotCode];
-  const text = depotCode === 'kar' ? colors.text : colors.textInverse;
-  return { bg, text };
-};
-
-const depotNames: Record<string, string> = {
-  kar: 'Karratha', per: 'Perth', wub: 'Wubin',
-  new: 'Newman', hed: 'Hedland', car: 'Carnarvon',
-};
+import {
+  getScanTypeIcon,
+  getScanTypeColor,
+  formatScanTypeLabel,
+  getDepotCodeFromLocation,
+  getLocationBadgeColors,
+  DEPOT_NAMES,
+} from '../../src/utils/scanFormatters';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -117,10 +53,10 @@ export default function HomeScreen() {
   const isLoading = scansLoading || statsLoading;
   const isRefetching = scansRefetching || statsRefetching;
 
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     refetchScans();
     refetchStats();
-  };
+  }, [refetchScans, refetchStats]);
 
   // Get time-based greeting
   const hour = new Date().getHours();
@@ -183,6 +119,62 @@ export default function HomeScreen() {
     runAnimation();
   }, [greetingOpacity, usernameOpacity, geofenceOpacity]);
 
+  const totalAssets = assetStats?.total ?? 0;
+  const servicedCount = assetStats?.serviced ?? 0;
+  const outOfServiceCount = assetStats?.outOfService ?? 0;
+
+  // Memoize stats cards to prevent recreation on every render
+  // Note: Must be before any early returns to maintain hook order
+  const statsCards = useMemo(() => [
+    { label: 'Total Assets', value: totalAssets, color: colors.electricBlue, icon: 'cube-outline' as const },
+    { label: 'Serviced', value: servicedCount, color: colors.status.active, icon: 'checkmark-circle-outline' as const },
+    { label: 'Total Scans', value: scans.length, color: colors.status.maintenance, icon: 'qr-code-outline' as const },
+    { label: 'Out of Service', value: outOfServiceCount, color: colors.status.outOfService, icon: 'close-circle-outline' as const },
+  ], [totalAssets, servicedCount, scans.length, outOfServiceCount]);
+
+  // Memoized render function for FlatList items
+  // Note: Must be before any early returns to maintain hook order
+  const renderScanItem = useCallback(({ item }: { item: ScanEventWithScanner }) => {
+    const activityColor = getScanTypeColor(item.scanType);
+    const depotCode = item.locationDescription ? getDepotCodeFromLocation(item.locationDescription) : null;
+    const badgeColors = item.locationDescription ? getLocationBadgeColors(item.locationDescription) : null;
+
+    return (
+      <TouchableOpacity
+        style={[styles.scanCard, { borderLeftWidth: 4, borderLeftColor: activityColor }]}
+        onPress={() => router.navigate(`/(tabs)/assets/${item.assetId}`)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.scanCardContent}>
+          <View style={styles.scanIconContainer}>
+            <Ionicons name={getScanTypeIcon(item.scanType)} size={31} color={activityColor} />
+          </View>
+          <View style={styles.scanDetails}>
+            <View style={styles.scanHeader}>
+              <Text style={styles.assetNumber}>
+                {item.assetNumber || 'Unknown Asset'}
+              </Text>
+              {depotCode && badgeColors && (
+                <View style={[styles.depotLocationBadge, { backgroundColor: badgeColors.bg }]}>
+                  <Text style={[styles.depotLocationText, { color: badgeColors.text }]}>{DEPOT_NAMES[depotCode]}</Text>
+                </View>
+              )}
+            </View>
+            <View style={styles.scanFooter}>
+              <Text style={styles.scanTypeLabel}>
+                {formatScanTypeLabel(item.scanType)}
+              </Text>
+              <Text style={styles.scanTime}>
+                {formatRelativeTime(item.createdAt)}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  }, [router]);
+
+  // Early return must be after all hooks to maintain hook order
   if (!user) {
     return null;
   }
@@ -190,23 +182,12 @@ export default function HomeScreen() {
   const roleLabel = UserRoleLabels[user.role] || user.role;
   const recentScans = scans.slice(0, 5);
 
-  const totalAssets = assetStats?.total ?? 0;
-  const servicedCount = assetStats?.serviced ?? 0;
-  const outOfServiceCount = assetStats?.outOfService ?? 0;
-
-  const statsCards = [
-    { label: 'Total Assets', value: totalAssets, color: colors.electricBlue, icon: 'cube-outline' as const },
-    { label: 'Serviced', value: servicedCount, color: colors.status.active, icon: 'checkmark-circle-outline' as const },
-    { label: 'Total Scans', value: scans.length, color: colors.status.maintenance, icon: 'qr-code-outline' as const },
-    { label: 'Out of Service', value: outOfServiceCount, color: colors.status.outOfService, icon: 'close-circle-outline' as const },
-  ];
-
   if (isLoading) {
     return (
       <View style={styles.container}>
         <SafeAreaView style={styles.containerInner}>
           <View style={styles.centerContent}>
-            <LoadingDots color="#0000FF" size={12} />
+            <LoadingDots color={colors.electricBlue} size={12} />
           </View>
         </SafeAreaView>
       </View>
@@ -268,45 +249,7 @@ export default function HomeScreen() {
               </View>
             </>
           }
-          renderItem={({ item }) => {
-            const activityColor = getScanTypeColor(item.scanType);
-            const depotCode = item.locationDescription ? getDepotCodeFromLocation(item.locationDescription) : null;
-            const badgeColors = item.locationDescription ? getLocationBadgeColors(item.locationDescription) : null;
-
-            return (
-            <TouchableOpacity
-              style={[styles.scanCard, { borderLeftWidth: 4, borderLeftColor: activityColor }]}
-              onPress={() => router.navigate(`/(tabs)/assets/${item.assetId}`)}
-              activeOpacity={0.7}
-            >
-              <View style={styles.scanCardContent}>
-                <View style={styles.scanIconContainer}>
-                  <Ionicons name={getScanTypeIcon(item.scanType)} size={31} color={activityColor} />
-                </View>
-                <View style={styles.scanDetails}>
-                  <View style={styles.scanHeader}>
-                    <Text style={styles.assetNumber}>
-                      {item.assetNumber || 'Unknown Asset'}
-                    </Text>
-                    {depotCode && badgeColors && (
-                      <View style={[styles.depotLocationBadge, { backgroundColor: badgeColors.bg }]}>
-                        <Text style={[styles.depotLocationText, { color: badgeColors.text }]}>{depotNames[depotCode]}</Text>
-                      </View>
-                    )}
-                  </View>
-                  <View style={styles.scanFooter}>
-                    <Text style={styles.scanTypeLabel}>
-                      {formatScanTypeLabel(item.scanType)}
-                    </Text>
-                    <Text style={styles.scanTime}>
-                      {formatRelativeTime(item.createdAt)}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            </TouchableOpacity>
-            );
-          }}
+          renderItem={renderScanItem}
           contentContainerStyle={styles.listContent}
           refreshControl={
             <RefreshControl
