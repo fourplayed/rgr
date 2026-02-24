@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, ReactNode } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,8 @@ interface PhotoPromptSheetProps {
   assetNumber: string;
   onAddPhoto: () => void;
   onSkip: () => void;
+  /** Optional role-specific content (e.g., photo type picker) */
+  children?: ReactNode;
 }
 
 function PhotoPromptSheetComponent({
@@ -22,6 +24,7 @@ function PhotoPromptSheetComponent({
   assetNumber,
   onAddPhoto,
   onSkip,
+  children,
 }: PhotoPromptSheetProps) {
   return (
     <Modal
@@ -51,6 +54,9 @@ function PhotoPromptSheetComponent({
               Capture a photo of the freight on{' '}
               <Text style={styles.assetNumber}>{assetNumber}</Text> for analysis
             </Text>
+
+            {/* Role-specific content (e.g., photo type picker) */}
+            {children}
 
             <View style={styles.buttonRow}>
               <TouchableOpacity

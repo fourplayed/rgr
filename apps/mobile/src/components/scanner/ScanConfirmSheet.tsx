@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import {
   View,
   Text,
@@ -22,6 +22,8 @@ interface ScanConfirmSheetProps {
   isSubmitting: boolean;
   onConfirm: () => void;
   onCancel: () => void;
+  /** Optional role-specific content (e.g., maintenance checkbox) */
+  children?: ReactNode;
 }
 
 export function ScanConfirmSheet({
@@ -32,6 +34,7 @@ export function ScanConfirmSheet({
   isSubmitting,
   onConfirm,
   onCancel,
+  children,
 }: ScanConfirmSheetProps) {
   if (!asset) return null;
 
@@ -109,6 +112,9 @@ export function ScanConfirmSheet({
                 </Text>
               </View>
             )}
+
+            {/* Role-specific content (e.g., maintenance checkbox) */}
+            {children}
 
             <View style={styles.buttonRow}>
               <TouchableOpacity

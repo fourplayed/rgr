@@ -224,12 +224,12 @@ export default function HomeScreen() {
                   <View>
                     <Animated.Text style={[styles.greeting, { opacity: greetingOpacity }]}>{greeting},</Animated.Text>
                     <Animated.Text style={[styles.userName, { opacity: usernameOpacity }]}>{user.fullName}</Animated.Text>
-                    <Animated.View style={{ opacity: geofenceOpacity }}>
+                    <Animated.View style={{ opacity: geofenceOpacity, alignSelf: 'flex-end' }}>
                       {isResolvingDepot ? (
                         <LoadingDots color={colors.textSecondary} size={6} />
                       ) : resolvedDepot ? (
                         <Text style={styles.geofenceText}>
-                          Your current location is within the <Text style={styles.geofenceLocation}>{resolvedDepot.depot.name}</Text> geofence
+                          Geofencing has resolved your location to <Text style={styles.geofenceLocation}>{resolvedDepot.depot.name}</Text>
                         </Text>
                       ) : (
                         <Text style={styles.geofenceText}>You are not within any depot geofence</Text>
@@ -320,6 +320,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.base,
     fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
+    marginTop: -5,
   },
   userName: {
     fontSize: fontSize.userName,

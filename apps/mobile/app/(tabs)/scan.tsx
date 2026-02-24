@@ -6,29 +6,29 @@ import {
   SafeAreaView,
   Alert,
   TouchableOpacity,
-  ScrollView,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAssetByQRCode, useCreateScanEvent, useUpdateAsset } from '../../src/hooks/useAssetData';
+import { useCreateMaintenance } from '../../src/hooks/useMaintenanceData';
 import { useLocation } from '../../src/hooks/useLocation';
 import { useQRScanner } from '../../src/hooks/useQRScanner';
 import { useDepots, findNearestDepot } from '../../src/hooks/useDepots';
 import { useAuthStore } from '../../src/store/authStore';
 import { useLocationStore } from '../../src/store/locationStore';
+import { useUserPermissions } from '../../src/contexts/UserPermissionsContext';
+import { useAssetCountMode } from '../../src/hooks/useAssetCountMode';
 import { ScanConfirmSheet } from '../../src/components/scanner/ScanConfirmSheet';
+import { MaintenanceCheckbox } from '../../src/components/scanner/MaintenanceCheckbox';
 import { PhotoPromptSheet, CameraCapture } from '../../src/components/photos';
+import { PhotoTypePicker, type PhotoType } from '../../src/components/photos/PhotoTypePicker';
 import type { Asset, Depot } from '@rgr/shared';
 import type { CachedLocationData } from '../../src/store/locationStore';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../src/theme/spacing';
 import { CONTENT_TOP_OFFSET } from '../../src/theme/layout';
-
-type LogEntry = {
-  timestamp: Date;
-  message: string;
-  type: 'info' | 'success' | 'error' | 'warning';
-};
+import { logger } from '../../src/utils/logger';
 
 export default function ScanScreen() {
   const { user } = useAuthStore();
@@ -37,22 +37,23 @@ export default function ScanScreen() {
     lastLocation: cachedLocation,
     isLocationStale,
   } = useLocationStore();
+  const { canMarkMaintenance, canSelectPhotoType, canPerformAssetCount } = useUserPermissions();
   const [permission, requestPermission] = useCameraPermissions();
   const [scannedAsset, setScannedAsset] = useState<Asset | null>(null);
   const [showConfirmSheet, setShowConfirmSheet] = useState(false);
   const [matchedDepot, setMatchedDepot] = useState<{ depot: Depot; distanceKm: number } | null>(null);
   const [effectiveLocation, setEffectiveLocation] = useState<CachedLocationData | null>(null);
-  const [workflowLog, setWorkflowLog] = useState<LogEntry[]>([]);
   const [showPhotoPrompt, setShowPhotoPrompt] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [lastScanEventId, setLastScanEventId] = useState<string | null>(null);
   const [completedAsset, setCompletedAsset] = useState<Asset | null>(null);
-  const logScrollRef = useRef<ScrollView>(null);
 
-  const addLog = useCallback((message: string, type: LogEntry['type'] = 'info') => {
-    setWorkflowLog(prev => [...prev, { timestamp: new Date(), message, type }]);
-    setTimeout(() => logScrollRef.current?.scrollToEnd({ animated: true }), 100);
-  }, []);
+  // Role-specific state
+  const [markForMaintenance, setMarkForMaintenance] = useState(false);
+  const [selectedPhotoType, setSelectedPhotoType] = useState<PhotoType>('freight');
+
+  // Asset Count mode (managers+)
+  const assetCount = useAssetCountMode();
 
   const {
     requestLocation,
@@ -67,11 +68,12 @@ export default function ScanScreen() {
   const { mutateAsync: lookupAsset } = useAssetByQRCode();
   const { mutateAsync: createScan, isPending: isCreatingScan } = useCreateScanEvent();
   const { mutateAsync: updateAssetMutation } = useUpdateAsset();
+  const { mutateAsync: createMaintenance } = useCreateMaintenance();
 
   const { handleBarCodeScanned, resetScanner } = useQRScanner(
     async (qrData) => {
       try {
-        addLog(`QR code detected: ${qrData.substring(0, 30)}...`, 'info');
+        logger.scan(`QR code detected: ${qrData.substring(0, 30)}...`);
 
         // Check if we have a cached location/depot from sign-in that's still fresh
         const useCachedLocation = cachedLocation && !isLocationStale() && cachedDepot;
@@ -81,27 +83,27 @@ export default function ScanScreen() {
 
         if (useCachedLocation) {
           // Use cached location and depot - skip GPS request
-          addLog('Using cached location from sign-in', 'info');
+          logger.scan('Using cached location from sign-in');
           scanLocation = cachedLocation;
           nearestDepot = cachedDepot;
-          addLog(`Cached location: ${scanLocation.latitude.toFixed(4)}, ${scanLocation.longitude.toFixed(4)}`, 'success');
-          addLog(`Cached depot: ${nearestDepot.depot.name} (${nearestDepot.distanceKm.toFixed(2)} km)`, 'success');
+          logger.scan(`Cached location: ${scanLocation.latitude.toFixed(4)}, ${scanLocation.longitude.toFixed(4)}`);
+          logger.scan(`Cached depot: ${nearestDepot.depot.name} (${nearestDepot.distanceKm.toFixed(2)} km)`);
         } else {
           // Get fresh location
-          addLog('Requesting current location...', 'info');
+          logger.scan('Requesting current location...');
           const freshLocation = await requestLocation();
 
           if (!freshLocation) {
-            addLog('Failed to get location', 'error');
+            logger.scan('Failed to get location');
             Alert.alert('Location Required', 'Unable to get current location');
             resetScanner();
             return;
           }
           scanLocation = freshLocation;
-          addLog(`Location acquired: ${scanLocation.latitude.toFixed(4)}, ${scanLocation.longitude.toFixed(4)}`, 'success');
+          logger.scan(`Location acquired: ${scanLocation.latitude.toFixed(4)}, ${scanLocation.longitude.toFixed(4)}`);
 
           // Find nearest depot to current location
-          addLog('Searching for nearest depot...', 'info');
+          logger.scan('Searching for nearest depot...');
           if (depots && depots.length > 0) {
             nearestDepot = findNearestDepot(
               scanLocation.latitude,
@@ -110,9 +112,9 @@ export default function ScanScreen() {
             );
           }
           if (nearestDepot) {
-            addLog(`Matched depot: ${nearestDepot.depot.name} (${nearestDepot.distanceKm.toFixed(2)} km)`, 'success');
+            logger.scan(`Matched depot: ${nearestDepot.depot.name} (${nearestDepot.distanceKm.toFixed(2)} km)`);
           } else {
-            addLog('No depot matched', 'warning');
+            logger.warn('No depot matched');
           }
         }
 
@@ -120,17 +122,17 @@ export default function ScanScreen() {
         setMatchedDepot(nearestDepot);
 
         // Lookup asset from QR code
-        addLog('Looking up asset...', 'info');
+        logger.scan('Looking up asset...');
         const asset = await lookupAsset(qrData);
-        addLog(`Asset found: ${asset.assetNumber}`, 'success');
+        logger.scan(`Asset found: ${asset.assetNumber}`);
 
         // Show confirmation sheet
-        addLog('Showing confirmation sheet', 'info');
+        logger.scan('Showing confirmation sheet');
         setScannedAsset(asset);
         setShowConfirmSheet(true);
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to scan QR code';
-        addLog(`Error: ${message}`, 'error');
+        logger.error(`Scan error: ${message}`);
         Alert.alert('Scan Failed', message);
         resetScanner();
       }
@@ -139,13 +141,13 @@ export default function ScanScreen() {
 
   const handleConfirmScan = async () => {
     if (!scannedAsset || !effectiveLocation || !user) {
-      addLog('Missing required information', 'error');
+      logger.error('Missing required information for scan');
       Alert.alert('Error', 'Missing required information');
       return;
     }
 
     try {
-      addLog('Submitting scan event...', 'info');
+      logger.scan('Submitting scan event...');
       // Create the scan event
       const scanEvent = await createScan({
         assetId: scannedAsset.id,
@@ -159,30 +161,55 @@ export default function ScanScreen() {
         speed: effectiveLocation.speed,
         locationDescription: matchedDepot ? matchedDepot.depot.name : null,
       });
-      addLog('Scan event created successfully', 'success');
+      logger.scan('Scan event created successfully');
 
       // Update asset's assigned depot if we matched one
       if (matchedDepot) {
-        addLog(`Updating asset depot to ${matchedDepot.depot.name}...`, 'info');
+        logger.scan(`Updating asset depot to ${matchedDepot.depot.name}...`);
         await updateAssetMutation({
           id: scannedAsset.id,
           input: { assignedDepotId: matchedDepot.depot.id },
         });
-        addLog('Asset depot updated', 'success');
+        logger.scan('Asset depot updated');
+      }
+
+      // Create maintenance record if flagged (mechanics+)
+      if (markForMaintenance && canMarkMaintenance) {
+        try {
+          logger.scan('Creating maintenance record...');
+          await createMaintenance({
+            assetId: scannedAsset.id,
+            reportedBy: user.id,
+            title: `Maintenance flagged during scan - ${scannedAsset.assetNumber}`,
+            description: `Asset flagged for maintenance attention during scan at ${matchedDepot?.depot.name ?? 'unknown location'}.`,
+            priority: 'medium',
+            status: 'scheduled',
+            scanEventId: scanEvent.id,
+          });
+          logger.scan('Maintenance record created');
+        } catch (maintError) {
+          // Don't fail the whole scan if maintenance creation fails
+          logger.error('Failed to create maintenance record', maintError);
+          Alert.alert(
+            'Partial Success',
+            'Scan recorded but maintenance flag could not be saved.'
+          );
+        }
       }
 
       // Success haptic and animation
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      addLog('Scan completed successfully!', 'success');
+      logger.scan('Scan completed successfully!');
 
       // Close confirm sheet and show photo prompt
       setShowConfirmSheet(false);
       setLastScanEventId(scanEvent.id);
       setCompletedAsset(scannedAsset);
+      setMarkForMaintenance(false); // Reset for next scan
       setShowPhotoPrompt(true);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to submit scan';
-      addLog(`Submit failed: ${message}`, 'error');
+      logger.error(`Submit failed: ${message}`);
       Alert.alert('Scan Failed', message);
     }
   };
@@ -192,6 +219,7 @@ export default function ScanScreen() {
     setScannedAsset(null);
     setMatchedDepot(null);
     setEffectiveLocation(null);
+    setMarkForMaintenance(false);
     resetScanner();
   };
 
@@ -214,6 +242,7 @@ export default function ScanScreen() {
     setMatchedDepot(null);
     setEffectiveLocation(null);
     setLastScanEventId(null);
+    setSelectedPhotoType('freight');
     resetScanner();
   }, [completedAsset, matchedDepot, resetScanner]);
 
@@ -231,12 +260,42 @@ export default function ScanScreen() {
     setMatchedDepot(null);
     setEffectiveLocation(null);
     setLastScanEventId(null);
+    setSelectedPhotoType('freight');
     resetScanner();
   }, [completedAsset, matchedDepot, resetScanner]);
 
+  // Asset Count handlers (managers+)
+  const handleStartAssetCount = useCallback(() => {
+    if (!cachedDepot) {
+      Alert.alert('No Depot', 'Please wait for location to be determined before starting a count.');
+      return;
+    }
+    assetCount.startCount(cachedDepot.depot.id, cachedDepot.depot.name);
+  }, [cachedDepot, assetCount]);
+
+  const handleEndAssetCount = useCallback(() => {
+    Alert.alert(
+      'End Asset Count',
+      `You have counted ${assetCount.scanCount} assets at ${assetCount.depotName}. End this session?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'End Count',
+          style: 'destructive',
+          onPress: () => {
+            // TODO: Submit to database when API is ready
+            logger.assetCount('Session ended', { count: assetCount.scanCount });
+            assetCount.endCount();
+            Alert.alert('Count Complete', `${assetCount.scanCount} assets recorded.`);
+          },
+        },
+      ]
+    );
+  }, [assetCount]);
+
   const handlePhotoUploaded = useCallback(() => {
-    addLog('Photo uploaded successfully', 'success');
-  }, [addLog]);
+    logger.scan('Photo uploaded successfully');
+  }, []);
 
   // Track if initial permission requests have been made
   const hasRequestedPermissions = useRef(false);
@@ -299,10 +358,25 @@ export default function ScanScreen() {
       >
         <SafeAreaView style={styles.overlay}>
           <View style={styles.header}>
-            <Text style={styles.title}>Scan QR Code</Text>
-            <Text style={styles.subtitle}>
-              Point camera at asset QR code
-            </Text>
+            {assetCount.isActive ? (
+              <>
+                <View style={styles.assetCountBadge}>
+                  <Ionicons name="clipboard-outline" size={14} color={colors.textInverse} />
+                  <Text style={styles.assetCountBadgeText}>Asset Count Mode</Text>
+                </View>
+                <Text style={styles.title}>{assetCount.depotName}</Text>
+                <Text style={styles.subtitle}>
+                  {assetCount.scanCount} assets counted
+                </Text>
+              </>
+            ) : (
+              <>
+                <Text style={styles.title}>Scan QR Code</Text>
+                <Text style={styles.subtitle}>
+                  Point camera at asset QR code
+                </Text>
+              </>
+            )}
           </View>
 
           {/* Scanning frame */}
@@ -337,42 +411,34 @@ export default function ScanScreen() {
                 </Text>
               </View>
             )}
-          </View>
 
-          {/* Workflow Log Overlay */}
-          {workflowLog.length > 0 && (
-            <View style={styles.logOverlay}>
-              <View style={styles.logContainer}>
-                <View style={styles.logHeader}>
-                  <Text style={styles.logTitle}>Workflow Log</Text>
-                  <TouchableOpacity onPress={() => setWorkflowLog([])}>
-                    <Text style={styles.logClear}>Clear</Text>
-                  </TouchableOpacity>
-                </View>
-                <ScrollView
-                  ref={logScrollRef}
-                  style={styles.logScroll}
-                  showsVerticalScrollIndicator={true}
+            {/* Asset Count button for managers+ */}
+            {canPerformAssetCount && (
+              <TouchableOpacity
+                style={[
+                  styles.assetCountButton,
+                  assetCount.isActive && styles.assetCountButtonActive,
+                ]}
+                onPress={assetCount.isActive ? handleEndAssetCount : handleStartAssetCount}
+                accessibilityRole="button"
+                accessibilityLabel={assetCount.isActive ? 'End asset count' : 'Start asset count'}
+              >
+                <Ionicons
+                  name={assetCount.isActive ? 'stop-circle-outline' : 'clipboard-outline'}
+                  size={18}
+                  color={assetCount.isActive ? colors.error : colors.electricBlue}
+                />
+                <Text
+                  style={[
+                    styles.assetCountButtonText,
+                    assetCount.isActive && styles.assetCountButtonTextActive,
+                  ]}
                 >
-                  {workflowLog.map((entry, index) => (
-                    <View key={index} style={styles.logEntry}>
-                      <Text style={styles.logTime}>
-                        {entry.timestamp.toLocaleTimeString()}
-                      </Text>
-                      <Text style={[
-                        styles.logMessage,
-                        entry.type === 'success' && styles.logSuccess,
-                        entry.type === 'error' && styles.logError,
-                        entry.type === 'warning' && styles.logWarning,
-                      ]}>
-                        {entry.message}
-                      </Text>
-                    </View>
-                  ))}
-                </ScrollView>
-              </View>
-            </View>
-          )}
+                  {assetCount.isActive ? 'End Count' : 'Asset Count'}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </SafeAreaView>
       </CameraView>
 
@@ -384,14 +450,31 @@ export default function ScanScreen() {
         isSubmitting={isCreatingScan}
         onConfirm={handleConfirmScan}
         onCancel={handleCancelScan}
-      />
+      >
+        {/* Maintenance checkbox for mechanics+ */}
+        {canMarkMaintenance && (
+          <MaintenanceCheckbox
+            checked={markForMaintenance}
+            onChange={setMarkForMaintenance}
+            disabled={isCreatingScan}
+          />
+        )}
+      </ScanConfirmSheet>
 
       <PhotoPromptSheet
         visible={showPhotoPrompt}
         assetNumber={completedAsset?.assetNumber ?? ''}
         onAddPhoto={handlePhotoPromptAddPhoto}
         onSkip={handlePhotoPromptSkip}
-      />
+      >
+        {/* Photo type picker for mechanics+ */}
+        {canSelectPhotoType && (
+          <PhotoTypePicker
+            selected={selectedPhotoType}
+            onChange={setSelectedPhotoType}
+          />
+        )}
+      </PhotoPromptSheet>
 
       {completedAsset && (
         <CameraCapture
@@ -570,68 +653,46 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
 
-  // Workflow Log
-  logOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
-    padding: spacing.lg,
-    paddingTop: 80,
-  },
-  logContainer: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
-  },
-  logHeader: {
+  // Asset Count Mode
+  assetCountBadge: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    backgroundColor: colors.electricBlue,
+    paddingVertical: 4,
+    paddingHorizontal: spacing.sm,
+    borderRadius: borderRadius.full,
     marginBottom: spacing.xs,
+    gap: 4,
   },
-  logTitle: {
+  assetCountBadgeText: {
     fontSize: fontSize.xs,
     fontFamily: 'Lato_700Bold',
-    color: colors.chrome,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  logClear: {
-    fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
-    color: colors.electricBlue,
-  },
-  logScroll: {
-    flex: 1,
-  },
-  logEntry: {
-    flexDirection: 'row',
-    marginBottom: 2,
-  },
-  logTime: {
-    fontSize: 10,
-    fontFamily: 'Lato_400Regular',
-    color: colors.textSecondary,
-    marginRight: spacing.xs,
-    width: 65,
-  },
-  logMessage: {
-    fontSize: 11,
-    fontFamily: 'Lato_400Regular',
     color: colors.textInverse,
-    flex: 1,
+    textTransform: 'uppercase',
   },
-  logSuccess: {
-    color: colors.scanSuccess,
+  assetCountButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.overlayLight,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.md,
+    marginTop: spacing.md,
+    gap: spacing.sm,
   },
-  logError: {
+  assetCountButtonActive: {
+    backgroundColor: colors.error + '20',
+    borderWidth: 1,
+    borderColor: colors.error,
+  },
+  assetCountButtonText: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_700Bold',
+    color: colors.electricBlue,
+    textTransform: 'uppercase',
+  },
+  assetCountButtonTextActive: {
     color: colors.error,
-  },
-  logWarning: {
-    color: colors.warning,
   },
 });

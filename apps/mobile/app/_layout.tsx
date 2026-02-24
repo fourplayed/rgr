@@ -20,6 +20,7 @@ import {
 import { initializeMobileSupabase } from '../src/config/supabase';
 import { useAuthStore } from '../src/store/authStore';
 import { useLocationStore } from '../src/store/locationStore';
+import { UserPermissionsProvider } from '../src/contexts/UserPermissionsContext';
 import { ErrorBoundary } from '../src/components/common/ErrorBoundary';
 import { OfflineBanner } from '../src/components/common/OfflineBanner';
 import { colors } from '../src/theme/colors';
@@ -70,7 +71,7 @@ export default function RootLayout() {
 
   const router = useRouter();
   const segments = useSegments();
-  const { isAuthenticated, isLoading, checkAuth, attemptAutoLogin } = useAuthStore();
+  const { user, isAuthenticated, isLoading, checkAuth, attemptAutoLogin } = useAuthStore();
   const { resolveDepot } = useLocationStore();
 
   // Check auth on mount - try auto-login first, then fall back to session check
@@ -127,21 +128,23 @@ export default function RootLayout() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <StatusBar style="dark" />
-        <View style={styles.container}>
-          <OfflineBanner />
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(auth)" />
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen
-              name="settings"
-              options={{
-                presentation: 'modal',
-                animation: 'slide_from_bottom',
-              }}
-            />
-          </Stack>
-        </View>
+        <UserPermissionsProvider userRole={user?.role ?? null}>
+          <StatusBar style="dark" />
+          <View style={styles.container}>
+            <OfflineBanner />
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="(auth)" />
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen
+                name="settings"
+                options={{
+                  presentation: 'modal',
+                  animation: 'slide_from_bottom',
+                }}
+              />
+            </Stack>
+          </View>
+        </UserPermissionsProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   );
