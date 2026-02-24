@@ -59,7 +59,6 @@ export default function ScanScreen() {
     requestLocation,
     hasPermission: hasLocationPermission,
     requestPermission: requestLocationPermission,
-    isLoading: isLocationLoading,
   } = useLocation();
 
   // Fetch depots for location matching
@@ -388,28 +387,13 @@ export default function ScanScreen() {
           </View>
 
           <View style={styles.footer}>
-            {!hasLocationPermission ? (
+            {!hasLocationPermission && (
               <TouchableOpacity
                 style={styles.permissionButton}
                 onPress={requestLocationPermission}
               >
                 <Text style={styles.permissionButtonText}>Enable Location</Text>
               </TouchableOpacity>
-            ) : cachedLocation && cachedDepot ? (
-              <View style={styles.locationInfo}>
-                <Text style={styles.coordsText}>
-                  {cachedLocation.latitude.toFixed(4)}, {cachedLocation.longitude.toFixed(4)}
-                </Text>
-                <Text style={styles.depotInfoText}>
-                  {cachedDepot.depot.name} • {cachedDepot.distanceKm.toFixed(1)} km away
-                </Text>
-              </View>
-            ) : (
-              <View style={styles.locationInfo}>
-                <Text style={styles.coordsText}>
-                  {isLocationLoading ? 'Getting location...' : 'Ready to scan'}
-                </Text>
-              </View>
             )}
 
             {/* Asset Count button for managers+ */}
@@ -597,35 +581,23 @@ const styles = StyleSheet.create({
   permissionButton: {
     marginTop: spacing.sm,
     backgroundColor: '#0000FF',
-    paddingVertical: spacing.sm,
+    height: 48,
     paddingHorizontal: spacing.lg,
     borderRadius: borderRadius.md,
     alignSelf: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.6,
+    shadowRadius: 6,
+    elevation: 6,
   },
   permissionButtonText: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.bold,
+    fontSize: fontSize.lg,
     fontFamily: 'Lato_700Bold',
     color: colors.textInverse,
     textTransform: 'uppercase',
-  },
-  locationInfo: {
-    backgroundColor: colors.overlayLight,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    borderRadius: borderRadius.md,
-    alignItems: 'center',
-  },
-  coordsText: {
-    fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
-    color: colors.chrome,
-    marginBottom: spacing.xs,
-  },
-  depotInfoText: {
-    fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
-    color: colors.scanSuccess,
   },
   centerContent: {
     flex: 1,
@@ -641,16 +613,23 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   button: {
-    backgroundColor: colors.electricBlue,
+    backgroundColor: '#0000FF',
     paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.base,
+    height: 48,
     borderRadius: borderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.6,
+    shadowRadius: 6,
+    elevation: 6,
   },
   buttonText: {
-    fontSize: fontSize.base,
-    fontWeight: fontWeight.bold,
+    fontSize: fontSize.lg,
     fontFamily: 'Lato_700Bold',
-    color: colors.text,
+    color: colors.textInverse,
+    textTransform: 'uppercase',
   },
 
   // Asset Count Mode

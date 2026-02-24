@@ -557,21 +557,21 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
-    paddingVertical: spacing.base,
+    height: 48,
     borderRadius: borderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
   cancelButton: {
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
   },
   cancelButtonText: {
-    fontSize: fontSize.base,
-    fontWeight: fontWeight.semibold,
+    fontSize: fontSize.lg,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
+    textTransform: 'uppercase',
   },
   saveButton: {
     backgroundColor: '#0000FF',
@@ -582,8 +582,7 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   saveButtonText: {
-    fontSize: fontSize.base,
-    fontWeight: fontWeight.bold,
+    fontSize: fontSize.lg,
     fontFamily: 'Lato_700Bold',
     color: colors.textInverse,
     textTransform: 'uppercase',
@@ -604,9 +603,10 @@ const styles = StyleSheet.create({
   },
   doneButton: {
     backgroundColor: '#0000FF',
-    paddingVertical: spacing.base,
+    height: 48,
     borderRadius: borderRadius.md,
     alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.6,
@@ -614,8 +614,7 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   doneButtonText: {
-    fontSize: fontSize.base,
-    fontWeight: fontWeight.bold,
+    fontSize: fontSize.lg,
     fontFamily: 'Lato_700Bold',
     color: colors.textInverse,
     textTransform: 'uppercase',

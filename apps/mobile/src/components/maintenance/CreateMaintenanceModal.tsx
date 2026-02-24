@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
-    paddingVertical: spacing.base,
+    height: 48,
     borderRadius: borderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
@@ -387,10 +387,10 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   cancelButtonText: {
-    fontSize: fontSize.base,
-    fontWeight: fontWeight.semibold,
+    fontSize: fontSize.lg,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
+    textTransform: 'uppercase',
   },
   saveButton: {
     backgroundColor: '#0000FF',
@@ -401,8 +401,7 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   saveButtonText: {
-    fontSize: fontSize.base,
-    fontWeight: fontWeight.bold,
+    fontSize: fontSize.lg,
     fontFamily: 'Lato_700Bold',
     color: colors.textInverse,
     textTransform: 'uppercase',
