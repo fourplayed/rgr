@@ -3,6 +3,36 @@ import { AssetStatusSchema, AssetCategorySchema } from '../enums/AssetEnums';
 import type { AssetStatus, AssetCategory } from '../enums/AssetEnums';
 
 /**
+ * Trailer subtypes - centralized list for filtering and validation
+ */
+export const TrailerSubtypes = [
+  'Flattop',
+  'Dropdeck',
+  'Ramp Trailer',
+  'Flattop Tautliner',
+  'Mezdeck Tautliner',
+  'Extendable Flattop',
+  'Spreaddeck Ramp Trailer',
+  '50t Float',
+  '75t Float',
+  '100t Float',
+  'Flattop A-Trailer',
+  'Tautliner A-Trailer',
+  'Skel Trailer',
+] as const;
+
+export type TrailerSubtype = (typeof TrailerSubtypes)[number];
+
+/**
+ * Map of asset categories to their available subtypes
+ * Note: Dollies have no subtypes
+ */
+export const AssetSubtypesByCategory: Record<AssetCategory, readonly string[]> = {
+  trailer: TrailerSubtypes,
+  dolly: [], // Dollies have no subtypes
+};
+
+/**
  * Asset — camelCase application interface
  */
 export interface Asset {

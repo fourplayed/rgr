@@ -21,7 +21,7 @@ const THUMBNAIL_GAP = spacing.sm;
 interface PhotoGalleryProps {
   assetId: string;
   onPhotoPress: (photo: PhotoListItem) => void;
-  onAddPhoto: () => void;
+  onAddPhoto?: () => void;
 }
 
 interface GalleryItem {
@@ -40,16 +40,19 @@ function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto }: PhotoGalle
     return Math.floor(availableWidth / NUM_COLUMNS);
   }, [width]);
 
-  // Prepare data with add button as first item
+  // Prepare data - only include add button if onAddPhoto is provided
   const galleryData = useMemo((): GalleryItem[] => {
-    const addItem: GalleryItem = { type: 'add', id: 'add-photo' };
     const photoItems: GalleryItem[] = (photos || []).map(photo => ({
       type: 'photo' as const,
       photo,
       id: photo.id,
     }));
-    return [addItem, ...photoItems];
-  }, [photos]);
+    if (onAddPhoto) {
+      const addItem: GalleryItem = { type: 'add', id: 'add-photo' };
+      return [addItem, ...photoItems];
+    }
+    return photoItems;
+  }, [photos, onAddPhoto]);
 
   const getItemLayout = useCallback((_: unknown, index: number) => ({
     length: thumbnailSize + THUMBNAIL_GAP,

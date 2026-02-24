@@ -47,6 +47,7 @@ const styles = StyleSheet.create({
   badgeSmall: {
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
+    borderRadius: borderRadius.sm,
   },
   label: {
     color: colors.textInverse,

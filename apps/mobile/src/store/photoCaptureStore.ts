@@ -5,6 +5,7 @@ interface PhotoCaptureState {
   capturedUri: string | null;
   assetId: string | null;
   scanEventId: string | null;
+  locationDescription: string | null;
   isUploading: boolean;
   uploadError: string | null;
 
@@ -12,9 +13,10 @@ interface PhotoCaptureState {
   setCapturedUri: (uri: string | null) => void;
   setAssetId: (assetId: string | null) => void;
   setScanEventId: (scanEventId: string | null) => void;
+  setLocationDescription: (location: string | null) => void;
   setIsUploading: (isUploading: boolean) => void;
   setUploadError: (error: string | null) => void;
-  startCapture: (assetId: string, scanEventId?: string | null) => void;
+  startCapture: (assetId: string, scanEventId?: string | null, locationDescription?: string | null) => void;
   reset: () => void;
 }
 
@@ -22,6 +24,7 @@ const initialState = {
   capturedUri: null,
   assetId: null,
   scanEventId: null,
+  locationDescription: null,
   isUploading: false,
   uploadError: null,
 };
@@ -35,14 +38,17 @@ export const usePhotoCaptureStore = create<PhotoCaptureState>((set) => ({
 
   setScanEventId: (scanEventId) => set({ scanEventId }),
 
+  setLocationDescription: (locationDescription) => set({ locationDescription }),
+
   setIsUploading: (isUploading) => set({ isUploading }),
 
   setUploadError: (error) => set({ uploadError: error }),
 
-  startCapture: (assetId, scanEventId = null) => set({
+  startCapture: (assetId, scanEventId = null, locationDescription = null) => set({
     ...initialState,
     assetId,
     scanEventId,
+    locationDescription,
   }),
 
   reset: () => set(initialState),

@@ -6,20 +6,20 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import { LoadingDots } from '../components/common/LoadingDots';
+import { LoadingDots } from '../src/components/common/LoadingDots';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
-import { useAuthStore } from '../store/authStore';
+import { useAuthStore } from '../src/store/authStore';
 import { UserRoleLabels, fetchProfile, getSupabaseClient } from '@rgr/shared';
-import { colors } from '../theme/colors';
-import { spacing, fontSize, fontWeight, borderRadius } from '../theme/spacing';
-import { EditProfileModal } from '../components/settings/EditProfileModal';
-import { NotificationsModal } from '../components/settings/NotificationsModal';
-import { SecurityModal } from '../components/settings/SecurityModal';
-import { getSession as getStoredSession } from '../utils/secureStorage';
+import { colors } from '../src/theme/colors';
+import { spacing, fontSize, fontWeight, borderRadius } from '../src/theme/spacing';
+import { EditProfileModal } from '../src/components/settings/EditProfileModal';
+import { NotificationsModal } from '../src/components/settings/NotificationsModal';
+import { SecurityModal } from '../src/components/settings/SecurityModal';
+import { getSession as getStoredSession } from '../src/utils/secureStorage';
 import type { Profile } from '@rgr/shared';
 
 const SUPABASE_URL = Constants.expoConfig?.extra?.['supabaseUrl'] || process.env['EXPO_PUBLIC_SUPABASE_URL'] || 'Unknown';
@@ -227,15 +227,8 @@ export default function SettingsScreen() {
                   <Text style={styles.profileName}>{user.fullName}</Text>
                   <Text style={styles.profileEmail}>{user.email}</Text>
                 </View>
-                <View style={styles.badgesRow}>
-                  <View style={[styles.roleBadge, { backgroundColor: colors.userRole[user.role as keyof typeof colors.userRole] || colors.backgroundDark }]}>
-                    <Text style={styles.roleText}>{roleLabel}</Text>
-                  </View>
-                  {user.depot && (
-                    <View style={[styles.depotBadge, { backgroundColor: colors.depot[user.depot.toLowerCase() as keyof typeof colors.depot] || colors.chrome }]}>
-                      <Text style={[styles.depotText, { color: user.depot.toLowerCase() === 'karratha' ? colors.text : colors.textInverse }]}>{user.depot}</Text>
-                    </View>
-                  )}
+                <View style={[styles.roleBadge, { backgroundColor: colors.userRole[user.role as keyof typeof colors.userRole] || colors.backgroundDark }]}>
+                  <Text style={styles.roleText}>{roleLabel}</Text>
                 </View>
               </View>
             </View>
@@ -471,11 +464,6 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: spacing.xs,
   },
-  badgesRow: {
-    flexDirection: 'column',
-    alignItems: 'flex-end',
-    gap: spacing.xs,
-  },
   roleBadge: {
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
@@ -486,18 +474,6 @@ const styles = StyleSheet.create({
     fontWeight: fontWeight.semibold,
     fontFamily: 'Lato_700Bold',
     color: colors.textInverse,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  depotBadge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm,
-  },
-  depotText: {
-    fontSize: fontSize.xs,
-    fontWeight: fontWeight.semibold,
-    fontFamily: 'Lato_700Bold',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },

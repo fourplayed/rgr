@@ -25,13 +25,11 @@ import { useAsset, useAssetScans, useAssetMaintenance } from '../../../src/hooks
 import { useAssetPhotos } from '../../../src/hooks/usePhotos';
 import type { ScanEventWithScanner, MaintenanceRecord, PhotoListItem } from '@rgr/shared';
 import { AssetInfoCard } from '../../../src/components/assets/AssetInfoCard';
-import { PhotoGallery, PhotoDetailModal, CameraCapture } from '../../../src/components/photos';
+import { PhotoGallery, PhotoDetailModal } from '../../../src/components/photos';
 import { CollapsibleSection } from '../../../src/components/common/CollapsibleSection';
 import {
-  MaintenanceListItem,
   MaintenanceStatusBadge,
   MaintenancePriorityBadge,
-  CreateMaintenanceModal,
   MaintenanceDetailModal,
 } from '../../../src/components/maintenance';
 import { useAuthStore } from '../../../src/store/authStore';
@@ -64,8 +62,6 @@ export default function AssetDetailScreen() {
   const [activityExpanded, setActivityExpanded] = useState(true);
   const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
   const [showPhotoDetail, setShowPhotoDetail] = useState(false);
-  const [showCamera, setShowCamera] = useState(false);
-  const [showCreateMaintenance, setShowCreateMaintenance] = useState(false);
   const [selectedMaintenanceId, setSelectedMaintenanceId] = useState<string | null>(null);
   const rotateAnim = useRef(new Animated.Value(1)).current;
 
@@ -94,21 +90,7 @@ export default function AssetDetailScreen() {
     setSelectedPhotoId(null);
   }, []);
 
-  const handleAddPhoto = useCallback(() => {
-    setShowCamera(true);
-  }, []);
 
-  const handleCloseCamera = useCallback(() => {
-    setShowCamera(false);
-  }, []);
-
-  const handleOpenCreateMaintenance = useCallback(() => {
-    setShowCreateMaintenance(true);
-  }, []);
-
-  const handleCloseCreateMaintenance = useCallback(() => {
-    setShowCreateMaintenance(false);
-  }, []);
 
   const handleMaintenancePress = useCallback((item: MaintenanceRecord) => {
     setSelectedMaintenanceId(item.id);
@@ -254,7 +236,6 @@ export default function AssetDetailScreen() {
           <PhotoGallery
             assetId={id}
             onPhotoPress={handlePhotoPress}
-            onAddPhoto={handleAddPhoto}
           />
         </CollapsibleSection>
 
@@ -291,14 +272,6 @@ export default function AssetDetailScreen() {
                 ))}
               </View>
             )}
-            <TouchableOpacity
-              style={styles.scheduleButton}
-              onPress={handleOpenCreateMaintenance}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="add" size={18} color={colors.textInverse} />
-              <Text style={styles.scheduleButtonText}>Schedule Maintenance</Text>
-            </TouchableOpacity>
           </View>
         </CollapsibleSection>
 
@@ -442,20 +415,7 @@ export default function AssetDetailScreen() {
         onClose={handleClosePhotoDetail}
       />
 
-      {/* Camera Capture Modal */}
-      <CameraCapture
-        visible={showCamera}
-        assetId={id}
-        onClose={handleCloseCamera}
-      />
 
-      {/* Create Maintenance Modal */}
-      <CreateMaintenanceModal
-        visible={showCreateMaintenance}
-        onClose={handleCloseCreateMaintenance}
-        assetId={id}
-        assetNumber={asset.assetNumber}
-      />
 
       {/* Maintenance Detail Modal */}
       <MaintenanceDetailModal
@@ -506,7 +466,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   emptyText: {
-    fontSize: fontSize.sm,
+    fontSize: fontSize.xs,
     fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
     fontStyle: 'italic',
@@ -581,7 +541,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   activityTitle: {
-    fontSize: fontSize.base,
+    fontSize: fontSize.xs,
     fontFamily: 'Lato_700Bold',
     color: colors.electricBlue,
     textTransform: 'uppercase',
@@ -705,21 +665,5 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
-  },
-  scheduleButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.electricBlue,
-    paddingVertical: spacing.md,
-    borderRadius: borderRadius.md,
-    marginTop: spacing.sm,
-  },
-  scheduleButtonText: {
-    fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
-    color: colors.textInverse,
-    textTransform: 'uppercase',
   },
 });

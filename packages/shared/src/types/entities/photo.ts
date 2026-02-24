@@ -16,6 +16,7 @@ export interface Photo {
   mimeType: string | null;
   width: number | null;
   height: number | null;
+  locationDescription: string | null;
   isAnalyzed: boolean;
   createdAt: string;
 }
@@ -36,6 +37,7 @@ export interface PhotoRow {
   mime_type: string | null;
   width: number | null;
   height: number | null;
+  location_description: string | null;
   is_analyzed: boolean;
   created_at: string;
 }
@@ -55,6 +57,7 @@ export interface CreatePhotoInput {
   mimeType?: string | null;
   width?: number | null;
   height?: number | null;
+  locationDescription?: string | null;
 }
 
 // ── Zod schemas ──
@@ -71,6 +74,7 @@ export const CreatePhotoInputSchema = z.object({
   mimeType: z.string().max(100).nullable().optional(),
   width: z.number().int().min(0).nullable().optional(),
   height: z.number().int().min(0).nullable().optional(),
+  locationDescription: z.string().max(255).nullable().optional(),
 });
 
 // ── Mappers ──
@@ -89,6 +93,7 @@ export function mapRowToPhoto(row: PhotoRow): Photo {
     mimeType: row.mime_type,
     width: row.width,
     height: row.height,
+    locationDescription: row.location_description,
     isAnalyzed: row.is_analyzed,
     createdAt: row.created_at,
   };
@@ -109,5 +114,6 @@ export function mapPhotoToInsert(
     mime_type: input.mimeType ?? null,
     width: input.width ?? null,
     height: input.height ?? null,
+    location_description: input.locationDescription ?? null,
   };
 }

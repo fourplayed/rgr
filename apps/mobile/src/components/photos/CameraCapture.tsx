@@ -15,12 +15,13 @@ import * as Haptics from 'expo-haptics';
 import { usePhotoCapture } from '../../hooks/usePhotoCapture';
 import { LoadingDots } from '../common/LoadingDots';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 
 interface CameraCaptureProps {
   visible: boolean;
   assetId: string;
   scanEventId?: string | null;
+  locationDescription?: string | null;
   onClose: () => void;
   onPhotoUploaded?: () => void;
 }
@@ -29,6 +30,7 @@ function CameraCaptureComponent({
   visible,
   assetId,
   scanEventId,
+  locationDescription,
   onClose,
   onPhotoUploaded,
 }: CameraCaptureProps) {
@@ -49,9 +51,9 @@ function CameraCaptureComponent({
   // Initialize capture state when modal opens
   React.useEffect(() => {
     if (visible) {
-      startCapture(assetId, scanEventId);
+      startCapture(assetId, scanEventId, locationDescription);
     }
-  }, [visible, assetId, scanEventId, startCapture]);
+  }, [visible, assetId, scanEventId, locationDescription, startCapture]);
 
   const handleCapture = useCallback(async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -175,7 +177,10 @@ function CameraCaptureComponent({
                 <TouchableOpacity style={styles.headerButton} onPress={handleClose}>
                   <Ionicons name="close" size={28} color={colors.textInverse} />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Capture Photo</Text>
+                <View style={styles.headerTitleContainer}>
+                  <Text style={styles.headerTitle}>Capture Photo</Text>
+                  <Text style={styles.guideText}>Position freight in frame</Text>
+                </View>
                 <View style={styles.headerButton} />
               </View>
 
@@ -186,7 +191,6 @@ function CameraCaptureComponent({
                   <View style={[styles.guideCorner, styles.guideBottomLeft]} />
                   <View style={[styles.guideCorner, styles.guideBottomRight]} />
                 </View>
-                <Text style={styles.guideText}>Position freight in frame</Text>
               </View>
 
               <View style={styles.captureContainer}>
@@ -275,6 +279,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  headerTitleContainer: {
+    alignItems: 'center',
+  },
   headerTitle: {
     fontSize: fontSize.lg,
     fontFamily: 'Lato_700Bold',
@@ -325,11 +332,11 @@ const styles = StyleSheet.create({
     borderRightWidth: CORNER_THICKNESS,
   },
   guideText: {
-    marginTop: spacing.lg,
+    marginTop: spacing.xs,
     fontSize: fontSize.sm,
     fontFamily: 'Lato_400Regular',
     color: colors.textInverse,
-    textTransform: 'uppercase',
+    opacity: 0.8,
     letterSpacing: 0.5,
   },
 

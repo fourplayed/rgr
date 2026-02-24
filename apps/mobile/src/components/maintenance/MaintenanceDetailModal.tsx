@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { formatRelativeTime, MaintenanceStatusLabels, MaintenancePriorityLabels } from '@rgr/shared';
+import { formatRelativeTime } from '@rgr/shared';
 import type { MaintenanceStatus } from '@rgr/shared';
 import { LoadingDots } from '../common/LoadingDots';
 import { colors } from '../../theme/colors';
@@ -36,7 +36,6 @@ export function MaintenanceDetailModal({
   const updateStatusMutation = useUpdateMaintenanceStatus();
   const updateMutation = useUpdateMaintenance();
 
-  const [actualCost, setActualCost] = useState('');
   const [editingNotes, setEditingNotes] = useState(false);
   const [notes, setNotes] = useState('');
 

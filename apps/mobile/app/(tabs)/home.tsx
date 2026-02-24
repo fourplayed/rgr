@@ -333,7 +333,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
     fontStyle: 'italic',
-    marginLeft: 32,
   },
   geofenceLocation: {
     fontFamily: 'Lato_700Bold',

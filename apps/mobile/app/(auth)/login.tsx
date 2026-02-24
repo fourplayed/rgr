@@ -16,13 +16,13 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFonts, Lato_700Bold } from '@expo-google-fonts/lato';
 import Constants from 'expo-constants';
-import { useAuthStore } from '../../store/authStore';
-import { useLocationStore } from '../../store/locationStore';
-import { SaveCredentialsModal } from '../../components/auth/SaveCredentialsModal';
-import { isAutoLoginEnabled } from '../../utils/secureStorage';
-import { colors } from '../../theme/colors';
-import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
-import { LoadingDots } from '../../components/common/LoadingDots';
+import { useAuthStore } from '../../src/store/authStore';
+import { useLocationStore } from '../../src/store/locationStore';
+import { SaveCredentialsModal } from '../../src/components/auth/SaveCredentialsModal';
+import { isAutoLoginEnabled } from '../../src/utils/secureStorage';
+import { colors } from '../../src/theme/colors';
+import { spacing, fontSize, fontWeight, borderRadius } from '../../src/theme/spacing';
+import { LoadingDots } from '../../src/components/common/LoadingDots';
 
 const APP_VERSION = Constants.expoConfig?.version || '1.0.0';
 const BUILD_NUMBER = Constants['nativeBuildVersion'] || Constants.expoConfig?.ios?.buildNumber || Constants.expoConfig?.android?.versionCode || '0';
@@ -242,7 +242,7 @@ export default function LoginScreen() {
               ]}
             >
               <Animated.Image
-                source={require('../../assets/logo.png')}
+                source={require('../../src/assets/logo.png')}
                 style={styles.logo}
                 resizeMode="contain"
               />

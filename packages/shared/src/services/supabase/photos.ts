@@ -57,6 +57,7 @@ export interface UploadPhotoOptions {
   photoType: string;
   fileUri: string;
   mimeType?: string;
+  locationDescription?: string | null;
 }
 
 // ── Photo CRUD ──
@@ -68,7 +69,7 @@ export interface UploadPhotoOptions {
 export async function uploadPhoto(
   options: UploadPhotoOptions
 ): Promise<ServiceResult<Photo>> {
-  const { assetId, scanEventId, uploadedBy, photoType, fileUri, mimeType = 'image/jpeg' } = options;
+  const { assetId, scanEventId, uploadedBy, photoType, fileUri, mimeType = 'image/jpeg', locationDescription } = options;
 
   const supabase = getSupabaseClient();
 
@@ -118,6 +119,7 @@ export async function uploadPhoto(
       filename,
       fileSize,
       mimeType,
+      locationDescription: locationDescription ?? null,
     };
 
     const parsed = CreatePhotoInputSchema.safeParse(photoInput);

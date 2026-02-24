@@ -18,7 +18,7 @@ import { useAuthStore } from '../../src/store/authStore';
 import { useLocationStore } from '../../src/store/locationStore';
 import { ScanConfirmSheet } from '../../src/components/scanner/ScanConfirmSheet';
 import { PhotoPromptSheet, CameraCapture } from '../../src/components/photos';
-import type { Asset, Depot, ScanEvent } from '@rgr/shared';
+import type { Asset, Depot } from '@rgr/shared';
 import type { CachedLocationData } from '../../src/store/locationStore';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../src/theme/spacing';
@@ -398,6 +398,7 @@ export default function ScanScreen() {
           visible={showCamera}
           assetId={completedAsset.id}
           scanEventId={lastScanEventId}
+          locationDescription={matchedDepot?.depot.name ?? null}
           onClose={handleCameraClose}
           onPhotoUploaded={handlePhotoUploaded}
         />

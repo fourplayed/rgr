@@ -14,6 +14,7 @@ export function usePhotoCapture() {
     capturedUri,
     assetId,
     scanEventId,
+    locationDescription,
     isUploading,
     uploadError,
     setCapturedUri,
@@ -90,6 +91,7 @@ export function usePhotoCapture() {
         photoType,
         fileUri: capturedUri,
         mimeType: 'image/jpeg',
+        locationDescription,
       });
 
       // Success - reset the capture state
@@ -102,7 +104,7 @@ export function usePhotoCapture() {
     } finally {
       setIsUploading(false);
     }
-  }, [capturedUri, assetId, scanEventId, user, uploadPhotoMutation, setIsUploading, setUploadError, reset]);
+  }, [capturedUri, assetId, scanEventId, locationDescription, user, uploadPhotoMutation, setIsUploading, setUploadError, reset]);
 
   /**
    * Cancel the capture workflow.
