@@ -3,7 +3,7 @@ import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import type { PhotoListItem } from '@rgr/shared';
-import { getPublicUrl } from '@rgr/shared';
+import { useSignedUrl } from '../../hooks/usePhotos';
 import { colors } from '../../theme/colors';
 import { borderRadius, spacing } from '../../theme/spacing';
 
@@ -19,10 +19,26 @@ function PhotoThumbnailComponent({ photo, size, onPress }: PhotoThumbnailProps) 
   }, [photo, onPress]);
 
   // Use thumbnail if available, otherwise fall back to full image
-  const imageUrl = getPublicUrl(photo.thumbnailPath || photo.storagePath);
+  const storagePath = photo.thumbnailPath || photo.storagePath;
+  const { data: imageUrl, isLoading, error } = useSignedUrl(storagePath);
 
   const hasHazard = photo.hazardCount > 0;
   const hasCriticalHazard = photo.maxSeverity === 'critical' || photo.maxSeverity === 'high';
+
+  // Show placeholder while loading or on error
+  if (isLoading || !imageUrl) {
+    return (
+      <TouchableOpacity
+        style={[styles.container, styles.placeholder, { width: size, height: size }]}
+        onPress={handlePress}
+        activeOpacity={0.8}
+      >
+        {error && (
+          <Ionicons name="image-outline" size={24} color={colors.textSecondary} />
+        )}
+      </TouchableOpacity>
+    );
+  }
 
   return (
     <TouchableOpacity
@@ -73,6 +89,10 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     overflow: 'hidden',
     backgroundColor: colors.surface,
+  },
+  placeholder: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   image: {
     flex: 1,

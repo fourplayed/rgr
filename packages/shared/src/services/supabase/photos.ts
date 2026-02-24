@@ -80,14 +80,22 @@ export async function uploadPhoto(
   const storagePath = `photos/${assetId}/${filename}`;
 
   try {
-    // Fetch the file as blob
+    // Fetch the file as ArrayBuffer (more reliable in React Native than blob)
     const response = await fetch(fileUri);
-    const blob = await response.blob();
+    const arrayBuffer = await response.arrayBuffer();
+
+    // Validate we actually have data
+    if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+      return { success: false, data: null, error: 'Failed to read photo file: empty content' };
+    }
+
+    // Convert to Uint8Array for Supabase upload
+    const uint8Array = new Uint8Array(arrayBuffer);
 
     // Upload to Supabase storage
     const { error: uploadError } = await supabase.storage
       .from('photos-compressed')
-      .upload(storagePath, blob, {
+      .upload(storagePath, uint8Array, {
         contentType: mimeType,
         cacheControl: '3600',
         upsert: false,
@@ -97,8 +105,8 @@ export async function uploadPhoto(
       return { success: false, data: null, error: `Failed to upload photo: ${uploadError.message}` };
     }
 
-    // Get file size from blob
-    const fileSize = blob.size;
+    // Get file size from array buffer
+    const fileSize = arrayBuffer.byteLength;
 
     // Create database record
     const photoInput: CreatePhotoInput = {

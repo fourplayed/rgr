@@ -71,7 +71,7 @@ export function mapRowToFreightAnalysis(
     loadDistributionScore: row.load_distribution_score,
     restraintCount: row.restraint_count,
     hazardCount: row.hazard_count,
-    maxSeverity: row.max_severity === null ? null : HazardSeveritySchema.parse(row.max_severity),
+    maxSeverity: row.max_severity == null ? null : HazardSeveritySchema.parse(row.max_severity),
     requiresAcknowledgment: row.requires_acknowledgment,
     blockedFromDeparture: row.blocked_from_departure,
     rawResponse: row.raw_response,

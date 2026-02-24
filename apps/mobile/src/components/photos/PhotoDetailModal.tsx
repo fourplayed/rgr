@@ -31,8 +31,8 @@ function PhotoDetailModalComponent({
   assetId,
   onClose,
 }: PhotoDetailModalProps) {
-  const { data: photoData, isLoading } = usePhoto(photoId ?? undefined);
-  const { data: signedUrl } = useSignedUrl(photoData?.storagePath);
+  const { data: photoData, isLoading, error } = usePhoto(photoId ?? undefined);
+  const { data: signedUrl, error: urlError } = useSignedUrl(photoData?.storagePath);
   const { mutateAsync: deletePhotoMutation, isPending: isDeleting } = useDeletePhoto();
 
   const handleDelete = useCallback(() => {
@@ -103,12 +103,21 @@ function PhotoDetailModalComponent({
             >
               {/* Photo */}
               <View style={styles.imageContainer}>
-                <Image
-                  source={{ uri: signedUrl || '' }}
-                  style={styles.image}
-                  contentFit="contain"
-                  transition={300}
-                />
+                {signedUrl ? (
+                  <Image
+                    source={{ uri: signedUrl }}
+                    style={styles.image}
+                    contentFit="contain"
+                    transition={300}
+                  />
+                ) : (
+                  <View style={styles.imagePlaceholder}>
+                    <LoadingDots color={colors.textSecondary} size={8} />
+                    <Text style={styles.imageLoadingText}>
+                      {urlError ? 'Failed to load image' : 'Loading image...'}
+                    </Text>
+                  </View>
+                )}
               </View>
 
               {/* Photo metadata */}
@@ -122,7 +131,7 @@ function PhotoDetailModalComponent({
                   </View>
                   <View style={styles.metadataItem}>
                     <Text style={styles.metadataLabel}>Captured</Text>
-                    <Text style={styles.metadataValue}>
+                    <Text style={styles.metadataValueSmall}>
                       {formatRelativeTime(photoData.createdAt)}
                     </Text>
                   </View>
@@ -175,7 +184,13 @@ function PhotoDetailModalComponent({
             </ScrollView>
           ) : (
             <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>Photo not found</Text>
+              <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
+              <Text style={styles.errorText}>
+                {error?.message || 'Photo not found'}
+              </Text>
+              <Text style={styles.errorSubtext}>
+                The photo may have been deleted or is unavailable.
+              </Text>
             </View>
           )}
         </SafeAreaView>
@@ -226,12 +241,21 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.xl,
   },
   errorText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: 'Lato_700Bold',
     color: colors.error,
     textTransform: 'uppercase',
+    textAlign: 'center',
+  },
+  errorSubtext: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_400Regular',
+    color: colors.textSecondary,
+    textAlign: 'center',
   },
   content: {
     flex: 1,
@@ -248,6 +272,18 @@ const styles = StyleSheet.create({
   },
   image: {
     flex: 1,
+  },
+  imagePlaceholder: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  imageLoadingText: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_400Regular',
+    color: colors.textSecondary,
+    textAlign: 'center',
   },
   metadataSection: {
     backgroundColor: colors.background,
@@ -273,6 +309,11 @@ const styles = StyleSheet.create({
   },
   metadataValue: {
     fontSize: fontSize.base,
+    fontFamily: 'Lato_700Bold',
+    color: colors.text,
+  },
+  metadataValueSmall: {
+    fontSize: fontSize.sm,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
   },

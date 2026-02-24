@@ -60,7 +60,7 @@ function FreightAnalysisCardComponent({ analysis, hazards }: FreightAnalysisCard
 
       {/* Stats grid */}
       <View style={styles.statsGrid}>
-        {analysis.estimatedWeightKg !== null && (
+        {analysis.estimatedWeightKg != null && (
           <View style={styles.statItem}>
             <Ionicons name="scale-outline" size={18} color={colors.textSecondary} />
             <Text style={styles.statValue}>
@@ -78,7 +78,7 @@ function FreightAnalysisCardComponent({ analysis, hazards }: FreightAnalysisCard
           </View>
         )}
 
-        {analysis.restraintCount !== null && (
+        {analysis.restraintCount != null && (
           <View style={styles.statItem}>
             <Ionicons name="link-outline" size={18} color={colors.textSecondary} />
             <Text style={styles.statValue}>{analysis.restraintCount}</Text>

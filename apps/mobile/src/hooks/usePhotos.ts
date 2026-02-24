@@ -50,12 +50,15 @@ export function usePhoto(photoId: string | undefined) {
     queryFn: async () => {
       if (!photoId) throw new Error('Photo ID is required');
 
+      console.log('[usePhoto] Fetching photo:', photoId);
       const result = await getPhotoById(photoId);
 
       if (!result.success) {
+        console.error('[usePhoto] Failed:', result.error);
         throw new Error(result.error);
       }
 
+      console.log('[usePhoto] Success:', result.data?.id);
       return result.data;
     },
     enabled: !!photoId,
