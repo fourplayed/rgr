@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, LayoutAnimation, Platform, UIManager } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, LayoutAnimation, Platform, UIManager, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
@@ -20,6 +20,20 @@ interface CollapsibleSectionProps {
 
 export function CollapsibleSection({ title, children, defaultExpanded = true, badge, variant = 'contained' }: CollapsibleSectionProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
+  const rotateAnim = useRef(new Animated.Value(defaultExpanded ? 1 : 0)).current;
+
+  useEffect(() => {
+    Animated.timing(rotateAnim, {
+      toValue: expanded ? 1 : 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  }, [expanded, rotateAnim]);
+
+  const chevronRotate = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '180deg'],
+  });
 
   const toggle = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -36,11 +50,13 @@ export function CollapsibleSection({ title, children, defaultExpanded = true, ba
           {badge}
         </View>
         <TouchableOpacity style={styles.chevronButton} onPress={toggle} activeOpacity={0.7}>
-          <Ionicons
-            name={expanded ? 'chevron-up' : 'chevron-down'}
-            size={20}
-            color={colors.text}
-          />
+          <Animated.View style={{ transform: [{ rotate: chevronRotate }] }}>
+            <Ionicons
+              name="chevron-down"
+              size={20}
+              color={colors.text}
+            />
+          </Animated.View>
         </TouchableOpacity>
       </View>
       {expanded && <View style={isFlat ? styles.contentFlat : styles.content}>{children}</View>}

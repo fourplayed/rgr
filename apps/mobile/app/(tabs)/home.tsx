@@ -224,22 +224,22 @@ export default function HomeScreen() {
                   <View>
                     <Animated.Text style={[styles.greeting, { opacity: greetingOpacity }]}>{greeting},</Animated.Text>
                     <Animated.Text style={[styles.userName, { opacity: usernameOpacity }]}>{user.fullName}</Animated.Text>
-                    <Animated.View style={{ opacity: geofenceOpacity, alignSelf: 'flex-end' }}>
-                      {isResolvingDepot ? (
-                        <LoadingDots color={colors.textSecondary} size={6} />
-                      ) : resolvedDepot ? (
-                        <Text style={styles.geofenceText}>
-                          Geofencing has resolved your location to <Text style={styles.geofenceLocation}>{resolvedDepot.depot.name}</Text>
-                        </Text>
-                      ) : (
-                        <Text style={styles.geofenceText}>You are not within any depot geofence</Text>
-                      )}
-                    </Animated.View>
                   </View>
                   <View style={[styles.badgeBase, { backgroundColor: colors.userRole[user.role as keyof typeof colors.userRole] || colors.electricBlue, position: 'absolute', top: 0, right: 0 }]}>
                     <Text style={[styles.badgeText, { color: colors.textInverse }]}>{roleLabel}</Text>
                   </View>
                 </View>
+                <Animated.View style={{ opacity: geofenceOpacity, alignItems: 'flex-end', marginRight: 16 }}>
+                  {isResolvingDepot ? (
+                    <LoadingDots color={colors.textSecondary} size={6} />
+                  ) : resolvedDepot ? (
+                    <Text style={styles.geofenceText}>
+                      Your location is within the <Text style={styles.geofenceLocation}>{resolvedDepot.depot.name}</Text> geofence
+                    </Text>
+                  ) : (
+                    <Text style={styles.geofenceText}>You are not within any depot geofence</Text>
+                  )}
+                </Animated.View>
               </View>
 
               {/* Stats Cards Grid */}
