@@ -172,5 +172,7 @@ export function usePrefetchImages(photos: PhotoListItem[] | undefined) {
         staleTime: 3000000, // Match existing cache time
       });
     });
+    // Using photoIds as stable dependency to avoid re-running on array reference changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [photoIds, queryClient]);
 }
