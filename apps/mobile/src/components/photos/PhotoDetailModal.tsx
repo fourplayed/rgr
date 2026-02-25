@@ -1,4 +1,4 @@
-import React, { memo, useCallback } from 'react';
+import React, { memo, useCallback, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   ScrollView,
   SafeAreaView,
   Alert,
+  Platform,
+  Linking,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -32,8 +34,24 @@ function PhotoDetailModalComponent({
   onClose,
 }: PhotoDetailModalProps) {
   const { data: photoData, isLoading, error } = usePhoto(photoId ?? undefined);
-  const { data: signedUrl, error: urlError } = useSignedUrl(photoData?.storagePath);
+  const { data: thumbnailUrl } = useSignedUrl(photoData?.thumbnailPath ?? undefined);
+  const { data: fullImageUrl, error: urlError } = useSignedUrl(photoData?.storagePath);
   const { mutateAsync: deletePhotoMutation, isPending: isDeleting } = useDeletePhoto();
+  const [isFullImageLoaded, setIsFullImageLoaded] = useState(false);
+
+  // Reset full image loaded state when photo changes
+  useEffect(() => {
+    setIsFullImageLoaded(false);
+  }, [photoId]);
+
+  const openInMaps = useCallback(() => {
+    if (!photoData?.latitude || !photoData?.longitude) return;
+    const url = Platform.select({
+      ios: `maps:?q=${photoData.latitude},${photoData.longitude}`,
+      android: `geo:${photoData.latitude},${photoData.longitude}`,
+    });
+    if (url) Linking.openURL(url);
+  }, [photoData?.latitude, photoData?.longitude]);
 
   const handleDelete = useCallback(() => {
     if (!photoId) return;
@@ -101,23 +119,32 @@ function PhotoDetailModalComponent({
               contentContainerStyle={styles.contentContainer}
               showsVerticalScrollIndicator={false}
             >
-              {/* Photo */}
+              {/* Photo with progressive loading */}
               <View style={styles.imageContainer}>
-                {signedUrl ? (
+                {thumbnailUrl && !isFullImageLoaded && (
                   <Image
-                    source={{ uri: signedUrl }}
-                    style={styles.image}
+                    source={{ uri: thumbnailUrl }}
+                    style={[styles.image, StyleSheet.absoluteFill]}
+                    contentFit="contain"
+                    blurRadius={2}
+                  />
+                )}
+                {fullImageUrl ? (
+                  <Image
+                    source={{ uri: fullImageUrl }}
+                    style={[styles.image, { opacity: isFullImageLoaded ? 1 : 0 }]}
                     contentFit="contain"
                     transition={300}
+                    onLoadEnd={() => setIsFullImageLoaded(true)}
                   />
-                ) : (
+                ) : !thumbnailUrl ? (
                   <View style={styles.imagePlaceholder}>
                     <LoadingDots color={colors.textSecondary} size={8} />
                     <Text style={styles.imageLoadingText}>
                       {urlError ? 'Failed to load image' : 'Loading image...'}
                     </Text>
                   </View>
-                )}
+                ) : null}
               </View>
 
               {/* Photo metadata */}
@@ -156,6 +183,21 @@ function PhotoDetailModalComponent({
                       </View>
                     )}
                   </View>
+                )}
+
+                {/* GPS Location */}
+                {photoData.latitude != null && photoData.longitude != null && (
+                  <TouchableOpacity onPress={openInMaps} style={styles.metadataRow}>
+                    <View style={styles.metadataItem}>
+                      <Text style={styles.metadataLabel}>Location</Text>
+                      <View style={styles.locationValue}>
+                        <Text style={styles.metadataValueLink}>
+                          {photoData.latitude.toFixed(5)}, {photoData.longitude.toFixed(5)}
+                        </Text>
+                        <Ionicons name="open-outline" size={14} color={colors.electricBlue} />
+                      </View>
+                    </View>
+                  </TouchableOpacity>
                 )}
 
                 {/* Analysis status */}
@@ -316,6 +358,16 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
+  },
+  locationValue: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  metadataValueLink: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_700Bold',
+    color: colors.electricBlue,
   },
   analysisStatus: {
     borderTopWidth: 1,

@@ -58,6 +58,11 @@ export interface UploadPhotoOptions {
   fileUri: string;
   mimeType?: string;
   locationDescription?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  width?: number;
+  height?: number;
+  thumbnailFileUri?: string;
 }
 
 // ── Photo CRUD ──
@@ -69,7 +74,7 @@ export interface UploadPhotoOptions {
 export async function uploadPhoto(
   options: UploadPhotoOptions
 ): Promise<ServiceResult<Photo>> {
-  const { assetId, scanEventId, uploadedBy, photoType, fileUri, mimeType = 'image/jpeg', locationDescription } = options;
+  const { assetId, scanEventId, uploadedBy, photoType, fileUri, mimeType = 'image/jpeg', locationDescription, latitude, longitude, width, height, thumbnailFileUri } = options;
 
   const supabase = getSupabaseClient();
 
@@ -109,6 +114,35 @@ export async function uploadPhoto(
     // Get file size from array buffer
     const fileSize = arrayBuffer.byteLength;
 
+    // Upload thumbnail if provided
+    let thumbnailPath: string | null = null;
+    if (thumbnailFileUri) {
+      const thumbFilename = `thumb_${filename}`;
+      thumbnailPath = `photos/${assetId}/thumbnails/${thumbFilename}`;
+
+      try {
+        const thumbResponse = await fetch(thumbnailFileUri);
+        const thumbArrayBuffer = await thumbResponse.arrayBuffer();
+        const thumbBuffer = new Uint8Array(thumbArrayBuffer);
+
+        const { error: thumbUploadError } = await supabase.storage
+          .from('photos-compressed')
+          .upload(thumbnailPath, thumbBuffer, {
+            contentType: 'image/jpeg',
+            cacheControl: '31536000', // 1 year cache for thumbnails
+            upsert: false,
+          });
+
+        if (thumbUploadError) {
+          console.warn(`Failed to upload thumbnail: ${thumbUploadError.message}`);
+          thumbnailPath = null; // Continue without thumbnail
+        }
+      } catch (thumbError) {
+        console.warn('Failed to upload thumbnail:', thumbError);
+        thumbnailPath = null; // Continue without thumbnail
+      }
+    }
+
     // Create database record
     const photoInput: CreatePhotoInput = {
       assetId,
@@ -116,16 +150,23 @@ export async function uploadPhoto(
       uploadedBy,
       photoType,
       storagePath,
+      thumbnailPath,
       filename,
       fileSize,
       mimeType,
+      width: width ?? null,
+      height: height ?? null,
       locationDescription: locationDescription ?? null,
+      latitude: latitude ?? null,
+      longitude: longitude ?? null,
     };
 
     const parsed = CreatePhotoInputSchema.safeParse(photoInput);
     if (!parsed.success) {
-      // Cleanup uploaded file on validation failure
-      await supabase.storage.from('photos-compressed').remove([storagePath]);
+      // Cleanup uploaded files on validation failure
+      const pathsToRemove = [storagePath];
+      if (thumbnailPath) pathsToRemove.push(thumbnailPath);
+      await supabase.storage.from('photos-compressed').remove(pathsToRemove);
       return { success: false, data: null, error: parsed.error.errors[0]?.message ?? 'Invalid input' };
     }
 
@@ -138,8 +179,10 @@ export async function uploadPhoto(
       .single();
 
     if (dbError) {
-      // Cleanup uploaded file on database failure
-      await supabase.storage.from('photos-compressed').remove([storagePath]);
+      // Cleanup uploaded files on database failure
+      const pathsToRemove = [storagePath];
+      if (thumbnailPath) pathsToRemove.push(thumbnailPath);
+      await supabase.storage.from('photos-compressed').remove(pathsToRemove);
       return { success: false, data: null, error: `Failed to create photo record: ${dbError.message}` };
     }
 

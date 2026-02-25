@@ -3,6 +3,7 @@ import type { CameraView } from 'expo-camera';
 import { usePhotoCaptureStore } from '../store/photoCaptureStore';
 import { useUploadPhoto } from './usePhotos';
 import { useAuthStore } from '../store/authStore';
+import { generateThumbnail } from '../utils/imageUtils';
 
 /**
  * Hook for managing photo capture workflow.
@@ -15,11 +16,16 @@ export function usePhotoCapture() {
     assetId,
     scanEventId,
     locationDescription,
+    latitude,
+    longitude,
     isUploading,
     uploadError,
+    imageWidth,
+    imageHeight,
     setCapturedUri,
     setIsUploading,
     setUploadError,
+    setImageDimensions,
     startCapture,
     reset,
   } = usePhotoCaptureStore();
@@ -48,6 +54,9 @@ export function usePhotoCapture() {
 
       if (photo?.uri) {
         setCapturedUri(photo.uri);
+        if (photo.width && photo.height) {
+          setImageDimensions(photo.width, photo.height);
+        }
         return photo.uri;
       }
 
@@ -58,7 +67,7 @@ export function usePhotoCapture() {
     } finally {
       isCapturingRef.current = false;
     }
-  }, [setCapturedUri]);
+  }, [setCapturedUri, setImageDimensions]);
 
   /**
    * Clear the captured photo and return to camera view.
@@ -84,6 +93,18 @@ export function usePhotoCapture() {
       setIsUploading(true);
       setUploadError(null);
 
+      // Generate thumbnail before upload
+      let thumbnailFileUri: string | undefined;
+      if (imageWidth && imageHeight) {
+        try {
+          const thumbnail = await generateThumbnail(capturedUri);
+          thumbnailFileUri = thumbnail.uri;
+        } catch (thumbError) {
+          console.warn('Failed to generate thumbnail:', thumbError);
+          // Continue without thumbnail
+        }
+      }
+
       await uploadPhotoMutation({
         assetId,
         scanEventId,
@@ -92,6 +113,11 @@ export function usePhotoCapture() {
         fileUri: capturedUri,
         mimeType: 'image/jpeg',
         locationDescription,
+        latitude,
+        longitude,
+        ...(imageWidth != null && { width: imageWidth }),
+        ...(imageHeight != null && { height: imageHeight }),
+        ...(thumbnailFileUri && { thumbnailFileUri }),
       });
 
       // Success - reset the capture state
@@ -104,7 +130,7 @@ export function usePhotoCapture() {
     } finally {
       setIsUploading(false);
     }
-  }, [capturedUri, assetId, scanEventId, locationDescription, user, uploadPhotoMutation, setIsUploading, setUploadError, reset]);
+  }, [capturedUri, assetId, scanEventId, locationDescription, latitude, longitude, imageWidth, imageHeight, user, uploadPhotoMutation, setIsUploading, setUploadError, reset]);
 
   /**
    * Cancel the capture workflow.

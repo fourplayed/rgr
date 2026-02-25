@@ -10,7 +10,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { PhotoThumbnail } from './PhotoThumbnail';
 import { LoadingDots } from '../common/LoadingDots';
-import { useAssetPhotos } from '../../hooks/usePhotos';
+import { useAssetPhotos, usePrefetchImages } from '../../hooks/usePhotos';
 import type { PhotoListItem } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
@@ -33,6 +33,9 @@ interface GalleryItem {
 function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto }: PhotoGalleryProps) {
   const { width } = useWindowDimensions();
   const { data: photos, isLoading, error } = useAssetPhotos(assetId);
+
+  // Prefetch first 6 thumbnail URLs for faster gallery loading
+  usePrefetchImages(photos);
 
   // Calculate thumbnail size based on screen width
   const thumbnailSize = useMemo(() => {

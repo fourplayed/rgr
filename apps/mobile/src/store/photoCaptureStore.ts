@@ -1,13 +1,25 @@
 import { create } from 'zustand';
 
+export interface StartCaptureOptions {
+  assetId: string;
+  scanEventId?: string | null | undefined;
+  locationDescription?: string | null | undefined;
+  latitude?: number | null | undefined;
+  longitude?: number | null | undefined;
+}
+
 interface PhotoCaptureState {
   // State
   capturedUri: string | null;
   assetId: string | null;
   scanEventId: string | null;
   locationDescription: string | null;
+  latitude: number | null;
+  longitude: number | null;
   isUploading: boolean;
   uploadError: string | null;
+  imageWidth: number | null;
+  imageHeight: number | null;
 
   // Actions
   setCapturedUri: (uri: string | null) => void;
@@ -16,7 +28,8 @@ interface PhotoCaptureState {
   setLocationDescription: (location: string | null) => void;
   setIsUploading: (isUploading: boolean) => void;
   setUploadError: (error: string | null) => void;
-  startCapture: (assetId: string, scanEventId?: string | null, locationDescription?: string | null) => void;
+  setImageDimensions: (width: number, height: number) => void;
+  startCapture: (options: StartCaptureOptions) => void;
   reset: () => void;
 }
 
@@ -25,8 +38,12 @@ const initialState = {
   assetId: null,
   scanEventId: null,
   locationDescription: null,
+  latitude: null,
+  longitude: null,
   isUploading: false,
   uploadError: null,
+  imageWidth: null,
+  imageHeight: null,
 };
 
 export const usePhotoCaptureStore = create<PhotoCaptureState>((set) => ({
@@ -44,11 +61,15 @@ export const usePhotoCaptureStore = create<PhotoCaptureState>((set) => ({
 
   setUploadError: (error) => set({ uploadError: error }),
 
-  startCapture: (assetId, scanEventId = null, locationDescription = null) => set({
+  setImageDimensions: (width, height) => set({ imageWidth: width, imageHeight: height }),
+
+  startCapture: (options: StartCaptureOptions) => set({
     ...initialState,
-    assetId,
-    scanEventId,
-    locationDescription,
+    assetId: options.assetId,
+    scanEventId: options.scanEventId ?? null,
+    locationDescription: options.locationDescription ?? null,
+    latitude: options.latitude ?? null,
+    longitude: options.longitude ?? null,
   }),
 
   reset: () => set(initialState),

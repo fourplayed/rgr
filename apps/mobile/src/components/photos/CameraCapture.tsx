@@ -22,6 +22,8 @@ interface CameraCaptureProps {
   assetId: string;
   scanEventId?: string | null;
   locationDescription?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   onClose: () => void;
   onPhotoUploaded?: () => void;
 }
@@ -31,6 +33,8 @@ function CameraCaptureComponent({
   assetId,
   scanEventId,
   locationDescription,
+  latitude,
+  longitude,
   onClose,
   onPhotoUploaded,
 }: CameraCaptureProps) {
@@ -51,9 +55,15 @@ function CameraCaptureComponent({
   // Initialize capture state when modal opens
   React.useEffect(() => {
     if (visible) {
-      startCapture(assetId, scanEventId, locationDescription);
+      startCapture({
+        assetId,
+        scanEventId,
+        locationDescription,
+        latitude,
+        longitude,
+      });
     }
-  }, [visible, assetId, scanEventId, locationDescription, startCapture]);
+  }, [visible, assetId, scanEventId, locationDescription, latitude, longitude, startCapture]);
 
   const handleCapture = useCallback(async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);

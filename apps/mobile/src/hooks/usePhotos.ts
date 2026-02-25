@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo } from 'react';
 import {
   getAssetPhotos,
   getPhotoById,
@@ -6,7 +7,7 @@ import {
   deletePhoto,
   getSignedUrl,
 } from '@rgr/shared';
-import type { UploadPhotoOptions } from '@rgr/shared';
+import type { UploadPhotoOptions, PhotoListItem } from '@rgr/shared';
 import { assetKeys } from './useAssetData';
 
 /**
@@ -138,4 +139,38 @@ export function useDeletePhoto() {
       queryClient.invalidateQueries({ queryKey: assetKeys.detail(data.assetId) });
     },
   });
+}
+
+/**
+ * Prefetch thumbnail signed URLs for the first N photos.
+ * Uses TanStack Query's prefetchQuery for cache integration.
+ */
+export function usePrefetchImages(photos: PhotoListItem[] | undefined) {
+  const queryClient = useQueryClient();
+
+  // Use stable dependency - photo IDs string, not array reference
+  const photoIds = useMemo(
+    () => photos?.map(p => p.id).join(',') ?? '',
+    [photos]
+  );
+
+  useEffect(() => {
+    if (!photos?.length) return;
+
+    // Prefetch first 6 thumbnails into TanStack Query cache
+    photos.slice(0, 6).forEach((photo) => {
+      const path = photo.thumbnailPath || photo.storagePath;
+      if (!path) return;
+
+      queryClient.prefetchQuery({
+        queryKey: photoKeys.signedUrl(path),
+        queryFn: async () => {
+          const result = await getSignedUrl(path);
+          if (!result.success) throw new Error(result.error ?? 'Failed');
+          return result.data;
+        },
+        staleTime: 3000000, // Match existing cache time
+      });
+    });
+  }, [photoIds, queryClient]);
 }

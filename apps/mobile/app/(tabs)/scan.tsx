@@ -466,6 +466,8 @@ export default function ScanScreen() {
           assetId={completedAsset.id}
           scanEventId={lastScanEventId}
           locationDescription={matchedDepot?.depot.name ?? null}
+          latitude={effectiveLocation?.latitude ?? null}
+          longitude={effectiveLocation?.longitude ?? null}
           onClose={handleCameraClose}
           onPhotoUploaded={handlePhotoUploaded}
         />

@@ -17,6 +17,8 @@ export interface Photo {
   width: number | null;
   height: number | null;
   locationDescription: string | null;
+  latitude: number | null;
+  longitude: number | null;
   isAnalyzed: boolean;
   createdAt: string;
 }
@@ -38,6 +40,8 @@ export interface PhotoRow {
   width: number | null;
   height: number | null;
   location_description: string | null;
+  latitude: number | null;
+  longitude: number | null;
   is_analyzed: boolean;
   created_at: string;
 }
@@ -58,6 +62,8 @@ export interface CreatePhotoInput {
   width?: number | null;
   height?: number | null;
   locationDescription?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 // ── Zod schemas ──
@@ -75,6 +81,8 @@ export const CreatePhotoInputSchema = z.object({
   width: z.number().int().min(0).nullable().optional(),
   height: z.number().int().min(0).nullable().optional(),
   locationDescription: z.string().max(255).nullable().optional(),
+  latitude: z.number().min(-90).max(90).nullable().optional(),
+  longitude: z.number().min(-180).max(180).nullable().optional(),
 });
 
 // ── Mappers ──
@@ -94,6 +102,8 @@ export function mapRowToPhoto(row: PhotoRow): Photo {
     width: row.width,
     height: row.height,
     locationDescription: row.location_description,
+    latitude: row.latitude,
+    longitude: row.longitude,
     isAnalyzed: row.is_analyzed,
     createdAt: row.created_at,
   };
@@ -115,5 +125,7 @@ export function mapPhotoToInsert(
     width: input.width ?? null,
     height: input.height ?? null,
     location_description: input.locationDescription ?? null,
+    latitude: input.latitude ?? null,
+    longitude: input.longitude ?? null,
   };
 }
