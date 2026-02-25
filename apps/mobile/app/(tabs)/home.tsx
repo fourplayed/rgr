@@ -12,7 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useIsFocused } from '@react-navigation/native';
-import { useMyRecentScans, useAssetCountsByStatus } from '../../src/hooks/useAssetData';
+import { useRecentScans, useAssetCountsByStatus } from '../../src/hooks/useAssetData';
 import { useAuthStore } from '../../src/store/authStore';
 import { useLocationStore } from '../../src/store/locationStore';
 import { formatRelativeTime, UserRoleLabels } from '@rgr/shared';
@@ -36,13 +36,13 @@ export default function HomeScreen() {
   const { resolvedDepot, isResolvingDepot } = useLocationStore();
   const isFocused = useIsFocused();
 
-  // Recent scans (last 5)
+  // Recent scans across all users (global activity)
   const {
     data: scans = [],
     isLoading: scansLoading,
     refetch: refetchScans,
     isRefetching: scansRefetching,
-  } = useMyRecentScans(user?.id);
+  } = useRecentScans();
 
   // Asset counts by status using efficient RPC call (single query instead of 3)
   const {

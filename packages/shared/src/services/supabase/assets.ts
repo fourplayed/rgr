@@ -465,6 +465,42 @@ export async function getAssetByQRCode(
 }
 
 /**
+ * Get recent scans across all users (global activity).
+ */
+export async function getRecentScans(
+  limit: number = 50
+): Promise<ServiceResult<ScanEventWithScanner[]>> {
+  const supabase = getSupabaseClient();
+
+  const { data, error } = await supabase
+    .from('scan_events')
+    .select(`
+      *,
+      profiles(full_name),
+      assets!inner(asset_number, category)
+    `)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    return { success: false, data: null, error: `Failed to fetch recent scans: ${error.message}` };
+  }
+
+  const scans = (data || []).map((row: ScanEventRowWithJoins) => {
+    const { profiles, assets, ...scanRow } = row;
+    const scan = mapRowToScanEvent(scanRow as ScanEventRow);
+    return {
+      ...scan,
+      scannerName: profiles?.full_name ?? null,
+      assetNumber: assets?.asset_number ?? null,
+      assetCategory: assets?.category ?? null,
+    } as ScanEventWithScanner;
+  });
+
+  return { success: true, data: scans, error: null };
+}
+
+/**
  * Get recent scans for a specific user (driver's activity).
  */
 export async function getMyRecentScans(

@@ -5,6 +5,7 @@ import {
   getAssetScans,
   getAssetByQRCode,
   getMyRecentScans,
+  getRecentScans,
   createScanEvent,
   getAssetMaintenance,
   getAssetHazards,
@@ -13,6 +14,7 @@ import {
 } from '@rgr/shared';
 import type {
   AssetStatus,
+  AssetCategory,
   CreateScanEventInput,
   UpdateAssetInput,
 } from '@rgr/shared';
@@ -27,6 +29,8 @@ export const assetKeys = {
     page?: number;
     pageSize?: number;
     statuses?: AssetStatus[];
+    categories?: AssetCategory[];
+    depotIds?: string[];
     search?: string;
   }) => [...assetKeys.lists(), filters] as const,
   details: () => [...assetKeys.all, 'detail'] as const,
@@ -35,8 +39,12 @@ export const assetKeys = {
   maintenance: (id: string) => [...assetKeys.detail(id), 'maintenance'] as const,
   hazards: (id: string) => [...assetKeys.detail(id), 'hazards'] as const,
   myScans: (userId: string) => ['scans', 'my', userId] as const,
+  recentScans: () => ['scans', 'recent'] as const,
   countsByStatus: () => [...assetKeys.all, 'countsByStatus'] as const,
 };
+
+// Note: depotKeys and useDepots are defined in useDepots.ts
+// Import from there to avoid duplication
 
 /**
  * Fetch paginated list of assets
@@ -45,6 +53,8 @@ export function useAssetList(filters?: {
   page?: number;
   pageSize?: number;
   statuses?: AssetStatus[];
+  categories?: AssetCategory[];
+  depotIds?: string[];
   search?: string;
 }) {
   return useQuery({
@@ -54,6 +64,8 @@ export function useAssetList(filters?: {
         page: number;
         pageSize: number;
         statuses?: AssetStatus[];
+        categories?: AssetCategory[];
+        depotIds?: string[];
         search?: string;
         sortField: string;
         sortDirection: 'asc' | 'desc';
@@ -66,6 +78,12 @@ export function useAssetList(filters?: {
 
       if (filters?.statuses !== undefined) {
         params.statuses = filters.statuses;
+      }
+      if (filters?.categories !== undefined) {
+        params.categories = filters.categories;
+      }
+      if (filters?.depotIds !== undefined) {
+        params.depotIds = filters.depotIds;
       }
       if (filters?.search !== undefined) {
         params.search = filters.search;
@@ -81,6 +99,9 @@ export function useAssetList(filters?: {
     },
   });
 }
+
+// useDepots is now exported from useDepots.ts - import from there
+export { useDepots } from './useDepots';
 
 /**
  * Fetch single asset details
@@ -121,6 +142,7 @@ export function useAssetScans(assetId: string | undefined) {
       return result.data.data;
     },
     enabled: !!assetId,
+    staleTime: 30000, // Cache for 30 seconds - scans don't change frequently
   });
 }
 
@@ -184,6 +206,26 @@ export function useMyRecentScans(userId: string | undefined) {
       return result.data;
     },
     enabled: !!userId,
+    staleTime: 30000, // Cache for 30 seconds
+  });
+}
+
+/**
+ * Fetch recent scans across all users (global activity)
+ */
+export function useRecentScans(limit: number = 50) {
+  return useQuery({
+    queryKey: assetKeys.recentScans(),
+    queryFn: async () => {
+      const result = await getRecentScans(limit);
+
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+
+      return result.data;
+    },
+    staleTime: 30000, // Cache for 30 seconds
   });
 }
 
@@ -222,12 +264,19 @@ export function useCreateScanEvent() {
     },
     onSuccess: (data, variables) => {
       // Invalidate related queries to refresh data
+      // Use refetchType: 'none' for list queries to mark stale without immediate refetch
+      // This prevents unnecessary network requests when user may not view the list
       queryClient.invalidateQueries({ queryKey: assetKeys.detail(variables.assetId) });
       queryClient.invalidateQueries({ queryKey: assetKeys.scans(variables.assetId) });
+      queryClient.invalidateQueries({ queryKey: assetKeys.recentScans() });
       if (variables.scannedBy) {
         queryClient.invalidateQueries({ queryKey: assetKeys.myScans(variables.scannedBy) });
       }
-      queryClient.invalidateQueries({ queryKey: assetKeys.lists() });
+      // Mark list queries as stale but don't refetch immediately
+      queryClient.invalidateQueries({
+        queryKey: assetKeys.lists(),
+        refetchType: 'none',
+      });
     },
   });
 }
@@ -284,8 +333,12 @@ export function useUpdateAsset() {
     },
     onSuccess: (data) => {
       // Invalidate related queries to refresh data
+      // Detail query gets immediate refetch, lists marked stale without refetch
       queryClient.invalidateQueries({ queryKey: assetKeys.detail(data.id) });
-      queryClient.invalidateQueries({ queryKey: assetKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: assetKeys.lists(),
+        refetchType: 'none',
+      });
     },
   });
 }
