@@ -7,7 +7,6 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   Animated,
   Easing,
   Keyboard,
@@ -22,7 +21,7 @@ import { SaveCredentialsModal } from '../../src/components/auth/SaveCredentialsM
 import { isAutoLoginEnabled } from '../../src/utils/secureStorage';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../src/theme/spacing';
-import { LoadingDots } from '../../src/components/common/LoadingDots';
+import { LoadingDots, AlertSheet } from '../../src/components/common';
 
 const APP_VERSION = Constants.expoConfig?.version || '1.0.0';
 const BUILD_NUMBER = Constants['nativeBuildVersion'] || Constants.expoConfig?.ios?.buildNumber || Constants.expoConfig?.android?.versionCode || '0';
@@ -38,6 +37,12 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [alertSheet, setAlertSheet] = useState<{
+    visible: boolean;
+    type: 'error' | 'warning' | 'info';
+    title: string;
+    message: string;
+  }>({ visible: false, type: 'error', title: '', message: '' });
   const tiltAnim = useRef(new Animated.Value(-1)).current;
   const keyboardOffset = useRef(new Animated.Value(0)).current;
   const accentAnim = useRef(new Animated.Value(0)).current;
@@ -122,7 +127,12 @@ export default function LoginScreen() {
 
     // Validate inputs
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Error', 'Please enter both email and password');
+      setAlertSheet({
+        visible: true,
+        type: 'error',
+        title: 'Error',
+        message: 'Please enter both email and password',
+      });
       return;
     }
 
@@ -131,7 +141,10 @@ export default function LoginScreen() {
 
     if (result.success) {
       // Fire and forget: resolve depot based on GPS location
-      resolveDepot();
+      // Errors are non-fatal - user can still use the app without depot resolution
+      resolveDepot().catch((err) => {
+        console.warn('Failed to resolve depot on login:', err);
+      });
 
       // Check if auto-login is already enabled
       const autoLoginAlreadyEnabled = await isAutoLoginEnabled();
@@ -144,7 +157,12 @@ export default function LoginScreen() {
         setShowSaveModal(true);
       }
     } else if (result.error) {
-      Alert.alert('Login Failed', result.error);
+      setAlertSheet({
+        visible: true,
+        type: 'error',
+        title: 'Login Failed',
+        message: result.error,
+      });
     }
   };
 
@@ -309,6 +327,14 @@ export default function LoginScreen() {
       onSave={handleSaveCredentials}
       onSkip={handleSkipSave}
     />
+
+    <AlertSheet
+      visible={alertSheet.visible}
+      type={alertSheet.type}
+      title={alertSheet.title}
+      message={alertSheet.message}
+      onDismiss={() => setAlertSheet(prev => ({ ...prev, visible: false }))}
+    />
     </View>
   );
 }
@@ -316,7 +342,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E8E8E8',
+    backgroundColor: colors.chrome,
   },
   containerInner: {
     flex: 1,
@@ -400,7 +426,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontFamily: 'Lato_700Bold',
     fontWeight: fontWeight.bold,
-    color: '#000000',
+    color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
@@ -415,7 +441,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   button: {
-    backgroundColor: '#0000FF',
+    backgroundColor: colors.primary,
     borderRadius: borderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',

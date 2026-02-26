@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -6,10 +6,15 @@ import {
   TouchableOpacity,
   Switch,
   StyleSheet,
+  Animated,
+  Dimensions,
 } from 'react-native';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
 import { useSettingsStore } from '../../store/settingsStore';
+
+const SCREEN_HEIGHT = Dimensions.get('window').height;
+const ANIMATION_DURATION = 300;
 
 interface NotificationsModalProps {
   visible: boolean;
@@ -34,7 +39,7 @@ function ToggleRow({ title, subtitle, value, onValueChange, disabled }: ToggleRo
       <Switch
         value={value}
         onValueChange={onValueChange}
-        trackColor={{ false: colors.border, true: '#0000FF' }}
+        trackColor={{ false: colors.border, true: colors.primary }}
         thumbColor={colors.background}
         disabled={disabled}
       />
@@ -44,24 +49,64 @@ function ToggleRow({ title, subtitle, value, onValueChange, disabled }: ToggleRo
 
 export function NotificationsModal({ visible, onClose }: NotificationsModalProps) {
   const { notifications, setNotificationSetting } = useSettingsStore();
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const backdropOpacity = useRef(new Animated.Value(0)).current;
+  const sheetTranslateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
 
   const isPushDisabled = !notifications.pushEnabled;
 
+  // Handle open/close animations
+  useEffect(() => {
+    if (visible) {
+      setModalVisible(true);
+      Animated.parallel([
+        Animated.timing(backdropOpacity, {
+          toValue: 1,
+          duration: ANIMATION_DURATION,
+          useNativeDriver: true,
+        }),
+        Animated.timing(sheetTranslateY, {
+          toValue: 0,
+          duration: ANIMATION_DURATION,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(backdropOpacity, {
+          toValue: 0,
+          duration: ANIMATION_DURATION,
+          useNativeDriver: true,
+        }),
+        Animated.timing(sheetTranslateY, {
+          toValue: SCREEN_HEIGHT,
+          duration: ANIMATION_DURATION,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setModalVisible(false);
+      });
+    }
+  }, [visible, backdropOpacity, sheetTranslateY]);
+
   return (
     <Modal
-      visible={visible}
+      visible={modalVisible}
       transparent
-      animationType="slide"
+      animationType="none"
       onRequestClose={onClose}
     >
-      <View style={styles.backdrop}>
-        <TouchableOpacity
-          style={styles.backdropTouchable}
-          activeOpacity={1}
-          onPress={onClose}
-        />
+      <View style={styles.container}>
+        <Animated.View style={[styles.backdrop, { opacity: backdropOpacity }]}>
+          <TouchableOpacity
+            style={styles.backdropTouchable}
+            activeOpacity={1}
+            onPress={onClose}
+          />
+        </Animated.View>
 
-        <View style={styles.sheet}>
+        <Animated.View style={[styles.sheet, { transform: [{ translateY: sheetTranslateY }] }]}>
           <View style={styles.handle} />
 
           <View style={styles.content}>
@@ -115,17 +160,20 @@ export function NotificationsModal({ visible, onClose }: NotificationsModalProps
               <Text style={styles.doneButtonText}>Done</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
+  container: {
     flex: 1,
-    backgroundColor: colors.overlay,
     justifyContent: 'flex-end',
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: colors.overlay,
   },
   backdropTouchable: {
     flex: 1,
@@ -206,7 +254,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.border,
   },
   doneButton: {
-    backgroundColor: '#0000FF',
+    backgroundColor: colors.primary,
     height: 48,
     borderRadius: borderRadius.md,
     alignItems: 'center',

@@ -3,6 +3,9 @@ import type { BarcodeScanningResult } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { isValidQRCode } from '@rgr/shared';
 
+// Safety timeout to prevent permanently stuck scanner state
+const SCANNER_LOCK_TIMEOUT_MS = 30000;
+
 export interface QRScanResult {
   data: string;
   timestamp: number;
@@ -19,6 +22,7 @@ interface UseQRScannerResult {
  * Hook for managing QR code scanning state
  * Includes debouncing to prevent multiple scans of the same code
  * Uses ref-based lock to prevent race conditions with async callbacks
+ * Includes a 30-second safety timeout to prevent permanently stuck scanner state
  */
 export function useQRScanner(
   onScan?: (data: string) => void,
@@ -31,11 +35,18 @@ export function useQRScanner(
   const isProcessingRef = useRef(false);
   // Track if component is mounted to prevent state updates after unmount
   const isMountedRef = useRef(true);
+  // Safety timeout to prevent stuck scanner state
+  const lockTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
+      // Clear any pending timeout on unmount
+      if (lockTimeoutRef.current) {
+        clearTimeout(lockTimeoutRef.current);
+        lockTimeoutRef.current = null;
+      }
     };
   }, []);
 
@@ -65,6 +76,20 @@ export function useQRScanner(
 
     // Set ref lock immediately to prevent concurrent processing
     isProcessingRef.current = true;
+
+    // Clear any existing timeout
+    if (lockTimeoutRef.current) {
+      clearTimeout(lockTimeoutRef.current);
+    }
+
+    // Set safety timeout to auto-reset lock if stuck (e.g., callback never completes)
+    lockTimeoutRef.current = setTimeout(() => {
+      if (isMountedRef.current && isProcessingRef.current) {
+        console.warn('Scanner lock timeout - auto-resetting after 30s');
+        isProcessingRef.current = false;
+        setIsProcessing(false);
+      }
+    }, SCANNER_LOCK_TIMEOUT_MS);
 
     // Trigger haptic feedback
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -100,6 +125,11 @@ export function useQRScanner(
 
   const resetScanner = useCallback(() => {
     if (!isMountedRef.current) return;
+    // Clear safety timeout when manually reset
+    if (lockTimeoutRef.current) {
+      clearTimeout(lockTimeoutRef.current);
+      lockTimeoutRef.current = null;
+    }
     setScannedData(null);
     setIsProcessing(false);
     isProcessingRef.current = false;

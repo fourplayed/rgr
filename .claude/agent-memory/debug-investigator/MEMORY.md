@@ -1,5 +1,17 @@
 # Debug Investigator Memory
 
+## Expo Router Monorepo Issue (2026-02-23)
+
+**Error**: `Invalid call at line 2: process.env.EXPO_ROUTER_APP_ROOT`
+
+**Root Cause**: In npm workspaces, `babel-preset-expo` hoists to monorepo root but `expo-router` stays in workspace's local node_modules. The `hasModule('expo-router')` check fails -> `expoRouterBabelPlugin` never loads -> env var never transformed.
+
+**Solution**: Add `expo-router` to monorepo root's package.json dependencies.
+
+**Key files**: `babel-preset-expo/build/index.js` (line 156), `babel-preset-expo/build/common.js`
+
+---
+
 ## Project Structure
 - Monorepo at `rgr-new/rgr/` (NOT `rgr-new/apps/`) -- files are under `rgr/apps/web/src/`
 - React + TypeScript + Vite + Vitest

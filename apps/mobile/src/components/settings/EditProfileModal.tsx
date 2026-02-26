@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,11 +8,16 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  Animated,
+  Dimensions,
 } from 'react-native';
 import { LoadingDots } from '../common/LoadingDots';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
 import { useAuthStore } from '../../store/authStore';
+
+const SCREEN_HEIGHT = Dimensions.get('window').height;
+const ANIMATION_DURATION = 300;
 
 interface EditProfileModalProps {
   visible: boolean;
@@ -25,6 +30,46 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
   const [phone, setPhone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const backdropOpacity = useRef(new Animated.Value(0)).current;
+  const sheetTranslateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+
+  // Handle open/close animations
+  useEffect(() => {
+    if (visible) {
+      setModalVisible(true);
+      // Animate in: fade backdrop, slide sheet
+      Animated.parallel([
+        Animated.timing(backdropOpacity, {
+          toValue: 1,
+          duration: ANIMATION_DURATION,
+          useNativeDriver: true,
+        }),
+        Animated.timing(sheetTranslateY, {
+          toValue: 0,
+          duration: ANIMATION_DURATION,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      // Animate out: fade backdrop, slide sheet
+      Animated.parallel([
+        Animated.timing(backdropOpacity, {
+          toValue: 0,
+          duration: ANIMATION_DURATION,
+          useNativeDriver: true,
+        }),
+        Animated.timing(sheetTranslateY, {
+          toValue: SCREEN_HEIGHT,
+          duration: ANIMATION_DURATION,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setModalVisible(false);
+      });
+    }
+  }, [visible, backdropOpacity, sheetTranslateY]);
 
   useEffect(() => {
     if (visible && user) {
@@ -59,22 +104,24 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
 
   return (
     <Modal
-      visible={visible}
+      visible={modalVisible}
       transparent
-      animationType="slide"
+      animationType="none"
       onRequestClose={onClose}
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.backdrop}
+        style={styles.container}
       >
-        <TouchableOpacity
-          style={styles.backdropTouchable}
-          activeOpacity={1}
-          onPress={onClose}
-        />
+        <Animated.View style={[styles.backdrop, { opacity: backdropOpacity }]}>
+          <TouchableOpacity
+            style={styles.backdropTouchable}
+            activeOpacity={1}
+            onPress={onClose}
+          />
+        </Animated.View>
 
-        <View style={styles.sheet}>
+        <Animated.View style={[styles.sheet, { transform: [{ translateY: sheetTranslateY }] }]}>
           <View style={styles.handle} />
 
           <View style={styles.content}>
@@ -130,17 +177,20 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </Animated.View>
       </KeyboardAvoidingView>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
+  container: {
     flex: 1,
-    backgroundColor: colors.overlay,
     justifyContent: 'flex-end',
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: colors.overlay,
   },
   backdropTouchable: {
     flex: 1,
@@ -167,7 +217,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.lg,
     fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
-    color: '#000000',
+    color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: spacing.lg,
@@ -179,7 +229,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
-    color: '#000000',
+    color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: spacing.xs,
@@ -225,7 +275,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   saveButton: {
-    backgroundColor: '#0000FF',
+    backgroundColor: colors.primary,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.6,

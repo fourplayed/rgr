@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Animated,
+  Dimensions,
 } from 'react-native';
 import { LoadingDots } from '../common/LoadingDots';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,6 +20,9 @@ import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing
 import { isAutoLoginEnabled, setAutoLoginEnabled } from '../../utils/secureStorage';
 import { updatePassword, verifyCurrentPassword } from '@rgr/shared';
 import { useAuthStore } from '../../store/authStore';
+
+const SCREEN_HEIGHT = Dimensions.get('window').height;
+const ANIMATION_DURATION = 300;
 
 interface SecurityModalProps {
   visible: boolean;
@@ -68,6 +73,7 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
   const { user } = useAuthStore();
   const [autoLogin, setAutoLogin] = useState(false);
   const [autoLoginLoading, setAutoLoginLoading] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
 
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
@@ -81,8 +87,45 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const backdropOpacity = useRef(new Animated.Value(0)).current;
+  const sheetTranslateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+
   const validation = validatePassword(newPassword);
   const passwordsMatch = newPassword === confirmPassword && confirmPassword.length > 0;
+
+  // Handle open/close animations
+  useEffect(() => {
+    if (visible) {
+      setModalVisible(true);
+      Animated.parallel([
+        Animated.timing(backdropOpacity, {
+          toValue: 1,
+          duration: ANIMATION_DURATION,
+          useNativeDriver: true,
+        }),
+        Animated.timing(sheetTranslateY, {
+          toValue: 0,
+          duration: ANIMATION_DURATION,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(backdropOpacity, {
+          toValue: 0,
+          duration: ANIMATION_DURATION,
+          useNativeDriver: true,
+        }),
+        Animated.timing(sheetTranslateY, {
+          toValue: SCREEN_HEIGHT,
+          duration: ANIMATION_DURATION,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setModalVisible(false);
+      });
+    }
+  }, [visible, backdropOpacity, sheetTranslateY]);
 
   useEffect(() => {
     if (visible) {
@@ -164,22 +207,24 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
 
   return (
     <Modal
-      visible={visible}
+      visible={modalVisible}
       transparent
-      animationType="slide"
+      animationType="none"
       onRequestClose={onClose}
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.backdrop}
+        style={styles.container}
       >
-        <TouchableOpacity
-          style={styles.backdropTouchable}
-          activeOpacity={1}
-          onPress={onClose}
-        />
+        <Animated.View style={[styles.backdrop, { opacity: backdropOpacity }]}>
+          <TouchableOpacity
+            style={styles.backdropTouchable}
+            activeOpacity={1}
+            onPress={onClose}
+          />
+        </Animated.View>
 
-        <View style={styles.sheet}>
+        <Animated.View style={[styles.sheet, { transform: [{ translateY: sheetTranslateY }] }]}>
           <View style={styles.handle} />
 
           <ScrollView style={styles.scrollContent} bounces={false}>
@@ -201,7 +246,7 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
                     <Switch
                       value={autoLogin}
                       onValueChange={handleAutoLoginToggle}
-                      trackColor={{ false: colors.border, true: '#0000FF' }}
+                      trackColor={{ false: colors.border, true: colors.primary }}
                       thumbColor={colors.background}
                     />
                   )}
@@ -369,17 +414,20 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
               </TouchableOpacity>
             </View>
           </ScrollView>
-        </View>
+        </Animated.View>
       </KeyboardAvoidingView>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
+  container: {
     flex: 1,
-    backgroundColor: colors.overlay,
     justifyContent: 'flex-end',
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: colors.overlay,
   },
   backdropTouchable: {
     flex: 1,
@@ -574,7 +622,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   saveButton: {
-    backgroundColor: '#0000FF',
+    backgroundColor: colors.primary,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.6,
@@ -602,7 +650,7 @@ const styles = StyleSheet.create({
     color: colors.success,
   },
   doneButton: {
-    backgroundColor: '#0000FF',
+    backgroundColor: colors.primary,
     height: 48,
     borderRadius: borderRadius.md,
     alignItems: 'center',

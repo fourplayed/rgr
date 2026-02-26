@@ -6,7 +6,11 @@ export const colors = {
   // Primary brand colors
   navy: '#000030',
   electricBlue: '#00A8FF',
+  neonViolet: '#9D00FF',
   chrome: '#E8E8E8',
+  // Primary action color (buttons, links)
+  primary: '#0000FF',
+  primaryDark: '#0000CC',
 
   // Status colors (matching shared enums)
   status: {

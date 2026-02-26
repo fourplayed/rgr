@@ -16,6 +16,7 @@ export interface CachedLocationData {
   altitude: number | null;
   heading: number | null;
   speed: number | null;
+  timestamp: number;
 }
 
 interface LocationState {
@@ -83,6 +84,7 @@ export const useLocationStore = create<LocationState>((set, get) => ({
         altitude: coords.altitude,
         heading: sanitizeNonNegative(coords.heading),
         speed: sanitizeNonNegative(coords.speed),
+        timestamp: locationResult.timestamp,
       };
 
       // Fetch depots

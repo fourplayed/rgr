@@ -7,13 +7,12 @@ import {
   TextInput,
   StyleSheet,
   ScrollView,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { formatRelativeTime } from '@rgr/shared';
 import type { MaintenanceStatus } from '@rgr/shared';
-import { LoadingDots } from '../common/LoadingDots';
+import { LoadingDots, AlertSheet, ConfirmSheet, InputSheet } from '../common';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
 import { useMaintenance, useUpdateMaintenanceStatus, useUpdateMaintenance } from '../../hooks/useMaintenanceData';
@@ -39,6 +38,16 @@ export function MaintenanceDetailModal({
   const [editingNotes, setEditingNotes] = useState(false);
   const [notes, setNotes] = useState('');
 
+  // Sheet states
+  const [alertSheet, setAlertSheet] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+  }>({ visible: false, title: '', message: '' });
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showCompleteInput, setShowCompleteInput] = useState(false);
+  const [isCompletingMaintenance, setIsCompletingMaintenance] = useState(false);
+
   const handleStartWork = useCallback(async () => {
     if (!maintenanceId) return;
 
@@ -48,67 +57,67 @@ export function MaintenanceDetailModal({
         status: 'in_progress',
       });
     } catch (err) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to start work');
+      setAlertSheet({
+        visible: true,
+        title: 'Error',
+        message: err instanceof Error ? err.message : 'Failed to start work',
+      });
     }
   }, [maintenanceId, updateStatusMutation]);
 
-  const handleComplete = useCallback(async () => {
+  const handleComplete = useCallback(() => {
+    if (!maintenanceId) return;
+    setShowCompleteInput(true);
+  }, [maintenanceId]);
+
+  const handleCompleteSubmit = useCallback(async (cost: string) => {
     if (!maintenanceId) return;
 
-    Alert.prompt(
-      'Complete Maintenance',
-      'Enter actual cost (optional):',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Complete',
-          onPress: async (cost?: string) => {
-            try {
-              const parsedCost = cost ? parseFloat(cost) : undefined;
-              const params: { id: string; status: MaintenanceStatus; actualCost?: number } = {
-                id: maintenanceId,
-                status: 'completed',
-              };
-              if (parsedCost !== undefined) {
-                params.actualCost = parsedCost;
-              }
-              await updateStatusMutation.mutateAsync(params);
-            } catch (err) {
-              Alert.alert('Error', err instanceof Error ? err.message : 'Failed to complete');
-            }
-          },
-        },
-      ],
-      'plain-text',
-      '',
-      'decimal-pad'
-    );
+    setIsCompletingMaintenance(true);
+    try {
+      const parsedCost = cost ? parseFloat(cost) : undefined;
+      const params: { id: string; status: MaintenanceStatus; actualCost?: number } = {
+        id: maintenanceId,
+        status: 'completed',
+      };
+      if (parsedCost !== undefined && !isNaN(parsedCost)) {
+        params.actualCost = parsedCost;
+      }
+      await updateStatusMutation.mutateAsync(params);
+      setShowCompleteInput(false);
+    } catch (err) {
+      setShowCompleteInput(false);
+      setAlertSheet({
+        visible: true,
+        title: 'Error',
+        message: err instanceof Error ? err.message : 'Failed to complete',
+      });
+    } finally {
+      setIsCompletingMaintenance(false);
+    }
   }, [maintenanceId, updateStatusMutation]);
 
-  const handleCancel = useCallback(async () => {
+  const handleCancelMaintenance = useCallback(() => {
+    if (!maintenanceId) return;
+    setShowCancelConfirm(true);
+  }, [maintenanceId]);
+
+  const handleConfirmCancel = useCallback(async () => {
     if (!maintenanceId) return;
 
-    Alert.alert(
-      'Cancel Maintenance',
-      'Are you sure you want to cancel this maintenance record?',
-      [
-        { text: 'No', style: 'cancel' },
-        {
-          text: 'Yes, Cancel',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await updateStatusMutation.mutateAsync({
-                id: maintenanceId,
-                status: 'cancelled',
-              });
-            } catch (err) {
-              Alert.alert('Error', err instanceof Error ? err.message : 'Failed to cancel');
-            }
-          },
-        },
-      ]
-    );
+    setShowCancelConfirm(false);
+    try {
+      await updateStatusMutation.mutateAsync({
+        id: maintenanceId,
+        status: 'cancelled',
+      });
+    } catch (err) {
+      setAlertSheet({
+        visible: true,
+        title: 'Error',
+        message: err instanceof Error ? err.message : 'Failed to cancel',
+      });
+    }
   }, [maintenanceId, updateStatusMutation]);
 
   const handleSaveNotes = useCallback(async () => {
@@ -121,7 +130,11 @@ export function MaintenanceDetailModal({
       });
       setEditingNotes(false);
     } catch (err) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to save notes');
+      setAlertSheet({
+        visible: true,
+        title: 'Error',
+        message: err instanceof Error ? err.message : 'Failed to save notes',
+      });
     }
   }, [maintenanceId, notes, updateMutation]);
 
@@ -156,7 +169,7 @@ export function MaintenanceDetailModal({
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.actionButton, styles.dangerButton]}
-              onPress={handleCancel}
+              onPress={handleCancelMaintenance}
               disabled={updateStatusMutation.isPending}
             >
               <Text style={styles.dangerButtonText}>Cancel</Text>
@@ -176,7 +189,7 @@ export function MaintenanceDetailModal({
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.actionButton, styles.dangerButton]}
-              onPress={handleCancel}
+              onPress={handleCancelMaintenance}
               disabled={updateStatusMutation.isPending}
             >
               <Text style={styles.dangerButtonText}>Cancel</Text>
@@ -411,6 +424,42 @@ export function MaintenanceDetailModal({
           )}
         </View>
       </View>
+
+      {/* Cancel Confirmation Sheet */}
+      <ConfirmSheet
+        visible={showCancelConfirm}
+        type="danger"
+        title="Cancel Maintenance"
+        message="Are you sure you want to cancel this maintenance record?"
+        confirmLabel="Yes, Cancel"
+        cancelLabel="No"
+        onConfirm={handleConfirmCancel}
+        onCancel={() => setShowCancelConfirm(false)}
+        isLoading={updateStatusMutation.isPending}
+      />
+
+      {/* Complete Maintenance Input Sheet */}
+      <InputSheet
+        visible={showCompleteInput}
+        title="Complete Maintenance"
+        message="Enter actual cost (optional):"
+        placeholder="0.00"
+        keyboardType="decimal-pad"
+        submitLabel="Complete"
+        cancelLabel="Cancel"
+        onSubmit={handleCompleteSubmit}
+        onCancel={() => setShowCompleteInput(false)}
+        isLoading={isCompletingMaintenance}
+      />
+
+      {/* Alert Sheet for errors */}
+      <AlertSheet
+        visible={alertSheet.visible}
+        type="error"
+        title={alertSheet.title}
+        message={alertSheet.message}
+        onDismiss={() => setAlertSheet(prev => ({ ...prev, visible: false }))}
+      />
     </Modal>
   );
 }
@@ -583,7 +632,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
   },
   primaryButton: {
-    backgroundColor: '#0000FF',
+    backgroundColor: colors.primary,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.6,

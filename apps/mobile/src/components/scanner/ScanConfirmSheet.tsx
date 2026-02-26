@@ -6,12 +6,13 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { LoadingDots } from '../common/LoadingDots';
 import type { Asset, Depot } from '@rgr/shared';
-import { formatRelativeTime } from '@rgr/shared';
+import { AssetStatusColors } from '@rgr/shared';
 import { StatusBadge } from '../common/StatusBadge';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 import type { LocationData } from '../../hooks/useLocation';
 
 interface ScanConfirmSheetProps {
@@ -22,6 +23,8 @@ interface ScanConfirmSheetProps {
   isSubmitting: boolean;
   onConfirm: () => void;
   onCancel: () => void;
+  /** Called when the modal dismiss animation completes (iOS only) */
+  onDismiss?: () => void;
   /** Optional role-specific content (e.g., maintenance checkbox) */
   children?: ReactNode;
 }
@@ -34,17 +37,31 @@ export function ScanConfirmSheet({
   isSubmitting,
   onConfirm,
   onCancel,
+  onDismiss,
   children,
 }: ScanConfirmSheetProps) {
   if (!asset) return null;
 
-  const lastScanText = asset.lastLocationUpdatedAt
-    ? `Last scanned ${formatRelativeTime(asset.lastLocationUpdatedAt)}`
-    : 'Never scanned';
+  // Format subtype display
+  const subtypeDisplay = asset.subtype
+    ? asset.subtype
+    : asset.category === 'dolly' ? 'Dolly' : 'Trailer';
 
-  const lastLocationText = asset.assignedDepotId
-    ? 'location tracked'
-    : 'location unknown';
+  // Get status color for left border
+  const statusColor = AssetStatusColors[asset.status as keyof typeof AssetStatusColors] || colors.electricBlue;
+
+  // Get depot badge colors
+  const getDepotBadgeColors = (depotCode: string | null): { bg: string; text: string } => {
+    if (!depotCode) {
+      return { bg: colors.chrome, text: colors.text };
+    }
+    const code = depotCode.toLowerCase() as keyof typeof colors.depot;
+    const bg = colors.depot[code] || colors.chrome;
+    const text = code === 'kar' ? colors.text : colors.textInverse;
+    return { bg, text };
+  };
+
+  const depotBadgeColors = matchedDepot ? getDepotBadgeColors(matchedDepot.depot.code) : null;
 
   return (
     <Modal
@@ -52,6 +69,7 @@ export function ScanConfirmSheet({
       transparent
       animationType="slide"
       onRequestClose={onCancel}
+      onDismiss={onDismiss}
     >
       <View style={styles.backdrop}>
         <TouchableOpacity
@@ -66,54 +84,61 @@ export function ScanConfirmSheet({
           <View style={styles.content}>
             <Text style={styles.title}>Confirm Scan</Text>
 
-            <View style={styles.assetInfo}>
+            {/* Asset Info Card */}
+            <View style={[styles.assetCard, { borderLeftWidth: 4, borderLeftColor: statusColor }]}>
               <View style={styles.assetHeader}>
                 <Text style={styles.assetNumber}>{asset.assetNumber ?? 'Unknown'}</Text>
                 {asset.status && <StatusBadge status={asset.status} size="small" />}
               </View>
 
-              <Text style={styles.description} numberOfLines={2}>
-                {asset.description ?? 'No description'}
-              </Text>
-
-              <Text style={styles.lastScan}>
-                {lastScanText} {lastLocationText}
-              </Text>
+              <Text style={styles.subtype}>{subtypeDisplay}</Text>
             </View>
 
-            {location && (
-              <View style={styles.locationInfo}>
-                <Text style={styles.locationTitle}>Current Location</Text>
-                <Text style={styles.coordinates}>
-                  {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}
-                </Text>
-                {location.accuracy && (
-                  <Text style={styles.accuracy}>
-                    Accuracy: ±{Math.round(location.accuracy)}m
-                  </Text>
-                )}
-              </View>
-            )}
+            {/* Location & Depot Card (merged) */}
+            <View style={[styles.locationCard, matchedDepot && styles.locationCardSuccess]}>
+              <View style={styles.locationHeader}>
+                <View style={styles.locationHeaderLeft}>
+                  <View style={styles.locationTitleRow}>
+                    <Ionicons
+                      name={matchedDepot ? "checkmark-circle" : "navigate"}
+                      size={20}
+                      color={matchedDepot ? colors.success : colors.electricBlue}
+                    />
+                    <Text style={styles.locationTitle}>
+                      {matchedDepot ? 'Depot Matched' : 'Current Location'}
+                    </Text>
+                  </View>
+                  {location && (
+                    <View style={styles.coordinatesRow}>
+                      <Text style={styles.coordinates}>
+                        {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)}
+                      </Text>
+                      {location.accuracy && (
+                        <Text style={styles.accuracy}> ±{Math.round(location.accuracy)}m</Text>
+                      )}
+                    </View>
+                  )}
+                  {!matchedDepot && location && (
+                    <Text style={styles.noDepotText}>No depot within range</Text>
+                  )}
+                </View>
 
-            {matchedDepot && (
-              <View style={styles.depotInfo}>
-                <Text style={styles.depotTitle}>Assigned Depot</Text>
-                <Text style={styles.depotName}>{matchedDepot.depot.name}</Text>
-                <Text style={styles.depotDistance}>
-                  {matchedDepot.distanceKm.toFixed(1)} km away
-                </Text>
+                {matchedDepot && depotBadgeColors ? (
+                  <View style={styles.depotColumn}>
+                    <View style={[styles.depotBadge, { backgroundColor: depotBadgeColors.bg }]}>
+                      <Text style={[styles.depotBadgeText, { color: depotBadgeColors.text }]}>
+                        {matchedDepot.depot.name}
+                      </Text>
+                    </View>
+                    <Text style={styles.depotDistance}>
+                      {matchedDepot.distanceKm.toFixed(1)} km away
+                    </Text>
+                  </View>
+                ) : null}
               </View>
-            )}
+            </View>
 
-            {!matchedDepot && location && (
-              <View style={styles.depotWarning}>
-                <Text style={styles.depotWarningText}>
-                  No depot within range
-                </Text>
-              </View>
-            )}
-
-            {/* Role-specific content (e.g., maintenance checkbox) */}
+            {/* Role-specific content (e.g., defect report checkbox) */}
             {children}
 
             <View style={styles.buttonRow}>
@@ -141,7 +166,7 @@ export function ScanConfirmSheet({
                 {isSubmitting ? (
                   <LoadingDots color={colors.textInverse} size={8} />
                 ) : (
-                  <Text style={styles.confirmButtonText}>Confirm Scan</Text>
+                  <Text style={styles.confirmButtonText}>Confirm</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -181,85 +206,84 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: fontSize['2xl'],
-    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     marginBottom: spacing.lg,
+    textAlign: 'center',
+    textTransform: 'uppercase',
   },
-  assetInfo: {
+
+  // Asset Card
+  assetCard: {
     backgroundColor: colors.surface,
     padding: spacing.base,
     borderRadius: borderRadius.md,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
   },
   assetHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   assetNumber: {
-    fontSize: fontSize.xl,
-    fontWeight: fontWeight.bold,
+    fontSize: fontSize['2xl'],
     fontFamily: 'Lato_700Bold',
     color: colors.text,
   },
-  description: {
-    fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
-    color: colors.textSecondary,
-    marginBottom: spacing.sm,
-  },
-  lastScan: {
+  subtype: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
-    color: colors.textSecondary,
+    fontFamily: 'Lato_700Bold',
+    color: colors.electricBlue,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  locationInfo: {
+
+  // Location Card
+  locationCard: {
     backgroundColor: colors.surface,
     padding: spacing.base,
     borderRadius: borderRadius.md,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.electricBlue,
+  },
+  locationCardSuccess: {
+    borderLeftColor: colors.success,
+  },
+  locationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  locationHeaderLeft: {
+    flex: 1,
+  },
+  locationTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.xs,
   },
   locationTitle: {
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.semibold,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
-    marginBottom: spacing.xs,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  coordinates: {
-    fontSize: fontSize.base,
-    fontWeight: fontWeight.medium,
-    color: colors.electricBlue,
-    fontFamily: 'Lato_400Regular',
+  depotColumn: {
+    alignItems: 'flex-end',
   },
-  accuracy: {
-    fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
-    color: colors.textSecondary,
-    marginTop: spacing.xs,
+  depotBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: borderRadius.sm,
   },
-  depotInfo: {
-    backgroundColor: colors.surface,
-    padding: spacing.base,
-    borderRadius: borderRadius.md,
-    marginBottom: spacing.lg,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.success,
-  },
-  depotTitle: {
+  depotBadgeText: {
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.semibold,
     fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    marginBottom: spacing.xs,
-  },
-  depotName: {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.bold,
-    fontFamily: 'Lato_700Bold',
-    color: colors.success,
+    textTransform: 'uppercase',
   },
   depotDistance: {
     fontSize: fontSize.xs,
@@ -267,19 +291,28 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: spacing.xs,
   },
-  depotWarning: {
-    backgroundColor: colors.surface,
-    padding: spacing.base,
-    borderRadius: borderRadius.md,
-    marginBottom: spacing.lg,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.warning,
-  },
-  depotWarningText: {
+  noDepotText: {
     fontSize: fontSize.sm,
     fontFamily: 'Lato_400Regular',
     color: colors.warning,
+    marginTop: spacing.xs,
   },
+  coordinatesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  coordinates: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_400Regular',
+    color: colors.textSecondary,
+  },
+  accuracy: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_400Regular',
+    color: colors.textSecondary,
+  },
+
+  // Buttons
   buttonRow: {
     flexDirection: 'row',
     gap: spacing.md,
@@ -297,13 +330,13 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   cancelButtonText: {
-    fontSize: fontSize.lg,
+    fontSize: fontSize.base,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     textTransform: 'uppercase',
   },
   confirmButton: {
-    backgroundColor: '#0000FF',
+    backgroundColor: colors.primary,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.6,

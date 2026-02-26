@@ -6,7 +6,6 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 
@@ -15,6 +14,8 @@ interface PhotoPromptSheetProps {
   assetNumber: string;
   onAddPhoto: () => void;
   onSkip: () => void;
+  /** Called when the modal dismiss animation completes (iOS only) */
+  onDismiss?: () => void;
   /** Optional role-specific content (e.g., photo type picker) */
   children?: ReactNode;
 }
@@ -24,6 +25,7 @@ function PhotoPromptSheetComponent({
   assetNumber,
   onAddPhoto,
   onSkip,
+  onDismiss,
   children,
 }: PhotoPromptSheetProps) {
   return (
@@ -32,6 +34,7 @@ function PhotoPromptSheetComponent({
       transparent
       animationType="slide"
       onRequestClose={onSkip}
+      onDismiss={onDismiss}
     >
       <View style={styles.backdrop}>
         <TouchableOpacity
@@ -44,10 +47,6 @@ function PhotoPromptSheetComponent({
           <View style={styles.handle} />
 
           <View style={styles.content}>
-            <View style={styles.iconContainer}>
-              <Ionicons name="camera" size={48} color={colors.electricBlue} />
-            </View>
-
             <Text style={styles.title}>Add Freight Photo?</Text>
 
             <Text style={styles.description}>
@@ -70,7 +69,6 @@ function PhotoPromptSheetComponent({
                 style={[styles.button, styles.addButton]}
                 onPress={onAddPhoto}
               >
-                <Ionicons name="camera" size={20} color={colors.textInverse} />
                 <Text style={styles.addButtonText}>Add Photo</Text>
               </TouchableOpacity>
             </View>
@@ -111,21 +109,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     alignItems: 'center',
   },
-  iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-  },
   title: {
     fontSize: fontSize['2xl'],
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     marginBottom: spacing.sm,
     textAlign: 'center',
+    textTransform: 'uppercase',
   },
   description: {
     fontSize: fontSize.base,
@@ -138,6 +128,7 @@ const styles = StyleSheet.create({
   assetNumber: {
     fontFamily: 'Lato_700Bold',
     color: colors.electricBlue,
+    textTransform: 'uppercase',
   },
   buttonRow: {
     flexDirection: 'row',
@@ -165,7 +156,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   addButton: {
-    backgroundColor: '#0000FF',
+    backgroundColor: colors.primary,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.6,

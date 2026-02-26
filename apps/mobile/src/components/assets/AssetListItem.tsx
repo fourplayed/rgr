@@ -65,7 +65,7 @@ function AssetListItemComponent({ asset, onPress }: AssetListItemProps) {
           </View>
           <View style={styles.footerRow}>
             <Text style={styles.subtypeLabel}>
-              {asset.subtype || (asset.category === 'dolly' ? 'Dolly' : asset.category.toUpperCase())}
+              {asset.subtype ? asset.subtype : asset.category === 'dolly' ? 'Dolly' : 'Trailer'}
             </Text>
             <Text style={styles.timeText}>{lastScanText}</Text>
           </View>

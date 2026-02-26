@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Modal,
-  Alert,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Image } from 'expo-image';
@@ -26,6 +25,7 @@ interface CameraCaptureProps {
   longitude?: number | null;
   onClose: () => void;
   onPhotoUploaded?: () => void;
+  onDismiss?: () => void;
 }
 
 function CameraCaptureComponent({
@@ -37,6 +37,7 @@ function CameraCaptureComponent({
   longitude,
   onClose,
   onPhotoUploaded,
+  onDismiss,
 }: CameraCaptureProps) {
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
@@ -80,7 +81,6 @@ function CameraCaptureComponent({
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       onPhotoUploaded?.();
       onClose();
-      Alert.alert('Success', 'Photo uploaded successfully');
     } else {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
@@ -93,7 +93,7 @@ function CameraCaptureComponent({
 
   if (!permission) {
     return (
-      <Modal visible={visible} animationType="slide" onRequestClose={handleClose}>
+      <Modal visible={visible} animationType="slide" onRequestClose={handleClose} onDismiss={onDismiss}>
         <View style={styles.container}>
           <SafeAreaView style={styles.centered}>
             <Text style={styles.messageText}>Checking camera permission...</Text>
@@ -105,7 +105,7 @@ function CameraCaptureComponent({
 
   if (!permission.granted) {
     return (
-      <Modal visible={visible} animationType="slide" onRequestClose={handleClose}>
+      <Modal visible={visible} animationType="slide" onRequestClose={handleClose} onDismiss={onDismiss}>
         <View style={styles.container}>
           <SafeAreaView style={styles.centered}>
             <Text style={styles.messageText}>Camera permission is required</Text>
@@ -122,7 +122,7 @@ function CameraCaptureComponent({
   }
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={handleClose}>
+    <Modal visible={visible} animationType="slide" onRequestClose={handleClose} onDismiss={onDismiss}>
       <View style={styles.container}>
         {capturedUri ? (
           // Preview Mode
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   permissionButton: {
-    backgroundColor: '#0000FF',
+    backgroundColor: colors.primary,
     height: 48,
     paddingHorizontal: spacing.xl,
     borderRadius: borderRadius.md,
@@ -438,7 +438,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   confirmButton: {
-    backgroundColor: '#0000FF',
+    backgroundColor: colors.primary,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.6,

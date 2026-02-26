@@ -24,9 +24,7 @@ export function AssetInfoCard({ asset, nextServiceDate }: AssetInfoCardProps) {
         <View style={styles.assetColumn}>
           <Text style={styles.assetNumber}>{asset.assetNumber}</Text>
           <Text style={styles.categoryText}>
-            {asset.category === 'trailer' && asset.subtype
-              ? asset.subtype
-              : asset.category.replace(/_/g, ' ')}
+            {asset.subtype ? asset.subtype : asset.category === 'dolly' ? 'Dolly' : 'Trailer'}
           </Text>
         </View>
         <View style={styles.badgeColumn}>

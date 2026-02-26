@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
-  Alert,
   Platform,
   Linking,
 } from 'react-native';
@@ -15,7 +14,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { usePhoto, useDeletePhoto, useSignedUrl } from '../../hooks/usePhotos';
 import { FreightAnalysisCard } from './FreightAnalysisCard';
-import { LoadingDots } from '../common/LoadingDots';
+import { LoadingDots, AlertSheet, ConfirmSheet } from '../common';
 import { formatRelativeTime } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
@@ -38,6 +37,12 @@ function PhotoDetailModalComponent({
   const { data: fullImageUrl, error: urlError } = useSignedUrl(photoData?.storagePath);
   const { mutateAsync: deletePhotoMutation, isPending: isDeleting } = useDeletePhoto();
   const [isFullImageLoaded, setIsFullImageLoaded] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [alertSheet, setAlertSheet] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+  }>({ visible: false, title: '', message: '' });
 
   // Reset full image loaded state when photo changes
   useEffect(() => {
@@ -55,28 +60,28 @@ function PhotoDetailModalComponent({
 
   const handleDelete = useCallback(() => {
     if (!photoId) return;
+    setShowDeleteConfirm(true);
+  }, [photoId]);
 
-    Alert.alert(
-      'Delete Photo',
-      'Are you sure you want to delete this photo? This action cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deletePhotoMutation({ photoId, assetId });
-              onClose();
-            } catch (error) {
-              const message = error instanceof Error ? error.message : 'Failed to delete photo';
-              Alert.alert('Error', message);
-            }
-          },
-        },
-      ]
-    );
+  const handleConfirmDelete = useCallback(async () => {
+    if (!photoId) return;
+    setShowDeleteConfirm(false);
+    try {
+      await deletePhotoMutation({ photoId, assetId });
+      onClose();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to delete photo';
+      setAlertSheet({
+        visible: true,
+        title: 'Error',
+        message,
+      });
+    }
   }, [photoId, assetId, deletePhotoMutation, onClose]);
+
+  const handleCancelDelete = useCallback(() => {
+    setShowDeleteConfirm(false);
+  }, []);
 
   const formatPhotoType = (type: string): string => {
     return type.charAt(0).toUpperCase() + type.slice(1).replace(/_/g, ' ');
@@ -237,6 +242,26 @@ function PhotoDetailModalComponent({
           )}
         </SafeAreaView>
       </View>
+
+      <ConfirmSheet
+        visible={showDeleteConfirm}
+        type="danger"
+        title="Delete Photo"
+        message="Are you sure you want to delete this photo? This action cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        isLoading={isDeleting}
+      />
+
+      <AlertSheet
+        visible={alertSheet.visible}
+        type="error"
+        title={alertSheet.title}
+        message={alertSheet.message}
+        onDismiss={() => setAlertSheet(prev => ({ ...prev, visible: false }))}
+      />
     </Modal>
   );
 }

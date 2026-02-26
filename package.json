@@ -23,14 +23,18 @@
     "clean": "turbo run clean && rm -rf node_modules",
     "db:migrate": "cd supabase && supabase db push",
     "db:reset": "cd supabase && supabase db reset",
-    "db:seed": "cd supabase && psql $DATABASE_URL < seed.sql"
+    "db:seed": "cd supabase && psql $DATABASE_URL < seed.sql",
+    "deploy:sim": "./scripts/deploy-sim.sh"
   },
   "devDependencies": {
+    "@types/sharp": "^0.31.1",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^7.0.1",
+    "pg": "^8.18.0",
     "prettier": "^3.3.0",
+    "sharp": "^0.34.5",
     "turbo": "^2.0.0",
     "typescript": "^5.5.0"
   },
@@ -39,5 +43,11 @@
     "node": ">=20.0.0",
     "npm": ">=10.0.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "ajv": "^8.18.0",
+    "css-tree": "^3.1.0"
+  },
+  "overrides": {
+    "react-native-safe-area-context": "4.12.0"
+  }
 }

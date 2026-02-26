@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   saveButton: {
-    backgroundColor: '#0000FF',
+    backgroundColor: colors.primary,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.6,
