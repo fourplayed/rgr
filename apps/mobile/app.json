@@ -41,7 +41,8 @@
         {
           "locationWhenInUsePermission": "Location is captured during asset scans"
         }
-      ]
+      ],
+      ["@sentry/react-native/expo", { "organization": "rgr", "project": "rgr-mobile" }]
     ]
   }
 }

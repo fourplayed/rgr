@@ -5,6 +5,8 @@
  * Use this instead of inline console.log for cleaner production builds.
  */
 
+import { captureError } from '../config/sentry';
+
 const isDev = __DEV__;
 
 type LogData = unknown;
@@ -76,5 +78,9 @@ export const logger = {
     } else {
       console.error(formatMessage('Error', message));
     }
+    captureError(data instanceof Error ? data : new Error(message), {
+      loggerMessage: message,
+      ...(data !== undefined && !(data instanceof Error) ? { data } : {}),
+    });
   },
 };
