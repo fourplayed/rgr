@@ -8,10 +8,11 @@ import { useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { useTheme } from '@/hooks/useTheme';
+import type { Profile } from '@rgr/shared';
 import type { DashboardSection } from './types';
 
 export interface DashboardState {
-  user: { id: string; email: string; role: string; fullName: string | null; avatarUrl: string | null } | null;
+  user: Profile | null;
   isDark: boolean;
   activeSection: DashboardSection;
   canAccessAdmin: boolean;

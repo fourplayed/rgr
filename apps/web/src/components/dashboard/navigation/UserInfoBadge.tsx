@@ -8,13 +8,13 @@ import { RGR_COLORS } from '@/styles/color-palette';
 export interface UserInfoBadgeProps {
   user: {
     email?: string | null;
-    full_name?: string | null;
+    fullName?: string | null;
   };
   isDark?: boolean;
 }
 
 export const UserInfoBadge = React.memo<UserInfoBadgeProps>(({ user, isDark = true }) => {
-  const displayName = user.full_name || user.email || 'User';
+  const displayName = user.fullName || user.email || 'User';
 
   return (
     <div

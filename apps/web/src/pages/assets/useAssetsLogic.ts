@@ -9,6 +9,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { useTheme } from '@/hooks/useTheme';
 import { hasRoleLevel, UserRole } from '@rgr/shared';
+import type { Profile } from '@rgr/shared';
 import type { AssetStatus, AssetCategory } from '@rgr/shared';
 import type {
   AssetFilters,
@@ -23,7 +24,7 @@ import {
 } from './types';
 
 export interface AssetsState {
-  user: { id: string; email: string; role: string; fullName: string | null } | null;
+  user: Profile | null;
   isDark: boolean;
   viewMode: AssetsViewMode;
   filters: AssetFilters;

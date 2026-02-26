@@ -1,18 +1,9 @@
 import { create } from 'zustand';
-import { getSupabaseClient, fetchProfile } from '@rgr/shared';
-
-type UserRole = 'driver' | 'mechanic' | 'manager' | 'superuser';
-
-interface UserState {
-  id: string;
-  email: string;
-  role: UserRole;
-  fullName: string | null;
-  avatarUrl: string | null;
-}
+import { getSupabaseClient, fetchProfile, updateLastLogin } from '@rgr/shared';
+import type { Profile } from '@rgr/shared';
 
 interface AuthState {
-  user: UserState | null;
+  user: Profile | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
@@ -51,30 +42,46 @@ export const useAuthStore = create<AuthState>((set) => ({
         throw new Error(errorMsg);
       }
 
-      // Fetch the authoritative role from the profiles table
-      let role: UserRole = (data.user.user_metadata?.role as UserRole) || 'driver';
-      let fullName: string | null = null;
-      let avatarUrl: string | null = null;
+      // Fetch the authoritative profile from the profiles table
+      const profileResult = await fetchProfile(data.user.id);
 
-      const { data: profile, error: profileError } = await fetchProfile(data.user.id);
+      let user: Profile;
 
-      if (profileError) {
-        // Could not fetch profile, falling back to user_metadata role
-      } else if (profile) {
+      if (!profileResult.success || !profileResult.data) {
+        // Could not fetch profile, construct a minimal fallback from user_metadata
+        const meta = data.user.user_metadata ?? {};
+        user = {
+          id: data.user.id,
+          email: data.user.email || '',
+          fullName: (meta['full_name'] as string) || '',
+          role: (meta['role'] as Profile['role']) || 'driver',
+          phone: null,
+          avatarUrl: null,
+          isActive: true,
+          employeeId: null,
+          depot: null,
+          lastLoginAt: null,
+          createdAt: data.user.created_at || new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+      } else {
         // Block deactivated users from logging in
-        if (!profile.isActive) {
+        if (!profileResult.data.isActive) {
           await supabase.auth.signOut();
           const errorMsg = 'Your account has been deactivated. Contact an administrator.';
           set({ error: errorMsg, isLoading: false });
           throw new Error(errorMsg);
         }
-        role = profile.role as UserRole;
-        fullName = profile.fullName;
-        avatarUrl = profile.avatarUrl;
+        user = profileResult.data;
       }
 
+      // Fire-and-forget: update last login timestamp
+      updateLastLogin(data.user.id).catch((err) =>
+        console.error('[Auth] Failed to update last login:', err)
+      );
+
       set({
-        user: { id: data.user.id, email: data.user.email || '', role, fullName, avatarUrl },
+        user,
         isAuthenticated: true,
         isLoading: false,
         error: null,
@@ -126,34 +133,39 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
 
       if (session?.user) {
-        let role: UserRole = (session.user.user_metadata?.role as UserRole) || 'driver';
-        let fullName: string | null = null;
-        let avatarUrl: string | null = null;
+        const profileResult = await fetchProfile(session.user.id);
 
-        const { data: profile, error: profileError } = await fetchProfile(session.user.id);
+        let user: Profile;
 
-        if (profileError) {
-          // Could not fetch profile, falling back to user_metadata role
-        } else if (profile) {
+        if (!profileResult.success || !profileResult.data) {
+          // Could not fetch profile, construct a minimal fallback from user_metadata
+          const meta = session.user.user_metadata ?? {};
+          user = {
+            id: session.user.id,
+            email: session.user.email || '',
+            fullName: (meta['full_name'] as string) || '',
+            role: (meta['role'] as Profile['role']) || 'driver',
+            phone: null,
+            avatarUrl: null,
+            isActive: true,
+            employeeId: null,
+            depot: null,
+            lastLoginAt: null,
+            createdAt: session.user.created_at || new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+        } else {
           // Block deactivated users on session restore
-          if (!profile.isActive) {
+          if (!profileResult.data.isActive) {
             await supabase.auth.signOut();
             set({ user: null, isAuthenticated: false, isLoading: false, error: null });
             return;
           }
-          role = profile.role as UserRole;
-          fullName = profile.fullName;
-          avatarUrl = profile.avatarUrl;
+          user = profileResult.data;
         }
 
         set({
-          user: {
-            id: session.user.id,
-            email: session.user.email || '',
-            role,
-            fullName,
-            avatarUrl,
-          },
+          user,
           isAuthenticated: true,
           isLoading: false,
           error: null,
