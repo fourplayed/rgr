@@ -17,6 +17,9 @@ import {
 import { mapRowToFreightAnalysis } from '../../types/entities/freightAnalysis';
 import { mapRowToHazardAlert } from '../../types/entities/hazardAlert';
 
+/** Maximum allowed photo size in bytes (20 MB) */
+const MAX_PHOTO_SIZE_BYTES = 20 * 1024 * 1024;
+
 /**
  * Generate a unique ID for filenames.
  * Uses timestamp + random string, which is sufficient for storage paths.
@@ -93,6 +96,11 @@ export async function uploadPhoto(
     // Validate we actually have data
     if (!arrayBuffer || arrayBuffer.byteLength === 0) {
       return { success: false, data: null, error: 'Failed to read photo file: empty content' };
+    }
+
+    // Validate file size before uploading
+    if (arrayBuffer.byteLength > MAX_PHOTO_SIZE_BYTES) {
+      return { success: false, data: null, error: `Photo exceeds maximum size of ${MAX_PHOTO_SIZE_BYTES / (1024 * 1024)}MB` };
     }
 
     // Convert to Uint8Array for Supabase upload

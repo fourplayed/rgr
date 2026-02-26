@@ -12,6 +12,8 @@
  *   unsubscribe();
  */
 
+import { logger } from './logger';
+
 type EventCallback = () => void;
 
 class EventBus {
@@ -36,9 +38,7 @@ class EventBus {
         try {
           callback();
         } catch (error) {
-          if (__DEV__) {
-            console.error(`Error in event handler for '${event}':`, error);
-          }
+          logger.error(`Error in event handler for '${event}'`, error);
         }
       });
     }

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import * as Location from 'expo-location';
+import { logger } from '../utils/logger';
 
 export interface LocationData {
   latitude: number;
@@ -45,7 +46,7 @@ export function useLocation(): UseLocationResult {
         setHasPermission(status === 'granted');
       }
     } catch (err) {
-      console.error('Error checking location permission:', err);
+      logger.error('Error checking location permission', err);
       if (isMountedRef.current) {
         setHasPermission(false);
       }

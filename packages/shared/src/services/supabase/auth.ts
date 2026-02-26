@@ -11,6 +11,7 @@ import type {
 } from '../../types/api/auth';
 import { mapRowToProfile, mapProfileToUpdate } from '../../types/api/auth';
 import type { ServiceResult } from '../../types';
+import { checkRateLimit, recordFailure, recordSuccess } from '../../utils/authRateLimiter';
 
 /**
  * Supabase Auth Service
@@ -25,6 +26,16 @@ import type { ServiceResult } from '../../types';
 export async function signInWithEmail(
   credentials: SignInCredentials
 ): Promise<ServiceResult<{ user: AuthUser; session: Session }>> {
+  // Check rate limit before attempting sign-in
+  const rateLimit = checkRateLimit(credentials.email);
+  if (!rateLimit.allowed) {
+    return {
+      success: false,
+      data: null,
+      error: `Too many login attempts. Please try again in ${rateLimit.retryAfterSeconds} seconds.`,
+    };
+  }
+
   const supabase = getSupabaseClient();
 
   const { data, error } = await supabase.auth.signInWithPassword({
@@ -33,13 +44,16 @@ export async function signInWithEmail(
   });
 
   if (error) {
+    recordFailure(credentials.email);
     return { success: false, data: null, error: mapAuthError(error.message) };
   }
 
   if (!data.user || !data.session) {
+    recordFailure(credentials.email);
     return { success: false, data: null, error: 'Authentication failed' };
   }
 
+  recordSuccess(credentials.email);
   return { success: true, data: { user: data.user, session: data.session }, error: null };
 }
 
@@ -132,6 +146,16 @@ export async function verifyCurrentPassword(
   email: string,
   currentPassword: string
 ): Promise<ServiceResult<void>> {
+  // Check rate limit before attempting verification
+  const rateLimit = checkRateLimit(email);
+  if (!rateLimit.allowed) {
+    return {
+      success: false,
+      data: null,
+      error: `Too many attempts. Please try again in ${rateLimit.retryAfterSeconds} seconds.`,
+    };
+  }
+
   const supabase = getSupabaseClient();
 
   const { error } = await supabase.auth.signInWithPassword({
@@ -140,9 +164,11 @@ export async function verifyCurrentPassword(
   });
 
   if (error) {
+    recordFailure(email);
     return { success: false, data: null, error: 'Current password is incorrect' };
   }
 
+  recordSuccess(email);
   return { success: true, data: undefined, error: null };
 }
 

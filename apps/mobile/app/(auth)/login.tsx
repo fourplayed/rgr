@@ -22,6 +22,7 @@ import { isAutoLoginEnabled } from '../../src/utils/secureStorage';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../src/theme/spacing';
 import { LoadingDots, AlertSheet } from '../../src/components/common';
+import { logger } from '../../src/utils/logger';
 
 const APP_VERSION = Constants.expoConfig?.version || '1.0.0';
 const BUILD_NUMBER = Constants['nativeBuildVersion'] || Constants.expoConfig?.ios?.buildNumber || Constants.expoConfig?.android?.versionCode || '0';
@@ -143,7 +144,7 @@ export default function LoginScreen() {
       // Fire and forget: resolve depot based on GPS location
       // Errors are non-fatal - user can still use the app without depot resolution
       resolveDepot().catch((err) => {
-        console.warn('Failed to resolve depot on login:', err);
+        logger.warn('Failed to resolve depot on login', err);
       });
 
       // Check if auto-login is already enabled

@@ -18,6 +18,7 @@ import {
   type StoredSession,
 } from '../utils/secureStorage';
 import { eventBus, AppEvents } from '../utils/eventBus';
+import { logger } from '../utils/logger';
 
 interface AuthState {
   user: Profile | null;
@@ -87,7 +88,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       // Fire-and-forget: update last login timestamp
       updateLastLogin(result.data.user.id).catch((err) =>
-        console.error('[Auth] Failed to update last login:', err)
+        logger.error('Failed to update last login', err)
       );
 
       return { success: true };

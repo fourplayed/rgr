@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import type { BarcodeScanningResult } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { isValidQRCode } from '@rgr/shared';
+import { logger } from '../utils/logger';
 
 // Safety timeout to prevent permanently stuck scanner state
 const SCANNER_LOCK_TIMEOUT_MS = 30000;
@@ -70,7 +71,7 @@ export function useQRScanner(
 
     // Validate QR code format
     if (!isValidQRCode(data)) {
-      console.warn('Invalid QR code format:', data);
+      logger.warn('Invalid QR code format', data);
       return;
     }
 
@@ -85,7 +86,7 @@ export function useQRScanner(
     // Set safety timeout to auto-reset lock if stuck (e.g., callback never completes)
     lockTimeoutRef.current = setTimeout(() => {
       if (isMountedRef.current && isProcessingRef.current) {
-        console.warn('Scanner lock timeout - auto-resetting after 30s');
+        logger.warn('Scanner lock timeout - auto-resetting after 30s');
         isProcessingRef.current = false;
         setIsProcessing(false);
       }

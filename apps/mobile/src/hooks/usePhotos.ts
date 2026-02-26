@@ -9,6 +9,7 @@ import {
 } from '@rgr/shared';
 import type { UploadPhotoOptions, PhotoListItem } from '@rgr/shared';
 import { assetKeys } from './useAssetData';
+import { logger } from '../utils/logger';
 
 /**
  * Query keys for photo-related data
@@ -51,15 +52,15 @@ export function usePhoto(photoId: string | undefined) {
     queryFn: async () => {
       if (!photoId) throw new Error('Photo ID is required');
 
-      console.log('[usePhoto] Fetching photo:', photoId);
+      logger.info('Fetching photo', photoId);
       const result = await getPhotoById(photoId);
 
       if (!result.success) {
-        console.error('[usePhoto] Failed:', result.error);
+        logger.error('Failed to fetch photo', result.error);
         throw new Error(result.error);
       }
 
-      console.log('[usePhoto] Success:', result.data?.id);
+      logger.info('Photo fetched successfully', result.data?.id);
       return result.data;
     },
     enabled: !!photoId,

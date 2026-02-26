@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Ionicons } from '@expo/vector-icons';
+import { logger } from '../utils/logger';
 
 const AVATAR_STORAGE_KEY = '@rgr_avatar_id';
 
@@ -50,9 +51,7 @@ export const useAvatarStore = create<AvatarState>((set, get) => ({
         set({ isLoading: false });
       }
     } catch (error) {
-      if (__DEV__) {
-        console.error('Failed to load avatar from storage:', error);
-      }
+      logger.error('Failed to load avatar from storage', error);
       set({ isLoading: false });
     }
   },
@@ -63,9 +62,7 @@ export const useAvatarStore = create<AvatarState>((set, get) => ({
       set({ selectedAvatarId: avatarId });
     } catch (error) {
       // Keep current selection, but log for debugging
-      if (__DEV__) {
-        console.error('Failed to save avatar to storage:', error);
-      }
+      logger.error('Failed to save avatar to storage', error);
     }
   },
 

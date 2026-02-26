@@ -16,6 +16,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LoadingDots } from '../common/LoadingDots';
+import { logger } from '../../utils/logger';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 
@@ -74,7 +75,7 @@ function CombinationPhotoSheetComponent({
         onCapture(photo.uri);
       }
     } catch (error) {
-      console.error('Failed to take photo:', error);
+      logger.error('Failed to take photo', error);
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setIsCapturing(false);

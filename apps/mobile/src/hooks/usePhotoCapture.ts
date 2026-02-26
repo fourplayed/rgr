@@ -4,6 +4,7 @@ import { usePhotoCaptureStore } from '../store/photoCaptureStore';
 import { useUploadPhoto } from './usePhotos';
 import { useAuthStore } from '../store/authStore';
 import { generateThumbnail } from '../utils/imageUtils';
+import { logger } from '../utils/logger';
 
 /**
  * Hook for managing photo capture workflow.
@@ -62,7 +63,7 @@ export function usePhotoCapture() {
 
       return null;
     } catch (error) {
-      console.error('Failed to take photo:', error);
+      logger.error('Failed to take photo', error);
       return null;
     } finally {
       isCapturingRef.current = false;
@@ -100,7 +101,7 @@ export function usePhotoCapture() {
           const thumbnail = await generateThumbnail(capturedUri);
           thumbnailFileUri = thumbnail.uri;
         } catch (thumbError) {
-          console.warn('Failed to generate thumbnail:', thumbError);
+          logger.warn('Failed to generate thumbnail', thumbError);
           // Continue without thumbnail
         }
       }

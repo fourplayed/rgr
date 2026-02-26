@@ -7,6 +7,7 @@
 export * from './qrCode';
 export * from './location';
 export * from './depots';
+export * from './authRateLimiter';
 
 /**
  * Validate email format
