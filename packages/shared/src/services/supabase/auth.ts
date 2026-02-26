@@ -106,43 +106,6 @@ export async function getSession(): Promise<ServiceResult<Session | null>> {
 }
 
 /**
- * Get the current auth user
- */
-export async function getAuthUser(): Promise<ServiceResult<AuthUser | null>> {
-  const supabase = getSupabaseClient();
-
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error) {
-    return { success: false, data: null, error: error.message };
-  }
-
-  return { success: true, data: user, error: null };
-}
-
-/**
- * Refresh the current session
- */
-export async function refreshSession(): Promise<ServiceResult<Session>> {
-  const supabase = getSupabaseClient();
-
-  const { data, error } = await supabase.auth.refreshSession();
-
-  if (error) {
-    return { success: false, data: null, error: error.message };
-  }
-
-  if (!data.session) {
-    return { success: false, data: null, error: 'Failed to refresh session' };
-  }
-
-  return { success: true, data: data.session, error: null };
-}
-
-/**
  * Send password reset email
  */
 export async function sendPasswordResetEmail(

@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { initializeSupabase } from './config/supabase';
 import { useAuthStore } from './stores/authStore';
-import { getSupabaseClient, hasRoleLevel } from '@rgr/shared';
+import { hasRoleLevel, onAuthStateChange } from '@rgr/shared';
 import type { UserRole } from '@rgr/shared';
 import { DebugToolbar } from './pages/login/components/DebugToolbar';
 import { PersistentBackground } from './components/backgrounds';
@@ -59,7 +59,7 @@ function App() {
   const { checkAuth } = useAuthStore();
 
   useEffect(() => {
-    let subscription: { unsubscribe: () => void } | null = null;
+    let unsubscribeAuth: (() => void) | null = null;
 
     // Initialize Supabase client and check auth status
     async function initialize() {
@@ -68,15 +68,19 @@ function App() {
         await checkAuth();
 
         // Subscribe to auth state changes
-        const supabase = getSupabaseClient();
-        const { data: { subscription: sub } } = supabase.auth.onAuthStateChange((event, session) => {
-          if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
-            if (!session) {
-              useAuthStore.setState({ user: null, isAuthenticated: false, error: null });
+        unsubscribeAuth = onAuthStateChange((event, session) => {
+          if (event === 'SIGNED_OUT' || !session) {
+            useAuthStore.setState({ user: null, isAuthenticated: false, error: null });
+          } else if (event === 'TOKEN_REFRESHED') {
+            // Refresh profile to pick up role/status changes
+            useAuthStore.getState().checkAuth();
+          } else if (event === 'SIGNED_IN') {
+            // Handle cross-tab sign-in; local login() already sets state
+            if (!useAuthStore.getState().isAuthenticated) {
+              useAuthStore.getState().checkAuth();
             }
           }
         });
-        subscription = sub;
 
         setIsInitialized(true);
       } catch (error) {
@@ -91,7 +95,7 @@ function App() {
 
     // Cleanup subscription on unmount
     return () => {
-      subscription?.unsubscribe();
+      unsubscribeAuth?.();
     };
   }, [checkAuth]);
 

@@ -8,6 +8,7 @@ import { useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { useTheme } from '@/hooks/useTheme';
+import { hasRoleLevel, UserRole } from '@rgr/shared';
 import type { Profile } from '@rgr/shared';
 import type { DashboardSection } from './types';
 
@@ -42,7 +43,7 @@ export function useDashboardLogic(): { state: DashboardState; actions: Dashboard
   const navigate = useNavigate();
 
   const activeSection = pathToSection(location.pathname);
-  const canAccessAdmin = user?.role === 'superuser';
+  const canAccessAdmin = !!user?.role && hasRoleLevel(user.role, UserRole.SUPERUSER);
 
   const navigateTo = useCallback(
     (path: string) => {

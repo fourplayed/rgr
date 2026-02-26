@@ -33,7 +33,7 @@ import {
   MaintenanceDetailModal,
 } from '../../../src/components/maintenance';
 import { useAuthStore } from '../../../src/store/authStore';
-import { formatRelativeTime } from '@rgr/shared';
+import { formatRelativeTime, hasRoleLevel, UserRole } from '@rgr/shared';
 import { colors } from '../../../src/theme/colors';
 import { spacing, fontSize, borderRadius } from '../../../src/theme/spacing';
 import { CONTENT_TOP_OFFSET } from '../../../src/theme/layout';
@@ -65,7 +65,7 @@ export default function AssetDetailScreen() {
   const [selectedMaintenanceId, setSelectedMaintenanceId] = useState<string | null>(null);
   const rotateAnim = useRef(new Animated.Value(1)).current;
 
-  const isSuperuser = user?.role === 'superuser';
+  const isSuperuser = !!user?.role && hasRoleLevel(user.role, UserRole.SUPERUSER);
 
   useEffect(() => {
     Animated.timing(rotateAnim, {
