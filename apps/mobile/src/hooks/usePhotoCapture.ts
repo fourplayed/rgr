@@ -1,8 +1,10 @@
 import { useCallback, useRef } from 'react';
 import type { CameraView } from 'expo-camera';
+import * as FileSystem from 'expo-file-system';
 import { usePhotoCaptureStore } from '../store/photoCaptureStore';
 import { useUploadPhoto } from './usePhotos';
 import { useAuthStore } from '../store/authStore';
+import { MAX_PHOTO_SIZE_BYTES } from '@rgr/shared';
 import { generateThumbnail } from '../utils/imageUtils';
 import { logger } from '../utils/logger';
 
@@ -93,6 +95,14 @@ export function usePhotoCapture() {
     try {
       setIsUploading(true);
       setUploadError(null);
+
+      // Pre-check file size before uploading
+      const fileInfo = await FileSystem.getInfoAsync(capturedUri, { size: true });
+      if (!fileInfo.exists || (fileInfo.size !== undefined && fileInfo.size > MAX_PHOTO_SIZE_BYTES)) {
+        setUploadError(`Photo is too large. Maximum size is ${MAX_PHOTO_SIZE_BYTES / (1024 * 1024)}MB.`);
+        setIsUploading(false);
+        return false;
+      }
 
       // Generate thumbnail before upload
       let thumbnailFileUri: string | undefined;

@@ -8,6 +8,7 @@ export * from './qrCode';
 export * from './location';
 export * from './depots';
 export * from './authRateLimiter';
+export { MAX_PHOTO_SIZE_BYTES } from './constants';
 
 /**
  * Validate email format

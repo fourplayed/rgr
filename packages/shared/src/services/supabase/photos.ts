@@ -16,9 +16,7 @@ import {
 } from '../../types/entities/photo';
 import { mapRowToFreightAnalysis } from '../../types/entities/freightAnalysis';
 import { mapRowToHazardAlert } from '../../types/entities/hazardAlert';
-
-/** Maximum allowed photo size in bytes (20 MB) */
-const MAX_PHOTO_SIZE_BYTES = 20 * 1024 * 1024;
+import { MAX_PHOTO_SIZE_BYTES } from '../../utils/constants';
 
 /**
  * Generate a unique ID for filenames.

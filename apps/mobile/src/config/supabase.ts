@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { initSupabase } from '@rgr/shared';
+import { initSupabase, initRateLimiter, loadPersistedState } from '@rgr/shared';
 import Constants from 'expo-constants';
 
 /**
@@ -23,4 +23,8 @@ export function initializeMobileSupabase() {
     storage: AsyncStorage,
     detectSessionInUrl: false,
   });
+
+  // Initialize rate limiter with persistent storage so state survives app restarts
+  initRateLimiter({ storage: AsyncStorage });
+  loadPersistedState().catch(() => {});
 }

@@ -79,6 +79,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         return { success: false, error: profileResult.error };
       }
 
+      if (!profileResult.data.isActive) {
+        await signOut();
+        await clearSession();
+        const errorMsg = 'Your account has been deactivated. Contact an administrator.';
+        set({ error: errorMsg, isLoading: false });
+        return { success: false, error: errorMsg };
+      }
+
       set({
         user: profileResult.data,
         isAuthenticated: true,
@@ -147,6 +155,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isAuthenticated: false,
           isLoading: false,
         });
+        return;
+      }
+
+      if (!profileResult.data.isActive) {
+        await signOut();
+        await clearSession();
+        set({ user: null, isAuthenticated: false, isLoading: false });
         return;
       }
 
@@ -227,6 +242,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (!profileResult.success) {
         await clearSession();
         set({ authError: 'Failed to load profile. Please log in again.' });
+        return false;
+      }
+
+      if (!profileResult.data.isActive) {
+        await signOut();
+        await clearSession();
+        set({ authError: 'Your account has been deactivated. Contact an administrator.' });
         return false;
       }
 
