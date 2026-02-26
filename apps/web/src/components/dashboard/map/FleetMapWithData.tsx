@@ -15,8 +15,10 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { AssetHoverCard } from './AssetHoverCard';
 import { RGR_COLORS } from '@/styles/color-palette';
-import { DEPOT_LOCATIONS, DEPOT_COLOR, DEPOT_COLORS, type DepotLocation } from '@/constants/fleetMap';
+import type { DepotLocation } from '@/constants/fleetMap';
 import type { AssetLocation } from '@/hooks/useFleetData';
+import { useDepots } from '@/hooks/useAssetData';
+import type { Depot } from '@rgr/shared';
 
 export interface FleetMapHandle {
   zoomIn: () => void;
@@ -76,6 +78,22 @@ const LIGHT_THEME_COLORS: Record<string, string> = {
   maintenance: '#d97706', // amber-600
   out_of_service: '#dc2626', // red-600
 };
+
+const DEFAULT_DEPOT_COLOR = '#9ca3af';
+
+/** Convert Depot records to DepotLocation format for map rendering */
+function toDepotLocations(depots: Depot[]): DepotLocation[] {
+  return depots
+    .filter(d => d.latitude != null && d.longitude != null)
+    .map(d => ({
+      name: d.name,
+      lng: d.longitude!,
+      lat: d.latitude!,
+      trailers: 0,
+      dollies: 0,
+      color: d.color || DEFAULT_DEPOT_COLOR,
+    }));
+}
 
 /**
  * Simple clustering algorithm for nearby markers
@@ -155,6 +173,9 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
   filters: externalFilters,
   showDepotLabels = true,
 }, ref) => {
+  const { data: dbDepots = [] } = useDepots();
+  const depotLocations = useMemo(() => toDepotLocations(dbDepots), [dbDepots]);
+
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markers = useRef<mapboxgl.Marker[]>([]);
@@ -200,7 +221,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
     fitBounds: () => {
       if (!map.current) return;
       const bounds = new mapboxgl.LngLatBounds();
-      DEPOT_LOCATIONS.forEach((depot) => bounds.extend([depot.lng, depot.lat]));
+      depotLocations.forEach((depot) => bounds.extend([depot.lng, depot.lat]));
       filteredAssets.forEach((asset) => bounds.extend([asset.longitude, asset.latitude]));
       if (bounds.isEmpty()) return;
       map.current.fitBounds(bounds, { padding: 50 });
@@ -257,66 +278,6 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         if (!isMounted) return;
         setMapLoaded(true);
         onMapLoad?.();
-
-        // Per-depot layout: stem height, anchor side, z-index
-        // 'west' = right edge of label sits on pole, label extends left
-        // 'east' = left edge of label sits on pole, label extends right
-        const depotLayout: Record<string, { stem: number; anchor: 'west' | 'east' | 'center'; z: number }> = {
-          Perth:     { stem: 45, anchor: 'east',   z: 16 },
-          Wubin:     { stem: 85, anchor: 'east',   z: 14 },
-          Newman:    { stem: 45, anchor: 'east',   z: 12 },
-          Hedland:   { stem: 48, anchor: 'east',   z: 16 },
-          Karratha:  { stem: 88, anchor: 'east',   z: 14 },
-          Carnarvon: { stem: 45, anchor: 'east',   z: 12 },
-        };
-
-        // Add depot markers with text labels
-        DEPOT_LOCATIONS.forEach((depot: DepotLocation) => {
-          const depotColor = DEPOT_COLORS[depot.name] || DEPOT_COLOR;
-          const tipTextColor = depot.name === 'Newman' ? '#6366f1' : depotColor;
-          const layout = depotLayout[depot.name] ?? { stem: 68, anchor: 'center', z: 10 };
-
-          // Translate label so the correct edge sits on the pole
-          const offsetX = layout.anchor === 'west' ? '-100%' : layout.anchor === 'east' ? '0%' : '-50%';
-
-          // Tooltip on opposite side of beam from label, anchored to the pole
-          const tipOnRight = layout.anchor === 'west';  // label left → tooltip right
-          const tipOrigin = tipOnRight ? 'transform-origin: left center;' : 'transform-origin: right center;';
-          const tipHidden = tipOnRight ? 'transform: rotateY(-90deg);' : 'transform: rotateY(90deg);';
-          const tipRadius = tipOnRight ? 'border-radius: 0 8px 8px 0;' : 'border-radius: 8px 0 0 8px;';
-          // Position tooltip at beam center: right-side starts at left:50%, left-side ends at beam via right + calc
-          const tipPosition = tipOnRight
-            ? 'left: 50%;'
-            : 'right: calc(50% - 1px);';  // -1px to overlap the beam edge
-
-          const el = document.createElement('div');
-          el.className = 'depot-marker';
-          el.style.cssText = `margin: 0; padding: 0; line-height: 0; z-index: ${layout.z};`;
-          el.innerHTML = `
-            <div style="display: flex; flex-direction: column; align-items: center; position: relative; margin: 0; padding: 0; perspective: 400px;">
-              <div style="width: 2px; height: ${layout.stem}px; background: linear-gradient(to bottom, ${depotColor}cc, ${depotColor}44 70%, transparent); pointer-events: none;"></div>
-              <div style="position: absolute; top: 0; width: 4px; height: ${layout.stem}px; background: linear-gradient(to bottom, ${depotColor}25, ${depotColor}0a 60%, transparent); filter: blur(2px); pointer-events: none; left: 50%; transform: translateX(-50%);"></div>
-              <div class="depot-label-wrap" style="position: absolute; top: -7px; left: 50%; transform: translateX(${offsetX}); display: inline-flex; align-items: center; pointer-events: auto; cursor: pointer;">
-                <span class="depot-label" style="position: relative; z-index: 1; color: white; font-family: 'Lato', sans-serif; font-size: 14px; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; text-shadow: 0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.6); background: ${depotColor}cc; border: 1px solid ${depotColor}; padding: 8px 10px 12px 10px; border-radius: 8px; backdrop-filter: blur(4px);">${depot.name}</span>
-              </div>
-              <div class="depot-tooltip" style="position: absolute; top: -7px; ${tipPosition} ${tipOrigin} ${tipHidden} line-height: 1.4; white-space: nowrap; color: white; font-family: 'Lato', sans-serif; font-size: 12px; font-weight: 600; background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: none; padding: 0; ${tipRadius} opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease; pointer-events: none; overflow: hidden;">
-                <div style="display: grid; grid-template-columns: auto auto; line-height: 1;">
-                  <div style="padding: 8px 10px; border-right: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1); color: ${tipTextColor};">TL</div>
-                  <div style="padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.1); color: ${tipTextColor}; font-weight: 800;">${depot.trailers}</div>
-                  <div style="padding: 8px 10px; border-right: 1px solid rgba(255,255,255,0.1); color: ${tipTextColor};">DL</div>
-                  <div style="padding: 8px 10px; color: ${tipTextColor}; font-weight: 800;">${depot.dollies}</div>
-                </div>
-              </div>
-              <div style="width: 5px; height: 5px; border-radius: 50%; background-color: ${depotColor}; box-shadow: 0 0 6px ${depotColor}, 0 0 12px ${depotColor}80; cursor: pointer; flex-shrink: 0;"></div>
-            </div>
-          `;
-
-          const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
-            .setLngLat([depot.lng, depot.lat])
-            .addTo(mapInstance);
-
-          depotMarkers.current.push(marker);
-        });
       });
 
       // Track zoom level for clustering
@@ -345,6 +306,73 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onMapLoad]);
+
+  // Add depot markers when map is loaded and depot data is available
+  useEffect(() => {
+    if (!map.current || !mapLoaded || depotLocations.length === 0) return;
+
+    // Clear existing depot markers
+    depotPopupRoots.current.forEach(({ root }) => root.unmount());
+    depotPopupRoots.current = [];
+    depotMarkers.current.forEach((marker) => marker.remove());
+    depotMarkers.current = [];
+
+    const mapInstance = map.current;
+
+    // Per-depot layout: stem height, anchor side, z-index
+    const depotLayout: Record<string, { stem: number; anchor: 'west' | 'east' | 'center'; z: number }> = {
+      Perth:     { stem: 45, anchor: 'east',   z: 16 },
+      Wubin:     { stem: 85, anchor: 'east',   z: 14 },
+      Newman:    { stem: 45, anchor: 'east',   z: 12 },
+      Hedland:   { stem: 48, anchor: 'east',   z: 16 },
+      Karratha:  { stem: 88, anchor: 'east',   z: 14 },
+      Carnarvon: { stem: 45, anchor: 'east',   z: 12 },
+    };
+
+    depotLocations.forEach((depot: DepotLocation) => {
+      const depotColor = depot.color;
+      const tipTextColor = depot.name === 'Newman' ? '#6366f1' : depotColor;
+      const layout = depotLayout[depot.name] ?? { stem: 68, anchor: 'center', z: 10 };
+
+      const offsetX = layout.anchor === 'west' ? '-100%' : layout.anchor === 'east' ? '0%' : '-50%';
+
+      const tipOnRight = layout.anchor === 'west';
+      const tipOrigin = tipOnRight ? 'transform-origin: left center;' : 'transform-origin: right center;';
+      const tipHidden = tipOnRight ? 'transform: rotateY(-90deg);' : 'transform: rotateY(90deg);';
+      const tipRadius = tipOnRight ? 'border-radius: 0 8px 8px 0;' : 'border-radius: 8px 0 0 8px;';
+      const tipPosition = tipOnRight
+        ? 'left: 50%;'
+        : 'right: calc(50% - 1px);';
+
+      const el = document.createElement('div');
+      el.className = 'depot-marker';
+      el.style.cssText = `margin: 0; padding: 0; line-height: 0; z-index: ${layout.z};`;
+      el.innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; position: relative; margin: 0; padding: 0; perspective: 400px;">
+          <div style="width: 2px; height: ${layout.stem}px; background: linear-gradient(to bottom, ${depotColor}cc, ${depotColor}44 70%, transparent); pointer-events: none;"></div>
+          <div style="position: absolute; top: 0; width: 4px; height: ${layout.stem}px; background: linear-gradient(to bottom, ${depotColor}25, ${depotColor}0a 60%, transparent); filter: blur(2px); pointer-events: none; left: 50%; transform: translateX(-50%);"></div>
+          <div class="depot-label-wrap" style="position: absolute; top: -7px; left: 50%; transform: translateX(${offsetX}); display: inline-flex; align-items: center; pointer-events: auto; cursor: pointer;">
+            <span class="depot-label" style="position: relative; z-index: 1; color: white; font-family: 'Lato', sans-serif; font-size: 14px; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; text-shadow: 0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.6); background: ${depotColor}cc; border: 1px solid ${depotColor}; padding: 8px 10px 12px 10px; border-radius: 8px; backdrop-filter: blur(4px);">${depot.name}</span>
+          </div>
+          <div class="depot-tooltip" style="position: absolute; top: -7px; ${tipPosition} ${tipOrigin} ${tipHidden} line-height: 1.4; white-space: nowrap; color: white; font-family: 'Lato', sans-serif; font-size: 12px; font-weight: 600; background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: none; padding: 0; ${tipRadius} opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease; pointer-events: none; overflow: hidden;">
+            <div style="display: grid; grid-template-columns: auto auto; line-height: 1;">
+              <div style="padding: 8px 10px; border-right: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1); color: ${tipTextColor};">TL</div>
+              <div style="padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.1); color: ${tipTextColor}; font-weight: 800;">${depot.trailers}</div>
+              <div style="padding: 8px 10px; border-right: 1px solid rgba(255,255,255,0.1); color: ${tipTextColor};">DL</div>
+              <div style="padding: 8px 10px; color: ${tipTextColor}; font-weight: 800;">${depot.dollies}</div>
+            </div>
+          </div>
+          <div style="width: 5px; height: 5px; border-radius: 50%; background-color: ${depotColor}; box-shadow: 0 0 6px ${depotColor}, 0 0 12px ${depotColor}80; cursor: pointer; flex-shrink: 0;"></div>
+        </div>
+      `;
+
+      const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+        .setLngLat([depot.lng, depot.lat])
+        .addTo(mapInstance);
+
+      depotMarkers.current.push(marker);
+    });
+  }, [mapLoaded, depotLocations]);
 
   // Update markers when clusters change
   useEffect(() => {
@@ -480,11 +508,11 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
 
     depotMarkers.current.forEach((marker, i) => {
       const el = marker.getElement();
-      const depotName = DEPOT_LOCATIONS[i]?.name;
+      const depotName = depotLocations[i]?.name;
       const visible = showDepotLabels && (!hasDepotFilter || selectedDepots.includes(depotName));
       el.style.display = visible ? '' : 'none';
     });
-  }, [showDepotLabels, filters.depot]);
+  }, [showDepotLabels, filters.depot, depotLocations]);
 
   // Focus on asset
   useEffect(() => {

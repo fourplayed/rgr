@@ -41,10 +41,9 @@ import {
   getScanTypeIcon,
   getScanTypeColor,
   formatScanTypeLabel,
-  getDepotCodeFromLocation,
-  getLocationBadgeColors,
-  DEPOT_NAMES,
 } from '../../../src/utils/scanFormatters';
+import { findDepotByLocationString, getDepotBadgeColors } from '@rgr/shared';
+import { useDepotLookup } from '../../../src/hooks/useDepots';
 
 type ActivityItem =
   | { type: 'scan'; data: ScanEventWithScanner; timestamp: Date }
@@ -66,6 +65,7 @@ export default function AssetDetailScreen() {
   const rotateAnim = useRef(new Animated.Value(1)).current;
 
   const isSuperuser = !!user?.role && hasRoleLevel(user.role, UserRole.SUPERUSER);
+  const { depots } = useDepotLookup();
 
   useEffect(() => {
     Animated.timing(rotateAnim, {
@@ -330,12 +330,12 @@ export default function AssetDetailScreen() {
                             : item.data.maintenanceType?.replace(/_/g, ' ') || 'Maintenance'}
                       </Text>
                       {item.type === 'scan' && item.data.locationDescription && (() => {
-                        const depotCode = getDepotCodeFromLocation(item.data.locationDescription);
-                        if (!depotCode) return null;
-                        const badgeColors = getLocationBadgeColors(item.data.locationDescription);
+                        const matchedDepot = findDepotByLocationString(item.data.locationDescription, depots);
+                        if (!matchedDepot) return null;
+                        const badgeColors = getDepotBadgeColors(matchedDepot, colors.chrome, colors.text);
                         return (
                           <View style={[styles.locationBadge, { backgroundColor: badgeColors.bg }]}>
-                            <Text style={[styles.locationText, { color: badgeColors.text }]}>{DEPOT_NAMES[depotCode]}</Text>
+                            <Text style={[styles.locationText, { color: badgeColors.text }]}>{matchedDepot.name}</Text>
                           </View>
                         );
                       })()}

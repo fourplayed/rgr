@@ -1,22 +1,9 @@
 /**
- * Shared utility functions for formatting scan and depot data
- * Extracted from home.tsx and assets/[id].tsx to eliminate duplication
+ * Shared utility functions for formatting scan data
  */
 
 import type { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
-
-/**
- * Depot display names mapped by code
- */
-export const DEPOT_NAMES: Record<string, string> = {
-  kar: 'Karratha',
-  per: 'Perth',
-  wub: 'Wubin',
-  new: 'Newman',
-  hed: 'Hedland',
-  car: 'Carnarvon',
-};
 
 /**
  * Get the appropriate icon for a scan type
@@ -74,37 +61,3 @@ export function formatScanTypeLabel(scanType: string): string {
     .join(' ');
 }
 
-/**
- * Extract depot code from a location description string
- */
-export function getDepotCodeFromLocation(locationDescription: string): keyof typeof colors.depot | null {
-  const location = locationDescription.toLowerCase();
-  if (location.includes('karratha')) return 'kar';
-  if (location.includes('perth')) return 'per';
-  if (location.includes('wubin')) return 'wub';
-  if (location.includes('newman')) return 'new';
-  if (location.includes('hedland')) return 'hed';
-  if (location.includes('carnarvon')) return 'car';
-  return null;
-}
-
-/**
- * Get background and text colors for a location badge
- */
-export function getLocationBadgeColors(locationDescription: string): { bg: string; text: string } {
-  const depotCode = getDepotCodeFromLocation(locationDescription);
-  if (!depotCode) {
-    return { bg: colors.chrome, text: colors.text };
-  }
-  const bg = colors.depot[depotCode];
-  // Karratha uses yellow background, so use dark text
-  const text = depotCode === 'kar' ? colors.text : colors.textInverse;
-  return { bg, text };
-}
-
-/**
- * Check if a string is a valid depot code
- */
-export function isValidDepotCode(code: string): code is keyof typeof colors.depot {
-  return code in colors.depot;
-}

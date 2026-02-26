@@ -13,7 +13,7 @@ import {
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
   getSupabaseClient,
   listAssets,
@@ -25,7 +25,9 @@ import {
   getAssetMaintenance,
   getAssetHazards,
   listDepots,
+  buildDepotLookups,
 } from '@rgr/shared';
+import type { Depot } from '@rgr/shared';
 import type {
   AssetWithRelations,
   CreateAssetInput,
@@ -171,6 +173,26 @@ export function useDepots(enabled: boolean = true) {
     staleTime: 5 * 60 * 1000,
     enabled,
   });
+}
+
+/**
+ * Memoized depot lookups with helper methods
+ */
+export function useDepotLookup() {
+  const { data: depots = [] } = useDepots();
+
+  return useMemo(() => {
+    const { byCode, byName } = buildDepotLookups(depots);
+    return {
+      depots,
+      byCode,
+      byName,
+      getColor: (code: string, fallback = '#9ca3af') =>
+        byCode.get(code.toLowerCase())?.color ?? fallback,
+      getName: (code: string) =>
+        byCode.get(code.toLowerCase())?.name ?? code.toUpperCase(),
+    };
+  }, [depots]);
 }
 
 // ── Mutation Hooks ──

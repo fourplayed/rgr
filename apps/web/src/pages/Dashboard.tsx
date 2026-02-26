@@ -12,11 +12,13 @@ import { DashboardPresenter } from './dashboard/DashboardPresenter';
 import { FleetMapWithData, SearchFilterBar } from '@/components/dashboard/map';
 import type { FleetMapHandle, AssetFilters } from '@/components/dashboard/map';
 import { useAssetLocations } from '@/hooks/useFleetData';
+import { useDepots } from '@/hooks/useAssetData';
 import { StatCards } from '@/components/dashboard/stats/StatCards';
 
 export default function Dashboard() {
   const { state, actions } = useDashboardLogic();
   const { data: assets = [] } = useAssetLocations();
+  const { data: depots = [] } = useDepots();
   const [focusAssetId, setFocusAssetId] = useState<string | null>(null);
   const [filters, setFilters] = useState<AssetFilters>({
     category: 'all',
@@ -58,6 +60,7 @@ export default function Dashboard() {
       <SearchFilterBar
         isDark={state.isDark}
         assets={assets}
+        depots={depots}
         onSearch={handleSearch}
         filters={filters}
         onFiltersChange={setFilters}

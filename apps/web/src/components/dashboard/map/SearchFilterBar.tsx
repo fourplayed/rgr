@@ -9,10 +9,12 @@ import { Search, Filter, ZoomIn, ZoomOut, Maximize2, X, ChevronLeft, Flag } from
 import type { LucideIcon } from 'lucide-react';
 import type { AssetFilters } from './FleetMapWithData';
 import type { AssetLocation } from '@/hooks/useFleetData';
+import type { Depot } from '@rgr/shared';
 
 interface SearchFilterBarProps {
   isDark: boolean;
   assets: AssetLocation[];
+  depots?: Depot[];
   onSearch: (query: string) => void;
   filters: AssetFilters;
   onFiltersChange: (filters: AssetFilters) => void;
@@ -29,19 +31,7 @@ const FILTER_CATEGORIES = [
   { value: 'dolly', label: 'Dollies', color: '#bf5fff' },
 ] as const;
 
-const DEPOT_LOCATIONS_ROW1 = [
-  { value: 'Perth', label: 'Perth', color: '#22c55e' },
-  { value: 'Karratha', label: 'Karratha', color: '#d4ff00' },
-  { value: 'Hedland', label: 'Hedland', color: '#ec4899' },
-  { value: 'Newman', label: 'Newman', color: '#0000FF' },
-] as const;
-
-const DEPOT_LOCATIONS_ROW2 = [
-  { value: 'Wubin', label: 'Wubin', color: '#facc15' },
-  { value: 'Carnarvon', label: 'Carnarvon', color: '#38bdf8' },
-] as const;
-
-const DEPOT_LOCATIONS = [...DEPOT_LOCATIONS_ROW1, ...DEPOT_LOCATIONS_ROW2];
+const DEFAULT_DEPOT_COLOR = '#9ca3af';
 
 const FILTER_STATUSES = [
   { value: 'all', label: 'All Statuses', color: '#9ca3af' },
@@ -53,6 +43,7 @@ const FILTER_STATUSES = [
 export const SearchFilterBar = React.memo<SearchFilterBarProps>(({
   isDark,
   assets,
+  depots = [],
   onSearch,
   filters,
   onFiltersChange,
@@ -483,19 +474,19 @@ export const SearchFilterBar = React.memo<SearchFilterBarProps>(({
                 Location
               </span>
               <div className="filter-grid-locations" style={{ display: 'flex', flexDirection: 'column', gap: '5px', alignItems: 'flex-start' }}>
-                {DEPOT_LOCATIONS.map((depot) => {
+                {depots.map((depot) => {
                   const currentDepots = Array.isArray(filters.depot) ? filters.depot : [];
-                  const isActive = currentDepots.includes(depot.value);
+                  const isActive = currentDepots.includes(depot.name);
                   return (
                     <FilterPill
-                      key={depot.value}
+                      key={depot.id}
                       active={isActive}
-                      label={depot.label}
-                      color={depot.color}
+                      label={depot.name}
+                      color={depot.color || DEFAULT_DEPOT_COLOR}
                       onClick={() => {
                         const next = isActive
-                          ? currentDepots.filter((v) => v !== depot.value)
-                          : [...currentDepots, depot.value];
+                          ? currentDepots.filter((v) => v !== depot.name)
+                          : [...currentDepots, depot.name];
                         onFiltersChange({ ...filters, depot: next.length === 0 ? 'all' : next });
                         if (!showDepotLabels && next.length > 0) onToggleDepotLabels();
                       }}

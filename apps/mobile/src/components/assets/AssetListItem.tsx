@@ -1,7 +1,8 @@
 import React, { memo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import type { AssetWithRelations } from '@rgr/shared';
-import { formatRelativeTime, AssetStatusColors, AssetStatusLabels } from '@rgr/shared';
+import { formatRelativeTime, AssetStatusColors, AssetStatusLabels, getDepotBadgeColors } from '@rgr/shared';
+import { useDepotLookup } from '../../hooks/useDepots';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 
@@ -18,23 +19,15 @@ const getStatusColor = (status: string): string => {
   return AssetStatusColors[status as keyof typeof AssetStatusColors] || colors.electricBlue;
 };
 
-const getDepotBadgeColors = (depotCode: string | null): { bg: string; text: string } => {
-  if (!depotCode) {
-    return { bg: colors.chrome, text: colors.text };
-  }
-  const code = depotCode.toLowerCase() as keyof typeof colors.depot;
-  const bg = colors.depot[code] || colors.chrome;
-  const text = code === 'kar' ? colors.text : colors.textInverse;
-  return { bg, text };
-};
-
 function AssetListItemComponent({ asset, onPress }: AssetListItemProps) {
+  const depotLookup = useDepotLookup();
   const lastScanText = asset.lastLocationUpdatedAt
     ? formatRelativeTime(asset.lastLocationUpdatedAt)
     : 'Never scanned';
 
   const statusColor = getStatusColor(asset.status);
-  const depotBadgeColors = asset.depotCode ? getDepotBadgeColors(asset.depotCode) : null;
+  const depot = asset.depotCode ? depotLookup.byCode.get(asset.depotCode.toLowerCase()) ?? null : null;
+  const depotBadgeColors = asset.depotCode ? getDepotBadgeColors(depot, colors.chrome, colors.text) : null;
 
   return (
     <TouchableOpacity

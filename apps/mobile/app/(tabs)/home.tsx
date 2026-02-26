@@ -25,16 +25,16 @@ import {
   getScanTypeIcon,
   getScanTypeColor,
   formatScanTypeLabel,
-  getDepotCodeFromLocation,
-  getLocationBadgeColors,
-  DEPOT_NAMES,
 } from '../../src/utils/scanFormatters';
+import { findDepotByLocationString, getDepotBadgeColors } from '@rgr/shared';
+import { useDepotLookup } from '../../src/hooks/useDepots';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
   const { resolvedDepot, isResolvingDepot } = useLocationStore();
   const isFocused = useIsFocused();
+  const { depots } = useDepotLookup();
 
   // Recent scans across all users (global activity)
   const {
@@ -152,8 +152,8 @@ export default function HomeScreen() {
   // Note: Must be before any early returns to maintain hook order
   const renderScanItem = useCallback(({ item }: { item: ScanEventWithScanner }) => {
     const activityColor = getScanTypeColor(item.scanType);
-    const depotCode = item.locationDescription ? getDepotCodeFromLocation(item.locationDescription) : null;
-    const badgeColors = item.locationDescription ? getLocationBadgeColors(item.locationDescription) : null;
+    const matchedDepot = item.locationDescription ? findDepotByLocationString(item.locationDescription, depots) : null;
+    const badgeColors = matchedDepot ? getDepotBadgeColors(matchedDepot, colors.chrome, colors.text) : null;
 
     return (
       <TouchableOpacity
@@ -170,9 +170,9 @@ export default function HomeScreen() {
               <Text style={styles.assetNumber}>
                 {item.assetNumber || 'Unknown Asset'}
               </Text>
-              {depotCode && badgeColors && (
+              {matchedDepot && badgeColors && (
                 <View style={[styles.depotLocationBadge, { backgroundColor: badgeColors.bg }]}>
-                  <Text style={[styles.depotLocationText, { color: badgeColors.text }]}>{DEPOT_NAMES[depotCode]}</Text>
+                  <Text style={[styles.depotLocationText, { color: badgeColors.text }]}>{matchedDepot.name}</Text>
                 </View>
               )}
             </View>
@@ -188,7 +188,7 @@ export default function HomeScreen() {
         </View>
       </TouchableOpacity>
     );
-  }, [router]);
+  }, [router, depots]);
 
   // Early return must be after all hooks to maintain hook order
   if (!user) {

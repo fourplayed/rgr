@@ -154,14 +154,18 @@ export const AssetFilterPanel = memo(function AssetFilterPanel({
     ? AssetSubtypesByCategory[selectedCategory]
     : [];
 
-  const getDepotColor = useCallback((depotCode: string): string => {
-    const code = depotCode.toLowerCase() as keyof typeof colors.depot;
-    return colors.depot[code] || colors.electricBlue;
+  const getDepotColor = useCallback((depot: Depot): string => {
+    return depot.color || colors.electricBlue;
   }, []);
 
-  const getDepotTextColor = useCallback((depotCode: string): string => {
-    const code = depotCode.toLowerCase();
-    return code === 'kar' ? colors.text : colors.textInverse;
+  const getDepotTextColor = useCallback((depot: Depot): string => {
+    if (!depot.color) return colors.textInverse;
+    // Simple luminance check — light backgrounds need dark text
+    const c = depot.color.replace('#', '');
+    const r = parseInt(c.substring(0, 2), 16);
+    const g = parseInt(c.substring(2, 4), 16);
+    const b = parseInt(c.substring(4, 6), 16);
+    return (r * 299 + g * 587 + b * 114) / 1000 > 160 ? colors.text : colors.textInverse;
   }, []);
 
   const chevronRotate = rotateAnim.interpolate({
@@ -239,14 +243,14 @@ export const AssetFilterPanel = memo(function AssetFilterPanel({
                 })
                 .map((depot) => {
                 const isSelected = depotIds.includes(depot.id);
-                const depotColor = getDepotColor(depot.code);
+                const chipColor = getDepotColor(depot);
                 return (
                   <TouchableOpacity
                     key={depot.id}
                     style={[
                       styles.chip,
                       {
-                        backgroundColor: isSelected ? depotColor : colors.surface,
+                        backgroundColor: isSelected ? chipColor : colors.surface,
                         borderColor: isSelected ? 'transparent' : colors.border,
                       },
                     ]}
@@ -257,7 +261,7 @@ export const AssetFilterPanel = memo(function AssetFilterPanel({
                       style={[
                         styles.chipText,
                         {
-                          color: isSelected ? getDepotTextColor(depot.code) : colors.text,
+                          color: isSelected ? getDepotTextColor(depot) : colors.text,
                           fontFamily: isSelected ? 'Lato_700Bold' : 'Lato_400Regular',
                         },
                       ]}

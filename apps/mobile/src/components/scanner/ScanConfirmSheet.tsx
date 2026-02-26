@@ -9,7 +9,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LoadingDots } from '../common/LoadingDots';
 import type { Asset, Depot } from '@rgr/shared';
-import { AssetStatusColors } from '@rgr/shared';
+import { AssetStatusColors, getDepotBadgeColors } from '@rgr/shared';
 import { StatusBadge } from '../common/StatusBadge';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
@@ -50,18 +50,7 @@ export function ScanConfirmSheet({
   // Get status color for left border
   const statusColor = AssetStatusColors[asset.status as keyof typeof AssetStatusColors] || colors.electricBlue;
 
-  // Get depot badge colors
-  const getDepotBadgeColors = (depotCode: string | null): { bg: string; text: string } => {
-    if (!depotCode) {
-      return { bg: colors.chrome, text: colors.text };
-    }
-    const code = depotCode.toLowerCase() as keyof typeof colors.depot;
-    const bg = colors.depot[code] || colors.chrome;
-    const text = code === 'kar' ? colors.text : colors.textInverse;
-    return { bg, text };
-  };
-
-  const depotBadgeColors = matchedDepot ? getDepotBadgeColors(matchedDepot.depot.code) : null;
+  const depotBadgeColors = matchedDepot ? getDepotBadgeColors(matchedDepot.depot, colors.chrome, colors.text) : null;
 
   return (
     <Modal

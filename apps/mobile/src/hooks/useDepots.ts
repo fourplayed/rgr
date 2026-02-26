@@ -1,5 +1,6 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { listDepots, findNearestLocation } from '@rgr/shared';
+import { listDepots, findNearestLocation, buildDepotLookups } from '@rgr/shared';
 import type { Depot } from '@rgr/shared';
 
 /**
@@ -27,6 +28,26 @@ export function useDepots() {
     },
     staleTime: 1000 * 60 * 10, // Cache for 10 minutes - depots don't change often
   });
+}
+
+/**
+ * Memoized depot lookups with helper methods
+ */
+export function useDepotLookup() {
+  const { data: depots = [] } = useDepots();
+
+  return useMemo(() => {
+    const { byCode, byName } = buildDepotLookups(depots);
+    return {
+      depots,
+      byCode,
+      byName,
+      getColor: (code: string, fallback = '#E8E8E8') =>
+        byCode.get(code.toLowerCase())?.color ?? fallback,
+      getName: (code: string) =>
+        byCode.get(code.toLowerCase())?.name ?? code.toUpperCase(),
+    };
+  }, [depots]);
 }
 
 /**

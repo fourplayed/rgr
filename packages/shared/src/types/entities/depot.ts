@@ -10,6 +10,7 @@ export interface Depot {
   address: string | null;
   latitude: number | null;
   longitude: number | null;
+  color: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -25,6 +26,7 @@ export interface DepotRow {
   address: string | null;
   latitude: number | null;
   longitude: number | null;
+  color: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -39,6 +41,7 @@ export interface CreateDepotInput {
   address?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  color?: string | null;
   isActive?: boolean;
 }
 
@@ -51,6 +54,7 @@ export interface UpdateDepotInput {
   address?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  color?: string | null;
   isActive?: boolean;
 }
 
@@ -62,6 +66,7 @@ export const CreateDepotInputSchema = z.object({
   address: z.string().nullable().optional(),
   latitude: z.number().min(-90).max(90).nullable().optional(),
   longitude: z.number().min(-180).max(180).nullable().optional(),
+  color: z.string().max(7).nullable().optional(),
   isActive: z.boolean().optional(),
 });
 
@@ -77,6 +82,7 @@ export function mapRowToDepot(row: DepotRow): Depot {
     address: row.address,
     latitude: row.latitude,
     longitude: row.longitude,
+    color: row.color,
     isActive: row.is_active,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -92,6 +98,7 @@ export function mapDepotToInsert(
     address: input.address ?? null,
     latitude: input.latitude ?? null,
     longitude: input.longitude ?? null,
+    color: input.color ?? null,
     is_active: input.isActive ?? true,
   };
 }
@@ -106,6 +113,7 @@ export function mapDepotToUpdate(
   if (input.address !== undefined) updates['address'] = input.address;
   if (input.latitude !== undefined) updates['latitude'] = input.latitude;
   if (input.longitude !== undefined) updates['longitude'] = input.longitude;
+  if (input.color !== undefined) updates['color'] = input.color;
   if (input.isActive !== undefined) updates['is_active'] = input.isActive;
 
   return updates;

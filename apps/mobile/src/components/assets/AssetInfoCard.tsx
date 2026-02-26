@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import type { AssetWithRelations } from '@rgr/shared';
-import { formatDate, AssetStatusColors } from '@rgr/shared';
+import { formatDate, AssetStatusColors, getDepotBadgeColors } from '@rgr/shared';
+import { useDepotLookup } from '../../hooks/useDepots';
 import { StatusBadge } from '../common/StatusBadge';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
@@ -12,10 +13,10 @@ interface AssetInfoCardProps {
 }
 
 export function AssetInfoCard({ asset, nextServiceDate }: AssetInfoCardProps) {
-  const depotCode = asset.depotCode?.toLowerCase() as keyof typeof colors.depot | undefined;
-  const depotColor = depotCode ? colors.depot[depotCode] : colors.chrome;
-  // Karratha (kar) uses fluro yellow which needs dark text
-  const depotTextColor = depotCode === 'kar' ? colors.text : colors.textInverse;
+  const depotLookup = useDepotLookup();
+  const depotCode = asset.depotCode?.toLowerCase();
+  const depot = depotCode ? depotLookup.byCode.get(depotCode) ?? null : null;
+  const { bg: depotColor, text: depotTextColor } = getDepotBadgeColors(depot, colors.chrome, colors.text);
   const statusColor = AssetStatusColors[asset.status];
 
   return (
