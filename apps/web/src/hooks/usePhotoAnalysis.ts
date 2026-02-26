@@ -11,6 +11,7 @@
  */
 import { useState, useCallback, useMemo } from 'react';
 import { getSupabaseClient } from '@rgr/shared';
+import { useAuthStore } from '@/stores/authStore';
 import type { HazardSeverity } from '../components/dashboard/hazards';
 
 // ============================================================================
@@ -215,6 +216,7 @@ function generateFilePath(userId: string, fileName: string): string {
 // ============================================================================
 
 export function usePhotoAnalysis(): UsePhotoAnalysisResult {
+  const user = useAuthStore((s) => s.user);
   const [status, setStatus] = useState<AnalysisStatus>('idle');
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -238,13 +240,10 @@ export function usePhotoAnalysis(): UsePhotoAnalysisResult {
 
       setProgress(10);
 
-      const supabase = getSupabaseClient();
-
-      // Get current user
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError || !user) {
+      if (!user) {
         throw new Error('Please sign in to analyze photos');
       }
+      const supabase = getSupabaseClient();
 
       setProgress(20);
 
@@ -412,7 +411,7 @@ export function usePhotoAnalysis(): UsePhotoAnalysisResult {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
       setStatus('error');
     }
-  }, []);
+  }, [user]);
 
   // Reset state
   const reset = useCallback(() => {

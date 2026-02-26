@@ -16,7 +16,7 @@ import type { ServiceResult } from '../../types';
  * Supabase Auth Service
  *
  * Low-level authentication operations using Supabase Auth.
- * For higher-level auth operations with business logic, use AuthService.
+ * Business logic (profile fetching, role checks, etc.) lives in app-level auth stores.
  */
 
 /**

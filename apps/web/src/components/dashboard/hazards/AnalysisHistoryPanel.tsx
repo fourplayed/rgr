@@ -28,6 +28,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { getSupabaseClient } from '@rgr/shared';
+import { useAuthStore } from '@/stores/authStore';
 import { VisionCard } from '../vision/VisionCard';
 import { RGR_COLORS } from '@/styles/color-palette';
 import { ImageLightbox } from './ImageLightbox';
@@ -92,6 +93,7 @@ export const AnalysisHistoryPanel = React.memo<AnalysisHistoryPanelProps>(({
   isDark = true,
   maxItems = 50,
 }) => {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const [items, setItems] = useState<AnalysisHistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -122,12 +124,10 @@ export const AnalysisHistoryPanel = React.memo<AnalysisHistoryPanelProps>(({
     setError(null);
 
     try {
-      const supabase = getSupabaseClient();
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) {
+      if (!isAuthenticated) {
         throw new Error('Please sign in to view analysis history');
       }
+      const supabase = getSupabaseClient();
 
       // Build query with filters
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -255,7 +255,7 @@ export const AnalysisHistoryPanel = React.memo<AnalysisHistoryPanelProps>(({
     } finally {
       setIsLoading(false);
     }
-  }, [filters, maxItems]);
+  }, [isAuthenticated, filters, maxItems]);
 
   // Initial fetch
   useEffect(() => {

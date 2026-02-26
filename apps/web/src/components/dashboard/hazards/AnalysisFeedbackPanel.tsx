@@ -25,6 +25,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { getSupabaseClient } from '@rgr/shared';
+import { useAuthStore } from '@/stores/authStore';
 import type { AnalysisResult } from '@/hooks/usePhotoAnalysis';
 
 // ============================================================================
@@ -98,6 +99,7 @@ export const AnalysisFeedbackPanel = React.memo<AnalysisFeedbackPanelProps>(({
   className = '',
   isDark = true,
 }) => {
+  const user = useAuthStore((s) => s.user);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -149,12 +151,10 @@ export const AnalysisFeedbackPanel = React.memo<AnalysisFeedbackPanelProps>(({
     setError(null);
 
     try {
-      const supabase = getSupabaseClient();
-      const { data: { user } } = await supabase.auth.getUser();
-
       if (!user) {
         throw new Error('Please sign in to submit feedback');
       }
+      const supabase = getSupabaseClient();
 
       // Update freight_analysis with freight classification feedback
       if (freightAccurate !== null) {
@@ -232,6 +232,7 @@ export const AnalysisFeedbackPanel = React.memo<AnalysisFeedbackPanelProps>(({
       setIsSubmitting(false);
     }
   }, [
+    user,
     result,
     freightAccurate,
     correctCategory,

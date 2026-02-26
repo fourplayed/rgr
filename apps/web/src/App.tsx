@@ -4,7 +4,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { initializeSupabase } from './config/supabase';
 import { useAuthStore } from './stores/authStore';
-import { getSupabaseClient } from '@rgr/shared';
+import { getSupabaseClient, hasRoleLevel } from '@rgr/shared';
+import type { UserRole } from '@rgr/shared';
 import { DebugToolbar } from './pages/login/components/DebugToolbar';
 import { PersistentBackground } from './components/backgrounds';
 
@@ -27,7 +28,7 @@ const queryClient = new QueryClient({
 /**
  * Protected Route wrapper - redirects to login if not authenticated
  */
-function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole?: string }) {
+function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole?: UserRole }) {
   const { isAuthenticated, isLoading, user } = useAuthStore();
 
   if (isLoading) {
@@ -45,7 +46,7 @@ function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode;
     return <Navigate to="/login" replace />;
   }
 
-  if (requiredRole && user?.role !== requiredRole) {
+  if (requiredRole && (!user?.role || !hasRoleLevel(user.role, requiredRole))) {
     return <Navigate to="/dashboard" replace />;
   }
 

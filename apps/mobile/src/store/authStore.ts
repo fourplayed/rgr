@@ -5,6 +5,7 @@ import {
   getSession as getSupabaseSession,
   fetchProfile,
   updateProfile,
+  updateLastLogin,
   getSupabaseClient,
 } from '@rgr/shared';
 import type { UpdateProfileInput } from '@rgr/shared';
@@ -83,6 +84,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isLoading: false,
         error: null,
       });
+
+      // Fire-and-forget: update last login timestamp
+      updateLastLogin(result.data.user.id).catch((err) =>
+        console.error('[Auth] Failed to update last login:', err)
+      );
 
       return { success: true };
     } catch (error) {
