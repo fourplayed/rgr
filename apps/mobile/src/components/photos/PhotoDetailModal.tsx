@@ -13,6 +13,7 @@ import {
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { usePhoto, useDeletePhoto, useSignedUrl } from '../../hooks/usePhotos';
+import { useUserPermissions } from '../../contexts/UserPermissionsContext';
 import { FreightAnalysisCard } from './FreightAnalysisCard';
 import { LoadingDots, AlertSheet, ConfirmSheet } from '../common';
 import { formatRelativeTime } from '@rgr/shared';
@@ -36,6 +37,7 @@ function PhotoDetailModalComponent({
   const { data: thumbnailUrl } = useSignedUrl(photoData?.thumbnailPath ?? undefined);
   const { data: fullImageUrl, error: urlError } = useSignedUrl(photoData?.storagePath);
   const { mutateAsync: deletePhotoMutation, isPending: isDeleting } = useDeletePhoto();
+  const { canAccessAdmin } = useUserPermissions();
   const [isFullImageLoaded, setIsFullImageLoaded] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [alertSheet, setAlertSheet] = useState<{
@@ -106,20 +108,24 @@ function PhotoDetailModalComponent({
               <Ionicons name="close" size={28} color={colors.text} />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Photo Details</Text>
-            <TouchableOpacity
-              style={styles.headerButton}
-              onPress={handleDelete}
-              disabled={isDeleting || isLoading}
-              accessibilityRole="button"
-              accessibilityLabel="Delete photo"
-              accessibilityHint="Double tap to delete this photo"
-            >
-              {isDeleting ? (
-                <LoadingDots color={colors.error} size={6} />
-              ) : (
-                <Ionicons name="trash-outline" size={24} color={colors.error} />
-              )}
-            </TouchableOpacity>
+            {canAccessAdmin ? (
+              <TouchableOpacity
+                style={styles.headerButton}
+                onPress={handleDelete}
+                disabled={isDeleting || isLoading}
+                accessibilityRole="button"
+                accessibilityLabel="Delete photo"
+                accessibilityHint="Double tap to delete this photo"
+              >
+                {isDeleting ? (
+                  <LoadingDots color={colors.error} size={6} />
+                ) : (
+                  <Ionicons name="trash-outline" size={24} color={colors.error} />
+                )}
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.headerButton} />
+            )}
           </View>
 
           {isLoading ? (

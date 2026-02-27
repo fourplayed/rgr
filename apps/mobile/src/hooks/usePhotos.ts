@@ -5,6 +5,7 @@ import {
   getPhotoById,
   uploadPhoto,
   deletePhoto,
+  bulkDeletePhotos,
   getSignedUrl,
 } from '@rgr/shared';
 import type { UploadPhotoOptions, PhotoListItem } from '@rgr/shared';
@@ -137,6 +138,35 @@ export function useDeletePhoto() {
       // Remove the specific photo from cache
       queryClient.removeQueries({ queryKey: photoKeys.detail(data.photoId) });
       // Also invalidate asset detail
+      queryClient.invalidateQueries({ queryKey: assetKeys.detail(data.assetId) });
+    },
+  });
+}
+
+/**
+ * Bulk delete photos
+ */
+export function useBulkDeletePhotos() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ photoIds, assetId }: { photoIds: string[]; assetId: string }) => {
+      const result = await bulkDeletePhotos(photoIds);
+
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+
+      return { ...result.data, photoIds, assetId };
+    },
+    onSuccess: (data) => {
+      // Invalidate photo list for the asset
+      queryClient.invalidateQueries({ queryKey: photoKeys.asset(data.assetId) });
+      // Remove each deleted photo from cache
+      for (const photoId of data.photoIds) {
+        queryClient.removeQueries({ queryKey: photoKeys.detail(photoId) });
+      }
+      // Invalidate asset detail
       queryClient.invalidateQueries({ queryKey: assetKeys.detail(data.assetId) });
     },
   });

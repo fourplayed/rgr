@@ -436,6 +436,81 @@ export async function deletePhoto(
 }
 
 /**
+ * Bulk delete photos from storage and database.
+ * Uses batch operations (3 total queries) instead of 3N for individual deletes.
+ */
+export async function bulkDeletePhotos(
+  photoIds: string[]
+): Promise<ServiceResult<{ deleted: number; failed: string[] }>> {
+  if (photoIds.length === 0) {
+    return { success: true, data: { deleted: 0, failed: [] }, error: null };
+  }
+
+  const supabase = getSupabaseClient();
+
+  try {
+    // 1. Fetch all storage paths for the given IDs
+    const { data: photos, error: fetchError } = await supabase
+      .from('photos')
+      .select('id, storage_path, thumbnail_path')
+      .in('id', photoIds);
+
+    if (fetchError) {
+      return { success: false, data: null, error: `Failed to fetch photos: ${fetchError.message}` };
+    }
+
+    if (!photos || photos.length === 0) {
+      return { success: true, data: { deleted: 0, failed: photoIds }, error: null };
+    }
+
+    // Collect all storage paths to delete
+    const storagePaths: string[] = [];
+    for (const photo of photos) {
+      storagePaths.push(photo.storage_path);
+      if (photo.thumbnail_path) {
+        storagePaths.push(photo.thumbnail_path);
+      }
+    }
+
+    // 2. Batch remove from storage
+    if (storagePaths.length > 0) {
+      const { error: storageError } = await supabase.storage
+        .from('photos-compressed')
+        .remove(storagePaths);
+
+      if (storageError) {
+        console.warn(`Failed to delete photos from storage: ${storageError.message}`);
+        // Continue with database deletion even if storage fails
+      }
+    }
+
+    // 3. Batch delete from database (cascades to freight_analysis and hazard_alerts via FK)
+    const foundIds = photos.map((p) => p.id);
+    const { error: dbError } = await supabase
+      .from('photos')
+      .delete()
+      .in('id', foundIds);
+
+    if (dbError) {
+      return { success: false, data: null, error: `Failed to delete photos: ${dbError.message}` };
+    }
+
+    // Track which IDs weren't found
+    const foundIdSet = new Set(foundIds);
+    const failed = photoIds.filter((id) => !foundIdSet.has(id));
+
+    return {
+      success: true,
+      data: { deleted: foundIds.length, failed },
+      error: null,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to bulk delete photos';
+    return { success: false, data: null, error: message };
+  }
+}
+
+/**
  * Generate a signed URL for downloading a photo.
  * URLs are valid for 1 hour by default.
  */
