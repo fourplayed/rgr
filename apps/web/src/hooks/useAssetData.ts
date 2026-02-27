@@ -27,7 +27,6 @@ import {
   listDepots,
   buildDepotLookups,
 } from '@rgr/shared';
-import type { Depot } from '@rgr/shared';
 import type {
   AssetWithRelations,
   CreateAssetInput,

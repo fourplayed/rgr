@@ -226,7 +226,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
       if (bounds.isEmpty()) return;
       map.current.fitBounds(bounds, { padding: 50 });
     },
-  }), [filteredAssets]);
+  }), [filteredAssets, depotLocations]);
 
   // Cluster filtered assets
   const clusters = useMemo(() => {

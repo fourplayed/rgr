@@ -31,7 +31,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         throw new Error(result.error);
       }
 
-      const { user: authUser, session } = result.data;
+      const { user: authUser } = result.data;
 
       // Fetch the authoritative profile from the profiles table
       const profileResult = await fetchProfile(authUser.id);
