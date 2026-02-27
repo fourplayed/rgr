@@ -28,11 +28,11 @@ export const UserInfoBadge = React.memo<UserInfoBadgeProps>(({ user, isDark = tr
     >
       <User
         className="w-4 h-4"
-        style={{ color: isDark ? RGR_COLORS.chrome.medium : '#000000' }}
+        style={{ color: isDark ? RGR_COLORS.chrome.medium : '#1e293b' }}
       />
       <span
         className="text-sm font-medium"
-        style={{ color: isDark ? RGR_COLORS.chrome.light : '#000000' }}
+        style={{ color: isDark ? RGR_COLORS.chrome.light : '#1e293b' }}
       >
         {displayName}
       </span>

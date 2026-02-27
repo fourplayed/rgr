@@ -63,7 +63,7 @@ export const PhotoUploadZone = React.memo<PhotoUploadZoneProps>(({
   }, [preview]);
 
   // Theme colors
-  const textPrimary = isDark ? '#ffffff' : '#000000';
+  const textPrimary = isDark ? '#ffffff' : '#1e293b';
   const textMuted = isDark ? '#94a3b8' : '#6b7280';
 
   // Validate file

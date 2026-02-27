@@ -111,7 +111,7 @@ export const AnalysisHistoryPanel = React.memo<AnalysisHistoryPanelProps>(({
   });
 
   // Theme colors
-  const textPrimary = isDark ? '#ffffff' : '#000000';
+  const textPrimary = isDark ? '#ffffff' : '#1e293b';
   const textSecondary = isDark ? '#e2e8f0' : '#374151';
   const textMuted = isDark ? '#94a3b8' : '#6b7280';
   const borderColor = isDark ? `${RGR_COLORS.chrome.medium}33` : 'rgba(107, 114, 128, 0.75)';

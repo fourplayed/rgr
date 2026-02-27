@@ -68,7 +68,7 @@ const NavButton = React.memo<NavButtonProps>(({ item, active, isDark, showDivide
     if (isHovered) {
       return isDark ? '#06b6d4' : '#1e40af'; // Cyan for dark, deep blue (blue-800) for light
     }
-    return isDark ? RGR_COLORS.chrome.medium : '#000000'; // Black for light theme
+    return isDark ? RGR_COLORS.chrome.medium : '#1e293b'; // Slate-800 for light theme
   };
 
   const handleClick = () => {
@@ -250,7 +250,7 @@ export const VisionTopNav = React.memo<VisionTopNavProps>(({ className = '' }) =
               e.currentTarget.style.color = '#ef4444'; // Red
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.color = isDark ? RGR_COLORS.chrome.medium : '#000000'; // Black for light theme
+              e.currentTarget.style.color = isDark ? RGR_COLORS.chrome.medium : '#1e293b'; // Slate-800 for light theme
             }}
             aria-label="Sign out"
           >

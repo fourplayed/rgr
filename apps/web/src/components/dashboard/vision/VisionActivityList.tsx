@@ -115,7 +115,7 @@ export const VisionActivityList = React.memo<VisionActivityListProps>(({
       >
         <h3
           className="text-lg font-medium"
-          style={{ color: isDark ? RGR_COLORS.chrome.highlight : '#000000' }} // Black for light theme
+          style={{ color: isDark ? RGR_COLORS.chrome.highlight : '#1e293b' }} // Slate-800 for light theme
         >
           {title}
         </h3>
@@ -149,7 +149,7 @@ export const VisionActivityList = React.memo<VisionActivityListProps>(({
             />
             <p
               className="text-sm"
-              style={{ color: isDark ? RGR_COLORS.chrome.light : '#000000' }} // Black for light theme
+              style={{ color: isDark ? RGR_COLORS.chrome.light : '#1e293b' }} // Slate-800 for light theme
             >
               No recent activity
             </p>
@@ -207,13 +207,13 @@ export const VisionActivityList = React.memo<VisionActivityListProps>(({
                 <div className="flex items-center justify-between gap-2 mb-1">
                   <span
                     className="font-semibold text-base"
-                    style={{ color: isDark ? RGR_COLORS.chrome.highlight : '#000000' }} // Black for light theme
+                    style={{ color: isDark ? RGR_COLORS.chrome.highlight : '#1e293b' }} // Slate-800 for light theme
                   >
                     {event.assetNumber}
                   </span>
                   <span
                     className="text-sm flex-shrink-0"
-                    style={{ color: isDark ? RGR_COLORS.chrome.medium : '#000000' }} // Black for light theme
+                    style={{ color: isDark ? RGR_COLORS.chrome.medium : '#1e293b' }} // Slate-800 for light theme
                   >
                     {formatTime(event.scannedAt)}
                   </span>
@@ -222,7 +222,7 @@ export const VisionActivityList = React.memo<VisionActivityListProps>(({
                 {event.locationDescription && (
                   <div
                     className="flex items-center gap-1.5 text-sm mb-1"
-                    style={{ color: isDark ? RGR_COLORS.chrome.light : '#000000' }} // Black for light theme
+                    style={{ color: isDark ? RGR_COLORS.chrome.light : '#1e293b' }} // Slate-800 for light theme
                   >
                     <MapPin className="w-3.5 h-3.5" />
                     <span className="truncate">{event.locationDescription}</span>
@@ -231,7 +231,7 @@ export const VisionActivityList = React.memo<VisionActivityListProps>(({
 
                 <div
                   className="flex items-center gap-1.5 text-sm"
-                  style={{ color: isDark ? RGR_COLORS.chrome.medium : '#000000' }} // Black for light theme
+                  style={{ color: isDark ? RGR_COLORS.chrome.medium : '#1e293b' }} // Slate-800 for light theme
                 >
                   <User className="w-3.5 h-3.5" />
                   <span>{event.scannerName}</span>

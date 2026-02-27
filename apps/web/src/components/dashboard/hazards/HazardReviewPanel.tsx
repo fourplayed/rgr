@@ -45,8 +45,8 @@ interface EmptyStateProps {
 }
 
 function EmptyState({ isDark, hasFilters, onClearFilters }: EmptyStateProps) {
-  const textPrimary = isDark ? '#ffffff' : '#000000';
-  const textSecondary = isDark ? '#e2e8f0' : '#000000';
+  const textPrimary = isDark ? '#ffffff' : '#1e293b';
+  const textSecondary = isDark ? '#e2e8f0' : '#475569';
 
   return (
     <VisionCard isDark={isDark} className="text-center py-12">
@@ -99,8 +99,8 @@ interface ErrorStateProps {
 }
 
 function ErrorState({ isDark, error, onRetry }: ErrorStateProps) {
-  const textPrimary = isDark ? '#ffffff' : '#000000';
-  const textSecondary = isDark ? '#e2e8f0' : '#000000';
+  const textPrimary = isDark ? '#ffffff' : '#1e293b';
+  const textSecondary = isDark ? '#e2e8f0' : '#475569';
 
   return (
     <VisionCard isDark={isDark} className="text-center py-12">
@@ -169,8 +169,8 @@ export const HazardReviewPanel = React.memo<HazardReviewPanelProps>(({
 }) => {
   const { state, actions } = useHazardReview();
 
-  const textPrimary = isDark ? '#ffffff' : '#000000';
-  const textSecondary = isDark ? '#e2e8f0' : '#000000';
+  const textPrimary = isDark ? '#ffffff' : '#1e293b';
+  const textSecondary = isDark ? '#e2e8f0' : '#475569';
 
   // Check if any filters are active
   const hasActiveFilters =
@@ -243,7 +243,7 @@ export const HazardReviewPanel = React.memo<HazardReviewPanelProps>(({
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-6 h-6" style={{ color: isDark ? '#ffffff' : '#000000' }} />
+                  <AlertTriangle className="w-6 h-6" style={{ color: isDark ? '#ffffff' : '#1e293b' }} />
                   <h2 className="text-lg font-medium" style={{ color: textPrimary }}>
                     {state.hazards.length} Hazard{state.hazards.length !== 1 ? 's' : ''} Found
                   </h2>

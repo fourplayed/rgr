@@ -42,7 +42,7 @@ export interface HazardReviewCardProps {
 const SEVERITY_CONFIG = {
   critical: { color: '#ef4444', label: 'Critical', bgOpacity: 'rgba(239, 68, 68, 0.1)' },
   high: { color: '#f97316', label: 'High', bgOpacity: 'rgba(249, 115, 22, 0.1)' },
-  medium: { color: '#f59e0b', label: 'Medium', bgOpacity: 'rgba(245, 158, 11, 0.1)' },
+  medium: { color: '#B45309', label: 'Medium', bgOpacity: 'rgba(245, 158, 11, 0.1)' },
   low: { color: '#22c55e', label: 'Low', bgOpacity: 'rgba(34, 197, 94, 0.1)' },
 } as const;
 
@@ -58,9 +58,9 @@ export const HazardReviewCard = React.memo<HazardReviewCardProps>(({
 
   const severityConfig = SEVERITY_CONFIG[hazard.severity];
   // White text for dark theme, black for light theme
-  const textPrimary = isDark ? '#ffffff' : '#000000';
-  const textSecondary = isDark ? '#e2e8f0' : '#000000';
-  const textMuted = isDark ? '#94a3b8' : '#000000';
+  const textPrimary = isDark ? '#ffffff' : '#1e293b';
+  const textSecondary = isDark ? '#e2e8f0' : '#475569';
+  const textMuted = isDark ? '#94a3b8' : '#6b7280';
 
   // Format timestamp
   const formatTime = (timestamp: string) => {

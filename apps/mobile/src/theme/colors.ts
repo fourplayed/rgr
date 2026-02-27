@@ -64,12 +64,13 @@ export const colors = {
 
   // Text
   text: '#1E293B',
-  textSecondary: '#64748B',
+  textSecondary: '#475569',
   textInverse: '#FFFFFF',
 
   // Semantic colors
   success: '#22C55E',
   warning: '#F59E0B',
+  warningText: '#B45309',
   error: '#EF4444',
   info: '#3B82F6',
 

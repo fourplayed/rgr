@@ -76,7 +76,7 @@ export default {
         warning: {
           DEFAULT: '#f59e0b',  // Amber
           light: '#ffcd75',
-          dark: '#e6a23c',
+          dark: '#B45309',
         },
         error: {
           DEFAULT: '#ef4444',  // Red

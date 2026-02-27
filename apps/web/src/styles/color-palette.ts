@@ -64,6 +64,8 @@ export const RGR_COLORS = {
     success: '#22c55e',
     /** Warning amber - pending items, medium confidence (#f59e0b) */
     warning: '#f59e0b',
+    /** Warning text - WCAG AA compliant on white backgrounds (#B45309) */
+    warningText: '#B45309',
     /** Error red - critical alerts, failures, destructive actions (#ef4444) */
     error: '#ef4444',
     /** Info blue - informational badges, tips (matches bright.vibrant) (#3b82f6) */

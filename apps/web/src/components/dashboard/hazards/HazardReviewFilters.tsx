@@ -66,9 +66,9 @@ export const HazardReviewFilters = React.memo<HazardReviewFiltersProps>(({
   isDark = true,
 }) => {
   // White text for dark theme, black for light theme
-  const textPrimary = isDark ? '#ffffff' : '#000000';
-  const textSecondary = isDark ? '#e2e8f0' : '#000000';
-  const textMuted = isDark ? '#94a3b8' : '#000000';
+  const textPrimary = isDark ? '#ffffff' : '#1e293b';
+  const textSecondary = isDark ? '#e2e8f0' : '#475569';
+  const textMuted = isDark ? '#94a3b8' : '#6b7280';
   const inputBg = isDark ? 'rgba(0, 0, 0, 0.3)' : '#ffffff'; // 100% opaque white for light theme
   const inputBorder = isDark ? `${RGR_COLORS.chrome.medium}33` : 'rgba(107, 114, 128, 1.0)'; // 100% opacity
 
@@ -126,7 +126,7 @@ export const HazardReviewFilters = React.memo<HazardReviewFiltersProps>(({
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Filter className="w-6 h-6" style={{ color: isDark ? '#ffffff' : '#000000' }} />
+            <Filter className="w-6 h-6" style={{ color: isDark ? '#ffffff' : '#1e293b' }} />
             <h3 className="text-lg font-medium" style={{ color: textPrimary }}>
               Filters
             </h3>

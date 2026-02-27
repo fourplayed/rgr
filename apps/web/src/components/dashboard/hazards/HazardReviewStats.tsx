@@ -60,7 +60,7 @@ export const HazardReviewStats = React.memo<HazardReviewStatsProps>(({
   // Calculate AI accuracy color
   const getAccuracyColor = (accuracy: number): string => {
     if (accuracy >= 90) return '#22c55e'; // green
-    if (accuracy >= 70) return '#f59e0b'; // amber
+    if (accuracy >= 70) return RGR_COLORS.semantic.warningText; // amber (WCAG AA)
     return '#ef4444'; // red
   };
 
@@ -78,9 +78,9 @@ export const HazardReviewStats = React.memo<HazardReviewStatsProps>(({
   };
 
   // White text for dark theme, black for light theme
-  const textPrimary = isDark ? '#ffffff' : '#000000';
-  const textSecondary = isDark ? '#e2e8f0' : '#000000';
-  const textMuted = isDark ? '#94a3b8' : '#000000';
+  const textPrimary = isDark ? '#ffffff' : '#1e293b';
+  const textSecondary = isDark ? '#e2e8f0' : '#475569';
+  const textMuted = isDark ? '#94a3b8' : '#6b7280';
 
   // Border color matching dashboard pattern
   const borderColor = isDark
@@ -267,7 +267,7 @@ export const HazardReviewStats = React.memo<HazardReviewStatsProps>(({
             <div className="flex items-center gap-1.5">
               <AlertTriangle
                 className="w-3.5 h-3.5"
-                style={{ color: data.pendingReviews > 0 ? '#f59e0b' : textMuted }}
+                style={{ color: data.pendingReviews > 0 ? RGR_COLORS.semantic.warningText : textMuted }}
               />
               <span className="text-sm font-medium" style={{ color: textSecondary }}>
                 Pending
@@ -275,7 +275,7 @@ export const HazardReviewStats = React.memo<HazardReviewStatsProps>(({
             </div>
             <div
               className="text-2xl font-bold"
-              style={{ color: data.pendingReviews > 0 ? '#f59e0b' : textPrimary }}
+              style={{ color: data.pendingReviews > 0 ? RGR_COLORS.semantic.warningText : textPrimary }}
             >
               {data.pendingReviews}
             </div>

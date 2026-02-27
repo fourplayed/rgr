@@ -41,7 +41,7 @@ export const PhotoAnalysisSection = React.memo<PhotoAnalysisSectionProps>(({
   const { state, actions } = usePhotoAnalysis();
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
 
-  const textPrimary = isDark ? '#ffffff' : '#000000';
+  const textPrimary = isDark ? '#ffffff' : '#1e293b';
   const textMuted = isDark ? '#94a3b8' : '#6b7280';
 
   const borderColor = isDark
@@ -85,9 +85,9 @@ export const PhotoAnalysisSection = React.memo<PhotoAnalysisSectionProps>(({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {showResults ? (
-              <Sparkles className="w-5 h-5" style={{ color: '#f59e0b' }} />
+              <Sparkles className="w-5 h-5" style={{ color: RGR_COLORS.semantic.warningText }} />
             ) : (
-              <Camera className="w-5 h-5" style={{ color: isDark ? '#ffffff' : '#000000' }} />
+              <Camera className="w-5 h-5" style={{ color: isDark ? '#ffffff' : '#1e293b' }} />
             )}
             <h3 className="text-lg font-medium" style={{ color: textPrimary }}>
               {showResults ? 'Analysis Complete' : 'Analyze New Photo'}
@@ -146,7 +146,7 @@ export const PhotoAnalysisSection = React.memo<PhotoAnalysisSectionProps>(({
                 style={{ color: textMuted }}
               >
                 {!selectedAssetId ? (
-                  <p style={{ color: '#f59e0b' }}>
+                  <p style={{ color: RGR_COLORS.semantic.warningText }}>
                     Please select an asset above before uploading a photo.
                   </p>
                 ) : (

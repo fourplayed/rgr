@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
-    color: '#000000',
+    color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },

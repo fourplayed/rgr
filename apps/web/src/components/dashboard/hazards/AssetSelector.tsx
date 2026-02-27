@@ -53,7 +53,7 @@ export const AssetSelector = React.memo<AssetSelectorProps>(({
   const [error, setError] = useState<string | null>(null);
 
   // Theme colors
-  const textPrimary = isDark ? '#ffffff' : '#000000';
+  const textPrimary = isDark ? '#ffffff' : '#1e293b';
   const textMuted = isDark ? '#94a3b8' : '#6b7280';
   const bgColor = isDark
     ? 'linear-gradient(to bottom, rgba(0, 0, 40, 0.8) 0%, rgba(10, 38, 84, 0.8) 100%)'

@@ -51,7 +51,7 @@ export interface AnalysisResultCardProps {
 const SEVERITY_CONFIG: Record<HazardSeverity, { color: string; label: string; bgOpacity: string }> = {
   critical: { color: '#ef4444', label: 'Critical', bgOpacity: 'rgba(239, 68, 68, 0.1)' },
   high: { color: '#f97316', label: 'High', bgOpacity: 'rgba(249, 115, 22, 0.1)' },
-  medium: { color: '#f59e0b', label: 'Medium', bgOpacity: 'rgba(245, 158, 11, 0.1)' },
+  medium: { color: '#B45309', label: 'Medium', bgOpacity: 'rgba(245, 158, 11, 0.1)' },
   low: { color: '#22c55e', label: 'Low', bgOpacity: 'rgba(34, 197, 94, 0.1)' },
 };
 
@@ -69,8 +69,8 @@ const HazardItem = React.memo<HazardItemProps>(({ hazard, isDark, index }) => {
   const [isExpanded, setIsExpanded] = useState(index === 0); // First item expanded by default
 
   const severityConfig = SEVERITY_CONFIG[hazard.severity];
-  const textPrimary = isDark ? '#ffffff' : '#000000';
-  const textSecondary = isDark ? '#e2e8f0' : '#000000';
+  const textPrimary = isDark ? '#ffffff' : '#1e293b';
+  const textSecondary = isDark ? '#e2e8f0' : '#475569';
   const textMuted = isDark ? '#94a3b8' : '#6b7280';
 
   return (
@@ -182,8 +182,8 @@ export const AnalysisResultCard = React.memo<AnalysisResultCardProps>(({
 }) => {
   const [showLightbox, setShowLightbox] = useState(false);
 
-  const textPrimary = isDark ? '#ffffff' : '#000000';
-  const textSecondary = isDark ? '#e2e8f0' : '#000000';
+  const textPrimary = isDark ? '#ffffff' : '#1e293b';
+  const textSecondary = isDark ? '#e2e8f0' : '#475569';
   const textMuted = isDark ? '#94a3b8' : '#6b7280';
 
   const borderColor = isDark
@@ -273,7 +273,7 @@ export const AnalysisResultCard = React.memo<AnalysisResultCardProps>(({
                   backgroundColor: result.freight.confidence >= 80
                     ? 'rgba(34, 197, 94, 0.15)'
                     : 'rgba(245, 158, 11, 0.15)',
-                  color: result.freight.confidence >= 80 ? '#22c55e' : '#f59e0b',
+                  color: result.freight.confidence >= 80 ? '#22c55e' : RGR_COLORS.semantic.warningText,
                 }}
               >
                 {result.freight.confidence}%
@@ -314,7 +314,7 @@ export const AnalysisResultCard = React.memo<AnalysisResultCardProps>(({
             {/* Hazards Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4" style={{ color: hasHighSeverity ? '#ef4444' : '#f59e0b' }} />
+                <AlertTriangle className="w-4 h-4" style={{ color: hasHighSeverity ? '#ef4444' : RGR_COLORS.semantic.warningText }} />
                 <span className="text-sm font-semibold" style={{ color: textPrimary }}>
                   {result.hazards.length} Hazard{result.hazards.length !== 1 ? 's' : ''} Detected
                 </span>

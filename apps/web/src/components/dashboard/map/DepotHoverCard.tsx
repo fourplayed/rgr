@@ -73,7 +73,7 @@ export const DepotHoverCard = React.memo<DepotHoverCardProps>(({
     : 'rgba(107, 114, 128, 0.75)'; // Light: gray-500 at 75% opacity
 
   // Theme-aware text colors
-  const textColor = isDark ? '#ffffff' : '#000000';
+  const textColor = isDark ? '#ffffff' : '#1e293b';
   const secondaryTextColor = isDark ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.7)';
   const borderBottomColor = isDark ? 'rgba(235, 235, 235, 0.15)' : 'rgba(107, 114, 128, 0.3)';
 

@@ -114,7 +114,7 @@ export const AnalysisFeedbackPanel = React.memo<AnalysisFeedbackPanelProps>(({
   const [generalNotes, setGeneralNotes] = useState('');
 
   // Theme colors
-  const textPrimary = isDark ? '#ffffff' : '#000000';
+  const textPrimary = isDark ? '#ffffff' : '#1e293b';
   const textSecondary = isDark ? '#e2e8f0' : '#374151';
   const textMuted = isDark ? '#94a3b8' : '#6b7280';
   const borderColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';

@@ -23,7 +23,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 // Category-specific colors for Asset Type filter chips
 const CATEGORY_COLORS: Record<AssetCategory, string> = {
   trailer: '#8B5CF6', // Violet
-  dolly: '#00CED1', // Cyan
+  dolly: '#0E7490', // Cyan (WCAG AA compliant with white text)
 };
 
 // Depot display order
