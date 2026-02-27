@@ -40,6 +40,7 @@ export default defineConfig({
   },
   clearScreen: false,
   test: {
+    pool: 'threads',
     setupFiles: ['./src/test/setup.ts'],
     environment: 'jsdom',
     globals: true,
