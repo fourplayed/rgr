@@ -377,7 +377,7 @@ describe('Integration: Photo Analysis Flow', () => {
       await user.click(addButton);
 
       expect(onHazardDetected).toHaveBeenCalled();
-      expect(onHazardDetected.mock.calls[0][0]).toMatchObject({
+      expect(onHazardDetected.mock.calls[0]![0]).toMatchObject({
         analysisId: 'analysis-456',
         hazards: expect.arrayContaining([
           expect.objectContaining({

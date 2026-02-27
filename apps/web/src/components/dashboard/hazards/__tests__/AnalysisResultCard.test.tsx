@@ -203,11 +203,12 @@ describe('AnalysisResultCard', () => {
     it('should not display metrics that are undefined', () => {
       renderAnalysisResultCard({
         result: createMockResult({
-          freight: createMockFreightInfo({
-            estimatedWeightKg: undefined,
-            loadDistributionScore: undefined,
-            restraintCount: undefined,
-          }),
+          freight: {
+            primaryCategory: 'Construction Materials',
+            secondaryCategories: ['Steel'],
+            description: 'Steel beams',
+            confidence: 92,
+          },
         }),
       });
 
@@ -526,11 +527,7 @@ describe('AnalysisResultCard', () => {
     });
 
     it('should not render buttons when callbacks are not provided', () => {
-      renderAnalysisResultCard({
-        onAddToQueue: undefined,
-        onDismiss: undefined,
-        onNewAnalysis: undefined,
-      });
+      render(<AnalysisResultCard result={createMockResult()} />);
 
       expect(screen.queryByRole('button', { name: /add to review queue/i })).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /new analysis/i })).not.toBeInTheDocument();

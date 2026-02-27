@@ -482,7 +482,7 @@ describe('PhotoAnalysisSection', () => {
       const user = userEvent.setup();
       const result = createMockResult();
       setupMockHook({ status: 'completed', result });
-      renderPhotoAnalysisSection({ onHazardDetected: undefined });
+      render(<PhotoAnalysisSection isDark={true} />);
 
       const addButton = screen.getByRole('button', { name: /add to review queue/i });
 

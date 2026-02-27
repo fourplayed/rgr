@@ -306,7 +306,7 @@ describe('useQRScanner', () => {
     mockScanner.stop.mockResolvedValue(undefined);
 
     // Get reference to track stop mock before starting
-    const trackStopMock = mockMediaStream.getTracks()[0].stop;
+    const trackStopMock = mockMediaStream.getTracks()[0]!.stop;
 
     await act(async () => {
       await result.current.startScanning('qr-reader');

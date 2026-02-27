@@ -233,13 +233,13 @@ describe('VisionStatCard', () => {
 
   it('should not crash with undefined change', () => {
     expect(() => {
-      render(<VisionStatCard {...defaultProps} change={undefined} />);
+      render(<VisionStatCard {...defaultProps} />);
     }).not.toThrow();
   });
 
   it('should not crash with undefined metric', () => {
     expect(() => {
-      render(<VisionStatCard {...defaultProps} metric={undefined} />);
+      render(<VisionStatCard {...defaultProps} />);
     }).not.toThrow();
   });
 

@@ -400,7 +400,7 @@ describe('usePhotoAnalysis', () => {
       });
 
       // "unsecured_load" should become "Unsecured Load"
-      expect(result.current.state.result?.hazards[0].hazardType).toBe('Unsecured Load');
+      expect(result.current.state.result?.hazards[0]!.hazardType).toBe('Unsecured Load');
     });
 
     it('should convert confidence scores to percentages', async () => {
