@@ -9,7 +9,6 @@ import type {
 } from '@rgr/shared';
 import { isValidAssetCountState, isStandaloneScan } from '@rgr/shared';
 import { reducer, initialState, STORAGE_KEY, DEBOUNCE_MS } from './assetCountModeReducer';
-import type { Action } from './assetCountModeReducer';
 
 // Re-export types for consumers
 export type { AssetScan, StandaloneScan, CombinationScan, CombinationGroup };
