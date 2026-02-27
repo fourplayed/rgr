@@ -491,7 +491,7 @@ export default function ScanScreen() {
     if (!scanFlow.hasLocationPermission) {
       scanFlow.requestLocationPermission();
     }
-  }, [permission?.granted, scanFlow.hasLocationPermission, requestPermission, scanFlow.requestLocationPermission]);
+  }, [permission?.granted, scanFlow, requestPermission]);
 
   // ── Render ──
 
