@@ -99,6 +99,15 @@ export async function signInWithEmailSecure(
 
     const body = await response.json();
 
+    // If the Edge Function is not deployed (404) or unavailable (5xx),
+    // fall back to direct auth rather than treating it as a login failure.
+    if (response.status === 404 || response.status >= 500) {
+      console.warn(
+        `[auth] secure-auth Edge Function returned ${response.status}, falling back to direct sign-in`
+      );
+      return signInWithEmail(credentials);
+    }
+
     if (!response.ok) {
       recordFailure(credentials.email);
       const errorMessage = body.error || 'Authentication failed';

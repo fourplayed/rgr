@@ -177,6 +177,39 @@ export const CreateUserInputSchema = z.object({
 });
 
 /**
+ * Admin update profile input — extends UpdateProfileInput with role and isActive
+ * Used by superusers to modify other users' profiles
+ */
+export interface AdminUpdateProfileInput extends UpdateProfileInput {
+  role?: UserRole;
+  isActive?: boolean;
+}
+
+export const AdminUpdateProfileInputSchema = UpdateProfileInputSchema.extend({
+  role: UserRoleSchema.optional(),
+  isActive: z.boolean().optional(),
+});
+
+/**
+ * Map admin profile update to database columns
+ */
+export function mapAdminProfileToUpdate(
+  input: AdminUpdateProfileInput
+): Partial<ProfileRow> {
+  const updates: Partial<ProfileRow> = {};
+
+  if (input.fullName !== undefined) updates.full_name = input.fullName;
+  if (input.phone !== undefined) updates.phone = input.phone;
+  if (input.avatarUrl !== undefined) updates.avatar_url = input.avatarUrl;
+  if (input.employeeId !== undefined) updates.employee_id = input.employeeId;
+  if (input.depot !== undefined) updates.depot = input.depot;
+  if (input.role !== undefined) updates.role = input.role;
+  if (input.isActive !== undefined) updates.is_active = input.isActive;
+
+  return updates;
+}
+
+/**
  * Auth result from sign-in/sign-up operations
  */
 export interface AuthResult {

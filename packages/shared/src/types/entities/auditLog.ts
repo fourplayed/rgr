@@ -30,6 +30,13 @@ export interface AuditLogRow {
   created_at: string;
 }
 
+/**
+ * AuditLog enriched with user name from profiles join
+ */
+export interface AuditLogWithUser extends AuditLog {
+  userName: string | null;
+}
+
 // ── Mapper ──
 
 export function mapRowToAuditLog(row: AuditLogRow): AuditLog {

@@ -1,5 +1,5 @@
 import { getSupabaseClient } from './client';
-import type { ServiceResult } from '../../types';
+import type { ServiceResult, PaginatedResult } from '../../types';
 import type {
   Asset,
   AssetRow,
@@ -71,13 +71,7 @@ export interface ListAssetsParams {
   sortDirection?: 'asc' | 'desc';
 }
 
-export interface PaginatedResult<T> {
-  data: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-}
+// PaginatedResult<T> is now defined in '../../types' and imported above
 
 // ── Sort field mapping ──
 

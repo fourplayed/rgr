@@ -9,6 +9,10 @@ interface UserPermissions {
   canSelectPhotoType: boolean;
   /** Manager+ can perform asset count sessions */
   canPerformAssetCount: boolean;
+  /** Manager+ can view audit logs */
+  canViewAuditLog: boolean;
+  /** Superuser only — access admin screens */
+  canAccessAdmin: boolean;
 }
 
 const UserPermissionsContext = createContext<UserPermissions | null>(null);
@@ -26,12 +30,15 @@ export function UserPermissionsProvider({
     const level = userRole ? UserRoleLevel[userRole] : 0;
     const mechanicLevel = UserRoleLevel.mechanic;
     const managerLevel = UserRoleLevel.manager;
+    const superuserLevel = UserRoleLevel.superuser;
 
     return {
       role: userRole,
       canMarkMaintenance: level >= mechanicLevel,
       canSelectPhotoType: level >= mechanicLevel,
       canPerformAssetCount: level >= managerLevel,
+      canViewAuditLog: level >= managerLevel,
+      canAccessAdmin: level >= superuserLevel,
     };
   }, [userRole]);
 
@@ -56,6 +63,8 @@ export function useUserPermissions(): UserPermissions {
       canMarkMaintenance: false,
       canSelectPhotoType: false,
       canPerformAssetCount: false,
+      canViewAuditLog: false,
+      canAccessAdmin: false,
     };
   }
 

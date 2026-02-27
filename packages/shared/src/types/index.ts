@@ -18,6 +18,18 @@ export type ServiceResult<T> =
   | { success: true; data: T; error: null }
   | { success: false; data: null; error: string };
 
+/**
+ * Paginated result wrapper for list endpoints.
+ * Extracted here so all services can share it.
+ */
+export interface PaginatedResult<T> {
+  data: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 // Re-export all types from subdirectories
 export * from './api/auth';
 export * from './enums';

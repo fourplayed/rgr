@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
 import { useAuthStore } from '../src/store/authStore';
+import { useUserPermissions } from '../src/contexts/UserPermissionsContext';
 import { UserRoleLabels, fetchProfile, getSupabaseClient } from '@rgr/shared';
 import { colors } from '../src/theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../src/theme/spacing';
@@ -69,6 +70,7 @@ interface DebugInfo {
 export default function SettingsScreen() {
   const router = useRouter();
   const { user, checkAuth } = useAuthStore();
+  const { canAccessAdmin } = useUserPermissions();
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSecurity, setShowSecurity] = useState(false);
@@ -260,6 +262,42 @@ export default function SettingsScreen() {
               />
             </View>
           </View>
+
+          {/* Administration Section - Superuser only */}
+          {canAccessAdmin && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Administration</Text>
+              <View style={styles.card}>
+                <SettingsItem
+                  icon="people-outline"
+                  title="User Management"
+                  subtitle="Manage users, roles, and access"
+                  onPress={() => router.push('/(admin)/users')}
+                />
+                <View style={styles.divider} />
+                <SettingsItem
+                  icon="business-outline"
+                  title="Depot Management"
+                  subtitle="Create, edit, and remove depots"
+                  onPress={() => router.push('/(admin)/depots')}
+                />
+                <View style={styles.divider} />
+                <SettingsItem
+                  icon="cube-outline"
+                  title="Asset Administration"
+                  subtitle="Bulk operations and asset deletion"
+                  onPress={() => router.push('/(admin)/asset-admin')}
+                />
+                <View style={styles.divider} />
+                <SettingsItem
+                  icon="document-text-outline"
+                  title="Audit Log"
+                  subtitle="View system activity and changes"
+                  onPress={() => router.push('/(admin)/audit-log')}
+                />
+              </View>
+            </View>
+          )}
 
           {/* Debug Section */}
           <View style={styles.section}>
