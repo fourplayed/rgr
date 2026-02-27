@@ -33,7 +33,8 @@ export type Action =
   | { type: 'SET_COMBINATION_NOTES'; combinationId: string; notes: string }
   | { type: 'SET_COMBINATION_PHOTO'; combinationId: string; photoUri: string; photoId: string | null }
   | { type: 'END_COUNT' }
-  | { type: 'RESTORE'; state: AssetCountState };
+  | { type: 'RESTORE'; state: AssetCountState }
+  | { type: 'UNDO_LAST_SCAN' };
 
 export const STORAGE_KEY = '@rgr/asset_count_session';
 export const DEBOUNCE_MS = 500;
@@ -257,6 +258,85 @@ export function reducer(state: AssetCountState, action: Action): AssetCountState
             photoId: action.photoId,
           },
         },
+      };
+    }
+
+    case 'UNDO_LAST_SCAN': {
+      if (state.scans.length === 0) {
+        logger.warn('No scans to undo');
+        return state;
+      }
+
+      const lastScan = state.scans[state.scans.length - 1];
+      const newScans = state.scans.slice(0, -1);
+
+      // If the removed scan was part of a combination, we need to clean up
+      if (lastScan && !isStandaloneScan(lastScan)) {
+        const comboId = lastScan.combinationId;
+        const combo = state.combinations[comboId];
+
+        if (combo && combo.assetIds.length <= 2) {
+          // Combination only had 2 assets — removing one dissolves it.
+          // Revert the other scan back to standalone.
+          const newCombinations = { ...state.combinations };
+          delete newCombinations[comboId];
+
+          const revertedScans = newScans.map(scan => {
+            if (!isStandaloneScan(scan) && scan.combinationId === comboId) {
+              return {
+                type: 'standalone' as const,
+                assetId: scan.assetId,
+                assetNumber: scan.assetNumber,
+                timestamp: scan.timestamp,
+              };
+            }
+            return scan;
+          });
+
+          logger.assetCount('Undo last scan (dissolved combination)', {
+            removedAsset: lastScan.assetNumber,
+            combinationId: comboId,
+          });
+
+          return {
+            ...state,
+            scans: revertedScans,
+            combinations: newCombinations,
+            lastUnlinkedScanIndex: revertedScans.length > 0 ? revertedScans.length - 1 : null,
+          };
+        } else if (combo) {
+          // Combination has 3+ assets — just remove this asset from it
+          const newCombinations = {
+            ...state.combinations,
+            [comboId]: {
+              ...combo,
+              assetIds: combo.assetIds.filter(id => id !== lastScan.assetId),
+              assetNumbers: combo.assetNumbers.filter(n => n !== lastScan.assetNumber),
+            },
+          };
+
+          logger.assetCount('Undo last scan (removed from combination)', {
+            removedAsset: lastScan.assetNumber,
+            combinationId: comboId,
+          });
+
+          return {
+            ...state,
+            scans: newScans,
+            combinations: newCombinations,
+            lastUnlinkedScanIndex: newScans.length > 0 ? newScans.length - 1 : null,
+          };
+        }
+      }
+
+      logger.assetCount('Undo last scan (standalone)', {
+        removedAsset: lastScan?.assetNumber,
+      });
+
+      return {
+        ...state,
+        scans: newScans,
+        lastUnlinkedScanIndex: newScans.length > 0 ? newScans.length - 1 : null,
       };
     }
 

@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, SafeAreaView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import type { Asset, Depot } from '@rgr/shared';
-import type { CachedLocationData } from '../../store/locationStore';
+import type { Depot } from '@rgr/shared';
+import { ScanToast } from './ScanToast';
+import { QuickLinkBar } from './QuickLinkBar';
 import { colors } from '../../theme/colors';
 import { styles } from './scan.styles';
 
@@ -22,6 +23,23 @@ interface CameraOverlayProps {
   // Debug scan (dev only)
   onDebugScan: () => void;
   cachedDepot: { depot: Depot; distanceKm: number } | null;
+
+  // Count mode inline components
+  scanToast?: {
+    visible: boolean;
+    message: string;
+    type: 'success' | 'info' | 'link';
+    showUndo: boolean;
+  };
+  onScanToastDismiss?: () => void;
+  onScanToastUndo?: () => void;
+  quickLinkBar?: {
+    visible: boolean;
+    currentAssetNumber: string;
+    previousAssetNumber: string;
+  };
+  onQuickLink?: () => void;
+  onQuickLinkDismiss?: () => void;
 }
 
 export function CameraOverlay({
@@ -34,6 +52,12 @@ export function CameraOverlay({
   onStartAssetCount,
   onEndAssetCount,
   onDebugScan,
+  scanToast,
+  onScanToastDismiss,
+  onScanToastUndo,
+  quickLinkBar,
+  onQuickLink,
+  onQuickLinkDismiss,
 }: CameraOverlayProps) {
   return (
     <SafeAreaView style={styles.overlay}>
@@ -57,6 +81,17 @@ export function CameraOverlay({
             </Text>
           </>
         )}
+
+        {/* Scan toast (count mode inline feedback) */}
+        {scanToast && onScanToastDismiss && (
+          <ScanToast
+            visible={scanToast.visible}
+            message={scanToast.message}
+            type={scanToast.type}
+            onUndo={scanToast.showUndo ? onScanToastUndo : undefined}
+            onDismiss={onScanToastDismiss}
+          />
+        )}
       </View>
 
       {/* Scanning frame */}
@@ -68,6 +103,17 @@ export function CameraOverlay({
       </View>
 
       <View style={styles.footer}>
+        {/* Quick-link bar (count mode inline link prompt) */}
+        {quickLinkBar && onQuickLink && onQuickLinkDismiss && (
+          <QuickLinkBar
+            visible={quickLinkBar.visible}
+            currentAssetNumber={quickLinkBar.currentAssetNumber}
+            previousAssetNumber={quickLinkBar.previousAssetNumber}
+            onLink={onQuickLink}
+            onDismiss={onQuickLinkDismiss}
+          />
+        )}
+
         {!hasLocationPermission && (
           <TouchableOpacity
             style={styles.permissionButton}

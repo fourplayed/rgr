@@ -52,11 +52,6 @@ interface ScanModalStackProps {
   successItems: Array<{ label: string; value?: string }>;
   onSuccessDismiss: () => void;
 
-  // Count complete success
-  showCountCompleteSheet: boolean;
-  countCompleteItems: Array<{ label: string; value?: string }>;
-  onCountCompleteDismiss: () => void;
-
   // Alert
   alertSheet: AlertSheetState;
   onAlertDismiss: () => void;
@@ -149,13 +144,6 @@ export function ScanModalStack(props: ScanModalStackProps) {
         visible={props.showSuccessSheet}
         items={props.successItems}
         onDismiss={props.onSuccessDismiss}
-      />
-
-      {/* Count Complete Success Sheet */}
-      <ScanSuccessSheet
-        visible={props.showCountCompleteSheet}
-        items={props.countCompleteItems}
-        onDismiss={props.onCountCompleteDismiss}
       />
 
       {/* Alert Sheet for errors/warnings */}

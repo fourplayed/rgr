@@ -34,6 +34,13 @@ interface ConfirmScanOptions {
   canMarkMaintenance: boolean;
 }
 
+export interface CountModeAutoConfirmResult {
+  asset: Asset;
+  scanEventId: string;
+}
+
+export type CountModeAutoConfirmCallback = (result: CountModeAutoConfirmResult) => void;
+
 export function useScanFlow() {
   const { user } = useAuthStore();
   const {
@@ -49,6 +56,9 @@ export function useScanFlow() {
   const [lastScanEventId, setLastScanEventId] = useState<string | null>(null);
   const [completedAsset, setCompletedAsset] = useState<Asset | null>(null);
   const [markForMaintenance, setMarkForMaintenance] = useState(false);
+
+  // Count mode: ref-based callback for auto-confirm (set by scan.tsx)
+  const countModeCallbackRef = useRef<CountModeAutoConfirmCallback | null>(null);
 
   const [alertSheet, setAlertSheet] = useState<AlertSheetState>({
     visible: false,
@@ -130,6 +140,56 @@ export function useScanFlow() {
         logger.scan('Looking up asset...');
         const asset = await lookupAsset(qrData);
         logger.scan(`Asset found: ${asset.assetNumber}`);
+
+        // Count mode: auto-confirm without showing the confirm sheet
+        if (countModeCallbackRef.current && user) {
+          try {
+            logger.scan('Count mode: auto-confirming scan...');
+            const scanEvent = await createScan({
+              assetId: asset.id,
+              scannedBy: user.id,
+              scanType: 'qr_scan',
+              latitude: scanLocation.latitude,
+              longitude: scanLocation.longitude,
+              accuracy: scanLocation.accuracy,
+              altitude: scanLocation.altitude,
+              heading: scanLocation.heading,
+              speed: scanLocation.speed,
+              locationDescription: nearestDepot ? nearestDepot.depot.name : null,
+            });
+
+            if (nearestDepot) {
+              await updateAssetMutation({
+                id: asset.id,
+                input: { assignedDepotId: nearestDepot.depot.id },
+              });
+            }
+
+            await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            logger.scan('Count mode: scan auto-confirmed');
+
+            setLastScanEventId(scanEvent.id);
+            setCompletedAsset(asset);
+
+            countModeCallbackRef.current({
+              asset,
+              scanEventId: scanEvent.id,
+            });
+            resetScanner();
+            return;
+          } catch (autoConfirmError) {
+            const msg = autoConfirmError instanceof Error ? autoConfirmError.message : 'Auto-confirm failed';
+            logger.error(`Count mode auto-confirm failed: ${msg}`);
+            setAlertSheet({
+              visible: true,
+              type: 'error',
+              title: 'Scan Failed',
+              message: msg,
+            });
+            resetScanner();
+            return;
+          }
+        }
 
         logger.scan('Showing confirmation sheet');
         setScannedAsset(asset);
@@ -302,5 +362,8 @@ export function useScanFlow() {
 
     // Exposed for camera ref capture
     cachedDepot,
+
+    // Count mode auto-confirm
+    countModeCallbackRef,
   };
 }

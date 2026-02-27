@@ -147,6 +147,10 @@ export function useAssetCountMode() {
     dispatch({ type: 'SET_COMBINATION_PHOTO', combinationId, photoUri, photoId });
   }, []);
 
+  const undoLastScan = useCallback(() => {
+    dispatch({ type: 'UNDO_LAST_SCAN' });
+  }, []);
+
   const endCount = useCallback(() => {
     dispatch({ type: 'END_COUNT' });
   }, []);
@@ -200,6 +204,7 @@ export function useAssetCountMode() {
     keepSeparate,
     setCombinationNotes,
     setCombinationPhoto,
+    undoLastScan,
     endCount,
     getLastCombinationId,
   };

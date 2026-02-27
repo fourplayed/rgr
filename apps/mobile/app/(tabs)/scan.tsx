@@ -18,6 +18,7 @@ import { PermissionScreen } from '../../src/components/scanner/PermissionScreen'
 import { CameraOverlay } from '../../src/components/scanner/CameraOverlay';
 import { ScanModalStack } from '../../src/components/scanner/ScanModalStack';
 import type { CachedLocationData } from '../../src/store/locationStore';
+import type { CountModeAutoConfirmResult } from '../../src/hooks/scan/useScanFlow';
 import { isStandaloneScan, submitAssetCount } from '@rgr/shared';
 import { colors } from '../../src/theme/colors';
 import { styles } from '../../src/components/scanner/scan.styles';
@@ -59,6 +60,9 @@ export default function ScanScreen() {
     setPendingCombinationPhoto(false);
     setShowEndCountReview(false);
     setActiveCombinationId(null);
+    // Count mode inline state
+    setScanToast({ visible: false, message: '', type: 'success', showUndo: false });
+    setQuickLinkBar({ visible: false, currentAssetNumber: '', previousAssetNumber: '' });
   }, [scanFlow, photoFlow, defectFlow]);
 
   resetAllScanStateRef.current = resetAllScanState;
@@ -73,12 +77,113 @@ export default function ScanScreen() {
   const [isSubmittingCount, setIsSubmittingCount] = useState(false);
   const [activeCombinationId, setActiveCombinationId] = useState<string | null>(null);
 
-  // Count complete success sheet state
-  const [showCountCompleteSheet, setShowCountCompleteSheet] = useState(false);
-  const [countCompleteItems, setCountCompleteItems] = useState<Array<{ label: string; value?: string }>>([]);
+  // Scan toast state (count mode inline feedback)
+  const [scanToast, setScanToast] = useState<{
+    visible: boolean;
+    message: string;
+    type: 'success' | 'info' | 'link';
+    showUndo: boolean;
+  }>({ visible: false, message: '', type: 'success', showUndo: false });
+
+  // Quick-link bar state (count mode inline link prompt)
+  const [quickLinkBar, setQuickLinkBar] = useState<{
+    visible: boolean;
+    currentAssetNumber: string;
+    previousAssetNumber: string;
+  }>({ visible: false, currentAssetNumber: '', previousAssetNumber: '' });
 
   // Debug state
   const [showDebugOverlay, setShowDebugOverlay] = useState(false);
+
+  // ── Count Mode Auto-Confirm ──
+
+  // Wire up the count mode callback ref so useScanFlow can auto-confirm scans
+  useEffect(() => {
+    if (assetCount.isActive) {
+      scanFlow.countModeCallbackRef.current = (result: CountModeAutoConfirmResult) => {
+        const { asset } = result;
+        const assetNumber = asset.assetNumber ?? 'Unknown';
+
+        // Add to asset count
+        assetCount.addScan({
+          type: 'standalone',
+          assetId: asset.id,
+          assetNumber,
+          timestamp: Date.now(),
+        });
+        assetCount.confirmScan();
+
+        // Dismiss any existing quick-link bar (auto-dismiss = keep separate)
+        if (quickLinkBar.visible) {
+          assetCount.keepSeparate();
+          setQuickLinkBar({ visible: false, currentAssetNumber: '', previousAssetNumber: '' });
+        }
+
+        // Show scan toast with undo
+        setScanToast({
+          visible: true,
+          message: `${assetNumber} counted`,
+          type: 'success',
+          showUndo: true,
+        });
+
+        // Show quick-link bar if there's a previous scan to link to
+        // (canLinkToPrevious updates after confirmScan, so check scans length >= 1
+        // because we just added one — the reducer will have >= 2 after this dispatch)
+        if (assetCount.scans.length >= 1) {
+          const prevScan = assetCount.scans[assetCount.scans.length - 1];
+          const prevAssetNumber = prevScan?.assetNumber ?? '';
+          // Defer to next tick so reducer state settles
+          setTimeout(() => {
+            setQuickLinkBar({
+              visible: true,
+              currentAssetNumber: assetNumber,
+              previousAssetNumber: prevAssetNumber,
+            });
+          }, 0);
+        }
+
+        scanFlow.addDebugLog(`Count mode: auto-confirmed ${assetNumber}`);
+      };
+    } else {
+      scanFlow.countModeCallbackRef.current = null;
+    }
+  }, [assetCount.isActive, assetCount, scanFlow, quickLinkBar.visible]);
+
+  const handleScanToastDismiss = useCallback(() => {
+    setScanToast(prev => ({ ...prev, visible: false }));
+  }, []);
+
+  const handleScanToastUndo = useCallback(() => {
+    scanFlow.addDebugLog('Undo last scan');
+    assetCount.undoLastScan();
+    setScanToast(prev => ({ ...prev, visible: false }));
+    // Also dismiss quick-link bar since the scan was undone
+    setQuickLinkBar({ visible: false, currentAssetNumber: '', previousAssetNumber: '' });
+  }, [assetCount, scanFlow]);
+
+  // ── Quick Link Bar (count mode inline linking) ──
+
+  const handleQuickLink = useCallback(() => {
+    scanFlow.addDebugLog('Quick-linking to previous asset');
+    assetCount.linkToPrevious();
+    const linked = quickLinkBar.currentAssetNumber;
+    const prev = quickLinkBar.previousAssetNumber;
+    setQuickLinkBar({ visible: false, currentAssetNumber: '', previousAssetNumber: '' });
+    // Show link confirmation toast
+    setScanToast({
+      visible: true,
+      message: `${prev} + ${linked} linked`,
+      type: 'link',
+      showUndo: false,
+    });
+  }, [assetCount, scanFlow, quickLinkBar]);
+
+  const handleQuickLinkDismiss = useCallback(() => {
+    scanFlow.addDebugLog('Quick-link dismissed (keep separate)');
+    assetCount.keepSeparate();
+    setQuickLinkBar({ visible: false, currentAssetNumber: '', previousAssetNumber: '' });
+  }, [assetCount, scanFlow]);
 
   // ── Orchestration: Confirm Sheet Dismiss ──
 
@@ -301,14 +406,14 @@ export default function ScanScreen() {
       assetCount.endCount();
       setShowEndCountReview(false);
 
-      const successItems = [
-        { label: 'Asset count completed', value: `${count} assets recorded` },
-      ];
-      if (comboCount > 0) {
-        successItems.push({ label: 'Combinations', value: `${comboCount} linked groups` });
-      }
-      setCountCompleteItems(successItems);
-      setShowCountCompleteSheet(true);
+      // Show inline toast instead of modal
+      const comboText = comboCount > 0 ? ` (${comboCount} combos)` : '';
+      setScanToast({
+        visible: true,
+        message: `Count submitted: ${count} assets${comboText}`,
+        type: 'success',
+        showUndo: false,
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to submit count';
       scanFlow.addDebugLog(`ERROR: ${message}`);
@@ -420,6 +525,13 @@ export default function ScanScreen() {
           onEndAssetCount={handleEndAssetCount}
           onDebugScan={handleDebugScan}
           cachedDepot={cachedDepot}
+          // Count mode inline components
+          scanToast={scanToast}
+          onScanToastDismiss={handleScanToastDismiss}
+          onScanToastUndo={handleScanToastUndo}
+          quickLinkBar={quickLinkBar}
+          onQuickLink={handleQuickLink}
+          onQuickLinkDismiss={handleQuickLinkDismiss}
         />
       </CameraView>
 
@@ -458,10 +570,6 @@ export default function ScanScreen() {
         showSuccessSheet={photoFlow.showSuccessSheet}
         successItems={photoFlow.successItems}
         onSuccessDismiss={photoFlow.handleSuccessDismiss}
-        // Count complete
-        showCountCompleteSheet={showCountCompleteSheet}
-        countCompleteItems={countCompleteItems}
-        onCountCompleteDismiss={() => setShowCountCompleteSheet(false)}
         // Alert
         alertSheet={scanFlow.alertSheet}
         onAlertDismiss={() => scanFlow.setAlertSheet(prev => ({ ...prev, visible: false }))}

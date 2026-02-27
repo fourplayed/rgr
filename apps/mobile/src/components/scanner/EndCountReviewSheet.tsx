@@ -119,10 +119,20 @@ function EndCountReviewSheetComponent({
                         </View>
                         {onEditCombination && (
                           <TouchableOpacity
-                            style={styles.editButton}
+                            style={[
+                              styles.editButton,
+                              !combo.photoUri && styles.addPhotoButton,
+                            ]}
                             onPress={() => onEditCombination(combo.combinationId)}
                           >
-                            <Ionicons name="pencil" size={14} color={colors.electricBlue} />
+                            <Ionicons
+                              name={combo.photoUri ? 'pencil' : 'camera'}
+                              size={14}
+                              color={combo.photoUri ? colors.electricBlue : colors.textInverse}
+                            />
+                            {!combo.photoUri && (
+                              <Text style={styles.addPhotoButtonText}>Add Photo</Text>
+                            )}
                           </TouchableOpacity>
                         )}
                       </View>
@@ -350,6 +360,19 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
     borderRadius: borderRadius.sm,
     backgroundColor: colors.electricBlue + '15',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  addPhotoButton: {
+    backgroundColor: colors.electricBlue,
+    paddingHorizontal: spacing.md,
+  },
+  addPhotoButtonText: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_700Bold',
+    color: colors.textInverse,
+    textTransform: 'uppercase',
   },
   combinationStatus: {
     flexDirection: 'row',
