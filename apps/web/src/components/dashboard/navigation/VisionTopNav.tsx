@@ -243,7 +243,7 @@ export const VisionTopNav = React.memo<VisionTopNavProps>(({ className = '' }) =
             className="group relative py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 transition-all duration-500 ease-out"
             style={{
               ['--tw-ring-color' as string]: '#ef4444',
-              color: isDark ? RGR_COLORS.chrome.medium : '#000000', // Black for light theme
+              color: isDark ? RGR_COLORS.chrome.medium : '#1e293b', // Slate-800 for light theme
               transition: 'color 0.2s ease-out',
             }}
             onMouseEnter={(e) => {

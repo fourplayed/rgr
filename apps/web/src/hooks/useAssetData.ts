@@ -26,6 +26,7 @@ import {
   getAssetHazards,
   listDepots,
   buildDepotLookups,
+  queryFromService,
 } from '@rgr/shared';
 import type {
   AssetWithRelations,
@@ -66,7 +67,7 @@ export function useAssets(
 ) {
   return useQuery({
     queryKey: ASSET_QUERY_KEYS.list(filters, sort, pagination),
-    queryFn: async () => {
+    queryFn: queryFromService(() => {
       const params: Parameters<typeof listAssets>[0] = {
         page: pagination.page,
         pageSize: pagination.pageSize,
@@ -78,10 +79,8 @@ export function useAssets(
       if (filters.categories.length > 0) params.categories = filters.categories;
       if (filters.depotIds.length > 0) params.depotIds = filters.depotIds;
       if (filters.hasLocation != null) params.hasLocation = filters.hasLocation;
-      const result = await listAssets(params);
-      if (result.error) throw new Error(result.error);
-      return result.data!;
-    },
+      return listAssets(params);
+    }),
     staleTime: 60 * 1000,
     enabled,
   });
@@ -93,11 +92,7 @@ export function useAssets(
 export function useAsset(id: string | null, enabled: boolean = true) {
   return useQuery({
     queryKey: ASSET_QUERY_KEYS.detail(id ?? ''),
-    queryFn: async () => {
-      const result = await getAsset(id!);
-      if (result.error) throw new Error(result.error);
-      return result.data!;
-    },
+    queryFn: queryFromService(() => getAsset(id!)),
     enabled: enabled && !!id,
   });
 }
@@ -112,11 +107,7 @@ export function useAssetScans(
 ) {
   return useQuery({
     queryKey: ASSET_QUERY_KEYS.scans(assetId ?? '', page),
-    queryFn: async () => {
-      const result = await getAssetScans(assetId!, page);
-      if (result.error) throw new Error(result.error);
-      return result.data!;
-    },
+    queryFn: queryFromService(() => getAssetScans(assetId!, page)),
     enabled: enabled && !!assetId,
   });
 }
@@ -131,11 +122,7 @@ export function useAssetMaintenance(
 ) {
   return useQuery({
     queryKey: ASSET_QUERY_KEYS.maintenance(assetId ?? '', page),
-    queryFn: async () => {
-      const result = await getAssetMaintenance(assetId!, page);
-      if (result.error) throw new Error(result.error);
-      return result.data!;
-    },
+    queryFn: queryFromService(() => getAssetMaintenance(assetId!, page)),
     enabled: enabled && !!assetId,
   });
 }
@@ -150,11 +137,7 @@ export function useAssetHazards(
 ) {
   return useQuery({
     queryKey: ASSET_QUERY_KEYS.hazards(assetId ?? '', page),
-    queryFn: async () => {
-      const result = await getAssetHazards(assetId!, page);
-      if (result.error) throw new Error(result.error);
-      return result.data!;
-    },
+    queryFn: queryFromService(() => getAssetHazards(assetId!, page)),
     enabled: enabled && !!assetId,
   });
 }
@@ -165,11 +148,7 @@ export function useAssetHazards(
 export function useDepots(enabled: boolean = true) {
   return useQuery({
     queryKey: ASSET_QUERY_KEYS.depots,
-    queryFn: async () => {
-      const result = await listDepots();
-      if (result.error) throw new Error(result.error);
-      return result.data!;
-    },
+    queryFn: queryFromService(() => listDepots()),
     staleTime: 5 * 60 * 1000,
     enabled,
   });
