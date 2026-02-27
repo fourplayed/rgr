@@ -250,7 +250,7 @@ export function useHazardAlertRealtime(
         const event: HazardRealtimeEvent = {
           type: eventType as 'INSERT' | 'UPDATE' | 'DELETE',
           alert: alert || (oldAlert as RealtimeHazardAlert),
-          oldAlert,
+          ...(oldAlert ? { oldAlert } : {}),
           timestamp: new Date(),
         };
 

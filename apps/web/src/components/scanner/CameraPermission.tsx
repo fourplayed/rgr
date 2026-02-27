@@ -196,7 +196,7 @@ const ActionButtons = memo(function ActionButtons({ status, onRequestPermission,
         </Button>
       )}
       {showRequestPermission && (
-        <Button onClick={onRequestPermission} isLoading={isLoading} aria-label="Request camera access">
+        <Button onClick={onRequestPermission} {...(isLoading !== undefined ? { isLoading } : {})} aria-label="Request camera access">
           <Camera className="w-4 h-4 mr-2" aria-hidden="true" />
           Allow Camera Access
         </Button>
@@ -257,7 +257,7 @@ export default function CameraPermission({
         <ActionButtons
           status={status}
           onRequestPermission={onRequestPermission}
-          onUseFallback={onUseFallback}
+          {...(onUseFallback ? { onUseFallback } : {})}
           isLoading={isLoading}
         />
 

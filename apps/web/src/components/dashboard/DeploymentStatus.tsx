@@ -67,7 +67,7 @@ export const DeploymentStatus = React.memo<DeploymentStatusProps>(({
     refetch,
   } = useDeploymentStatus({
     repository,
-    githubToken,
+    ...(githubToken !== undefined ? { githubToken } : {}),
     refreshInterval,
     maxRuns,
   });

@@ -68,17 +68,18 @@ export function useAssets(
   return useQuery({
     queryKey: ASSET_QUERY_KEYS.list(filters, sort, pagination),
     queryFn: async () => {
-      const result = await listAssets({
+      const params: Parameters<typeof listAssets>[0] = {
         page: pagination.page,
         pageSize: pagination.pageSize,
-        search: filters.search || undefined,
-        statuses: filters.statuses.length > 0 ? filters.statuses : undefined,
-        categories: filters.categories.length > 0 ? filters.categories : undefined,
-        depotIds: filters.depotIds.length > 0 ? filters.depotIds : undefined,
-        hasLocation: filters.hasLocation ?? undefined,
         sortField: sort.field,
         sortDirection: sort.direction,
-      });
+      };
+      if (filters.search) params.search = filters.search;
+      if (filters.statuses.length > 0) params.statuses = filters.statuses;
+      if (filters.categories.length > 0) params.categories = filters.categories;
+      if (filters.depotIds.length > 0) params.depotIds = filters.depotIds;
+      if (filters.hasLocation != null) params.hasLocation = filters.hasLocation;
+      const result = await listAssets(params);
       if (result.error) throw new Error(result.error);
       return result.data!;
     },

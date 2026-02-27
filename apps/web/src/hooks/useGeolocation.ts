@@ -29,7 +29,7 @@ export function useGeolocation() {
           const loc: LocationData = {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
-            accuracy: sanitizeNonNegative(position.coords.accuracy),
+            accuracy: sanitizeNonNegative(position.coords.accuracy) ?? 0,
             altitude: position.coords.altitude,
             altitudeAccuracy: position.coords.altitudeAccuracy,
             heading: sanitizeNonNegative(position.coords.heading),

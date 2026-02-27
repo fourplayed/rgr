@@ -213,7 +213,7 @@ export const AnalysisFeedbackPanel = React.memo<AnalysisFeedbackPanelProps>(({
       const feedbackData: AnalysisFeedbackData = {
         analysisId: result.analysisId,
         freightClassificationAccurate: freightAccurate,
-        correctCategory: freightAccurate === false ? correctCategory : undefined,
+        ...(freightAccurate === false ? { correctCategory } : {}),
         hazardFeedback: Object.entries(hazardFeedback).map(([id, accurate]) => ({
           hazardId: id,
           wasAccurate: accurate,

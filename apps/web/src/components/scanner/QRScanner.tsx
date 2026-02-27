@@ -61,7 +61,7 @@ export default function QRScanner({
 }: QRScannerProps) {
   const scannerElementId = 'qr-scanner-container';
   const scannerContainerRef = useRef<HTMLDivElement>(null);
-  const animationTimersRef = useRef<{ interval?: NodeJS.Timeout; timeout?: NodeJS.Timeout }>({});
+  const animationTimersRef = useRef<{ interval?: NodeJS.Timeout | undefined; timeout?: NodeJS.Timeout | undefined }>({});
   const [successState, setSuccessState] = useState<ScanSuccessState>({
     isVisible: false,
     scannedValue: null,

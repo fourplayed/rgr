@@ -31,7 +31,7 @@ export default class ScannerErrorBoundary extends Component<
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
+  override componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
     // Log error for debugging
     console.error('Scanner error caught by boundary:', error, errorInfo);
   }
@@ -45,7 +45,7 @@ export default class ScannerErrorBoundary extends Component<
     window.location.reload();
   };
 
-  render(): ReactNode {
+  override render(): ReactNode {
     if (this.state.hasError) {
       const message =
         this.props.fallbackMessage || 'Camera error - please refresh';

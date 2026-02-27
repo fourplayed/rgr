@@ -91,7 +91,7 @@ export const ActivityFeed = React.memo<ActivityFeedProps>(({
             <ActivityItem
               key={event.id}
               event={event}
-              onClick={onEventClick}
+              {...(onEventClick ? { onClick: onEventClick } : {})}
               showLocation={showLocations}
               isLast={index === Math.min(events.length - 1, 9)}
               animationDelay={index * 50}

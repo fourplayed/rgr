@@ -27,7 +27,7 @@ export interface FleetMapHandle {
 }
 
 // Validate and set Mapbox access token
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
+const MAPBOX_TOKEN = import.meta.env['VITE_MAPBOX_TOKEN'] || '';
 if (MAPBOX_TOKEN) {
   mapboxgl.accessToken = MAPBOX_TOKEN;
 }
@@ -252,8 +252,8 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
 
     try {
       const styleUrl = initialIsDark.current
-        ? import.meta.env.VITE_MAPBOX_STYLE_DARK || 'mapbox://styles/mapbox/dark-v11'
-        : import.meta.env.VITE_MAPBOX_STYLE_LIGHT || 'mapbox://styles/mapbox/light-v11';
+        ? import.meta.env['VITE_MAPBOX_STYLE_DARK'] || 'mapbox://styles/mapbox/dark-v11'
+        : import.meta.env['VITE_MAPBOX_STYLE_LIGHT'] || 'mapbox://styles/mapbox/light-v11';
 
       currentStyleUrl.current = styleUrl;
 
@@ -390,6 +390,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
     clusters.forEach((cluster) => {
       const isCluster = cluster.count > 1;
       const representativeAsset = cluster.assets[0];
+      if (!representativeAsset) return;
       const statusColor = isDark
         ? (STATUS_COLORS[representativeAsset.status] || '#6b7280')
         : (LIGHT_THEME_COLORS[representativeAsset.status] || '#4b5563');
@@ -478,8 +479,8 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
     if (!map.current || !mapLoaded) return;
 
     const styleUrl = isDark
-      ? import.meta.env.VITE_MAPBOX_STYLE_DARK || 'mapbox://styles/mapbox/dark-v11'
-      : import.meta.env.VITE_MAPBOX_STYLE_LIGHT || 'mapbox://styles/mapbox/light-v11';
+      ? import.meta.env['VITE_MAPBOX_STYLE_DARK'] || 'mapbox://styles/mapbox/dark-v11'
+      : import.meta.env['VITE_MAPBOX_STYLE_LIGHT'] || 'mapbox://styles/mapbox/light-v11';
 
     // Only call setStyle when the URL actually changes (skip on initial load)
     if (styleUrl !== currentStyleUrl.current) {
@@ -508,7 +509,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
 
     depotMarkers.current.forEach((marker, i) => {
       const el = marker.getElement();
-      const depotName = depotLocations[i]?.name;
+      const depotName = depotLocations[i]?.name ?? '';
       const visible = showDepotLabels && (!hasDepotFilter || selectedDepots.includes(depotName));
       el.style.display = visible ? '' : 'none';
     });

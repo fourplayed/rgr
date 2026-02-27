@@ -232,7 +232,7 @@ function useToast() {
     ...state,
     toast,
     dismiss: (toastId?: string) => {
-      dispatch({ type: actionTypes.DISMISS_TOAST, toastId });
+      dispatch({ type: actionTypes.DISMISS_TOAST, ...(toastId !== undefined ? { toastId } : {}) });
       
       if (toastId) {
         const timeout = toastTimeouts.get(toastId);

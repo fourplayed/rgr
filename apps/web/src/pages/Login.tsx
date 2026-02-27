@@ -34,7 +34,7 @@ export default function Login() {
   const deferredNavigate = useCallback(
     (to: string | number, options?: { replace?: boolean; state?: unknown }) => {
       if (typeof to === 'string') {
-        pendingNavRef.current = { path: to, options };
+        pendingNavRef.current = options ? { path: to, options } : { path: to };
       } else {
         // Numeric (history go) -- pass through immediately
         realNavigate(to);
@@ -61,7 +61,7 @@ export default function Login() {
     <LoginPresenter
       state={state}
       actions={actions}
-      ButtonComponent={Button}
+      ButtonComponent={Button as React.ComponentType<import('./login/components/LoginFormCard').ButtonProps>}
       onNavigationReady={handleNavigationReady}
     />
   );

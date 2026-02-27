@@ -49,7 +49,7 @@ export const DARK_THEME_SETTINGS: ThemeSettings = {
  */
 export function generateBackgroundGradient(settings: ThemeSettings): string {
   const stops = settings.backgroundColors
-    .map((color, i) => `${color} ${settings.backgroundLocations[i] * 100}%`)
+    .map((color, i) => `${color} ${(settings.backgroundLocations[i] ?? 0) * 100}%`)
     .join(', ');
 
   return `linear-gradient(to bottom, ${stops})`;

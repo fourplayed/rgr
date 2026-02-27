@@ -280,11 +280,13 @@ export function usePhotoAnalysis(): UsePhotoAnalysisResult {
           }),
       ];
 
-      const [compressedResult, originalResult] = await Promise.allSettled(uploadPromises);
+      const results = await Promise.allSettled(uploadPromises);
+      const compressedResult = results[0];
+      const originalResult = results[1];
 
       // Check compressed upload result - this is required
-      if (compressedResult.status === 'rejected') {
-        console.error('Compressed upload error:', compressedResult.reason);
+      if (!compressedResult || compressedResult.status === 'rejected') {
+        console.error('Compressed upload error:', compressedResult?.reason);
         throw new Error('Failed to upload photo. Please try again.');
       }
 
@@ -296,8 +298,8 @@ export function usePhotoAnalysis(): UsePhotoAnalysisResult {
       }
 
       // Original upload is optional - log warning if it failed but don't throw
-      if (originalResult.status === 'rejected') {
-        console.warn('Original photo upload failed (non-critical):', originalResult.reason);
+      if (!originalResult || originalResult.status === 'rejected') {
+        console.warn('Original photo upload failed (non-critical):', originalResult?.reason);
       } else if (originalResult.value.error) {
         console.warn('Original photo upload failed (non-critical):', originalResult.value.error);
       }
@@ -372,11 +374,11 @@ export function usePhotoAnalysis(): UsePhotoAnalysisResult {
           secondaryCategories: (analysisData.result?.secondaryCategories || []).map(formatCategoryName),
           description: analysisData.result?.description || 'No description available',
           confidence: Math.round((analysisData.result?.confidence || 0) * 100),
-          estimatedWeightKg: analysisData.result?.estimatedWeightKg,
-          loadDistributionScore: analysisData.result?.loadDistributionScore
-            ? Math.round(analysisData.result.loadDistributionScore * 100)
-            : undefined,
-          restraintCount: analysisData.result?.restraintCount,
+          ...(analysisData.result?.estimatedWeightKg != null ? { estimatedWeightKg: analysisData.result.estimatedWeightKg } : {}),
+          ...(analysisData.result?.loadDistributionScore != null
+            ? { loadDistributionScore: Math.round(analysisData.result.loadDistributionScore * 100) }
+            : {}),
+          ...(analysisData.result?.restraintCount != null ? { restraintCount: analysisData.result.restraintCount } : {}),
         },
         hazards: (analysisData.hazardAlerts || []).map((alert: {
           alertId: string;

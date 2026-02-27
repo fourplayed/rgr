@@ -139,16 +139,18 @@ export const PhotoUploadZone = React.memo<PhotoUploadZoneProps>(({
     if (disabled || isLoading) return;
 
     const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      handleFileSelection(files[0]);
+    const firstFile = files[0];
+    if (files.length > 0 && firstFile) {
+      handleFileSelection(firstFile);
     }
   }, [disabled, isLoading, handleFileSelection]);
 
   // File input change
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files && files.length > 0) {
-      handleFileSelection(files[0]);
+    const firstFile = files?.[0];
+    if (firstFile) {
+      handleFileSelection(firstFile);
     }
   }, [handleFileSelection]);
 

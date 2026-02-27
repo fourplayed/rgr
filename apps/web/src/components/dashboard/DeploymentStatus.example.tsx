@@ -14,7 +14,7 @@ export function BasicExample() {
     <div className="p-6 bg-gradient-to-br from-slate-950 to-slate-900 min-h-screen">
       <DeploymentStatus
         repository="fourplayed/rgr-fleet-manager"
-        githubToken={import.meta.env.VITE_GITHUB_TOKEN}
+        githubToken={import.meta.env['VITE_GITHUB_TOKEN']}
       />
     </div>
   );
@@ -28,7 +28,7 @@ export function CustomRefreshExample() {
     <div className="p-6 bg-gradient-to-br from-slate-950 to-slate-900 min-h-screen">
       <DeploymentStatus
         repository="fourplayed/rgr-fleet-manager"
-        githubToken={import.meta.env.VITE_GITHUB_TOKEN}
+        githubToken={import.meta.env['VITE_GITHUB_TOKEN']}
         refreshInterval={60000} // Refresh every 60 seconds
         maxRuns={20} // Show last 20 runs
       />
@@ -44,7 +44,7 @@ export function LightThemeExample() {
     <div className="p-6 bg-gradient-to-br from-blue-600 to-blue-800 min-h-screen">
       <DeploymentStatus
         repository="fourplayed/rgr-fleet-manager"
-        githubToken={import.meta.env.VITE_GITHUB_TOKEN}
+        githubToken={import.meta.env['VITE_GITHUB_TOKEN']}
         isDark={false}
       />
     </div>
@@ -65,7 +65,7 @@ export function DashboardIntegrationExample() {
           <div className="xl:col-span-2">
             <DeploymentStatus
               repository="fourplayed/rgr-fleet-manager"
-              githubToken={import.meta.env.VITE_GITHUB_TOKEN}
+              githubToken={import.meta.env['VITE_GITHUB_TOKEN']}
             />
           </div>
 
@@ -118,7 +118,7 @@ export function MultiRepoExample() {
           <DeploymentStatus
             key={repo}
             repository={repo}
-            githubToken={import.meta.env.VITE_GITHUB_TOKEN}
+            githubToken={import.meta.env['VITE_GITHUB_TOKEN']}
             maxRuns={5}
           />
         ))}
@@ -137,7 +137,7 @@ export function ResponsiveExample() {
       <div className="container mx-auto px-4 py-6 lg:px-6">
         <DeploymentStatus
           repository="fourplayed/rgr-fleet-manager"
-          githubToken={import.meta.env.VITE_GITHUB_TOKEN}
+          githubToken={import.meta.env['VITE_GITHUB_TOKEN']}
           className="w-full"
         />
       </div>
@@ -167,7 +167,7 @@ export function ResponsiveExample() {
  *      return (
  *        <DeploymentStatus
  *          repository="fourplayed/rgr-fleet-manager"
- *          githubToken={import.meta.env.VITE_GITHUB_TOKEN}
+ *          githubToken={import.meta.env['VITE_GITHUB_TOKEN']}
  *        />
  *      );
  *    }

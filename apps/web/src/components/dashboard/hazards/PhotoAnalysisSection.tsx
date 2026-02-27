@@ -164,7 +164,7 @@ export const PhotoAnalysisSection = React.memo<PhotoAnalysisSectionProps>(({
         {showResults && state.result && (
           <AnalysisResultCard
             result={state.result}
-            onAddToQueue={state.result.hazards.length > 0 ? handleAddToQueue : undefined}
+            {...(state.result.hazards.length > 0 ? { onAddToQueue: handleAddToQueue } : {})}
             onDismiss={handleDismiss}
             onNewAnalysis={handleNewAnalysis}
             isDark={isDark}

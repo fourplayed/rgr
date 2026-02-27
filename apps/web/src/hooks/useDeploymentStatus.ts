@@ -34,7 +34,7 @@ function transformWorkflowRun(run: GitHubWorkflowRun): WorkflowRun {
     updated_at: run.updated_at,
     duration: Math.max(0, duration),
     commit_sha: run.head_sha,
-    commit_message: run.head_commit.message.split('\n')[0], // First line only
+    commit_message: run.head_commit.message.split('\n')[0] ?? '', // First line only
     branch: run.head_branch,
     actor: run.actor.login,
     html_url: run.html_url,
@@ -108,14 +108,15 @@ function calculateMetrics(workflows: WorkflowRun[]): DeploymentMetrics {
     }
   }
 
-  return {
+  const result: DeploymentMetrics = {
     avgBuildTime,
     cacheHitRate,
     successRate,
     deploymentsToday,
     buildTimeTrend,
-    improvements,
   };
+  if (improvements) result.improvements = improvements;
+  return result;
 }
 
 /**
@@ -161,7 +162,7 @@ export function useDeploymentStatus({
       };
 
       // Add authorization if token provided
-      if (githubToken) {
+      if (githubToken !== undefined && githubToken !== '') {
         headers['Authorization'] = `Bearer ${githubToken}`;
       }
 

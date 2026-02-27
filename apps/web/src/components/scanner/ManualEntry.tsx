@@ -202,8 +202,8 @@ export default function ManualEntry({
               placeholder="rgr://asset/... or TL001"
               value={inputValue}
               onChange={handleInputChange}
-              error={displayError || undefined}
-              helperText={!displayError ? (getFormatHint() as unknown as string) : undefined}
+              {...(displayError ? { error: displayError } : {})}
+              {...(!displayError && getFormatHint() ? { helperText: getFormatHint() as unknown as string } : {})}
               disabled={isLoading}
               className="pr-10"
             />
@@ -312,7 +312,7 @@ export function CompactManualEntry({
           }}
           placeholder={placeholder}
           disabled={isLoading}
-          error={error || undefined}
+          {...(error ? { error } : {})}
           className="flex-1"
         />
         <Button type="submit" isLoading={isLoading} disabled={!value.trim()}>

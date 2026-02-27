@@ -336,7 +336,9 @@ export const ExplodingStars = memo(function ExplodingStars({
     const pairs: Array<[number, number]> = [];
     for (let i = 0; i < positions.length; i++) {
       for (let j = i + 1; j < positions.length; j++) {
-        if (dist(positions[i], positions[j]) <= SHOCK_RADIUS) {
+        const posI = positions[i];
+        const posJ = positions[j];
+        if (posI && posJ && dist(posI, posJ) <= SHOCK_RADIUS) {
           pairs.push([i, j]);
         }
       }
@@ -364,6 +366,7 @@ export const ExplodingStars = memo(function ExplodingStars({
   const spawnShock = useCallback((fromIdx: number, toIdx: number) => {
     const from = positions[fromIdx];
     const to = positions[toIdx];
+    if (!from || !to) return;
     const id = ++shockIdRef.current;
 
     const bolt: ShockBolt = {
@@ -405,8 +408,8 @@ export const ExplodingStars = memo(function ExplodingStars({
         const d = dist(pos, other);
         if (d < nearestDist) { nearestDist = d; nearestIdx = j; }
       });
-      if (nearestIdx === -1) return { tx: 0, ty: 0 };
-      const nearest = positions[nearestIdx];
+      const nearest = nearestIdx === -1 ? undefined : positions[nearestIdx];
+      if (!nearest) return { tx: 0, ty: 0 };
       return { tx: (nearest.x - pos.x) * 0.7, ty: (nearest.y - pos.y) * 0.7 };
     }),
   );
@@ -422,7 +425,9 @@ export const ExplodingStars = memo(function ExplodingStars({
       // Chain reaction — nearby stars get shocked + triggered
       positions.forEach((_, j) => {
         if (j === i || busyRef.current.has(j)) return;
-        if (dist(positions[i], positions[j]) <= BLAST_RADIUS) {
+        const posI = positions[i];
+        const posJ = positions[j];
+        if (posI && posJ && dist(posI, posJ) <= BLAST_RADIUS) {
           const chainDelay = 300 + Math.random() * 700;
           // Shock bolt
           sched(() => spawnShock(i, j), chainDelay * 0.3);
@@ -489,7 +494,8 @@ export const ExplodingStars = memo(function ExplodingStars({
           if (p === 'normal' && !busyRef.current.has(i)) candidates.push(i);
         });
         if (candidates.length > 0) {
-          trigger(candidates[Math.floor(Math.random() * candidates.length)]);
+          const idx = candidates[Math.floor(Math.random() * candidates.length)];
+          if (idx !== undefined) trigger(idx);
         }
         loop();
       }, delay);
@@ -505,7 +511,8 @@ export const ExplodingStars = memo(function ExplodingStars({
         if (p === 'normal' && !busyRef.current.has(i)) candidates.push(i);
       });
       if (candidates.length > 0) {
-        trigger(candidates[Math.floor(Math.random() * candidates.length)]);
+        const idx = candidates[Math.floor(Math.random() * candidates.length)];
+        if (idx !== undefined) trigger(idx);
       }
       loop();
     }, firstDelay);
@@ -629,13 +636,13 @@ export const ExplodingStars = memo(function ExplodingStars({
                 height: 0,
                 ...(phase === 'warning'
                   ? {
-                      '--attract-tx': `${attractVectors.current[i].tx}px`,
-                      '--attract-ty': `${attractVectors.current[i].ty}px`,
+                      '--attract-tx': `${attractVectors.current[i]!.tx}px`,
+                      '--attract-ty': `${attractVectors.current[i]!.ty}px`,
                       animation: `explSpeedBoost ${WARNING_MS}ms ease-in forwards`,
                     } as React.CSSProperties
                   : {}),
                 ...(phase === 'exploding'
-                  ? { transform: `translate(${attractVectors.current[i].tx}px, ${attractVectors.current[i].ty}px)` }
+                  ? { transform: `translate(${attractVectors.current[i]!.tx}px, ${attractVectors.current[i]!.ty}px)` }
                   : {}),
               }}
             >
@@ -651,7 +658,7 @@ export const ExplodingStars = memo(function ExplodingStars({
                     boxShadow: `0 0 ${pos.size * 18}px ${pos.size * 4.5}px ${glowColor}`,
                     transform: 'translate(-50%, -50%)',
                     ...(phase === 'normal'
-                      ? { animation: `explGlowPulse ${pulseDurations.current[i]}ms ease-in-out infinite` }
+                      ? { animation: `explGlowPulse ${pulseDurations.current[i]!}ms ease-in-out infinite` }
                       : {}),
                     ...(phase === 'warning'
                       ? { animation: `explWarningGrow ${WARNING_MS}ms ease-in forwards` }
@@ -704,7 +711,7 @@ export const ExplodingStars = memo(function ExplodingStars({
                       pointerEvents: 'none',
                     }}
                   />
-                  {particlesRef.current[i].map((p, pi) => {
+                  {particlesRef.current[i]!.map((p, pi) => {
                     const rad = (p.angle * Math.PI) / 180;
                     const tx = Math.cos(rad) * p.distance;
                     const ty = Math.sin(rad) * p.distance;

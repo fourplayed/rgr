@@ -145,13 +145,13 @@ export function useAssetsLogic(): { state: AssetsState; actions: AssetsActions }
       setFilters: (partial: Partial<AssetFilters>) => {
         const updates: Record<string, string | null> = { page: null };
         if (partial.statuses !== undefined) {
-          updates.status = partial.statuses.length > 0 ? partial.statuses.join(',') : null;
+          updates['status'] = partial.statuses.length > 0 ? partial.statuses.join(',') : null;
         }
         if (partial.categories !== undefined) {
-          updates.category = partial.categories.length > 0 ? partial.categories.join(',') : null;
+          updates['category'] = partial.categories.length > 0 ? partial.categories.join(',') : null;
         }
         if (partial.depotIds !== undefined) {
-          updates.depotId = partial.depotIds.length > 0 ? partial.depotIds.join(',') : null;
+          updates['depotId'] = partial.depotIds.length > 0 ? partial.depotIds.join(',') : null;
         }
         updateParams(updates);
       },

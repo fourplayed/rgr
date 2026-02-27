@@ -65,7 +65,7 @@ export function LoginFormCard({
     await sleep(800);
 
     steps[0] = {
-      ...steps[0],
+      ...steps[0]!,
       status: 'success',
       detail: 'Connected to eryhwfkqbbuftepjvgwq.supabase.co',
       timestamp: new Date().toISOString(),
@@ -84,7 +84,7 @@ export function LoginFormCard({
     await sleep(1000);
 
     steps[1] = {
-      ...steps[1],
+      ...steps[1]!,
       status: 'success',
       detail: 'User authenticated successfully',
       timestamp: new Date().toISOString(),
@@ -103,7 +103,7 @@ export function LoginFormCard({
     await sleep(600);
 
     steps[2] = {
-      ...steps[2],
+      ...steps[2]!,
       status: 'success',
       detail: 'Session created with 7-day expiry',
       timestamp: new Date().toISOString(),
@@ -122,7 +122,7 @@ export function LoginFormCard({
     await sleep(500);
 
     steps[3] = {
-      ...steps[3],
+      ...steps[3]!,
       status: 'success',
       detail: 'Profile data loaded',
       timestamp: new Date().toISOString(),
@@ -141,7 +141,7 @@ export function LoginFormCard({
     await sleep(400);
 
     steps[4] = {
-      ...steps[4],
+      ...steps[4]!,
       status: 'success',
       detail: 'Permissions validated',
       timestamp: new Date().toISOString(),
@@ -160,7 +160,7 @@ export function LoginFormCard({
     await sleep(700);
 
     steps[5] = {
-      ...steps[5],
+      ...steps[5]!,
       status: 'success',
       detail: 'Data synchronized',
       timestamp: new Date().toISOString(),

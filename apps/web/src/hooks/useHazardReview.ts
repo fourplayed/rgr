@@ -155,7 +155,7 @@ function mapAlertToHazardData(alert: HazardAlert): HazardData {
     ? supabase.storage.from('photos-compressed').getPublicUrl(photo.storage_path).data.publicUrl
     : '/api/placeholder/120/90';
 
-  return {
+  const data: HazardData = {
     id: alert.id,
     photoUrl,
     assetNumber: asset?.asset_number || 'Unknown',
@@ -163,10 +163,11 @@ function mapAlertToHazardData(alert: HazardAlert): HazardData {
     hazardType: formatHazardType(alert.hazard_type),
     description: alert.description,
     confidence: Math.round(alert.confidence_score * 100),
-    location: alert.location_in_image || undefined,
     detectedAt: alert.created_at,
     recommendedActions: alert.recommended_actions || [],
   };
+  if (alert.location_in_image) data.location = alert.location_in_image;
+  return data;
 }
 
 function formatHazardType(type: string): string {
