@@ -110,6 +110,9 @@ export default function MaintenanceScreen() {
               style={styles.addButton}
               onPress={handleOpenCreate}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Create maintenance record"
+              accessibilityHint="Double tap to schedule new maintenance"
             >
               <Ionicons name="add" size={24} color={colors.textInverse} />
             </TouchableOpacity>
@@ -137,6 +140,8 @@ export default function MaintenanceScreen() {
             <TouchableOpacity
               style={styles.retryButton}
               onPress={() => refetch()}
+              accessibilityRole="button"
+              accessibilityLabel="Retry loading maintenance"
             >
               <Text style={styles.retryButtonText}>Retry</Text>
             </TouchableOpacity>

@@ -109,10 +109,20 @@ function CameraCaptureComponent({
         <View style={styles.container}>
           <SafeAreaView style={styles.centered}>
             <Text style={styles.messageText}>Camera permission is required</Text>
-            <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
+            <TouchableOpacity
+              style={styles.permissionButton}
+              onPress={requestPermission}
+              accessibilityRole="button"
+              accessibilityLabel="Grant camera permission"
+            >
               <Text style={styles.permissionButtonText}>Grant Permission</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={handleClose}
+              accessibilityRole="button"
+              accessibilityLabel="Cancel"
+            >
               <Text style={styles.closeButtonText}>Cancel</Text>
             </TouchableOpacity>
           </SafeAreaView>
@@ -128,7 +138,12 @@ function CameraCaptureComponent({
           // Preview Mode
           <SafeAreaView style={styles.previewContainer}>
             <View style={styles.header}>
-              <TouchableOpacity style={styles.headerButton} onPress={handleClose}>
+              <TouchableOpacity
+                style={styles.headerButton}
+                onPress={handleClose}
+                accessibilityRole="button"
+                accessibilityLabel="Close camera"
+              >
                 <Ionicons name="close" size={28} color={colors.textInverse} />
               </TouchableOpacity>
               <Text style={styles.headerTitle}>Review Photo</Text>
@@ -154,6 +169,8 @@ function CameraCaptureComponent({
                 style={[styles.actionButton, styles.retakeButton]}
                 onPress={handleRetake}
                 disabled={isUploading}
+                accessibilityRole="button"
+                accessibilityLabel="Retake photo"
               >
                 <Ionicons name="refresh" size={24} color={colors.text} />
                 <Text style={styles.retakeButtonText}>Retake</Text>
@@ -163,6 +180,9 @@ function CameraCaptureComponent({
                 style={[styles.actionButton, styles.confirmButton]}
                 onPress={handleConfirm}
                 disabled={isUploading}
+                accessibilityRole="button"
+                accessibilityLabel="Use photo"
+                accessibilityHint="Double tap to upload this photo"
               >
                 {isUploading ? (
                   <LoadingDots color={colors.textInverse} size={8} />
@@ -184,7 +204,12 @@ function CameraCaptureComponent({
           >
             <SafeAreaView style={styles.cameraOverlay}>
               <View style={styles.header}>
-                <TouchableOpacity style={styles.headerButton} onPress={handleClose}>
+                <TouchableOpacity
+                  style={styles.headerButton}
+                  onPress={handleClose}
+                  accessibilityRole="button"
+                  accessibilityLabel="Close camera"
+                >
                   <Ionicons name="close" size={28} color={colors.textInverse} />
                 </TouchableOpacity>
                 <View style={styles.headerTitleContainer}>
@@ -208,6 +233,9 @@ function CameraCaptureComponent({
                   style={styles.captureButton}
                   onPress={handleCapture}
                   activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel="Take photo"
+                  accessibilityHint="Double tap to capture a photo"
                 >
                   <View style={styles.captureButtonInner} />
                 </TouchableOpacity>

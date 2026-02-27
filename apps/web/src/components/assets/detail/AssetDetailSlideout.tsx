@@ -97,8 +97,9 @@ export const AssetDetailSlideout = React.memo<AssetDetailSlideoutProps>(
             <button
               onClick={onClose}
               className={`p-1.5 rounded-lg ${mutedColor} hover:text-white hover:bg-white/10 transition-colors`}
+              aria-label="Close asset details"
             >
-              <X className="w-5 h-5" />
+              <X className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
         </div>

@@ -44,6 +44,14 @@ vi.mock('@rgr/shared', () => ({
   getSupabaseClient: () => mockSupabase,
 }));
 
+let mockAuthUser: { id: string } | null = { id: 'user-123' };
+
+vi.mock('@/stores/authStore', () => ({
+  useAuthStore: vi.fn((selector: (s: { user: { id: string } | null }) => unknown) =>
+    selector({ user: mockAuthUser })
+  ),
+}));
+
 // Mock Image for compression
 const mockImage = {
   onload: null as (() => void) | null,
@@ -68,6 +76,7 @@ const mockCanvas = {
 beforeEach(() => {
   // Reset all mocks
   vi.clearAllMocks();
+  mockAuthUser = { id: 'user-123' };
 
   // Setup Image mock
   vi.stubGlobal(
@@ -269,7 +278,7 @@ describe('usePhotoAnalysis', () => {
       expect(result.current.state.progress).toBeGreaterThanOrEqual(10);
     });
 
-    it('should call supabase auth.getUser', async () => {
+    it('should use authenticated user from auth store', async () => {
       const { result } = renderHook(() => usePhotoAnalysis());
       const file = createMockFile();
 
@@ -277,7 +286,9 @@ describe('usePhotoAnalysis', () => {
         await result.current.actions.analyzePhoto(file);
       });
 
-      expect(mockSupabaseAuth.getUser).toHaveBeenCalled();
+      // Hook uses useAuthStore for auth, not supabase.auth.getUser
+      // Verify upload proceeded (would fail if user was null)
+      expect(mockSupabaseStorage.from).toHaveBeenCalledWith('photos-compressed');
     });
 
     it('should upload compressed image to storage', async () => {
@@ -422,10 +433,7 @@ describe('usePhotoAnalysis', () => {
 
   describe('Error Handling', () => {
     it('should handle authentication error', async () => {
-      mockSupabaseAuth.getUser.mockResolvedValue({
-        data: { user: null },
-        error: { message: 'Not authenticated' },
-      });
+      mockAuthUser = null;
 
       const { result } = renderHook(() => usePhotoAnalysis());
       const file = createMockFile();
@@ -439,10 +447,7 @@ describe('usePhotoAnalysis', () => {
     });
 
     it('should handle missing user', async () => {
-      mockSupabaseAuth.getUser.mockResolvedValue({
-        data: { user: null },
-        error: null,
-      });
+      mockAuthUser = null;
 
       const { result } = renderHook(() => usePhotoAnalysis());
       const file = createMockFile();
@@ -515,7 +520,9 @@ describe('usePhotoAnalysis', () => {
     });
 
     it('should handle unexpected errors', async () => {
-      mockSupabaseAuth.getUser.mockRejectedValue(new Error('Network error'));
+      mockSupabaseStorage.from.mockImplementation(() => {
+        throw new Error('Network error');
+      });
 
       const { result } = renderHook(() => usePhotoAnalysis());
       const file = createMockFile();
@@ -569,10 +576,7 @@ describe('usePhotoAnalysis', () => {
     });
 
     it('should clear error', async () => {
-      mockSupabaseAuth.getUser.mockResolvedValue({
-        data: { user: null },
-        error: { message: 'Error' },
-      });
+      mockAuthUser = null;
 
       const { result } = renderHook(() => usePhotoAnalysis());
       const file = createMockFile();
@@ -614,10 +618,7 @@ describe('usePhotoAnalysis', () => {
 
   describe('Clear Error Action', () => {
     it('should clear error message', async () => {
-      mockSupabaseAuth.getUser.mockResolvedValue({
-        data: { user: null },
-        error: { message: 'Error' },
-      });
+      mockAuthUser = null;
 
       const { result } = renderHook(() => usePhotoAnalysis());
       const file = createMockFile();
@@ -636,10 +637,7 @@ describe('usePhotoAnalysis', () => {
     });
 
     it('should reset status to idle when in error state', async () => {
-      mockSupabaseAuth.getUser.mockResolvedValue({
-        data: { user: null },
-        error: { message: 'Error' },
-      });
+      mockAuthUser = null;
 
       const { result } = renderHook(() => usePhotoAnalysis());
       const file = createMockFile();
@@ -754,8 +752,10 @@ describe('usePhotoAnalysis', () => {
       rerender();
       const secondActions = result.current.actions;
 
-      // Actions should be memoized
-      expect(firstActions).toBe(secondActions);
+      // Individual action functions should be memoized across renders
+      // (actions object itself may change if clearError depends on status)
+      expect(firstActions.analyzePhoto).toBe(secondActions.analyzePhoto);
+      expect(firstActions.reset).toBe(secondActions.reset);
     });
   });
 

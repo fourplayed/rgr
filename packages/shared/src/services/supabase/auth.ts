@@ -1,5 +1,5 @@
 import type { Session, User as AuthUser } from '@supabase/supabase-js';
-import { getSupabaseClient } from './client';
+import { getSupabaseClient, getSupabaseConfig } from './client';
 import type {
   Profile,
   ProfileRow,
@@ -55,6 +55,96 @@ export async function signInWithEmail(
 
   recordSuccess(credentials.email);
   return { success: true, data: { user: data.user, session: data.session }, error: null };
+}
+
+/**
+ * Sign in via the secure-auth Edge Function (server-side rate limiting).
+ *
+ * The Edge Function validates credentials and applies per-IP and per-email
+ * rate limiting that cannot be bypassed from the client. On success it
+ * returns a session which is then set on the local Supabase client so
+ * subsequent requests are authenticated.
+ *
+ * Falls back to direct `signInWithEmail` if the Edge Function is
+ * unreachable (e.g. network error, function not deployed yet) so that
+ * the app remains usable during rollout.
+ */
+export async function signInWithEmailSecure(
+  credentials: SignInCredentials
+): Promise<ServiceResult<{ user: AuthUser; session: Session }>> {
+  // Client-side rate limiting still runs as a first line of defense
+  const rateLimit = checkRateLimit(credentials.email);
+  if (!rateLimit.allowed) {
+    return {
+      success: false,
+      data: null,
+      error: `Too many login attempts. Please try again in ${rateLimit.retryAfterSeconds} seconds.`,
+    };
+  }
+
+  const config = getSupabaseConfig();
+  const functionUrl = `${config.url}/functions/v1/secure-auth`;
+
+  try {
+    const response = await fetch(functionUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': config.anonKey,
+        'Authorization': `Bearer ${config.anonKey}`,
+      },
+      body: JSON.stringify({
+        email: credentials.email,
+        password: credentials.password,
+      }),
+    });
+
+    const body = await response.json();
+
+    if (!response.ok) {
+      recordFailure(credentials.email);
+      const errorMessage = body.error || 'Authentication failed';
+      return { success: false, data: null, error: errorMessage };
+    }
+
+    if (!body.user || !body.session) {
+      recordFailure(credentials.email);
+      return { success: false, data: null, error: 'Authentication failed' };
+    }
+
+    // Establish the session on the local Supabase client so that
+    // subsequent queries (profile fetch, etc.) are authenticated.
+    const supabase = getSupabaseClient();
+    await supabase.auth.setSession({
+      access_token: body.session.access_token,
+      refresh_token: body.session.refresh_token,
+    });
+
+    recordSuccess(credentials.email);
+    return {
+      success: true,
+      data: {
+        user: body.user as AuthUser,
+        session: {
+          access_token: body.session.access_token,
+          refresh_token: body.session.refresh_token,
+          expires_at: body.session.expires_at,
+          expires_in: body.session.expires_in,
+          token_type: body.session.token_type,
+          user: body.user,
+        } as Session,
+      },
+      error: null,
+    };
+  } catch (networkError) {
+    // Edge Function unreachable -- fall back to direct auth so the app
+    // is not bricked if the function is not deployed or Deno is down.
+    console.warn(
+      '[auth] secure-auth Edge Function unreachable, falling back to direct sign-in:',
+      networkError instanceof Error ? networkError.message : networkError
+    );
+    return signInWithEmail(credentials);
+  }
 }
 
 /**

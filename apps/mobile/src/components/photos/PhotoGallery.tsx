@@ -75,6 +75,9 @@ function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto }: PhotoGalle
           ]}
           onPress={onAddPhoto}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Add photo"
+          accessibilityHint="Double tap to open camera and take a photo"
         >
           <Ionicons name="camera" size={32} color={colors.electricBlue} />
           <Text style={styles.addButtonText}>Add Photo</Text>

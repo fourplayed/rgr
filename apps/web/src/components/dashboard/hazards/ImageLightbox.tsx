@@ -98,6 +98,10 @@ export const ImageLightbox = React.memo<ImageLightboxProps>(({
       <div
         className="absolute inset-0 bg-black/90 backdrop-blur-sm"
         onClick={onClose}
+        role="button"
+        aria-label="Close lightbox"
+        tabIndex={0}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClose(); }}
       />
 
       {/* Controls Bar */}
@@ -107,8 +111,9 @@ export const ImageLightbox = React.memo<ImageLightboxProps>(({
           onClick={zoomOut}
           className="p-2 rounded-full hover:bg-white/10 transition-colors"
           title="Zoom Out (-)"
+          aria-label="Zoom out"
         >
-          <ZoomOut className="w-5 h-5 text-white" />
+          <ZoomOut className="w-5 h-5 text-white" aria-hidden="true" />
         </button>
         <span className="text-sm text-white/70 min-w-[60px] text-center">
           {Math.round(scale * 100)}%
@@ -118,8 +123,9 @@ export const ImageLightbox = React.memo<ImageLightboxProps>(({
           onClick={zoomIn}
           className="p-2 rounded-full hover:bg-white/10 transition-colors"
           title="Zoom In (+)"
+          aria-label="Zoom in"
         >
-          <ZoomIn className="w-5 h-5 text-white" />
+          <ZoomIn className="w-5 h-5 text-white" aria-hidden="true" />
         </button>
         <div className="w-px h-6 bg-white/20 mx-1" />
         <button
@@ -127,16 +133,18 @@ export const ImageLightbox = React.memo<ImageLightboxProps>(({
           onClick={rotate}
           className="p-2 rounded-full hover:bg-white/10 transition-colors"
           title="Rotate (R)"
+          aria-label="Rotate image"
         >
-          <RotateCw className="w-5 h-5 text-white" />
+          <RotateCw className="w-5 h-5 text-white" aria-hidden="true" />
         </button>
         <button
           type="button"
           onClick={resetView}
           className="p-2 rounded-full hover:bg-white/10 transition-colors"
           title="Reset View"
+          aria-label="Reset view"
         >
-          <Maximize2 className="w-5 h-5 text-white" />
+          <Maximize2 className="w-5 h-5 text-white" aria-hidden="true" />
         </button>
         <div className="w-px h-6 bg-white/20 mx-1" />
         <button
@@ -144,8 +152,9 @@ export const ImageLightbox = React.memo<ImageLightboxProps>(({
           onClick={downloadImage}
           className="p-2 rounded-full hover:bg-white/10 transition-colors"
           title="Download"
+          aria-label="Download image"
         >
-          <Download className="w-5 h-5 text-white" />
+          <Download className="w-5 h-5 text-white" aria-hidden="true" />
         </button>
       </div>
 
@@ -155,8 +164,9 @@ export const ImageLightbox = React.memo<ImageLightboxProps>(({
         onClick={onClose}
         className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors"
         title="Close (Esc)"
+        aria-label="Close lightbox"
       >
-        <X className="w-6 h-6 text-white" />
+        <X className="w-6 h-6 text-white" aria-hidden="true" />
       </button>
 
       {/* Image Container */}

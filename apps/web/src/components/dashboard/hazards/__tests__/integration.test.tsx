@@ -57,6 +57,14 @@ vi.mock('@rgr/shared', () => ({
   getSupabaseClient: () => mockSupabase,
 }));
 
+let mockAuthUser: { id: string } | null = { id: 'user-123' };
+
+vi.mock('@/stores/authStore', () => ({
+  useAuthStore: vi.fn((selector: (s: { user: { id: string } | null }) => unknown) =>
+    selector({ user: mockAuthUser })
+  ),
+}));
+
 // Store original createElement before mocking
 const originalCreateElement = document.createElement.bind(document);
 
@@ -102,6 +110,7 @@ beforeEach(() => {
 
   // Reset mocks
   vi.clearAllMocks();
+  mockAuthUser = { id: 'user-123' };
 });
 
 afterEach(() => {
@@ -142,11 +151,8 @@ function createMockFile(
 }
 
 function setupSuccessfulUploadMocks(analysisResult: Partial<AnalysisResult> = {}) {
-  // Auth
-  mockSupabase.auth.getUser.mockResolvedValue({
-    data: { user: { id: 'user-123' } },
-    error: null,
-  });
+  // Ensure auth user is set
+  mockAuthUser = { id: 'user-123' };
 
   // Storage upload
   mockSupabase.storage.from.mockReturnValue({
@@ -218,10 +224,7 @@ function setupSuccessfulUploadMocks(analysisResult: Partial<AnalysisResult> = {}
 }
 
 function setupAuthFailureMocks() {
-  mockSupabase.auth.getUser.mockResolvedValue({
-    data: { user: null },
-    error: { message: 'Not authenticated' },
-  });
+  mockAuthUser = null;
 }
 
 function setupUploadFailureMocks() {

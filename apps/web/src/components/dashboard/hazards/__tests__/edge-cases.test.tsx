@@ -53,6 +53,14 @@ vi.mock('@rgr/shared', () => ({
   getSupabaseClient: () => mockSupabase,
 }));
 
+let mockAuthUser: { id: string } | null = { id: 'user-123' };
+
+vi.mock('@/stores/authStore', () => ({
+  useAuthStore: vi.fn((selector: (s: { user: { id: string } | null }) => unknown) =>
+    selector({ user: mockAuthUser })
+  ),
+}));
+
 // Store original createElement before mocking
 const originalCreateElement = document.createElement.bind(document);
 
@@ -93,6 +101,7 @@ beforeEach(() => {
   });
 
   vi.clearAllMocks();
+  mockAuthUser = { id: 'user-123' };
 });
 
 afterEach(() => {
@@ -419,7 +428,9 @@ describe('Edge Cases: Network Failures', () => {
 
   it('should handle connection refused error', async () => {
     setupSuccessfulMocks();
-    mockSupabase.auth.getUser.mockRejectedValue(new Error('Connection refused'));
+    mockSupabase.storage.from.mockImplementation(() => {
+      throw new Error('Connection refused');
+    });
 
     const { container } = render(
       <PhotoAnalysisSection isDark={true} onHazardDetected={vi.fn()} />

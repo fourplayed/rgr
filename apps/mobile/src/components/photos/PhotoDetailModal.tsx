@@ -97,7 +97,12 @@ function PhotoDetailModalComponent({
         <SafeAreaView style={styles.safeArea}>
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity style={styles.headerButton} onPress={onClose}>
+            <TouchableOpacity
+              style={styles.headerButton}
+              onPress={onClose}
+              accessibilityRole="button"
+              accessibilityLabel="Close photo details"
+            >
               <Ionicons name="close" size={28} color={colors.text} />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Photo Details</Text>
@@ -105,6 +110,9 @@ function PhotoDetailModalComponent({
               style={styles.headerButton}
               onPress={handleDelete}
               disabled={isDeleting || isLoading}
+              accessibilityRole="button"
+              accessibilityLabel="Delete photo"
+              accessibilityHint="Double tap to delete this photo"
             >
               {isDeleting ? (
                 <LoadingDots color={colors.error} size={6} />
@@ -192,7 +200,13 @@ function PhotoDetailModalComponent({
 
                 {/* GPS Location */}
                 {photoData.latitude != null && photoData.longitude != null && (
-                  <TouchableOpacity onPress={openInMaps} style={styles.metadataRow}>
+                  <TouchableOpacity
+                    onPress={openInMaps}
+                    style={styles.metadataRow}
+                    accessibilityRole="link"
+                    accessibilityLabel="Open location in maps"
+                    accessibilityHint="Double tap to open this location in your maps app"
+                  >
                     <View style={styles.metadataItem}>
                       <Text style={styles.metadataLabel}>Location</Text>
                       <View style={styles.locationValue}>

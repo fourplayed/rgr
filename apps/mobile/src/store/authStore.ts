@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import {
-  signInWithEmail,
+  signInWithEmailSecure,
   signOut,
   getSession as getSupabaseSession,
   fetchProfile,
@@ -51,7 +51,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      const result = await signInWithEmail({ email, password });
+      const result = await signInWithEmailSecure({ email, password });
 
       if (!result.success) {
         set({ error: result.error, isLoading: false });

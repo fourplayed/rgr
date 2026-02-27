@@ -160,6 +160,9 @@ export default function HomeScreen() {
         style={[styles.scanCard, { borderLeftWidth: 4, borderLeftColor: activityColor }]}
         onPress={() => router.navigate(`/(tabs)/assets/${item.assetId}`)}
         activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityLabel={`${formatScanTypeLabel(item.scanType)} scan for asset ${item.assetNumber || 'Unknown'}`}
+        accessibilityHint="Double tap to view asset details"
       >
         <View style={styles.scanCardContent}>
           <View style={styles.scanIconContainer}>

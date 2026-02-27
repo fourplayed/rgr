@@ -171,6 +171,8 @@ export default function AssetDetailScreen() {
           <TouchableOpacity
             style={styles.retryButton}
             onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
           >
             <Text style={styles.retryButtonText}>Go Back</Text>
           </TouchableOpacity>
@@ -201,6 +203,8 @@ export default function AssetDetailScreen() {
           <TouchableOpacity
             style={styles.retryButton}
             onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
           >
             <Text style={styles.retryButtonText}>Go Back</Text>
           </TouchableOpacity>
@@ -220,6 +224,9 @@ export default function AssetDetailScreen() {
             style={styles.qrLink}
             onPress={() => setShowQRModal(true)}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="View QR Code"
+            accessibilityHint="Double tap to view the asset QR code"
           >
             <Ionicons name="qr-code-outline" size={20} color={colors.neonViolet} />
             <Text style={styles.qrLinkText}>View QR Code</Text>
@@ -283,6 +290,9 @@ export default function AssetDetailScreen() {
             onPress={handleToggleActivity}
             activeOpacity={0.7}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityRole="button"
+            accessibilityLabel={activityExpanded ? "Collapse recent activity" : "Expand recent activity"}
+            accessibilityHint="Double tap to toggle the activity section"
           >
             <Animated.View style={{ transform: [{ rotate: chevronRotate }] }}>
               <Ionicons
@@ -387,6 +397,8 @@ export default function AssetDetailScreen() {
               <TouchableOpacity
                 onPress={() => setShowQRModal(false)}
                 style={styles.modalCloseButton}
+                accessibilityRole="button"
+                accessibilityLabel="Close QR code modal"
               >
                 <Ionicons name="close" size={24} color={colors.text} />
               </TouchableOpacity>

@@ -354,6 +354,10 @@ export default function SettingsScreen() {
                 style={styles.syncButton}
                 onPress={handleSync}
                 disabled={isSyncing}
+                accessibilityRole="button"
+                accessibilityLabel="Sync now"
+                accessibilityHint="Double tap to synchronize local and remote profiles"
+                accessibilityState={{ disabled: isSyncing }}
               >
                 {isSyncing ? (
                   <LoadingDots color={colors.textInverse} size={8} />

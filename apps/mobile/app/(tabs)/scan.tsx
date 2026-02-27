@@ -781,6 +781,9 @@ export default function ScanScreen() {
               <TouchableOpacity
                 style={styles.permissionButton}
                 onPress={requestLocationPermission}
+                accessibilityRole="button"
+                accessibilityLabel="Enable location"
+                accessibilityHint="Double tap to grant location permission for scan tracking"
               >
                 <Text style={styles.permissionButtonText}>Enable Location</Text>
               </TouchableOpacity>

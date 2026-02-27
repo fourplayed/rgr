@@ -1,0 +1,183 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run type check
+        run: npm run typecheck
+
+  format-check:
+    name: Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check formatting
+        run: npm run format:check
+
+  test-mobile:
+    name: Test Mobile
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run mobile tests with coverage
+        run: npm run test:mobile -- --coverage --coverageReporters=text --coverageReporters=lcov --coverageDirectory=apps/mobile/coverage
+
+      - name: Upload mobile coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-mobile
+          path: apps/mobile/coverage/lcov.info
+          retention-days: 7
+
+      # To enable Codecov reporting:
+      # 1. Sign up at https://codecov.io and add this repository
+      # 2. Add CODECOV_TOKEN as a repository secret in GitHub Settings > Secrets
+      # 3. Uncomment the step below:
+      #
+      # - name: Upload to Codecov
+      #   uses: codecov/codecov-action@v4
+      #   with:
+      #     token: ${{ secrets.CODECOV_TOKEN }}
+      #     flags: mobile
+      #     files: apps/mobile/coverage/lcov.info
+      #     fail_ci_if_error: false
+
+  test-web:
+    name: Test Web
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run web tests with coverage
+        run: npm run test:web -- --coverage --reporter=default --reporter=lcov --outputFile.lcov=apps/web/coverage/lcov.info
+
+      - name: Upload web coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-web
+          path: apps/web/coverage/lcov.info
+          retention-days: 7
+
+      # To enable Codecov reporting:
+      # 1. Sign up at https://codecov.io and add this repository
+      # 2. Add CODECOV_TOKEN as a repository secret in GitHub Settings > Secrets
+      # 3. Uncomment the step below:
+      #
+      # - name: Upload to Codecov
+      #   uses: codecov/codecov-action@v4
+      #   with:
+      #     token: ${{ secrets.CODECOV_TOKEN }}
+      #     flags: web
+      #     files: apps/web/coverage/lcov.info
+      #     fail_ci_if_error: false
+
+  test-shared:
+    name: Test Shared
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build shared package
+        run: npm run build --workspace=@rgr/shared
+
+      - name: Run shared tests with coverage
+        run: npm run test:shared -- --coverage --coverageReporters=text --coverageReporters=lcov --coverageDirectory=packages/shared/coverage
+
+      - name: Upload shared coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-shared
+          path: packages/shared/coverage/lcov.info
+          retention-days: 7
+
+      # To enable Codecov reporting:
+      # 1. Sign up at https://codecov.io and add this repository
+      # 2. Add CODECOV_TOKEN as a repository secret in GitHub Settings > Secrets
+      # 3. Uncomment the step below:
+      #
+      # - name: Upload to Codecov
+      #   uses: codecov/codecov-action@v4
+      #   with:
+      #     token: ${{ secrets.CODECOV_TOKEN }}
+      #     flags: shared
+      #     files: packages/shared/coverage/lcov.info
+      #     fail_ci_if_error: false

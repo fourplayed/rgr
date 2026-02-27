@@ -8,16 +8,28 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 const wrapper = ({ children }: { children: ReactNode }) =>
   createElement(ThemeProvider, null, children);
 
+// Provide a proper localStorage implementation for tests
+const localStorageMap = new Map<string, string>();
+const localStorageMock = {
+  getItem: (key: string) => localStorageMap.get(key) ?? null,
+  setItem: (key: string, value: string) => localStorageMap.set(key, String(value)),
+  removeItem: (key: string) => localStorageMap.delete(key),
+  clear: () => localStorageMap.clear(),
+  get length() { return localStorageMap.size; },
+  key: (index: number) => [...localStorageMap.keys()][index] ?? null,
+};
+
 describe('useTheme', () => {
   beforeEach(() => {
-    // Clear localStorage
-    localStorage.clear();
+    localStorageMap.clear();
+    vi.stubGlobal('localStorage', localStorageMock);
 
     // Reset document classes
     document.documentElement.className = '';
   });
 
   afterEach(() => {
+    vi.unstubAllGlobals();
     vi.clearAllMocks();
   });
 

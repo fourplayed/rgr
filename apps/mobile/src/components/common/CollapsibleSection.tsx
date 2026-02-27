@@ -49,7 +49,14 @@ export function CollapsibleSection({ title, children, defaultExpanded = true, ba
           <Text style={isFlat ? styles.titleFlat : styles.title}>{title}</Text>
           {badge}
         </View>
-        <TouchableOpacity style={styles.chevronButton} onPress={toggle} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={styles.chevronButton}
+          onPress={toggle}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={`${expanded ? 'Collapse' : 'Expand'} ${title} section`}
+          accessibilityState={{ expanded }}
+        >
           <Animated.View style={{ transform: [{ rotate: chevronRotate }] }}>
             <Ionicons
               name="chevron-down"

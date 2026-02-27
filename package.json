@@ -24,7 +24,9 @@
     "db:migrate": "cd supabase && supabase db push",
     "db:reset": "cd supabase && supabase db reset",
     "db:seed": "cd supabase && psql $DATABASE_URL < seed.sql",
-    "deploy:sim": "./scripts/deploy-sim.sh"
+    "deploy:sim": "./scripts/deploy-sim.sh",
+    "format": "prettier --write \"apps/*/src/**/*.{ts,tsx,js,jsx,json,css}\" \"packages/*/src/**/*.{ts,tsx,js,jsx,json}\"",
+    "format:check": "prettier --check \"apps/*/src/**/*.{ts,tsx,js,jsx,json,css}\" \"packages/*/src/**/*.{ts,tsx,js,jsx,json}\""
   },
   "devDependencies": {
     "@types/sharp": "^0.31.1",

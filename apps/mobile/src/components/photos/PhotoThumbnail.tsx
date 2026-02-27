@@ -32,6 +32,8 @@ function PhotoThumbnailComponent({ photo, size, onPress }: PhotoThumbnailProps) 
         style={[styles.container, styles.placeholder, { width: size, height: size }]}
         onPress={handlePress}
         activeOpacity={0.8}
+        accessibilityRole="image"
+        accessibilityLabel={`Photo${error ? ' (failed to load)' : ' loading'}`}
       >
         {error && (
           <Ionicons name="image-outline" size={24} color={colors.textSecondary} />
@@ -45,6 +47,9 @@ function PhotoThumbnailComponent({ photo, size, onPress }: PhotoThumbnailProps) 
       style={[styles.container, { width: size, height: size }]}
       onPress={handlePress}
       activeOpacity={0.8}
+      accessibilityRole="image"
+      accessibilityLabel={`Photo${hasHazard ? `, ${photo.hazardCount} hazard${photo.hazardCount !== 1 ? 's' : ''} detected` : ''}${photo.primaryCategory ? ', analyzed' : ''}`}
+      accessibilityHint="Double tap to view photo details"
     >
       <Image
         source={{ uri: imageUrl }}

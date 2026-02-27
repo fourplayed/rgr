@@ -244,7 +244,12 @@ export function MaintenanceDetailModal({
               {/* Header */}
               <View style={styles.header}>
                 <Text style={styles.title}>{maintenance.title}</Text>
-                <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                <TouchableOpacity
+                  onPress={onClose}
+                  style={styles.closeButton}
+                  accessibilityRole="button"
+                  accessibilityLabel="Close maintenance details"
+                >
                   <Ionicons name="close" size={24} color={colors.text} />
                 </TouchableOpacity>
               </View>
@@ -377,7 +382,12 @@ export function MaintenanceDetailModal({
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionTitle}>Notes</Text>
                   {!editingNotes && maintenance.status !== 'completed' && maintenance.status !== 'cancelled' && (
-                    <TouchableOpacity onPress={handleEditNotes}>
+                    <TouchableOpacity
+                      onPress={handleEditNotes}
+                      accessibilityRole="button"
+                      accessibilityLabel="Edit notes"
+                      accessibilityHint="Double tap to edit maintenance notes"
+                    >
                       <Ionicons name="pencil" size={18} color={colors.electricBlue} />
                     </TouchableOpacity>
                   )}
