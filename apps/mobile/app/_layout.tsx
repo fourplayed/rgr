@@ -18,7 +18,6 @@ import {
   Lato_900Black_Italic,
 } from '@expo-google-fonts/lato';
 import { initializeMobileSupabase } from '../src/config/supabase';
-import { initSentry, setSentryUser } from '../src/config/sentry';
 import { useAuthStore } from '../src/store/authStore';
 import { useLocationStore } from '../src/store/locationStore';
 import { UserPermissionsProvider } from '../src/contexts/UserPermissionsContext';
@@ -39,9 +38,6 @@ Text.defaultProps.style = defaultTextStyle;
 
 // Initialize Supabase client
 initializeMobileSupabase();
-
-// Initialize Sentry error reporting
-initSentry();
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -77,11 +73,6 @@ export default function RootLayout() {
   const segments = useSegments();
   const { user, isAuthenticated, isLoading, checkAuth, attemptAutoLogin } = useAuthStore();
   const { resolveDepot } = useLocationStore();
-
-  // Sync auth state to Sentry user context
-  useEffect(() => {
-    setSentryUser(isAuthenticated && user ? user : null);
-  }, [isAuthenticated, user]);
 
   // Check auth on mount - try auto-login first, then fall back to session check
   useEffect(() => {

@@ -13,7 +13,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.rgr.fleetmanager",
-      "buildNumber": "8",
+      "buildNumber": "9",
       "infoPlist": {
         "NSCameraUsageDescription": "Camera is used to scan QR codes on fleet assets",
         "NSLocationWhenInUseUsageDescription": "Location is captured during asset scans for fleet tracking"
@@ -40,13 +40,6 @@
         "expo-location",
         {
           "locationWhenInUsePermission": "Location is captured during asset scans"
-        }
-      ],
-      [
-        "@sentry/react-native/expo",
-        {
-          "organization": "rgr",
-          "project": "rgr-mobile"
         }
       ]
     ]
