@@ -51,15 +51,12 @@ vi.mock('@/hooks/usePhotoAnalysis', () => ({
 // Mock URL.createObjectURL and revokeObjectURL for PhotoUploadZone
 const mockObjectUrl = 'blob:http://localhost/mock-object-url';
 beforeEach(() => {
-  vi.stubGlobal('URL', {
-    createObjectURL: vi.fn(() => mockObjectUrl),
-    revokeObjectURL: vi.fn(),
-  });
+  vi.spyOn(URL, 'createObjectURL').mockReturnValue(mockObjectUrl);
+  vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
 });
 
 afterEach(() => {
-  vi.clearAllMocks();
-  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 // ============================================================================

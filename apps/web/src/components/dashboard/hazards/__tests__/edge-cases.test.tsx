@@ -65,10 +65,8 @@ vi.mock('@/stores/authStore', () => ({
 const originalCreateElement = document.createElement.bind(document);
 
 beforeEach(() => {
-  vi.stubGlobal('URL', {
-    createObjectURL: vi.fn(() => 'blob:test'),
-    revokeObjectURL: vi.fn(),
-  });
+  vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:http://localhost/mock-object-url');
+  vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
 
   vi.stubGlobal(
     'Image',

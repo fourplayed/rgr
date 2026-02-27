@@ -70,10 +70,8 @@ const originalCreateElement = document.createElement.bind(document);
 
 // Mock URL APIs for file handling
 beforeEach(() => {
-  vi.stubGlobal('URL', {
-    createObjectURL: vi.fn(() => 'blob:http://localhost/test-url'),
-    revokeObjectURL: vi.fn(),
-  });
+  vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:http://localhost/mock-object-url');
+  vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
 
   // Mock Image for compression
   vi.stubGlobal(

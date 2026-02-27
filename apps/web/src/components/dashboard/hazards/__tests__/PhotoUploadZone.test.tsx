@@ -24,19 +24,14 @@ import { PhotoUploadZone, type PhotoUploadZoneProps } from '../PhotoUploadZone';
 
 // Mock URL.createObjectURL and revokeObjectURL
 const mockObjectUrl = 'blob:http://localhost/mock-object-url';
-const createObjectURLSpy = vi.fn(() => mockObjectUrl);
-const revokeObjectURLSpy = vi.fn();
 
 beforeEach(() => {
-  vi.stubGlobal('URL', {
-    createObjectURL: createObjectURLSpy,
-    revokeObjectURL: revokeObjectURLSpy,
-  });
+  vi.spyOn(URL, 'createObjectURL').mockReturnValue(mockObjectUrl);
+  vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
 });
 
 afterEach(() => {
-  vi.clearAllMocks();
-  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 // ============================================================================
@@ -211,7 +206,7 @@ describe('PhotoUploadZone', () => {
 
       fireEvent.change(input, { target: { files: [file] } });
 
-      expect(createObjectURLSpy).toHaveBeenCalledWith(file);
+      expect(URL.createObjectURL).toHaveBeenCalledWith(file);
     });
 
     it('should display preview image after file selection', async () => {
@@ -538,7 +533,7 @@ describe('PhotoUploadZone', () => {
       const removeButton = screen.getByRole('button', { name: /remove selected photo/i });
       await user.click(removeButton);
 
-      expect(revokeObjectURLSpy).toHaveBeenCalledWith(mockObjectUrl);
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith(mockObjectUrl);
     });
 
     it('should call onClearError when preview is cleared', async () => {
@@ -859,7 +854,7 @@ describe('PhotoUploadZone', () => {
       }
 
       // Should have created 5 object URLs
-      expect(createObjectURLSpy).toHaveBeenCalledTimes(5);
+      expect(URL.createObjectURL).toHaveBeenCalledTimes(5);
     });
 
     it('should handle very small files (1 byte)', () => {
