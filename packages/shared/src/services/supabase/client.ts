@@ -10,7 +10,7 @@ export interface SupabaseConfig {
   url: string;
   anonKey: string;
   /** Custom session storage (pass AsyncStorage for React Native) */
-  storage?: any;
+  storage?: { getItem: (key: string) => string | null | Promise<string | null>; setItem: (key: string, value: string) => void | Promise<void>; removeItem: (key: string) => void | Promise<void> };
   /** Set to false for React Native (default: true for web) */
   detectSessionInUrl?: boolean;
 }

@@ -9,7 +9,6 @@ import type {
   ScanEvent,
   ScanEventWithScanner,
   CreateScanEventInput,
-  MaintenanceRecord,
   MaintenanceRecordWithNames,
   HazardAlert,
   Depot,
@@ -314,7 +313,7 @@ export async function softDeleteAsset(
 ): Promise<ServiceResult<void>> {
   const supabase = getSupabaseClient();
 
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('assets')
     .update({ deleted_at: new Date().toISOString(), status: 'out_of_service' })
     .eq('id', id)

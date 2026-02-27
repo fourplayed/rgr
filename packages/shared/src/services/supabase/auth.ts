@@ -6,8 +6,6 @@ import type {
   SignInCredentials,
   SignUpInput,
   UpdateProfileInput,
-  AuthResult,
-  SessionInfo,
 } from '../../types/api/auth';
 import { mapRowToProfile, mapProfileToUpdate } from '../../types/api/auth';
 import type { ServiceResult } from '../../types';
