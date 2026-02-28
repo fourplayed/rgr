@@ -14,7 +14,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import {
-  AssetCategory,
   AssetCategoryLabels,
   TrailerSubtypes,
 } from '@rgr/shared';
