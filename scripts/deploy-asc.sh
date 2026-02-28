@@ -302,7 +302,7 @@ commit_build_change() {
     git add app.json
     git commit -m "chore(mobile): bump build to $VERSION ($BUILD) for ASC
 
-Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 
     log_success "Build number change committed"
 }
@@ -319,6 +319,12 @@ main() {
     echo "  RGR Fleet - App Store Connect Deploy"
     echo "=========================================="
     echo ""
+
+    # Auto-source ASC credentials if available and not already set
+    if [[ -z "$ASC_API_KEY_ID" ]] && [[ -f "$HOME/.asc-credentials" ]]; then
+        log_info "Loading credentials from ~/.asc-credentials"
+        source "$HOME/.asc-credentials"
+    fi
 
     check_requirements
     check_git_status
