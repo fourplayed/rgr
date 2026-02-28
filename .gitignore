@@ -53,3 +53,6 @@ supabase/.temp/
 
 # Documentation
 *.md
+
+# One-off scripts
+scripts/plan-review.sh
