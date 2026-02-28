@@ -7,6 +7,10 @@ import { z } from 'zod';
 // Uses discriminated unions to prevent invalid states.
 // ============================================================================
 
+// ── Session Status ──
+
+export type AssetCountSessionStatus = 'in_progress' | 'completed' | 'cancelled';
+
 // ── Discriminated Union for Asset Scans ──
 
 /**
@@ -95,7 +99,7 @@ export interface AssetCountSessionRow {
   counted_by: string;
   started_at: string;
   completed_at: string | null;
-  status: 'in_progress' | 'completed' | 'cancelled';
+  status: AssetCountSessionStatus;
   total_assets_counted: number;
   notes: string | null;
   created_at: string;
@@ -147,7 +151,7 @@ export interface AssetCountSession {
   countedBy: string;
   startedAt: Date;
   completedAt: Date | null;
-  status: 'in_progress' | 'completed' | 'cancelled';
+  status: AssetCountSessionStatus;
   totalAssetsCounted: number;
   notes: string | null;
   createdAt: Date;

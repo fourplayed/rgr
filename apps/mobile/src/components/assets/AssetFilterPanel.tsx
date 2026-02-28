@@ -14,6 +14,7 @@ import type { AssetStatus, AssetCategory, Depot } from '@rgr/shared';
 import { AssetStatusLabels, AssetStatusColors, AssetCategoryLabels, AssetSubtypesByCategory } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { DEPOT_ORDER, getDepotColor, getDepotTextColor } from '../../utils/depotDisplay';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -25,9 +26,6 @@ const CATEGORY_COLORS: Record<AssetCategory, string> = {
   trailer: '#8B5CF6', // Violet
   dolly: '#0E7490', // Cyan (WCAG AA compliant with white text)
 };
-
-// Depot display order
-const DEPOT_ORDER = ['per', 'new', 'hed', 'kar', 'wub', 'car'];
 
 interface AssetFilterPanelProps {
   statuses: AssetStatus[];
@@ -153,20 +151,6 @@ export const AssetFilterPanel = memo(function AssetFilterPanel({
   const availableSubtypes: readonly string[] = selectedCategory
     ? AssetSubtypesByCategory[selectedCategory]
     : [];
-
-  const getDepotColor = useCallback((depot: Depot): string => {
-    return depot.color || colors.electricBlue;
-  }, []);
-
-  const getDepotTextColor = useCallback((depot: Depot): string => {
-    if (!depot.color) return colors.textInverse;
-    // Simple luminance check — light backgrounds need dark text
-    const c = depot.color.replace('#', '');
-    const r = parseInt(c.substring(0, 2), 16);
-    const g = parseInt(c.substring(2, 4), 16);
-    const b = parseInt(c.substring(4, 6), 16);
-    return (r * 299 + g * 587 + b * 114) / 1000 > 160 ? colors.text : colors.textInverse;
-  }, []);
 
   const chevronRotate = rotateAnim.interpolate({
     inputRange: [0, 1],

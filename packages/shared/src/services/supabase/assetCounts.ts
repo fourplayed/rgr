@@ -1,8 +1,9 @@
 import { getSupabaseClient } from './client';
-import type { ServiceResult } from '../../types';
+import type { ServiceResult, PaginatedResult } from '../../types';
 import type {
   AssetCountSession,
   AssetCountSessionRow,
+  AssetCountSessionStatus,
   AssetCountItem,
   AssetCountItemRow,
   CombinationMetadata,
@@ -454,6 +455,137 @@ export async function submitAssetCount(
     const message = error instanceof Error ? error.message : 'Failed to submit count';
     return { success: false, data: null, error: message };
   }
+}
+
+// ============================================================================
+// List / Query Functions (for Count History)
+// ============================================================================
+
+export interface ListAssetCountSessionsParams {
+  depotId?: string;
+  status?: AssetCountSessionStatus;
+  page?: number;
+  pageSize?: number;
+}
+
+/** Session row with joined counter and depot names */
+interface SessionListRow extends AssetCountSessionRow {
+  counter: { full_name: string } | null;
+  depot: { name: string; code: string } | null;
+}
+
+/** Session with resolved display names */
+export interface AssetCountSessionWithNames extends AssetCountSession {
+  counterName: string | null;
+  depotName: string | null;
+  depotCode: string | null;
+}
+
+/**
+ * List asset count sessions with optional depot filter and pagination.
+ * Defaults to completed sessions, ordered newest-first.
+ */
+export async function listAssetCountSessions(
+  params: ListAssetCountSessionsParams = {}
+): Promise<ServiceResult<PaginatedResult<AssetCountSessionWithNames>>> {
+  const {
+    depotId,
+    status = 'completed',
+    page = 1,
+    pageSize = 20,
+  } = params;
+
+  const supabase = getSupabaseClient();
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  let query = supabase
+    .from('asset_count_sessions')
+    .select(
+      '*, counter:counted_by(full_name), depot:depot_id(name, code)',
+      { count: 'estimated' }
+    );
+
+  if (depotId) {
+    query = query.eq('depot_id', depotId);
+  }
+
+  query = query
+    .eq('status', status)
+    .order('started_at', { ascending: false })
+    .range(from, to);
+
+  const { data, error, count } = await query;
+
+  if (error) {
+    return { success: false, data: null, error: `Failed to list sessions: ${error.message}` };
+  }
+
+  const total = count ?? 0;
+  const sessions: AssetCountSessionWithNames[] = ((data || []) as SessionListRow[]).map((row) => {
+    const { counter, depot, ...sessionRow } = row;
+    const session = mapRowToAssetCountSession(sessionRow as AssetCountSessionRow);
+    return {
+      ...session,
+      counterName: counter?.full_name ?? null,
+      depotName: depot?.name ?? null,
+      depotCode: depot?.code ?? null,
+    };
+  });
+
+  return {
+    success: true,
+    data: {
+      data: sessions,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    },
+    error: null,
+  };
+}
+
+/** Item row with joined asset details */
+interface ItemWithAssetRow extends AssetCountItemRow {
+  asset: { asset_number: string; category: string } | null;
+}
+
+/** Count item with resolved asset display data */
+export interface AssetCountItemWithAsset extends AssetCountItem {
+  assetNumber: string | null;
+  assetCategory: string | null;
+}
+
+/**
+ * Get all items for a session with joined asset details (number + category).
+ */
+export async function getSessionItemsWithAssets(
+  sessionId: string
+): Promise<ServiceResult<AssetCountItemWithAsset[]>> {
+  const supabase = getSupabaseClient();
+
+  const { data, error } = await supabase
+    .from('asset_count_items')
+    .select('*, asset:asset_id(asset_number, category)')
+    .eq('session_id', sessionId)
+    .order('scanned_at', { ascending: true });
+
+  if (error) {
+    return { success: false, data: null, error: `Failed to get items: ${error.message}` };
+  }
+
+  const items: AssetCountItemWithAsset[] = ((data || []) as ItemWithAssetRow[]).map((row) => {
+    const { asset, ...itemRow } = row;
+    const item = mapRowToAssetCountItem(itemRow as AssetCountItemRow);
+    return {
+      ...item,
+      assetNumber: asset?.asset_number ?? null,
+      assetCategory: asset?.category ?? null,
+    };
+  });
+
+  return { success: true, data: items, error: null };
 }
 
 // ============================================================================

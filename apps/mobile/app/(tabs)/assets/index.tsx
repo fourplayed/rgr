@@ -17,6 +17,7 @@ import { useAssetList, useDepots } from '../../../src/hooks/useAssetData';
 import { useDebounce } from '../../../src/hooks/useDebounce';
 import { AssetListItem } from '../../../src/components/assets/AssetListItem';
 import { AssetFilterPanel } from '../../../src/components/assets/AssetFilterPanel';
+import { useUserPermissions } from '../../../src/contexts/UserPermissionsContext';
 import { colors } from '../../../src/theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../../src/theme/spacing';
 import { CONTENT_TOP_OFFSET } from '../../../src/theme/layout';
@@ -44,6 +45,7 @@ interface AssetFilters {
 
 export default function AssetListScreen() {
   const router = useRouter();
+  const { canPerformAssetCount } = useUserPermissions();
   const [searchInput, setSearchInput] = useState('');
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
   const [filters, setFilters] = useState<AssetFilters>({
@@ -136,6 +138,19 @@ export default function AssetListScreen() {
       <SafeAreaView style={styles.containerInner}>
         <View style={styles.header}>
           <Text style={styles.title}>Fleet Assets</Text>
+          {canPerformAssetCount && (
+            <TouchableOpacity
+              style={styles.historyButton}
+              onPress={() => router.push('/(tabs)/assets/count-history')}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Count History"
+              accessibilityHint="View past count sessions"
+            >
+              <Ionicons name="clipboard-outline" size={18} color={colors.electricBlue} />
+              <Text style={styles.historyButtonText}>Count History</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.searchContainer}>
@@ -231,9 +246,25 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: spacing.base,
     paddingTop: CONTENT_TOP_OFFSET,
     paddingBottom: spacing.sm,
+  },
+  historyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+  },
+  historyButtonText: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_700Bold',
+    color: colors.electricBlue,
+    textTransform: 'uppercase',
   },
   title: {
     fontSize: fontSize.sm,

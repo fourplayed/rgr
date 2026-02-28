@@ -45,6 +45,13 @@ export const colors = {
     critical: '#DC2626',
   },
 
+  // Count session status
+  countSessionStatus: {
+    in_progress: '#3B82F6',  // info blue
+    completed: '#22C55E',    // success green
+    cancelled: '#EF4444',    // error red
+  },
+
   // User role colors
   userRole: {
     driver: '#00A8FF',     // Light blue
