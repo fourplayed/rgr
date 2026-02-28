@@ -272,28 +272,28 @@ export default function SettingsScreen() {
                   icon="people-outline"
                   title="User Management"
                   subtitle="Manage users, roles, and access"
-                  onPress={() => router.push('/(admin)/users')}
+                  onPress={() => router.replace('/(admin)/users')}
                 />
                 <View style={styles.divider} />
                 <SettingsItem
                   icon="business-outline"
                   title="Depot Management"
                   subtitle="Create, edit, and remove depots"
-                  onPress={() => router.push('/(admin)/depots')}
+                  onPress={() => router.replace('/(admin)/depots')}
                 />
                 <View style={styles.divider} />
                 <SettingsItem
                   icon="cube-outline"
                   title="Asset Administration"
                   subtitle="Bulk operations and asset deletion"
-                  onPress={() => router.push('/(admin)/asset-admin')}
+                  onPress={() => router.replace('/(admin)/asset-admin')}
                 />
                 <View style={styles.divider} />
                 <SettingsItem
                   icon="document-text-outline"
                   title="Audit Log"
                   subtitle="View system activity and changes"
-                  onPress={() => router.push('/(admin)/audit-log')}
+                  onPress={() => router.replace('/(admin)/audit-log')}
                 />
               </View>
             </View>
