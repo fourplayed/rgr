@@ -83,6 +83,7 @@ interface ScanModalStackProps {
   onEditCombination: (combinationId: string) => void;
   onSubmitCount: () => void;
   onCancelEndCount: () => void;
+  onDiscardCount: () => void;
 }
 
 export function ScanModalStack(props: ScanModalStackProps) {
@@ -189,6 +190,7 @@ export function ScanModalStack(props: ScanModalStackProps) {
         onEditCombination={props.onEditCombination}
         onSubmit={props.onSubmitCount}
         onCancel={props.onCancelEndCount}
+        onDiscard={props.onDiscardCount}
       />
     </>
   );

@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LoadingDots } from '../common/LoadingDots';
@@ -23,6 +24,7 @@ interface EndCountReviewSheetProps {
   onEditCombination?: (combinationId: string) => void;
   onSubmit: () => void;
   onCancel: () => void;
+  onDiscard: () => void;
   onDismiss?: () => void;
 }
 
@@ -35,6 +37,7 @@ function EndCountReviewSheetComponent({
   onEditCombination,
   onSubmit,
   onCancel,
+  onDiscard,
   onDismiss,
 }: EndCountReviewSheetProps) {
   // Compute standalone scans and combination info
@@ -226,6 +229,25 @@ function EndCountReviewSheetComponent({
                 )}
               </TouchableOpacity>
             </View>
+
+            {/* Discard */}
+            <TouchableOpacity
+              style={styles.discardButton}
+              onPress={() => {
+                Alert.alert(
+                  'Discard Count',
+                  `Are you sure you want to discard this count? ${totalAssets} scanned asset${totalAssets !== 1 ? 's' : ''} will be lost.`,
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Discard', style: 'destructive', onPress: onDiscard },
+                  ],
+                );
+              }}
+              disabled={isSubmitting}
+            >
+              <Ionicons name="trash-outline" size={16} color={colors.error} />
+              <Text style={styles.discardButtonText}>Discard Count</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -474,5 +496,18 @@ const styles = StyleSheet.create({
     fontFamily: 'Lato_700Bold',
     color: colors.textInverse,
     textTransform: 'uppercase',
+  },
+  discardButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.md,
+    marginTop: spacing.sm,
+  },
+  discardButtonText: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_400Regular',
+    color: colors.error,
   },
 });

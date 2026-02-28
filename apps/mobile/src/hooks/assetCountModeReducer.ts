@@ -10,7 +10,7 @@ import { isStandaloneScan } from '@rgr/shared';
  * Generate a UUID v4 for combination IDs.
  * Uses crypto.randomUUID when available, falls back to manual generation.
  */
-function generateUUID(): string {
+export function generateUUID(): string {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return crypto.randomUUID();
   }
@@ -28,7 +28,7 @@ export type Action =
   | { type: 'ADD_SCAN'; scan: StandaloneScan }
   | { type: 'CONFIRM_SCAN' }
   | { type: 'CANCEL_SCAN' }
-  | { type: 'LINK_TO_PREVIOUS' }
+  | { type: 'LINK_TO_PREVIOUS'; combinationId?: string }
   | { type: 'KEEP_SEPARATE' }
   | { type: 'SET_COMBINATION_NOTES'; combinationId: string; notes: string }
   | { type: 'SET_COMBINATION_PHOTO'; combinationId: string; photoUri: string; photoId: string | null }
@@ -84,6 +84,17 @@ export function reducer(state: AssetCountState, action: Action): AssetCountState
         logger.warn('Attempted to confirm scan with no pending scan');
         return state;
       }
+      // Reject duplicate asset IDs within the same session
+      if (state.scans.some(s => s.assetId === state.currentScan!.assetId)) {
+        logger.warn('Duplicate asset scan rejected', {
+          assetId: state.currentScan.assetId,
+          assetNumber: state.currentScan.assetNumber,
+        });
+        return {
+          ...state,
+          currentScan: null,
+        };
+      }
       logger.assetCount('Confirming scan', {
         assetNumber: state.currentScan.assetNumber,
         totalScans: state.scans.length + 1,
@@ -131,7 +142,7 @@ export function reducer(state: AssetCountState, action: Action): AssetCountState
 
       if (isStandaloneScan(previousScan)) {
         // Create new combination
-        combinationId = generateUUID();
+        combinationId = action.combinationId ?? generateUUID();
 
         // Convert previous scan to combination scan
         const previousAsCombination: CombinationScan = {

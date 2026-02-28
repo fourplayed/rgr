@@ -104,6 +104,26 @@ export default function ScanScreen() {
         const { asset } = result;
         const assetNumber = asset.assetNumber ?? 'Unknown';
 
+        // Capture the previous scan's asset number BEFORE dispatching,
+        // since the current last scan is the actual "previous" relative to the new one
+        const previousAssetNumber = assetCount.scans.length > 0
+          ? assetCount.scans[assetCount.scans.length - 1]?.assetNumber ?? ''
+          : '';
+
+        // Check for duplicate scan before adding
+        const isDuplicate = assetCount.scans.some(s => s.assetId === asset.id);
+        if (isDuplicate) {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+          setScanToast({
+            visible: true,
+            message: `${assetNumber} already counted`,
+            type: 'info',
+            showUndo: false,
+          });
+          scanFlow.addDebugLog(`Count mode: duplicate scan rejected ${assetNumber}`);
+          return;
+        }
+
         // Add to asset count
         assetCount.addScan({
           type: 'standalone',
@@ -128,17 +148,14 @@ export default function ScanScreen() {
         });
 
         // Show quick-link bar if there's a previous scan to link to
-        // (canLinkToPrevious updates after confirmScan, so check scans length >= 1
-        // because we just added one — the reducer will have >= 2 after this dispatch)
-        if (assetCount.scans.length >= 1) {
-          const prevScan = assetCount.scans[assetCount.scans.length - 1];
-          const prevAssetNumber = prevScan?.assetNumber ?? '';
+        // (we use the previously captured previousAssetNumber since state hasn't updated yet)
+        if (previousAssetNumber) {
           // Defer to next tick so reducer state settles
           setTimeout(() => {
             setQuickLinkBar({
               visible: true,
               currentAssetNumber: assetNumber,
-              previousAssetNumber: prevAssetNumber,
+              previousAssetNumber,
             });
           }, 0);
         }
@@ -305,8 +322,7 @@ export default function ScanScreen() {
   // Combination Link handlers
   const handleLinkToPrevious = useCallback(() => {
     scanFlow.addDebugLog('Linking to previous asset');
-    assetCount.linkToPrevious();
-    const comboId = assetCount.getLastCombinationId();
+    const comboId = assetCount.linkToPrevious();
     if (comboId) {
       setActiveCombinationId(comboId);
       setPendingCombinationPhoto(true);
@@ -431,6 +447,13 @@ export default function ScanScreen() {
   const handleCancelEndCount = useCallback(() => {
     setShowEndCountReview(false);
   }, []);
+
+  const handleDiscardCount = useCallback(() => {
+    assetCount.endCount();
+    setShowEndCountReview(false);
+    resetAllScanState();
+    scanFlow.addDebugLog('Asset count discarded');
+  }, [assetCount, resetAllScanState, scanFlow]);
 
   const handleEditCombination = useCallback((combinationId: string) => {
     setActiveCombinationId(combinationId);
@@ -606,19 +629,22 @@ export default function ScanScreen() {
         onEditCombination={handleEditCombination}
         onSubmitCount={handleSubmitCount}
         onCancelEndCount={handleCancelEndCount}
+        onDiscardCount={handleDiscardCount}
       />
 
       {/* Debug Overlay */}
-      <TouchableOpacity
-        style={styles.debugToggle}
-        onPress={() => setShowDebugOverlay(prev => !prev)}
-      >
-        <Text style={styles.debugToggleText}>
-          {showDebugOverlay ? '\u2715' : '\uD83D\uDC1B'}
-        </Text>
-      </TouchableOpacity>
+      {__DEV__ && (
+        <TouchableOpacity
+          style={styles.debugToggle}
+          onPress={() => setShowDebugOverlay(prev => !prev)}
+        >
+          <Text style={styles.debugToggleText}>
+            {showDebugOverlay ? '\u2715' : '\uD83D\uDC1B'}
+          </Text>
+        </TouchableOpacity>
+      )}
 
-      {showDebugOverlay && (
+      {__DEV__ && showDebugOverlay && (
         <View style={styles.debugOverlay}>
               <Text style={styles.debugTitle}>Scan Flow</Text>
 

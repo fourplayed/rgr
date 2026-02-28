@@ -127,13 +127,15 @@ export function CameraOverlay({
         )}
 
         {/* Debug button for testing */}
-        <TouchableOpacity
-          style={styles.debugButton}
-          onPress={onDebugScan}
-        >
-          <Ionicons name="bug-outline" size={18} color={colors.warning} />
-          <Text style={styles.debugButtonText}>Debug Scan</Text>
-        </TouchableOpacity>
+        {__DEV__ && (
+          <TouchableOpacity
+            style={styles.debugButton}
+            onPress={onDebugScan}
+          >
+            <Ionicons name="bug-outline" size={18} color={colors.warning} />
+            <Text style={styles.debugButtonText}>Debug Scan</Text>
+          </TouchableOpacity>
+        )}
 
         {/* Asset Count button for managers+ */}
         {canPerformAssetCount && (

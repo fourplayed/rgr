@@ -295,6 +295,114 @@ describe('assetCountModeReducer', () => {
     });
   });
 
+  describe('UNDO_LAST_SCAN', () => {
+    it('returns state unchanged if no scans to undo', () => {
+      const active = reducer(initialState, { type: 'START_COUNT', depotId: 'd', depotName: 'D' });
+      const state = reducer(active, { type: 'UNDO_LAST_SCAN' });
+
+      expect(state.scans).toEqual([]);
+    });
+
+    it('removes a standalone scan', () => {
+      let state = reducer(initialState, { type: 'START_COUNT', depotId: 'd', depotName: 'D' });
+      state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('TL001', 'a1') });
+      state = reducer(state, { type: 'CONFIRM_SCAN' });
+      state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('TL002', 'a2') });
+      state = reducer(state, { type: 'CONFIRM_SCAN' });
+
+      state = reducer(state, { type: 'UNDO_LAST_SCAN' });
+
+      expect(state.scans).toHaveLength(1);
+      expect(state.scans[0]!.assetNumber).toBe('TL001');
+      expect(state.lastUnlinkedScanIndex).toBe(0);
+    });
+
+    it('dissolves a 2-asset combination and reverts remaining scan to standalone', () => {
+      const comboId = mockUUID;
+      const stateWithCombo: AssetCountState = {
+        isActive: true,
+        sessionId: null,
+        depotId: 'd',
+        depotName: 'D',
+        scans: [
+          { type: 'combination', assetId: 'a1', assetNumber: 'TL001', timestamp: 1, combinationId: comboId, combinationPosition: 1 },
+          { type: 'combination', assetId: 'a2', assetNumber: 'TL002', timestamp: 2, combinationId: comboId, combinationPosition: 2 },
+        ],
+        currentScan: null,
+        combinations: {
+          [comboId]: {
+            combinationId: comboId,
+            assetIds: ['a1', 'a2'],
+            assetNumbers: ['TL001', 'TL002'],
+            notes: null,
+            photoUri: null,
+            photoId: null,
+          },
+        },
+        lastUnlinkedScanIndex: 1,
+      };
+
+      const state = reducer(stateWithCombo, { type: 'UNDO_LAST_SCAN' });
+
+      expect(state.scans).toHaveLength(1);
+      expect(state.scans[0]!.type).toBe('standalone');
+      expect(state.scans[0]!.assetNumber).toBe('TL001');
+      expect(Object.keys(state.combinations)).toHaveLength(0);
+      expect(state.lastUnlinkedScanIndex).toBe(0);
+    });
+
+    it('removes asset from a 3+ asset combination without dissolving it', () => {
+      const comboId = mockUUID;
+      const stateWith3Combo: AssetCountState = {
+        isActive: true,
+        sessionId: null,
+        depotId: 'd',
+        depotName: 'D',
+        scans: [
+          { type: 'combination', assetId: 'a1', assetNumber: 'TL001', timestamp: 1, combinationId: comboId, combinationPosition: 1 },
+          { type: 'combination', assetId: 'a2', assetNumber: 'TL002', timestamp: 2, combinationId: comboId, combinationPosition: 2 },
+          { type: 'combination', assetId: 'a3', assetNumber: 'TL003', timestamp: 3, combinationId: comboId, combinationPosition: 3 },
+        ],
+        currentScan: null,
+        combinations: {
+          [comboId]: {
+            combinationId: comboId,
+            assetIds: ['a1', 'a2', 'a3'],
+            assetNumbers: ['TL001', 'TL002', 'TL003'],
+            notes: null,
+            photoUri: null,
+            photoId: null,
+          },
+        },
+        lastUnlinkedScanIndex: 2,
+      };
+
+      const state = reducer(stateWith3Combo, { type: 'UNDO_LAST_SCAN' });
+
+      expect(state.scans).toHaveLength(2);
+      expect(state.scans[0]!.type).toBe('combination');
+      expect(state.scans[1]!.type).toBe('combination');
+      expect(state.combinations[comboId]!.assetIds).toEqual(['a1', 'a2']);
+      expect(state.combinations[comboId]!.assetNumbers).toEqual(['TL001', 'TL002']);
+      expect(state.lastUnlinkedScanIndex).toBe(1);
+    });
+  });
+
+  describe('CONFIRM_SCAN duplicate rejection', () => {
+    it('rejects a scan with an already-present assetId', () => {
+      let state = reducer(initialState, { type: 'START_COUNT', depotId: 'd', depotName: 'D' });
+      state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('TL001', 'a1') });
+      state = reducer(state, { type: 'CONFIRM_SCAN' });
+
+      // Try to add the same asset again
+      state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('TL001', 'a1') });
+      state = reducer(state, { type: 'CONFIRM_SCAN' });
+
+      expect(state.scans).toHaveLength(1);
+      expect(state.currentScan).toBeNull();
+    });
+  });
+
   describe('RESTORE', () => {
     it('replaces current state with restored state', () => {
       const restoredState: AssetCountState = {

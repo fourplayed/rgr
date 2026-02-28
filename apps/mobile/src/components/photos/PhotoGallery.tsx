@@ -114,6 +114,10 @@ function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto }: PhotoGalle
     );
   }
 
+  if (galleryData.length === 0) {
+    return <Text style={styles.emptyText}>No photos uploaded</Text>;
+  }
+
   return (
     <FlatList
       data={galleryData}
@@ -145,12 +149,18 @@ const styles = StyleSheet.create({
   },
   emptyContainer: {
     paddingVertical: spacing.lg,
-    alignItems: 'center',
   },
   errorText: {
     fontSize: fontSize.sm,
     fontFamily: 'Lato_400Regular',
     color: colors.error,
+    textTransform: 'uppercase',
+  },
+  emptyText: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_400Regular',
+    color: colors.textSecondary,
+    fontStyle: 'italic',
     textTransform: 'uppercase',
   },
   addButton: {

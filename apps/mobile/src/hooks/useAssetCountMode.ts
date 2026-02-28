@@ -8,7 +8,7 @@ import type {
   CombinationGroup,
 } from '@rgr/shared';
 import { isValidAssetCountState, isStandaloneScan } from '@rgr/shared';
-import { reducer, initialState, STORAGE_KEY, DEBOUNCE_MS } from './assetCountModeReducer';
+import { reducer, initialState, STORAGE_KEY, DEBOUNCE_MS, generateUUID } from './assetCountModeReducer';
 
 // Re-export types for consumers
 export type { AssetScan, StandaloneScan, CombinationScan, CombinationGroup };
@@ -131,9 +131,25 @@ export function useAssetCountMode() {
     dispatch({ type: 'CANCEL_SCAN' });
   }, []);
 
-  const linkToPrevious = useCallback(() => {
-    dispatch({ type: 'LINK_TO_PREVIOUS' });
-  }, []);
+  const linkToPrevious = useCallback((): string | null => {
+    if (state.lastUnlinkedScanIndex === null || state.scans.length < 2) {
+      return null;
+    }
+    const prevScan = state.scans[state.lastUnlinkedScanIndex];
+    if (!prevScan) return null;
+
+    let comboId: string;
+    if (isStandaloneScan(prevScan)) {
+      // New combo will be created — generate ID here so we can return it
+      comboId = generateUUID();
+      dispatch({ type: 'LINK_TO_PREVIOUS', combinationId: comboId });
+    } else {
+      // Extending existing combo
+      comboId = prevScan.combinationId;
+      dispatch({ type: 'LINK_TO_PREVIOUS' });
+    }
+    return comboId;
+  }, [state.lastUnlinkedScanIndex, state.scans]);
 
   const keepSeparate = useCallback(() => {
     dispatch({ type: 'KEEP_SEPARATE' });
