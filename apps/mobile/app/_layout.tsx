@@ -143,6 +143,13 @@ export default function RootLayout() {
                 }}
               />
               <Stack.Screen
+                name="audit-log"
+                options={{
+                  presentation: 'modal',
+                  animation: 'slide_from_bottom',
+                }}
+              />
+              <Stack.Screen
                 name="(admin)"
                 options={{
                   presentation: 'card',

@@ -609,19 +609,17 @@ export default function ScanScreen() {
       />
 
       {/* Debug Overlay */}
-      {__DEV__ && (
-        <>
-          <TouchableOpacity
-            style={styles.debugToggle}
-            onPress={() => setShowDebugOverlay(prev => !prev)}
-          >
-            <Text style={styles.debugToggleText}>
-              {showDebugOverlay ? '\u2715' : '\uD83D\uDC1B'}
-            </Text>
-          </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.debugToggle}
+        onPress={() => setShowDebugOverlay(prev => !prev)}
+      >
+        <Text style={styles.debugToggleText}>
+          {showDebugOverlay ? '\u2715' : '\uD83D\uDC1B'}
+        </Text>
+      </TouchableOpacity>
 
-          {showDebugOverlay && (
-            <View style={styles.debugOverlay}>
+      {showDebugOverlay && (
+        <View style={styles.debugOverlay}>
               <Text style={styles.debugTitle}>Scan Flow</Text>
 
               {/* Step 1: QR Scanned */}
@@ -752,8 +750,6 @@ export default function ScanScreen() {
               </TouchableOpacity>
             </View>
           )}
-        </>
-      )}
     </View>
   );
 }

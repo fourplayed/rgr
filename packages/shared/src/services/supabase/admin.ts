@@ -440,6 +440,7 @@ export async function adminCreateUser(
 
     return { success: true, data: body, error: null };
   } catch (err) {
-    return { success: false, data: null, error: 'Failed to create user' };
+    const message = err instanceof Error ? err.message : 'Failed to create user';
+    return { success: false, data: null, error: message };
   }
 }

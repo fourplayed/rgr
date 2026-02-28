@@ -21,12 +21,15 @@ import {
   MAINTENANCE_ITEM_HEIGHT,
 } from '../../src/components/maintenance';
 import { useMaintenanceList } from '../../src/hooks/useMaintenanceData';
+import { useUserPermissions } from '../../src/contexts/UserPermissionsContext';
 
 // Default filters: show scheduled and in_progress
 const DEFAULT_STATUSES: MaintenanceStatus[] = ['scheduled', 'in_progress'];
 const DEFAULT_PRIORITIES: MaintenancePriority[] = [];
 
 export default function MaintenanceScreen() {
+  const { canMarkMaintenance } = useUserPermissions();
+
   // Filter state
   const [statuses, setStatuses] = useState<MaintenanceStatus[]>(DEFAULT_STATUSES);
   const [priorities, setPriorities] = useState<MaintenancePriority[]>(DEFAULT_PRIORITIES);
@@ -91,7 +94,7 @@ export default function MaintenanceScreen() {
       </View>
       <Text style={styles.emptyText}>No maintenance records</Text>
       <Text style={styles.emptySubtext}>
-        Tap + to schedule maintenance
+        {canMarkMaintenance ? 'Tap + to schedule maintenance' : 'No scheduled maintenance tasks'}
       </Text>
     </View>
   );
@@ -106,16 +109,18 @@ export default function MaintenanceScreen() {
               <Text style={styles.title}>Maintenance</Text>
               <Text style={styles.subtitle}>Track service and repairs</Text>
             </View>
-            <TouchableOpacity
-              style={styles.addButton}
-              onPress={handleOpenCreate}
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel="Create maintenance record"
-              accessibilityHint="Double tap to schedule new maintenance"
-            >
-              <Ionicons name="add" size={24} color={colors.textInverse} />
-            </TouchableOpacity>
+            {canMarkMaintenance && (
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={handleOpenCreate}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="Create maintenance record"
+                accessibilityHint="Double tap to schedule new maintenance"
+              >
+                <Ionicons name="add" size={24} color={colors.textInverse} />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 

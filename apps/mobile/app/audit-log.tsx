@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,20 +11,29 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import type { AuditLogWithUser } from '@rgr/shared';
-import { useAuditLogs } from '../../src/hooks/useAdminAuditLog';
-import { AuditLogItem } from '../../src/components/admin/AuditLogItem';
+import { useAuditLogs } from '../src/hooks/useAdminAuditLog';
+import { AuditLogItem } from '../src/components/admin/AuditLogItem';
 import {
   AuditLogFilterSheet,
   type AuditLogFilters,
-} from '../../src/components/admin/AuditLogFilterSheet';
-import { LoadingDots } from '../../src/components/common/LoadingDots';
-import { colors } from '../../src/theme/colors';
-import { spacing, fontSize, fontWeight, borderRadius } from '../../src/theme/spacing';
+} from '../src/components/admin/AuditLogFilterSheet';
+import { LoadingDots } from '../src/components/common/LoadingDots';
+import { useUserPermissions } from '../src/contexts/UserPermissionsContext';
+import { colors } from '../src/theme/colors';
+import { spacing, fontSize, fontWeight, borderRadius } from '../src/theme/spacing';
 
 export default function AuditLogScreen() {
   const router = useRouter();
+  const { canViewAuditLog } = useUserPermissions();
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<AuditLogFilters>({});
+
+  // Redirect non-authorized users
+  useEffect(() => {
+    if (!canViewAuditLog) {
+      router.replace('/(tabs)');
+    }
+  }, [canViewAuditLog, router]);
 
   const {
     data,
@@ -84,6 +93,8 @@ export default function AuditLogScreen() {
     ),
     []
   );
+
+  if (!canViewAuditLog) return null;
 
   const hasActiveFilters =
     !!filters.action || !!filters.startDate || !!filters.endDate;

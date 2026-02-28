@@ -70,7 +70,7 @@ interface DebugInfo {
 export default function SettingsScreen() {
   const router = useRouter();
   const { user, checkAuth } = useAuthStore();
-  const { canAccessAdmin } = useUserPermissions();
+  const { canAccessAdmin, canViewAuditLog } = useUserPermissions();
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSecurity, setShowSecurity] = useState(false);
@@ -263,6 +263,21 @@ export default function SettingsScreen() {
             </View>
           </View>
 
+          {/* Audit Log - Manager+ */}
+          {canViewAuditLog && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Oversight</Text>
+              <View style={styles.card}>
+                <SettingsItem
+                  icon="document-text-outline"
+                  title="Audit Log"
+                  subtitle="View system activity and changes"
+                  onPress={() => router.push('/audit-log')}
+                />
+              </View>
+            </View>
+          )}
+
           {/* Administration Section - Superuser only */}
           {canAccessAdmin && (
             <View style={styles.section}>
@@ -287,13 +302,6 @@ export default function SettingsScreen() {
                   title="Asset Administration"
                   subtitle="Bulk operations and asset deletion"
                   onPress={() => router.replace('/(admin)/asset-admin')}
-                />
-                <View style={styles.divider} />
-                <SettingsItem
-                  icon="document-text-outline"
-                  title="Audit Log"
-                  subtitle="View system activity and changes"
-                  onPress={() => router.replace('/(admin)/audit-log')}
                 />
               </View>
             </View>

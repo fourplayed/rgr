@@ -163,34 +163,40 @@ serve(async (req: Request): Promise<Response> => {
 
     const newUserId = newUser.user.id;
 
-    // Update auto-created profile with desired role and fields
-    const profileUpdates: Record<string, unknown> = {
-      role,
+    // Upsert profile — handles both cases:
+    // 1. Trigger already created the row → updates it
+    // 2. Trigger failed silently → inserts new row
+    const profileData: Record<string, unknown> = {
+      id: newUserId,
+      email: email.toLowerCase().trim(),
       full_name: fullName,
+      role,
       is_active: true,
     };
-    if (phone !== undefined && phone !== null) profileUpdates.phone = phone;
+    if (phone !== undefined && phone !== null) profileData.phone = phone;
     if (employeeId !== undefined && employeeId !== null)
-      profileUpdates.employee_id = employeeId;
-    if (depot !== undefined && depot !== null) profileUpdates.depot = depot;
+      profileData.employee_id = employeeId;
+    if (depot !== undefined && depot !== null) profileData.depot = depot;
 
     const { data: updatedProfile, error: updateError } = await serviceClient
       .from("profiles")
-      .update(profileUpdates)
-      .eq("id", newUserId)
+      .upsert(profileData, { onConflict: "id" })
       .select("id, role, full_name")
       .single();
 
     if (updateError || !updatedProfile) {
       // Rollback: delete the orphaned auth user
+      const updateMsg = updateError?.message || "No profile row returned";
+      const updateCode = updateError?.code || "unknown";
       console.error(
-        "Profile update failed, rolling back auth user:",
-        updateError?.message,
+        `Profile update failed [${updateCode}]: ${updateMsg}. Rolling back auth user ${newUserId}`,
       );
       await serviceClient.auth.admin.deleteUser(newUserId);
 
       return new Response(
-        JSON.stringify({ error: "Failed to set up user profile" }),
+        JSON.stringify({
+          error: `Failed to set up user profile: ${updateMsg}`,
+        }),
         {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },

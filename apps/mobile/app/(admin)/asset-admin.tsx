@@ -36,6 +36,7 @@ export default function AssetAdminScreen() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [deleteTarget, setDeleteTarget] = useState<AssetWithRelations | null>(null);
+  const [bulkDeleteIds, setBulkDeleteIds] = useState<string[]>([]);
   const [showStatusPicker, setShowStatusPicker] = useState(false);
 
   const searchTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -83,6 +84,23 @@ export default function AssetAdminScreen() {
       },
     });
   }, [deleteTarget, deleteMutation]);
+
+  const handleBulkDelete = useCallback(async () => {
+    if (bulkDeleteIds.length === 0) return;
+    let successCount = 0;
+    for (const id of bulkDeleteIds) {
+      try {
+        await deleteMutation.mutateAsync(id);
+        successCount++;
+      } catch {
+        // continue with remaining
+      }
+    }
+    setBulkDeleteIds([]);
+    if (successCount > 0) {
+      clearSelection();
+    }
+  }, [bulkDeleteIds, deleteMutation, clearSelection]);
 
   const handleBulkStatus = useCallback(
     (status: string) => {
@@ -213,7 +231,15 @@ export default function AssetAdminScreen() {
               <Ionicons name="close" size={24} color={colors.text} />
             </TouchableOpacity>
           ) : (
-            <View style={styles.headerSpacer} />
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => router.push('/(admin)/create-asset')}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Create asset"
+            >
+              <Ionicons name="add" size={24} color={colors.textInverse} />
+            </TouchableOpacity>
           )}
         </View>
 
@@ -244,15 +270,18 @@ export default function AssetAdminScreen() {
             <TouchableOpacity
               style={[styles.toolbarButton, styles.toolbarButtonDanger]}
               onPress={() => {
-                // For bulk delete, pick first selected
-                const firstId = Array.from(selectedIds)[0];
-                const asset = assets.find((a) => a.id === firstId);
-                if (asset) setDeleteTarget(asset);
+                if (selectedIds.size === 1) {
+                  const firstId = Array.from(selectedIds)[0];
+                  const asset = assets.find((a) => a.id === firstId);
+                  if (asset) setDeleteTarget(asset);
+                } else {
+                  setBulkDeleteIds(Array.from(selectedIds));
+                }
               }}
             >
               <Ionicons name="trash-outline" size={18} color={colors.error} />
               <Text style={[styles.toolbarButtonText, { color: colors.error }]}>
-                Delete
+                Delete{selectedIds.size > 1 ? ` (${selectedIds.size})` : ''}
               </Text>
             </TouchableOpacity>
 
@@ -322,6 +351,18 @@ export default function AssetAdminScreen() {
           isLoading={deleteMutation.isPending}
         />
 
+        {/* Bulk Delete Confirm */}
+        <ConfirmSheet
+          visible={bulkDeleteIds.length > 0}
+          type="danger"
+          title={`Delete ${bulkDeleteIds.length} Assets?`}
+          message={`This will soft-delete ${bulkDeleteIds.length} selected assets, setting their status to Out of Service.`}
+          confirmLabel={`Delete ${bulkDeleteIds.length}`}
+          onConfirm={handleBulkDelete}
+          onCancel={() => setBulkDeleteIds([])}
+          isLoading={deleteMutation.isPending}
+        />
+
         {/* Status Picker Sheet */}
         {showStatusPicker && (
           <View style={StyleSheet.absoluteFill}>
@@ -385,6 +426,19 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   headerSpacer: { width: 40 },
+  addButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.electricBlue,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
   searchContainer: {
     paddingHorizontal: spacing.base,
     marginBottom: spacing.sm,

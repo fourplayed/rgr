@@ -16,6 +16,7 @@ import { LoadingDots, AlertSheet, ConfirmSheet, InputSheet } from '../common';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
 import { useMaintenance, useUpdateMaintenanceStatus, useUpdateMaintenance } from '../../hooks/useMaintenanceData';
+import { useUserPermissions } from '../../contexts/UserPermissionsContext';
 import { MaintenanceStatusBadge } from './MaintenanceStatusBadge';
 import { MaintenancePriorityBadge } from './MaintenancePriorityBadge';
 
@@ -31,6 +32,7 @@ export function MaintenanceDetailModal({
   onClose,
 }: MaintenanceDetailModalProps) {
   const router = useRouter();
+  const { canMarkMaintenance } = useUserPermissions();
   const { data: maintenance, isLoading } = useMaintenance(maintenanceId);
   const updateStatusMutation = useUpdateMaintenanceStatus();
   const updateMutation = useUpdateMaintenance();
@@ -157,7 +159,7 @@ export function MaintenanceDetailModal({
 
     return (
       <View style={styles.actionsContainer}>
-        {status === 'scheduled' && (
+        {canMarkMaintenance && status === 'scheduled' && (
           <>
             <TouchableOpacity
               style={[styles.actionButton, styles.primaryButton]}
@@ -177,7 +179,7 @@ export function MaintenanceDetailModal({
           </>
         )}
 
-        {status === 'in_progress' && (
+        {canMarkMaintenance && status === 'in_progress' && (
           <>
             <TouchableOpacity
               style={[styles.actionButton, styles.successButton]}
@@ -381,7 +383,7 @@ export function MaintenanceDetailModal({
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionTitle}>Notes</Text>
-                  {!editingNotes && maintenance.status !== 'completed' && maintenance.status !== 'cancelled' && (
+                  {canMarkMaintenance && !editingNotes && maintenance.status !== 'completed' && maintenance.status !== 'cancelled' && (
                     <TouchableOpacity
                       onPress={handleEditNotes}
                       accessibilityRole="button"

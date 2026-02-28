@@ -1,10 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
+  createAsset,
+  updateAsset,
   deleteAsset,
   bulkUpdateAssetStatus,
   getAssetRelatedCounts,
+  generateQRCodeData,
 } from '@rgr/shared';
-import type { AssetStatus } from '@rgr/shared';
+import type { AssetStatus, CreateAssetInput } from '@rgr/shared';
 import { assetKeys } from './useAssetData';
 
 export function useAssetRelatedCounts(assetId: string | null) {
@@ -20,6 +23,37 @@ export function useAssetRelatedCounts(assetId: string | null) {
   });
 }
 
+export function useCreateAsset() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: CreateAssetInput) => {
+      const result = await createAsset(input);
+      if (!result.success) throw new Error(result.error);
+      const asset = result.data;
+
+      // Assign QR code to newly created asset
+      try {
+        const qrResult = await updateAsset(asset.id, {
+          qrCodeData: generateQRCodeData(asset.id),
+          qrGeneratedAt: new Date().toISOString(),
+        });
+        if (!qrResult.success) {
+          console.warn('QR code assignment failed:', qrResult.error);
+        }
+      } catch (e) {
+        console.warn('QR code assignment failed:', e);
+      }
+
+      return asset;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: assetKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: assetKeys.countsByStatus() });
+    },
+  });
+}
+
 export function useDeleteAsset() {
   const queryClient = useQueryClient();
 
@@ -27,10 +61,12 @@ export function useDeleteAsset() {
     mutationFn: async (id: string) => {
       const result = await deleteAsset(id);
       if (!result.success) throw new Error(result.error);
+      return id;
     },
-    onSuccess: () => {
+    onSuccess: (deletedId) => {
       queryClient.invalidateQueries({ queryKey: assetKeys.lists() });
       queryClient.invalidateQueries({ queryKey: assetKeys.countsByStatus() });
+      queryClient.invalidateQueries({ queryKey: assetKeys.detail(deletedId) });
     },
   });
 }

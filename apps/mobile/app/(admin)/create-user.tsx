@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import type { UserRole } from '@rgr/shared';
 import { useCreateUser } from '../../src/hooks/useAdminUsers';
 import { useDepots } from '../../src/hooks/useDepots';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
+import { CreateUserOverlay } from '../../src/components/admin/CreateUserOverlay';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../src/theme/spacing';
 
@@ -35,12 +36,29 @@ export default function CreateUserScreen() {
   const [phone, setPhone] = useState('');
   const [selectedDepot, setSelectedDepot] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showOverlay, setShowOverlay] = useState(false);
 
   const isValid = email.trim() && password.length >= 8 && fullName.trim();
+
+  const handleOverlayDismiss = useCallback(() => {
+    const wasSuccess = createMutation.isSuccess;
+    setShowOverlay(false);
+    if (wasSuccess) {
+      router.back();
+    }
+  }, [createMutation.isSuccess, router]);
+
+  const overlayError = useMemo(() => {
+    if (createMutation.isError) {
+      return createMutation.error?.message ?? 'An unexpected error occurred';
+    }
+    return null;
+  }, [createMutation.isError, createMutation.error]);
 
   const handleSubmit = useCallback(async () => {
     if (!isValid) return;
     setError(null);
+    setShowOverlay(true);
 
     createMutation.mutate(
       {
@@ -51,14 +69,7 @@ export default function CreateUserScreen() {
         phone: phone.trim() || null,
         depot: selectedDepot,
       },
-      {
-        onSuccess: () => {
-          router.back();
-        },
-        onError: (err) => {
-          setError(err.message);
-        },
-      }
+      {}
     );
   }, [
     isValid,
@@ -69,7 +80,6 @@ export default function CreateUserScreen() {
     phone,
     selectedDepot,
     createMutation,
-    router,
   ]);
 
   return (
@@ -284,6 +294,15 @@ export default function CreateUserScreen() {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
+
+      <CreateUserOverlay
+        visible={showOverlay}
+        isPending={createMutation.isPending}
+        isSuccess={createMutation.isSuccess}
+        isError={createMutation.isError}
+        error={overlayError}
+        onDismiss={handleOverlayDismiss}
+      />
     </LinearGradient>
   );
 }

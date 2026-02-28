@@ -23,8 +23,8 @@ export default function AdminLayout() {
       <Stack.Screen name="create-user" />
       <Stack.Screen name="depots" />
       <Stack.Screen name="asset-admin" />
+      <Stack.Screen name="create-asset" />
       <Stack.Screen name="asset-photos" />
-      <Stack.Screen name="audit-log" />
     </Stack>
   );
 }

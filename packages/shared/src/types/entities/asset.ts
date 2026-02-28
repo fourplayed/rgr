@@ -142,6 +142,8 @@ export interface UpdateAssetInput {
   assignedDepotId?: string | null;
   assignedDriverId?: string | null;
   notes?: string | null;
+  qrCodeData?: string | null;
+  qrGeneratedAt?: string | null;
 }
 
 // ── Zod schemas ──
@@ -163,7 +165,10 @@ export const CreateAssetInputSchema = z.object({
   notes: z.string().nullable().optional(),
 });
 
-export const UpdateAssetInputSchema = CreateAssetInputSchema.partial();
+export const UpdateAssetInputSchema = CreateAssetInputSchema.partial().extend({
+  qrCodeData: z.string().nullable().optional(),
+  qrGeneratedAt: z.string().nullable().optional(),
+});
 
 // ── Mappers ──
 
@@ -237,6 +242,8 @@ export function mapAssetToUpdate(
   if (input.assignedDepotId !== undefined) updates['assigned_depot_id'] = input.assignedDepotId;
   if (input.assignedDriverId !== undefined) updates['assigned_driver_id'] = input.assignedDriverId;
   if (input.notes !== undefined) updates['notes'] = input.notes;
+  if (input.qrCodeData !== undefined) updates['qr_code_data'] = input.qrCodeData;
+  if (input.qrGeneratedAt !== undefined) updates['qr_generated_at'] = input.qrGeneratedAt;
 
   return updates;
 }

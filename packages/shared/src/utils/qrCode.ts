@@ -130,3 +130,13 @@ export function extractAssetInfo(value: string): AssetInfo | null {
 
   return null;
 }
+
+/**
+ * Generate a QR code data string for a given asset ID.
+ *
+ * @param assetId - The UUID of the asset
+ * @returns A QR code URI in the format `rgr://asset/{UUID}`
+ */
+export function generateQRCodeData(assetId: string): string {
+  return `rgr://asset/${assetId}`;
+}

@@ -22,11 +22,14 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
 import { useAsset, useAssetScans, useAssetMaintenance } from '../../../src/hooks/useAssetData';
+import { useDeleteAsset, useAssetRelatedCounts } from '../../../src/hooks/useAdminAssets';
 import { useAssetPhotos } from '../../../src/hooks/usePhotos';
 import type { ScanEventWithScanner, MaintenanceRecord, PhotoListItem } from '@rgr/shared';
 import { AssetInfoCard } from '../../../src/components/assets/AssetInfoCard';
 import { PhotoGallery, PhotoDetailModal } from '../../../src/components/photos';
 import { CollapsibleSection } from '../../../src/components/common/CollapsibleSection';
+import { ConfirmSheet } from '../../../src/components/common/ConfirmSheet';
+import { AlertSheet } from '../../../src/components/common/AlertSheet';
 import {
   MaintenanceStatusBadge,
   MaintenancePriorityBadge,
@@ -62,9 +65,15 @@ export default function AssetDetailScreen() {
   const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
   const [showPhotoDetail, setShowPhotoDetail] = useState(false);
   const [selectedMaintenanceId, setSelectedMaintenanceId] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteAlert, setDeleteAlert] = useState<{ visible: boolean; title: string; message: string }>({
+    visible: false, title: '', message: '',
+  });
   const rotateAnim = useRef(new Animated.Value(1)).current;
 
   const isSuperuser = !!user?.role && hasRoleLevel(user.role, UserRole.SUPERUSER);
+  const deleteMutation = useDeleteAsset();
+  const { data: relatedCounts } = useAssetRelatedCounts(isSuperuser ? id ?? null : null);
   const { depots } = useDepotLookup();
 
   useEffect(() => {
@@ -99,6 +108,24 @@ export default function AssetDetailScreen() {
   const handleCloseMaintenanceDetail = useCallback(() => {
     setSelectedMaintenanceId(null);
   }, []);
+
+  const handleDeleteAsset = useCallback(() => {
+    if (!id) return;
+    deleteMutation.mutate(id, {
+      onSuccess: () => {
+        setShowDeleteConfirm(false);
+        router.back();
+      },
+      onError: (err) => {
+        setShowDeleteConfirm(false);
+        setDeleteAlert({
+          visible: true,
+          title: 'Delete Failed',
+          message: err?.message ?? 'An unexpected error occurred',
+        });
+      },
+    });
+  }, [id, deleteMutation, router]);
 
   const chevronRotate = rotateAnim.interpolate({
     inputRange: [0, 1],
@@ -218,19 +245,33 @@ export default function AssetDetailScreen() {
     <View style={styles.container}>
     <SafeAreaView style={styles.containerInner}>
       <ScrollView contentContainerStyle={styles.content}>
-        {/* QR Code Link - Superuser Only */}
-        {isSuperuser && asset.qrCodeData && (
-          <TouchableOpacity
-            style={styles.qrLink}
-            onPress={() => setShowQRModal(true)}
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel="View QR Code"
-            accessibilityHint="Double tap to view the asset QR code"
-          >
-            <Ionicons name="qr-code-outline" size={20} color={colors.neonViolet} />
-            <Text style={styles.qrLinkText}>View QR Code</Text>
-          </TouchableOpacity>
+        {/* Superuser Actions */}
+        {isSuperuser && (
+          <View style={styles.superuserActions}>
+            {asset.qrCodeData && (
+              <TouchableOpacity
+                style={styles.qrLink}
+                onPress={() => setShowQRModal(true)}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="View QR Code"
+                accessibilityHint="Double tap to view the asset QR code"
+              >
+                <Ionicons name="qr-code-outline" size={20} color={colors.neonViolet} />
+                <Text style={styles.qrLinkText}>View QR Code</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              style={styles.deleteLink}
+              onPress={() => setShowDeleteConfirm(true)}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Delete asset"
+            >
+              <Ionicons name="trash-outline" size={20} color={colors.error} />
+              <Text style={styles.deleteLinkText}>Delete Asset</Text>
+            </TouchableOpacity>
+          </View>
         )}
 
         <AssetInfoCard
@@ -435,6 +476,35 @@ export default function AssetDetailScreen() {
         maintenanceId={selectedMaintenanceId}
         onClose={handleCloseMaintenanceDetail}
       />
+
+      {/* Delete Confirm - Superuser Only */}
+      <ConfirmSheet
+        visible={showDeleteConfirm}
+        type="danger"
+        title="Delete Asset"
+        message={
+          asset
+            ? `Soft-delete "${asset.assetNumber}"? This sets status to Out of Service.${
+                relatedCounts
+                  ? `\n\nRelated records: ${relatedCounts.scanEvents} scans, ${relatedCounts.maintenanceRecords} maintenance records (preserved).`
+                  : ''
+              }`
+            : ''
+        }
+        confirmLabel="Delete"
+        onConfirm={handleDeleteAsset}
+        onCancel={() => setShowDeleteConfirm(false)}
+        isLoading={deleteMutation.isPending}
+      />
+
+      {/* Delete Error Alert */}
+      <AlertSheet
+        visible={deleteAlert.visible}
+        type="error"
+        title={deleteAlert.title}
+        message={deleteAlert.message}
+        onDismiss={() => setDeleteAlert({ ...deleteAlert, visible: false })}
+      />
     </SafeAreaView>
     </View>
   );
@@ -484,16 +554,32 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     textTransform: 'uppercase',
   },
+  superuserActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    gap: spacing.lg,
+  },
   qrLink: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    alignSelf: 'flex-end',
   },
   qrLinkText: {
     fontSize: fontSize.sm,
     fontFamily: 'Lato_700Bold',
     color: colors.neonViolet,
+    textTransform: 'uppercase',
+  },
+  deleteLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  deleteLinkText: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_700Bold',
+    color: colors.error,
     textTransform: 'uppercase',
   },
   activitySectionHeader: {
