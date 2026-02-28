@@ -106,12 +106,6 @@ export default function CountHistoryScreen() {
     page: 1,
   });
 
-  // Permission guard
-  if (!canPerformAssetCount) {
-    router.replace('/(tabs)/assets');
-    return null;
-  }
-
   const sessions = data?.data ?? [];
 
   const handleSessionPress = useCallback(
@@ -140,6 +134,12 @@ export default function CountHistoryScreen() {
     }),
     []
   );
+
+  // Permission guard
+  if (!canPerformAssetCount) {
+    router.replace('/(tabs)/assets');
+    return null;
+  }
 
   return (
     <View style={styles.container}>

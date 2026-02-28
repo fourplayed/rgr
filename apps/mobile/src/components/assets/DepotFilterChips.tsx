@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import type { Depot } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';

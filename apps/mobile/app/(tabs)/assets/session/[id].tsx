@@ -19,8 +19,6 @@ import { CONTENT_TOP_OFFSET } from '../../../../src/theme/layout';
 import type {
   AssetCountSessionStatus,
   AssetCountItemWithAsset,
-  CombinationMetadata,
-  CombinationPhoto,
 } from '@rgr/shared';
 
 const STATUS_LABELS: Record<AssetCountSessionStatus, string> = {
