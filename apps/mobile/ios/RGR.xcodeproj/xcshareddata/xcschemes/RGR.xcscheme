@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "RGRFleet.app"
-               BlueprintName = "RGRFleet"
-               ReferencedContainer = "container:RGRFleet.xcodeproj">
+               BuildableName = "RGR.app"
+               BlueprintName = "RGR"
+               ReferencedContainer = "container:RGR.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "RGRFleetTests.xctest"
-               BlueprintName = "RGRFleetTests"
-               ReferencedContainer = "container:RGRFleet.xcodeproj">
+               BuildableName = "RGRTests.xctest"
+               BlueprintName = "RGRTests"
+               ReferencedContainer = "container:RGR.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "RGRFleet.app"
-            BlueprintName = "RGRFleet"
-            ReferencedContainer = "container:RGRFleet.xcodeproj">
+            BuildableName = "RGR.app"
+            BlueprintName = "RGR"
+            ReferencedContainer = "container:RGR.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "RGRFleet.app"
-            BlueprintName = "RGRFleet"
-            ReferencedContainer = "container:RGRFleet.xcodeproj">
+            BuildableName = "RGR.app"
+            BlueprintName = "RGR"
+            ReferencedContainer = "container:RGR.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
