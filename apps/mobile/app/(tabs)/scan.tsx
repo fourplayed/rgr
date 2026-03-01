@@ -55,7 +55,7 @@ export default function ScanScreen() {
     defectFlow.resetDefectFlow();
     // Combination/count state
     setShowCombinationPhoto(false);
-    setPendingCombinationPhoto(false);
+    setCombinationPhotoMandatory(false);
     setShowEndCountReview(false);
     setActiveCombinationId(null);
     // Count mode inline state
