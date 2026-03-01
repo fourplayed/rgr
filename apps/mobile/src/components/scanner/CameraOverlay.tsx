@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, SafeAreaView, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ScanToast } from './ScanToast';
+import { LoadingDots } from '../common/LoadingDots';
 import { colors } from '../../theme/colors';
 import { styles } from './scan.styles';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
@@ -37,6 +38,9 @@ interface CameraOverlayProps {
   activeChainSize?: number;
   onStartChain?: () => void;
   onEndChain?: () => void;
+
+  // Scan status overlay
+  scanStatus?: string | null;
 }
 
 function CameraOverlayComponent({
@@ -56,6 +60,7 @@ function CameraOverlayComponent({
   activeChainSize,
   onStartChain,
   onEndChain,
+  scanStatus,
 }: CameraOverlayProps) {
   return (
     <SafeAreaView style={styles.overlay}>
@@ -105,6 +110,14 @@ function CameraOverlayComponent({
         <View style={[styles.corner, styles.cornerBottomLeft]} />
         <View style={[styles.corner, styles.cornerBottomRight]} />
       </View>
+
+      {/* Scan status pill */}
+      {scanStatus ? (
+        <View style={statusStyles.scanStatusPill}>
+          <LoadingDots color={colors.textInverse} size={6} />
+          <Text style={statusStyles.scanStatusText}>{scanStatus}</Text>
+        </View>
+      ) : null}
 
       <View style={styles.footer}>
         {/* Chain controls (count mode) */}
@@ -199,6 +212,25 @@ function CameraOverlayComponent({
 // (e.g., via useCallback) — otherwise new function references on every
 // render will defeat the shallow comparison.
 export const CameraOverlay = React.memo(CameraOverlayComponent);
+
+const statusStyles = StyleSheet.create({
+  scanStatusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.base,
+    borderRadius: borderRadius.full,
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  scanStatusText: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_700Bold',
+    color: colors.textInverse,
+  },
+});
 
 const chainStyles = StyleSheet.create({
   chainingBadge: {

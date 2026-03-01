@@ -131,6 +131,27 @@ export async function cancelAssetCountSession(
   return { success: true, data: mapRowToAssetCountSession(data as AssetCountSessionRow), error: null };
 }
 
+/**
+ * Delete an asset count session (superuser only).
+ * Cascades to all related items, metadata, and photos via ON DELETE CASCADE.
+ */
+export async function deleteAssetCountSession(
+  sessionId: string
+): Promise<ServiceResult<void>> {
+  const supabase = getSupabaseClient();
+
+  const { error } = await supabase
+    .from('asset_count_sessions')
+    .delete()
+    .eq('id', sessionId);
+
+  if (error) {
+    return { success: false, data: null, error: `Failed to delete session: ${error.message}` };
+  }
+
+  return { success: true, data: undefined, error: null };
+}
+
 // ============================================================================
 // Asset Count Item Functions
 // ============================================================================

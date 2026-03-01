@@ -1,10 +1,11 @@
-import { useQuery, keepPreviousData } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import {
   listAssetCountSessions,
   getAssetCountSession,
   getSessionItemsWithAssets,
   getSessionCombinationMetadata,
   getSessionCombinationPhotos,
+  deleteAssetCountSession,
 } from '@rgr/shared';
 import type { ListAssetCountSessionsParams } from '@rgr/shared';
 
@@ -76,5 +77,25 @@ export function useCountSessionDetail(sessionId: string | undefined) {
     },
     enabled: !!sessionId,
     staleTime: 60_000,
+  });
+}
+
+/**
+ * Delete an asset count session (superuser only).
+ * Invalidates both list and detail caches on success.
+ */
+export function useDeleteCountSession() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (sessionId: string) => {
+      const result = await deleteAssetCountSession(sessionId);
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: countHistoryKeys.all });
+    },
   });
 }

@@ -55,6 +55,7 @@ export function useScanFlow() {
   const [lastScanEventId, setLastScanEventId] = useState<string | null>(null);
   const [completedAsset, setCompletedAsset] = useState<Asset | null>(null);
   const [markForMaintenance, setMarkForMaintenance] = useState(false);
+  const [scanStatus, setScanStatus] = useState<string | null>(null);
 
   // Count mode: ref-based callback for auto-confirm (set by scan.tsx)
   const countModeCallbackRef = useRef<CountModeAutoConfirmCallback | null>(null);
@@ -89,6 +90,7 @@ export function useScanFlow() {
     async (qrData) => {
       try {
         logger.scan(`QR code detected: ${qrData.substring(0, 30)}...`);
+        setScanStatus('QR detected');
 
         const useCachedLocation = cachedLocation && !isLocationStale() && cachedDepot;
 
@@ -105,6 +107,7 @@ export function useScanFlow() {
           logger.scan(`Cached depot: ${nearestDepot.depot.name} (${nearestDepot.distanceKm.toFixed(2)} km)`);
 
           logger.scan('Looking up asset...');
+          setScanStatus('Looking up asset...');
           asset = await lookupAsset(qrData);
           logger.scan(`Asset found: ${asset.assetNumber}`);
         } else {
@@ -112,6 +115,7 @@ export function useScanFlow() {
           // Note: when cachedLocation is available (common case after sign-in), location is instant
           // and this parallelization only helps cold-start scans.
           logger.scan('Requesting current location and looking up asset in parallel...');
+          setScanStatus('Getting location...');
           const [freshLocation, lookedUpAsset] = await Promise.all([
             requestLocation(),
             lookupAsset(qrData),
@@ -119,6 +123,7 @@ export function useScanFlow() {
 
           if (!freshLocation) {
             logger.scan('Failed to get location');
+            setScanStatus(null);
             setAlertSheet({
               visible: true,
               type: 'error',
@@ -155,6 +160,7 @@ export function useScanFlow() {
         if (countModeCallbackRef.current && user) {
           try {
             logger.scan('Count mode: auto-confirming scan...');
+            setScanStatus('Confirming scan...');
             const scanEvent = await createScan({
               assetId: asset.id,
               scannedBy: user.id,
@@ -180,6 +186,7 @@ export function useScanFlow() {
 
             setLastScanEventId(scanEvent.id);
             setCompletedAsset(asset);
+            setScanStatus(null);
 
             countModeCallbackRef.current({
               asset,
@@ -190,6 +197,7 @@ export function useScanFlow() {
           } catch (autoConfirmError) {
             const msg = autoConfirmError instanceof Error ? autoConfirmError.message : 'Auto-confirm failed';
             logger.error(`Count mode auto-confirm failed: ${msg}`);
+            setScanStatus(null);
             setAlertSheet({
               visible: true,
               type: 'error',
@@ -202,11 +210,13 @@ export function useScanFlow() {
         }
 
         logger.scan('Showing confirmation sheet');
+        setScanStatus(null);
         setScannedAsset(asset);
         setShowConfirmSheet(true);
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to scan QR code';
         logger.error(`Scan error: ${message}`);
+        setScanStatus(null);
         setAlertSheet({
           visible: true,
           type: 'error',
@@ -323,6 +333,7 @@ export function useScanFlow() {
     setEffectiveLocation(null);
     setLastScanEventId(null);
     setMarkForMaintenance(false);
+    setScanStatus(null);
     resetScanner();
   }, [resetScanner]);
 
@@ -337,6 +348,7 @@ export function useScanFlow() {
     lastScanEventId,
     completedAsset,
     isCreatingScan,
+    scanStatus,
 
     // Handlers
     handleBarCodeScanned,
