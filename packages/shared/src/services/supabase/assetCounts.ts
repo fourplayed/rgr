@@ -545,7 +545,6 @@ export async function listAssetCountSessions(
 
   const supabase = getSupabaseClient();
   const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
 
   let query = supabase
     .from('asset_count_sessions')

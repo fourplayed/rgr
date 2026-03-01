@@ -12,8 +12,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
+import * as Location from 'expo-location';
+import * as Clipboard from 'expo-clipboard';
 import { useAuthStore } from '../../src/store/authStore';
-import { fetchProfile, getSupabaseClient } from '@rgr/shared';
+import { fetchProfile, getSupabaseClient, isSupabaseInitialized } from '@rgr/shared';
+import { useNetworkStatus } from '../../src/hooks/useNetworkStatus';
+import { useLocationStore } from '../../src/store/locationStore';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../src/theme/spacing';
 import { getSession as getStoredSession } from '../../src/utils/secureStorage';
@@ -32,10 +36,119 @@ interface DebugInfo {
   storedSessionExists: boolean;
 }
 
+// --- Helper functions ---
+
+const getBooleanColor = (v: boolean | null) =>
+  v === null ? colors.warning : v ? colors.success : colors.error;
+
+const boolLabel = (v: boolean | null) =>
+  v === null ? 'Checking...' : v ? 'Yes' : 'No';
+
+function formatFixAge(timestamp: number): string {
+  const seconds = Math.floor((Date.now() - timestamp) / 1000);
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  return `${hours}h ${minutes % 60}m ago`;
+}
+
+// --- Helper components ---
+
+function DebugRow({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.debugRow}>
+      <Text style={styles.debugLabel}>{label}</Text>
+      <Text style={styles.debugValue}>{value}</Text>
+    </View>
+  );
+}
+
+function DebugStatusRow({
+  label,
+  status,
+  statusLabel,
+}: {
+  label: string;
+  status: boolean | null;
+  statusLabel?: string;
+}) {
+  const displayLabel = statusLabel ?? boolLabel(status);
+  return (
+    <View
+      style={styles.debugRow}
+      accessibilityLabel={`${label}: ${displayLabel}`}
+    >
+      <Text style={styles.debugLabel}>{label}</Text>
+      <View style={styles.debugStatusRow}>
+        <View
+          style={[styles.statusDot, { backgroundColor: getBooleanColor(status) }]}
+        />
+        <Text style={styles.debugValue}>{displayLabel}</Text>
+      </View>
+    </View>
+  );
+}
+
+// --- Health banner logic ---
+
+type HealthLevel = 'ok' | 'warning' | 'critical';
+
+function deriveHealth(
+  isConnected: boolean | null,
+  isInternetReachable: boolean | null,
+  isAuthenticated: boolean,
+  syncStatus: string,
+  lastLocation: { timestamp: number } | null,
+  resolvedDepot: unknown,
+): { level: HealthLevel; message: string } {
+  // Critical checks first
+  if (isConnected === false) return { level: 'critical', message: 'Offline' };
+  if (isInternetReachable === false)
+    return { level: 'critical', message: 'No Internet' };
+  if (!isAuthenticated)
+    return { level: 'critical', message: 'Not Authenticated' };
+  if (syncStatus === 'error' || syncStatus === 'out-of-sync')
+    return { level: 'critical', message: 'Sync Error' };
+
+  // Warning checks
+  const gpsStale =
+    !lastLocation ||
+    Date.now() - lastLocation.timestamp > 5 * 60 * 1000; // 5 min
+  if (gpsStale) return { level: 'warning', message: 'GPS Stale' };
+  if (!resolvedDepot) return { level: 'warning', message: 'No Depot Resolved' };
+
+  // Still checking network
+  if (isConnected === null || isInternetReachable === null)
+    return { level: 'warning', message: 'Checking Network...' };
+
+  return { level: 'ok', message: 'All Systems OK' };
+}
+
+const healthColors: Record<HealthLevel, string> = {
+  ok: colors.success,
+  warning: colors.warning,
+  critical: colors.error,
+};
+
+// --- Main screen ---
+
 export default function DebugScreen() {
   const router = useRouter();
   const { user, checkAuth } = useAuthStore();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const autoLoginAttempted = useAuthStore((s) => s.autoLoginAttempted);
+  const authError = useAuthStore((s) => s.authError);
+  const { isConnected, isInternetReachable } = useNetworkStatus();
+
+  // Location store — individual selectors to minimize re-renders
+  const resolvedDepot = useLocationStore((s) => s.resolvedDepot);
+  const lastLocation = useLocationStore((s) => s.lastLocation);
+  const depotResolutionError = useLocationStore((s) => s.depotResolutionError);
+
   const [isSyncing, setIsSyncing] = useState(false);
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [copied, setCopied] = useState(false);
   const [debugInfo, setDebugInfo] = useState<DebugInfo>({
     localProfile: null,
     remoteProfile: null,
@@ -46,10 +159,24 @@ export default function DebugScreen() {
     storedSessionExists: false,
   });
 
+  // Tick for GPS age display (every 10s)
+  const [, tick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => tick((t) => t + 1), 10_000);
+    return () => clearInterval(id);
+  }, []);
+
+  // One-shot permission check (no side effects unlike useLocation)
+  useEffect(() => {
+    Location.getForegroundPermissionsAsync().then(({ status }) => {
+      setHasPermission(status === 'granted');
+    });
+  }, []);
+
   const fetchDebugInfo = useCallback(async () => {
     if (!user) return;
 
-    setDebugInfo(prev => ({
+    setDebugInfo((prev) => ({
       ...prev,
       localConnectionStatus: 'checking',
       remoteConnectionStatus: 'checking',
@@ -61,7 +188,7 @@ export default function DebugScreen() {
       const storedSession = await getStoredSession();
       const localProfile = user;
 
-      setDebugInfo(prev => ({
+      setDebugInfo((prev) => ({
         ...prev,
         localProfile,
         localConnectionStatus: 'connected',
@@ -80,9 +207,10 @@ export default function DebugScreen() {
             const remoteProfile = remoteResult.data;
 
             // Compare local and remote
-            const isInSync = JSON.stringify(localProfile) === JSON.stringify(remoteProfile);
+            const isInSync =
+              JSON.stringify(localProfile) === JSON.stringify(remoteProfile);
 
-            setDebugInfo(prev => ({
+            setDebugInfo((prev) => ({
               ...prev,
               remoteProfile,
               remoteConnectionStatus: 'connected',
@@ -90,28 +218,28 @@ export default function DebugScreen() {
               lastSyncTime: new Date().toLocaleTimeString(),
             }));
           } else {
-            setDebugInfo(prev => ({
+            setDebugInfo((prev) => ({
               ...prev,
               remoteConnectionStatus: 'disconnected',
               syncStatus: 'error',
             }));
           }
         } else {
-          setDebugInfo(prev => ({
+          setDebugInfo((prev) => ({
             ...prev,
             remoteConnectionStatus: 'disconnected',
             syncStatus: 'error',
           }));
         }
       } catch {
-        setDebugInfo(prev => ({
+        setDebugInfo((prev) => ({
           ...prev,
           remoteConnectionStatus: 'disconnected',
           syncStatus: 'error',
         }));
       }
     } catch {
-      setDebugInfo(prev => ({
+      setDebugInfo((prev) => ({
         ...prev,
         localConnectionStatus: 'disconnected',
         syncStatus: 'error',
@@ -147,6 +275,55 @@ export default function DebugScreen() {
     }
   };
 
+  const handleCopyDiagnostics = async () => {
+    const appName = Constants.expoConfig?.name ?? 'RGR Fleet';
+    const version = Constants.expoConfig?.version ?? '?';
+    const build = Constants.expoConfig?.ios?.buildNumber ?? '?';
+
+    const networkLine = `Network: ${isConnected ? 'Connected \u2713' : isConnected === false ? 'Disconnected \u2717' : 'Checking...'} | Internet: ${isInternetReachable ? 'Reachable \u2713' : isInternetReachable === false ? 'Unreachable \u2717' : 'Checking...'}`;
+
+    let gpsLine = 'GPS: No fix';
+    if (lastLocation) {
+      const acc = lastLocation.accuracy !== null ? `\u00B1${Math.round(lastLocation.accuracy)}m` : '';
+      const age = formatFixAge(lastLocation.timestamp);
+      gpsLine = `GPS: ${lastLocation.latitude.toFixed(2)}, ${lastLocation.longitude.toFixed(2)} (${acc}, ${age})`;
+    }
+
+    const depotLine = resolvedDepot
+      ? `Depot: ${resolvedDepot.depot.name} (${resolvedDepot.distanceKm.toFixed(1)}km)`
+      : 'Depot: None';
+
+    const authLine = `Auth: ${isAuthenticated ? 'OK' : 'Not authenticated'} | Auto-login: ${autoLoginAttempted ? 'Yes' : 'No'}`;
+
+    const syncLine = `Sync: ${debugInfo.syncStatus} | Local \u2194 Remote: ${debugInfo.syncStatus === 'synced' ? 'Match' : debugInfo.syncStatus}`;
+
+    const checkedLine = `Checked: ${new Date().toLocaleTimeString()}`;
+
+    const text = [
+      `${appName} v${version} (build ${build})`,
+      networkLine,
+      gpsLine,
+      depotLine,
+      authLine,
+      syncLine,
+      checkedLine,
+    ].join('\n');
+
+    await Clipboard.setStringAsync(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  // Health banner
+  const health = deriveHealth(
+    isConnected,
+    isInternetReachable,
+    isAuthenticated,
+    debugInfo.syncStatus,
+    lastLocation,
+    resolvedDepot,
+  );
+
   if (!user) {
     return null;
   }
@@ -175,111 +352,250 @@ export default function DebugScreen() {
         </View>
 
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-          <View style={styles.card}>
-            {/* Connection Status */}
-            <View style={styles.debugRow}>
-              <Text style={styles.debugLabel}>Local Storage</Text>
-              <View style={styles.debugStatusRow}>
-                <View style={[styles.statusDot, { backgroundColor: getStatusColor(debugInfo.localConnectionStatus) }]} />
-                <Text style={styles.debugValue}>{debugInfo.localConnectionStatus}</Text>
-              </View>
+          {/* 1. Health Banner */}
+          <View
+            style={[styles.healthBanner, { backgroundColor: healthColors[health.level] }]}
+            accessibilityLabel={`System status: ${health.message}`}
+          >
+            <Text style={styles.healthBannerText}>{health.message}</Text>
+          </View>
+
+          {/* 2. Network */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Network</Text>
+            <View style={styles.card}>
+              <DebugStatusRow
+                label="Connected"
+                status={isConnected}
+              />
+              <View style={styles.debugDivider} />
+              <DebugStatusRow
+                label="Internet Reachable"
+                status={isInternetReachable}
+              />
             </View>
-            <View style={styles.debugDivider} />
+          </View>
 
-            <View style={styles.debugRow}>
-              <Text style={styles.debugLabel}>Remote Database</Text>
-              <View style={styles.debugStatusRow}>
-                <View style={[styles.statusDot, { backgroundColor: getStatusColor(debugInfo.remoteConnectionStatus) }]} />
-                <Text style={styles.debugValue}>{debugInfo.remoteConnectionStatus}</Text>
-              </View>
-            </View>
-            <View style={styles.debugDivider} />
-
-            <View style={styles.debugRow}>
-              <Text style={styles.debugLabel}>Sync Status</Text>
-              <View style={styles.debugStatusRow}>
-                <View style={[styles.statusDot, { backgroundColor: getStatusColor(debugInfo.syncStatus) }]} />
-                <Text style={styles.debugValue}>{debugInfo.syncStatus}</Text>
-              </View>
-            </View>
-            <View style={styles.debugDivider} />
-
-            <View style={styles.debugRow}>
-              <Text style={styles.debugLabel}>Session Token</Text>
-              <Text style={styles.debugValue}>{debugInfo.storedSessionExists ? 'Stored' : 'None'}</Text>
-            </View>
-            <View style={styles.debugDivider} />
-
-            {debugInfo.lastSyncTime && (
-              <>
-                <View style={styles.debugRow}>
-                  <Text style={styles.debugLabel}>Last Checked</Text>
-                  <Text style={styles.debugValue}>{debugInfo.lastSyncTime}</Text>
-                </View>
-                <View style={styles.debugDivider} />
-              </>
-            )}
-
-            {/* Local Profile Data */}
-            <View style={styles.debugDataSection}>
-              <Text style={styles.debugSubtitle}>Local Profile</Text>
-              <View style={styles.debugDataBox}>
-                <Text style={styles.debugDataTextBold}>Storage: {LOCAL_STORAGE_NAME}</Text>
-                {debugInfo.localProfile ? (
-                  <>
-                    <Text style={styles.debugDataText}>ID: {debugInfo.localProfile.id}</Text>
-                    <Text style={styles.debugDataText}>Name: {debugInfo.localProfile.fullName}</Text>
-                    <Text style={styles.debugDataText}>Email: {debugInfo.localProfile.email}</Text>
-                    <Text style={styles.debugDataText}>Role: {debugInfo.localProfile.role}</Text>
-                    <Text style={styles.debugDataText}>Depot: {debugInfo.localProfile.depot || 'None'}</Text>
-                    <Text style={styles.debugDataText}>Updated: {debugInfo.localProfile.updatedAt}</Text>
-                  </>
-                ) : (
-                  <Text style={styles.debugDataText}>No local data</Text>
-                )}
-              </View>
-            </View>
-
-            {/* Remote Profile Data */}
-            <View style={styles.debugDataSection}>
-              <Text style={styles.debugSubtitle}>Remote Profile</Text>
-              <View style={styles.debugDataBox}>
-                <Text style={styles.debugDataTextBold} numberOfLines={1}>Database: {SUPABASE_URL}</Text>
-                {debugInfo.remoteProfile ? (
-                  <>
-                    <Text style={styles.debugDataText}>ID: {debugInfo.remoteProfile.id}</Text>
-                    <Text style={styles.debugDataText}>Name: {debugInfo.remoteProfile.fullName}</Text>
-                    <Text style={styles.debugDataText}>Email: {debugInfo.remoteProfile.email}</Text>
-                    <Text style={styles.debugDataText}>Role: {debugInfo.remoteProfile.role}</Text>
-                    <Text style={styles.debugDataText}>Depot: {debugInfo.remoteProfile.depot || 'None'}</Text>
-                    <Text style={styles.debugDataText}>Updated: {debugInfo.remoteProfile.updatedAt}</Text>
-                  </>
-                ) : (
-                  <Text style={styles.debugDataText}>No remote data</Text>
-                )}
-              </View>
-            </View>
-
-            {/* Sync Button */}
-            <TouchableOpacity
-              style={styles.syncButton}
-              onPress={handleSync}
-              disabled={isSyncing}
-              accessibilityRole="button"
-              accessibilityLabel="Sync now"
-              accessibilityHint="Double tap to synchronize local and remote profiles"
-              accessibilityState={{ disabled: isSyncing }}
-            >
-              {isSyncing ? (
-                <LoadingDots color={colors.textInverse} size={8} />
-              ) : (
+          {/* 3. Location & Depot */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Location & Depot</Text>
+            <View style={styles.card}>
+              <DebugStatusRow
+                label="Location Permission"
+                status={hasPermission}
+                statusLabel={hasPermission === null ? 'Checking...' : hasPermission ? 'Granted' : 'Denied'}
+              />
+              <View style={styles.debugDivider} />
+              <DebugRow
+                label="Last Fix"
+                value={
+                  lastLocation
+                    ? `${lastLocation.latitude.toFixed(5)}, ${lastLocation.longitude.toFixed(5)}${lastLocation.accuracy !== null ? ` (\u00B1${Math.round(lastLocation.accuracy)}m)` : ''}`
+                    : 'No fix'
+                }
+              />
+              <View style={styles.debugDivider} />
+              {lastLocation && (
                 <>
-                  <Ionicons name="sync" size={20} color={colors.textInverse} />
-                  <Text style={styles.syncButtonText}>Sync Now</Text>
+                  <DebugRow
+                    label="Fix Age"
+                    value={formatFixAge(lastLocation.timestamp)}
+                  />
+                  <View style={styles.debugDivider} />
                 </>
               )}
-            </TouchableOpacity>
+              <DebugRow
+                label="Resolved Depot"
+                value={
+                  resolvedDepot
+                    ? `${resolvedDepot.depot.name} (${resolvedDepot.distanceKm.toFixed(1)} km)`
+                    : 'None'
+                }
+              />
+              {depotResolutionError && (
+                <>
+                  <View style={styles.debugDivider} />
+                  <View style={styles.debugRow}>
+                    <Text style={styles.debugLabel}>Resolution Error</Text>
+                    <Text style={[styles.debugValue, { color: colors.error }]}>
+                      {depotResolutionError}
+                    </Text>
+                  </View>
+                </>
+              )}
+            </View>
           </View>
+
+          {/* 4. Auth */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Auth</Text>
+            <View style={styles.card}>
+              <DebugStatusRow
+                label="Authenticated"
+                status={isAuthenticated}
+              />
+              <View style={styles.debugDivider} />
+              <DebugStatusRow
+                label="Auto-Login Attempted"
+                status={autoLoginAttempted}
+              />
+              {authError && (
+                <>
+                  <View style={styles.debugDivider} />
+                  <View style={styles.debugRow}>
+                    <Text style={styles.debugLabel}>Auth Error</Text>
+                    <Text style={[styles.debugValue, { color: colors.error }]}>
+                      {authError}
+                    </Text>
+                  </View>
+                </>
+              )}
+            </View>
+          </View>
+
+          {/* 5. Sync (existing card, unchanged) */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Sync</Text>
+            <View style={styles.card}>
+              {/* Connection Status */}
+              <View style={styles.debugRow}>
+                <Text style={styles.debugLabel}>Local Storage</Text>
+                <View style={styles.debugStatusRow}>
+                  <View style={[styles.statusDot, { backgroundColor: getStatusColor(debugInfo.localConnectionStatus) }]} />
+                  <Text style={styles.debugValue}>{debugInfo.localConnectionStatus}</Text>
+                </View>
+              </View>
+              <View style={styles.debugDivider} />
+
+              <View style={styles.debugRow}>
+                <Text style={styles.debugLabel}>Remote Database</Text>
+                <View style={styles.debugStatusRow}>
+                  <View style={[styles.statusDot, { backgroundColor: getStatusColor(debugInfo.remoteConnectionStatus) }]} />
+                  <Text style={styles.debugValue}>{debugInfo.remoteConnectionStatus}</Text>
+                </View>
+              </View>
+              <View style={styles.debugDivider} />
+
+              <View style={styles.debugRow}>
+                <Text style={styles.debugLabel}>Sync Status</Text>
+                <View style={styles.debugStatusRow}>
+                  <View style={[styles.statusDot, { backgroundColor: getStatusColor(debugInfo.syncStatus) }]} />
+                  <Text style={styles.debugValue}>{debugInfo.syncStatus}</Text>
+                </View>
+              </View>
+              <View style={styles.debugDivider} />
+
+              <View style={styles.debugRow}>
+                <Text style={styles.debugLabel}>Session Token</Text>
+                <Text style={styles.debugValue}>{debugInfo.storedSessionExists ? 'Stored' : 'None'}</Text>
+              </View>
+              <View style={styles.debugDivider} />
+
+              {debugInfo.lastSyncTime && (
+                <>
+                  <View style={styles.debugRow}>
+                    <Text style={styles.debugLabel}>Last Checked</Text>
+                    <Text style={styles.debugValue}>{debugInfo.lastSyncTime}</Text>
+                  </View>
+                  <View style={styles.debugDivider} />
+                </>
+              )}
+
+              {/* Local Profile Data */}
+              <View style={styles.debugDataSection}>
+                <Text style={styles.debugSubtitle}>Local Profile</Text>
+                <View style={styles.debugDataBox}>
+                  <Text style={styles.debugDataTextBold}>Storage: {LOCAL_STORAGE_NAME}</Text>
+                  {debugInfo.localProfile ? (
+                    <>
+                      <Text style={styles.debugDataText}>ID: {debugInfo.localProfile.id}</Text>
+                      <Text style={styles.debugDataText}>Name: {debugInfo.localProfile.fullName}</Text>
+                      <Text style={styles.debugDataText}>Email: {debugInfo.localProfile.email}</Text>
+                      <Text style={styles.debugDataText}>Role: {debugInfo.localProfile.role}</Text>
+                      <Text style={styles.debugDataText}>Depot: {debugInfo.localProfile.depot || 'None'}</Text>
+                      <Text style={styles.debugDataText}>Updated: {debugInfo.localProfile.updatedAt}</Text>
+                    </>
+                  ) : (
+                    <Text style={styles.debugDataText}>No local data</Text>
+                  )}
+                </View>
+              </View>
+
+              {/* Remote Profile Data */}
+              <View style={styles.debugDataSection}>
+                <Text style={styles.debugSubtitle}>Remote Profile</Text>
+                <View style={styles.debugDataBox}>
+                  <Text style={styles.debugDataTextBold} numberOfLines={1}>Database: {SUPABASE_URL}</Text>
+                  {debugInfo.remoteProfile ? (
+                    <>
+                      <Text style={styles.debugDataText}>ID: {debugInfo.remoteProfile.id}</Text>
+                      <Text style={styles.debugDataText}>Name: {debugInfo.remoteProfile.fullName}</Text>
+                      <Text style={styles.debugDataText}>Email: {debugInfo.remoteProfile.email}</Text>
+                      <Text style={styles.debugDataText}>Role: {debugInfo.remoteProfile.role}</Text>
+                      <Text style={styles.debugDataText}>Depot: {debugInfo.remoteProfile.depot || 'None'}</Text>
+                      <Text style={styles.debugDataText}>Updated: {debugInfo.remoteProfile.updatedAt}</Text>
+                    </>
+                  ) : (
+                    <Text style={styles.debugDataText}>No remote data</Text>
+                  )}
+                </View>
+              </View>
+
+              {/* Sync Button */}
+              <TouchableOpacity
+                style={styles.syncButton}
+                onPress={handleSync}
+                disabled={isSyncing}
+                accessibilityRole="button"
+                accessibilityLabel="Sync now"
+                accessibilityHint="Double tap to synchronize local and remote profiles"
+                accessibilityState={{ disabled: isSyncing }}
+              >
+                {isSyncing ? (
+                  <LoadingDots color={colors.textInverse} size={8} />
+                ) : (
+                  <>
+                    <Ionicons name="sync" size={20} color={colors.textInverse} />
+                    <Text style={styles.syncButtonText}>Sync Now</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* 6. App Info */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>App</Text>
+            <View style={styles.card}>
+              <DebugRow label="App Name" value={Constants.expoConfig?.name ?? 'Unknown'} />
+              <View style={styles.debugDivider} />
+              <DebugRow label="Version" value={Constants.expoConfig?.version ?? 'Unknown'} />
+              <View style={styles.debugDivider} />
+              <DebugRow label="Build" value={Constants.expoConfig?.ios?.buildNumber ?? 'Unknown'} />
+              <View style={styles.debugDivider} />
+              <DebugStatusRow
+                label="Supabase Initialized"
+                status={isSupabaseInitialized()}
+              />
+            </View>
+          </View>
+
+          {/* 7. Copy Diagnostics */}
+          <TouchableOpacity
+            style={styles.copyButton}
+            onPress={handleCopyDiagnostics}
+            accessibilityRole="button"
+            accessibilityLabel="Copy diagnostics to clipboard"
+          >
+            <Ionicons
+              name={copied ? 'checkmark-circle' : 'copy-outline'}
+              size={20}
+              color={colors.textInverse}
+            />
+            <Text style={styles.copyButtonText}>
+              {copied ? 'Copied!' : 'Copy Diagnostics'}
+            </Text>
+          </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>
@@ -321,6 +637,36 @@ const styles = StyleSheet.create({
     padding: spacing.base,
     paddingBottom: spacing.lg,
   },
+  // Health banner
+  healthBanner: {
+    borderRadius: borderRadius.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.base,
+    marginBottom: spacing.lg,
+    alignItems: 'center',
+  },
+  healthBannerText: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.bold,
+    fontFamily: 'Lato_700Bold',
+    color: colors.textInverse,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  // Sections (from settings.tsx pattern)
+  section: {
+    marginBottom: spacing.lg,
+  },
+  sectionTitle: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.bold,
+    fontFamily: 'Lato_700Bold',
+    color: colors.text,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: spacing.sm,
+    marginLeft: spacing.xs,
+  },
   card: {
     backgroundColor: colors.background,
     borderRadius: borderRadius.lg,
@@ -342,12 +688,15 @@ const styles = StyleSheet.create({
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    flexShrink: 0,
   },
   debugValue: {
     fontSize: fontSize.sm,
     fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
     textTransform: 'capitalize',
+    flexShrink: 1,
+    textAlign: 'right',
   },
   debugStatusRow: {
     flexDirection: 'row',
@@ -412,6 +761,24 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   syncButtonText: {
+    fontSize: fontSize.base,
+    fontWeight: fontWeight.bold,
+    fontFamily: 'Lato_700Bold',
+    color: colors.textInverse,
+    textTransform: 'uppercase',
+  },
+  // Copy diagnostics button
+  copyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.textSecondary,
+    paddingVertical: spacing.base,
+    borderRadius: borderRadius.md,
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  copyButtonText: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
