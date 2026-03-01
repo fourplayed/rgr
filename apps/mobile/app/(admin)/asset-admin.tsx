@@ -146,15 +146,17 @@ export default function AssetAdminScreen() {
           accessibilityState={{ checked: isSelected }}
           accessibilityLabel={`${item.assetNumber}, ${AssetStatusLabels[item.status as keyof typeof AssetStatusLabels] || item.status}`}
         >
-          <TouchableOpacity
-            style={styles.cameraButton}
-            onPress={() => handleOpenPhotos(item)}
-            accessibilityRole="button"
-            accessibilityLabel={`View photos for ${item.assetNumber}`}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Ionicons name="camera-outline" size={20} color={colors.textSecondary} />
-          </TouchableOpacity>
+          {item.photoCount > 0 && (
+            <TouchableOpacity
+              style={styles.cameraButton}
+              onPress={() => handleOpenPhotos(item)}
+              accessibilityRole="button"
+              accessibilityLabel={`View photos for ${item.assetNumber}`}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="camera-outline" size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
+          )}
           <View style={styles.checkbox}>
             {isSelected && (
               <Ionicons name="checkmark" size={16} color={colors.electricBlue} />

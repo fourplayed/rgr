@@ -113,7 +113,7 @@ export async function listAssets(
 
   let query = supabase
     .from('assets')
-    .select('*, depot:assigned_depot_id(name, code)', { count: 'exact' })
+    .select('*, depot:assigned_depot_id(name, code), photos(count)', { count: 'exact' })
     .is('deleted_at', null);
 
   // Filters
@@ -165,10 +165,11 @@ export async function listAssets(
 
   interface ListAssetRow extends AssetRow {
     depot: { name: string; code: string } | null;
+    photos: [{ count: number }];
   }
 
   const assets = (data || []).map((row: ListAssetRow) => {
-    const { depot, ...assetRow } = row;
+    const { depot, photos, ...assetRow } = row;
     const asset = mapRowToAsset(assetRow as AssetRow);
     return {
       ...asset,
@@ -176,6 +177,7 @@ export async function listAssets(
       depotCode: depot?.code ?? null,
       driverName: null,
       lastScannerName: null,
+      photoCount: photos?.[0]?.count ?? 0,
     } as AssetWithRelations;
   });
 
@@ -206,7 +208,8 @@ export async function getAsset(
       *,
       depot:assigned_depot_id(name, code),
       driver:assigned_driver_id(full_name),
-      scanner:last_scanned_by(full_name)
+      scanner:last_scanned_by(full_name),
+      photos(count)
     `)
     .eq('id', id)
     .maybeSingle();
@@ -219,7 +222,7 @@ export async function getAsset(
     return { success: false, data: null, error: 'Asset not found' };
   }
 
-  const { depot, driver, scanner, ...assetRow } = data as unknown as AssetRowWithJoins;
+  const { depot, driver, scanner, photos, ...assetRow } = data as unknown as AssetRowWithJoins & { photos: [{ count: number }] };
   const asset = mapRowToAsset(assetRow as AssetRow);
 
   return {
@@ -230,6 +233,7 @@ export async function getAsset(
       depotCode: depot?.code ?? null,
       driverName: driver?.full_name ?? null,
       lastScannerName: scanner?.full_name ?? null,
+      photoCount: photos?.[0]?.count ?? 0,
     },
     error: null,
   };

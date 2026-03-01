@@ -102,6 +102,7 @@ export interface AssetWithRelations extends Asset {
   depotCode: string | null;
   driverName: string | null;
   lastScannerName: string | null;
+  photoCount: number;
 }
 
 /**
