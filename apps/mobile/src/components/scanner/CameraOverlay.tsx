@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, Text, SafeAreaView, TouchableOpacity } from 'react-native';
+import { View, Text, SafeAreaView, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ScanToast } from './ScanToast';
-import { QuickLinkBar } from './QuickLinkBar';
 import { colors } from '../../theme/colors';
 import { styles } from './scan.styles';
+import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 
 interface CameraOverlayProps {
   // Asset count mode
@@ -31,13 +31,12 @@ interface CameraOverlayProps {
   };
   onScanToastDismiss?: () => void;
   onScanToastUndo?: () => void;
-  quickLinkBar?: {
-    visible: boolean;
-    currentAssetNumber: string;
-    previousAssetNumber: string;
-  };
-  onQuickLink?: () => void;
-  onQuickLinkDismiss?: () => void;
+
+  // Chain mode
+  isChainActive?: boolean;
+  activeChainSize?: number;
+  onStartChain?: () => void;
+  onEndChain?: () => void;
 }
 
 function CameraOverlayComponent({
@@ -53,9 +52,10 @@ function CameraOverlayComponent({
   scanToast,
   onScanToastDismiss,
   onScanToastUndo,
-  quickLinkBar,
-  onQuickLink,
-  onQuickLinkDismiss,
+  isChainActive,
+  activeChainSize,
+  onStartChain,
+  onEndChain,
 }: CameraOverlayProps) {
   return (
     <SafeAreaView style={styles.overlay}>
@@ -66,6 +66,12 @@ function CameraOverlayComponent({
               <Ionicons name="clipboard-outline" size={14} color={colors.textInverse} />
               <Text style={styles.assetCountBadgeText}>Asset Count Mode</Text>
             </View>
+            {isChainActive && (
+              <View style={chainStyles.chainingBadge}>
+                <Ionicons name="link" size={12} color={colors.textInverse} />
+                <Text style={chainStyles.chainingBadgeText}>Chaining</Text>
+              </View>
+            )}
             <Text style={styles.title}>{assetCountDepotName}</Text>
             <Text style={styles.subtitle}>
               {assetCountScanCount} assets counted
@@ -101,15 +107,37 @@ function CameraOverlayComponent({
       </View>
 
       <View style={styles.footer}>
-        {/* Quick-link bar (count mode inline link prompt) */}
-        {quickLinkBar && onQuickLink && onQuickLinkDismiss && (
-          <QuickLinkBar
-            visible={quickLinkBar.visible}
-            currentAssetNumber={quickLinkBar.currentAssetNumber}
-            previousAssetNumber={quickLinkBar.previousAssetNumber}
-            onLink={onQuickLink}
-            onDismiss={onQuickLinkDismiss}
-          />
+        {/* Chain controls (count mode) */}
+        {assetCountActive && onStartChain && onEndChain && (
+          isChainActive ? (
+            <View style={chainStyles.chainActiveContainer}>
+              <View style={chainStyles.chainStatus}>
+                <Ionicons name="link" size={16} color={colors.electricBlue} />
+                <Text style={chainStyles.chainStatusText}>
+                  Building Chain ({activeChainSize ?? 0} {(activeChainSize ?? 0) === 1 ? 'asset' : 'assets'})
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={chainStyles.endChainButton}
+                onPress={onEndChain}
+                accessibilityRole="button"
+                accessibilityLabel="End chain"
+              >
+                <Ionicons name="checkmark-circle-outline" size={18} color={colors.textInverse} />
+                <Text style={chainStyles.endChainButtonText}>End Chain</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={chainStyles.startChainButton}
+              onPress={onStartChain}
+              accessibilityRole="button"
+              accessibilityLabel="Start chain"
+            >
+              <Ionicons name="link" size={18} color={colors.electricBlue} />
+              <Text style={chainStyles.startChainButtonText}>Start Chain</Text>
+            </TouchableOpacity>
+          )
         )}
 
         {!hasLocationPermission && (
@@ -127,11 +155,11 @@ function CameraOverlayComponent({
         {/* Debug button for testing */}
         {__DEV__ && (
           <TouchableOpacity
-            style={styles.debugButton}
+            style={chainStyles.startChainButton}
             onPress={onDebugScan}
           >
             <Ionicons name="bug-outline" size={18} color={colors.warning} />
-            <Text style={styles.debugButtonText}>Debug Scan</Text>
+            <Text style={[chainStyles.startChainButtonText, { color: colors.warning }]}>Debug Scan</Text>
           </TouchableOpacity>
         )}
 
@@ -171,3 +199,72 @@ function CameraOverlayComponent({
 // (e.g., via useCallback) — otherwise new function references on every
 // render will defeat the shallow comparison.
 export const CameraOverlay = React.memo(CameraOverlayComponent);
+
+const chainStyles = StyleSheet.create({
+  chainingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.warning,
+    paddingVertical: 3,
+    paddingHorizontal: spacing.sm,
+    borderRadius: borderRadius.full,
+    marginBottom: spacing.xs,
+    gap: 4,
+  },
+  chainingBadgeText: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_700Bold',
+    color: colors.textInverse,
+    textTransform: 'uppercase',
+  },
+  chainActiveContainer: {
+    marginBottom: spacing.sm,
+  },
+  chainStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  chainStatusText: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_700Bold',
+    color: colors.electricBlue,
+  },
+  endChainButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.success,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.md,
+    gap: spacing.sm,
+  },
+  endChainButtonText: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_700Bold',
+    color: colors.textInverse,
+    textTransform: 'uppercase',
+  },
+  startChainButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.electricBlue + '20',
+    borderWidth: 1,
+    borderColor: colors.electricBlue + '50',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.sm,
+    gap: spacing.sm,
+  },
+  startChainButtonText: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_700Bold',
+    color: colors.electricBlue,
+    textTransform: 'uppercase',
+  },
+});

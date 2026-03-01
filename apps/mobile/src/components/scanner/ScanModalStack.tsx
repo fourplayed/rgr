@@ -5,7 +5,6 @@ import { ScanConfirmSheet } from './ScanConfirmSheet';
 import { MaintenanceCheckbox } from './MaintenanceCheckbox';
 import { DefectReportSheet } from './DefectReportSheet';
 import { ScanSuccessSheet } from './ScanSuccessSheet';
-import { CombinationLinkSheet } from './CombinationLinkSheet';
 import { CombinationPhotoSheet } from './CombinationPhotoSheet';
 import { EndCountReviewSheet } from './EndCountReviewSheet';
 import { PhotoPromptSheet, CameraCapture } from '../photos';
@@ -56,19 +55,11 @@ interface ScanModalStackProps {
   alertSheet: AlertSheetState;
   onAlertDismiss: () => void;
 
-  // Combination link
-  showLinkSheet: boolean;
-  previousScanForLink: AssetScan | null;
-  currentAssetNumber: string;
-  existingComboSize: number | undefined;
-  onLinkToPrevious: () => void;
-  onKeepSeparate: () => void;
-  onLinkSheetDismiss: () => void;
-
   // Combination photo
   showCombinationPhoto: boolean;
   activeCombinationId: string | null;
   combinationAssetNumbers: string[];
+  combinationPhotoMandatory?: boolean;
   onCombinationPhotoCapture: (photoUri: string) => void;
   onCombinationNotesChange: (notes: string) => void;
   onCombinationPhotoComplete: () => void;
@@ -156,22 +147,12 @@ export function ScanModalStack(props: ScanModalStackProps) {
         onDismiss={props.onAlertDismiss}
       />
 
-      {/* Combination Link Sheet */}
-      <CombinationLinkSheet
-        visible={props.showLinkSheet}
-        previousScan={props.previousScanForLink}
-        currentAssetNumber={props.currentAssetNumber}
-        {...(props.existingComboSize != null ? { existingComboSize: props.existingComboSize } : {})}
-        onLinkToPrevious={props.onLinkToPrevious}
-        onKeepSeparate={props.onKeepSeparate}
-        onDismiss={props.onLinkSheetDismiss}
-      />
-
       {/* Combination Photo Sheet */}
       {props.activeCombinationId && props.combinationAssetNumbers.length > 0 && (
         <CombinationPhotoSheet
           visible={props.showCombinationPhoto}
           assetNumbers={props.combinationAssetNumbers}
+          mandatory={props.combinationPhotoMandatory}
           onCapture={props.onCombinationPhotoCapture}
           onNotesChange={props.onCombinationNotesChange}
           onComplete={props.onCombinationPhotoComplete}

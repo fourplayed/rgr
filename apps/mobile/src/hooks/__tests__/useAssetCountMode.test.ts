@@ -33,7 +33,7 @@ Object.defineProperty(globalThis, 'crypto', {
 import { renderHook, act } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAssetCountMode } from '../useAssetCountMode';
-import type { StandaloneScan, AssetCountState, AssetCategory } from '@rgr/shared';
+import type { AssetCountState, AssetCategory, StandaloneScan } from '@rgr/shared';
 import { STORAGE_KEY, DEBOUNCE_MS } from '../assetCountModeReducer';
 
 // Type the mocked module
@@ -44,7 +44,6 @@ const mockRemoveItem = AsyncStorage.removeItem as jest.Mock;
 // Valid UUIDs for tests that need Zod validation (restore/persistence)
 const UUID1 = '00000000-0000-4000-8000-000000000001';
 const UUID2 = '00000000-0000-4000-8000-000000000002';
-const UUID3 = '00000000-0000-4000-8000-000000000003';
 const DEPOT_UUID = '00000000-0000-4000-8000-0000000000d1';
 const COMBO_UUID = '00000000-0000-4000-8000-00000000c001';
 
@@ -107,24 +106,23 @@ describe('useAssetCountMode', () => {
       expect(result.current.standaloneCount).toBe(2);
     });
 
-    it('combinationCount counts Object.keys(combinations).length', async () => {
+    it('combinationCount counts chains after building one', async () => {
       const { result } = renderHook(() => useAssetCountMode());
       await flushMicrotasks();
 
       act(() => result.current.startCount('d1', 'Depot'));
+      act(() => result.current.startChain());
       act(() => result.current.addScan(makeScan('TL001', 'a1', 'trailer')));
       act(() => result.current.confirmScan());
       act(() => result.current.addScan(makeScan('DL001', 'a2', 'dolly')));
       act(() => result.current.confirmScan());
-
-      act(() => { result.current.linkToPrevious(); });
+      act(() => result.current.endChain());
 
       expect(result.current.combinationCount).toBe(1);
+      expect(result.current.standaloneCount).toBe(0);
     });
 
-    it('after linking 2 scans: standaloneCount decreases by 2, combinationCount increases by 1', async () => {
-      // Use RESTORE to set up correct combo state (the reducer's linking logic
-      // is tested separately; here we verify computed values from proper state).
+    it('after chain with 2 assets: standaloneCount=0, combinationCount=1', async () => {
       const restoredState: AssetCountState = {
         isActive: true,
         sessionId: null,
@@ -147,6 +145,7 @@ describe('useAssetCountMode', () => {
           },
         },
         lastUnlinkedScanIndex: 1,
+        activeChainId: null,
       };
       mockGetItem.mockResolvedValue(JSON.stringify(restoredState));
 
@@ -158,51 +157,7 @@ describe('useAssetCountMode', () => {
       expect(result.current.scanCount).toBe(2);
     });
 
-    it('after extending combo (3rd asset): standaloneCount decreases by 1, combinationCount stays same', async () => {
-      // Use RESTORE with 2-asset combo + 1 standalone, then link 3rd to extend
-      const restoredState: AssetCountState = {
-        isActive: true,
-        sessionId: null,
-        depotId: DEPOT_UUID,
-        depotName: 'Depot',
-        scans: [
-          { type: 'combination', assetId: UUID1, assetNumber: 'TL001', timestamp: 1, combinationId: COMBO_UUID, combinationPosition: 1, category: 'trailer' },
-          { type: 'combination', assetId: UUID2, assetNumber: 'DL001', timestamp: 2, combinationId: COMBO_UUID, combinationPosition: 2, category: 'dolly' },
-          { type: 'standalone', assetId: UUID3, assetNumber: 'TL002', timestamp: 3, category: 'trailer' },
-        ],
-        currentScan: null,
-        combinations: {
-          [COMBO_UUID]: {
-            combinationId: COMBO_UUID,
-            assetIds: [UUID1, UUID2],
-            assetNumbers: ['TL001', 'DL001'],
-            notes: null,
-            photoUri: null,
-            photoId: null,
-            assetCategories: ['trailer', 'dolly'],
-          },
-        },
-        // Points to DL001 (in the combo) — enables "extend" path
-        lastUnlinkedScanIndex: 1,
-      };
-      mockGetItem.mockResolvedValue(JSON.stringify(restoredState));
-
-      const { result } = renderHook(() => useAssetCountMode());
-      await flushMicrotasks();
-
-      expect(result.current.standaloneCount).toBe(1);
-      expect(result.current.combinationCount).toBe(1);
-
-      // Link TL002 to the existing combo (extending it)
-      act(() => { result.current.linkToPrevious(); });
-
-      expect(result.current.standaloneCount).toBe(0);
-      expect(result.current.combinationCount).toBe(1); // same combo extended
-      expect(result.current.scanCount).toBe(3);
-    });
-
     it('after undo on 2-asset combo: combo dissolves, counts revert correctly', async () => {
-      // Use RESTORE with a proper 2-asset combo
       const restoredState: AssetCountState = {
         isActive: true,
         sessionId: null,
@@ -225,6 +180,7 @@ describe('useAssetCountMode', () => {
           },
         },
         lastUnlinkedScanIndex: 1,
+        activeChainId: null,
       };
       mockGetItem.mockResolvedValue(JSON.stringify(restoredState));
 
@@ -243,209 +199,97 @@ describe('useAssetCountMode', () => {
     });
   });
 
-  // ── canLinkToPrevious / previousScanForLink ──
+  // ── Chain Mode ──
 
-  describe('canLinkToPrevious / previousScanForLink', () => {
-    it('true when ≥2 scans with alternating categories', async () => {
+  describe('chain mode', () => {
+    it('exposes isChainActive=false initially', async () => {
       const { result } = renderHook(() => useAssetCountMode());
       await flushMicrotasks();
 
       act(() => result.current.startCount('d1', 'Depot'));
+
+      expect(result.current.isChainActive).toBe(false);
+      expect(result.current.activeChainId).toBeNull();
+      expect(result.current.activeChain).toBeNull();
+      expect(result.current.activeChainSize).toBe(0);
+    });
+
+    it('startChain activates chain mode', async () => {
+      const { result } = renderHook(() => useAssetCountMode());
+      await flushMicrotasks();
+
+      act(() => result.current.startCount('d1', 'Depot'));
+      act(() => result.current.startChain());
+
+      expect(result.current.isChainActive).toBe(true);
+      expect(result.current.activeChainId).not.toBeNull();
+      expect(result.current.activeChain).not.toBeNull();
+      expect(result.current.activeChainSize).toBe(0);
+    });
+
+    it('scans in chain mode increment activeChainSize', async () => {
+      const { result } = renderHook(() => useAssetCountMode());
+      await flushMicrotasks();
+
+      act(() => result.current.startCount('d1', 'Depot'));
+      act(() => result.current.startChain());
+
+      act(() => result.current.addScan(makeScan('TL001', 'a1', 'trailer')));
+      act(() => result.current.confirmScan());
+      expect(result.current.activeChainSize).toBe(1);
+
+      act(() => result.current.addScan(makeScan('DL001', 'a2', 'dolly')));
+      act(() => result.current.confirmScan());
+      expect(result.current.activeChainSize).toBe(2);
+    });
+
+    it('endChain clears chain mode', async () => {
+      const { result } = renderHook(() => useAssetCountMode());
+      await flushMicrotasks();
+
+      act(() => result.current.startCount('d1', 'Depot'));
+      act(() => result.current.startChain());
       act(() => result.current.addScan(makeScan('TL001', 'a1', 'trailer')));
       act(() => result.current.confirmScan());
       act(() => result.current.addScan(makeScan('DL001', 'a2', 'dolly')));
       act(() => result.current.confirmScan());
 
-      expect(result.current.canLinkToPrevious).toBe(true);
-    });
+      act(() => result.current.endChain());
 
-    it('false when both scans are same category', async () => {
-      const { result } = renderHook(() => useAssetCountMode());
-      await flushMicrotasks();
-
-      act(() => result.current.startCount('d1', 'Depot'));
-      act(() => result.current.addScan(makeScan('TL001', 'a1', 'trailer')));
-      act(() => result.current.confirmScan());
-      act(() => result.current.addScan(makeScan('TL002', 'a2', 'trailer')));
-      act(() => result.current.confirmScan());
-
-      expect(result.current.canLinkToPrevious).toBe(false);
-    });
-
-    it('false when category is undefined (backward compat)', async () => {
-      const { result } = renderHook(() => useAssetCountMode());
-      await flushMicrotasks();
-
-      act(() => result.current.startCount('d1', 'Depot'));
-      act(() => result.current.addScan(makeScan('TL001', 'a1')));
-      act(() => result.current.confirmScan());
-      act(() => result.current.addScan(makeScan('TL002', 'a2')));
-      act(() => result.current.confirmScan());
-
-      expect(result.current.canLinkToPrevious).toBe(false);
-    });
-
-    it('false with only 1 scan', async () => {
-      const { result } = renderHook(() => useAssetCountMode());
-      await flushMicrotasks();
-
-      act(() => result.current.startCount('d1', 'Depot'));
-      act(() => result.current.addScan(makeScan('TL001', 'a1', 'trailer')));
-      act(() => result.current.confirmScan());
-
-      expect(result.current.canLinkToPrevious).toBe(false);
-    });
-
-    it('false before any scans', async () => {
-      const { result } = renderHook(() => useAssetCountMode());
-      await flushMicrotasks();
-
-      act(() => result.current.startCount('d1', 'Depot'));
-
-      expect(result.current.canLinkToPrevious).toBe(false);
-    });
-
-    it('previousScanForLink returns the correct scan object', async () => {
-      const { result } = renderHook(() => useAssetCountMode());
-      await flushMicrotasks();
-
-      act(() => result.current.startCount('d1', 'Depot'));
-      act(() => result.current.addScan(makeScan('TL001', 'a1', 'trailer')));
-      act(() => result.current.confirmScan());
-      act(() => result.current.addScan(makeScan('DL001', 'a2', 'dolly')));
-      act(() => result.current.confirmScan());
-
-      // After confirming DL001, lastUnlinkedScanIndex = 0 (TL001, preserved from first confirm)
-      expect(result.current.previousScanForLink).not.toBeNull();
-      expect(result.current.previousScanForLink!.assetNumber).toBe('TL001');
-    });
-
-    it('previousScanForLink is null when canLinkToPrevious is false', async () => {
-      const { result } = renderHook(() => useAssetCountMode());
-      await flushMicrotasks();
-
-      act(() => result.current.startCount('d1', 'Depot'));
-      act(() => result.current.addScan(makeScan('TL001', 'a1', 'trailer')));
-      act(() => result.current.confirmScan());
-
-      expect(result.current.previousScanForLink).toBeNull();
-    });
-
-    it('false when combo is at max size (5)', async () => {
-      const restoredState: AssetCountState = {
-        isActive: true,
-        sessionId: null,
-        depotId: DEPOT_UUID,
-        depotName: 'Depot',
-        scans: [
-          { type: 'combination', assetId: UUID1, assetNumber: 'TL001', timestamp: 1, combinationId: COMBO_UUID, combinationPosition: 1, category: 'trailer' },
-          { type: 'combination', assetId: UUID2, assetNumber: 'DL001', timestamp: 2, combinationId: COMBO_UUID, combinationPosition: 2, category: 'dolly' },
-          { type: 'combination', assetId: UUID3, assetNumber: 'TL002', timestamp: 3, combinationId: COMBO_UUID, combinationPosition: 3, category: 'trailer' },
-          { type: 'combination', assetId: '00000000-0000-4000-8000-000000000004', assetNumber: 'DL002', timestamp: 4, combinationId: COMBO_UUID, combinationPosition: 4, category: 'dolly' },
-          { type: 'combination', assetId: '00000000-0000-4000-8000-000000000005', assetNumber: 'TL003', timestamp: 5, combinationId: COMBO_UUID, combinationPosition: 5, category: 'trailer' },
-          { type: 'standalone', assetId: '00000000-0000-4000-8000-000000000006', assetNumber: 'DL003', timestamp: 6, category: 'dolly' },
-        ],
-        currentScan: null,
-        combinations: {
-          [COMBO_UUID]: {
-            combinationId: COMBO_UUID,
-            assetIds: [UUID1, UUID2, UUID3, '00000000-0000-4000-8000-000000000004', '00000000-0000-4000-8000-000000000005'],
-            assetNumbers: ['TL001', 'DL001', 'TL002', 'DL002', 'TL003'],
-            notes: null,
-            photoUri: null,
-            photoId: null,
-            assetCategories: ['trailer', 'dolly', 'trailer', 'dolly', 'trailer'],
-          },
-        },
-        lastUnlinkedScanIndex: 4,
-      };
-      mockGetItem.mockResolvedValue(JSON.stringify(restoredState));
-
-      const { result } = renderHook(() => useAssetCountMode());
-      await flushMicrotasks();
-
-      expect(result.current.canLinkToPrevious).toBe(false);
-    });
-  });
-
-  // ── linkToPrevious return value ──
-
-  describe('linkToPrevious return value', () => {
-    it('returns new UUID when linking two standalone scans', async () => {
-      const { result } = renderHook(() => useAssetCountMode());
-      await flushMicrotasks();
-
-      act(() => result.current.startCount('d1', 'Depot'));
-      act(() => result.current.addScan(makeScan('TL001', 'a1', 'trailer')));
-      act(() => result.current.confirmScan());
-      act(() => result.current.addScan(makeScan('DL001', 'a2', 'dolly')));
-      act(() => result.current.confirmScan());
-
-      let comboId: string | null = null;
-      act(() => { comboId = result.current.linkToPrevious(); });
-
-      expect(comboId).toBe('combo-uuid-1');
-    });
-
-    it('returns existing combinationId when previous scan is already in a combo (extend path)', async () => {
-      // The "extend combo" path requires lastUnlinkedScanIndex to point to a scan
-      // that's already in a combination. This is naturally tested at the reducer level.
-      // Here we verify the hook delegates correctly by using RESTORE to set up
-      // the needed state (lastUnlinkedScanIndex pointing into an existing combo).
-      // Must use valid UUIDs because RESTORE validates via Zod schema.
-      const restoredState: AssetCountState = {
-        isActive: true,
-        sessionId: null,
-        depotId: DEPOT_UUID,
-        depotName: 'Depot',
-        scans: [
-          { type: 'combination', assetId: UUID1, assetNumber: 'TL001', timestamp: 1, combinationId: COMBO_UUID, combinationPosition: 1, category: 'trailer' },
-          { type: 'combination', assetId: UUID2, assetNumber: 'DL001', timestamp: 2, combinationId: COMBO_UUID, combinationPosition: 2, category: 'dolly' },
-          { type: 'standalone', assetId: UUID3, assetNumber: 'TL002', timestamp: 3, category: 'trailer' },
-        ],
-        currentScan: null,
-        combinations: {
-          [COMBO_UUID]: {
-            combinationId: COMBO_UUID,
-            assetIds: [UUID1, UUID2],
-            assetNumbers: ['TL001', 'DL001'],
-            notes: null,
-            photoUri: null,
-            photoId: null,
-            assetCategories: ['trailer', 'dolly'],
-          },
-        },
-        // Points to DL001 (in the combo) — the "extend" scenario
-        lastUnlinkedScanIndex: 1,
-      };
-      mockGetItem.mockResolvedValue(JSON.stringify(restoredState));
-
-      const { result } = renderHook(() => useAssetCountMode());
-      await flushMicrotasks();
-
-      expect(result.current.isActive).toBe(true);
-      expect(result.current.scanCount).toBe(3);
-
-      let returnedId: string | null = null;
-      act(() => { returnedId = result.current.linkToPrevious(); });
-
-      // Should return the existing combo ID, not a new UUID
-      expect(returnedId).toBe(COMBO_UUID);
+      expect(result.current.isChainActive).toBe(false);
+      expect(result.current.activeChainId).toBeNull();
+      expect(result.current.activeChain).toBeNull();
+      expect(result.current.activeChainSize).toBe(0);
+      // Combination should still exist
       expect(result.current.combinationCount).toBe(1);
     });
 
-    it('returns null when no previous scan available', async () => {
+    it('endChain with 0 items discards chain', async () => {
       const { result } = renderHook(() => useAssetCountMode());
       await flushMicrotasks();
 
       act(() => result.current.startCount('d1', 'Depot'));
+      act(() => result.current.startChain());
+      act(() => result.current.endChain());
+
+      expect(result.current.isChainActive).toBe(false);
+      expect(result.current.combinationCount).toBe(0);
+    });
+
+    it('endChain with 1 item reverts to standalone', async () => {
+      const { result } = renderHook(() => useAssetCountMode());
+      await flushMicrotasks();
+
+      act(() => result.current.startCount('d1', 'Depot'));
+      act(() => result.current.startChain());
       act(() => result.current.addScan(makeScan('TL001', 'a1', 'trailer')));
       act(() => result.current.confirmScan());
+      act(() => result.current.endChain());
 
-      let comboId: string | null = 'not-null';
-      act(() => { comboId = result.current.linkToPrevious(); });
-
-      expect(comboId).toBeNull();
+      expect(result.current.isChainActive).toBe(false);
+      expect(result.current.combinationCount).toBe(0);
+      expect(result.current.standaloneCount).toBe(1);
+      expect(result.current.scans[0]!.type).toBe('standalone');
     });
   });
 
@@ -519,6 +363,7 @@ describe('useAssetCountMode', () => {
         currentScan: null,
         combinations: {},
         lastUnlinkedScanIndex: 0,
+        activeChainId: null,
       };
       mockGetItem.mockResolvedValue(JSON.stringify(savedState));
 
@@ -551,6 +396,7 @@ describe('useAssetCountMode', () => {
         currentScan: null,
         combinations: {},
         lastUnlinkedScanIndex: null,
+        activeChainId: null,
       };
       mockGetItem.mockResolvedValue(JSON.stringify(inactiveState));
 

@@ -96,6 +96,8 @@ export interface AssetCountState {
   combinations: Record<string, CombinationGroup>;
   /** Last scan that was standalone (candidate for linking) */
   lastUnlinkedScanIndex: number | null;
+  /** Active chain ID — when set, all scans are added to this chain's combination */
+  activeChainId: string | null;
 }
 
 // ── Database Row Types ──
@@ -272,6 +274,7 @@ export const AssetCountStateSchema = z.object({
   currentScan: AssetScanSchema.nullable(),
   combinations: z.record(z.string(), CombinationGroupSchema),
   lastUnlinkedScanIndex: z.number().int().nullable(),
+  activeChainId: z.string().uuid().nullable().optional(),
 });
 
 // ── Type Guards ──

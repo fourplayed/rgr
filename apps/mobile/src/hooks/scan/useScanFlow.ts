@@ -24,8 +24,7 @@ export interface AlertSheetState {
  */
 export type PostConfirmAction =
   | { type: 'defectReport' }
-  | { type: 'photoPrompt' }
-  | { type: 'assetCountLink' };
+  | { type: 'photoPrompt' };
 
 interface ConfirmScanOptions {
   isAssetCountActive: boolean;
@@ -278,11 +277,6 @@ export function useScanFlow() {
 
         setShowConfirmSheet(false);
         setMarkForMaintenance(false);
-
-        if (opts.assetCountScansLength >= 1) {
-          addDebugLog('Asset count: checking for link option');
-          return { type: 'assetCountLink' };
-        }
         return null;
       }
 
