@@ -37,7 +37,12 @@ let currentConfig: SupabaseConfig | null = null;
  */
 export function initSupabase(config: SupabaseConfig): SupabaseClient {
   // Return existing client if already initialized
-  if (supabaseClient) return supabaseClient;
+  if (supabaseClient) {
+    if (config.url !== currentConfig?.url) {
+      console.warn('[initSupabase] Called with different URL but client already initialized');
+    }
+    return supabaseClient;
+  }
 
   if (!config.url || !config.anonKey) {
     throw new Error(

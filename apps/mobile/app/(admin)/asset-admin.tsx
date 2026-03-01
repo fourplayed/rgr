@@ -15,9 +15,11 @@ import {
   AssetStatusLabels,
   AssetStatusColors,
   AssetStatus,
+  getDepotBadgeColors,
 } from '@rgr/shared';
 import type { AssetWithRelations } from '@rgr/shared';
 import { useAssetList } from '../../src/hooks/useAssetData';
+import { useDepotLookup } from '../../src/hooks/useDepots';
 import {
   useDeleteAsset,
   useBulkUpdateStatus,
@@ -52,6 +54,8 @@ export default function AssetAdminScreen() {
   });
 
   const assets = data?.data ?? [];
+
+  const depotLookup = useDepotLookup();
 
   const deleteMutation = useDeleteAsset();
   const bulkStatusMutation = useBulkUpdateStatus();
@@ -131,6 +135,8 @@ export default function AssetAdminScreen() {
       const statusColor =
         AssetStatusColors[item.status as keyof typeof AssetStatusColors] ||
         colors.electricBlue;
+      const depot = item.depotCode ? depotLookup.byCode.get(item.depotCode.toLowerCase()) ?? null : null;
+      const depotBadgeColors = item.depotCode ? getDepotBadgeColors(depot, colors.chrome, colors.text) : null;
 
       return (
         <TouchableOpacity
@@ -165,25 +171,31 @@ export default function AssetAdminScreen() {
           <View style={styles.assetInfo}>
             <View style={styles.assetHeaderRow}>
               <Text style={styles.assetNumber}>{item.assetNumber}</Text>
-              <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
-                <Text style={styles.statusBadgeText}>
-                  {AssetStatusLabels[item.status as keyof typeof AssetStatusLabels] || item.status}
-                </Text>
+              <View style={styles.badgeRow}>
+                {item.depotName && depotBadgeColors && (
+                  <View style={[styles.depotBadge, { backgroundColor: depotBadgeColors.bg }]}>
+                    <Text style={[styles.depotBadgeText, { color: depotBadgeColors.text }]}>
+                      {item.depotName}
+                    </Text>
+                  </View>
+                )}
+                <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
+                  <Text style={styles.statusBadgeText}>
+                    {AssetStatusLabels[item.status as keyof typeof AssetStatusLabels] || item.status}
+                  </Text>
+                </View>
               </View>
             </View>
             <View style={styles.assetFooterRow}>
               <Text style={styles.assetSubtext} numberOfLines={1}>
                 {item.subtype || item.category}
               </Text>
-              {item.depotCode && (
-                <Text style={styles.assetDepot}>{item.depotCode.toUpperCase()}</Text>
-              )}
             </View>
           </View>
         </TouchableOpacity>
       );
     },
-    [selectedIds, toggleSelection, handleOpenPhotos]
+    [selectedIds, toggleSelection, handleOpenPhotos, depotLookup]
   );
 
   const renderEmpty = useCallback(
@@ -546,6 +558,11 @@ const styles = StyleSheet.create({
     fontFamily: 'Lato_700Bold',
     color: colors.text,
   },
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
   statusBadge: {
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
@@ -555,6 +572,16 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     fontFamily: 'Lato_700Bold',
     color: colors.textInverse,
+    textTransform: 'uppercase',
+  },
+  depotBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: borderRadius.sm,
+  },
+  depotBadgeText: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_700Bold',
     textTransform: 'uppercase',
   },
   assetFooterRow: {
@@ -567,11 +594,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
-  },
-  assetDepot: {
-    fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
-    color: colors.electricBlue,
   },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   centerContent: {

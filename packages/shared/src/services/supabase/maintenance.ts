@@ -128,27 +128,34 @@ export async function listMaintenance(
     return { success: false, data: null, error: `Failed to list maintenance: ${error.message}` };
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const items: MaintenanceListItem[] = (data || []).map((row: any) => {
-    // Handle joined relations which may be object or null
-    const reporter = row.reporter;
-    const asset = row.asset;
+  interface MaintenanceListRow {
+    id: string;
+    asset_id: string;
+    title: string;
+    priority: MaintenancePriority;
+    status: MaintenanceStatus;
+    maintenance_type: string | null;
+    scheduled_date: string | null;
+    due_date: string | null;
+    created_at: string;
+    reporter: { full_name: string } | null;
+    asset: { asset_number: string; category: string } | null;
+  }
 
-    return {
-      id: row.id,
-      assetId: row.asset_id,
-      title: row.title,
-      priority: row.priority as MaintenancePriority,
-      status: row.status as MaintenanceStatus,
-      maintenanceType: row.maintenance_type,
-      scheduledDate: row.scheduled_date,
-      dueDate: row.due_date,
-      createdAt: row.created_at,
-      reporterName: reporter?.full_name ?? null,
-      assetNumber: asset?.asset_number ?? null,
-      assetCategory: asset?.category ?? null,
-    };
-  });
+  const items: MaintenanceListItem[] = ((data || []) as unknown as MaintenanceListRow[]).map((row) => ({
+    id: row.id,
+    assetId: row.asset_id,
+    title: row.title,
+    priority: row.priority,
+    status: row.status,
+    maintenanceType: row.maintenance_type,
+    scheduledDate: row.scheduled_date,
+    dueDate: row.due_date,
+    createdAt: row.created_at,
+    reporterName: row.reporter?.full_name ?? null,
+    assetNumber: row.asset?.asset_number ?? null,
+    assetCategory: row.asset?.category ?? null,
+  }));
 
   return { success: true, data: items, error: null };
 }
@@ -264,16 +271,16 @@ export async function updateMaintenanceStatus(
   }
 
   // Build update payload with auto-timestamps
-  const updates: Record<string, unknown> = { status: newStatus };
+  const updates: { status: MaintenanceStatus; started_at?: string; completed_at?: string; actual_cost?: number } = { status: newStatus };
 
   if (newStatus === 'in_progress' && currentStatus === 'scheduled') {
-    updates['started_at'] = new Date().toISOString();
+    updates.started_at = new Date().toISOString();
   }
 
   if (newStatus === 'completed' && currentStatus === 'in_progress') {
-    updates['completed_at'] = new Date().toISOString();
+    updates.completed_at = new Date().toISOString();
     if (actualCost !== undefined) {
-      updates['actual_cost'] = actualCost;
+      updates.actual_cost = actualCost;
     }
   }
 
@@ -281,10 +288,14 @@ export async function updateMaintenanceStatus(
     .from('maintenance_records')
     .update(updates)
     .eq('id', id)
+    .eq('status', currentStatus)
     .select()
     .single();
 
   if (error) {
+    if (error.code === 'PGRST116') {
+      return { success: false, data: null, error: 'Status was changed by another request. Please refresh and try again.' };
+    }
     return { success: false, data: null, error: `Failed to update status: ${error.message}` };
   }
 

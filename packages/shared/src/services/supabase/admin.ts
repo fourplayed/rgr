@@ -45,7 +45,8 @@ export async function listProfiles(
       .select('*', { count: 'exact' });
 
     if (search) {
-      query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%`);
+      const safeSearch = search.replace(/[%_\\,().]/g, (c) => `\\${c}`);
+      query = query.or(`full_name.ilike.%${safeSearch}%,email.ilike.%${safeSearch}%`);
     }
 
     if (roles && roles.length > 0) {
@@ -127,7 +128,8 @@ export async function listAllDepots(): Promise<ServiceResult<Depot[]>> {
     const { data, error } = await supabase
       .from('depots')
       .select('*')
-      .order('name', { ascending: true });
+      .order('name', { ascending: true })
+      .limit(500);
 
     if (error) {
       return { success: false, data: null, error: error.message };
@@ -240,9 +242,14 @@ export async function deleteAsset(
         status: 'out_of_service',
       })
       .eq('id', id)
-      .is('deleted_at', null);
+      .is('deleted_at', null)
+      .select('id')
+      .single();
 
     if (error) {
+      if (error.code === 'PGRST116') {
+        return { success: false, data: null, error: 'Asset not found or already deleted' };
+      }
       return { success: false, data: null, error: error.message };
     }
 

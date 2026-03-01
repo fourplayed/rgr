@@ -1,4 +1,5 @@
 import { useReducer, useCallback, useEffect, useRef, useMemo } from 'react';
+import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from '../utils/logger';
 import type {
@@ -27,6 +28,9 @@ export function useAssetCountMode() {
   const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Guard to skip redundant persistence write immediately after a RESTORE dispatch
   const isRestoredRef = useRef(false);
+  // Always-current state ref for AppState background flush
+  const stateRef = useRef(state);
+  stateRef.current = state;
 
   // Persist to AsyncStorage after state changes (debounced)
   useEffect(() => {
@@ -61,6 +65,21 @@ export function useAssetCountMode() {
       }
     };
   }, [state]);
+
+  // Flush pending state to AsyncStorage when app goes to background
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'background' && persistTimeoutRef.current) {
+        clearTimeout(persistTimeoutRef.current);
+        persistTimeoutRef.current = null;
+        const current = stateRef.current;
+        if (current.isActive) {
+          AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(current)).catch(() => {});
+        }
+      }
+    });
+    return () => sub.remove();
+  }, []);
 
   // Restore from AsyncStorage on mount
   useEffect(() => {

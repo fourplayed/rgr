@@ -2,13 +2,14 @@ import React, { memo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import type { AssetWithRelations, AssetStatus } from '@rgr/shared';
 import { formatRelativeTime, AssetStatusColors, AssetStatusLabels, getDepotBadgeColors } from '@rgr/shared';
-import { useDepotLookup } from '../../hooks/useDepots';
+import type { useDepotLookup } from '../../hooks/useDepots';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 
-interface AssetListItemProps {
+export interface AssetListItemProps {
   asset: AssetWithRelations;
   onPress: (asset: AssetWithRelations) => void;
+  depotLookup: ReturnType<typeof useDepotLookup>;
 }
 
 const getStatusLabel = (status: AssetStatus): string => {
@@ -19,8 +20,7 @@ const getStatusColor = (status: AssetStatus): string => {
   return AssetStatusColors[status] || colors.electricBlue;
 };
 
-function AssetListItemComponent({ asset, onPress }: AssetListItemProps) {
-  const depotLookup = useDepotLookup();
+function AssetListItemComponent({ asset, onPress, depotLookup }: AssetListItemProps) {
   const lastScanText = asset.lastLocationUpdatedAt
     ? formatRelativeTime(asset.lastLocationUpdatedAt)
     : 'Never scanned';
@@ -78,7 +78,8 @@ export const AssetListItem = memo(
     prevProps.asset.depotCode === nextProps.asset.depotCode &&
     prevProps.asset.lastLocationUpdatedAt === nextProps.asset.lastLocationUpdatedAt &&
     prevProps.asset.subtype === nextProps.asset.subtype &&
-    prevProps.onPress === nextProps.onPress
+    prevProps.onPress === nextProps.onPress &&
+    prevProps.depotLookup === nextProps.depotLookup
 );
 
 const styles = StyleSheet.create({

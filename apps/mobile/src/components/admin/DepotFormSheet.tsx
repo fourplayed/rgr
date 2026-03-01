@@ -59,7 +59,7 @@ export function DepotFormSheet({
       }
       setError(null);
     }
-  }, [visible, depot, depotName, depotCode, depotAddress, depotIsActive]);
+  }, [visible, isEdit, depotName, depotCode, depotAddress, depotIsActive]);
 
   const isValid = name.trim() && code.trim();
 

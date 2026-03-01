@@ -17,7 +17,7 @@ const HEADER_GRADIENT_COLORS = ['#0000DD', '#000099'] as const;
 export function UserProfileHeader() {
   const router = useRouter();
   const segments = useSegments();
-  const { logout } = useAuthStore();
+  const logout = useAuthStore(s => s.logout);
   const insets = useSafeAreaInsets();
 
   // Show back button on detail pages (e.g., assets/[id])

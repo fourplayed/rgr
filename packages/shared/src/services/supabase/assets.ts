@@ -462,11 +462,29 @@ export async function getAssetByQRCode(
 }
 
 /**
+ * Get total count of all scan events (server-side COUNT).
+ */
+export async function getTotalScanCount(): Promise<ServiceResult<number>> {
+  const supabase = getSupabaseClient();
+
+  const { count, error } = await supabase
+    .from('scan_events')
+    .select('id', { count: 'exact', head: true });
+
+  if (error) {
+    return { success: false, data: null, error: `Failed to fetch scan count: ${error.message}` };
+  }
+
+  return { success: true, data: count ?? 0, error: null };
+}
+
+/**
  * Get recent scans across all users (global activity).
  */
 export async function getRecentScans(
   limit: number = 50
 ): Promise<ServiceResult<ScanEventWithScanner[]>> {
+  const safeLimit = Math.min(Math.max(limit, 1), 200);
   const supabase = getSupabaseClient();
 
   const { data, error } = await supabase
@@ -477,7 +495,7 @@ export async function getRecentScans(
       assets!inner(asset_number, category)
     `)
     .order('created_at', { ascending: false })
-    .limit(limit);
+    .limit(safeLimit);
 
   if (error) {
     return { success: false, data: null, error: `Failed to fetch recent scans: ${error.message}` };
@@ -504,6 +522,7 @@ export async function getMyRecentScans(
   userId: string,
   limit: number = 50
 ): Promise<ServiceResult<ScanEventWithScanner[]>> {
+  const safeLimit = Math.min(Math.max(limit, 1), 200);
   const supabase = getSupabaseClient();
 
   const { data, error } = await supabase
@@ -515,7 +534,7 @@ export async function getMyRecentScans(
     `)
     .eq('scanned_by', userId)
     .order('created_at', { ascending: false })
-    .limit(limit);
+    .limit(safeLimit);
 
   if (error) {
     return { success: false, data: null, error: `Failed to fetch recent scans: ${error.message}` };

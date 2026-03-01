@@ -26,7 +26,7 @@ interface UseQRScannerResult {
  * Includes a 30-second safety timeout to prevent permanently stuck scanner state
  */
 export function useQRScanner(
-  onScan?: (data: string) => void,
+  onScan?: (data: string) => void | Promise<void>,
   debounceMs: number = 2000
 ): UseQRScannerResult {
   const [scannedData, setScannedData] = useState<QRScanResult | null>(null);

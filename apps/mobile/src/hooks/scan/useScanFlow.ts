@@ -175,10 +175,14 @@ export function useScanFlow() {
             });
 
             if (nearestDepot) {
-              await updateAssetMutation({
-                id: asset.id,
-                input: { assignedDepotId: nearestDepot.depot.id },
-              });
+              try {
+                await updateAssetMutation({
+                  id: asset.id,
+                  input: { assignedDepotId: nearestDepot.depot.id },
+                });
+              } catch (depotError) {
+                logger.warn('Depot update failed after successful scan:', depotError);
+              }
             }
 
             await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -267,12 +271,16 @@ export function useScanFlow() {
       logger.scan('Scan event created successfully');
 
       if (matchedDepot) {
-        logger.scan(`Updating asset depot to ${matchedDepot.depot.name}...`);
-        await updateAssetMutation({
-          id: scannedAsset.id,
-          input: { assignedDepotId: matchedDepot.depot.id },
-        });
-        logger.scan('Asset depot updated');
+        try {
+          logger.scan(`Updating asset depot to ${matchedDepot.depot.name}...`);
+          await updateAssetMutation({
+            id: scannedAsset.id,
+            input: { assignedDepotId: matchedDepot.depot.id },
+          });
+          logger.scan('Asset depot updated');
+        } catch (depotError) {
+          logger.warn('Depot update failed after successful scan:', depotError);
+        }
       }
 
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

@@ -14,6 +14,7 @@ import { LoadingDots } from '../../../src/components/common/LoadingDots';
 import { useRouter } from 'expo-router';
 import type { AssetStatus, AssetCategory, AssetWithRelations } from '@rgr/shared';
 import { useAssetList, useDepots } from '../../../src/hooks/useAssetData';
+import { useDepotLookup } from '../../../src/hooks/useDepots';
 import { useDebounce } from '../../../src/hooks/useDebounce';
 import { AssetListItem } from '../../../src/components/assets/AssetListItem';
 import { AssetFilterPanel } from '../../../src/components/assets/AssetFilterPanel';
@@ -58,8 +59,9 @@ export default function AssetListScreen() {
   // Debounce search input to avoid triggering queries on every keystroke
   const debouncedSearch = useDebounce(searchInput, 300);
 
-  // Fetch depots for filter panel
+  // Fetch depots for filter panel and list item display
   const { data: depots = [] } = useDepots();
+  const depotLookup = useDepotLookup();
 
   // Build query filters
   const queryFilters: {
@@ -130,8 +132,8 @@ export default function AssetListScreen() {
 
   // Memoized renderItem for FlatList - critical for list performance
   const renderAssetItem = useCallback(({ item }: { item: AssetWithRelations }) => (
-    <AssetListItem asset={item} onPress={handleAssetPress} />
-  ), [handleAssetPress]);
+    <AssetListItem asset={item} onPress={handleAssetPress} depotLookup={depotLookup} />
+  ), [handleAssetPress, depotLookup]);
 
   return (
     <View style={styles.container}>

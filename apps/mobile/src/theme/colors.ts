@@ -21,13 +21,13 @@ export const colors = {
     inspection: '#3B82F6',
   },
 
-  // Maintenance status
+  // Maintenance status (keys match MaintenanceStatus enum values)
   maintenanceStatus: {
     scheduled: '#3B82F6',
-    inProgress: '#F59E0B',
+    in_progress: '#F59E0B',
     completed: '#22C55E',
     cancelled: '#6B7280',
-  },
+  } as Record<string, string>,
 
   // Maintenance priority
   maintenancePriority: {

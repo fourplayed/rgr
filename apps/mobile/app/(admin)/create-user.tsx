@@ -297,7 +297,6 @@ export default function CreateUserScreen() {
 
       <CreateUserOverlay
         visible={showOverlay}
-        isPending={createMutation.isPending}
         isSuccess={createMutation.isSuccess}
         isError={createMutation.isError}
         error={overlayError}

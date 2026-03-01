@@ -60,6 +60,7 @@ export function formatRelativeTime(date: string | Date): string {
   const d = typeof date === 'string' ? new Date(date) : date;
   const now = new Date();
   const diffMs = now.getTime() - d.getTime();
+  if (diffMs < 0) return 'just now';
   const diffSecs = Math.floor(diffMs / 1000);
   const diffMins = Math.floor(diffSecs / 60);
   const diffHours = Math.floor(diffMins / 60);
@@ -107,23 +108,25 @@ export async function retry<T>(
 }
 
 /**
- * Debounce a function
+ * Debounce a function. Returns a debounced version with a `.cancel()` method.
  */
-export function debounce<T extends (...args: unknown[]) => unknown>(
-  fn: T,
+export function debounce<A extends unknown[]>(
+  fn: (...args: A) => void,
   delayMs: number
-): (...args: Parameters<T>) => void {
+): ((...args: A) => void) & { cancel: () => void } {
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
-  return (...args: Parameters<T>) => {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
-
-    timeoutId = setTimeout(() => {
-      fn(...args);
-    }, delayMs);
+  const debounced = (...args: A) => {
+    if (timeoutId) clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => fn(...args), delayMs);
   };
+
+  debounced.cancel = () => {
+    if (timeoutId) clearTimeout(timeoutId);
+    timeoutId = undefined;
+  };
+
+  return debounced;
 }
 
 /**
@@ -143,13 +146,6 @@ export function throttle<T extends (...args: unknown[]) => unknown>(
       fn(...args);
     }
   };
-}
-
-/**
- * Deep clone an object
- */
-export function deepClone<T>(obj: T): T {
-  return JSON.parse(JSON.stringify(obj));
 }
 
 /**

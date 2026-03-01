@@ -171,6 +171,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isLoading: false,
       });
     } catch (error) {
+      logger.error('Auth check failed:', error);
       set({
         user: null,
         isAuthenticated: false,
@@ -200,16 +201,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       // Check if token has expired before attempting to use it
       // This prevents unnecessary network requests with known-expired tokens
-      if (storedSession.expires_at !== undefined && typeof storedSession.expires_at === 'number') {
-        const expiresAt = storedSession.expires_at * 1000; // Convert to milliseconds
-        const now = Date.now();
-        const bufferMs = 60 * 1000; // 1 minute buffer to account for clock skew
-        if (now >= expiresAt - bufferMs) {
-          // Token expired or about to expire, clear and require fresh login
-          await clearSession();
-          set({ authError: 'Session expired. Please log in again.' });
-          return false;
-        }
+      if (storedSession.expires_at === undefined || typeof storedSession.expires_at !== 'number') {
+        logger.warn('Stored session missing expires_at, requiring re-authentication');
+        await clearSession();
+        set({ authError: 'Session expired. Please log in again.' });
+        return false;
+      }
+
+      const expiresAt = storedSession.expires_at * 1000; // Convert to milliseconds
+      const now = Date.now();
+      const bufferMs = 60 * 1000; // 1 minute buffer to account for clock skew
+      if (now >= expiresAt - bufferMs) {
+        // Token expired or about to expire, clear and require fresh login
+        await clearSession();
+        set({ authError: 'Session expired. Please log in again.' });
+        return false;
       }
 
       // Restore session using stored tokens (not password)

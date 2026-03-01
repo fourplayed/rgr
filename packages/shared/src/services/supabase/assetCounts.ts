@@ -83,8 +83,8 @@ export async function completeAssetCountSession(
 ): Promise<ServiceResult<AssetCountSession>> {
   const supabase = getSupabaseClient();
 
-  const updateData: { status: string; completed_at: string; notes?: string | null } = {
-    status: 'completed',
+  const updateData: { status: 'completed'; completed_at: string; notes?: string | null } = {
+    status: 'completed' as const,
     completed_at: new Date().toISOString(),
   };
 
@@ -92,14 +92,19 @@ export async function completeAssetCountSession(
     updateData.notes = notes;
   }
 
+  // Only allow completing sessions that are in_progress (guard against double-complete)
   const { data, error } = await supabase
     .from('asset_count_sessions')
     .update(updateData)
     .eq('id', sessionId)
+    .eq('status', 'in_progress')
     .select()
     .single();
 
   if (error) {
+    if (error.code === 'PGRST116') {
+      return { success: false, data: null, error: 'Session not found or not in progress' };
+    }
     return { success: false, data: null, error: `Failed to complete session: ${error.message}` };
   }
 
@@ -423,19 +428,41 @@ export async function submitAssetCount(
   const sessionId = sessionResult.data.id;
 
   try {
-    // Create all items
-    for (const item of input.items) {
-      const itemResult = await createAssetCountItem({
-        sessionId,
-        assetId: item.assetId,
-        combinationId: item.combinationId,
-        combinationPosition: item.combinationPosition,
+    // Bulk insert items via RPC (atomic, with duplicate handling)
+    const supabase = getSupabaseClient();
+    try {
+      const rpcItems = input.items.map((item) => ({
+        asset_id: item.assetId,
+        combination_id: item.combinationId ?? '',
+        combination_position: item.combinationPosition,
+      }));
+
+      const { data: insertedCount, error: rpcError } = await supabase.rpc('submit_asset_count_items', {
+        p_session_id: sessionId,
+        p_items: rpcItems,
       });
 
-      if (!itemResult.success) {
-        // Cancel session on failure
-        await cancelAssetCountSession(sessionId);
-        return { success: false, data: null, error: itemResult.error };
+      if (rpcError) throw rpcError;
+
+      if (typeof insertedCount === 'number' && insertedCount < input.items.length) {
+        // Some items were duplicates — warn but don't fail
+        console.warn(`${input.items.length - insertedCount} duplicate items skipped`);
+      }
+    } catch (rpcError) {
+      // Fallback to sequential inserts if RPC not available
+      console.warn('RPC unavailable, falling back to sequential inserts:', rpcError);
+      for (const item of input.items) {
+        const itemResult = await createAssetCountItem({
+          sessionId,
+          assetId: item.assetId,
+          combinationId: item.combinationId,
+          combinationPosition: item.combinationPosition,
+        });
+
+        if (!itemResult.success) {
+          await cancelAssetCountSession(sessionId);
+          return { success: false, data: null, error: itemResult.error };
+        }
       }
     }
 
@@ -523,8 +550,7 @@ export async function listAssetCountSessions(
   let query = supabase
     .from('asset_count_sessions')
     .select(
-      '*, counter:counted_by(full_name), depot:depot_id(name, code)',
-      { count: 'estimated' }
+      '*, counter:counted_by(full_name), depot:depot_id(name, code)'
     );
 
   if (depotId) {
@@ -534,16 +560,20 @@ export async function listAssetCountSessions(
   query = query
     .eq('status', status)
     .order('started_at', { ascending: false })
-    .range(from, to);
+    .limit(pageSize + 1)
+    .range(from, from + pageSize);
 
-  const { data, error, count } = await query;
+  const { data, error } = await query;
 
   if (error) {
     return { success: false, data: null, error: `Failed to list sessions: ${error.message}` };
   }
 
-  const total = count ?? 0;
-  const sessions: AssetCountSessionWithNames[] = ((data || []) as SessionListRow[]).map((row) => {
+  const rows = (data || []) as SessionListRow[];
+  const hasMore = rows.length > pageSize;
+  const pageRows = hasMore ? rows.slice(0, pageSize) : rows;
+
+  const sessions: AssetCountSessionWithNames[] = pageRows.map((row) => {
     const { counter, depot, ...sessionRow } = row;
     const session = mapRowToAssetCountSession(sessionRow as AssetCountSessionRow);
     return {
@@ -554,14 +584,17 @@ export async function listAssetCountSessions(
     };
   });
 
+  // Estimate total from current page position
+  const estimatedTotal = hasMore ? (page * pageSize) + 1 : ((page - 1) * pageSize) + pageRows.length;
+
   return {
     success: true,
     data: {
       data: sessions,
-      total,
+      total: estimatedTotal,
       page,
       pageSize,
-      totalPages: Math.ceil(total / pageSize),
+      totalPages: hasMore ? page + 1 : page,
     },
     error: null,
   };
@@ -626,22 +659,25 @@ export interface AssetCountSummary {
 export async function getAssetCountSummary(
   sessionId: string
 ): Promise<ServiceResult<AssetCountSummary>> {
-  const sessionResult = await getAssetCountSession(sessionId);
+  const [sessionResult, itemsResult, metadataResult, photosResult] = await Promise.all([
+    getAssetCountSession(sessionId),
+    getSessionItems(sessionId),
+    getSessionCombinationMetadata(sessionId),
+    getSessionCombinationPhotos(sessionId),
+  ]);
+
   if (!sessionResult.success) {
-    return sessionResult;
+    return { success: false, data: null, error: sessionResult.error };
   }
 
-  const itemsResult = await getSessionItems(sessionId);
   if (!itemsResult.success) {
     return { success: false, data: null, error: itemsResult.error };
   }
 
-  const metadataResult = await getSessionCombinationMetadata(sessionId);
   if (!metadataResult.success) {
     return { success: false, data: null, error: metadataResult.error };
   }
 
-  const photosResult = await getSessionCombinationPhotos(sessionId);
   if (!photosResult.success) {
     return { success: false, data: null, error: photosResult.error };
   }

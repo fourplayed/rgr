@@ -448,7 +448,6 @@ export default function CreateAssetScreen() {
 
       <CreateAssetOverlay
         visible={showOverlay}
-        isPending={createMutation.isPending}
         isSuccess={createMutation.isSuccess}
         isError={createMutation.isError}
         error={overlayError}

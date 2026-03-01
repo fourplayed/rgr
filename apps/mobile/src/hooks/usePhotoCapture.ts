@@ -106,10 +106,15 @@ export function usePhotoCapture() {
       setIsUploading(true);
       setUploadError(null);
 
-      // Pre-check file size before uploading
+      // Pre-check file existence and size before uploading
       const fileInfo = await FileSystem.getInfoAsync(capturedUri, { size: true });
-      if (!fileInfo.exists || (fileInfo.size !== undefined && fileInfo.size > MAX_PHOTO_SIZE_BYTES)) {
-        setUploadError(`Photo is too large. Maximum size is ${MAX_PHOTO_SIZE_BYTES / (1024 * 1024)}MB.`);
+      if (!fileInfo.exists) {
+        setUploadError('Photo file not found. Please try taking the photo again.');
+        setIsUploading(false);
+        return false;
+      }
+      if (fileInfo.size !== undefined && fileInfo.size > MAX_PHOTO_SIZE_BYTES) {
+        setUploadError(`Photo is too large (max ${MAX_PHOTO_SIZE_BYTES / (1024 * 1024)}MB). Please retake the photo.`);
         setIsUploading(false);
         return false;
       }

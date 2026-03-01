@@ -77,6 +77,11 @@ export async function uploadPhoto(
 ): Promise<ServiceResult<Photo>> {
   const { assetId, scanEventId, uploadedBy, photoType, fileUri, mimeType = 'image/jpeg', locationDescription, latitude, longitude, width, height, thumbnailFileUri } = options;
 
+  const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+  if (!ALLOWED_MIME_TYPES.includes(mimeType)) {
+    return { success: false, data: null, error: `Unsupported image type: ${mimeType}` };
+  }
+
   const supabase = getSupabaseClient();
 
   // Generate unique filename
@@ -305,41 +310,48 @@ export async function getPhotoById(
 ): Promise<ServiceResult<PhotoWithAnalysis>> {
   const supabase = getSupabaseClient();
 
-  // Get photo with freight analysis (excluding raw_response for performance)
-  const { data: photoData, error: photoError } = await supabase
-    .from('photos')
-    .select(`
-      *,
-      freight_analysis!left(
-        id,
-        photo_id,
-        asset_id,
-        analyzed_by_user,
-        primary_category,
-        secondary_categories,
-        description,
-        confidence,
-        estimated_weight_kg,
-        load_distribution_score,
-        restraint_count,
-        hazard_count,
-        max_severity,
-        requires_acknowledgment,
-        blocked_from_departure,
-        model_version,
-        processing_duration_ms,
-        created_at,
-        updated_at
-      )
-    `)
-    .eq('id', photoId)
-    .maybeSingle();
+  // Fetch photo with freight analysis and hazard alerts in parallel
+  const [photoResult, alertsResult] = await Promise.all([
+    supabase
+      .from('photos')
+      .select(`
+        *,
+        freight_analysis!left(
+          id,
+          photo_id,
+          asset_id,
+          analyzed_by_user,
+          primary_category,
+          secondary_categories,
+          description,
+          confidence,
+          estimated_weight_kg,
+          load_distribution_score,
+          restraint_count,
+          hazard_count,
+          max_severity,
+          requires_acknowledgment,
+          blocked_from_departure,
+          model_version,
+          processing_duration_ms,
+          created_at,
+          updated_at
+        )
+      `)
+      .eq('id', photoId)
+      .maybeSingle(),
+    supabase
+      .from('hazard_alerts')
+      .select('*')
+      .eq('photo_id', photoId)
+      .order('severity', { ascending: true }),
+  ]);
 
-  if (photoError) {
-    return { success: false, data: null, error: `Failed to fetch photo: ${photoError.message}` };
+  if (photoResult.error) {
+    return { success: false, data: null, error: `Failed to fetch photo: ${photoResult.error.message}` };
   }
 
-  if (!photoData) {
+  if (!photoResult.data) {
     return { success: false, data: null, error: 'Photo not found' };
   }
 
@@ -347,30 +359,21 @@ export async function getPhotoById(
     freight_analysis: Omit<FreightAnalysisRow, 'raw_response'> & { raw_response?: never } | null;
   }
 
-  const row = photoData as unknown as PhotoWithAnalysisRow;
+  const row = photoResult.data as unknown as PhotoWithAnalysisRow;
   const { freight_analysis, ...photoRow } = row;
   const photo = mapRowToPhoto(photoRow as PhotoRow);
 
-  // Get hazard alerts if we have a freight analysis
   let hazardAlerts: HazardAlert[] = [];
   let freightAnalysis: FreightAnalysis | null = null;
 
   if (freight_analysis) {
-    // Map freight analysis (add null raw_response since we excluded it)
     freightAnalysis = mapRowToFreightAnalysis({
       ...freight_analysis,
       raw_response: null,
     } as FreightAnalysisRow);
 
-    // Fetch hazard alerts for this photo
-    const { data: alertsData, error: alertsError } = await supabase
-      .from('hazard_alerts')
-      .select('*')
-      .eq('photo_id', photoId)
-      .order('severity', { ascending: true }); // critical first
-
-    if (!alertsError && alertsData) {
-      hazardAlerts = alertsData.map((alertRow: HazardAlertRow) => mapRowToHazardAlert(alertRow));
+    if (!alertsResult.error && alertsResult.data) {
+      hazardAlerts = alertsResult.data.map((alertRow: HazardAlertRow) => mapRowToHazardAlert(alertRow));
     }
   }
 
@@ -393,18 +396,20 @@ export async function deletePhoto(
 ): Promise<ServiceResult<void>> {
   const supabase = getSupabaseClient();
 
-  // First get the photo to find storage path
-  const { data: photo, error: fetchError } = await supabase
+  // Delete from database and retrieve storage paths in a single query
+  // (cascades to freight_analysis and hazard_alerts via FK)
+  const { data: photo, error: dbError } = await supabase
     .from('photos')
-    .select('storage_path, thumbnail_path')
+    .delete()
     .eq('id', photoId)
+    .select('storage_path, thumbnail_path')
     .single();
 
-  if (fetchError) {
-    if (fetchError.code === 'PGRST116') {
+  if (dbError) {
+    if (dbError.code === 'PGRST116') {
       return { success: false, data: null, error: 'Photo not found' };
     }
-    return { success: false, data: null, error: `Failed to fetch photo: ${fetchError.message}` };
+    return { success: false, data: null, error: `Failed to delete photo: ${dbError.message}` };
   }
 
   // Delete from storage
@@ -419,17 +424,7 @@ export async function deletePhoto(
 
   if (storageError) {
     console.warn(`Failed to delete photo from storage: ${storageError.message}`);
-    // Continue with database deletion even if storage fails
-  }
-
-  // Delete from database (cascades to freight_analysis and hazard_alerts via FK)
-  const { error: dbError } = await supabase
-    .from('photos')
-    .delete()
-    .eq('id', photoId);
-
-  if (dbError) {
-    return { success: false, data: null, error: `Failed to delete photo: ${dbError.message}` };
+    // DB record already deleted; storage cleanup is best-effort
   }
 
   return { success: true, data: undefined, error: null };

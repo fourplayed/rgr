@@ -2,6 +2,7 @@ import React, { memo, useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { AuditLogWithUser } from '@rgr/shared';
+import { formatRelativeTime } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 
@@ -23,24 +24,6 @@ const ACTION_COLORS: Partial<Record<AuditAction, string>> = {
   LOGOUT: colors.textSecondary,
 };
 
-function formatRelativeTime(dateStr: string): string {
-  const now = new Date();
-  const date = new Date(dateStr);
-  const diffMs = now.getTime() - date.getTime();
-  const diffMin = Math.floor(diffMs / 60000);
-
-  if (diffMin < 1) return 'Just now';
-  if (diffMin < 60) return `${diffMin}m ago`;
-  const diffHrs = Math.floor(diffMin / 60);
-  if (diffHrs < 24) return `${diffHrs}h ago`;
-  const diffDays = Math.floor(diffHrs / 24);
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return date.toLocaleDateString('en-AU', {
-    month: 'short',
-    day: 'numeric',
-  });
-}
-
 interface AuditLogItemProps {
   item: AuditLogWithUser;
 }
@@ -50,9 +33,13 @@ function AuditLogItemInner({ item }: AuditLogItemProps) {
 
   const toggleExpand = useCallback(() => setExpanded((prev) => !prev), []);
 
-  const actionKey = item.action.toUpperCase() as AuditAction;
-  const icon = ACTION_ICONS[actionKey] ?? 'ellipse-outline';
-  const iconColor = ACTION_COLORS[actionKey] ?? colors.textSecondary;
+  const actionKey = item.action.toUpperCase();
+  const icon = actionKey in ACTION_ICONS
+    ? ACTION_ICONS[actionKey as keyof typeof ACTION_ICONS]
+    : 'document-outline';
+  const iconColor = actionKey in ACTION_COLORS
+    ? ACTION_COLORS[actionKey as keyof typeof ACTION_COLORS]
+    : colors.textSecondary;
 
   const description = item.tableName
     ? `${item.action} on ${item.tableName}`

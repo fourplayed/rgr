@@ -27,7 +27,6 @@ type StepStatus = 'pending' | 'in_progress' | 'complete' | 'failed';
 
 interface CreateUserOverlayProps {
   visible: boolean;
-  isPending: boolean;
   isSuccess: boolean;
   isError: boolean;
   error: string | null;
@@ -36,7 +35,6 @@ interface CreateUserOverlayProps {
 
 export function CreateUserOverlay({
   visible,
-  isPending: _isPending,
   isSuccess,
   isError,
   error,
@@ -48,6 +46,8 @@ export function CreateUserOverlay({
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const cardScale = useRef(new Animated.Value(0.9)).current;
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const onDismissRef = useRef(onDismiss);
+  useEffect(() => { onDismissRef.current = onDismiss; }, [onDismiss]);
 
   const clearTimer = useCallback(() => {
     if (timerRef.current) {
@@ -105,10 +105,10 @@ export function CreateUserOverlay({
       clearTimer();
       setCompletedSteps(STEPS.length);
       setAllDone(true);
-      const timeout = setTimeout(onDismiss, SUCCESS_DISMISS_DELAY);
+      const timeout = setTimeout(() => onDismissRef.current(), SUCCESS_DISMISS_DELAY);
       return () => clearTimeout(timeout);
     }
-  }, [isSuccess, visible, clearTimer, onDismiss]);
+  }, [isSuccess, visible, clearTimer]);
 
   // On error — stop progression, mark failed
   useEffect(() => {
