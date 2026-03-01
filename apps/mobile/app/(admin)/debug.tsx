@@ -276,7 +276,7 @@ export default function DebugScreen() {
   };
 
   const handleCopyDiagnostics = async () => {
-    const appName = Constants.expoConfig?.name ?? 'RGR Fleet';
+    const appName = Constants.expoConfig?.name ?? 'RGR';
     const version = Constants.expoConfig?.version ?? '?';
     const build = Constants.expoConfig?.ios?.buildNumber ?? '?';
 
