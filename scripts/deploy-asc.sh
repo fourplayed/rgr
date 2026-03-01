@@ -8,8 +8,8 @@ set -e
 # Configuration
 MOBILE_DIR="$(cd "$(dirname "$0")/../apps/mobile" && pwd)"
 IOS_DIR="$MOBILE_DIR/ios"
-PROJECT_NAME="RGRFleet"
-SCHEME="RGRFleet"
+PROJECT_NAME="RGR"
+SCHEME="RGR"
 BUNDLE_ID="com.rgr.fleetmanager"
 TEAM_ID="D793SF6URT"
 APP_JSON="$MOBILE_DIR/app.json"
