@@ -19,7 +19,7 @@ function UserListItemInner({ user, onPress }: UserListItemProps) {
         styles.container,
         {
           borderLeftColor:
-            colors.userRole[user.role as keyof typeof colors.userRole] ||
+            colors.userRole[user.role as keyof typeof colors.userRole] ??
             colors.border,
         },
       ]}
@@ -38,7 +38,7 @@ function UserListItemInner({ user, onPress }: UserListItemProps) {
               styles.roleBadge,
               {
                 backgroundColor:
-                  colors.userRole[user.role as keyof typeof colors.userRole] ||
+                  colors.userRole[user.role as keyof typeof colors.userRole] ??
                   colors.backgroundDark,
               },
             ]}
@@ -75,7 +75,11 @@ export const UserListItem = memo(UserListItemInner, (prev, next) => {
   return (
     prev.user.id === next.user.id &&
     prev.user.role === next.user.role &&
-    prev.user.isActive === next.user.isActive
+    prev.user.isActive === next.user.isActive &&
+    prev.user.fullName === next.user.fullName &&
+    prev.user.email === next.user.email &&
+    prev.user.depot === next.user.depot &&
+    prev.onPress === next.onPress
   );
 });
 

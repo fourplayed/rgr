@@ -51,7 +51,7 @@ export function UserRolePicker({
             {ROLES.map((role) => {
               const isSelected = role === currentRole;
               const roleColor =
-                colors.userRole[role as keyof typeof colors.userRole] ||
+                colors.userRole[role as keyof typeof colors.userRole] ??
                 colors.backgroundDark;
 
               return (

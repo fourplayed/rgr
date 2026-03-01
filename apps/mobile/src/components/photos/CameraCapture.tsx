@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, memo } from 'react';
+import React, { useRef, useCallback, useEffect, memo } from 'react';
 import {
   View,
   Text,
@@ -54,7 +54,9 @@ function CameraCaptureComponent({
   } = usePhotoCapture();
 
   // Initialize capture state when modal opens
-  React.useEffect(() => {
+  // Only depend on visible and assetId for reset logic to prevent re-triggering
+  // when parent re-renders with the same location params
+  useEffect(() => {
     if (visible) {
       startCapture({
         assetId,
@@ -64,7 +66,8 @@ function CameraCaptureComponent({
         longitude,
       });
     }
-  }, [visible, assetId, scanEventId, locationDescription, latitude, longitude, startCapture]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, assetId, startCapture]);
 
   const handleCapture = useCallback(async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);

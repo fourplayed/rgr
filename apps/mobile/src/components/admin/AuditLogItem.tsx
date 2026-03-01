@@ -5,7 +5,9 @@ import type { AuditLogWithUser } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 
-const ACTION_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
+type AuditAction = 'INSERT' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'LOGOUT';
+
+const ACTION_ICONS: Partial<Record<AuditAction, keyof typeof Ionicons.glyphMap>> = {
   INSERT: 'add-circle-outline',
   UPDATE: 'create-outline',
   DELETE: 'trash-outline',
@@ -13,7 +15,7 @@ const ACTION_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   LOGOUT: 'log-out-outline',
 };
 
-const ACTION_COLORS: Record<string, string> = {
+const ACTION_COLORS: Partial<Record<AuditAction, string>> = {
   INSERT: colors.success,
   UPDATE: colors.electricBlue,
   DELETE: colors.error,
@@ -48,9 +50,9 @@ function AuditLogItemInner({ item }: AuditLogItemProps) {
 
   const toggleExpand = useCallback(() => setExpanded((prev) => !prev), []);
 
-  const actionKey = item.action.toUpperCase();
-  const icon = ACTION_ICONS[actionKey] || 'ellipse-outline';
-  const iconColor = ACTION_COLORS[actionKey] || colors.textSecondary;
+  const actionKey = item.action.toUpperCase() as AuditAction;
+  const icon = ACTION_ICONS[actionKey] ?? 'ellipse-outline';
+  const iconColor = ACTION_COLORS[actionKey] ?? colors.textSecondary;
 
   const description = item.tableName
     ? `${item.action} on ${item.tableName}`

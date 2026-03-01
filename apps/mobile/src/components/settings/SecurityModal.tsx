@@ -11,7 +11,7 @@ import {
   Platform,
   ScrollView,
   Animated,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { LoadingDots } from '../common/LoadingDots';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,7 +21,6 @@ import { isAutoLoginEnabled, setAutoLoginEnabled } from '../../utils/secureStora
 import { updatePassword, verifyCurrentPassword } from '@rgr/shared';
 import { useAuthStore } from '../../store/authStore';
 
-const SCREEN_HEIGHT = Dimensions.get('window').height;
 const ANIMATION_DURATION = 300;
 
 interface SecurityModalProps {
@@ -71,6 +70,7 @@ function ValidationRow({ label, isValid }: ValidationRowProps) {
 
 export function SecurityModal({ visible, onClose }: SecurityModalProps) {
   const { user } = useAuthStore();
+  const { height: screenHeight } = useWindowDimensions();
   const [autoLogin, setAutoLogin] = useState(false);
   const [autoLoginLoading, setAutoLoginLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
@@ -88,7 +88,7 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const backdropOpacity = useRef(new Animated.Value(0)).current;
-  const sheetTranslateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+  const sheetTranslateY = useRef(new Animated.Value(screenHeight)).current;
 
   const validation = validatePassword(newPassword);
   const passwordsMatch = newPassword === confirmPassword && confirmPassword.length > 0;
@@ -117,7 +117,7 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
           useNativeDriver: true,
         }),
         Animated.timing(sheetTranslateY, {
-          toValue: SCREEN_HEIGHT,
+          toValue: screenHeight,
           duration: ANIMATION_DURATION,
           useNativeDriver: true,
         }),
@@ -125,7 +125,7 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
         setModalVisible(false);
       });
     }
-  }, [visible, backdropOpacity, sheetTranslateY]);
+  }, [visible, backdropOpacity, sheetTranslateY, screenHeight]);
 
   useEffect(() => {
     if (visible) {

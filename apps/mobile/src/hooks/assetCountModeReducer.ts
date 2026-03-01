@@ -4,7 +4,7 @@ import type {
   CombinationScan,
   AssetCountState,
 } from '@rgr/shared';
-import { isStandaloneScan } from '@rgr/shared';
+import { isStandaloneScan, canFormNewCombination, canAddToCombination } from '@rgr/shared';
 
 /**
  * Generate a UUID v4 for combination IDs.
@@ -99,13 +99,18 @@ export function reducer(state: AssetCountState, action: Action): AssetCountState
         assetNumber: state.currentScan.assetNumber,
         totalScans: state.scans.length + 1,
       });
-      // Add scan as standalone, track its index as potential link target
+      // Add scan as standalone, track its index as potential link target.
+      // If there's already a pending link candidate, keep it so the new scan
+      // can be linked to it. Otherwise, the new scan becomes the candidate.
       const newIndex = state.scans.length;
       return {
         ...state,
         scans: [...state.scans, state.currentScan],
         currentScan: null,
-        lastUnlinkedScanIndex: newIndex,
+        lastUnlinkedScanIndex:
+          state.lastUnlinkedScanIndex !== null && state.scans.length > 0
+            ? state.lastUnlinkedScanIndex
+            : newIndex,
       };
     }
 
@@ -141,6 +146,11 @@ export function reducer(state: AssetCountState, action: Action): AssetCountState
       const newScans = [...state.scans];
 
       if (isStandaloneScan(previousScan)) {
+        // Guard: both categories must be defined and different
+        if (!canFormNewCombination(previousScan.category, currentScan.category)) {
+          return state;
+        }
+
         // Create new combination
         combinationId = action.combinationId ?? generateUUID();
 
@@ -152,6 +162,7 @@ export function reducer(state: AssetCountState, action: Action): AssetCountState
           timestamp: previousScan.timestamp,
           combinationId,
           combinationPosition: 1,
+          ...(previousScan.category && { category: previousScan.category }),
         };
         newScans[previousIndex] = previousAsCombination;
 
@@ -163,6 +174,7 @@ export function reducer(state: AssetCountState, action: Action): AssetCountState
           timestamp: currentScan.timestamp,
           combinationId,
           combinationPosition: 2,
+          ...(currentScan.category && { category: currentScan.category }),
         };
         newScans[currentIndex] = currentAsCombination;
 
@@ -174,6 +186,7 @@ export function reducer(state: AssetCountState, action: Action): AssetCountState
           notes: null,
           photoUri: null,
           photoId: null,
+          assetCategories: [previousScan.category!, currentScan.category!],
         };
 
         logger.assetCount('Created new combination', {
@@ -191,6 +204,11 @@ export function reducer(state: AssetCountState, action: Action): AssetCountState
           return state;
         }
 
+        // Guard: alternation + max size
+        if (!canAddToCombination(existingCombo, currentScan.category)) {
+          return state;
+        }
+
         const newPosition = existingCombo.assetIds.length + 1;
 
         // Convert current scan to combination scan
@@ -201,6 +219,7 @@ export function reducer(state: AssetCountState, action: Action): AssetCountState
           timestamp: currentScan.timestamp,
           combinationId,
           combinationPosition: newPosition,
+          ...(currentScan.category && { category: currentScan.category }),
         };
         newScans[currentIndex] = currentAsCombination;
 
@@ -209,6 +228,7 @@ export function reducer(state: AssetCountState, action: Action): AssetCountState
           ...existingCombo,
           assetIds: [...existingCombo.assetIds, currentScan.assetId],
           assetNumbers: [...existingCombo.assetNumbers, currentScan.assetNumber],
+          assetCategories: [...(existingCombo.assetCategories ?? []), currentScan.category!],
         };
 
         logger.assetCount('Extended combination', {
@@ -299,6 +319,7 @@ export function reducer(state: AssetCountState, action: Action): AssetCountState
                 assetId: scan.assetId,
                 assetNumber: scan.assetNumber,
                 timestamp: scan.timestamp,
+                ...(scan.category && { category: scan.category }),
               };
             }
             return scan;
@@ -323,6 +344,9 @@ export function reducer(state: AssetCountState, action: Action): AssetCountState
               ...combo,
               assetIds: combo.assetIds.filter(id => id !== lastScan.assetId),
               assetNumbers: combo.assetNumbers.filter(n => n !== lastScan.assetNumber),
+              ...(combo.assetCategories && {
+                assetCategories: combo.assetCategories.slice(0, -1),
+              }),
             },
           };
 

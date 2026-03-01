@@ -172,7 +172,6 @@ export function ScanModalStack(props: ScanModalStackProps) {
         <CombinationPhotoSheet
           visible={props.showCombinationPhoto}
           assetNumbers={props.combinationAssetNumbers}
-          combinationId={props.activeCombinationId}
           onCapture={props.onCombinationPhotoCapture}
           onNotesChange={props.onCombinationNotesChange}
           onComplete={props.onCombinationPhotoComplete}

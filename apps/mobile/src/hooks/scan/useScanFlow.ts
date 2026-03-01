@@ -67,11 +67,12 @@ export function useScanFlow() {
     message: '',
   });
 
-  // Debug logging
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_debugLog, setDebugLog] = useState<string[]>([]);
+  // Debug logging — stored in a ref to avoid re-renders since the UI never reads this
+  const debugLogRef = useRef<string[]>([]);
   const addDebugLog = useCallback((msg: string) => {
-    setDebugLog(prev => [...prev.slice(-9), `${new Date().toLocaleTimeString()}: ${msg}`]);
+    const log = debugLogRef.current;
+    if (log.length >= 10) log.shift();
+    log.push(`${new Date().toLocaleTimeString()}: ${msg}`);
   }, []);
 
   const {
@@ -95,15 +96,27 @@ export function useScanFlow() {
         let scanLocation: LocationData | CachedLocationData;
         let nearestDepot: { depot: Depot; distanceKm: number } | null = null;
 
+        let asset: Asset;
+
         if (useCachedLocation) {
           logger.scan('Using cached location from sign-in');
           scanLocation = cachedLocation;
           nearestDepot = cachedDepot;
           logger.scan(`Cached location: ${scanLocation.latitude.toFixed(4)}, ${scanLocation.longitude.toFixed(4)}`);
           logger.scan(`Cached depot: ${nearestDepot.depot.name} (${nearestDepot.distanceKm.toFixed(2)} km)`);
+
+          logger.scan('Looking up asset...');
+          asset = await lookupAsset(qrData);
+          logger.scan(`Asset found: ${asset.assetNumber}`);
         } else {
-          logger.scan('Requesting current location...');
-          const freshLocation = await requestLocation();
+          // Cold-start: parallelize GPS request and asset lookup since they are independent reads.
+          // Note: when cachedLocation is available (common case after sign-in), location is instant
+          // and this parallelization only helps cold-start scans.
+          logger.scan('Requesting current location and looking up asset in parallel...');
+          const [freshLocation, lookedUpAsset] = await Promise.all([
+            requestLocation(),
+            lookupAsset(qrData),
+          ]);
 
           if (!freshLocation) {
             logger.scan('Failed to get location');
@@ -117,7 +130,9 @@ export function useScanFlow() {
             return;
           }
           scanLocation = freshLocation;
+          asset = lookedUpAsset;
           logger.scan(`Location acquired: ${scanLocation.latitude.toFixed(4)}, ${scanLocation.longitude.toFixed(4)}`);
+          logger.scan(`Asset found: ${asset.assetNumber}`);
 
           logger.scan('Searching for nearest depot...');
           if (depots && depots.length > 0) {
@@ -136,10 +151,6 @@ export function useScanFlow() {
 
         setEffectiveLocation(scanLocation);
         setMatchedDepot(nearestDepot);
-
-        logger.scan('Looking up asset...');
-        const asset = await lookupAsset(qrData);
-        logger.scan(`Asset found: ${asset.assetNumber}`);
 
         // Count mode: auto-confirm without showing the confirm sheet
         if (countModeCallbackRef.current && user) {

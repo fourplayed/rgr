@@ -1,4 +1,4 @@
-import React, { useState, memo } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import {
   View,
   Text,
@@ -36,7 +36,7 @@ function DefectReportSheetComponent({
   const [wantsPhoto, setWantsPhoto] = useState(false);
 
   // Reset state when modal closes (visible changes to false)
-  React.useEffect(() => {
+  useEffect(() => {
     if (!visible) {
       setNotes('');
       setWantsPhoto(false);

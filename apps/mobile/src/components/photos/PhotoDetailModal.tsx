@@ -71,8 +71,8 @@ function PhotoDetailModalComponent({
     try {
       await deletePhotoMutation({ photoId, assetId });
       onClose();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to delete photo';
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to delete photo';
       setAlertSheet({
         visible: true,
         title: 'Error',

@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useState, memo } from 'react';
+import React, { useRef, useCallback, useState, useEffect, memo } from 'react';
 import {
   View,
   Text,
@@ -24,8 +24,6 @@ interface CombinationPhotoSheetProps {
   visible: boolean;
   /** Asset numbers in the combination for display */
   assetNumbers: string[];
-  /** Combination ID for state updates */
-  combinationId: string;
   onCapture: (photoUri: string) => void;
   onNotesChange: (notes: string) => void;
   onComplete: () => void;
@@ -36,7 +34,6 @@ interface CombinationPhotoSheetProps {
 function CombinationPhotoSheetComponent({
   visible,
   assetNumbers,
-  combinationId: _combinationId,
   onCapture,
   onNotesChange,
   onComplete,
@@ -50,7 +47,7 @@ function CombinationPhotoSheetComponent({
   const [isCapturing, setIsCapturing] = useState(false);
 
   // Reset state when modal opens/closes
-  React.useEffect(() => {
+  useEffect(() => {
     if (!visible) {
       setCapturedUri(null);
       setNotes('');

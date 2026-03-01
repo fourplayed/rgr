@@ -9,7 +9,7 @@ const isDev = __DEV__;
 
 type LogData = unknown;
 
-function formatMessage(namespace: string, message: string, _data?: LogData): string {
+function formatMessage(namespace: string, message: string): string {
   const timestamp = new Date().toLocaleTimeString();
   return `[${timestamp}] [${namespace}] ${message}`;
 }

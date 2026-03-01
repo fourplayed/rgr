@@ -17,14 +17,15 @@ Object.defineProperty(globalThis, 'crypto', {
 
 import { reducer, initialState } from '../assetCountModeReducer';
 import type { Action } from '../assetCountModeReducer';
-import type { StandaloneScan, AssetCountState } from '@rgr/shared';
+import type { StandaloneScan, AssetCountState, AssetCategory } from '@rgr/shared';
 
-function makeScan(assetNumber: string, assetId?: string): StandaloneScan {
+function makeScan(assetNumber: string, assetId?: string, category?: AssetCategory): StandaloneScan {
   return {
     type: 'standalone',
     assetId: assetId ?? `asset-${assetNumber}`,
     assetNumber,
     timestamp: Date.now(),
+    ...(category && { category }),
   };
 }
 
@@ -115,7 +116,7 @@ describe('assetCountModeReducer', () => {
         sessionId: null,
         depotId: 'd',
         depotName: 'D',
-        scans: [makeScan('TL001', 'a1'), makeScan('TL002', 'a2')],
+        scans: [makeScan('TL001', 'a1', 'trailer'), makeScan('DL001', 'a2', 'dolly')],
         currentScan: null,
         combinations: {},
         lastUnlinkedScanIndex: 0,
@@ -130,42 +131,45 @@ describe('assetCountModeReducer', () => {
       const comboId = mockUUID;
       expect(Object.keys(state.combinations)).toHaveLength(1);
       expect(state.combinations[comboId]).toBeDefined();
-      expect(state.combinations[comboId]!.assetNumbers).toEqual(['TL001', 'TL002']);
+      expect(state.combinations[comboId]!.assetNumbers).toEqual(['TL001', 'DL001']);
+      expect(state.combinations[comboId]!.assetCategories).toEqual(['trailer', 'dolly']);
     });
 
     it('extends an existing combination', () => {
       const comboId = mockUUID;
 
-      // Set up state where TL001 and TL002 are already in a combination,
-      // and TL003 is a new standalone scan
+      // Set up state where TL001 and DL001 are already in a combination,
+      // and TL002 is a new standalone scan
       const stateBeforeLink: AssetCountState = {
         isActive: true,
         sessionId: null,
         depotId: 'd',
         depotName: 'D',
         scans: [
-          { type: 'combination', assetId: 'a1', assetNumber: 'TL001', timestamp: 1, combinationId: comboId, combinationPosition: 1 },
-          { type: 'combination', assetId: 'a2', assetNumber: 'TL002', timestamp: 2, combinationId: comboId, combinationPosition: 2 },
-          makeScan('TL003', 'a3'),
+          { type: 'combination', assetId: 'a1', assetNumber: 'TL001', timestamp: 1, combinationId: comboId, combinationPosition: 1, category: 'trailer' },
+          { type: 'combination', assetId: 'a2', assetNumber: 'DL001', timestamp: 2, combinationId: comboId, combinationPosition: 2, category: 'dolly' },
+          makeScan('TL002', 'a3', 'trailer'),
         ],
         currentScan: null,
         combinations: {
           [comboId]: {
             combinationId: comboId,
             assetIds: ['a1', 'a2'],
-            assetNumbers: ['TL001', 'TL002'],
+            assetNumbers: ['TL001', 'DL001'],
             notes: null,
             photoUri: null,
             photoId: null,
+            assetCategories: ['trailer', 'dolly'],
           },
         },
-        lastUnlinkedScanIndex: 1, // Points to TL002 (in the combo)
+        lastUnlinkedScanIndex: 1, // Points to DL001 (in the combo)
       };
 
       const state = reducer(stateBeforeLink, { type: 'LINK_TO_PREVIOUS' });
 
       expect(state.combinations[comboId]!.assetIds).toHaveLength(3);
-      expect(state.combinations[comboId]!.assetNumbers).toEqual(['TL001', 'TL002', 'TL003']);
+      expect(state.combinations[comboId]!.assetNumbers).toEqual(['TL001', 'DL001', 'TL002']);
+      expect(state.combinations[comboId]!.assetCategories).toEqual(['trailer', 'dolly', 'trailer']);
       expect(state.scans[2]!.type).toBe('combination');
     });
 
@@ -195,6 +199,120 @@ describe('assetCountModeReducer', () => {
 
       const state = reducer(stateNoLink, { type: 'LINK_TO_PREVIOUS' });
       expect(state).toBe(stateNoLink);
+    });
+
+    it('rejects link when both scans are trailers', () => {
+      const stateBeforeLink: AssetCountState = {
+        isActive: true,
+        sessionId: null,
+        depotId: 'd',
+        depotName: 'D',
+        scans: [makeScan('TL001', 'a1', 'trailer'), makeScan('TL002', 'a2', 'trailer')],
+        currentScan: null,
+        combinations: {},
+        lastUnlinkedScanIndex: 0,
+      };
+
+      const state = reducer(stateBeforeLink, { type: 'LINK_TO_PREVIOUS' });
+      expect(state).toBe(stateBeforeLink);
+    });
+
+    it('rejects link when both scans are dollies', () => {
+      const stateBeforeLink: AssetCountState = {
+        isActive: true,
+        sessionId: null,
+        depotId: 'd',
+        depotName: 'D',
+        scans: [makeScan('DL001', 'a1', 'dolly'), makeScan('DL002', 'a2', 'dolly')],
+        currentScan: null,
+        combinations: {},
+        lastUnlinkedScanIndex: 0,
+      };
+
+      const state = reducer(stateBeforeLink, { type: 'LINK_TO_PREVIOUS' });
+      expect(state).toBe(stateBeforeLink);
+    });
+
+    it('allows link when trailer + dolly', () => {
+      const stateBeforeLink: AssetCountState = {
+        isActive: true,
+        sessionId: null,
+        depotId: 'd',
+        depotName: 'D',
+        scans: [makeScan('TL001', 'a1', 'trailer'), makeScan('DL001', 'a2', 'dolly')],
+        currentScan: null,
+        combinations: {},
+        lastUnlinkedScanIndex: 0,
+      };
+
+      const state = reducer(stateBeforeLink, { type: 'LINK_TO_PREVIOUS' });
+      expect(state.scans[0]!.type).toBe('combination');
+      expect(state.scans[1]!.type).toBe('combination');
+    });
+
+    it('rejects link when combo is at max size (5)', () => {
+      const comboId = mockUUID;
+      const stateAtMax: AssetCountState = {
+        isActive: true,
+        sessionId: null,
+        depotId: 'd',
+        depotName: 'D',
+        scans: [
+          { type: 'combination', assetId: 'a1', assetNumber: 'TL001', timestamp: 1, combinationId: comboId, combinationPosition: 1, category: 'trailer' },
+          { type: 'combination', assetId: 'a2', assetNumber: 'DL001', timestamp: 2, combinationId: comboId, combinationPosition: 2, category: 'dolly' },
+          { type: 'combination', assetId: 'a3', assetNumber: 'TL002', timestamp: 3, combinationId: comboId, combinationPosition: 3, category: 'trailer' },
+          { type: 'combination', assetId: 'a4', assetNumber: 'DL002', timestamp: 4, combinationId: comboId, combinationPosition: 4, category: 'dolly' },
+          { type: 'combination', assetId: 'a5', assetNumber: 'TL003', timestamp: 5, combinationId: comboId, combinationPosition: 5, category: 'trailer' },
+          makeScan('DL003', 'a6', 'dolly'),
+        ],
+        currentScan: null,
+        combinations: {
+          [comboId]: {
+            combinationId: comboId,
+            assetIds: ['a1', 'a2', 'a3', 'a4', 'a5'],
+            assetNumbers: ['TL001', 'DL001', 'TL002', 'DL002', 'TL003'],
+            notes: null,
+            photoUri: null,
+            photoId: null,
+            assetCategories: ['trailer', 'dolly', 'trailer', 'dolly', 'trailer'],
+          },
+        },
+        lastUnlinkedScanIndex: 4,
+      };
+
+      const state = reducer(stateAtMax, { type: 'LINK_TO_PREVIOUS' });
+      expect(state).toBe(stateAtMax);
+    });
+
+    it('rejects extending combo with same category as last', () => {
+      const comboId = mockUUID;
+      const stateBeforeLink: AssetCountState = {
+        isActive: true,
+        sessionId: null,
+        depotId: 'd',
+        depotName: 'D',
+        scans: [
+          { type: 'combination', assetId: 'a1', assetNumber: 'TL001', timestamp: 1, combinationId: comboId, combinationPosition: 1, category: 'trailer' },
+          { type: 'combination', assetId: 'a2', assetNumber: 'DL001', timestamp: 2, combinationId: comboId, combinationPosition: 2, category: 'dolly' },
+          makeScan('DL002', 'a3', 'dolly'),
+        ],
+        currentScan: null,
+        combinations: {
+          [comboId]: {
+            combinationId: comboId,
+            assetIds: ['a1', 'a2'],
+            assetNumbers: ['TL001', 'DL001'],
+            notes: null,
+            photoUri: null,
+            photoId: null,
+            assetCategories: ['trailer', 'dolly'],
+          },
+        },
+        lastUnlinkedScanIndex: 1,
+      };
+
+      const state = reducer(stateBeforeLink, { type: 'LINK_TO_PREVIOUS' });
+      expect(state).toBe(stateBeforeLink);
     });
   });
 
@@ -325,18 +443,19 @@ describe('assetCountModeReducer', () => {
         depotId: 'd',
         depotName: 'D',
         scans: [
-          { type: 'combination', assetId: 'a1', assetNumber: 'TL001', timestamp: 1, combinationId: comboId, combinationPosition: 1 },
-          { type: 'combination', assetId: 'a2', assetNumber: 'TL002', timestamp: 2, combinationId: comboId, combinationPosition: 2 },
+          { type: 'combination', assetId: 'a1', assetNumber: 'TL001', timestamp: 1, combinationId: comboId, combinationPosition: 1, category: 'trailer' },
+          { type: 'combination', assetId: 'a2', assetNumber: 'DL001', timestamp: 2, combinationId: comboId, combinationPosition: 2, category: 'dolly' },
         ],
         currentScan: null,
         combinations: {
           [comboId]: {
             combinationId: comboId,
             assetIds: ['a1', 'a2'],
-            assetNumbers: ['TL001', 'TL002'],
+            assetNumbers: ['TL001', 'DL001'],
             notes: null,
             photoUri: null,
             photoId: null,
+            assetCategories: ['trailer', 'dolly'],
           },
         },
         lastUnlinkedScanIndex: 1,
@@ -359,19 +478,20 @@ describe('assetCountModeReducer', () => {
         depotId: 'd',
         depotName: 'D',
         scans: [
-          { type: 'combination', assetId: 'a1', assetNumber: 'TL001', timestamp: 1, combinationId: comboId, combinationPosition: 1 },
-          { type: 'combination', assetId: 'a2', assetNumber: 'TL002', timestamp: 2, combinationId: comboId, combinationPosition: 2 },
-          { type: 'combination', assetId: 'a3', assetNumber: 'TL003', timestamp: 3, combinationId: comboId, combinationPosition: 3 },
+          { type: 'combination', assetId: 'a1', assetNumber: 'TL001', timestamp: 1, combinationId: comboId, combinationPosition: 1, category: 'trailer' },
+          { type: 'combination', assetId: 'a2', assetNumber: 'DL001', timestamp: 2, combinationId: comboId, combinationPosition: 2, category: 'dolly' },
+          { type: 'combination', assetId: 'a3', assetNumber: 'TL002', timestamp: 3, combinationId: comboId, combinationPosition: 3, category: 'trailer' },
         ],
         currentScan: null,
         combinations: {
           [comboId]: {
             combinationId: comboId,
             assetIds: ['a1', 'a2', 'a3'],
-            assetNumbers: ['TL001', 'TL002', 'TL003'],
+            assetNumbers: ['TL001', 'DL001', 'TL002'],
             notes: null,
             photoUri: null,
             photoId: null,
+            assetCategories: ['trailer', 'dolly', 'trailer'],
           },
         },
         lastUnlinkedScanIndex: 2,
@@ -383,8 +503,42 @@ describe('assetCountModeReducer', () => {
       expect(state.scans[0]!.type).toBe('combination');
       expect(state.scans[1]!.type).toBe('combination');
       expect(state.combinations[comboId]!.assetIds).toEqual(['a1', 'a2']);
-      expect(state.combinations[comboId]!.assetNumbers).toEqual(['TL001', 'TL002']);
+      expect(state.combinations[comboId]!.assetNumbers).toEqual(['TL001', 'DL001']);
+      expect(state.combinations[comboId]!.assetCategories).toEqual(['trailer', 'dolly']);
       expect(state.lastUnlinkedScanIndex).toBe(1);
+    });
+
+    it('preserves category when dissolving combo to standalone', () => {
+      const comboId = mockUUID;
+      const stateWithCombo: AssetCountState = {
+        isActive: true,
+        sessionId: null,
+        depotId: 'd',
+        depotName: 'D',
+        scans: [
+          { type: 'combination', assetId: 'a1', assetNumber: 'TL001', timestamp: 1, combinationId: comboId, combinationPosition: 1, category: 'trailer' },
+          { type: 'combination', assetId: 'a2', assetNumber: 'DL001', timestamp: 2, combinationId: comboId, combinationPosition: 2, category: 'dolly' },
+        ],
+        currentScan: null,
+        combinations: {
+          [comboId]: {
+            combinationId: comboId,
+            assetIds: ['a1', 'a2'],
+            assetNumbers: ['TL001', 'DL001'],
+            notes: null,
+            photoUri: null,
+            photoId: null,
+            assetCategories: ['trailer', 'dolly'],
+          },
+        },
+        lastUnlinkedScanIndex: 1,
+      };
+
+      const state = reducer(stateWithCombo, { type: 'UNDO_LAST_SCAN' });
+
+      expect(state.scans).toHaveLength(1);
+      expect(state.scans[0]!.type).toBe('standalone');
+      expect((state.scans[0] as StandaloneScan).category).toBe('trailer');
     });
   });
 

@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, SafeAreaView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import type { Depot } from '@rgr/shared';
 import { ScanToast } from './ScanToast';
 import { QuickLinkBar } from './QuickLinkBar';
 import { colors } from '../../theme/colors';
@@ -22,7 +21,6 @@ interface CameraOverlayProps {
 
   // Debug scan (dev only)
   onDebugScan: () => void;
-  cachedDepot: { depot: Depot; distanceKm: number } | null;
 
   // Count mode inline components
   scanToast?: {
@@ -42,7 +40,7 @@ interface CameraOverlayProps {
   onQuickLinkDismiss?: () => void;
 }
 
-export function CameraOverlay({
+function CameraOverlayComponent({
   assetCountActive,
   assetCountDepotName,
   assetCountScanCount,
@@ -167,3 +165,9 @@ export function CameraOverlay({
     </SafeAreaView>
   );
 }
+
+// React.memo prevents re-renders when props haven't changed.
+// Note: this is only effective if the parent memoizes callback props
+// (e.g., via useCallback) — otherwise new function references on every
+// render will defeat the shallow comparison.
+export const CameraOverlay = React.memo(CameraOverlayComponent);

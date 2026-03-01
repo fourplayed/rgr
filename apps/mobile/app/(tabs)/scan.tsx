@@ -547,7 +547,6 @@ export default function ScanScreen() {
           onStartAssetCount={handleStartAssetCount}
           onEndAssetCount={handleEndAssetCount}
           onDebugScan={handleDebugScan}
-          cachedDepot={cachedDepot}
           // Count mode inline components
           scanToast={scanToast}
           onScanToastDismiss={handleScanToastDismiss}

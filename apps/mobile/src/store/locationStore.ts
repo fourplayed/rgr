@@ -26,7 +26,7 @@ interface LocationState {
   lastResolvedAt: Date | null;
   lastLocation: CachedLocationData | null;
 
-  resolveDepot: () => Promise<void>;
+  resolveDepot: (depots?: Depot[]) => Promise<void>;
   clearResolvedDepot: () => void;
   isLocationStale: () => boolean;
 }
@@ -38,7 +38,7 @@ export const useLocationStore = create<LocationState>((set, get) => ({
   lastResolvedAt: null,
   lastLocation: null,
 
-  resolveDepot: async () => {
+  resolveDepot: async (depots?: Depot[]) => {
     // Don't resolve if already resolving
     if (get().isResolvingDepot) {
       return;
@@ -61,8 +61,8 @@ export const useLocationStore = create<LocationState>((set, get) => ({
         }
       }
 
-      // Get current location with timeout
-      const locationResult = await Promise.race([
+      // Fetch GPS position and depot list in parallel (they are independent)
+      const locationPromise = Promise.race([
         Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.High,
         }),
@@ -70,6 +70,30 @@ export const useLocationStore = create<LocationState>((set, get) => ({
           setTimeout(() => reject(new Error('Location request timed out')), LOCATION_TIMEOUT_MS)
         ),
       ]);
+
+      const depotListPromise = depots
+        ? Promise.resolve(depots)
+        : listDepots().then((result) => {
+            if (!result.success || !result.data) {
+              throw new Error('Failed to fetch depots');
+            }
+            return result.data;
+          });
+
+      let locationResult: Location.LocationObject;
+      let depotList: Depot[];
+      try {
+        [locationResult, depotList] = await Promise.all([locationPromise, depotListPromise]);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to resolve depot';
+        // If we got a location before the depot fetch failed, still cache it
+        set({
+          isResolvingDepot: false,
+          depotResolutionError: message,
+          resolvedDepot: null,
+        });
+        return;
+      }
 
       const { coords } = locationResult;
 
@@ -87,23 +111,11 @@ export const useLocationStore = create<LocationState>((set, get) => ({
         timestamp: locationResult.timestamp,
       };
 
-      // Fetch depots
-      const depotsResult = await listDepots();
-      if (!depotsResult.success || !depotsResult.data) {
-        set({
-          isResolvingDepot: false,
-          depotResolutionError: 'Failed to fetch depots',
-          lastLocation: cachedLocation,
-          lastResolvedAt: new Date(),
-        });
-        return;
-      }
-
       // Find nearest depot within threshold
       const nearestResult = findNearestLocation(
         coords.latitude,
         coords.longitude,
-        depotsResult.data,
+        depotList,
         MAX_DEPOT_DISTANCE_KM
       );
 

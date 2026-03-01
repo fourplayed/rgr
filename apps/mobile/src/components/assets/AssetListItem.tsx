@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import type { AssetWithRelations } from '@rgr/shared';
+import type { AssetWithRelations, AssetStatus } from '@rgr/shared';
 import { formatRelativeTime, AssetStatusColors, AssetStatusLabels, getDepotBadgeColors } from '@rgr/shared';
 import { useDepotLookup } from '../../hooks/useDepots';
 import { colors } from '../../theme/colors';
@@ -11,12 +11,12 @@ interface AssetListItemProps {
   onPress: (asset: AssetWithRelations) => void;
 }
 
-const getStatusLabel = (status: string): string => {
-  return AssetStatusLabels[status as keyof typeof AssetStatusLabels] || status;
+const getStatusLabel = (status: AssetStatus): string => {
+  return AssetStatusLabels[status] || status;
 };
 
-const getStatusColor = (status: string): string => {
-  return AssetStatusColors[status as keyof typeof AssetStatusColors] || colors.electricBlue;
+const getStatusColor = (status: AssetStatus): string => {
+  return AssetStatusColors[status] || colors.electricBlue;
 };
 
 function AssetListItemComponent({ asset, onPress }: AssetListItemProps) {
@@ -34,6 +34,8 @@ function AssetListItemComponent({ asset, onPress }: AssetListItemProps) {
       style={[styles.container, { borderLeftWidth: 4, borderLeftColor: statusColor }]}
       onPress={() => onPress(asset)}
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={`Asset ${asset.assetNumber}, status ${asset.status}`}
     >
       <View style={styles.cardContent}>
         <View style={styles.details}>
@@ -70,7 +72,13 @@ function AssetListItemComponent({ asset, onPress }: AssetListItemProps) {
 
 export const AssetListItem = memo(
   AssetListItemComponent,
-  (prevProps, nextProps) => prevProps.asset.id === nextProps.asset.id
+  (prevProps, nextProps) =>
+    prevProps.asset.id === nextProps.asset.id &&
+    prevProps.asset.status === nextProps.asset.status &&
+    prevProps.asset.depotCode === nextProps.asset.depotCode &&
+    prevProps.asset.lastLocationUpdatedAt === nextProps.asset.lastLocationUpdatedAt &&
+    prevProps.asset.subtype === nextProps.asset.subtype &&
+    prevProps.onPress === nextProps.onPress
 );
 
 const styles = StyleSheet.create({

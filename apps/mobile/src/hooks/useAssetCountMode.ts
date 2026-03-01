@@ -1,4 +1,4 @@
-import { useReducer, useCallback, useEffect, useRef } from 'react';
+import { useReducer, useCallback, useEffect, useRef, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from '../utils/logger';
 import type {
@@ -7,7 +7,7 @@ import type {
   CombinationScan,
   CombinationGroup,
 } from '@rgr/shared';
-import { isValidAssetCountState, isStandaloneScan } from '@rgr/shared';
+import { isValidAssetCountState, isStandaloneScan, canFormNewCombination, canAddToCombination } from '@rgr/shared';
 import { reducer, initialState, STORAGE_KEY, DEBOUNCE_MS, generateUUID } from './assetCountModeReducer';
 
 // Re-export types for consumers
@@ -57,9 +57,17 @@ export function useAssetCountMode() {
 
   // Debounce timer ref for persistence
   const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Guard to skip redundant persistence write immediately after a RESTORE dispatch
+  const isRestoredRef = useRef(false);
 
   // Persist to AsyncStorage after state changes (debounced)
   useEffect(() => {
+    // Skip writing state back right after a RESTORE — it's already in storage
+    if (isRestoredRef.current) {
+      isRestoredRef.current = false;
+      return;
+    }
+
     // Clear any pending timeout
     if (persistTimeoutRef.current) {
       clearTimeout(persistTimeoutRef.current);
@@ -95,6 +103,7 @@ export function useAssetCountMode() {
           const parsed: unknown = JSON.parse(saved);
           // Validate schema before restoring to prevent crashes from corrupted data
           if (isValidAssetCountState(parsed) && parsed.isActive && parsed.depotId && parsed.depotName) {
+            isRestoredRef.current = true;
             dispatch({ type: 'RESTORE', state: parsed });
           } else if (parsed !== null) {
             // Clear invalid data
@@ -172,12 +181,22 @@ export function useAssetCountMode() {
   }, []);
 
   // Computed: Can we offer to link the current scan to a previous one?
-  // Must have at least 2 scans, and the previous one must exist
-  const canLinkToPrevious = state.scans.length >= 2 && state.lastUnlinkedScanIndex !== null;
+  // Category-aware: trailers and dollies must alternate, max 5 per combo
+  const canLinkToPrevious = useMemo(() => {
+    if (state.scans.length < 2 || state.lastUnlinkedScanIndex === null) return false;
+    const previous = state.scans[state.lastUnlinkedScanIndex];
+    const current = state.scans[state.scans.length - 1];
+    if (!previous || !current) return false;
+    if (isStandaloneScan(previous)) {
+      return canFormNewCombination(previous.category, current.category);
+    }
+    const combo = state.combinations[previous.combinationId];
+    return combo ? canAddToCombination(combo, current.category) : false;
+  }, [state.scans, state.lastUnlinkedScanIndex, state.combinations]);
 
   // Get the previous scan info for display in link sheet
   const previousScanForLink = canLinkToPrevious && state.lastUnlinkedScanIndex !== null
-    ? state.scans[state.lastUnlinkedScanIndex]
+    ? state.scans[state.lastUnlinkedScanIndex] ?? null
     : null;
 
   // Get the most recently created/extended combination (for photo capture after linking)

@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import type { FreightAnalysis, HazardAlert } from '@rgr/shared';
+import type { FreightAnalysis, HazardAlert, HazardSeverity } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 
@@ -16,19 +16,9 @@ function FreightAnalysisCardComponent({ analysis, hazards }: FreightAnalysisCard
     ? Math.round(analysis.loadDistributionScore * 100)
     : null;
 
-  const getSeverityColor = (severity: string | null): string => {
-    switch (severity) {
-      case 'critical':
-        return colors.hazardSeverity.critical;
-      case 'high':
-        return colors.hazardSeverity.high;
-      case 'medium':
-        return colors.hazardSeverity.medium;
-      case 'low':
-        return colors.hazardSeverity.low;
-      default:
-        return colors.textSecondary;
-    }
+  const getSeverityColor = (severity: HazardSeverity | null): string => {
+    if (severity === null) return colors.textSecondary;
+    return colors.hazardSeverity[severity] ?? colors.textSecondary;
   };
 
   return (

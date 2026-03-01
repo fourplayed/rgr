@@ -10,7 +10,7 @@ interface MaintenancePriorityBadgeProps {
 }
 
 const getPriorityColor = (priority: MaintenancePriority): string => {
-  return colors.maintenancePriority[priority as keyof typeof colors.maintenancePriority] || colors.textSecondary;
+  return colors.maintenancePriority[priority as keyof typeof colors.maintenancePriority] ?? colors.textSecondary;
 };
 
 function MaintenancePriorityBadgeComponent({ priority }: MaintenancePriorityBadgeProps) {

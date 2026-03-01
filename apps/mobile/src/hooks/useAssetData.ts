@@ -263,16 +263,25 @@ export function useCreateScanEvent() {
       return result.data;
     },
     onSuccess: (data, variables) => {
-      // Invalidate related queries to refresh data
-      // Use refetchType: 'none' for list queries to mark stale without immediate refetch
-      // This prevents unnecessary network requests when user may not view the list
+      // Invalidate related queries to refresh data.
+      // The detail query gets immediate refetch since the user is likely viewing this asset.
       queryClient.invalidateQueries({ queryKey: assetKeys.detail(variables.assetId) });
-      queryClient.invalidateQueries({ queryKey: assetKeys.scans(variables.assetId) });
-      queryClient.invalidateQueries({ queryKey: assetKeys.recentScans() });
+      // Mark other queries stale without immediate refetch — they will refetch when the
+      // user navigates to the relevant screen. This avoids unnecessary network requests.
+      queryClient.invalidateQueries({
+        queryKey: assetKeys.scans(variables.assetId),
+        refetchType: 'none',
+      });
+      queryClient.invalidateQueries({
+        queryKey: assetKeys.recentScans(),
+        refetchType: 'none',
+      });
       if (variables.scannedBy) {
-        queryClient.invalidateQueries({ queryKey: assetKeys.myScans(variables.scannedBy) });
+        queryClient.invalidateQueries({
+          queryKey: assetKeys.myScans(variables.scannedBy),
+          refetchType: 'none',
+        });
       }
-      // Mark list queries as stale but don't refetch immediately
       queryClient.invalidateQueries({
         queryKey: assetKeys.lists(),
         refetchType: 'none',

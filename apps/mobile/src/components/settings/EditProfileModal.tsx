@@ -9,14 +9,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   Animated,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { LoadingDots } from '../common/LoadingDots';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
 import { useAuthStore } from '../../store/authStore';
 
-const SCREEN_HEIGHT = Dimensions.get('window').height;
 const ANIMATION_DURATION = 300;
 
 interface EditProfileModalProps {
@@ -26,6 +25,7 @@ interface EditProfileModalProps {
 
 export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
   const { user, updateUserProfile } = useAuthStore();
+  const { height: screenHeight } = useWindowDimensions();
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -33,7 +33,7 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
   const [modalVisible, setModalVisible] = useState(false);
 
   const backdropOpacity = useRef(new Animated.Value(0)).current;
-  const sheetTranslateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+  const sheetTranslateY = useRef(new Animated.Value(screenHeight)).current;
 
   // Handle open/close animations
   useEffect(() => {
@@ -61,7 +61,7 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
           useNativeDriver: true,
         }),
         Animated.timing(sheetTranslateY, {
-          toValue: SCREEN_HEIGHT,
+          toValue: screenHeight,
           duration: ANIMATION_DURATION,
           useNativeDriver: true,
         }),
@@ -69,7 +69,7 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
         setModalVisible(false);
       });
     }
-  }, [visible, backdropOpacity, sheetTranslateY]);
+  }, [visible, backdropOpacity, sheetTranslateY, screenHeight]);
 
   useEffect(() => {
     if (visible && user) {

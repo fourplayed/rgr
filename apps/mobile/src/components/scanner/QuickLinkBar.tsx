@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -29,6 +29,15 @@ export function QuickLinkBar({
 }: QuickLinkBarProps) {
   const opacity = useRef(new Animated.Value(0)).current;
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onDismissRef = useRef(onDismiss);
+  useEffect(() => { onDismissRef.current = onDismiss; }, [onDismiss]);
+
+  const clearTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
     if (visible) {
@@ -38,9 +47,9 @@ export function QuickLinkBar({
         useNativeDriver: true,
       }).start();
 
-      if (timerRef.current) clearTimeout(timerRef.current);
+      clearTimer();
       timerRef.current = setTimeout(() => {
-        onDismiss();
+        onDismissRef.current();
       }, autoDismissMs);
     } else {
       Animated.timing(opacity, {
@@ -48,19 +57,11 @@ export function QuickLinkBar({
         duration: 150,
         useNativeDriver: true,
       }).start();
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
+      clearTimer();
     }
 
-    return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
-    };
-  }, [visible, autoDismissMs, onDismiss, opacity]);
+    return clearTimer;
+  }, [visible, autoDismissMs, opacity, clearTimer]);
 
   if (!visible) return null;
 

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, LayoutAnimation, Platform, UIManager, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
@@ -35,10 +35,10 @@ export function CollapsibleSection({ title, children, defaultExpanded = true, ba
     outputRange: ['0deg', '180deg'],
   });
 
-  const toggle = () => {
+  const toggle = useCallback(() => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpanded(!expanded);
-  };
+    setExpanded(prev => !prev);
+  }, []);
 
   const isFlat = variant === 'flat';
 

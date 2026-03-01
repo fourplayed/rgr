@@ -56,7 +56,11 @@ export const DepotListItem = memo(DepotListItemInner, (prev, next) => {
   return (
     prev.depot.id === next.depot.id &&
     prev.depot.isActive === next.depot.isActive &&
-    prev.depot.name === next.depot.name
+    prev.depot.name === next.depot.name &&
+    prev.depot.code === next.depot.code &&
+    prev.depot.address === next.depot.address &&
+    prev.onPress === next.onPress &&
+    prev.onLongPress === next.onLongPress
   );
 });
 

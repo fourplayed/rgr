@@ -14,29 +14,52 @@
 
 import { logger } from './logger';
 
-type EventCallback = () => void;
+/**
+ * Typed event map — add new events here with their payload types.
+ * Use `void` for events that carry no data.
+ */
+type EventMap = {
+  'user:logout': void;
+};
+
+type EventName = keyof EventMap;
+
+/** Callback type that adapts to the event's payload (void -> no args, otherwise one arg). */
+type EventCallback<E extends EventName> = EventMap[E] extends void
+  ? () => void
+  : (payload: EventMap[E]) => void;
+
+// Internal untyped callback for storage
+type AnyCallback = (...args: unknown[]) => void;
 
 class EventBus {
-  private listeners: Map<string, Set<EventCallback>> = new Map();
+  private listeners: Map<EventName, Set<AnyCallback>> = new Map();
 
-  on(event: string, callback: EventCallback): () => void {
+  on<E extends EventName>(event: E, callback: EventCallback<E>): () => void {
     if (!this.listeners.has(event)) {
       this.listeners.set(event, new Set());
     }
-    this.listeners.get(event)!.add(callback);
+    this.listeners.get(event)!.add(callback as AnyCallback);
 
     // Return unsubscribe function
     return () => {
-      this.listeners.get(event)?.delete(callback);
+      this.listeners.get(event)?.delete(callback as AnyCallback);
     };
   }
 
-  emit(event: string): void {
+  emit<E extends EventName>(
+    ...args: EventMap[E] extends void ? [event: E] : [event: E, payload: EventMap[E]]
+  ): void {
+    const [event, payload] = args;
     const callbacks = this.listeners.get(event);
     if (callbacks) {
       callbacks.forEach((callback) => {
         try {
-          callback();
+          if (payload !== undefined) {
+            (callback as (payload: EventMap[E]) => void)(payload);
+          } else {
+            (callback as () => void)();
+          }
         } catch (error) {
           logger.error(`Error in event handler for '${event}'`, error);
         }
@@ -44,8 +67,8 @@ class EventBus {
     }
   }
 
-  off(event: string, callback: EventCallback): void {
-    this.listeners.get(event)?.delete(callback);
+  off<E extends EventName>(event: E, callback: EventCallback<E>): void {
+    this.listeners.get(event)?.delete(callback as AnyCallback);
   }
 
   clear(): void {
@@ -58,4 +81,4 @@ export const eventBus = new EventBus();
 // Event type constants for type safety
 export const AppEvents = {
   USER_LOGOUT: 'user:logout',
-} as const;
+} as const satisfies Record<string, EventName>;

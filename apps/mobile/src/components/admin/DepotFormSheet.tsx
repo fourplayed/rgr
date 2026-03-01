@@ -39,13 +39,18 @@ export function DepotFormSheet({
   const [isActive, setIsActive] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const depotName = depot?.name;
+  const depotCode = depot?.code;
+  const depotAddress = depot?.address;
+  const depotIsActive = depot?.isActive;
+
   useEffect(() => {
     if (visible) {
       if (depot) {
-        setName(depot.name);
-        setCode(depot.code);
-        setAddress(depot.address || '');
-        setIsActive(depot.isActive);
+        setName(depotName ?? '');
+        setCode(depotCode ?? '');
+        setAddress(depotAddress || '');
+        setIsActive(depotIsActive ?? true);
       } else {
         setName('');
         setCode('');
@@ -54,19 +59,30 @@ export function DepotFormSheet({
       }
       setError(null);
     }
-  }, [visible, depot]);
+  }, [visible, depot, depotName, depotCode, depotAddress, depotIsActive]);
 
   const isValid = name.trim() && code.trim();
 
   const handleSubmit = () => {
     if (!isValid) return;
     setError(null);
-    onSubmit({
-      name: name.trim(),
-      code: code.trim(),
-      address: address.trim() || null,
-      isActive,
-    });
+    if (isEdit) {
+      const update: UpdateDepotInput = {
+        name: name.trim(),
+        code: code.trim(),
+        address: address.trim() || null,
+        isActive,
+      };
+      onSubmit(update);
+    } else {
+      const create: CreateDepotInput = {
+        name: name.trim(),
+        code: code.trim(),
+        address: address.trim() || null,
+        isActive,
+      };
+      onSubmit(create);
+    }
   };
 
   if (!visible) return null;
