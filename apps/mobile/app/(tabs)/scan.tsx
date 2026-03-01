@@ -58,6 +58,9 @@ export default function ScanScreen() {
     setCombinationPhotoMandatory(false);
     setShowEndCountReview(false);
     setActiveCombinationId(null);
+    setPendingCombinationPhoto(false);
+    setPendingEndCountReview(false);
+    comboPhotoOriginRef.current = null;
     // Count mode inline state
     setScanToast({ visible: false, message: '', type: 'success', showUndo: false });
   }, [scanFlow, photoFlow, defectFlow]);
@@ -71,6 +74,9 @@ export default function ScanScreen() {
   const [isSubmittingCount, setIsSubmittingCount] = useState(false);
   const [activeCombinationId, setActiveCombinationId] = useState<string | null>(null);
   const [combinationPhotoMandatory, setCombinationPhotoMandatory] = useState(false);
+  const [pendingCombinationPhoto, setPendingCombinationPhoto] = useState(false);
+  const [pendingEndCountReview, setPendingEndCountReview] = useState(false);
+  const comboPhotoOriginRef = useRef<'endCountReview' | 'autoChainEnd' | null>(null);
 
   // Scan toast state (count mode inline feedback)
   const [scanToast, setScanToast] = useState<{
@@ -99,6 +105,7 @@ export default function ScanScreen() {
         // Show mandatory photo sheet for the ended chain
         setActiveCombinationId(prevId);
         setCombinationPhotoMandatory(true);
+        comboPhotoOriginRef.current = 'autoChainEnd';
         setShowCombinationPhoto(true);
         setScanToast({
           visible: true,
@@ -350,18 +357,24 @@ export default function ScanScreen() {
 
   const handleCombinationPhotoComplete = useCallback(() => {
     scanFlow.addDebugLog('Combination photo complete');
+    if (comboPhotoOriginRef.current === 'endCountReview') {
+      setPendingEndCountReview(true);
+    }
     setShowCombinationPhoto(false);
     setActiveCombinationId(null);
     setCombinationPhotoMandatory(false);
-    scanFlow.resetScanner();
+    comboPhotoOriginRef.current = null;
   }, [scanFlow]);
 
   const handleCombinationPhotoSkip = useCallback(() => {
     scanFlow.addDebugLog('Combination photo skipped');
+    if (comboPhotoOriginRef.current === 'endCountReview') {
+      setPendingEndCountReview(true);
+    }
     setShowCombinationPhoto(false);
     setActiveCombinationId(null);
     setCombinationPhotoMandatory(false);
-    scanFlow.resetScanner();
+    comboPhotoOriginRef.current = null;
   }, [scanFlow]);
 
   // End Count Review handlers
@@ -447,9 +460,27 @@ export default function ScanScreen() {
   const handleEditCombination = useCallback((combinationId: string) => {
     setActiveCombinationId(combinationId);
     setCombinationPhotoMandatory(false);
-    setShowEndCountReview(false);
-    setShowCombinationPhoto(true);
-  }, []);
+    comboPhotoOriginRef.current = 'endCountReview';
+    setPendingCombinationPhoto(true);
+    setShowEndCountReview(false);         // slide down — onDismiss opens combo photo
+    scanFlow.resetScanner();
+  }, [scanFlow]);
+
+  const handleEndCountReviewDismiss = useCallback(() => {
+    if (pendingCombinationPhoto) {
+      setPendingCombinationPhoto(false);
+      setShowCombinationPhoto(true);      // slide up — no overlap
+    }
+  }, [pendingCombinationPhoto]);
+
+  const handleCombinationPhotoDismiss = useCallback(() => {
+    if (pendingEndCountReview) {
+      setPendingEndCountReview(false);
+      setShowEndCountReview(true);        // slide up — review returns
+    } else {
+      scanFlow.resetScanner();            // auto-chain-end path: back to scanner
+    }
+  }, [pendingEndCountReview, scanFlow]);
 
   // ── Debug Scan ──
 
@@ -546,6 +577,7 @@ export default function ScanScreen() {
           activeChainSize={assetCount.activeChainSize}
           onStartChain={handleStartChain}
           onEndChain={handleEndChain}
+          scanStatus={scanFlow.scanStatus}
         />
       </CameraView>
 
@@ -610,6 +642,8 @@ export default function ScanScreen() {
         onSubmitCount={handleSubmitCount}
         onCancelEndCount={handleCancelEndCount}
         onDiscardCount={handleDiscardCount}
+        onEndCountReviewDismiss={handleEndCountReviewDismiss}
+        onCombinationPhotoDismiss={handleCombinationPhotoDismiss}
       />
 
       {/* Debug Overlay */}

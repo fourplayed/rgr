@@ -75,6 +75,8 @@ interface ScanModalStackProps {
   onSubmitCount: () => void;
   onCancelEndCount: () => void;
   onDiscardCount: () => void;
+  onEndCountReviewDismiss: () => void;
+  onCombinationPhotoDismiss: () => void;
 }
 
 export function ScanModalStack(props: ScanModalStackProps) {
@@ -157,6 +159,7 @@ export function ScanModalStack(props: ScanModalStackProps) {
           onNotesChange={props.onCombinationNotesChange}
           onComplete={props.onCombinationPhotoComplete}
           onSkip={props.onCombinationPhotoSkip}
+          onDismiss={props.onCombinationPhotoDismiss}
         />
       )}
 
@@ -171,6 +174,7 @@ export function ScanModalStack(props: ScanModalStackProps) {
         onSubmit={props.onSubmitCount}
         onCancel={props.onCancelEndCount}
         onDiscard={props.onDiscardCount}
+        onDismiss={props.onEndCountReviewDismiss}
       />
     </>
   );
