@@ -9,6 +9,7 @@ import {
 } from '@rgr/shared';
 import type { AssetStatus, CreateAssetInput } from '@rgr/shared';
 import { assetKeys } from './useAssetData';
+import { logger } from '../utils/logger';
 
 export function useAssetRelatedCounts(assetId: string | null) {
   return useQuery({
@@ -39,10 +40,10 @@ export function useCreateAsset() {
           qrGeneratedAt: new Date().toISOString(),
         });
         if (!qrResult.success) {
-          console.warn('QR code assignment failed:', qrResult.error);
+          logger.warn('QR code assignment failed:', qrResult.error);
         }
       } catch (e) {
-        console.warn('QR code assignment failed:', e);
+        logger.warn('QR code assignment failed:', e);
       }
 
       return asset;

@@ -8,6 +8,7 @@ import {
   RefreshControl,
   TouchableOpacity,
   SafeAreaView,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -70,8 +71,9 @@ export default function SessionDetailScreen() {
       await deleteSession.mutateAsync(sessionId);
       setShowDeleteConfirm(false);
       router.back();
-    } catch {
-      // mutation error is available via deleteSession.error
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Failed to delete session';
+      Alert.alert('Delete Failed', message);
     }
   }, [sessionId, deleteSession, router]);
 
