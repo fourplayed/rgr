@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import type { AssetCategory } from '../enums/AssetEnums';
+import { AssetCategorySchema } from '../enums/AssetEnums';
 
 // ============================================================================
 // Asset Count Types
@@ -6,6 +8,10 @@ import { z } from 'zod';
 // Types for depot inventory count sessions with combination support.
 // Uses discriminated unions to prevent invalid states.
 // ============================================================================
+
+// ── Combination Rules ──
+
+export const MAX_COMBINATION_SIZE = 5;
 
 // ── Session Status ──
 
@@ -21,6 +27,7 @@ export interface StandaloneScan {
   assetId: string;
   assetNumber: string;
   timestamp: number;
+  category?: AssetCategory;
 }
 
 /**
@@ -35,6 +42,7 @@ export interface CombinationScan {
   combinationId: string;
   /** Position in the combination chain (1-based) */
   combinationPosition: number;
+  category?: AssetCategory;
 }
 
 /**
@@ -61,6 +69,8 @@ export interface CombinationGroup {
   photoUri: string | null;
   /** Database photo ID after upload (null until uploaded) */
   photoId: string | null;
+  /** Ordered categories for alternation validation (optional for backward compat) */
+  assetCategories?: AssetCategory[];
 }
 
 // ── Asset Count State ──
@@ -86,6 +96,8 @@ export interface AssetCountState {
   combinations: Record<string, CombinationGroup>;
   /** Last scan that was standalone (candidate for linking) */
   lastUnlinkedScanIndex: number | null;
+  /** Active chain ID — when set, all scans are added to this chain's combination */
+  activeChainId: string | null;
 }
 
 // ── Database Row Types ──
@@ -225,6 +237,7 @@ export const StandaloneScanSchema = z.object({
   assetId: z.string().uuid(),
   assetNumber: z.string().min(1),
   timestamp: z.number(),
+  category: AssetCategorySchema.optional(),
 });
 
 export const CombinationScanSchema = z.object({
@@ -234,6 +247,7 @@ export const CombinationScanSchema = z.object({
   timestamp: z.number(),
   combinationId: z.string().uuid(),
   combinationPosition: z.number().int().positive(),
+  category: AssetCategorySchema.optional(),
 });
 
 export const AssetScanSchema = z.discriminatedUnion('type', [
@@ -248,6 +262,7 @@ export const CombinationGroupSchema = z.object({
   notes: z.string().nullable(),
   photoUri: z.string().nullable(),
   photoId: z.string().uuid().nullable(),
+  assetCategories: z.array(AssetCategorySchema).optional(),
 });
 
 export const AssetCountStateSchema = z.object({
@@ -259,6 +274,7 @@ export const AssetCountStateSchema = z.object({
   currentScan: AssetScanSchema.nullable(),
   combinations: z.record(z.string(), CombinationGroupSchema),
   lastUnlinkedScanIndex: z.number().int().nullable(),
+  activeChainId: z.string().uuid().nullable().optional(),
 });
 
 // ── Type Guards ──
@@ -284,6 +300,38 @@ export function isCombinationScan(scan: AssetScan): scan is CombinationScan {
 export function isValidAssetCountState(obj: unknown): obj is AssetCountState {
   const result = AssetCountStateSchema.safeParse(obj);
   return result.success;
+}
+
+// ── Combination Rule Validators ──
+
+/**
+ * Returns true only when both categories are defined and different
+ * (trailer+dolly or dolly+trailer).
+ */
+export function canFormNewCombination(
+  categoryA?: AssetCategory,
+  categoryB?: AssetCategory,
+): boolean {
+  if (!categoryA || !categoryB) return false;
+  return categoryA !== categoryB;
+}
+
+/**
+ * Returns true when the new asset can be added to an existing combination:
+ * - combo size < MAX_COMBINATION_SIZE
+ * - newCategory is defined
+ * - combo has assetCategories
+ * - last category in combo differs from newCategory
+ */
+export function canAddToCombination(
+  combo: CombinationGroup,
+  newCategory?: AssetCategory,
+): boolean {
+  if (!newCategory) return false;
+  if (combo.assetIds.length >= MAX_COMBINATION_SIZE) return false;
+  if (!combo.assetCategories || combo.assetCategories.length === 0) return false;
+  const lastCategory = combo.assetCategories[combo.assetCategories.length - 1];
+  return lastCategory !== newCategory;
 }
 
 // ── Row Mappers ──

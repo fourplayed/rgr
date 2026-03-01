@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,9 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LoadingDots } from '../../../../src/components/common/LoadingDots';
-import { useCountSessionDetail } from '../../../../src/hooks/useCountHistoryData';
+import { ConfirmSheet } from '../../../../src/components/common/ConfirmSheet';
+import { useCountSessionDetail, useDeleteCountSession } from '../../../../src/hooks/useCountHistoryData';
+import { useUserPermissions } from '../../../../src/contexts/UserPermissionsContext';
 import { colors } from '../../../../src/theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../../../src/theme/spacing';
 import { CONTENT_TOP_OFFSET } from '../../../../src/theme/layout';
@@ -57,7 +59,21 @@ export default function SessionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const sessionId = Array.isArray(id) ? id[0] : id;
 
+  const { canDeleteAssetCount } = useUserPermissions();
   const { data: detail, isLoading, error, refetch, isRefetching } = useCountSessionDetail(sessionId);
+  const deleteSession = useDeleteCountSession();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!sessionId) return;
+    try {
+      await deleteSession.mutateAsync(sessionId);
+      setShowDeleteConfirm(false);
+      router.back();
+    } catch {
+      // mutation error is available via deleteSession.error
+    }
+  }, [sessionId, deleteSession, router]);
 
   const processed = useMemo<ProcessedData | null>(() => {
     if (!detail) return null;
@@ -161,6 +177,17 @@ export default function SessionDetailScreen() {
             </Text>
             <Text style={styles.headerDate}>{formatDate(session.startedAt)}</Text>
           </View>
+          {canDeleteAssetCount && (
+            <TouchableOpacity
+              onPress={() => setShowDeleteConfirm(true)}
+              style={styles.deleteButton}
+              accessibilityRole="button"
+              accessibilityLabel="Delete session"
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Ionicons name="trash-outline" size={22} color={colors.error} />
+            </TouchableOpacity>
+          )}
         </View>
 
         <ScrollView
@@ -309,6 +336,16 @@ export default function SessionDetailScreen() {
             />
           </View>
         )}
+        <ConfirmSheet
+          visible={showDeleteConfirm}
+          type="danger"
+          title="Delete Count Session"
+          message={`This will permanently remove this count session and all ${session.totalAssetsCounted} counted assets. This action cannot be undone.`}
+          confirmLabel="Delete"
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => setShowDeleteConfirm(false)}
+          isLoading={deleteSession.isPending}
+        />
       </SafeAreaView>
     </View>
   );
@@ -353,6 +390,12 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   backButton: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteButton: {
     width: 32,
     height: 32,
     alignItems: 'center',

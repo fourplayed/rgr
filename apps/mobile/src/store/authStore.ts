@@ -58,16 +58,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         return { success: false, error: result.error };
       }
 
-      // Save session tokens (not password) for auto-login
-      const sessionData: StoredSession = {
-        access_token: result.data.session.access_token,
-        refresh_token: result.data.session.refresh_token,
-      };
-      if (result.data.session.expires_at !== undefined) {
-        sessionData.expires_at = result.data.session.expires_at;
-      }
-      await saveSession(sessionData);
-
       // Fetch full profile data after successful login
       const profileResult = await fetchProfile(result.data.user.id);
 
@@ -81,11 +71,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       if (!profileResult.data.isActive) {
         await signOut();
-        await clearSession();
         const errorMsg = 'Your account has been deactivated. Contact an administrator.';
         set({ error: errorMsg, isLoading: false });
         return { success: false, error: errorMsg };
       }
+
+      // Save session tokens (not password) for auto-login
+      // Placed AFTER the isActive check so deactivated users never get persisted tokens
+      const sessionData: StoredSession = {
+        access_token: result.data.session.access_token,
+        refresh_token: result.data.session.refresh_token,
+      };
+      if (result.data.session.expires_at !== undefined) {
+        sessionData.expires_at = result.data.session.expires_at;
+      }
+      await saveSession(sessionData);
 
       set({
         user: profileResult.data,
@@ -200,7 +200,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       // Check if token has expired before attempting to use it
       // This prevents unnecessary network requests with known-expired tokens
-      if (storedSession.expires_at !== undefined) {
+      if (storedSession.expires_at !== undefined && typeof storedSession.expires_at === 'number') {
         const expiresAt = storedSession.expires_at * 1000; // Convert to milliseconds
         const now = Date.now();
         const bufferMs = 60 * 1000; // 1 minute buffer to account for clock skew
@@ -240,6 +240,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const profileResult = await fetchProfile(data.user.id);
 
       if (!profileResult.success) {
+        await supabase.auth.signOut();
         await clearSession();
         set({ authError: 'Failed to load profile. Please log in again.' });
         return false;

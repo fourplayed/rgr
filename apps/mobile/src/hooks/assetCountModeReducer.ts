@@ -4,7 +4,7 @@ import type {
   CombinationScan,
   AssetCountState,
 } from '@rgr/shared';
-import { isStandaloneScan } from '@rgr/shared';
+import { isStandaloneScan, canAddToCombination, MAX_COMBINATION_SIZE } from '@rgr/shared';
 
 /**
  * Generate a UUID v4 for combination IDs.
@@ -28,8 +28,8 @@ export type Action =
   | { type: 'ADD_SCAN'; scan: StandaloneScan }
   | { type: 'CONFIRM_SCAN' }
   | { type: 'CANCEL_SCAN' }
-  | { type: 'LINK_TO_PREVIOUS'; combinationId?: string }
-  | { type: 'KEEP_SEPARATE' }
+  | { type: 'START_CHAIN' }
+  | { type: 'END_CHAIN' }
   | { type: 'SET_COMBINATION_NOTES'; combinationId: string; notes: string }
   | { type: 'SET_COMBINATION_PHOTO'; combinationId: string; photoUri: string; photoId: string | null }
   | { type: 'END_COUNT' }
@@ -48,6 +48,7 @@ export const initialState: AssetCountState = {
   currentScan: null,
   combinations: {},
   lastUnlinkedScanIndex: null,
+  activeChainId: null,
 };
 
 export function reducer(state: AssetCountState, action: Action): AssetCountState {
@@ -99,7 +100,116 @@ export function reducer(state: AssetCountState, action: Action): AssetCountState
         assetNumber: state.currentScan.assetNumber,
         totalScans: state.scans.length + 1,
       });
-      // Add scan as standalone, track its index as potential link target
+
+      // Chain mode: add scan to active chain's combination
+      if (state.activeChainId) {
+        const chainCombo = state.combinations[state.activeChainId];
+        if (!chainCombo) {
+          logger.warn('Active chain combination not found');
+          return { ...state, currentScan: null };
+        }
+
+        const scan = state.currentScan;
+
+        // First item in chain — no alternation check needed
+        if (chainCombo.assetIds.length === 0) {
+          const combinationScan: CombinationScan = {
+            type: 'combination',
+            assetId: scan.assetId,
+            assetNumber: scan.assetNumber,
+            timestamp: scan.timestamp,
+            combinationId: state.activeChainId,
+            combinationPosition: 1,
+            ...(scan.category && { category: scan.category }),
+          };
+
+          const newCombinations = {
+            ...state.combinations,
+            [state.activeChainId]: {
+              ...chainCombo,
+              assetIds: [scan.assetId],
+              assetNumbers: [scan.assetNumber],
+              ...(scan.category ? { assetCategories: [scan.category] } : {}),
+            },
+          };
+
+          logger.assetCount('Added first item to chain', {
+            chainId: state.activeChainId,
+            assetNumber: scan.assetNumber,
+          });
+
+          return {
+            ...state,
+            scans: [...state.scans, combinationScan],
+            currentScan: null,
+            combinations: newCombinations,
+            lastUnlinkedScanIndex: state.scans.length,
+          };
+        }
+
+        // Subsequent items — validate alternation
+        if (!canAddToCombination(chainCombo, scan.category)) {
+          // Validation failed — add as standalone, chain stays active
+          logger.assetCount('Chain alternation validation failed, adding as standalone', {
+            chainId: state.activeChainId,
+            assetNumber: scan.assetNumber,
+          });
+
+          return {
+            ...state,
+            scans: [...state.scans, scan],
+            currentScan: null,
+            lastUnlinkedScanIndex: state.scans.length,
+          };
+        }
+
+        // Validation passed — add to chain
+        const newPosition = chainCombo.assetIds.length + 1;
+        const combinationScan: CombinationScan = {
+          type: 'combination',
+          assetId: scan.assetId,
+          assetNumber: scan.assetNumber,
+          timestamp: scan.timestamp,
+          combinationId: state.activeChainId,
+          combinationPosition: newPosition,
+          ...(scan.category && { category: scan.category }),
+        };
+
+        const newCombinations = {
+          ...state.combinations,
+          [state.activeChainId]: {
+            ...chainCombo,
+            assetIds: [...chainCombo.assetIds, scan.assetId],
+            assetNumbers: [...chainCombo.assetNumbers, scan.assetNumber],
+            assetCategories: [...(chainCombo.assetCategories ?? []), scan.category!],
+          },
+        };
+
+        logger.assetCount('Added item to chain', {
+          chainId: state.activeChainId,
+          assetNumber: scan.assetNumber,
+          chainSize: newPosition,
+        });
+
+        // Auto-end chain at max size
+        const autoEnd = newPosition >= MAX_COMBINATION_SIZE;
+        if (autoEnd) {
+          logger.assetCount('Chain auto-ended at max size', {
+            chainId: state.activeChainId,
+          });
+        }
+
+        return {
+          ...state,
+          scans: [...state.scans, combinationScan],
+          currentScan: null,
+          combinations: newCombinations,
+          lastUnlinkedScanIndex: state.scans.length,
+          activeChainId: autoEnd ? null : state.activeChainId,
+        };
+      }
+
+      // No active chain: existing standalone logic
       const newIndex = state.scans.length;
       return {
         ...state,
@@ -116,124 +226,97 @@ export function reducer(state: AssetCountState, action: Action): AssetCountState
         currentScan: null,
       };
 
-    case 'LINK_TO_PREVIOUS': {
-      // Link the current scan (last in array) to the previous unlinked scan
-      if (state.lastUnlinkedScanIndex === null || state.scans.length < 2) {
-        logger.warn('No previous scan to link to');
+    case 'START_CHAIN': {
+      // Guard: if chain already active, ignore
+      if (state.activeChainId) {
+        logger.assetCount('START_CHAIN ignored — chain already active');
         return state;
       }
 
-      const previousIndex = state.lastUnlinkedScanIndex;
-      const currentIndex = state.scans.length - 1;
-
-      // Previous scan could be standalone or already in a combination
-      const previousScan = state.scans[previousIndex];
-      const currentScan = state.scans[currentIndex];
-
-      // Guard against undefined scans (should not happen due to earlier checks)
-      if (!previousScan || !currentScan) {
-        logger.warn('Missing scans in LINK_TO_PREVIOUS');
-        return state;
-      }
-
-      let combinationId: string;
-      const newCombinations = { ...state.combinations };
-      const newScans = [...state.scans];
-
-      if (isStandaloneScan(previousScan)) {
-        // Create new combination
-        combinationId = action.combinationId ?? generateUUID();
-
-        // Convert previous scan to combination scan
-        const previousAsCombination: CombinationScan = {
-          type: 'combination',
-          assetId: previousScan.assetId,
-          assetNumber: previousScan.assetNumber,
-          timestamp: previousScan.timestamp,
-          combinationId,
-          combinationPosition: 1,
-        };
-        newScans[previousIndex] = previousAsCombination;
-
-        // Convert current scan to combination scan
-        const currentAsCombination: CombinationScan = {
-          type: 'combination',
-          assetId: currentScan.assetId,
-          assetNumber: currentScan.assetNumber,
-          timestamp: currentScan.timestamp,
-          combinationId,
-          combinationPosition: 2,
-        };
-        newScans[currentIndex] = currentAsCombination;
-
-        // Create combination group
-        newCombinations[combinationId] = {
-          combinationId,
-          assetIds: [previousScan.assetId, currentScan.assetId],
-          assetNumbers: [previousScan.assetNumber, currentScan.assetNumber],
-          notes: null,
-          photoUri: null,
-          photoId: null,
-        };
-
-        logger.assetCount('Created new combination', {
-          combinationId,
-          assets: [previousScan.assetNumber, currentScan.assetNumber],
-        });
-      } else {
-        // Extend existing combination
-        combinationId = previousScan.combinationId;
-        const existingCombo = state.combinations[combinationId];
-
-        // Guard against missing combo
-        if (!existingCombo) {
-          logger.warn('Missing combination in LINK_TO_PREVIOUS');
-          return state;
-        }
-
-        const newPosition = existingCombo.assetIds.length + 1;
-
-        // Convert current scan to combination scan
-        const currentAsCombination: CombinationScan = {
-          type: 'combination',
-          assetId: currentScan.assetId,
-          assetNumber: currentScan.assetNumber,
-          timestamp: currentScan.timestamp,
-          combinationId,
-          combinationPosition: newPosition,
-        };
-        newScans[currentIndex] = currentAsCombination;
-
-        // Update combination group
-        newCombinations[combinationId] = {
-          ...existingCombo,
-          assetIds: [...existingCombo.assetIds, currentScan.assetId],
-          assetNumbers: [...existingCombo.assetNumbers, currentScan.assetNumber],
-        };
-
-        logger.assetCount('Extended combination', {
-          combinationId,
-          assets: newCombinations[combinationId]?.assetNumbers ?? [],
-        });
-      }
+      const chainId = generateUUID();
+      logger.assetCount('Starting chain', { chainId });
 
       return {
         ...state,
-        scans: newScans,
-        combinations: newCombinations,
-        // Current scan stays as the last linkable (in case user wants to add more)
-        lastUnlinkedScanIndex: currentIndex,
+        activeChainId: chainId,
+        combinations: {
+          ...state.combinations,
+          [chainId]: {
+            combinationId: chainId,
+            assetIds: [],
+            assetNumbers: [],
+            notes: null,
+            photoUri: null,
+            photoId: null,
+            assetCategories: [],
+          },
+        },
       };
     }
 
-    case 'KEEP_SEPARATE':
-      // Just clear the link candidate - current scan is already standalone
-      logger.assetCount('Keeping scan separate');
+    case 'END_CHAIN': {
+      if (!state.activeChainId) {
+        logger.assetCount('END_CHAIN ignored — no active chain');
+        return state;
+      }
+
+      const chainCombo = state.combinations[state.activeChainId];
+      if (!chainCombo) {
+        return { ...state, activeChainId: null };
+      }
+
+      const chainSize = chainCombo.assetIds.length;
+
+      // 0 items: delete the empty combination
+      if (chainSize === 0) {
+        const newCombinations = { ...state.combinations };
+        delete newCombinations[state.activeChainId];
+        logger.assetCount('Empty chain discarded', { chainId: state.activeChainId });
+        return {
+          ...state,
+          activeChainId: null,
+          combinations: newCombinations,
+        };
+      }
+
+      // 1 item: revert scan back to standalone, delete combination
+      if (chainSize === 1) {
+        const newCombinations = { ...state.combinations };
+        delete newCombinations[state.activeChainId];
+
+        const chainId = state.activeChainId;
+        const revertedScans = state.scans.map(scan => {
+          if (!isStandaloneScan(scan) && scan.combinationId === chainId) {
+            return {
+              type: 'standalone' as const,
+              assetId: scan.assetId,
+              assetNumber: scan.assetNumber,
+              timestamp: scan.timestamp,
+              ...(scan.category && { category: scan.category }),
+            };
+          }
+          return scan;
+        });
+
+        logger.assetCount('Single-item chain reverted to standalone', { chainId });
+        return {
+          ...state,
+          activeChainId: null,
+          scans: revertedScans,
+          combinations: newCombinations,
+        };
+      }
+
+      // 2+ items: just deactivate the chain, combination stays
+      logger.assetCount('Chain ended', {
+        chainId: state.activeChainId,
+        chainSize,
+      });
       return {
         ...state,
-        // The most recent scan becomes the new linkable candidate
-        lastUnlinkedScanIndex: state.scans.length - 1,
+        activeChainId: null,
       };
+    }
 
     case 'SET_COMBINATION_NOTES': {
       const combo = state.combinations[action.combinationId];
@@ -286,6 +369,33 @@ export function reducer(state: AssetCountState, action: Action): AssetCountState
         const comboId = lastScan.combinationId;
         const combo = state.combinations[comboId];
 
+        // If this combo is the active chain, remove from chain but keep chain active
+        if (comboId === state.activeChainId && combo) {
+          const newCombinations = {
+            ...state.combinations,
+            [comboId]: {
+              ...combo,
+              assetIds: combo.assetIds.filter(id => id !== lastScan.assetId),
+              assetNumbers: combo.assetNumbers.filter(n => n !== lastScan.assetNumber),
+              ...(combo.assetCategories && {
+                assetCategories: combo.assetCategories.slice(0, -1),
+              }),
+            },
+          };
+
+          logger.assetCount('Undo last scan (removed from active chain)', {
+            removedAsset: lastScan.assetNumber,
+            chainId: comboId,
+          });
+
+          return {
+            ...state,
+            scans: newScans,
+            combinations: newCombinations,
+            lastUnlinkedScanIndex: newScans.length > 0 ? newScans.length - 1 : null,
+          };
+        }
+
         if (combo && combo.assetIds.length <= 2) {
           // Combination only had 2 assets — removing one dissolves it.
           // Revert the other scan back to standalone.
@@ -299,6 +409,7 @@ export function reducer(state: AssetCountState, action: Action): AssetCountState
                 assetId: scan.assetId,
                 assetNumber: scan.assetNumber,
                 timestamp: scan.timestamp,
+                ...(scan.category && { category: scan.category }),
               };
             }
             return scan;
@@ -323,6 +434,9 @@ export function reducer(state: AssetCountState, action: Action): AssetCountState
               ...combo,
               assetIds: combo.assetIds.filter(id => id !== lastScan.assetId),
               assetNumbers: combo.assetNumbers.filter(n => n !== lastScan.assetNumber),
+              ...(combo.assetCategories && {
+                assetCategories: combo.assetCategories.slice(0, -1),
+              }),
             },
           };
 
@@ -364,7 +478,11 @@ export function reducer(state: AssetCountState, action: Action): AssetCountState
         depotName: action.state.depotName,
         combinations: Object.keys(action.state.combinations).length,
       });
-      return action.state;
+      return {
+        ...action.state,
+        // Default activeChainId to null if missing from persisted data
+        activeChainId: action.state.activeChainId ?? null,
+      };
 
     default:
       return state;

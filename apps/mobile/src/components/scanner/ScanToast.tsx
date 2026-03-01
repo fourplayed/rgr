@@ -30,6 +30,8 @@ export function ScanToast({
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(-20)).current;
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onDismissRef = useRef(onDismiss);
+  useEffect(() => { onDismissRef.current = onDismiss; }, [onDismiss]);
 
   const clearTimer = useCallback(() => {
     if (timerRef.current) {
@@ -55,7 +57,7 @@ export function ScanToast({
 
       clearTimer();
       timerRef.current = setTimeout(() => {
-        onDismiss();
+        onDismissRef.current();
       }, duration);
     } else {
       Animated.parallel([
@@ -74,7 +76,7 @@ export function ScanToast({
     }
 
     return clearTimer;
-  }, [visible, duration, onDismiss, opacity, translateY, clearTimer]);
+  }, [visible, duration, opacity, translateY, clearTimer]);
 
   if (!visible) return null;
 

@@ -33,25 +33,26 @@ export function useLocation(): UseLocationResult {
 
   useEffect(() => {
     isMountedRef.current = true;
-    checkPermission();
+
+    // Inline permission check to avoid ESLint exhaustive-deps warning
+    (async () => {
+      try {
+        const { status } = await Location.getForegroundPermissionsAsync();
+        if (isMountedRef.current) {
+          setHasPermission(status === 'granted');
+        }
+      } catch (err) {
+        logger.error('Error checking location permission', err);
+        if (isMountedRef.current) {
+          setHasPermission(false);
+        }
+      }
+    })();
+
     return () => {
       isMountedRef.current = false;
     };
   }, []);
-
-  const checkPermission = async () => {
-    try {
-      const { status } = await Location.getForegroundPermissionsAsync();
-      if (isMountedRef.current) {
-        setHasPermission(status === 'granted');
-      }
-    } catch (err) {
-      logger.error('Error checking location permission', err);
-      if (isMountedRef.current) {
-        setHasPermission(false);
-      }
-    }
-  };
 
   const requestPermission = useCallback(async (): Promise<boolean> => {
     try {

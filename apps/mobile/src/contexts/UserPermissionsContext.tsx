@@ -13,6 +13,8 @@ interface UserPermissions {
   canViewAuditLog: boolean;
   /** Superuser only — access admin screens */
   canAccessAdmin: boolean;
+  /** Superuser only — delete asset count sessions */
+  canDeleteAssetCount: boolean;
 }
 
 const UserPermissionsContext = createContext<UserPermissions | null>(null);
@@ -39,6 +41,7 @@ export function UserPermissionsProvider({
       canPerformAssetCount: level >= managerLevel,
       canViewAuditLog: level >= managerLevel,
       canAccessAdmin: level >= superuserLevel,
+      canDeleteAssetCount: level >= superuserLevel,
     };
   }, [userRole]);
 
@@ -65,6 +68,7 @@ export function useUserPermissions(): UserPermissions {
       canPerformAssetCount: false,
       canViewAuditLog: false,
       canAccessAdmin: false,
+      canDeleteAssetCount: false,
     };
   }
 

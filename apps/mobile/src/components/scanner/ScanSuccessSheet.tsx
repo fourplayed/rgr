@@ -49,8 +49,8 @@ export function ScanSuccessSheet({
             <Text style={styles.title}>Success</Text>
 
             <View style={styles.list}>
-              {items.map((item, index) => (
-                <View key={index} style={styles.listItem}>
+              {items.map((item) => (
+                <View key={item.label} style={styles.listItem}>
                   <Ionicons
                     name="checkmark-circle"
                     size={24}

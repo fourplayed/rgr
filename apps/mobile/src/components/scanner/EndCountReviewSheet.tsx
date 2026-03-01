@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from 'react';
+import React, { memo, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -6,10 +6,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LoadingDots } from '../common/LoadingDots';
+import { ConfirmSheet } from '../common/ConfirmSheet';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 import type { AssetScan, CombinationGroup } from '@rgr/shared';
@@ -53,6 +53,8 @@ function EndCountReviewSheetComponent({
   const totalAssets = scans.length;
   const totalCombinations = combinationList.length;
   const standaloneCount = standaloneScans.length;
+
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
   // Check for missing data
   const combinationsWithoutPhoto = combinationList.filter(c => !c.photoUri);
@@ -233,16 +235,7 @@ function EndCountReviewSheetComponent({
             {/* Discard */}
             <TouchableOpacity
               style={styles.discardButton}
-              onPress={() => {
-                Alert.alert(
-                  'Discard Count',
-                  `Are you sure you want to discard this count? ${totalAssets} scanned asset${totalAssets !== 1 ? 's' : ''} will be lost.`,
-                  [
-                    { text: 'Cancel', style: 'cancel' },
-                    { text: 'Discard', style: 'destructive', onPress: onDiscard },
-                  ],
-                );
-              }}
+              onPress={() => setShowDiscardConfirm(true)}
               disabled={isSubmitting}
             >
               <Ionicons name="trash-outline" size={16} color={colors.error} />
@@ -251,6 +244,20 @@ function EndCountReviewSheetComponent({
           </View>
         </View>
       </View>
+
+      <ConfirmSheet
+        visible={showDiscardConfirm}
+        type="danger"
+        title="Discard Count"
+        message={`Are you sure you want to discard this count? ${totalAssets} scanned asset${totalAssets !== 1 ? 's' : ''} will be lost.`}
+        confirmLabel="Discard"
+        cancelLabel="Cancel"
+        onConfirm={() => {
+          setShowDiscardConfirm(false);
+          onDiscard();
+        }}
+        onCancel={() => setShowDiscardConfirm(false)}
+      />
     </Modal>
   );
 }

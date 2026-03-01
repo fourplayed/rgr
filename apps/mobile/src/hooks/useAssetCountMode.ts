@@ -1,4 +1,4 @@
-import { useReducer, useCallback, useEffect, useRef } from 'react';
+import { useReducer, useCallback, useEffect, useRef, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from '../utils/logger';
 import type {
@@ -7,8 +7,8 @@ import type {
   CombinationScan,
   CombinationGroup,
 } from '@rgr/shared';
-import { isValidAssetCountState, isStandaloneScan } from '@rgr/shared';
-import { reducer, initialState, STORAGE_KEY, DEBOUNCE_MS, generateUUID } from './assetCountModeReducer';
+import { isValidAssetCountState } from '@rgr/shared';
+import { reducer, initialState, STORAGE_KEY, DEBOUNCE_MS } from './assetCountModeReducer';
 
 // Re-export types for consumers
 export type { AssetScan, StandaloneScan, CombinationScan, CombinationGroup };
@@ -17,49 +17,25 @@ export type { AssetScan, StandaloneScan, CombinationScan, CombinationGroup };
  * Hook for managing Asset Count mode with AsyncStorage persistence.
  *
  * Asset Count mode allows managers to perform depot inventory counts by
- * scanning assets. Supports linking assets into combinations with photos
- * and notes. The session persists across app restarts.
- *
- * @example
- * ```tsx
- * const {
- *   isActive,
- *   scans,
- *   combinations,
- *   startCount,
- *   addScan,
- *   confirmScan,
- *   linkToPrevious,
- *   keepSeparate,
- *   endCount,
- * } = useAssetCountMode();
- *
- * // Start a count session
- * startCount('depot-uuid', 'Perth Depot');
- *
- * // Add a scan (pending confirmation)
- * addScan({ type: 'standalone', assetId: '...', assetNumber: 'TL001', timestamp: Date.now() });
- *
- * // Confirm the scan
- * confirmScan();
- *
- * // Link to previous if desired
- * if (hasUnlinkedPrevious) {
- *   linkToPrevious(); // Creates/extends combination
- * }
- *
- * // End session and submit
- * endCount();
- * ```
+ * scanning assets. Supports chain mode for linking assets into combinations
+ * with mandatory photos and notes. The session persists across app restarts.
  */
 export function useAssetCountMode() {
   const [state, dispatch] = useReducer(reducer, initialState);
 
   // Debounce timer ref for persistence
   const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Guard to skip redundant persistence write immediately after a RESTORE dispatch
+  const isRestoredRef = useRef(false);
 
   // Persist to AsyncStorage after state changes (debounced)
   useEffect(() => {
+    // Skip writing state back right after a RESTORE — it's already in storage
+    if (isRestoredRef.current) {
+      isRestoredRef.current = false;
+      return;
+    }
+
     // Clear any pending timeout
     if (persistTimeoutRef.current) {
       clearTimeout(persistTimeoutRef.current);
@@ -95,6 +71,7 @@ export function useAssetCountMode() {
           const parsed: unknown = JSON.parse(saved);
           // Validate schema before restoring to prevent crashes from corrupted data
           if (isValidAssetCountState(parsed) && parsed.isActive && parsed.depotId && parsed.depotName) {
+            isRestoredRef.current = true;
             dispatch({ type: 'RESTORE', state: parsed });
           } else if (parsed !== null) {
             // Clear invalid data
@@ -131,28 +108,12 @@ export function useAssetCountMode() {
     dispatch({ type: 'CANCEL_SCAN' });
   }, []);
 
-  const linkToPrevious = useCallback((): string | null => {
-    if (state.lastUnlinkedScanIndex === null || state.scans.length < 2) {
-      return null;
-    }
-    const prevScan = state.scans[state.lastUnlinkedScanIndex];
-    if (!prevScan) return null;
+  const startChain = useCallback(() => {
+    dispatch({ type: 'START_CHAIN' });
+  }, []);
 
-    let comboId: string;
-    if (isStandaloneScan(prevScan)) {
-      // New combo will be created — generate ID here so we can return it
-      comboId = generateUUID();
-      dispatch({ type: 'LINK_TO_PREVIOUS', combinationId: comboId });
-    } else {
-      // Extending existing combo
-      comboId = prevScan.combinationId;
-      dispatch({ type: 'LINK_TO_PREVIOUS' });
-    }
-    return comboId;
-  }, [state.lastUnlinkedScanIndex, state.scans]);
-
-  const keepSeparate = useCallback(() => {
-    dispatch({ type: 'KEEP_SEPARATE' });
+  const endChain = useCallback(() => {
+    dispatch({ type: 'END_CHAIN' });
   }, []);
 
   const setCombinationNotes = useCallback((combinationId: string, notes: string) => {
@@ -171,26 +132,19 @@ export function useAssetCountMode() {
     dispatch({ type: 'END_COUNT' });
   }, []);
 
-  // Computed: Can we offer to link the current scan to a previous one?
-  // Must have at least 2 scans, and the previous one must exist
-  const canLinkToPrevious = state.scans.length >= 2 && state.lastUnlinkedScanIndex !== null;
+  // Chain mode computed values
+  const isChainActive = state.activeChainId !== null;
+  const activeChainId = state.activeChainId;
 
-  // Get the previous scan info for display in link sheet
-  const previousScanForLink = canLinkToPrevious && state.lastUnlinkedScanIndex !== null
-    ? state.scans[state.lastUnlinkedScanIndex]
-    : null;
+  const activeChain: CombinationGroup | null = useMemo(() => {
+    if (!state.activeChainId) return null;
+    return state.combinations[state.activeChainId] ?? null;
+  }, [state.activeChainId, state.combinations]);
 
-  // Get the most recently created/extended combination (for photo capture after linking)
-  const getLastCombinationId = useCallback((): string | null => {
-    const lastScan = state.scans[state.scans.length - 1];
-    if (lastScan && !isStandaloneScan(lastScan)) {
-      return lastScan.combinationId;
-    }
-    return null;
-  }, [state.scans]);
+  const activeChainSize = activeChain?.assetIds.length ?? 0;
 
   // Count standalone vs combination scans
-  const standaloneCount = state.scans.filter(isStandaloneScan).length;
+  const standaloneCount = state.scans.filter(s => s.type === 'standalone').length;
   const combinationCount = Object.keys(state.combinations).length;
 
   return {
@@ -204,9 +158,13 @@ export function useAssetCountMode() {
     combinations: state.combinations,
     scanCount: state.scans.length,
 
+    // Chain mode
+    isChainActive,
+    activeChainId,
+    activeChain,
+    activeChainSize,
+
     // Computed
-    canLinkToPrevious,
-    previousScanForLink,
     standaloneCount,
     combinationCount,
 
@@ -216,12 +174,11 @@ export function useAssetCountMode() {
     addScan,
     confirmScan,
     cancelScan,
-    linkToPrevious,
-    keepSeparate,
+    startChain,
+    endChain,
     setCombinationNotes,
     setCombinationPhoto,
     undoLastScan,
     endCount,
-    getLastCombinationId,
   };
 }

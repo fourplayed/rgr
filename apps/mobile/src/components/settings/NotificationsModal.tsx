@@ -7,13 +7,12 @@ import {
   Switch,
   StyleSheet,
   Animated,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
 import { useSettingsStore } from '../../store/settingsStore';
 
-const SCREEN_HEIGHT = Dimensions.get('window').height;
 const ANIMATION_DURATION = 300;
 
 interface NotificationsModalProps {
@@ -49,10 +48,11 @@ function ToggleRow({ title, subtitle, value, onValueChange, disabled }: ToggleRo
 
 export function NotificationsModal({ visible, onClose }: NotificationsModalProps) {
   const { notifications, setNotificationSetting } = useSettingsStore();
+  const { height: screenHeight } = useWindowDimensions();
   const [modalVisible, setModalVisible] = useState(false);
 
   const backdropOpacity = useRef(new Animated.Value(0)).current;
-  const sheetTranslateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+  const sheetTranslateY = useRef(new Animated.Value(screenHeight)).current;
 
   const isPushDisabled = !notifications.pushEnabled;
 
@@ -80,7 +80,7 @@ export function NotificationsModal({ visible, onClose }: NotificationsModalProps
           useNativeDriver: true,
         }),
         Animated.timing(sheetTranslateY, {
-          toValue: SCREEN_HEIGHT,
+          toValue: screenHeight,
           duration: ANIMATION_DURATION,
           useNativeDriver: true,
         }),
@@ -88,7 +88,7 @@ export function NotificationsModal({ visible, onClose }: NotificationsModalProps
         setModalVisible(false);
       });
     }
-  }, [visible, backdropOpacity, sheetTranslateY]);
+  }, [visible, backdropOpacity, sheetTranslateY, screenHeight]);
 
   return (
     <Modal

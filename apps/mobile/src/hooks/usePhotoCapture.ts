@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import type { CameraView } from 'expo-camera';
 import * as FileSystem from 'expo-file-system';
 import { usePhotoCaptureStore } from '../store/photoCaptureStore';
@@ -7,6 +7,9 @@ import { useAuthStore } from '../store/authStore';
 import { MAX_PHOTO_SIZE_BYTES } from '@rgr/shared';
 import { generateThumbnail } from '../utils/imageUtils';
 import { logger } from '../utils/logger';
+
+/** Valid photo types matching the database photo_type enum */
+type PhotoType = 'freight' | 'damage' | 'inspection' | 'general';
 
 /**
  * Hook for managing photo capture workflow.
@@ -34,7 +37,12 @@ export function usePhotoCapture() {
   } = usePhotoCaptureStore();
 
   const { mutateAsync: uploadPhotoMutation } = useUploadPhoto();
+  // Dual ref + state pattern for isCapturing:
+  // - ref: guards against double-invocation (synchronous check in takePhoto)
+  // - state: drives UI updates (e.g., disabling capture button)
+  // Both are updated together to stay in sync.
   const isCapturingRef = useRef(false);
+  const [isCapturing, setIsCapturing] = useState(false);
 
   /**
    * Take a photo using the provided camera ref.
@@ -49,6 +57,7 @@ export function usePhotoCapture() {
 
     try {
       isCapturingRef.current = true;
+      setIsCapturing(true);
 
       const photo = await cameraRef.current.takePictureAsync({
         quality: 0.8,
@@ -69,6 +78,7 @@ export function usePhotoCapture() {
       return null;
     } finally {
       isCapturingRef.current = false;
+      setIsCapturing(false);
     }
   }, [setCapturedUri, setImageDimensions]);
 
@@ -85,7 +95,7 @@ export function usePhotoCapture() {
    * Returns true on success, false on failure.
    */
   const confirmAndUpload = useCallback(async (
-    photoType: string = 'freight'
+    photoType: PhotoType = 'freight'
   ): Promise<boolean> => {
     if (!capturedUri || !assetId || !user) {
       setUploadError('Missing required data for upload');
@@ -157,7 +167,7 @@ export function usePhotoCapture() {
     scanEventId,
     isUploading,
     uploadError,
-    isCapturing: isCapturingRef.current,
+    isCapturing,
 
     // Actions
     takePhoto,

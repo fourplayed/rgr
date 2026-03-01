@@ -65,6 +65,9 @@ const FilterChip = memo(function FilterChip({ label, isSelected, onPress, select
       ]}
       onPress={onPress}
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={`Filter by ${label}`}
+      accessibilityState={{ selected: isSelected }}
     >
       <Text
         style={[
@@ -119,13 +122,29 @@ export const AssetFilterPanel = memo(function AssetFilterPanel({
 
   const toggleCategory = useCallback((category: AssetCategory) => {
     if (categories.includes(category)) {
-      onCategoryChange(categories.filter((c) => c !== category));
-      // Clear subtypes when deselecting a category
-      onSubtypeChange([]);
+      const newCategories = categories.filter((c) => c !== category);
+      onCategoryChange(newCategories);
+      // Clear subtypes that belong to the deselected category
+      const validSubtypes = new Set(
+        newCategories.flatMap((c) => [...AssetSubtypesByCategory[c]])
+      );
+      const filtered = subtypes.filter((s) => validSubtypes.has(s));
+      if (filtered.length !== subtypes.length) {
+        onSubtypeChange(filtered);
+      }
     } else {
-      onCategoryChange([...categories, category]);
+      const newCategories = [...categories, category];
+      onCategoryChange(newCategories);
+      // Clear subtypes that don't belong to any selected category
+      const validSubtypes = new Set(
+        newCategories.flatMap((c) => [...AssetSubtypesByCategory[c]])
+      );
+      const filtered = subtypes.filter((s) => validSubtypes.has(s));
+      if (filtered.length !== subtypes.length) {
+        onSubtypeChange(filtered);
+      }
     }
-  }, [categories, onCategoryChange, onSubtypeChange]);
+  }, [categories, subtypes, onCategoryChange, onSubtypeChange]);
 
   const toggleSubtype = useCallback((subtype: string) => {
     if (subtypes.includes(subtype)) {
@@ -248,6 +267,9 @@ export const AssetFilterPanel = memo(function AssetFilterPanel({
                     ]}
                     onPress={() => toggleDepot(depot.id)}
                     activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Filter by ${depot.name}`}
+                    accessibilityState={{ selected: isSelected }}
                   >
                     <Text
                       style={[

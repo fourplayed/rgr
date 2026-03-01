@@ -25,13 +25,29 @@ export async function saveSession(session: StoredSession): Promise<void> {
 }
 
 /**
+ * Runtime type guard for parsed session data.
+ * Defends against corrupted or tampered secure storage values.
+ */
+function isStoredSession(obj: unknown): obj is StoredSession {
+  if (typeof obj !== 'object' || obj === null) return false;
+  const s = obj as Record<string, unknown>;
+  return (
+    typeof s['access_token'] === 'string' &&
+    typeof s['refresh_token'] === 'string' &&
+    (s['expires_at'] === undefined || typeof s['expires_at'] === 'number')
+  );
+}
+
+/**
  * Retrieve stored session tokens
  */
 export async function getSession(): Promise<StoredSession | null> {
   const sessionStr = await SecureStore.getItemAsync(KEYS.SESSION);
   if (!sessionStr) return null;
   try {
-    return JSON.parse(sessionStr) as StoredSession;
+    const parsed: unknown = JSON.parse(sessionStr);
+    if (!isStoredSession(parsed)) return null;
+    return parsed;
   } catch {
     return null;
   }

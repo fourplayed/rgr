@@ -57,7 +57,7 @@ function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto }: PhotoGalle
     return photoItems;
   }, [photos, onAddPhoto]);
 
-  const getItemLayout = useCallback((_: unknown, index: number) => ({
+  const getItemLayout = useCallback((_: ArrayLike<GalleryItem> | null | undefined, index: number) => ({
     length: thumbnailSize + THUMBNAIL_GAP,
     offset: (thumbnailSize + THUMBNAIL_GAP) * Math.floor(index / NUM_COLUMNS),
     index,

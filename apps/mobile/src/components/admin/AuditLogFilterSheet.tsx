@@ -11,10 +11,9 @@ import {
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 
-const ACTION_TYPES = ['INSERT', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT'];
+const ACTION_TYPES = ['INSERT', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT'] as const;
 
 export interface AuditLogFilters {
-  userId?: string;
   action?: string;
   startDate?: string;
   endDate?: string;
@@ -37,13 +36,17 @@ export function AuditLogFilterSheet({
   const [startDate, setStartDate] = useState(filters.startDate || '');
   const [endDate, setEndDate] = useState(filters.endDate || '');
 
+  const filtersAction = filters.action;
+  const filtersStartDate = filters.startDate;
+  const filtersEndDate = filters.endDate;
+
   useEffect(() => {
     if (visible) {
-      setAction(filters.action);
-      setStartDate(filters.startDate || '');
-      setEndDate(filters.endDate || '');
+      setAction(filtersAction);
+      setStartDate(filtersStartDate || '');
+      setEndDate(filtersEndDate || '');
     }
-  }, [visible, filters]);
+  }, [visible, filtersAction, filtersStartDate, filtersEndDate]);
 
   const handleApply = () => {
     const next: AuditLogFilters = {};
@@ -99,6 +102,9 @@ export function AuditLogFilterSheet({
                         setAction(isSelected ? undefined : type)
                       }
                       activeOpacity={0.7}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Filter by ${type}`}
+                      accessibilityState={{ selected: isSelected }}
                     >
                       <Text
                         style={[

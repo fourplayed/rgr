@@ -48,7 +48,7 @@ export function ScanConfirmSheet({
     : asset.category === 'dolly' ? 'Dolly' : 'Trailer';
 
   // Get status color for left border
-  const statusColor = AssetStatusColors[asset.status as keyof typeof AssetStatusColors] || colors.electricBlue;
+  const statusColor = AssetStatusColors[asset.status] ?? colors.electricBlue;
 
   const depotBadgeColors = matchedDepot ? getDepotBadgeColors(matchedDepot.depot, colors.chrome, colors.text) : null;
 

@@ -10,7 +10,7 @@ interface MaintenanceStatusBadgeProps {
 }
 
 const getStatusColor = (status: MaintenanceStatus): string => {
-  return colors.maintenanceStatus[status as keyof typeof colors.maintenanceStatus] || colors.textSecondary;
+  return colors.maintenanceStatus[status as keyof typeof colors.maintenanceStatus] ?? colors.textSecondary;
 };
 
 function MaintenanceStatusBadgeComponent({ status }: MaintenanceStatusBadgeProps) {

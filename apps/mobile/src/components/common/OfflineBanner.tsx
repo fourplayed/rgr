@@ -12,17 +12,10 @@ import { spacing, fontSize, fontWeight } from '../../theme/spacing';
  * It uses the useNetworkStatus hook to subscribe to network state changes.
  */
 export function OfflineBanner() {
-  const { isConnected, isInternetReachable } = useNetworkStatus();
+  const { isConnected } = useNetworkStatus();
 
-  // Don't show banner if we're still checking (null) or if connected
+  // Don't show banner if we're still checking (null) or if connected with reachable internet
   if (isConnected === null || isConnected === true) {
-    return null;
-  }
-
-  // Show banner if not connected, or if connected but internet is not reachable
-  const isOffline = !isConnected || isInternetReachable === false;
-
-  if (!isOffline) {
     return null;
   }
 

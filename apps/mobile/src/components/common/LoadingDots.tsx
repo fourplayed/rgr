@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Animated } from 'react-native';
+import { View, Animated, StyleSheet } from 'react-native';
 import { colors } from '../../theme/colors';
 
 interface LoadingDotsProps {
@@ -68,10 +68,18 @@ export function LoadingDots({ color = colors.electricBlue, size = 10 }: LoadingD
   });
 
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+    <View style={styles.container}>
       <Animated.View style={dotStyle(dot1)} />
       <Animated.View style={dotStyle(dot2)} />
       <Animated.View style={dotStyle(dot3)} />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});

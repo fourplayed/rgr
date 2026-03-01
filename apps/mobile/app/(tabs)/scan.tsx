@@ -54,28 +54,29 @@ export default function ScanScreen() {
     photoFlow.resetPhotoFlow();
     defectFlow.resetDefectFlow();
     // Combination/count state
-    setShowLinkSheet(false);
-    setPendingLinkSheet(false);
     setShowCombinationPhoto(false);
-    setPendingCombinationPhoto(false);
+    setCombinationPhotoMandatory(false);
     setShowEndCountReview(false);
     setActiveCombinationId(null);
+    setPendingCombinationPhoto(false);
+    setPendingEndCountReview(false);
+    comboPhotoOriginRef.current = null;
     // Count mode inline state
     setScanToast({ visible: false, message: '', type: 'success', showUndo: false });
-    setQuickLinkBar({ visible: false, currentAssetNumber: '', previousAssetNumber: '' });
   }, [scanFlow, photoFlow, defectFlow]);
 
   resetAllScanStateRef.current = resetAllScanState;
 
   // ── Combination / Count State ──
 
-  const [showLinkSheet, setShowLinkSheet] = useState(false);
-  const [pendingLinkSheet, setPendingLinkSheet] = useState(false);
   const [showCombinationPhoto, setShowCombinationPhoto] = useState(false);
-  const [pendingCombinationPhoto, setPendingCombinationPhoto] = useState(false);
   const [showEndCountReview, setShowEndCountReview] = useState(false);
   const [isSubmittingCount, setIsSubmittingCount] = useState(false);
   const [activeCombinationId, setActiveCombinationId] = useState<string | null>(null);
+  const [combinationPhotoMandatory, setCombinationPhotoMandatory] = useState(false);
+  const [pendingCombinationPhoto, setPendingCombinationPhoto] = useState(false);
+  const [pendingEndCountReview, setPendingEndCountReview] = useState(false);
+  const comboPhotoOriginRef = useRef<'endCountReview' | 'autoChainEnd' | null>(null);
 
   // Scan toast state (count mode inline feedback)
   const [scanToast, setScanToast] = useState<{
@@ -85,15 +86,38 @@ export default function ScanScreen() {
     showUndo: boolean;
   }>({ visible: false, message: '', type: 'success', showUndo: false });
 
-  // Quick-link bar state (count mode inline link prompt)
-  const [quickLinkBar, setQuickLinkBar] = useState<{
-    visible: boolean;
-    currentAssetNumber: string;
-    previousAssetNumber: string;
-  }>({ visible: false, currentAssetNumber: '', previousAssetNumber: '' });
-
   // Debug state
   const [showDebugOverlay, setShowDebugOverlay] = useState(false);
+
+  // Track previous activeChainId for auto-end detection
+  const prevChainIdRef = useRef<string | null>(null);
+
+  // ── Auto-end chain detection ──
+  // When chain hits max size, activeChainId transitions from non-null to null
+  useEffect(() => {
+    const prevId = prevChainIdRef.current;
+    const currentId = assetCount.activeChainId;
+
+    if (prevId !== null && currentId === null) {
+      // Chain just ended (could be auto-end at max size or explicit END_CHAIN)
+      const combo = assetCount.combinations[prevId];
+      if (combo && combo.assetIds.length >= 2) {
+        // Show mandatory photo sheet for the ended chain
+        setActiveCombinationId(prevId);
+        setCombinationPhotoMandatory(true);
+        comboPhotoOriginRef.current = 'autoChainEnd';
+        setShowCombinationPhoto(true);
+        setScanToast({
+          visible: true,
+          message: `Chain complete (${combo.assetIds.length} assets)`,
+          type: 'link',
+          showUndo: false,
+        });
+      }
+    }
+
+    prevChainIdRef.current = currentId;
+  }, [assetCount.activeChainId, assetCount.combinations]);
 
   // ── Count Mode Auto-Confirm ──
 
@@ -103,12 +127,6 @@ export default function ScanScreen() {
       scanFlow.countModeCallbackRef.current = (result: CountModeAutoConfirmResult) => {
         const { asset } = result;
         const assetNumber = asset.assetNumber ?? 'Unknown';
-
-        // Capture the previous scan's asset number BEFORE dispatching,
-        // since the current last scan is the actual "previous" relative to the new one
-        const previousAssetNumber = assetCount.scans.length > 0
-          ? assetCount.scans[assetCount.scans.length - 1]?.assetNumber ?? ''
-          : '';
 
         // Check for duplicate scan before adding
         const isDuplicate = assetCount.scans.some(s => s.assetId === asset.id);
@@ -130,34 +148,29 @@ export default function ScanScreen() {
           assetId: asset.id,
           assetNumber,
           timestamp: Date.now(),
+          ...(asset.category && { category: asset.category }),
         });
         assetCount.confirmScan();
 
-        // Dismiss any existing quick-link bar (auto-dismiss = keep separate)
-        if (quickLinkBar.visible) {
-          assetCount.keepSeparate();
-          setQuickLinkBar({ visible: false, currentAssetNumber: '', previousAssetNumber: '' });
-        }
-
-        // Show scan toast with undo
-        setScanToast({
-          visible: true,
-          message: `${assetNumber} counted`,
-          type: 'success',
-          showUndo: true,
-        });
-
-        // Show quick-link bar if there's a previous scan to link to
-        // (we use the previously captured previousAssetNumber since state hasn't updated yet)
-        if (previousAssetNumber) {
-          // Defer to next tick so reducer state settles
-          setTimeout(() => {
-            setQuickLinkBar({
-              visible: true,
-              currentAssetNumber: assetNumber,
-              previousAssetNumber,
-            });
-          }, 0);
+        // Show scan toast based on chain state
+        if (assetCount.isChainActive) {
+          // Check if the scan was added to chain or fell through to standalone
+          // We can check by looking at the category validation result
+          // The reducer handles this — if it added to chain, it will be combination type
+          // We show a chain message optimistically
+          setScanToast({
+            visible: true,
+            message: `${assetNumber} added to chain`,
+            type: 'link',
+            showUndo: true,
+          });
+        } else {
+          setScanToast({
+            visible: true,
+            message: `${assetNumber} counted`,
+            type: 'success',
+            showUndo: true,
+          });
         }
 
         scanFlow.addDebugLog(`Count mode: auto-confirmed ${assetNumber}`);
@@ -165,7 +178,7 @@ export default function ScanScreen() {
     } else {
       scanFlow.countModeCallbackRef.current = null;
     }
-  }, [assetCount.isActive, assetCount, scanFlow, quickLinkBar.visible]);
+  }, [assetCount.isActive, assetCount, scanFlow]);
 
   const handleScanToastDismiss = useCallback(() => {
     setScanToast(prev => ({ ...prev, visible: false }));
@@ -175,51 +188,58 @@ export default function ScanScreen() {
     scanFlow.addDebugLog('Undo last scan');
     assetCount.undoLastScan();
     setScanToast(prev => ({ ...prev, visible: false }));
-    // Also dismiss quick-link bar since the scan was undone
-    setQuickLinkBar({ visible: false, currentAssetNumber: '', previousAssetNumber: '' });
   }, [assetCount, scanFlow]);
 
-  // ── Quick Link Bar (count mode inline linking) ──
+  // ── Chain Mode Handlers ──
 
-  const handleQuickLink = useCallback(() => {
-    scanFlow.addDebugLog('Quick-linking to previous asset');
-    assetCount.linkToPrevious();
-    const linked = quickLinkBar.currentAssetNumber;
-    const prev = quickLinkBar.previousAssetNumber;
-    setQuickLinkBar({ visible: false, currentAssetNumber: '', previousAssetNumber: '' });
-    // Show link confirmation toast
+  const handleStartChain = useCallback(() => {
+    assetCount.startChain();
     setScanToast({
       visible: true,
-      message: `${prev} + ${linked} linked`,
+      message: 'Chain started — scan assets to link',
       type: 'link',
       showUndo: false,
     });
-  }, [assetCount, scanFlow, quickLinkBar]);
+    scanFlow.addDebugLog('Chain started');
+  }, [assetCount, scanFlow]);
 
-  const handleQuickLinkDismiss = useCallback(() => {
-    scanFlow.addDebugLog('Quick-link dismissed (keep separate)');
-    assetCount.keepSeparate();
-    setQuickLinkBar({ visible: false, currentAssetNumber: '', previousAssetNumber: '' });
+  const handleEndChain = useCallback(() => {
+    const chainSize = assetCount.activeChainSize;
+
+    assetCount.endChain();
+
+    if (chainSize === 0) {
+      setScanToast({
+        visible: true,
+        message: 'Empty chain discarded',
+        type: 'info',
+        showUndo: false,
+      });
+    } else if (chainSize === 1) {
+      setScanToast({
+        visible: true,
+        message: 'Need 2+ for a chain',
+        type: 'info',
+        showUndo: false,
+      });
+    }
+    // For 2+ items, the auto-end detection effect handles showing the photo sheet
+    // But we need to handle explicit end-chain here too since the effect checks prevChainIdRef
+    // which will be updated. The effect will fire and handle it.
+
+    scanFlow.addDebugLog(`Chain ended (${chainSize} items)`);
   }, [assetCount, scanFlow]);
 
   // ── Orchestration: Confirm Sheet Dismiss ──
 
   const handleConfirmSheetDismiss = useCallback(() => {
     scanFlow.addDebugLog('Confirm sheet dismissed (native callback)');
-    if (pendingLinkSheet && assetCount.canLinkToPrevious) {
-      scanFlow.addDebugLog('Showing link sheet now');
-      setPendingLinkSheet(false);
-      setShowLinkSheet(true);
-    } else if (pendingLinkSheet) {
-      scanFlow.addDebugLog('No previous scan to link, resetting');
-      setPendingLinkSheet(false);
-      scanFlow.resetScanner();
-    } else if (defectFlow.resolvePending()) {
+    if (defectFlow.resolvePending()) {
       // Defect report shown
     } else {
       photoFlow.resolvePending();
     }
-  }, [pendingLinkSheet, assetCount.canLinkToPrevious, scanFlow, defectFlow, photoFlow]);
+  }, [scanFlow, defectFlow, photoFlow]);
 
   // ── Orchestration: Confirm Scan ──
 
@@ -248,9 +268,6 @@ export default function ScanScreen() {
         break;
       case 'photoPrompt':
         photoFlow.queuePhotoPrompt();
-        break;
-      case 'assetCountLink':
-        setPendingLinkSheet(true);
         break;
     }
   }, [scanFlow, assetCount, canMarkMaintenance, defectFlow, photoFlow]);
@@ -289,11 +306,7 @@ export default function ScanScreen() {
 
   const handleDefectReportDismiss = useCallback(() => {
     scanFlow.addDebugLog('Defect report dismissed (native callback)');
-    // After defect report dismisses, resolve any pending photo flow states
-    // photoFlow.handlePhotoPromptDismiss handles both pendingCamera and pendingSuccessSheet
-    // but we need to check the raw pending states here
     if (photoFlow.pendingCamera) {
-      // Camera was queued (user wanted to take photo of defect)
       photoFlow.handlePhotoPromptDismiss();
     } else {
       photoFlow.resolvePending();
@@ -316,37 +329,18 @@ export default function ScanScreen() {
   }, [cachedDepot, assetCount, scanFlow]);
 
   const handleEndAssetCount = useCallback(() => {
+    // Prevent ending count while chain is active
+    if (assetCount.isChainActive) {
+      setScanToast({
+        visible: true,
+        message: 'End chain first',
+        type: 'info',
+        showUndo: false,
+      });
+      return;
+    }
     setShowEndCountReview(true);
-  }, []);
-
-  // Combination Link handlers
-  const handleLinkToPrevious = useCallback(() => {
-    scanFlow.addDebugLog('Linking to previous asset');
-    const comboId = assetCount.linkToPrevious();
-    if (comboId) {
-      setActiveCombinationId(comboId);
-      setPendingCombinationPhoto(true);
-    }
-    setShowLinkSheet(false);
-  }, [assetCount, scanFlow]);
-
-  const handleKeepSeparate = useCallback(() => {
-    scanFlow.addDebugLog('Keeping scan separate');
-    assetCount.keepSeparate();
-    setShowLinkSheet(false);
-    scanFlow.resetScanner();
-  }, [assetCount, scanFlow]);
-
-  const handleLinkSheetDismiss = useCallback(() => {
-    scanFlow.addDebugLog('Link sheet dismissed');
-    if (pendingCombinationPhoto && activeCombinationId) {
-      scanFlow.addDebugLog('Showing combination photo now');
-      setPendingCombinationPhoto(false);
-      setShowCombinationPhoto(true);
-    } else {
-      scanFlow.resetScanner();
-    }
-  }, [pendingCombinationPhoto, activeCombinationId, scanFlow]);
+  }, [assetCount.isChainActive]);
 
   // Combination Photo handlers
   const handleCombinationPhotoCapture = useCallback((photoUri: string) => {
@@ -363,16 +357,24 @@ export default function ScanScreen() {
 
   const handleCombinationPhotoComplete = useCallback(() => {
     scanFlow.addDebugLog('Combination photo complete');
+    if (comboPhotoOriginRef.current === 'endCountReview') {
+      setPendingEndCountReview(true);
+    }
     setShowCombinationPhoto(false);
     setActiveCombinationId(null);
-    scanFlow.resetScanner();
+    setCombinationPhotoMandatory(false);
+    comboPhotoOriginRef.current = null;
   }, [scanFlow]);
 
   const handleCombinationPhotoSkip = useCallback(() => {
     scanFlow.addDebugLog('Combination photo skipped');
+    if (comboPhotoOriginRef.current === 'endCountReview') {
+      setPendingEndCountReview(true);
+    }
     setShowCombinationPhoto(false);
     setActiveCombinationId(null);
-    scanFlow.resetScanner();
+    setCombinationPhotoMandatory(false);
+    comboPhotoOriginRef.current = null;
   }, [scanFlow]);
 
   // End Count Review handlers
@@ -457,9 +459,28 @@ export default function ScanScreen() {
 
   const handleEditCombination = useCallback((combinationId: string) => {
     setActiveCombinationId(combinationId);
-    setShowEndCountReview(false);
-    setShowCombinationPhoto(true);
-  }, []);
+    setCombinationPhotoMandatory(false);
+    comboPhotoOriginRef.current = 'endCountReview';
+    setPendingCombinationPhoto(true);
+    setShowEndCountReview(false);         // slide down — onDismiss opens combo photo
+    scanFlow.resetScanner();
+  }, [scanFlow]);
+
+  const handleEndCountReviewDismiss = useCallback(() => {
+    if (pendingCombinationPhoto) {
+      setPendingCombinationPhoto(false);
+      setShowCombinationPhoto(true);      // slide up — no overlap
+    }
+  }, [pendingCombinationPhoto]);
+
+  const handleCombinationPhotoDismiss = useCallback(() => {
+    if (pendingEndCountReview) {
+      setPendingEndCountReview(false);
+      setShowEndCountReview(true);        // slide up — review returns
+    } else {
+      scanFlow.resetScanner();            // auto-chain-end path: back to scanner
+    }
+  }, [pendingEndCountReview, scanFlow]);
 
   // ── Debug Scan ──
 
@@ -547,14 +568,16 @@ export default function ScanScreen() {
           onStartAssetCount={handleStartAssetCount}
           onEndAssetCount={handleEndAssetCount}
           onDebugScan={handleDebugScan}
-          cachedDepot={cachedDepot}
           // Count mode inline components
           scanToast={scanToast}
           onScanToastDismiss={handleScanToastDismiss}
           onScanToastUndo={handleScanToastUndo}
-          quickLinkBar={quickLinkBar}
-          onQuickLink={handleQuickLink}
-          onQuickLinkDismiss={handleQuickLinkDismiss}
+          // Chain mode
+          isChainActive={assetCount.isChainActive}
+          activeChainSize={assetCount.activeChainSize}
+          onStartChain={handleStartChain}
+          onEndChain={handleEndChain}
+          scanStatus={scanFlow.scanStatus}
         />
       </CameraView>
 
@@ -596,18 +619,6 @@ export default function ScanScreen() {
         // Alert
         alertSheet={scanFlow.alertSheet}
         onAlertDismiss={() => scanFlow.setAlertSheet(prev => ({ ...prev, visible: false }))}
-        // Combination link
-        showLinkSheet={showLinkSheet}
-        previousScanForLink={assetCount.previousScanForLink}
-        currentAssetNumber={scanFlow.completedAsset?.assetNumber ?? ''}
-        existingComboSize={
-          assetCount.previousScanForLink && !isStandaloneScan(assetCount.previousScanForLink)
-            ? assetCount.combinations[assetCount.previousScanForLink.combinationId]?.assetIds.length
-            : undefined
-        }
-        onLinkToPrevious={handleLinkToPrevious}
-        onKeepSeparate={handleKeepSeparate}
-        onLinkSheetDismiss={handleLinkSheetDismiss}
         // Combination photo
         showCombinationPhoto={showCombinationPhoto}
         activeCombinationId={activeCombinationId}
@@ -616,6 +627,7 @@ export default function ScanScreen() {
             ? assetCount.combinations[activeCombinationId].assetNumbers
             : []
         }
+        combinationPhotoMandatory={combinationPhotoMandatory}
         onCombinationPhotoCapture={handleCombinationPhotoCapture}
         onCombinationNotesChange={handleCombinationNotesChange}
         onCombinationPhotoComplete={handleCombinationPhotoComplete}
@@ -630,6 +642,8 @@ export default function ScanScreen() {
         onSubmitCount={handleSubmitCount}
         onCancelEndCount={handleCancelEndCount}
         onDiscardCount={handleDiscardCount}
+        onEndCountReviewDismiss={handleEndCountReviewDismiss}
+        onCombinationPhotoDismiss={handleCombinationPhotoDismiss}
       />
 
       {/* Debug Overlay */}

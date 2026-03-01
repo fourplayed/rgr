@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import type { MaintenanceListItem as MaintenanceListItemType } from '@rgr/shared';
+import type { MaintenanceListItem as MaintenanceListItemType, MaintenancePriority } from '@rgr/shared';
 import { formatRelativeTime } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
@@ -15,8 +15,8 @@ interface MaintenanceListItemProps {
   onPress: (maintenance: MaintenanceListItemType) => void;
 }
 
-const getPriorityBorderColor = (priority: string): string => {
-  return colors.maintenancePriority[priority as keyof typeof colors.maintenancePriority] || colors.border;
+const getPriorityBorderColor = (priority: MaintenancePriority): string => {
+  return colors.maintenancePriority[priority as keyof typeof colors.maintenancePriority] ?? colors.border;
 };
 
 function MaintenanceListItemComponent({ maintenance, onPress }: MaintenanceListItemProps) {
@@ -30,6 +30,8 @@ function MaintenanceListItemComponent({ maintenance, onPress }: MaintenanceListI
       style={[styles.container, { borderLeftColor: borderColor }]}
       onPress={() => onPress(maintenance)}
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={`Maintenance ${maintenance.title}, status ${maintenance.status}, priority ${maintenance.priority}`}
     >
       <View style={styles.cardContent}>
         <View style={styles.details}>
@@ -54,10 +56,17 @@ function MaintenanceListItemComponent({ maintenance, onPress }: MaintenanceListI
   );
 }
 
-// Custom memo comparison - only re-render if ID changes
+// Custom memo comparison - re-render if any rendered field changes
 export const MaintenanceListItem = memo(
   MaintenanceListItemComponent,
-  (prev, next) => prev.maintenance.id === next.maintenance.id
+  (prev, next) =>
+    prev.maintenance.id === next.maintenance.id &&
+    prev.maintenance.title === next.maintenance.title &&
+    prev.maintenance.status === next.maintenance.status &&
+    prev.maintenance.priority === next.maintenance.priority &&
+    prev.maintenance.dueDate === next.maintenance.dueDate &&
+    prev.maintenance.assetNumber === next.maintenance.assetNumber &&
+    prev.onPress === next.onPress
 );
 
 const styles = StyleSheet.create({

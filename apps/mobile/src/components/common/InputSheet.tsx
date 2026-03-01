@@ -50,9 +50,10 @@ export function InputSheet({
     if (visible) {
       setValue(defaultValue);
       // Focus input after modal animation completes
-      setTimeout(() => {
+      const timerId = setTimeout(() => {
         inputRef.current?.focus();
       }, 300);
+      return () => clearTimeout(timerId);
     }
   }, [visible, defaultValue]);
 

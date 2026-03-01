@@ -34,7 +34,7 @@ export function CreateMaintenanceModal({
   assetNumber,
 }: CreateMaintenanceModalProps) {
   const { user } = useAuthStore();
-  const createMutation = useCreateMaintenance();
+  const { mutateAsync: createMaintenanceAsync, isPending } = useCreateMaintenance();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -79,18 +79,21 @@ export function CreateMaintenanceModal({
       reportedBy: user?.id || null,
       dueDate: dueDate.trim() || null,
       notes: notes.trim() || null,
-      estimatedCost: estimatedCost ? parseFloat(estimatedCost) : null,
+      estimatedCost: (() => {
+        const parsed = estimatedCost ? parseFloat(estimatedCost) : null;
+        return parsed !== null && !isNaN(parsed) ? parsed : null;
+      })(),
     };
 
     try {
-      await createMutation.mutateAsync(input);
+      await createMaintenanceAsync(input);
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create maintenance record');
     }
-  }, [title, description, priority, dueDate, notes, estimatedCost, assetId, user, createMutation, onClose]);
+  }, [title, description, priority, dueDate, notes, estimatedCost, assetId, user, createMaintenanceAsync, onClose]);
 
-  const isLoading = createMutation.isPending;
+  const isLoading = isPending;
 
   return (
     <Modal

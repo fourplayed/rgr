@@ -11,22 +11,27 @@ jest.mock('../../utils/logger', () => ({
 
 // Mock crypto.randomUUID for deterministic test IDs
 const mockUUID = 'aaaaaaaa-bbbb-4ccc-dddd-eeeeeeeeeeee';
+let uuidCounter = 0;
 Object.defineProperty(globalThis, 'crypto', {
-  value: { randomUUID: () => mockUUID },
+  value: { randomUUID: () => `${mockUUID}-${uuidCounter++}` },
 });
 
-import { reducer, initialState } from '../assetCountModeReducer';
-import type { Action } from '../assetCountModeReducer';
-import type { StandaloneScan, AssetCountState } from '@rgr/shared';
+import { reducer, initialState, Action } from '../assetCountModeReducer';
+import { StandaloneScan, AssetCountState, AssetCategory } from '@rgr/shared';
 
-function makeScan(assetNumber: string, assetId?: string): StandaloneScan {
+function makeScan(assetNumber: string, assetId?: string, category?: AssetCategory): StandaloneScan {
   return {
     type: 'standalone',
     assetId: assetId ?? `asset-${assetNumber}`,
     assetNumber,
     timestamp: Date.now(),
+    ...(category && { category }),
   };
 }
+
+beforeEach(() => {
+  uuidCounter = 0;
+});
 
 describe('assetCountModeReducer', () => {
   describe('START_COUNT', () => {
@@ -38,6 +43,7 @@ describe('assetCountModeReducer', () => {
       expect(state.depotId).toBe('depot-1');
       expect(state.depotName).toBe('Perth');
       expect(state.scans).toEqual([]);
+      expect(state.activeChainId).toBeNull();
     });
 
     it('resets previous state when starting new count', () => {
@@ -77,7 +83,7 @@ describe('assetCountModeReducer', () => {
   });
 
   describe('CONFIRM_SCAN', () => {
-    it('moves pending scan to scans array', () => {
+    it('moves pending scan to scans array (standalone mode)', () => {
       let state = reducer(initialState, { type: 'START_COUNT', depotId: 'd', depotName: 'D' });
       const scan = makeScan('TL001');
       state = reducer(state, { type: 'ADD_SCAN', scan });
@@ -95,6 +101,84 @@ describe('assetCountModeReducer', () => {
 
       expect(state).toBe(active);
     });
+
+    it('adds first scan to active chain as combination', () => {
+      let state = reducer(initialState, { type: 'START_COUNT', depotId: 'd', depotName: 'D' });
+      state = reducer(state, { type: 'START_CHAIN' });
+      const chainId = state.activeChainId!;
+
+      const scan = makeScan('TL001', 'a1', 'trailer');
+      state = reducer(state, { type: 'ADD_SCAN', scan });
+      state = reducer(state, { type: 'CONFIRM_SCAN' });
+
+      expect(state.scans).toHaveLength(1);
+      expect(state.scans[0]!.type).toBe('combination');
+      expect(state.combinations[chainId]!.assetIds).toEqual(['a1']);
+      expect(state.combinations[chainId]!.assetNumbers).toEqual(['TL001']);
+      expect(state.activeChainId).toBe(chainId); // chain stays active
+    });
+
+    it('adds subsequent scans to chain with alternation validation', () => {
+      let state = reducer(initialState, { type: 'START_COUNT', depotId: 'd', depotName: 'D' });
+      state = reducer(state, { type: 'START_CHAIN' });
+      const chainId = state.activeChainId!;
+
+      // Add trailer
+      state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('TL001', 'a1', 'trailer') });
+      state = reducer(state, { type: 'CONFIRM_SCAN' });
+
+      // Add dolly (alternates correctly)
+      state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('DL001', 'a2', 'dolly') });
+      state = reducer(state, { type: 'CONFIRM_SCAN' });
+
+      expect(state.scans).toHaveLength(2);
+      expect(state.scans[1]!.type).toBe('combination');
+      expect(state.combinations[chainId]!.assetIds).toEqual(['a1', 'a2']);
+      expect(state.combinations[chainId]!.assetCategories).toEqual(['trailer', 'dolly']);
+    });
+
+    it('adds scan as standalone when chain alternation fails', () => {
+      let state = reducer(initialState, { type: 'START_COUNT', depotId: 'd', depotName: 'D' });
+      state = reducer(state, { type: 'START_CHAIN' });
+      const chainId = state.activeChainId!;
+
+      // Add trailer
+      state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('TL001', 'a1', 'trailer') });
+      state = reducer(state, { type: 'CONFIRM_SCAN' });
+
+      // Try to add another trailer (same category — fails alternation)
+      state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('TL002', 'a2', 'trailer') });
+      state = reducer(state, { type: 'CONFIRM_SCAN' });
+
+      expect(state.scans).toHaveLength(2);
+      expect(state.scans[1]!.type).toBe('standalone'); // fell through to standalone
+      expect(state.combinations[chainId]!.assetIds).toEqual(['a1']); // chain unchanged
+      expect(state.activeChainId).toBe(chainId); // chain still active
+    });
+
+    it('auto-ends chain at max size (5)', () => {
+      let state = reducer(initialState, { type: 'START_COUNT', depotId: 'd', depotName: 'D' });
+      state = reducer(state, { type: 'START_CHAIN' });
+      const chainId = state.activeChainId!;
+
+      // Add 5 alternating assets
+      state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('TL001', 'a1', 'trailer') });
+      state = reducer(state, { type: 'CONFIRM_SCAN' });
+      state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('DL001', 'a2', 'dolly') });
+      state = reducer(state, { type: 'CONFIRM_SCAN' });
+      state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('TL002', 'a3', 'trailer') });
+      state = reducer(state, { type: 'CONFIRM_SCAN' });
+      state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('DL002', 'a4', 'dolly') });
+      state = reducer(state, { type: 'CONFIRM_SCAN' });
+
+      expect(state.activeChainId).toBe(chainId); // still active at 4
+
+      state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('TL003', 'a5', 'trailer') });
+      state = reducer(state, { type: 'CONFIRM_SCAN' });
+
+      expect(state.activeChainId).toBeNull(); // auto-ended at 5
+      expect(state.combinations[chainId]!.assetIds).toHaveLength(5);
+    });
   });
 
   describe('CANCEL_SCAN', () => {
@@ -107,136 +191,101 @@ describe('assetCountModeReducer', () => {
     });
   });
 
-  describe('LINK_TO_PREVIOUS', () => {
-    it('creates a new combination from two standalone scans', () => {
-      // Set up state with two scans where lastUnlinkedScanIndex points to the first
-      const stateBeforeLink: AssetCountState = {
-        isActive: true,
-        sessionId: null,
-        depotId: 'd',
-        depotName: 'D',
-        scans: [makeScan('TL001', 'a1'), makeScan('TL002', 'a2')],
-        currentScan: null,
-        combinations: {},
-        lastUnlinkedScanIndex: 0,
-      };
-
-      const state = reducer(stateBeforeLink, { type: 'LINK_TO_PREVIOUS' });
-
-      expect(state.scans).toHaveLength(2);
-      expect(state.scans[0]!.type).toBe('combination');
-      expect(state.scans[1]!.type).toBe('combination');
-
-      const comboId = mockUUID;
-      expect(Object.keys(state.combinations)).toHaveLength(1);
-      expect(state.combinations[comboId]).toBeDefined();
-      expect(state.combinations[comboId]!.assetNumbers).toEqual(['TL001', 'TL002']);
-    });
-
-    it('extends an existing combination', () => {
-      const comboId = mockUUID;
-
-      // Set up state where TL001 and TL002 are already in a combination,
-      // and TL003 is a new standalone scan
-      const stateBeforeLink: AssetCountState = {
-        isActive: true,
-        sessionId: null,
-        depotId: 'd',
-        depotName: 'D',
-        scans: [
-          { type: 'combination', assetId: 'a1', assetNumber: 'TL001', timestamp: 1, combinationId: comboId, combinationPosition: 1 },
-          { type: 'combination', assetId: 'a2', assetNumber: 'TL002', timestamp: 2, combinationId: comboId, combinationPosition: 2 },
-          makeScan('TL003', 'a3'),
-        ],
-        currentScan: null,
-        combinations: {
-          [comboId]: {
-            combinationId: comboId,
-            assetIds: ['a1', 'a2'],
-            assetNumbers: ['TL001', 'TL002'],
-            notes: null,
-            photoUri: null,
-            photoId: null,
-          },
-        },
-        lastUnlinkedScanIndex: 1, // Points to TL002 (in the combo)
-      };
-
-      const state = reducer(stateBeforeLink, { type: 'LINK_TO_PREVIOUS' });
-
-      expect(state.combinations[comboId]!.assetIds).toHaveLength(3);
-      expect(state.combinations[comboId]!.assetNumbers).toEqual(['TL001', 'TL002', 'TL003']);
-      expect(state.scans[2]!.type).toBe('combination');
-    });
-
-    it('returns state unchanged if not enough scans', () => {
+  describe('START_CHAIN', () => {
+    it('creates an empty chain combination and sets activeChainId', () => {
       let state = reducer(initialState, { type: 'START_COUNT', depotId: 'd', depotName: 'D' });
-      state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('TL001') });
-      state = reducer(state, { type: 'CONFIRM_SCAN' });
+      state = reducer(state, { type: 'START_CHAIN' });
+
+      expect(state.activeChainId).not.toBeNull();
+      const chainId = state.activeChainId!;
+      expect(state.combinations[chainId]).toBeDefined();
+      expect(state.combinations[chainId]!.assetIds).toEqual([]);
+      expect(state.combinations[chainId]!.assetNumbers).toEqual([]);
+    });
+
+    it('is idempotent when chain already active', () => {
+      let state = reducer(initialState, { type: 'START_COUNT', depotId: 'd', depotName: 'D' });
+      state = reducer(state, { type: 'START_CHAIN' });
+      const firstChainId = state.activeChainId;
 
       const before = state;
-      state = reducer(state, { type: 'LINK_TO_PREVIOUS' });
+      state = reducer(state, { type: 'START_CHAIN' });
 
-      // Only 1 scan — should not link
       expect(state).toBe(before);
-    });
-
-    it('returns state unchanged if lastUnlinkedScanIndex is null', () => {
-      const stateNoLink: AssetCountState = {
-        isActive: true,
-        sessionId: null,
-        depotId: 'd',
-        depotName: 'D',
-        scans: [makeScan('TL001'), makeScan('TL002')],
-        currentScan: null,
-        combinations: {},
-        lastUnlinkedScanIndex: null,
-      };
-
-      const state = reducer(stateNoLink, { type: 'LINK_TO_PREVIOUS' });
-      expect(state).toBe(stateNoLink);
+      expect(state.activeChainId).toBe(firstChainId);
     });
   });
 
-  describe('KEEP_SEPARATE', () => {
-    it('updates lastUnlinkedScanIndex to most recent scan', () => {
+  describe('END_CHAIN', () => {
+    it('deletes empty chain (0 items)', () => {
       let state = reducer(initialState, { type: 'START_COUNT', depotId: 'd', depotName: 'D' });
-      state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('TL001') });
-      state = reducer(state, { type: 'CONFIRM_SCAN' });
-      state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('TL002') });
+      state = reducer(state, { type: 'START_CHAIN' });
+      const chainId = state.activeChainId!;
+
+      state = reducer(state, { type: 'END_CHAIN' });
+
+      expect(state.activeChainId).toBeNull();
+      expect(state.combinations[chainId]).toBeUndefined();
+    });
+
+    it('reverts single-item chain to standalone (1 item)', () => {
+      let state = reducer(initialState, { type: 'START_COUNT', depotId: 'd', depotName: 'D' });
+      state = reducer(state, { type: 'START_CHAIN' });
+      const chainId = state.activeChainId!;
+
+      state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('TL001', 'a1', 'trailer') });
       state = reducer(state, { type: 'CONFIRM_SCAN' });
 
-      state = reducer(state, { type: 'KEEP_SEPARATE' });
-      expect(state.lastUnlinkedScanIndex).toBe(1);
+      state = reducer(state, { type: 'END_CHAIN' });
+
+      expect(state.activeChainId).toBeNull();
+      expect(state.combinations[chainId]).toBeUndefined();
+      expect(state.scans).toHaveLength(1);
+      expect(state.scans[0]!.type).toBe('standalone');
+      expect(state.scans[0]!.assetNumber).toBe('TL001');
+    });
+
+    it('keeps combination for 2+ items', () => {
+      let state = reducer(initialState, { type: 'START_COUNT', depotId: 'd', depotName: 'D' });
+      state = reducer(state, { type: 'START_CHAIN' });
+      const chainId = state.activeChainId!;
+
+      state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('TL001', 'a1', 'trailer') });
+      state = reducer(state, { type: 'CONFIRM_SCAN' });
+      state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('DL001', 'a2', 'dolly') });
+      state = reducer(state, { type: 'CONFIRM_SCAN' });
+
+      state = reducer(state, { type: 'END_CHAIN' });
+
+      expect(state.activeChainId).toBeNull();
+      expect(state.combinations[chainId]).toBeDefined();
+      expect(state.combinations[chainId]!.assetIds).toEqual(['a1', 'a2']);
+    });
+
+    it('returns state unchanged if no active chain', () => {
+      const state = reducer(initialState, { type: 'START_COUNT', depotId: 'd', depotName: 'D' });
+      const before = state;
+      const after = reducer(state, { type: 'END_CHAIN' });
+
+      expect(after).toBe(before);
     });
   });
 
   describe('SET_COMBINATION_NOTES', () => {
     it('sets notes on an existing combination', () => {
-      const comboId = mockUUID;
-      const stateWithCombo: AssetCountState = {
-        isActive: true,
-        sessionId: null,
-        depotId: 'd',
-        depotName: 'D',
-        scans: [],
-        currentScan: null,
-        combinations: {
-          [comboId]: {
-            combinationId: comboId,
-            assetIds: ['a1', 'a2'],
-            assetNumbers: ['TL001', 'TL002'],
-            notes: null,
-            photoUri: null,
-            photoId: null,
-          },
-        },
-        lastUnlinkedScanIndex: null,
-      };
+      let state = reducer(initialState, { type: 'START_COUNT', depotId: 'd', depotName: 'D' });
+      state = reducer(state, { type: 'START_CHAIN' });
+      const chainId = state.activeChainId!;
 
-      const state = reducer(stateWithCombo, { type: 'SET_COMBINATION_NOTES', combinationId: comboId, notes: 'test notes' });
+      state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('TL001', 'a1', 'trailer') });
+      state = reducer(state, { type: 'CONFIRM_SCAN' });
+      state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('DL001', 'a2', 'dolly') });
+      state = reducer(state, { type: 'CONFIRM_SCAN' });
+      state = reducer(state, { type: 'END_CHAIN' });
 
-      expect(state.combinations[comboId]!.notes).toBe('test notes');
+      state = reducer(state, { type: 'SET_COMBINATION_NOTES', combinationId: chainId, notes: 'test notes' });
+
+      expect(state.combinations[chainId]!.notes).toBe('test notes');
     });
 
     it('returns state unchanged for missing combination', () => {
@@ -249,31 +298,20 @@ describe('assetCountModeReducer', () => {
 
   describe('SET_COMBINATION_PHOTO', () => {
     it('sets photo on an existing combination', () => {
-      const comboId = mockUUID;
-      const stateWithCombo: AssetCountState = {
-        isActive: true,
-        sessionId: null,
-        depotId: 'd',
-        depotName: 'D',
-        scans: [],
-        currentScan: null,
-        combinations: {
-          [comboId]: {
-            combinationId: comboId,
-            assetIds: ['a1', 'a2'],
-            assetNumbers: ['TL001', 'TL002'],
-            notes: null,
-            photoUri: null,
-            photoId: null,
-          },
-        },
-        lastUnlinkedScanIndex: null,
-      };
+      let state = reducer(initialState, { type: 'START_COUNT', depotId: 'd', depotName: 'D' });
+      state = reducer(state, { type: 'START_CHAIN' });
+      const chainId = state.activeChainId!;
 
-      const state = reducer(stateWithCombo, { type: 'SET_COMBINATION_PHOTO', combinationId: comboId, photoUri: 'file://photo.jpg', photoId: null });
+      state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('TL001', 'a1', 'trailer') });
+      state = reducer(state, { type: 'CONFIRM_SCAN' });
+      state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('DL001', 'a2', 'dolly') });
+      state = reducer(state, { type: 'CONFIRM_SCAN' });
+      state = reducer(state, { type: 'END_CHAIN' });
 
-      expect(state.combinations[comboId]!.photoUri).toBe('file://photo.jpg');
-      expect(state.combinations[comboId]!.photoId).toBeNull();
+      state = reducer(state, { type: 'SET_COMBINATION_PHOTO', combinationId: chainId, photoUri: 'file://photo.jpg', photoId: null });
+
+      expect(state.combinations[chainId]!.photoUri).toBe('file://photo.jpg');
+      expect(state.combinations[chainId]!.photoId).toBeNull();
     });
 
     it('returns state unchanged for missing combination', () => {
@@ -317,74 +355,93 @@ describe('assetCountModeReducer', () => {
       expect(state.lastUnlinkedScanIndex).toBe(0);
     });
 
-    it('dissolves a 2-asset combination and reverts remaining scan to standalone', () => {
-      const comboId = mockUUID;
-      const stateWithCombo: AssetCountState = {
-        isActive: true,
-        sessionId: null,
-        depotId: 'd',
-        depotName: 'D',
-        scans: [
-          { type: 'combination', assetId: 'a1', assetNumber: 'TL001', timestamp: 1, combinationId: comboId, combinationPosition: 1 },
-          { type: 'combination', assetId: 'a2', assetNumber: 'TL002', timestamp: 2, combinationId: comboId, combinationPosition: 2 },
-        ],
-        currentScan: null,
-        combinations: {
-          [comboId]: {
-            combinationId: comboId,
-            assetIds: ['a1', 'a2'],
-            assetNumbers: ['TL001', 'TL002'],
-            notes: null,
-            photoUri: null,
-            photoId: null,
-          },
-        },
-        lastUnlinkedScanIndex: 1,
-      };
+    it('removes scan from active chain without dissolving chain', () => {
+      let state = reducer(initialState, { type: 'START_COUNT', depotId: 'd', depotName: 'D' });
+      state = reducer(state, { type: 'START_CHAIN' });
+      const chainId = state.activeChainId!;
 
-      const state = reducer(stateWithCombo, { type: 'UNDO_LAST_SCAN' });
+      state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('TL001', 'a1', 'trailer') });
+      state = reducer(state, { type: 'CONFIRM_SCAN' });
+      state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('DL001', 'a2', 'dolly') });
+      state = reducer(state, { type: 'CONFIRM_SCAN' });
+
+      state = reducer(state, { type: 'UNDO_LAST_SCAN' });
+
+      expect(state.scans).toHaveLength(1);
+      expect(state.activeChainId).toBe(chainId); // chain stays active
+      expect(state.combinations[chainId]!.assetIds).toEqual(['a1']);
+    });
+
+    it('keeps chain active when undoing to empty chain', () => {
+      let state = reducer(initialState, { type: 'START_COUNT', depotId: 'd', depotName: 'D' });
+      state = reducer(state, { type: 'START_CHAIN' });
+      const chainId = state.activeChainId!;
+
+      state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('TL001', 'a1', 'trailer') });
+      state = reducer(state, { type: 'CONFIRM_SCAN' });
+
+      state = reducer(state, { type: 'UNDO_LAST_SCAN' });
+
+      expect(state.activeChainId).toBe(chainId); // chain still active
+      expect(state.combinations[chainId]!.assetIds).toEqual([]);
+    });
+
+    it('dissolves a 2-asset finalized combination and reverts remaining to standalone', () => {
+      let state = reducer(initialState, { type: 'START_COUNT', depotId: 'd', depotName: 'D' });
+      state = reducer(state, { type: 'START_CHAIN' });
+
+      state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('TL001', 'a1', 'trailer') });
+      state = reducer(state, { type: 'CONFIRM_SCAN' });
+      state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('DL001', 'a2', 'dolly') });
+      state = reducer(state, { type: 'CONFIRM_SCAN' });
+      state = reducer(state, { type: 'END_CHAIN' }); // finalize the chain
+
+      state = reducer(state, { type: 'UNDO_LAST_SCAN' });
 
       expect(state.scans).toHaveLength(1);
       expect(state.scans[0]!.type).toBe('standalone');
       expect(state.scans[0]!.assetNumber).toBe('TL001');
       expect(Object.keys(state.combinations)).toHaveLength(0);
-      expect(state.lastUnlinkedScanIndex).toBe(0);
     });
 
-    it('removes asset from a 3+ asset combination without dissolving it', () => {
-      const comboId = mockUUID;
-      const stateWith3Combo: AssetCountState = {
-        isActive: true,
-        sessionId: null,
-        depotId: 'd',
-        depotName: 'D',
-        scans: [
-          { type: 'combination', assetId: 'a1', assetNumber: 'TL001', timestamp: 1, combinationId: comboId, combinationPosition: 1 },
-          { type: 'combination', assetId: 'a2', assetNumber: 'TL002', timestamp: 2, combinationId: comboId, combinationPosition: 2 },
-          { type: 'combination', assetId: 'a3', assetNumber: 'TL003', timestamp: 3, combinationId: comboId, combinationPosition: 3 },
-        ],
-        currentScan: null,
-        combinations: {
-          [comboId]: {
-            combinationId: comboId,
-            assetIds: ['a1', 'a2', 'a3'],
-            assetNumbers: ['TL001', 'TL002', 'TL003'],
-            notes: null,
-            photoUri: null,
-            photoId: null,
-          },
-        },
-        lastUnlinkedScanIndex: 2,
-      };
+    it('removes asset from a 3+ asset finalized combination without dissolving it', () => {
+      let state = reducer(initialState, { type: 'START_COUNT', depotId: 'd', depotName: 'D' });
+      state = reducer(state, { type: 'START_CHAIN' });
+      const chainId = state.activeChainId!;
 
-      const state = reducer(stateWith3Combo, { type: 'UNDO_LAST_SCAN' });
+      state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('TL001', 'a1', 'trailer') });
+      state = reducer(state, { type: 'CONFIRM_SCAN' });
+      state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('DL001', 'a2', 'dolly') });
+      state = reducer(state, { type: 'CONFIRM_SCAN' });
+      state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('TL002', 'a3', 'trailer') });
+      state = reducer(state, { type: 'CONFIRM_SCAN' });
+      state = reducer(state, { type: 'END_CHAIN' }); // finalize
+
+      state = reducer(state, { type: 'UNDO_LAST_SCAN' });
 
       expect(state.scans).toHaveLength(2);
       expect(state.scans[0]!.type).toBe('combination');
       expect(state.scans[1]!.type).toBe('combination');
-      expect(state.combinations[comboId]!.assetIds).toEqual(['a1', 'a2']);
-      expect(state.combinations[comboId]!.assetNumbers).toEqual(['TL001', 'TL002']);
-      expect(state.lastUnlinkedScanIndex).toBe(1);
+      expect(state.combinations[chainId]!.assetIds).toEqual(['a1', 'a2']);
+      expect(state.combinations[chainId]!.assetNumbers).toEqual(['TL001', 'DL001']);
+      expect(state.combinations[chainId]!.assetCategories).toEqual(['trailer', 'dolly']);
+    });
+
+    it('preserves category when dissolving combo to standalone', () => {
+      let state = reducer(initialState, { type: 'START_COUNT', depotId: 'd', depotName: 'D' });
+      state = reducer(state, { type: 'START_CHAIN' });
+
+      state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('TL001', 'a1', 'trailer') });
+      state = reducer(state, { type: 'CONFIRM_SCAN' });
+      state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('DL001', 'a2', 'dolly') });
+      state = reducer(state, { type: 'CONFIRM_SCAN' });
+      state = reducer(state, { type: 'END_CHAIN' });
+
+      state = reducer(state, { type: 'UNDO_LAST_SCAN' });
+
+      expect(state.scans).toHaveLength(1);
+      expect(state.scans[0]!.type).toBe('standalone');
+      expect((state.scans[0] as StandaloneScan).category).toBe('trailer');
     });
   });
 
@@ -414,10 +471,27 @@ describe('assetCountModeReducer', () => {
         currentScan: null,
         combinations: {},
         lastUnlinkedScanIndex: 0,
+        activeChainId: null,
       };
 
       const state = reducer(initialState, { type: 'RESTORE', state: restoredState });
       expect(state).toEqual(restoredState);
+    });
+
+    it('defaults activeChainId to null if missing from persisted data', () => {
+      const restoredState = {
+        isActive: true,
+        sessionId: 'sess-1',
+        depotId: 'depot-1',
+        depotName: 'Perth',
+        scans: [],
+        currentScan: null,
+        combinations: {},
+        lastUnlinkedScanIndex: null,
+      } as unknown as AssetCountState;
+
+      const state = reducer(initialState, { type: 'RESTORE', state: restoredState });
+      expect(state.activeChainId).toBeNull();
     });
   });
 });

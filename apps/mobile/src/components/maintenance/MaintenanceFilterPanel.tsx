@@ -52,6 +52,9 @@ const FilterChip = memo(function FilterChip({ label, isSelected, onPress, select
       ]}
       onPress={onPress}
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={`Filter by ${label}`}
+      accessibilityState={{ selected: isSelected }}
     >
       <Text
         style={[
@@ -158,7 +161,7 @@ export const MaintenanceFilterPanel = memo(function MaintenanceFilterPanel({
                   label={MaintenanceStatusLabels[status]}
                   isSelected={statuses.includes(status)}
                   onPress={() => toggleStatus(status)}
-                  selectedColor={colors.maintenanceStatus[status as keyof typeof colors.maintenanceStatus]}
+                  selectedColor={colors.maintenanceStatus[status as keyof typeof colors.maintenanceStatus] ?? colors.electricBlue}
                 />
               ))}
             </View>
@@ -174,7 +177,7 @@ export const MaintenanceFilterPanel = memo(function MaintenanceFilterPanel({
                   label={MaintenancePriorityLabels[priority]}
                   isSelected={priorities.includes(priority)}
                   onPress={() => togglePriority(priority)}
-                  selectedColor={colors.maintenancePriority[priority as keyof typeof colors.maintenancePriority]}
+                  selectedColor={colors.maintenancePriority[priority as keyof typeof colors.maintenancePriority] ?? colors.electricBlue}
                 />
               ))}
             </View>
