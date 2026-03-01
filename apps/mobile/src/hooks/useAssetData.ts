@@ -10,6 +10,7 @@ import {
   getAssetMaintenance,
   getAssetHazards,
   getAssetCountsByStatus,
+  getTotalScanCount,
   updateAsset,
 } from '@rgr/shared';
 import type {
@@ -41,6 +42,7 @@ export const assetKeys = {
   myScans: (userId: string) => ['scans', 'my', userId] as const,
   recentScans: () => ['scans', 'recent'] as const,
   countsByStatus: () => [...assetKeys.all, 'countsByStatus'] as const,
+  totalScanCount: () => ['scans', 'totalCount'] as const,
 };
 
 // Note: depotKeys and useDepots are defined in useDepots.ts
@@ -230,6 +232,21 @@ export function useRecentScans(limit: number = 50) {
 }
 
 /**
+ * Fetch total scan count using server-side COUNT
+ */
+export function useTotalScanCount() {
+  return useQuery({
+    queryKey: assetKeys.totalScanCount(),
+    queryFn: async () => {
+      const result = await getTotalScanCount();
+      if (!result.success) throw new Error(result.error);
+      return result.data;
+    },
+    staleTime: 30000,
+  });
+}
+
+/**
  * Lookup asset by QR code
  */
 export function useAssetByQRCode() {
@@ -282,6 +299,10 @@ export function useCreateScanEvent() {
           refetchType: 'none',
         });
       }
+      queryClient.invalidateQueries({
+        queryKey: assetKeys.totalScanCount(),
+        refetchType: 'none',
+      });
       queryClient.invalidateQueries({
         queryKey: assetKeys.lists(),
         refetchType: 'none',

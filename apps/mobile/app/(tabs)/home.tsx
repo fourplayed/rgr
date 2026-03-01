@@ -12,7 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useIsFocused } from '@react-navigation/native';
-import { useRecentScans, useAssetCountsByStatus } from '../../src/hooks/useAssetData';
+import { useRecentScans, useAssetCountsByStatus, useTotalScanCount } from '../../src/hooks/useAssetData';
 import { useAuthStore } from '../../src/store/authStore';
 import { useLocationStore } from '../../src/store/locationStore';
 import { formatRelativeTime, UserRoleLabels } from '@rgr/shared';
@@ -52,13 +52,22 @@ export default function HomeScreen() {
     isRefetching: statsRefetching,
   } = useAssetCountsByStatus();
 
-  const isLoading = scansLoading || statsLoading;
-  const isRefetching = scansRefetching || statsRefetching;
+  // Total scan count using server-side COUNT (not capped by limit)
+  const {
+    data: totalScanCount,
+    isLoading: scanCountLoading,
+    refetch: refetchScanCount,
+    isRefetching: scanCountRefetching,
+  } = useTotalScanCount();
+
+  const isLoading = scansLoading || statsLoading || scanCountLoading;
+  const isRefetching = scansRefetching || statsRefetching || scanCountRefetching;
 
   const handleRefresh = useCallback(() => {
     refetchScans();
     refetchStats();
-  }, [refetchScans, refetchStats]);
+    refetchScanCount();
+  }, [refetchScans, refetchStats, refetchScanCount]);
 
   // Get time-based greeting
   const hour = new Date().getHours();
@@ -144,9 +153,9 @@ export default function HomeScreen() {
   const statsCards = useMemo(() => [
     { label: 'Total Assets', value: totalAssets, color: colors.electricBlue, icon: 'cube-outline' as const },
     { label: 'Serviced', value: servicedCount, color: colors.status.active, icon: 'checkmark-circle-outline' as const },
-    { label: 'Total Scans', value: scans.length, color: colors.status.maintenance, icon: 'qr-code-outline' as const },
+    { label: 'Total Scans', value: totalScanCount ?? 0, color: colors.status.maintenance, icon: 'qr-code-outline' as const },
     { label: 'Out of Service', value: outOfServiceCount, color: colors.status.outOfService, icon: 'close-circle-outline' as const },
-  ], [totalAssets, servicedCount, scans.length, outOfServiceCount]);
+  ], [totalAssets, servicedCount, totalScanCount, outOfServiceCount]);
 
   // Memoized render function for FlatList items
   // Note: Must be before any early returns to maintain hook order
@@ -264,7 +273,7 @@ export default function HomeScreen() {
               {/* Recent Activity Header */}
               <View style={styles.activityHeader}>
                 <Text style={styles.sectionTitle}>Recent Activity</Text>
-                <Text style={styles.activitySubtitle}>{scans.length} total scans</Text>
+                <Text style={styles.activitySubtitle}>{totalScanCount ?? 0} total scans</Text>
               </View>
             </>
           }
