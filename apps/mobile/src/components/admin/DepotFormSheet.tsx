@@ -46,7 +46,7 @@ export function DepotFormSheet({
 
   useEffect(() => {
     if (visible) {
-      if (depot) {
+      if (isEdit) {
         setName(depotName ?? '');
         setCode(depotCode ?? '');
         setAddress(depotAddress || '');
