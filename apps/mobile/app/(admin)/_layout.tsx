@@ -25,6 +25,7 @@ export default function AdminLayout() {
       <Stack.Screen name="asset-admin" />
       <Stack.Screen name="create-asset" />
       <Stack.Screen name="asset-photos" />
+      <Stack.Screen name="debug" />
     </Stack>
   );
 }
