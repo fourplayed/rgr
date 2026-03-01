@@ -32,9 +32,9 @@ function isStoredSession(obj: unknown): obj is StoredSession {
   if (typeof obj !== 'object' || obj === null) return false;
   const s = obj as Record<string, unknown>;
   return (
-    typeof s.access_token === 'string' &&
-    typeof s.refresh_token === 'string' &&
-    (s.expires_at === undefined || typeof s.expires_at === 'number')
+    typeof s['access_token'] === 'string' &&
+    typeof s['refresh_token'] === 'string' &&
+    (s['expires_at'] === undefined || typeof s['expires_at'] === 'number')
   );
 }
 
