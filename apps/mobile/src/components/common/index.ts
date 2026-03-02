@@ -15,3 +15,4 @@ export { InputSheet } from './InputSheet';
 export { ScreenHeader } from './ScreenHeader';
 export { PillBadge } from './PillBadge';
 export { SteppedProgressOverlay } from './SteppedProgressOverlay';
+export { SegmentedTabs } from './SegmentedTabs';
