@@ -135,7 +135,7 @@ export default function ScanScreen() {
     }
 
     prevChainIdRef.current = currentId;
-  }, [assetCount.activeChainId, assetCount.combinations]);
+  }, [assetCount.activeChainId, assetCount.combinations, showScanToast]);
 
   // ── Count Mode Auto-Confirm ──
 
@@ -189,7 +189,7 @@ export default function ScanScreen() {
     } else {
       scanFlow.countModeCallbackRef.current = null;
     }
-  }, [assetCount.isActive, assetCount, scanFlow]);
+  }, [assetCount.isActive, assetCount, scanFlow, showScanToast]);
 
   const handleScanToastDismiss = useCallback(() => {
     // If there's a queued toast, show it instead of hiding
@@ -253,7 +253,7 @@ export default function ScanScreen() {
     // which will be updated. The effect will fire and handle it.
 
     scanFlow.addDebugLog(`Chain ended (${chainSize} items)`);
-  }, [assetCount, scanFlow]);
+  }, [assetCount, scanFlow, showScanToast]);
 
   // ── Orchestration: Confirm Sheet Dismiss ──
 
@@ -481,7 +481,7 @@ export default function ScanScreen() {
     } finally {
       setIsSubmittingCount(false);
     }
-  }, [assetCount, user, scanFlow]);
+  }, [assetCount, user, scanFlow, showScanToast]);
 
   const handleCancelEndCount = useCallback(() => {
     setShowEndCountReview(false);
