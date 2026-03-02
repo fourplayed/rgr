@@ -27,16 +27,15 @@ import { spacing, fontSize, fontWeight, borderRadius } from '../../../src/theme/
 /**
  * Fixed height for FlatList optimization (getItemLayout)
  * Must match AssetListItem rendered height:
- * - Container padding: 16 * 2 = 32px
+ * - Container padding: 12 * 2 = 24px (spacing.md)
  * - Card content height: 48px (icon + text)
  * - Container marginBottom: 8px (spacing.sm)
- * - Border: 2px (top + bottom)
- * Total: 32 + 48 + 8 = 88px
+ * Total: 24 + 48 + 8 = 80px
  *
  * If AssetListItem styles change, this must be updated to match!
  * See: src/components/assets/AssetListItem.tsx
  */
-const ASSET_ITEM_HEIGHT = 88;
+const ASSET_ITEM_HEIGHT = 80;
 
 interface AssetFilters {
   statuses: AssetStatus[];

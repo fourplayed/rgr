@@ -1,10 +1,17 @@
 import React, { memo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import type { AssetWithRelations, AssetStatus } from '@rgr/shared';
-import { formatRelativeTime, AssetStatusColors, AssetStatusLabels, getDepotBadgeColors } from '@rgr/shared';
+import { AssetStatusColors, AssetStatusLabels, getDepotBadgeColors } from '@rgr/shared';
 import type { useDepotLookup } from '../../hooks/useDepots';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+
+const ASSET_STATUS_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
+  serviced: 'checkmark-circle',
+  maintenance: 'construct-outline',
+  out_of_service: 'close-circle-outline',
+};
 
 export interface AssetListItemProps {
   asset: AssetWithRelations;
@@ -21,48 +28,44 @@ const getStatusColor = (status: AssetStatus): string => {
 };
 
 function AssetListItemComponent({ asset, onPress, depotLookup }: AssetListItemProps) {
-  const lastScanText = asset.lastLocationUpdatedAt
-    ? formatRelativeTime(asset.lastLocationUpdatedAt)
-    : 'Never scanned';
-
   const statusColor = getStatusColor(asset.status);
   const depot = asset.depotCode ? depotLookup.byCode.get(asset.depotCode.toLowerCase()) ?? null : null;
   const depotBadgeColors = asset.depotCode ? getDepotBadgeColors(depot, colors.chrome, colors.text) : null;
 
+  const statusIcon = ASSET_STATUS_ICONS[asset.status] ?? 'ellipse-outline';
+
   return (
     <TouchableOpacity
-      style={[styles.container, { borderLeftWidth: 4, borderLeftColor: statusColor }]}
+      style={[styles.container, { borderLeftColor: statusColor }]}
       onPress={() => onPress(asset)}
       activeOpacity={0.7}
       accessibilityRole="button"
       accessibilityLabel={`Asset ${asset.assetNumber}, status ${asset.status}`}
     >
-      <View style={styles.cardContent}>
-        <View style={styles.details}>
+      <View style={styles.cardRow}>
+        <View style={styles.iconContainer}>
+          <Ionicons name={statusIcon} size={31} color={statusColor} />
+        </View>
+        <View style={styles.cardBody}>
           <View style={styles.headerRow}>
-            <Text style={styles.assetNumber}>{asset.assetNumber}</Text>
-            <View style={styles.badgeRow}>
-              {/* Location Badge */}
-              {asset.depotName && depotBadgeColors && (
-                <View style={[styles.depotBadge, { backgroundColor: depotBadgeColors.bg }]}>
-                  <Text style={[styles.depotBadgeText, { color: depotBadgeColors.text }]}>
-                    {asset.depotName}
-                  </Text>
-                </View>
-              )}
-              {/* Service Status Badge */}
-              <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
-                <Text style={styles.statusBadgeText}>
-                  {getStatusLabel(asset.status)}
-                </Text>
-              </View>
+            <Text style={styles.assetNumber} numberOfLines={1}>{asset.assetNumber}</Text>
+            <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
+              <Text style={styles.statusBadgeText}>
+                {getStatusLabel(asset.status)}
+              </Text>
             </View>
           </View>
           <View style={styles.footerRow}>
             <Text style={styles.subtypeLabel}>
               {asset.subtype ? asset.subtype : asset.category === 'dolly' ? 'Dolly' : 'Trailer'}
             </Text>
-            <Text style={styles.timeText}>{lastScanText}</Text>
+            {asset.depotName && depotBadgeColors && (
+              <View style={[styles.depotBadge, { backgroundColor: depotBadgeColors.bg }]}>
+                <Text style={[styles.depotBadgeText, { color: depotBadgeColors.text }]}>
+                  {asset.depotName}
+                </Text>
+              </View>
+            )}
           </View>
         </View>
       </View>
@@ -76,7 +79,6 @@ export const AssetListItem = memo(
     prevProps.asset.id === nextProps.asset.id &&
     prevProps.asset.status === nextProps.asset.status &&
     prevProps.asset.depotCode === nextProps.asset.depotCode &&
-    prevProps.asset.lastLocationUpdatedAt === nextProps.asset.lastLocationUpdatedAt &&
     prevProps.asset.subtype === nextProps.asset.subtype &&
     prevProps.onPress === nextProps.onPress &&
     prevProps.depotLookup === nextProps.depotLookup
@@ -85,17 +87,24 @@ export const AssetListItem = memo(
 const styles = StyleSheet.create({
   container: {
     backgroundColor: colors.background,
-    padding: spacing.base,
+    padding: spacing.md,
     borderRadius: borderRadius.md,
     borderWidth: 1,
     borderColor: colors.border,
+    borderLeftWidth: 4,
     marginBottom: spacing.sm,
   },
-  cardContent: {
+  cardRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  details: {
+  iconContainer: {
+    width: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  cardBody: {
     flex: 1,
   },
   headerRow: {
@@ -108,11 +117,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.base,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
-  },
-  badgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
   },
   statusBadge: {
     paddingHorizontal: spacing.sm,
@@ -146,10 +150,5 @@ const styles = StyleSheet.create({
     color: colors.electricBlue,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-  },
-  timeText: {
-    fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
-    color: colors.textSecondary,
   },
 });
