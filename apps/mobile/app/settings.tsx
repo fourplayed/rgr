@@ -11,10 +11,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../src/store/authStore';
+import { useTutorialStore } from '../src/store/tutorialStore';
 import { useUserPermissions } from '../src/contexts/UserPermissionsContext';
 import { UserRoleLabels } from '@rgr/shared';
 import { colors } from '../src/theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../src/theme/spacing';
+import { AlertSheet } from '../src/components/common';
 import { EditProfileModal } from '../src/components/settings/EditProfileModal';
 import { NotificationsModal } from '../src/components/settings/NotificationsModal';
 import { SecurityModal } from '../src/components/settings/SecurityModal';
@@ -53,10 +55,17 @@ function SettingsItem({ icon, title, subtitle, onPress, showChevron = true }: Se
 export default function SettingsScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { canAccessAdmin, canViewAuditLog } = useUserPermissions();
+  const { canAccessAdmin, canViewAuditLog, canPerformAssetCount } = useUserPermissions();
+  const resetTutorials = useTutorialStore(s => s.resetAll);
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSecurity, setShowSecurity] = useState(false);
+  const [showTutorialReset, setShowTutorialReset] = useState(false);
+
+  const handleResetTutorials = () => {
+    resetTutorials();
+    setShowTutorialReset(true);
+  };
 
   const handleBack = () => {
     router.back();
@@ -135,6 +144,21 @@ export default function SettingsScreen() {
             </View>
           </View>
 
+          {/* Help Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Help</Text>
+            <View style={styles.card}>
+              <SettingsItem
+                icon="book-outline"
+                title="View Tutorials"
+                subtitle={canPerformAssetCount
+                  ? 'Re-watch the scanning and counting guides'
+                  : 'Re-watch the scanning guide'}
+                onPress={handleResetTutorials}
+              />
+            </View>
+          </View>
+
           {/* Audit Log - Manager+ */}
           {canViewAuditLog && (
             <View style={styles.section}>
@@ -201,6 +225,14 @@ export default function SettingsScreen() {
         <SecurityModal
           visible={showSecurity}
           onClose={() => setShowSecurity(false)}
+        />
+
+        <AlertSheet
+          visible={showTutorialReset}
+          type="success"
+          title="Tutorials Reset"
+          message="Tutorials will show again next time you open the scanner or start a count."
+          onDismiss={() => setShowTutorialReset(false)}
         />
       </SafeAreaView>
     </LinearGradient>

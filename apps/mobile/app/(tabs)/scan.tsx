@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAuthStore } from '../../src/store/authStore';
 import { useLocationStore } from '../../src/store/locationStore';
+import { useTutorialStore } from '../../src/store/tutorialStore';
 import { useUserPermissions } from '../../src/contexts/UserPermissionsContext';
 import { useAssetCountMode } from '../../src/hooks/useAssetCountMode';
 import { useScanFlow } from '../../src/hooks/scan/useScanFlow';
@@ -19,6 +20,7 @@ import { PermissionScreen } from '../../src/components/scanner/PermissionScreen'
 import { CameraOverlay } from '../../src/components/scanner/CameraOverlay';
 import type { CountSummaryData } from '../../src/components/scanner/CameraOverlay';
 import { ScanModalStack } from '../../src/components/scanner/ScanModalStack';
+import { TutorialSheet } from '../../src/components/common';
 import type { CachedLocationData } from '../../src/store/locationStore';
 import type { CountModeAutoConfirmResult } from '../../src/hooks/scan/useScanFlow';
 import { isStandaloneScan, submitAssetCount, MAX_COMBINATION_SIZE } from '@rgr/shared';
@@ -30,6 +32,15 @@ export default function ScanScreen() {
   const { resolvedDepot: cachedDepot } = useLocationStore();
   const { canMarkMaintenance, canPerformAssetCount } = useUserPermissions();
   const [permission, requestPermission] = useCameraPermissions();
+
+  // Tutorial state
+  const hasSeenScan = useTutorialStore(s => s.seen.scan);
+  const hasSeenCount = useTutorialStore(s => s.seen.count);
+  const hasHydrated = useTutorialStore(s => s._hasHydrated);
+  const markSeen = useTutorialStore(s => s.markSeen);
+  const [showScanTutorial, setShowScanTutorial] = useState(false);
+  const [showCountTutorial, setShowCountTutorial] = useState(false);
+  const pendingCountStart = useRef(false);
 
   // Asset Count mode (managers+)
   const assetCount = useAssetCountMode();
@@ -341,6 +352,11 @@ export default function ScanScreen() {
   // ── Asset Count Handlers ──
 
   const handleStartAssetCount = useCallback(() => {
+    if (!hasSeenCount) {
+      pendingCountStart.current = true;
+      setShowCountTutorial(true);
+      return;
+    }
     if (!cachedDepot) {
       scanFlow.setAlertSheet({
         visible: true,
@@ -351,7 +367,7 @@ export default function ScanScreen() {
       return;
     }
     assetCount.startCount(cachedDepot.depot.id, cachedDepot.depot.name);
-  }, [cachedDepot, assetCount, scanFlow]);
+  }, [hasSeenCount, cachedDepot, assetCount, scanFlow]);
 
   const handleEndAssetCount = useCallback(() => {
     // Auto-finalize or discard active chain before showing review
@@ -569,6 +585,33 @@ export default function ScanScreen() {
     }
   }, [permission?.granted, scanFlow, requestPermission]);
 
+  // ── Scan Tutorial (first visit, after camera ready) ──
+
+  useEffect(() => {
+    if (!hasHydrated) return;
+    if (hasSeenScan) return;
+    if (!permission?.granted) return;
+
+    const task = InteractionManager.runAfterInteractions(() => {
+      setShowScanTutorial(true);
+    });
+    return () => task.cancel();
+  }, [hasHydrated, hasSeenScan, permission?.granted]);
+
+  const handleScanTutorialDismiss = useCallback(() => {
+    setShowScanTutorial(false);
+    markSeen('scan');
+  }, [markSeen]);
+
+  const handleCountTutorialDismiss = useCallback(() => {
+    setShowCountTutorial(false);
+    markSeen('count');
+    if (pendingCountStart.current && cachedDepot) {
+      pendingCountStart.current = false;
+      assetCount.startCount(cachedDepot.depot.id, cachedDepot.depot.name);
+    }
+  }, [markSeen, cachedDepot, assetCount]);
+
   // ── Mid-count summary data ──
   const countSummary: CountSummaryData | undefined = useMemo(() => {
     if (!assetCount.isActive) return undefined;
@@ -695,6 +738,25 @@ export default function ScanScreen() {
         onDiscardCount={handleDiscardCount}
         onEndCountReviewDismiss={handleEndCountReviewDismiss}
         onCombinationPhotoDismiss={handleCombinationPhotoDismiss}
+      />
+
+      <TutorialSheet
+        visible={showScanTutorial}
+        icon="qr-code-outline"
+        title="Getting Started"
+        body="Point your camera at an asset QR code. We'll detect it automatically and ask you to confirm the scan."
+        buttonLabel="GOT IT"
+        onDismiss={handleScanTutorialDismiss}
+      />
+
+      <TutorialSheet
+        visible={showCountTutorial}
+        icon="clipboard-outline"
+        title="Asset Count — Quick Start"
+        body="Scan each asset's QR code to count it."
+        bullets={['Use "Link" for connected assets (e.g. dolly + trailer)', 'Tap "End Count" when done to review and submit']}
+        buttonLabel="START COUNTING"
+        onDismiss={handleCountTutorialDismiss}
       />
 
       {/* Debug Overlay */}
