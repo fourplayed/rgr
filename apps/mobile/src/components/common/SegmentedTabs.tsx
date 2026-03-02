@@ -37,7 +37,7 @@ export function SegmentedTabs<T extends string>({
       tension: 80,
       useNativeDriver: true,
     }).start();
-  }, [activeIndex, pillWidth]);
+  }, [activeIndex, pillWidth, translateX]);
 
   const handleLayout = (e: LayoutChangeEvent) => {
     setTrayWidth(e.nativeEvent.layout.width);

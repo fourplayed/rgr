@@ -22,18 +22,6 @@ function relativeTime(dateStr: string, now: Date): string {
   return `${days} days ago`;
 }
 
-/** Human-readable duration phrase (e.g., "for the last 3 days", "for about 2 weeks"). */
-function durationPhrase(days: number): string {
-  if (days === 0) return 'since earlier today';
-  if (days === 1) return 'since yesterday';
-  if (days < 7) return `for the last ${days} days`;
-  const weeks = Math.round(days / 7);
-  if (weeks === 1) return 'for about a week';
-  if (days < 30) return `for about ${weeks} weeks`;
-  const months = Math.round(days / 30);
-  if (months === 1) return 'for about a month';
-  return `for over ${months} months`;
-}
 
 interface LocationHistory {
   durationDays: number;

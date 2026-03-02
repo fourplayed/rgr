@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, SafeAreaView, TouchableOpacity, StyleSheet, Modal, ScrollView } from 'react-native';
+import { View, Text, SafeAreaView, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ScanToast } from './ScanToast';
 import { LoadingDots } from '../common/LoadingDots';
