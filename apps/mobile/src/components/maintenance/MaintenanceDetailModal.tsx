@@ -221,175 +221,183 @@ export function MaintenanceDetailModal({
               <LoadingDots color={colors.electricBlue} size={10} />
             </View>
           ) : (
-            <ScrollView
-              style={styles.scrollView}
-              contentContainerStyle={styles.content}
-            >
+            <>
               {/* Header */}
               <View style={styles.header}>
-                <Text style={styles.title}>{maintenance.title}</Text>
+                <View style={styles.headerButton} />
+                <Text style={styles.title} numberOfLines={2}>{maintenance.title}</Text>
                 <TouchableOpacity
                   onPress={onClose}
-                  style={styles.closeButton}
+                  style={styles.headerButton}
                   accessibilityRole="button"
                   accessibilityLabel="Close maintenance details"
                 >
-                  <Ionicons name="close" size={24} color={colors.text} />
+                  <Ionicons name="close" size={28} color={colors.text} />
                 </TouchableOpacity>
               </View>
 
-              {/* Badges */}
-              <View style={styles.badgeRow}>
-                <MaintenanceStatusBadge status={maintenance.status} />
-                <MaintenancePriorityBadge priority={maintenance.priority} />
-              </View>
-
-              {/* Asset Link */}
-              <TouchableOpacity
-                style={styles.assetLink}
-                onPress={handleNavigateToAsset}
-                activeOpacity={0.7}
+              <ScrollView
+                style={styles.scrollView}
+                contentContainerStyle={styles.content}
               >
-                <Ionicons name="cube-outline" size={18} color={colors.electricBlue} />
-                <Text style={styles.assetLinkText}>
-                  View Asset
-                </Text>
-                <Ionicons name="chevron-forward" size={16} color={colors.electricBlue} />
-              </TouchableOpacity>
+                {/* Badges */}
+                <View style={styles.badgeRow}>
+                  <MaintenanceStatusBadge status={maintenance.status} />
+                  <MaintenancePriorityBadge priority={maintenance.priority} />
+                </View>
 
-              {/* Details Section */}
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Details</Text>
-
-                {maintenance.description && (
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Description</Text>
-                    <Text style={styles.detailValue}>{maintenance.description}</Text>
-                  </View>
-                )}
-
-                {maintenance.maintenanceType && (
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Type</Text>
-                    <Text style={styles.detailValue}>
-                      {maintenance.maintenanceType.replace(/_/g, ' ')}
-                    </Text>
-                  </View>
-                )}
-
-                {maintenance.scheduledDate && (
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Scheduled Date</Text>
-                    <Text style={styles.detailValue}>{maintenance.scheduledDate}</Text>
-                  </View>
-                )}
-
-                {maintenance.dueDate && (
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Due Date</Text>
-                    <Text style={styles.detailValue}>{maintenance.dueDate}</Text>
-                  </View>
-                )}
-
-                {maintenance.reporterName && (
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Reported By</Text>
-                    <Text style={styles.detailValue}>{maintenance.reporterName}</Text>
-                  </View>
-                )}
-
-                {maintenance.assigneeName && (
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Assigned To</Text>
-                    <Text style={styles.detailValue}>{maintenance.assigneeName}</Text>
-                  </View>
-                )}
-              </View>
-
-              {/* Timestamps Section */}
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Timeline</Text>
-
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Created</Text>
-                  <Text style={styles.detailValue}>
-                    {formatRelativeTime(maintenance.createdAt)}
+                {/* Asset Link */}
+                <TouchableOpacity
+                  style={styles.assetLink}
+                  onPress={handleNavigateToAsset}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="cube-outline" size={20} color={colors.electricBlue} />
+                  <Text style={styles.assetLinkText}>
+                    View Asset
                   </Text>
+                  <Ionicons name="chevron-forward" size={18} color={colors.electricBlue} />
+                </TouchableOpacity>
+
+                {/* Details Section */}
+                <View style={styles.sectionGroup}>
+                  <Text style={styles.sectionTitle}>Details</Text>
+                  <View style={styles.sectionCard}>
+                    {maintenance.description && (
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Description</Text>
+                        <Text style={styles.detailValue}>{maintenance.description}</Text>
+                      </View>
+                    )}
+
+                    {maintenance.maintenanceType && (
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Type</Text>
+                        <Text style={styles.detailValue}>
+                          {maintenance.maintenanceType.replace(/_/g, ' ')}
+                        </Text>
+                      </View>
+                    )}
+
+                    {maintenance.scheduledDate && (
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Scheduled Date</Text>
+                        <Text style={styles.detailValue}>{maintenance.scheduledDate}</Text>
+                      </View>
+                    )}
+
+                    {maintenance.dueDate && (
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Due Date</Text>
+                        <Text style={styles.detailValue}>{maintenance.dueDate}</Text>
+                      </View>
+                    )}
+
+                    {maintenance.reporterName && (
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Reported By</Text>
+                        <Text style={styles.detailValue}>{maintenance.reporterName}</Text>
+                      </View>
+                    )}
+
+                    {maintenance.assigneeName && (
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Assigned To</Text>
+                        <Text style={styles.detailValue}>{maintenance.assigneeName}</Text>
+                      </View>
+                    )}
+                  </View>
                 </View>
 
-                {maintenance.startedAt && (
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Started</Text>
-                    <Text style={styles.detailValue}>
-                      {formatRelativeTime(maintenance.startedAt)}
-                    </Text>
-                  </View>
-                )}
-
-                {maintenance.completedAt && (
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Completed</Text>
-                    <Text style={styles.detailValue}>
-                      {formatRelativeTime(maintenance.completedAt)}
-                    </Text>
-                  </View>
-                )}
-              </View>
-
-              {/* Notes Section */}
-              <View style={styles.section}>
-                <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>Notes</Text>
-                  {canMarkMaintenance && !editingNotes && maintenance.status !== 'completed' && maintenance.status !== 'cancelled' && (
-                    <TouchableOpacity
-                      onPress={handleEditNotes}
-                      accessibilityRole="button"
-                      accessibilityLabel="Edit notes"
-                      accessibilityHint="Double tap to edit maintenance notes"
-                    >
-                      <Ionicons name="pencil" size={18} color={colors.electricBlue} />
-                    </TouchableOpacity>
-                  )}
-                </View>
-
-                {editingNotes ? (
-                  <View style={styles.notesEdit}>
-                    <TextInput
-                      style={styles.notesInput}
-                      value={notes}
-                      onChangeText={setNotes}
-                      placeholder="Add notes..."
-                      placeholderTextColor={colors.textSecondary}
-                      multiline
-                      numberOfLines={4}
-                      textAlignVertical="top"
-                    />
-                    <View style={styles.notesButtonRow}>
-                      <TouchableOpacity
-                        style={styles.notesCancel}
-                        onPress={() => setEditingNotes(false)}
-                      >
-                        <Text style={styles.notesCancelText}>Cancel</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.notesSave}
-                        onPress={handleSaveNotes}
-                        disabled={updateMutation.isPending}
-                      >
-                        <Text style={styles.notesSaveText}>Save</Text>
-                      </TouchableOpacity>
+                {/* Timestamps Section */}
+                <View style={styles.sectionGroup}>
+                  <Text style={styles.sectionTitle}>Timeline</Text>
+                  <View style={styles.sectionCard}>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Created</Text>
+                      <Text style={styles.detailValue}>
+                        {formatRelativeTime(maintenance.createdAt)}
+                      </Text>
                     </View>
-                  </View>
-                ) : (
-                  <Text style={styles.notesText}>
-                    {maintenance.notes || 'No notes'}
-                  </Text>
-                )}
-              </View>
 
-              {/* Status Actions */}
-              {renderStatusActions()}
-            </ScrollView>
+                    {maintenance.startedAt && (
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Started</Text>
+                        <Text style={styles.detailValue}>
+                          {formatRelativeTime(maintenance.startedAt)}
+                        </Text>
+                      </View>
+                    )}
+
+                    {maintenance.completedAt && (
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Completed</Text>
+                        <Text style={styles.detailValue}>
+                          {formatRelativeTime(maintenance.completedAt)}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+
+                {/* Notes Section */}
+                <View style={styles.sectionGroup}>
+                  <View style={styles.sectionCard}>
+                    <View style={styles.sectionHeader}>
+                      <Text style={styles.sectionTitle}>Notes</Text>
+                      {canMarkMaintenance && !editingNotes && maintenance.status !== 'completed' && maintenance.status !== 'cancelled' && (
+                        <TouchableOpacity
+                          onPress={handleEditNotes}
+                          style={styles.iconButton}
+                          accessibilityRole="button"
+                          accessibilityLabel="Edit notes"
+                          accessibilityHint="Double tap to edit maintenance notes"
+                        >
+                          <Ionicons name="pencil" size={18} color={colors.electricBlue} />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+
+                    {editingNotes ? (
+                      <View style={styles.notesEdit}>
+                        <TextInput
+                          style={styles.notesInput}
+                          value={notes}
+                          onChangeText={setNotes}
+                          placeholder="Add notes..."
+                          placeholderTextColor={colors.textSecondary}
+                          multiline
+                          numberOfLines={4}
+                          textAlignVertical="top"
+                        />
+                        <View style={styles.notesButtonRow}>
+                          <TouchableOpacity
+                            style={styles.notesCancel}
+                            onPress={() => setEditingNotes(false)}
+                          >
+                            <Text style={styles.notesCancelText}>Cancel</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.notesSave}
+                            onPress={handleSaveNotes}
+                            disabled={updateMutation.isPending}
+                          >
+                            <Text style={styles.notesSaveText}>Save</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    ) : (
+                      <Text style={styles.notesText}>
+                        {maintenance.notes || 'No notes'}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+
+                {/* Status Actions */}
+                {renderStatusActions()}
+              </ScrollView>
+            </>
           )}
         </View>
       </View>
@@ -450,41 +458,50 @@ const styles = StyleSheet.create({
     flexGrow: 0,
   },
   content: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
+    paddingHorizontal: spacing.base,
+    paddingTop: spacing.base,
     paddingBottom: spacing['2xl'],
+    backgroundColor: colors.chrome,
+    gap: spacing.md,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: spacing.md,
+    alignItems: 'center',
+    paddingHorizontal: spacing.base,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    backgroundColor: colors.background,
   },
   title: {
     fontSize: fontSize.lg,
-    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
-    flex: 1,
-    marginRight: spacing.md,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    textAlign: 'center',
   },
-  closeButton: {
-    padding: spacing.xs,
+  headerButton: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   badgeRow: {
     flexDirection: 'row',
     gap: spacing.sm,
-    marginBottom: spacing.lg,
   },
   assetLink: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    backgroundColor: colors.surface,
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.base,
+    backgroundColor: colors.background,
     borderRadius: borderRadius.md,
-    marginBottom: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   assetLinkText: {
     fontSize: fontSize.sm,
@@ -493,8 +510,15 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     flex: 1,
   },
-  section: {
-    marginBottom: spacing.lg,
+  sectionGroup: {
+  },
+  sectionCard: {
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.md,
+    padding: spacing.base,
+    gap: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -508,10 +532,8 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 1,
-    marginBottom: spacing.sm,
   },
   detailRow: {
-    marginBottom: spacing.sm,
   },
   detailLabel: {
     fontSize: fontSize.xs,
@@ -522,12 +544,12 @@ const styles = StyleSheet.create({
   },
   detailValue: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: 'Lato_700Bold',
     color: colors.text,
   },
   notesText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: 'Lato_700Bold',
     color: colors.text,
   },
   notesEdit: {
@@ -549,28 +571,39 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-end',
     gap: spacing.sm,
-    marginTop: spacing.sm,
+    marginTop: spacing.md,
   },
   notesCancel: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    height: 44,
+    paddingHorizontal: spacing.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   notesCancelText: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: 'Lato_700Bold',
     color: colors.textSecondary,
+    textTransform: 'uppercase',
   },
   notesSave: {
     backgroundColor: colors.electricBlue,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.sm,
+    paddingHorizontal: spacing.lg,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: borderRadius.md,
   },
   notesSaveText: {
     fontSize: fontSize.sm,
     fontFamily: 'Lato_700Bold',
     color: colors.textInverse,
     textTransform: 'uppercase',
+  },
+  iconButton: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   actionsContainer: {
     flexDirection: 'row',

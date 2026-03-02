@@ -22,6 +22,7 @@ interface PhotoGalleryProps {
   assetId: string;
   onPhotoPress: (photo: PhotoListItem) => void;
   onAddPhoto?: () => void;
+  scrollEnabled?: boolean;
 }
 
 interface GalleryItem {
@@ -30,7 +31,7 @@ interface GalleryItem {
   id: string;
 }
 
-function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto }: PhotoGalleryProps) {
+function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto, scrollEnabled = false }: PhotoGalleryProps) {
   const { width } = useWindowDimensions();
   const { data: photos, isLoading, error } = useAssetPhotos(assetId);
 
@@ -128,8 +129,9 @@ function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto }: PhotoGalle
       contentContainerStyle={styles.container}
       getItemLayout={getItemLayout}
       removeClippedSubviews
-      scrollEnabled={false}
+      scrollEnabled={scrollEnabled}
       showsVerticalScrollIndicator={false}
+      {...(scrollEnabled && { style: { flex: 1 } })}
     />
   );
 }

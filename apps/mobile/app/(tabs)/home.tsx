@@ -167,30 +167,32 @@ export default function HomeScreen() {
 
     return (
       <TouchableOpacity
-        style={[styles.scanCard, { borderLeftWidth: 4, borderLeftColor: activityColor }]}
+        style={[styles.scanCard, { borderLeftColor: activityColor }]}
         onPress={() => router.navigate(`/(tabs)/assets/${item.assetId}`)}
         activeOpacity={0.7}
         accessibilityRole="button"
         accessibilityLabel={`${formatScanTypeLabel(item.scanType)} scan for asset ${item.assetNumber || 'Unknown'}`}
         accessibilityHint="Double tap to view asset details"
       >
-        <View style={styles.scanCardContent}>
-          <View style={styles.scanIconContainer}>
+        <View style={styles.cardRow}>
+          <View style={styles.cardIconContainer}>
             <Ionicons name={getScanTypeIcon(item.scanType)} size={31} color={activityColor} />
           </View>
-          <View style={styles.scanDetails}>
-            <View style={styles.scanHeader}>
-              <Text style={styles.assetNumber}>
+          <View style={styles.cardBody}>
+            <View style={styles.cardContentRow}>
+              <Text style={styles.cardTitle} numberOfLines={1}>
                 {item.assetNumber || 'Unknown Asset'}
               </Text>
-              {matchedDepot && badgeColors && (
-                <View style={[styles.depotLocationBadge, { backgroundColor: badgeColors.bg }]}>
-                  <Text style={[styles.depotLocationText, { color: badgeColors.text }]}>{matchedDepot.name}</Text>
-                </View>
-              )}
+              <View style={styles.cardBadges}>
+                {matchedDepot && badgeColors && (
+                  <View style={[styles.depotLocationBadge, { backgroundColor: badgeColors.bg }]}>
+                    <Text style={[styles.depotLocationText, { color: badgeColors.text }]}>{matchedDepot.name}</Text>
+                  </View>
+                )}
+              </View>
             </View>
             <View style={styles.scanFooter}>
-              <Text style={styles.scanTypeLabel}>
+              <Text style={styles.cardSecondaryText}>
                 {formatScanTypeLabel(item.scanType)}
               </Text>
               <Text style={styles.scanTime}>
@@ -439,35 +441,47 @@ const styles = StyleSheet.create({
   // Scan Cards
   scanCard: {
     backgroundColor: colors.background,
-    padding: spacing.base,
+    padding: spacing.md,
     borderRadius: borderRadius.md,
     borderWidth: 1,
     borderColor: colors.border,
+    borderLeftWidth: 4,
     marginBottom: spacing.sm,
   },
-  scanCardContent: {
+  cardRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  scanIconContainer: {
+  cardIconContainer: {
     width: 32,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.md,
   },
-  scanDetails: {
+  cardBody: {
     flex: 1,
   },
-  scanHeader: {
+  cardContentRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
+    gap: spacing.sm,
     marginBottom: spacing.xs,
   },
-  assetNumber: {
-    fontSize: fontSize.base,
+  cardTitle: {
+    fontSize: fontSize.sm,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
+    flex: 1,
+  },
+  cardBadges: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  cardSecondaryText: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_400Regular',
+    color: colors.textSecondary,
   },
   depotLocationBadge: {
     paddingHorizontal: spacing.sm,
@@ -483,13 +497,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  scanTypeLabel: {
-    fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
-    color: colors.electricBlue,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   scanTime: {
     fontSize: fontSize.xs,
