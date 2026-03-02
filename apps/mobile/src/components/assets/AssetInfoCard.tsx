@@ -6,6 +6,7 @@ import type { AssetStatus } from '@rgr/shared';
 import { formatDate, AssetStatusColors, getDepotBadgeColors } from '@rgr/shared';
 import { useDepotLookup } from '../../hooks/useDepots';
 import { StatusBadge } from '../common/StatusBadge';
+import { CollapsibleSection } from '../common/CollapsibleSection';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 
@@ -49,21 +50,20 @@ export function AssetInfoCard({ asset, nextServiceDate, assessment, onPress }: A
         </View>
       </View>
 
-      <View style={styles.divider} />
-      {assessment ? (
-        <>
-          <Text style={styles.assessmentText}>{assessment}</Text>
-          <View style={styles.divider} />
-        </>
-      ) : null}
-      <View style={styles.infoGrid}>
-        <InfoRow label="Registration" value={asset.registrationNumber || 'Unknown'} />
-        <InfoRow
-          label="Last Scanned"
-          value={asset.lastLocationUpdatedAt ? formatDate(asset.lastLocationUpdatedAt) : 'Unknown'}
-        />
-        <InfoRow label="Next Service Due" value={nextServiceDate ? formatDate(nextServiceDate) : 'Unknown'} />
-      </View>
+      <CollapsibleSection title="Details" variant="flat" defaultExpanded={false}>
+        {assessment ? (
+          <Text style={[styles.assessmentText, { marginBottom: spacing.sm }]}>{assessment}</Text>
+        ) : null}
+        <View style={styles.infoGrid}>
+          <InfoRow label="Registration" value={asset.registrationNumber || 'Unknown'} />
+          <InfoRow label="Registration Expiry" value={asset.registrationExpiry ? formatDate(asset.registrationExpiry) : 'Unknown'} />
+          <InfoRow
+            label="Last Scanned"
+            value={asset.lastLocationUpdatedAt ? formatDate(asset.lastLocationUpdatedAt) : 'Unknown'}
+          />
+          <InfoRow label="Next Service Due" value={nextServiceDate ? formatDate(nextServiceDate) : 'Unknown'} />
+        </View>
+      </CollapsibleSection>
     </View>
   );
 
