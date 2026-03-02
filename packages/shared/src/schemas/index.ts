@@ -40,9 +40,8 @@ export const DateRangeSchema = z.object({
 /**
  * Search query schema
  */
-export const SearchQuerySchema = z.object({
+export const SearchQuerySchema = PaginationSchema.extend({
   query: z.string().max(200).optional(),
-  ...PaginationSchema.shape,
 });
 
 /**

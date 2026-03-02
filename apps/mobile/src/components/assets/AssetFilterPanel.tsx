@@ -6,8 +6,6 @@ import {
   StyleSheet,
   Animated,
   LayoutAnimation,
-  Platform,
-  UIManager,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { AssetStatus, AssetCategory, Depot } from '@rgr/shared';
@@ -15,11 +13,8 @@ import { AssetStatusLabels, AssetStatusColors, AssetCategoryLabels, AssetSubtype
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 import { DEPOT_ORDER, getDepotColor, getDepotTextColor } from '../../utils/depotDisplay';
-
-// Enable LayoutAnimation on Android
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
+import { FilterChip } from '../common/FilterChip';
+import '../../utils/enableLayoutAnimation';
 
 // Category-specific colors for Asset Type filter chips
 const CATEGORY_COLORS: Record<AssetCategory, string> = {
@@ -40,49 +35,6 @@ interface AssetFilterPanelProps {
   isExpanded: boolean;
   onToggleExpanded: () => void;
 }
-
-interface FilterChipProps {
-  label: string;
-  isSelected: boolean;
-  onPress: () => void;
-  selectedColor?: string;
-}
-
-// Memoized FilterChip to prevent unnecessary re-renders
-const FilterChip = memo(function FilterChip({ label, isSelected, onPress, selectedColor }: FilterChipProps) {
-  const bgColor = isSelected ? (selectedColor || colors.electricBlue) : colors.surface;
-  const textColor = isSelected ? colors.textInverse : colors.text;
-  const borderColor = isSelected ? 'transparent' : colors.border;
-
-  return (
-    <TouchableOpacity
-      style={[
-        styles.chip,
-        {
-          backgroundColor: bgColor,
-          borderColor: borderColor,
-        },
-      ]}
-      onPress={onPress}
-      activeOpacity={0.7}
-      accessibilityRole="button"
-      accessibilityLabel={`Filter by ${label}`}
-      accessibilityState={{ selected: isSelected }}
-    >
-      <Text
-        style={[
-          styles.chipText,
-          {
-            color: textColor,
-            fontFamily: isSelected ? 'Lato_700Bold' : 'Lato_400Regular',
-          },
-        ]}
-      >
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
-});
 
 export const AssetFilterPanel = memo(function AssetFilterPanel({
   statuses,
@@ -386,6 +338,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: spacing.sm,
   },
+  // Depot chips use inline rendering with custom text colors per-depot
   chip: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,

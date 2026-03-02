@@ -11,12 +11,11 @@
 /** Prefix used in RGR QR code URIs */
 const QR_CODE_PREFIX = 'rgr://asset/';
 
+import { ASSET_NUMBER_REGEX } from './constants';
+
 /** Regex for a standard UUID (v4 or similar) */
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-/** Regex for an RGR asset number (e.g., TL001, DL015) */
-const ASSET_NUMBER_REGEX = /^[A-Z]{2}\d{3,}$/;
 
 /**
  * Result returned by parseQRCode

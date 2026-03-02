@@ -35,6 +35,7 @@ export function AuditLogFilterSheet({
   const [action, setAction] = useState<string | undefined>(filters.action);
   const [startDate, setStartDate] = useState(filters.startDate || '');
   const [endDate, setEndDate] = useState(filters.endDate || '');
+  const [dateError, setDateError] = useState('');
 
   const filtersAction = filters.action;
   const filtersStartDate = filters.startDate;
@@ -45,15 +46,35 @@ export function AuditLogFilterSheet({
       setAction(filtersAction);
       setStartDate(filtersStartDate || '');
       setEndDate(filtersEndDate || '');
+      setDateError('');
     }
   }, [visible, filtersAction, filtersStartDate, filtersEndDate]);
 
   const isValidDate = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(Date.parse(s));
 
+  const handleStartDateChange = (text: string) => {
+    setStartDate(text);
+    setDateError('');
+  };
+
+  const handleEndDateChange = (text: string) => {
+    setEndDate(text);
+    setDateError('');
+  };
+
   const handleApply = () => {
-    if (startDate && !isValidDate(startDate)) return;
-    if (endDate && !isValidDate(endDate)) return;
-    if (startDate && endDate && startDate > endDate) return;
+    if (startDate && !isValidDate(startDate)) {
+      setDateError('Start date must be YYYY-MM-DD');
+      return;
+    }
+    if (endDate && !isValidDate(endDate)) {
+      setDateError('End date must be YYYY-MM-DD');
+      return;
+    }
+    if (startDate && endDate && startDate > endDate) {
+      setDateError('Start date must be before end date');
+      return;
+    }
     const next: AuditLogFilters = {};
     if (action) next.action = action;
     if (startDate) next.startDate = startDate;
@@ -65,6 +86,7 @@ export function AuditLogFilterSheet({
     setAction(undefined);
     setStartDate('');
     setEndDate('');
+    setDateError('');
     onApply({});
   };
 
@@ -130,9 +152,9 @@ export function AuditLogFilterSheet({
               <Text style={styles.label}>Date Range</Text>
               <View style={styles.dateRow}>
                 <TextInput
-                  style={styles.dateInput}
+                  style={[styles.dateInput, dateError ? styles.dateInputError : undefined]}
                   value={startDate}
-                  onChangeText={setStartDate}
+                  onChangeText={handleStartDateChange}
                   placeholder="YYYY-MM-DD"
                   placeholderTextColor={colors.textSecondary}
                   maxLength={10}
@@ -140,15 +162,16 @@ export function AuditLogFilterSheet({
                 />
                 <Text style={styles.dateSeparator}>to</Text>
                 <TextInput
-                  style={styles.dateInput}
+                  style={[styles.dateInput, dateError ? styles.dateInputError : undefined]}
                   value={endDate}
-                  onChangeText={setEndDate}
+                  onChangeText={handleEndDateChange}
                   placeholder="YYYY-MM-DD"
                   placeholderTextColor={colors.textSecondary}
                   maxLength={10}
                   accessibilityLabel="End date"
                 />
               </View>
+              {dateError ? <Text style={styles.dateErrorText}>{dateError}</Text> : null}
             </View>
 
             {/* Buttons */}
@@ -268,6 +291,15 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
+  },
+  dateInputError: {
+    borderColor: colors.error,
+  },
+  dateErrorText: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_400Regular',
+    color: colors.error,
+    marginTop: spacing.xs,
   },
   buttonRow: {
     flexDirection: 'row',
