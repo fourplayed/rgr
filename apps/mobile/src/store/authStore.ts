@@ -35,6 +35,7 @@ interface AuthState {
   clearAuthError: () => void;
   setAuthError: (error: string | null) => void;
   attemptAutoLogin: () => Promise<boolean>;
+  handleSessionExpired: () => Promise<void>;
   clearSavedSession: () => Promise<void>;
   updateUserProfile: (updates: UpdateProfileInput) => Promise<{ success: boolean; error?: string }>;
 }
@@ -282,6 +283,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   clearAuthError: () => set({ authError: null }),
 
   setAuthError: (error: string | null) => set({ authError: error }),
+
+  handleSessionExpired: async () => {
+    await clearSession();
+    eventBus.emit(AppEvents.USER_LOGOUT);
+    set({
+      user: null,
+      isAuthenticated: false,
+      isLoading: false,
+      error: null,
+      authError: 'Session expired. Please log in again.',
+      autoLoginAttempted: false,
+    });
+  },
 
   clearSavedSession: async () => {
     await clearSession();

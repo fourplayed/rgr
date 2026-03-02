@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, Text } from 'react-native';
 import { LoadingDots } from '../src/components/common/LoadingDots';
 import { StatusBar } from 'expo-status-bar';
@@ -17,6 +17,7 @@ import {
   Lato_900Black,
   Lato_900Black_Italic,
 } from '@expo-google-fonts/lato';
+import { onAuthStateChange } from '@rgr/shared';
 import { initializeMobileSupabase } from '../src/config/supabase';
 import { useAuthStore } from '../src/store/authStore';
 import { useLocationStore } from '../src/store/locationStore';
@@ -94,6 +95,28 @@ export default function RootLayout() {
     // are stable store functions that should not trigger re-runs
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Listen for auth state changes (e.g. token refresh failure, session revocation)
+  useEffect(() => {
+    const unsubscribe = onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
+        const { isAuthenticated, handleSessionExpired } = useAuthStore.getState();
+        if (isAuthenticated) {
+          handleSessionExpired();
+        }
+      }
+    });
+    return unsubscribe;
+  }, []);
+
+  // Clear React Query cache when user logs out to prevent stale data on next login
+  const wasAuthenticated = useRef(false);
+  useEffect(() => {
+    if (wasAuthenticated.current && !isAuthenticated) {
+      queryClient.clear();
+    }
+    wasAuthenticated.current = isAuthenticated;
+  }, [isAuthenticated, queryClient]);
 
   // Check if navigation state is ready
   const navigationState = useRootNavigationState();
