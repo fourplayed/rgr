@@ -29,8 +29,6 @@ interface CameraOverlayProps {
   assetCountScanCount: number;
 
   // Footer
-  hasLocationPermission: boolean;
-  onRequestLocationPermission: () => void;
   canPerformAssetCount: boolean;
   onStartAssetCount: () => void;
   onEndAssetCount: () => void;
@@ -67,8 +65,6 @@ function CameraOverlayComponent({
   assetCountActive,
   assetCountDepotName,
   assetCountScanCount,
-  hasLocationPermission,
-  onRequestLocationPermission,
   canPerformAssetCount,
   onStartAssetCount,
   onEndAssetCount,
@@ -109,8 +105,7 @@ function CameraOverlayComponent({
     onEndAssetCount();
   }, [onEndAssetCount]);
 
-  const showFooterTray =
-    assetCountActive || !hasLocationPermission || canPerformAssetCount;
+  const showFooterTray = assetCountActive || canPerformAssetCount;
 
   return (
     <SafeAreaView style={styles.overlay}>
@@ -191,12 +186,14 @@ function CameraOverlayComponent({
 
       {/* ── Scan Frame ───────────────────────────── */}
       <View style={styles.scanFrame}>
-        <View style={[styles.corner, styles.cornerTopLeft]} />
-        <View style={[styles.corner, styles.cornerTopRight]} />
-        <View style={[styles.corner, styles.cornerBottomLeft]} />
-        <View style={[styles.corner, styles.cornerBottomRight]} />
+        <View style={styles.scanReticle}>
+          <View style={[styles.corner, styles.cornerTopLeft]} />
+          <View style={[styles.corner, styles.cornerTopRight]} />
+          <View style={[styles.corner, styles.cornerBottomLeft]} />
+          <View style={[styles.corner, styles.cornerBottomRight]} />
+        </View>
 
-        {/* Scan status pill (inside frame) */}
+        {/* Scan status pill (below reticle) */}
         {scanStatus ? (
           <View style={styles.scanStatusPill}>
             <LoadingDots color={colors.textInverse} size={6} />
@@ -264,31 +261,17 @@ function CameraOverlayComponent({
               )}
             </>
           ) : (
-            <>
-              {!hasLocationPermission && (
-                <TouchableOpacity
-                  style={[styles.scannerButtonBase, styles.buttonPrimary]}
-                  onPress={onRequestLocationPermission}
-                  accessibilityRole="button"
-                  accessibilityLabel="Enable location"
-                  accessibilityHint="Double tap to grant location permission for scan tracking"
-                >
-                  <Text style={[styles.scannerButtonText, styles.buttonPrimaryText]}>Enable Location</Text>
-                </TouchableOpacity>
-              )}
-
-              {canPerformAssetCount && (
-                <TouchableOpacity
-                  style={[styles.scannerButtonBase, styles.buttonDefault, { marginTop: !hasLocationPermission ? spacing.sm : 0 }]}
-                  onPress={handleStartAssetCount}
-                  accessibilityRole="button"
-                  accessibilityLabel="Start asset count"
-                >
-                  <Ionicons name="clipboard-outline" size={18} color={colors.electricBlue} />
-                  <Text style={[styles.scannerButtonText, styles.buttonDefaultText]}>Asset Count</Text>
-                </TouchableOpacity>
-              )}
-            </>
+            canPerformAssetCount && (
+              <TouchableOpacity
+                style={[styles.scannerButtonBase, styles.buttonDefault]}
+                onPress={handleStartAssetCount}
+                accessibilityRole="button"
+                accessibilityLabel="Start asset count"
+              >
+                <Ionicons name="clipboard-outline" size={18} color={colors.electricBlue} />
+                <Text style={[styles.scannerButtonText, styles.buttonDefaultText]}>Asset Count</Text>
+              </TouchableOpacity>
+            )
           )}
         </View>
       )}

@@ -620,8 +620,6 @@ export default function ScanScreen() {
           assetCountActive={assetCount.isActive}
           assetCountDepotName={assetCount.depotName}
           assetCountScanCount={assetCount.scanCount}
-          hasLocationPermission={scanFlow.hasLocationPermission}
-          onRequestLocationPermission={scanFlow.requestLocationPermission}
           canPerformAssetCount={canPerformAssetCount}
           onStartAssetCount={handleStartAssetCount}
           onEndAssetCount={handleEndAssetCount}

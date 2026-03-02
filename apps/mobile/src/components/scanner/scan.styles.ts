@@ -4,7 +4,7 @@ import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing
 import { HEADER_STATUS_BAR_GAP, HEADER_HEIGHT } from '../../theme/layout';
 
 export const SCAN_FRAME_SIZE = 250;
-export const TOP_BAR_HEIGHT = 56;
+export const TOP_BAR_HEIGHT = HEADER_STATUS_BAR_GAP + HEADER_HEIGHT + spacing.xl + 56;
 const CORNER_SIZE = 40;
 const CORNER_THICKNESS = 4;
 
@@ -103,6 +103,10 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  scanReticle: {
+    width: SCAN_FRAME_SIZE,
+    height: SCAN_FRAME_SIZE,
+  },
   corner: {
     position: 'absolute',
     width: CORNER_SIZE,
@@ -110,34 +114,33 @@ export const styles = StyleSheet.create({
     borderColor: colors.scanCorner,
   },
   cornerTopLeft: {
-    top: -SCAN_FRAME_SIZE / 2,
-    left: -SCAN_FRAME_SIZE / 2,
+    top: 0,
+    left: 0,
     borderTopWidth: CORNER_THICKNESS,
     borderLeftWidth: CORNER_THICKNESS,
   },
   cornerTopRight: {
-    top: -SCAN_FRAME_SIZE / 2,
-    right: -SCAN_FRAME_SIZE / 2,
+    top: 0,
+    right: 0,
     borderTopWidth: CORNER_THICKNESS,
     borderRightWidth: CORNER_THICKNESS,
   },
   cornerBottomLeft: {
-    bottom: -SCAN_FRAME_SIZE / 2,
-    left: -SCAN_FRAME_SIZE / 2,
+    bottom: 0,
+    left: 0,
     borderBottomWidth: CORNER_THICKNESS,
     borderLeftWidth: CORNER_THICKNESS,
   },
   cornerBottomRight: {
-    bottom: -SCAN_FRAME_SIZE / 2,
-    right: -SCAN_FRAME_SIZE / 2,
+    bottom: 0,
+    right: 0,
     borderBottomWidth: CORNER_THICKNESS,
     borderRightWidth: CORNER_THICKNESS,
   },
 
-  // ── Scan status pill (absolute inside scanFrame) ───────
+  // ── Scan status pill (below reticle) ───────────────────
   scanStatusPill: {
-    position: 'absolute',
-    top: SCAN_FRAME_SIZE / 2 + spacing.md,
+    marginTop: spacing.md,
     alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',
