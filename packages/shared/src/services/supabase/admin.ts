@@ -327,6 +327,7 @@ export async function bulkUpdateAssetStatus(
 export interface ListAuditLogsParams {
   pageSize?: number;
   cursor?: string; // created_at value for cursor-based pagination
+  cursorId?: string; // id value for composite cursor tie-breaking
   userId?: string;
   action?: string;
   startDate?: string;
@@ -343,6 +344,7 @@ export async function listAuditLogs(
   const {
     pageSize = 30,
     cursor,
+    cursorId,
     userId,
     action,
     startDate,
@@ -353,13 +355,21 @@ export async function listAuditLogs(
     const supabase = getSupabaseClient();
 
     let query = supabase
-      .from('audit_logs')
+      .from('audit_log')
       .select('*, profiles:user_id(full_name)')
       .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
       .limit(pageSize + 1); // Fetch one extra to detect hasMore
 
+    // Composite cursor on (created_at, id) to handle identical timestamps
     if (cursor) {
-      query = query.lt('created_at', cursor);
+      if (cursorId) {
+        query = query.or(
+          `created_at.lt.${cursor},and(created_at.eq.${cursor},id.lt.${cursorId})`
+        );
+      } else {
+        query = query.lt('created_at', cursor);
+      }
     }
 
     if (userId) {

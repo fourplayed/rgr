@@ -101,7 +101,7 @@ function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto }: PhotoGalle
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <LoadingDots color={colors.electricBlue} size={8} />
+        <LoadingDots size={8} />
       </View>
     );
   }

@@ -7,6 +7,7 @@ import type {
   FreightAnalysis,
   HazardAlert,
 } from '../../types/entities';
+import type { PhotoType } from '../../types/enums/PhotoEnums';
 import type { FreightAnalysisRow } from '../../types/entities/freightAnalysis';
 import type { HazardAlertRow } from '../../types/entities/hazardAlert';
 import {
@@ -16,7 +17,7 @@ import {
 } from '../../types/entities/photo';
 import { mapRowToFreightAnalysis } from '../../types/entities/freightAnalysis';
 import { mapRowToHazardAlert } from '../../types/entities/hazardAlert';
-import { MAX_PHOTO_SIZE_BYTES } from '../../utils/constants';
+import { MAX_PHOTO_SIZE_BYTES, STORAGE_BUCKETS } from '../../utils/constants';
 
 /**
  * Generate a unique ID for filenames.
@@ -55,7 +56,7 @@ export interface UploadPhotoOptions {
   assetId: string;
   scanEventId?: string | null;
   uploadedBy: string;
-  photoType: string;
+  photoType: PhotoType;
   fileUri: string;
   mimeType?: string;
   locationDescription?: string | null;
@@ -111,7 +112,7 @@ export async function uploadPhoto(
 
     // Upload to Supabase storage
     const { error: uploadError } = await supabase.storage
-      .from('photos-compressed')
+      .from(STORAGE_BUCKETS.photos)
       .upload(storagePath, uint8Array, {
         contentType: mimeType,
         cacheControl: '3600',
@@ -137,7 +138,7 @@ export async function uploadPhoto(
         const thumbBuffer = new Uint8Array(thumbArrayBuffer);
 
         const { error: thumbUploadError } = await supabase.storage
-          .from('photos-compressed')
+          .from(STORAGE_BUCKETS.photos)
           .upload(thumbnailPath, thumbBuffer, {
             contentType: 'image/jpeg',
             cacheControl: '31536000', // 1 year cache for thumbnails
@@ -177,7 +178,7 @@ export async function uploadPhoto(
       // Cleanup uploaded files on validation failure
       const pathsToRemove = [storagePath];
       if (thumbnailPath) pathsToRemove.push(thumbnailPath);
-      await supabase.storage.from('photos-compressed').remove(pathsToRemove);
+      await supabase.storage.from(STORAGE_BUCKETS.photos).remove(pathsToRemove);
       return { success: false, data: null, error: parsed.error.errors[0]?.message ?? 'Invalid input' };
     }
 
@@ -193,7 +194,7 @@ export async function uploadPhoto(
       // Cleanup uploaded files on database failure
       const pathsToRemove = [storagePath];
       if (thumbnailPath) pathsToRemove.push(thumbnailPath);
-      await supabase.storage.from('photos-compressed').remove(pathsToRemove);
+      await supabase.storage.from(STORAGE_BUCKETS.photos).remove(pathsToRemove);
       return { success: false, data: null, error: `Failed to create photo record: ${dbError.message}` };
     }
 
@@ -239,9 +240,9 @@ export async function getAssetPhotos(
     .order('id', { ascending: false })
     .limit(limit);
 
-  // Keyset pagination: get photos created before the specified ID
+  // Keyset pagination: composite cursor on (created_at, id) to handle
+  // items with identical timestamps correctly
   if (beforeId) {
-    // Get the created_at of the beforeId to use as cursor
     const { data: cursorPhoto } = await supabase
       .from('photos')
       .select('created_at')
@@ -249,7 +250,9 @@ export async function getAssetPhotos(
       .single();
 
     if (cursorPhoto) {
-      query = query.lt('created_at', cursorPhoto.created_at);
+      query = query.or(
+        `created_at.lt.${cursorPhoto.created_at},and(created_at.eq.${cursorPhoto.created_at},id.lt.${beforeId})`
+      );
     }
   }
 
@@ -419,7 +422,7 @@ export async function deletePhoto(
   }
 
   const { error: storageError } = await supabase.storage
-    .from('photos-compressed')
+    .from(STORAGE_BUCKETS.photos)
     .remove(pathsToDelete);
 
   if (storageError) {
@@ -467,19 +470,8 @@ export async function bulkDeletePhotos(
       }
     }
 
-    // 2. Batch remove from storage
-    if (storagePaths.length > 0) {
-      const { error: storageError } = await supabase.storage
-        .from('photos-compressed')
-        .remove(storagePaths);
-
-      if (storageError) {
-        console.warn(`Failed to delete photos from storage: ${storageError.message}`);
-        // Continue with database deletion even if storage fails
-      }
-    }
-
-    // 3. Batch delete from database (cascades to freight_analysis and hazard_alerts via FK)
+    // 2. Delete from database FIRST (cascades to freight_analysis and hazard_alerts via FK)
+    // If this fails, we return early without touching storage — no orphaned references.
     const foundIds = photos.map((p) => p.id);
     const { error: dbError } = await supabase
       .from('photos')
@@ -488,6 +480,17 @@ export async function bulkDeletePhotos(
 
     if (dbError) {
       return { success: false, data: null, error: `Failed to delete photos: ${dbError.message}` };
+    }
+
+    // 3. Best-effort storage cleanup (orphans are acceptable, can be cleaned later)
+    if (storagePaths.length > 0) {
+      const { error: storageError } = await supabase.storage
+        .from(STORAGE_BUCKETS.photos)
+        .remove(storagePaths);
+
+      if (storageError) {
+        console.warn(`Failed to delete photos from storage: ${storageError.message}`);
+      }
     }
 
     // Track which IDs weren't found
@@ -516,7 +519,7 @@ export async function getSignedUrl(
   const supabase = getSupabaseClient();
 
   const { data, error } = await supabase.storage
-    .from('photos-compressed')
+    .from(STORAGE_BUCKETS.photos)
     .createSignedUrl(storagePath, expiresIn);
 
   if (error) {
@@ -532,6 +535,6 @@ export async function getSignedUrl(
  */
 export function getPublicUrl(storagePath: string): string {
   const supabase = getSupabaseClient();
-  const { data } = supabase.storage.from('photos-compressed').getPublicUrl(storagePath);
+  const { data } = supabase.storage.from(STORAGE_BUCKETS.photos).getPublicUrl(storagePath);
   return data.publicUrl;
 }

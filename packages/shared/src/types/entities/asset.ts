@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { AssetStatusSchema, AssetCategorySchema } from '../enums/AssetEnums';
 import type { AssetStatus, AssetCategory } from '../enums/AssetEnums';
+import { safeParseEnum } from '../../utils/safeParseEnum';
 
 /**
  * Trailer subtypes - centralized list for filtering and validation
@@ -171,15 +172,20 @@ export const UpdateAssetInputSchema = CreateAssetInputSchema.partial().extend({
   qrGeneratedAt: z.string().nullable().optional(),
 });
 
+// ── Typed insert/update row types ──
+
+export type AssetInsertRow = Omit<AssetRow, 'id' | 'created_at' | 'updated_at' | 'deleted_at' | 'last_latitude' | 'last_longitude' | 'last_location_accuracy' | 'last_location_updated_at' | 'last_scanned_by' | 'qr_code_data' | 'qr_generated_at'>;
+export type AssetUpdateRow = Partial<Omit<AssetRow, 'id' | 'created_at'>>;
+
 // ── Mappers ──
 
 export function mapRowToAsset(row: AssetRow): Asset {
   return {
     id: row.id,
     assetNumber: row.asset_number,
-    category: AssetCategorySchema.parse(row.category),
+    category: safeParseEnum(AssetCategorySchema, row.category, 'trailer'),
     subtype: row.subtype,
-    status: AssetStatusSchema.parse(row.status),
+    status: safeParseEnum(AssetStatusSchema, row.status, 'serviced'),
     description: row.description,
     yearManufactured: row.year_manufactured,
     make: row.make,
@@ -205,7 +211,7 @@ export function mapRowToAsset(row: AssetRow): Asset {
 
 export function mapAssetToInsert(
   input: CreateAssetInput
-): Record<string, unknown> {
+): AssetInsertRow {
   return {
     asset_number: input.assetNumber,
     category: input.category,
@@ -226,8 +232,8 @@ export function mapAssetToInsert(
 
 export function mapAssetToUpdate(
   input: UpdateAssetInput
-): Record<string, unknown> {
-  const updates: Record<string, unknown> = {};
+): AssetUpdateRow {
+  const updates: AssetUpdateRow = {};
 
   if (input.assetNumber !== undefined) updates['asset_number'] = input.assetNumber;
   if (input.category !== undefined) updates['category'] = input.category;

@@ -9,7 +9,9 @@ export * from './location';
 export * from './depots';
 export * from './authRateLimiter';
 export { MAX_PHOTO_SIZE_BYTES } from './constants';
+export { STORAGE_BUCKETS } from './constants';
 export { queryFromService } from './queryFromService';
+export { safeParseEnum } from './safeParseEnum';
 
 /**
  * Validate email format

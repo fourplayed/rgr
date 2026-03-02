@@ -1,5 +1,6 @@
 import { HazardSeveritySchema } from '../enums/HazardEnums';
 import type { HazardSeverity } from '../enums/HazardEnums';
+import { safeParseEnum } from '../../utils/safeParseEnum';
 
 /**
  * FreightAnalysis — camelCase application interface
@@ -71,7 +72,7 @@ export function mapRowToFreightAnalysis(
     loadDistributionScore: row.load_distribution_score,
     restraintCount: row.restraint_count,
     hazardCount: row.hazard_count,
-    maxSeverity: row.max_severity == null ? null : HazardSeveritySchema.parse(row.max_severity),
+    maxSeverity: row.max_severity == null ? null : safeParseEnum(HazardSeveritySchema, row.max_severity, null),
     requiresAcknowledgment: row.requires_acknowledgment,
     blockedFromDeparture: row.blocked_from_departure,
     rawResponse: row.raw_response,

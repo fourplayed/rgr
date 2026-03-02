@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ScanTypeSchema } from '../enums/ScanEnums';
 import type { ScanType } from '../enums/ScanEnums';
+import { safeParseEnum } from '../../utils/safeParseEnum';
 
 /**
  * ScanEvent — camelCase application interface
@@ -91,7 +92,7 @@ export function mapRowToScanEvent(row: ScanEventRow): ScanEvent {
     id: row.id,
     assetId: row.asset_id,
     scannedBy: row.scanned_by,
-    scanType: ScanTypeSchema.parse(row.scan_type),
+    scanType: safeParseEnum(ScanTypeSchema, row.scan_type, 'qr_scan'),
     latitude: row.latitude,
     longitude: row.longitude,
     accuracy: row.accuracy,
@@ -105,9 +106,11 @@ export function mapRowToScanEvent(row: ScanEventRow): ScanEvent {
   };
 }
 
+export type ScanEventInsertRow = Omit<ScanEventRow, 'id' | 'created_at'>;
+
 export function mapScanEventToInsert(
   input: CreateScanEventInput
-): Record<string, unknown> {
+): ScanEventInsertRow {
   return {
     asset_id: input.assetId,
     scanned_by: input.scannedBy ?? null,

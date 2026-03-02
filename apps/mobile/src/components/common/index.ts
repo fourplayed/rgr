@@ -1,4 +1,5 @@
 export { LoadingDots } from './LoadingDots';
+export { RefreshLoadingDots } from './RefreshLoadingDots';
 export { StatusBadge } from './StatusBadge';
 export { FilterChips } from './FilterChips';
 export { OfflineBanner } from './OfflineBanner';

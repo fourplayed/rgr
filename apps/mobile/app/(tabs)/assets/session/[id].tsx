@@ -13,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LoadingDots } from '../../../../src/components/common/LoadingDots';
+import { RefreshLoadingDots } from '../../../../src/components/common/RefreshLoadingDots';
 import { ConfirmSheet } from '../../../../src/components/common/ConfirmSheet';
 import { useCountSessionDetail, useDeleteCountSession } from '../../../../src/hooks/useCountHistoryData';
 import { useUserPermissions } from '../../../../src/contexts/UserPermissionsContext';
@@ -124,7 +125,7 @@ export default function SessionDetailScreen() {
         <SafeAreaView style={styles.containerInner}>
           <Header onBack={() => router.back()} />
           <View style={styles.centerContent}>
-            <LoadingDots color={colors.electricBlue} size={12} />
+            <LoadingDots size={12} />
           </View>
         </SafeAreaView>
       </View>
@@ -199,11 +200,12 @@ export default function SessionDetailScreen() {
             <RefreshControl
               refreshing={!!isRefetching}
               onRefresh={refetch}
-              tintColor={colors.electricBlue}
+              tintColor="transparent"
             />
           }
           showsVerticalScrollIndicator={false}
         >
+          <RefreshLoadingDots isRefetching={!!isRefetching} />
           {/* Summary Stats */}
           <View style={styles.statsRow}>
             <View style={styles.statBox}>

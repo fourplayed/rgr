@@ -1,6 +1,17 @@
 import { submitAssetCount } from '../assetCounts';
 import type { SubmitAssetCountInput } from '../assetCounts';
 
+// ── Test UUIDs ──
+
+const UUID_DEPOT = '00000000-0000-4000-8000-000000000001';
+const UUID_USER = '00000000-0000-4000-8000-000000000002';
+const UUID_A1 = '00000000-0000-4000-8000-00000000000a';
+const UUID_A2 = '00000000-0000-4000-8000-00000000000b';
+const UUID_A3 = '00000000-0000-4000-8000-00000000000c';
+const UUID_COMBO = '00000000-0000-4000-8000-0000000000c0';
+const UUID_PHOTO = '00000000-0000-4000-8000-00000000f010';
+const UUID_SESS = '00000000-0000-4000-8000-000000005e55';
+
 // ── Chainable Supabase Mock ──
 
 // Each table mock tracks calls and lets tests configure return values per-table.
@@ -48,6 +59,7 @@ function getChain(tableName: string): MockChain {
 jest.mock('../client', () => ({
   getSupabaseClient: () => ({
     from: (tableName: string) => getChain(tableName),
+    rpc: jest.fn().mockRejectedValue(new Error('RPC not available')),
   }),
 }));
 
@@ -58,8 +70,8 @@ const now = new Date().toISOString();
 function makeSessionRow(id: string) {
   return {
     id,
-    depot_id: 'depot-1',
-    counted_by: 'user-1',
+    depot_id: UUID_DEPOT,
+    counted_by: UUID_USER,
     started_at: now,
     completed_at: null,
     status: 'in_progress',
@@ -96,7 +108,7 @@ function makePhotoRow(id: string, sessionId: string, combinationId: string) {
     id,
     session_id: sessionId,
     combination_id: combinationId,
-    photo_id: 'photo-1',
+    photo_id: UUID_PHOTO,
     created_at: now,
   };
 }
@@ -111,11 +123,11 @@ function makeCompletedSessionRow(id: string) {
 
 function baseInput(overrides?: Partial<SubmitAssetCountInput>): SubmitAssetCountInput {
   return {
-    depotId: 'depot-1',
-    countedBy: 'user-1',
+    depotId: UUID_DEPOT,
+    countedBy: UUID_USER,
     items: [
-      { assetId: 'a1', combinationId: null, combinationPosition: null },
-      { assetId: 'a2', combinationId: null, combinationPosition: null },
+      { assetId: UUID_A1, combinationId: null, combinationPosition: null },
+      { assetId: UUID_A2, combinationId: null, combinationPosition: null },
     ],
     combinations: [],
     ...overrides,
@@ -129,10 +141,11 @@ function setupHappyPath(sessionId: string, itemCount: number) {
     error: null,
   });
 
-  // Item creation — one call per item
+  // Item creation — one call per item (fallback path after RPC mock rejects)
   for (let i = 0; i < itemCount; i++) {
+    const assetUuids = [UUID_A1, UUID_A2, UUID_A3, '00000000-0000-4000-8000-00000000000d', '00000000-0000-4000-8000-00000000000e'];
     getChain('asset_count_items').single.mockResolvedValueOnce({
-      data: makeItemRow(`item-${i}`, sessionId, `a${i + 1}`),
+      data: makeItemRow(`item-${i}`, sessionId, assetUuids[i] ?? UUID_A1),
       error: null,
     });
   }
@@ -156,26 +169,26 @@ beforeEach(() => {
 describe('submitAssetCount', () => {
   describe('happy path', () => {
     it('creates session, inserts all items, completes session (standalone only)', async () => {
-      setupHappyPath('sess-1', 2);
+      setupHappyPath(UUID_SESS, 2);
 
       const result = await submitAssetCount(baseInput());
 
       expect(result.success).toBe(true);
       expect(result.data).not.toBeNull();
-      expect(result.data!.id).toBe('sess-1');
+      expect(result.data!.id).toBe(UUID_SESS);
       expect(result.data!.status).toBe('completed');
     });
 
     it('handles combination items with combination_id and combination_position', async () => {
       const input = baseInput({
         items: [
-          { assetId: 'a1', combinationId: 'combo-1', combinationPosition: 1 },
-          { assetId: 'a2', combinationId: 'combo-1', combinationPosition: 2 },
+          { assetId: UUID_A1, combinationId: UUID_COMBO, combinationPosition: 1 },
+          { assetId: UUID_A2, combinationId: UUID_COMBO, combinationPosition: 2 },
         ],
-        combinations: [{ combinationId: 'combo-1', notes: null, photoId: null }],
+        combinations: [{ combinationId: UUID_COMBO, notes: null, photoId: null }],
       });
 
-      setupHappyPath('sess-1', 2);
+      setupHappyPath(UUID_SESS, 2);
 
       const result = await submitAssetCount(input);
 
@@ -184,11 +197,11 @@ describe('submitAssetCount', () => {
       // Verify items were inserted with combination data
       const insertCalls = getChain('asset_count_items').insert.mock.calls;
       expect(insertCalls[0][0]).toEqual(expect.objectContaining({
-        combination_id: 'combo-1',
+        combination_id: UUID_COMBO,
         combination_position: 1,
       }));
       expect(insertCalls[1][0]).toEqual(expect.objectContaining({
-        combination_id: 'combo-1',
+        combination_id: UUID_COMBO,
         combination_position: 2,
       }));
     });
@@ -196,29 +209,29 @@ describe('submitAssetCount', () => {
     it('inserts combination metadata when notes present', async () => {
       const input = baseInput({
         items: [
-          { assetId: 'a1', combinationId: 'combo-1', combinationPosition: 1 },
-          { assetId: 'a2', combinationId: 'combo-1', combinationPosition: 2 },
+          { assetId: UUID_A1, combinationId: UUID_COMBO, combinationPosition: 1 },
+          { assetId: UUID_A2, combinationId: UUID_COMBO, combinationPosition: 2 },
         ],
-        combinations: [{ combinationId: 'combo-1', notes: 'Bolted together', photoId: null }],
+        combinations: [{ combinationId: UUID_COMBO, notes: 'Bolted together', photoId: null }],
       });
 
       // Session creation
       getChain('asset_count_sessions').single.mockResolvedValueOnce({
-        data: makeSessionRow('sess-1'),
+        data: makeSessionRow(UUID_SESS),
         error: null,
       });
-      // Items
+      // Items (fallback path)
       getChain('asset_count_items').single
-        .mockResolvedValueOnce({ data: makeItemRow('i1', 'sess-1', 'a1'), error: null })
-        .mockResolvedValueOnce({ data: makeItemRow('i2', 'sess-1', 'a2'), error: null });
+        .mockResolvedValueOnce({ data: makeItemRow('i1', UUID_SESS, UUID_A1), error: null })
+        .mockResolvedValueOnce({ data: makeItemRow('i2', UUID_SESS, UUID_A2), error: null });
       // Metadata upsert
       getChain('asset_count_combination_metadata').single.mockResolvedValueOnce({
-        data: makeMetadataRow('m1', 'sess-1', 'combo-1'),
+        data: makeMetadataRow('m1', UUID_SESS, UUID_COMBO),
         error: null,
       });
       // Completion
       getChain('asset_count_sessions').single.mockResolvedValueOnce({
-        data: makeCompletedSessionRow('sess-1'),
+        data: makeCompletedSessionRow(UUID_SESS),
         error: null,
       });
 
@@ -227,8 +240,8 @@ describe('submitAssetCount', () => {
       expect(result.success).toBe(true);
       expect(getChain('asset_count_combination_metadata').upsert).toHaveBeenCalledWith(
         expect.objectContaining({
-          session_id: 'sess-1',
-          combination_id: 'combo-1',
+          session_id: UUID_SESS,
+          combination_id: UUID_COMBO,
           notes: 'Bolted together',
         }),
         expect.anything()
@@ -238,29 +251,29 @@ describe('submitAssetCount', () => {
     it('links combination photos when photoId present', async () => {
       const input = baseInput({
         items: [
-          { assetId: 'a1', combinationId: 'combo-1', combinationPosition: 1 },
-          { assetId: 'a2', combinationId: 'combo-1', combinationPosition: 2 },
+          { assetId: UUID_A1, combinationId: UUID_COMBO, combinationPosition: 1 },
+          { assetId: UUID_A2, combinationId: UUID_COMBO, combinationPosition: 2 },
         ],
-        combinations: [{ combinationId: 'combo-1', notes: null, photoId: 'photo-1' }],
+        combinations: [{ combinationId: UUID_COMBO, notes: null, photoId: UUID_PHOTO }],
       });
 
       // Session
       getChain('asset_count_sessions').single.mockResolvedValueOnce({
-        data: makeSessionRow('sess-1'),
+        data: makeSessionRow(UUID_SESS),
         error: null,
       });
-      // Items
+      // Items (fallback path)
       getChain('asset_count_items').single
-        .mockResolvedValueOnce({ data: makeItemRow('i1', 'sess-1', 'a1'), error: null })
-        .mockResolvedValueOnce({ data: makeItemRow('i2', 'sess-1', 'a2'), error: null });
+        .mockResolvedValueOnce({ data: makeItemRow('i1', UUID_SESS, UUID_A1), error: null })
+        .mockResolvedValueOnce({ data: makeItemRow('i2', UUID_SESS, UUID_A2), error: null });
       // Photo insert
       getChain('asset_count_combination_photos').single.mockResolvedValueOnce({
-        data: makePhotoRow('p1', 'sess-1', 'combo-1'),
+        data: makePhotoRow('p1', UUID_SESS, UUID_COMBO),
         error: null,
       });
       // Completion
       getChain('asset_count_sessions').single.mockResolvedValueOnce({
-        data: makeCompletedSessionRow('sess-1'),
+        data: makeCompletedSessionRow(UUID_SESS),
         error: null,
       });
 
@@ -269,19 +282,19 @@ describe('submitAssetCount', () => {
       expect(result.success).toBe(true);
       expect(getChain('asset_count_combination_photos').insert).toHaveBeenCalledWith(
         expect.objectContaining({
-          session_id: 'sess-1',
-          combination_id: 'combo-1',
-          photo_id: 'photo-1',
+          session_id: UUID_SESS,
+          combination_id: UUID_COMBO,
+          photo_id: UUID_PHOTO,
         })
       );
     });
 
     it('skips metadata insert when notes is null', async () => {
       const input = baseInput({
-        combinations: [{ combinationId: 'combo-1', notes: null, photoId: null }],
+        combinations: [{ combinationId: UUID_COMBO, notes: null, photoId: null }],
       });
 
-      setupHappyPath('sess-1', 2);
+      setupHappyPath(UUID_SESS, 2);
 
       await submitAssetCount(input);
 
@@ -291,10 +304,10 @@ describe('submitAssetCount', () => {
 
     it('skips photo link when photoId is null', async () => {
       const input = baseInput({
-        combinations: [{ combinationId: 'combo-1', notes: null, photoId: null }],
+        combinations: [{ combinationId: UUID_COMBO, notes: null, photoId: null }],
       });
 
-      setupHappyPath('sess-1', 2);
+      setupHappyPath(UUID_SESS, 2);
 
       await submitAssetCount(input);
 
@@ -304,7 +317,7 @@ describe('submitAssetCount', () => {
     it('passes sessionNotes to completeAssetCountSession', async () => {
       const input = baseInput({ sessionNotes: 'Counted during rain' });
 
-      setupHappyPath('sess-1', 2);
+      setupHappyPath(UUID_SESS, 2);
 
       await submitAssetCount(input);
 
@@ -320,14 +333,17 @@ describe('submitAssetCount', () => {
 
   describe('count accuracy', () => {
     it('number of createAssetCountItem calls equals input.items.length', async () => {
-      const items = Array.from({ length: 5 }, (_, i) => ({
-        assetId: `a${i}`,
+      const assetUuids = Array.from({ length: 5 }, (_, i) =>
+        `00000000-0000-4000-8000-${(10 + i).toString(16).padStart(12, '0')}`
+      );
+      const items = assetUuids.map((id) => ({
+        assetId: id,
         combinationId: null,
         combinationPosition: null,
       }));
 
       const input = baseInput({ items });
-      setupHappyPath('sess-1', 5);
+      setupHappyPath(UUID_SESS, 5);
 
       await submitAssetCount(input);
 
@@ -337,25 +353,25 @@ describe('submitAssetCount', () => {
     it('each item\'s combinationId/combinationPosition matches input', async () => {
       const input = baseInput({
         items: [
-          { assetId: 'a1', combinationId: null, combinationPosition: null },
-          { assetId: 'a2', combinationId: 'combo-1', combinationPosition: 1 },
-          { assetId: 'a3', combinationId: 'combo-1', combinationPosition: 2 },
+          { assetId: UUID_A1, combinationId: null, combinationPosition: null },
+          { assetId: UUID_A2, combinationId: UUID_COMBO, combinationPosition: 1 },
+          { assetId: UUID_A3, combinationId: UUID_COMBO, combinationPosition: 2 },
         ],
       });
 
       // Session
       getChain('asset_count_sessions').single.mockResolvedValueOnce({
-        data: makeSessionRow('sess-1'),
+        data: makeSessionRow(UUID_SESS),
         error: null,
       });
-      // Items
+      // Items (fallback path)
       getChain('asset_count_items').single
-        .mockResolvedValueOnce({ data: makeItemRow('i1', 'sess-1', 'a1'), error: null })
-        .mockResolvedValueOnce({ data: makeItemRow('i2', 'sess-1', 'a2'), error: null })
-        .mockResolvedValueOnce({ data: makeItemRow('i3', 'sess-1', 'a3'), error: null });
+        .mockResolvedValueOnce({ data: makeItemRow('i1', UUID_SESS, UUID_A1), error: null })
+        .mockResolvedValueOnce({ data: makeItemRow('i2', UUID_SESS, UUID_A2), error: null })
+        .mockResolvedValueOnce({ data: makeItemRow('i3', UUID_SESS, UUID_A3), error: null });
       // Completion
       getChain('asset_count_sessions').single.mockResolvedValueOnce({
-        data: makeCompletedSessionRow('sess-1'),
+        data: makeCompletedSessionRow(UUID_SESS),
         error: null,
       });
 
@@ -364,9 +380,9 @@ describe('submitAssetCount', () => {
       const insertCalls = getChain('asset_count_items').insert.mock.calls;
       expect(insertCalls[0][0].combination_id).toBeNull();
       expect(insertCalls[0][0].combination_position).toBeNull();
-      expect(insertCalls[1][0].combination_id).toBe('combo-1');
+      expect(insertCalls[1][0].combination_id).toBe(UUID_COMBO);
       expect(insertCalls[1][0].combination_position).toBe(1);
-      expect(insertCalls[2][0].combination_id).toBe('combo-1');
+      expect(insertCalls[2][0].combination_id).toBe(UUID_COMBO);
       expect(insertCalls[2][0].combination_position).toBe(2);
     });
   });
@@ -375,7 +391,7 @@ describe('submitAssetCount', () => {
     it('cancels session when createAssetCountItem fails', async () => {
       // Session creation succeeds
       getChain('asset_count_sessions').single.mockResolvedValueOnce({
-        data: makeSessionRow('sess-1'),
+        data: makeSessionRow(UUID_SESS),
         error: null,
       });
       // First item fails
@@ -385,7 +401,7 @@ describe('submitAssetCount', () => {
       });
       // Cancellation
       getChain('asset_count_sessions').single.mockResolvedValueOnce({
-        data: { ...makeSessionRow('sess-1'), status: 'cancelled' },
+        data: { ...makeSessionRow(UUID_SESS), status: 'cancelled' },
         error: null,
       });
 
@@ -402,18 +418,18 @@ describe('submitAssetCount', () => {
 
     it('cancels session when upsertCombinationMetadata fails', async () => {
       const input = baseInput({
-        items: [{ assetId: 'a1', combinationId: 'combo-1', combinationPosition: 1 }],
-        combinations: [{ combinationId: 'combo-1', notes: 'test', photoId: null }],
+        items: [{ assetId: UUID_A1, combinationId: UUID_COMBO, combinationPosition: 1 }],
+        combinations: [{ combinationId: UUID_COMBO, notes: 'test', photoId: null }],
       });
 
       // Session
       getChain('asset_count_sessions').single.mockResolvedValueOnce({
-        data: makeSessionRow('sess-1'),
+        data: makeSessionRow(UUID_SESS),
         error: null,
       });
       // Item
       getChain('asset_count_items').single.mockResolvedValueOnce({
-        data: makeItemRow('i1', 'sess-1', 'a1'),
+        data: makeItemRow('i1', UUID_SESS, UUID_A1),
         error: null,
       });
       // Metadata upsert fails
@@ -423,7 +439,7 @@ describe('submitAssetCount', () => {
       });
       // Cancellation
       getChain('asset_count_sessions').single.mockResolvedValueOnce({
-        data: { ...makeSessionRow('sess-1'), status: 'cancelled' },
+        data: { ...makeSessionRow(UUID_SESS), status: 'cancelled' },
         error: null,
       });
 
@@ -435,18 +451,18 @@ describe('submitAssetCount', () => {
 
     it('cancels session when createCombinationPhoto fails', async () => {
       const input = baseInput({
-        items: [{ assetId: 'a1', combinationId: 'combo-1', combinationPosition: 1 }],
-        combinations: [{ combinationId: 'combo-1', notes: null, photoId: 'photo-1' }],
+        items: [{ assetId: UUID_A1, combinationId: UUID_COMBO, combinationPosition: 1 }],
+        combinations: [{ combinationId: UUID_COMBO, notes: null, photoId: UUID_PHOTO }],
       });
 
       // Session
       getChain('asset_count_sessions').single.mockResolvedValueOnce({
-        data: makeSessionRow('sess-1'),
+        data: makeSessionRow(UUID_SESS),
         error: null,
       });
       // Item
       getChain('asset_count_items').single.mockResolvedValueOnce({
-        data: makeItemRow('i1', 'sess-1', 'a1'),
+        data: makeItemRow('i1', UUID_SESS, UUID_A1),
         error: null,
       });
       // Photo insert fails
@@ -456,7 +472,7 @@ describe('submitAssetCount', () => {
       });
       // Cancellation
       getChain('asset_count_sessions').single.mockResolvedValueOnce({
-        data: { ...makeSessionRow('sess-1'), status: 'cancelled' },
+        data: { ...makeSessionRow(UUID_SESS), status: 'cancelled' },
         error: null,
       });
 
@@ -469,14 +485,14 @@ describe('submitAssetCount', () => {
     it('cancels session on unexpected exception', async () => {
       // Session creation succeeds
       getChain('asset_count_sessions').single.mockResolvedValueOnce({
-        data: makeSessionRow('sess-1'),
+        data: makeSessionRow(UUID_SESS),
         error: null,
       });
       // Item creation throws
       getChain('asset_count_items').single.mockRejectedValueOnce(new Error('Network error'));
       // Cancellation
       getChain('asset_count_sessions').single.mockResolvedValueOnce({
-        data: { ...makeSessionRow('sess-1'), status: 'cancelled' },
+        data: { ...makeSessionRow(UUID_SESS), status: 'cancelled' },
         error: null,
       });
 
@@ -505,7 +521,7 @@ describe('submitAssetCount', () => {
     it('returns specific error message for duplicate asset (23505)', async () => {
       // Session
       getChain('asset_count_sessions').single.mockResolvedValueOnce({
-        data: makeSessionRow('sess-1'),
+        data: makeSessionRow(UUID_SESS),
         error: null,
       });
       // Duplicate item
@@ -515,7 +531,7 @@ describe('submitAssetCount', () => {
       });
       // Cancellation
       getChain('asset_count_sessions').single.mockResolvedValueOnce({
-        data: { ...makeSessionRow('sess-1'), status: 'cancelled' },
+        data: { ...makeSessionRow(UUID_SESS), status: 'cancelled' },
         error: null,
       });
 
@@ -523,6 +539,32 @@ describe('submitAssetCount', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('Asset already counted in this session');
+    });
+  });
+
+  describe('validation', () => {
+    it('rejects input with missing required fields', async () => {
+      const result = await submitAssetCount({
+        depotId: 'not-a-uuid',
+        countedBy: UUID_USER,
+        items: [],
+        combinations: [],
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Invalid count data. Please try again.');
+    });
+
+    it('rejects input with empty items array', async () => {
+      const result = await submitAssetCount({
+        depotId: UUID_DEPOT,
+        countedBy: UUID_USER,
+        items: [],
+        combinations: [],
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Invalid count data. Please try again.');
     });
   });
 });

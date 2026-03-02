@@ -1,4 +1,7 @@
 import { z } from 'zod';
+import { PhotoTypeSchema } from '../enums/PhotoEnums';
+import type { PhotoType } from '../enums/PhotoEnums';
+import { safeParseEnum } from '../../utils/safeParseEnum';
 
 /**
  * Photo — camelCase application interface
@@ -8,7 +11,7 @@ export interface Photo {
   assetId: string | null;
   scanEventId: string | null;
   uploadedBy: string;
-  photoType: string;
+  photoType: PhotoType;
   storagePath: string;
   thumbnailPath: string | null;
   filename: string | null;
@@ -53,7 +56,7 @@ export interface CreatePhotoInput {
   assetId?: string | null;
   scanEventId?: string | null;
   uploadedBy: string;
-  photoType: string;
+  photoType: PhotoType;
   storagePath: string;
   thumbnailPath?: string | null;
   filename?: string | null;
@@ -72,18 +75,22 @@ export const CreatePhotoInputSchema = z.object({
   assetId: z.string().uuid().nullable().optional(),
   scanEventId: z.string().uuid().nullable().optional(),
   uploadedBy: z.string().uuid(),
-  photoType: z.string().min(1).max(50),
+  photoType: PhotoTypeSchema,
   storagePath: z.string().min(1),
   thumbnailPath: z.string().nullable().optional(),
   filename: z.string().max(255).nullable().optional(),
   fileSize: z.number().int().min(0).nullable().optional(),
-  mimeType: z.string().max(100).nullable().optional(),
+  mimeType: z.string().max(50).nullable().optional(),
   width: z.number().int().min(0).nullable().optional(),
   height: z.number().int().min(0).nullable().optional(),
   locationDescription: z.string().max(255).nullable().optional(),
   latitude: z.number().min(-90).max(90).nullable().optional(),
   longitude: z.number().min(-180).max(180).nullable().optional(),
 });
+
+// ── Typed insert row type ──
+
+export type PhotoInsertRow = Omit<PhotoRow, 'id' | 'created_at' | 'is_analyzed'>;
 
 // ── Mappers ──
 
@@ -93,7 +100,7 @@ export function mapRowToPhoto(row: PhotoRow): Photo {
     assetId: row.asset_id,
     scanEventId: row.scan_event_id,
     uploadedBy: row.uploaded_by,
-    photoType: row.photo_type,
+    photoType: safeParseEnum(PhotoTypeSchema, row.photo_type, 'general'),
     storagePath: row.storage_path,
     thumbnailPath: row.thumbnail_path,
     filename: row.filename,
@@ -111,7 +118,7 @@ export function mapRowToPhoto(row: PhotoRow): Photo {
 
 export function mapPhotoToInsert(
   input: CreatePhotoInput
-): Record<string, unknown> {
+): PhotoInsertRow {
   return {
     asset_id: input.assetId ?? null,
     scan_event_id: input.scanEventId ?? null,

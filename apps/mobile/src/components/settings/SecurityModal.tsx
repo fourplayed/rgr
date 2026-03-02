@@ -241,7 +241,7 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
                     </Text>
                   </View>
                   {autoLoginLoading ? (
-                    <LoadingDots color={colors.electricBlue} size={8} />
+                    <LoadingDots size={8} />
                   ) : (
                     <Switch
                       value={autoLogin}

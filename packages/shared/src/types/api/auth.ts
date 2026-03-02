@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { UserRoleSchema, type UserRole } from '../enums/UserRole';
+import { safeParseEnum } from '../../utils/safeParseEnum';
 
 /**
  * User profile interface
@@ -238,7 +239,7 @@ export function mapRowToProfile(row: ProfileRow): Profile {
     id: row.id,
     email: row.email,
     fullName: row.full_name,
-    role: UserRoleSchema.parse(row.role),
+    role: safeParseEnum(UserRoleSchema, row.role, 'driver'),
     phone: row.phone,
     avatarUrl: row.avatar_url,
     isActive: row.is_active,
@@ -253,10 +254,12 @@ export function mapRowToProfile(row: ProfileRow): Profile {
 /**
  * Map Profile interface (camelCase) to database update fields (snake_case)
  */
+export type ProfileUpdateRow = Partial<Omit<ProfileRow, 'id' | 'created_at'>>;
+
 export function mapProfileToUpdate(
   profile: UpdateProfileInput
-): Record<string, unknown> {
-  const updates: Record<string, unknown> = {};
+): ProfileUpdateRow {
+  const updates: ProfileUpdateRow = {};
 
   if (profile.fullName !== undefined) updates['full_name'] = profile.fullName;
   if (profile.phone !== undefined) updates['phone'] = profile.phone;

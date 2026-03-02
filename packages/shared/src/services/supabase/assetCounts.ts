@@ -14,12 +14,15 @@ import type {
   CreateAssetCountItemInput,
   CreateCombinationMetadataInput,
   CreateCombinationPhotoInput,
+  SubmitAssetCountInput,
 } from '../../types/entities/assetCount';
+export type { SubmitAssetCountInput } from '../../types/entities/assetCount';
 import {
   mapRowToAssetCountSession,
   mapRowToAssetCountItem,
   mapRowToCombinationMetadata,
   mapRowToCombinationPhoto,
+  SubmitAssetCountInputSchema,
 } from '../../types/entities/assetCount';
 
 // ============================================================================
@@ -126,6 +129,7 @@ export async function cancelAssetCountSession(
       completed_at: new Date().toISOString(),
     })
     .eq('id', sessionId)
+    .eq('status', 'in_progress')
     .select()
     .single();
 
@@ -396,25 +400,15 @@ export async function deleteCombinationPhoto(
  * Submit a complete asset count session with all items, metadata, and photo links.
  * This is the primary function for submitting a count from the mobile app.
  */
-export interface SubmitAssetCountInput {
-  depotId: string;
-  countedBy: string;
-  items: Array<{
-    assetId: string;
-    combinationId: string | null;
-    combinationPosition: number | null;
-  }>;
-  combinations: Array<{
-    combinationId: string;
-    notes: string | null;
-    photoId: string | null;
-  }>;
-  sessionNotes?: string | null;
-}
-
 export async function submitAssetCount(
   input: SubmitAssetCountInput
 ): Promise<ServiceResult<AssetCountSession>> {
+  // Validate input
+  const parsed = SubmitAssetCountInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, data: null, error: 'Invalid count data. Please try again.' };
+  }
+
   // Create session first
   const sessionResult = await createAssetCountSession({
     depotId: input.depotId,
@@ -466,32 +460,36 @@ export async function submitAssetCount(
       }
     }
 
-    // Create combination metadata and photo links
+    // Create combination metadata and photo links in parallel
+    const comboPromises: Promise<ServiceResult<unknown>>[] = [];
     for (const combo of input.combinations) {
       if (combo.notes) {
-        const metadataResult = await upsertCombinationMetadata({
+        comboPromises.push(upsertCombinationMetadata({
           sessionId,
           combinationId: combo.combinationId,
           notes: combo.notes,
-        });
-
-        if (!metadataResult.success) {
-          await cancelAssetCountSession(sessionId);
-          return { success: false, data: null, error: metadataResult.error };
-        }
+        }));
       }
-
       if (combo.photoId) {
-        const photoResult = await createCombinationPhoto({
+        comboPromises.push(createCombinationPhoto({
           sessionId,
           combinationId: combo.combinationId,
           photoId: combo.photoId,
-        });
+        }));
+      }
+    }
 
-        if (!photoResult.success) {
-          await cancelAssetCountSession(sessionId);
-          return { success: false, data: null, error: photoResult.error };
-        }
+    if (comboPromises.length > 0) {
+      const settled = await Promise.allSettled(comboPromises);
+      const failed = settled.find(
+        r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)
+      );
+      if (failed) {
+        await cancelAssetCountSession(sessionId);
+        const errorMsg = failed.status === 'rejected'
+          ? String(failed.reason)
+          : (failed.status === 'fulfilled' && !failed.value.success ? failed.value.error : 'Unknown error');
+        return { success: false, data: null, error: errorMsg };
       }
     }
 

@@ -11,6 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { LoadingDots } from '../../../src/components/common/LoadingDots';
+import { RefreshLoadingDots } from '../../../src/components/common/RefreshLoadingDots';
 import { ScreenHeader } from '../../../src/components/common/ScreenHeader';
 import { DepotFilterChips } from '../../../src/components/assets/DepotFilterChips';
 import { useCountHistorySessions } from '../../../src/hooks/useCountHistoryData';
@@ -162,7 +163,7 @@ export default function CountHistoryScreen() {
           </View>
         ) : isLoading && !isRefetching ? (
           <View style={styles.centerContent}>
-            <LoadingDots color={colors.electricBlue} size={12} />
+            <LoadingDots size={12} />
           </View>
         ) : error ? (
           <View style={styles.centerContent}>
@@ -187,9 +188,10 @@ export default function CountHistoryScreen() {
               <RefreshControl
                 refreshing={!!isRefetching}
                 onRefresh={refetch}
-                tintColor={colors.electricBlue}
+                tintColor="transparent"
               />
             }
+            ListHeaderComponent={<RefreshLoadingDots isRefetching={!!isRefetching} />}
             ListEmptyComponent={
               <View style={styles.emptyState}>
                 <Ionicons name="clipboard-outline" size={48} color={colors.textSecondary} />

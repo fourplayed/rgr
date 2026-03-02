@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LoadingDots } from '../../../src/components/common/LoadingDots';
+import { RefreshLoadingDots } from '../../../src/components/common/RefreshLoadingDots';
 import { ScreenHeader } from '../../../src/components/common/ScreenHeader';
 import { useRouter } from 'expo-router';
 import type { AssetStatus, AssetCategory, AssetWithRelations } from '@rgr/shared';
@@ -190,7 +191,7 @@ export default function AssetListScreen() {
 
       {(isLoading || isDepotsLoading) && !isRefetching ? (
         <View style={styles.centerContent}>
-          <LoadingDots color={colors.electricBlue} size={12} />
+          <LoadingDots size={12} />
         </View>
       ) : error ? (
         <View style={styles.centerContent}>
@@ -216,9 +217,10 @@ export default function AssetListScreen() {
             <RefreshControl
               refreshing={!!isRefetching}
               onRefresh={refetch}
-              tintColor={colors.electricBlue}
+              tintColor="transparent"
             />
           }
+          ListHeaderComponent={<RefreshLoadingDots isRefetching={!!isRefetching} />}
           ListEmptyComponent={
             <View style={styles.emptyState}>
               <Text style={styles.emptyText}>No assets found</Text>

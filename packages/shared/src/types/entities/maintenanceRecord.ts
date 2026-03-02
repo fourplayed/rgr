@@ -4,6 +4,7 @@ import {
   MaintenancePrioritySchema,
 } from '../enums/MaintenanceEnums';
 import type { MaintenanceStatus, MaintenancePriority } from '../enums/MaintenanceEnums';
+import { safeParseEnum } from '../../utils/safeParseEnum';
 
 /**
  * MaintenanceRecord — camelCase application interface
@@ -160,8 +161,8 @@ export function mapRowToMaintenanceRecord(
     completedBy: row.completed_by,
     title: row.title,
     description: row.description,
-    priority: MaintenancePrioritySchema.parse(row.priority),
-    status: MaintenanceStatusSchema.parse(row.status),
+    priority: safeParseEnum(MaintenancePrioritySchema, row.priority, 'medium'),
+    status: safeParseEnum(MaintenanceStatusSchema, row.status, 'scheduled'),
     maintenanceType: row.maintenance_type,
     scheduledDate: row.scheduled_date,
     startedAt: row.started_at,
@@ -178,9 +179,12 @@ export function mapRowToMaintenanceRecord(
   };
 }
 
+export type MaintenanceInsertRow = Omit<MaintenanceRecordRow, 'id' | 'created_at' | 'updated_at' | 'completed_by' | 'started_at' | 'completed_at' | 'actual_cost' | 'parts_used'>;
+export type MaintenanceUpdateRow = Partial<Omit<MaintenanceRecordRow, 'id' | 'created_at'>>;
+
 export function mapMaintenanceToInsert(
   input: CreateMaintenanceInput
-): Record<string, unknown> {
+): MaintenanceInsertRow {
   return {
     asset_id: input.assetId,
     reported_by: input.reportedBy ?? null,
@@ -201,8 +205,8 @@ export function mapMaintenanceToInsert(
 
 export function mapMaintenanceToUpdate(
   input: UpdateMaintenanceInput
-): Record<string, unknown> {
-  const updates: Record<string, unknown> = {};
+): MaintenanceUpdateRow {
+  const updates: MaintenanceUpdateRow = {};
 
   if (input.assignedTo !== undefined) updates['assigned_to'] = input.assignedTo;
   if (input.completedBy !== undefined) updates['completed_by'] = input.completedBy;

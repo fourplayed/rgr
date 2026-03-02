@@ -119,10 +119,10 @@ export const MAP_DEFAULTS = {
 };
 
 /**
- * Storage bucket names
+ * Storage bucket names — must match Supabase storage bucket IDs
  */
 export const STORAGE_BUCKETS = {
-  photos: 'photos',
-  thumbnails: 'thumbnails',
+  photos: 'photos-compressed',
+  originals: 'photos-original',
   avatars: 'avatars',
-};
+} as const satisfies Record<string, string>;

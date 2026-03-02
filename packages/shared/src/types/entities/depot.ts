@@ -72,6 +72,11 @@ export const CreateDepotInputSchema = z.object({
 
 export const UpdateDepotInputSchema = CreateDepotInputSchema.partial();
 
+// ── Typed insert/update row types ──
+
+export type DepotInsertRow = Omit<DepotRow, 'id' | 'created_at' | 'updated_at'>;
+export type DepotUpdateRow = Partial<Omit<DepotRow, 'id' | 'created_at'>>;
+
 // ── Mappers ──
 
 export function mapRowToDepot(row: DepotRow): Depot {
@@ -91,7 +96,7 @@ export function mapRowToDepot(row: DepotRow): Depot {
 
 export function mapDepotToInsert(
   input: CreateDepotInput
-): Record<string, unknown> {
+): DepotInsertRow {
   return {
     name: input.name,
     code: input.code,
@@ -105,8 +110,8 @@ export function mapDepotToInsert(
 
 export function mapDepotToUpdate(
   input: UpdateDepotInput
-): Record<string, unknown> {
-  const updates: Record<string, unknown> = {};
+): DepotUpdateRow {
+  const updates: DepotUpdateRow = {};
 
   if (input.name !== undefined) updates['name'] = input.name;
   if (input.code !== undefined) updates['code'] = input.code;

@@ -5,6 +5,7 @@ import {
   ReviewOutcomeSchema,
 } from '../enums/HazardEnums';
 import type { HazardSeverity, HazardStatus, ReviewOutcome } from '../enums/HazardEnums';
+import { safeParseEnum } from '../../utils/safeParseEnum';
 
 /**
  * HazardAlert — camelCase application interface
@@ -96,10 +97,6 @@ export const UpdateHazardAlertInputSchema = z.object({
 // ── Mappers ──
 
 export function mapRowToHazardAlert(row: HazardAlertRow): HazardAlert {
-  // Use safeParse to handle invalid/missing enum values gracefully
-  const severityResult = HazardSeveritySchema.safeParse(row.severity);
-  const statusResult = HazardStatusSchema.safeParse(row.status);
-
   return {
     id: row.id,
     freightAnalysisId: row.freight_analysis_id,
@@ -108,30 +105,32 @@ export function mapRowToHazardAlert(row: HazardAlertRow): HazardAlert {
     scanEventId: row.scan_event_id,
     hazardRuleId: row.hazard_rule_id,
     hazardType: row.hazard_type,
-    severity: severityResult.success ? severityResult.data : 'medium', // Default to medium if invalid
+    severity: safeParseEnum(HazardSeveritySchema, row.severity, 'medium'),
     confidenceScore: row.confidence_score,
     description: row.description,
     evidencePoints: row.evidence_points ?? [],
     recommendedActions: row.recommended_actions ?? [],
     locationInImage: row.location_in_image,
     boundingBox: row.bounding_box,
-    status: statusResult.success ? statusResult.data : 'active', // Default to active if invalid
+    status: safeParseEnum(HazardStatusSchema, row.status, 'active'),
     acknowledgedBy: row.acknowledged_by,
     acknowledgedAt: row.acknowledged_at,
     acknowledgmentType: row.acknowledgment_type,
     managerReviewBy: row.manager_review_by,
     managerReviewAt: row.manager_review_at,
-    reviewOutcome: row.review_outcome === null ? null : ReviewOutcomeSchema.parse(row.review_outcome),
+    reviewOutcome: row.review_outcome == null ? null : safeParseEnum(ReviewOutcomeSchema, row.review_outcome, null),
     reviewNotes: row.review_notes,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
 }
 
+export type HazardAlertUpdateRow = Partial<Omit<HazardAlertRow, 'id' | 'created_at'>>;
+
 export function mapHazardAlertToUpdate(
   input: UpdateHazardAlertInput
-): Record<string, unknown> {
-  const updates: Record<string, unknown> = {};
+): HazardAlertUpdateRow {
+  const updates: HazardAlertUpdateRow = {};
 
   if (input.status !== undefined) updates['status'] = input.status;
   if (input.acknowledgedBy !== undefined) updates['acknowledged_by'] = input.acknowledgedBy;

@@ -21,6 +21,7 @@ import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, borderRadius } from '../../src/theme/spacing';
 import { CONTENT_TOP_OFFSET } from '../../src/theme/layout';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
+import { RefreshLoadingDots } from '../../src/components/common/RefreshLoadingDots';
 import {
   getScanTypeIcon,
   getScanTypeColor,
@@ -215,7 +216,7 @@ export default function HomeScreen() {
       <View style={styles.container}>
         <SafeAreaView style={styles.containerInner}>
           <View style={styles.centerContent}>
-            <LoadingDots color={colors.electricBlue} size={12} />
+            <LoadingDots size={12} />
           </View>
         </SafeAreaView>
       </View>
@@ -225,11 +226,13 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.containerInner}>
+        <View style={styles.scrollGuard} />
         <FlatList
           data={recentScans}
           keyExtractor={(item) => item.id}
           ListHeaderComponent={
             <>
+              <RefreshLoadingDots isRefetching={!!isRefetching} />
               {/* User Profile Section */}
               <View style={styles.profileSection}>
                 <View style={styles.profileHeader}>
@@ -283,7 +286,7 @@ export default function HomeScreen() {
             <RefreshControl
               refreshing={!!isRefetching}
               onRefresh={handleRefresh}
-              tintColor={colors.electricBlue}
+              tintColor="transparent"
             />
           }
           ListEmptyComponent={
@@ -307,6 +310,15 @@ const styles = StyleSheet.create({
   },
   containerInner: {
     flex: 1,
+  },
+  scrollGuard: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: CONTENT_TOP_OFFSET,
+    backgroundColor: colors.chrome,
+    zIndex: 1,
   },
   centerContent: {
     flex: 1,
