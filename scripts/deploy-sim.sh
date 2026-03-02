@@ -1,46 +1,42 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Deploy script for building and running the mobile app on iOS Simulator
-# Usage: ./scripts/deploy-sim.sh
+# Usage: ./scripts/deploy-sim.sh [simulator-name]
+# Example: ./scripts/deploy-sim.sh "iPhone 16 Pro"
 
-set -e
+set -eo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+source "$SCRIPT_DIR/deploy-common.sh"
 
 # Configuration
-APP_NAME="RGRFleet"
-WORKSPACE="apps/mobile/ios/${APP_NAME}.xcworkspace"
+APP_NAME="RGR"
+MOBILE_DIR="$PROJECT_ROOT/apps/mobile"
+IOS_DIR="$MOBILE_DIR/ios"
+WORKSPACE="$IOS_DIR/${APP_NAME}.xcworkspace"
 SCHEME="${APP_NAME}"
 CONFIGURATION="Debug"
-SIMULATOR_NAME="iPhone 17 Pro"
-DERIVED_DATA_PATH="apps/mobile/ios/build/DerivedData"
-BUILD_DIR="apps/mobile/ios/build"
+SIMULATOR_NAME="${1:-iPhone 16 Pro}"
+DERIVED_DATA_PATH="$IOS_DIR/build/DerivedData"
 BUNDLE_ID="com.rgr.fleetmanager"
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+# Track Metro PID for cleanup
+METRO_PID=""
 
-print_step() {
-    echo -e "${BLUE}==>${NC} $1"
+# Cleanup on failure/exit
+cleanup_on_exit() {
+    local exit_code=$?
+    if [[ $exit_code -ne 0 ]] && [[ -n "$METRO_PID" ]]; then
+        log_warning "Cleaning up Metro process ($METRO_PID)..."
+        kill "$METRO_PID" 2>/dev/null || true
+    fi
 }
-
-print_success() {
-    echo -e "${GREEN}✓${NC} $1"
-}
-
-print_warning() {
-    echo -e "${YELLOW}!${NC} $1"
-}
-
-print_error() {
-    echo -e "${RED}✗${NC} $1"
-}
+trap cleanup_on_exit EXIT
 
 # Get the simulator UDID
 get_simulator_udid() {
-    xcrun simctl list devices available | grep "${SIMULATOR_NAME}" | head -1 | grep -oE '[A-F0-9-]{36}'
+    xcrun simctl list devices available | grep "${SIMULATOR_NAME}" | head -1 | grep -oEi '[A-F0-9-]{36}'
 }
 
 # Check if simulator is booted
@@ -54,49 +50,62 @@ kill_metro() {
     pkill -f "expo start" 2>/dev/null || true
     pkill -f "react-native start" 2>/dev/null || true
     pkill -f "metro" 2>/dev/null || true
-    lsof -ti:8081 | xargs kill -9 2>/dev/null || true
+    # Graceful kill first, then force after a short wait
+    local pids
+    pids=$(lsof -ti:8081 2>/dev/null || true)
+    if [[ -n "$pids" ]]; then
+        echo "$pids" | xargs kill 2>/dev/null || true
+        sleep 2
+        pids=$(lsof -ti:8081 2>/dev/null || true)
+        if [[ -n "$pids" ]]; then
+            echo "$pids" | xargs kill -9 2>/dev/null || true
+        fi
+    fi
 }
 
 # Main script
 main() {
     echo ""
     echo -e "${BLUE}╔════════════════════════════════════════════╗${NC}"
-    echo -e "${BLUE}║     RGR Fleet - iOS Simulator Deploy       ║${NC}"
+    echo -e "${BLUE}║       RGR - iOS Simulator Deploy           ║${NC}"
     echo -e "${BLUE}╚════════════════════════════════════════════╝${NC}"
     echo ""
 
-    # Ensure we're in the project root
-    if [[ ! -f "package.json" ]] || [[ ! -d "apps/mobile" ]]; then
-        print_error "Please run this script from the project root directory"
+    # Ensure we're working from known paths
+    if [[ ! -f "$PROJECT_ROOT/package.json" ]] || [[ ! -d "$MOBILE_DIR" ]]; then
+        log_error "Cannot find project root at $PROJECT_ROOT"
         exit 1
     fi
 
     # Get simulator UDID
-    print_step "Finding ${SIMULATOR_NAME} simulator..."
+    log_info "Finding ${SIMULATOR_NAME} simulator..."
     SIMULATOR_UDID=$(get_simulator_udid)
 
     if [[ -z "$SIMULATOR_UDID" ]]; then
-        print_error "Could not find ${SIMULATOR_NAME} simulator"
+        log_error "Could not find '${SIMULATOR_NAME}' simulator"
         echo "Available simulators:"
         xcrun simctl list devices available | grep -i "iphone"
+        echo ""
+        echo "Usage: $0 [simulator-name]"
+        echo "Example: $0 \"iPhone 16 Pro\""
         exit 1
     fi
-    print_success "Found simulator: ${SIMULATOR_UDID}"
+    log_success "Found simulator: ${SIMULATOR_UDID}"
 
     # Boot simulator if not already running
-    print_step "Starting simulator..."
+    log_info "Starting simulator..."
     if is_simulator_booted "$SIMULATOR_UDID"; then
-        print_success "Simulator already running"
+        log_success "Simulator already running"
     else
         xcrun simctl boot "$SIMULATOR_UDID" 2>/dev/null || true
-        print_success "Simulator booted"
+        log_success "Simulator booted"
     fi
 
     # Open Simulator app
     open -a Simulator
 
     # Build the app
-    print_step "Building ${APP_NAME} for simulator..."
+    log_info "Building ${APP_NAME} for simulator..."
     echo "    Workspace: ${WORKSPACE}"
     echo "    Scheme: ${SCHEME}"
     echo "    Configuration: ${CONFIGURATION}"
@@ -111,63 +120,65 @@ main() {
         -quiet \
         build
 
-    print_success "Build completed"
+    log_success "Build completed"
 
     # Find the built app
-    print_step "Locating built app..."
+    log_info "Locating built app..."
     APP_PATH=$(find "${DERIVED_DATA_PATH}" -name "${APP_NAME}.app" -type d | grep -v "\.dSYM" | head -1)
 
     if [[ -z "$APP_PATH" ]]; then
-        print_error "Could not find built app"
+        log_error "Could not find built app"
         exit 1
     fi
-    print_success "Found app: ${APP_PATH}"
+    log_success "Found app: ${APP_PATH}"
 
     # Install the app
-    print_step "Installing app on simulator..."
+    log_info "Installing app on simulator..."
     xcrun simctl install "$SIMULATOR_UDID" "$APP_PATH"
-    print_success "App installed"
+    log_success "App installed"
 
     # Kill existing Metro processes
-    print_step "Stopping any existing Metro processes..."
+    log_info "Stopping any existing Metro processes..."
     kill_metro
     sleep 1
-    print_success "Metro processes stopped"
+    log_success "Metro processes stopped"
 
     # Clear Metro cache
-    print_step "Clearing Metro cache..."
-    rm -rf apps/mobile/node_modules/.cache/metro 2>/dev/null || true
+    log_info "Clearing Metro cache..."
+    rm -rf "$MOBILE_DIR/node_modules/.cache/metro" 2>/dev/null || true
     rm -rf /tmp/metro-* 2>/dev/null || true
     rm -rf /tmp/haste-map-* 2>/dev/null || true
     watchman watch-del-all 2>/dev/null || true
-    print_success "Metro cache cleared"
+    log_success "Metro cache cleared"
 
     # Start Metro bundler in background
-    print_step "Starting Metro bundler..."
-    cd apps/mobile
+    log_info "Starting Metro bundler..."
+    cd "$MOBILE_DIR"
     npx expo start --clear --localhost &
     METRO_PID=$!
-    cd - > /dev/null
 
     # Wait for Metro to be ready
-    print_step "Waiting for Metro to be ready..."
+    log_info "Waiting for Metro to be ready..."
     for i in {1..30}; do
         if curl -s http://localhost:8081/status 2>/dev/null | grep -q "packager-status:running"; then
-            print_success "Metro is ready"
+            log_success "Metro is ready"
             break
         fi
-        if [ $i -eq 30 ]; then
-            print_warning "Metro may still be starting, continuing anyway..."
+        if [ "$i" -eq 30 ]; then
+            log_warning "Metro may still be starting, continuing anyway..."
         fi
         sleep 1
     done
 
     # Launch the app
-    print_step "Launching ${APP_NAME}..."
+    log_info "Launching ${APP_NAME}..."
     xcrun simctl terminate "$SIMULATOR_UDID" "$BUNDLE_ID" 2>/dev/null || true
     sleep 1
     xcrun simctl launch "$SIMULATOR_UDID" "$BUNDLE_ID"
-    print_success "App launched"
+    log_success "App launched"
+
+    # Deploy succeeded — don't kill Metro on exit
+    trap - EXIT
 
     echo ""
     echo -e "${GREEN}╔════════════════════════════════════════════╗${NC}"

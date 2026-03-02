@@ -1,12 +1,15 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Deploy to App Store Connect
 # This script type checks, lints, increments build number, archives, and uploads to ASC
 
-set -e
+set -eo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/deploy-common.sh"
 
 # Configuration
-MOBILE_DIR="$(cd "$(dirname "$0")/../apps/mobile" && pwd)"
+MOBILE_DIR="$(cd "$SCRIPT_DIR/../apps/mobile" && pwd)"
 IOS_DIR="$MOBILE_DIR/ios"
 PROJECT_NAME="RGR"
 SCHEME="RGR"
@@ -16,29 +19,35 @@ APP_JSON="$MOBILE_DIR/app.json"
 EXPORT_OPTIONS="$IOS_DIR/ExportOptions.plist"
 ARCHIVE_DIR="$IOS_DIR/build/Archives"
 EXPORT_DIR="$IOS_DIR/build/AppStore"
+HAS_XCBEAUTIFY=false
+if command -v xcbeautify &> /dev/null; then
+    HAS_XCBEAUTIFY=true
+fi
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+# Track state for cleanup
+ORIGINAL_BUILD_NUMBER=""
+BUILD_INCREMENTED=false
 
-log_info() {
-    echo -e "${BLUE}[INFO]${NC} $1"
+# Cleanup on failure
+cleanup() {
+    local exit_code=$?
+    rm -f /tmp/deploy_version /tmp/deploy_build /tmp/deploy_archive_path
+
+    if [[ $exit_code -ne 0 ]] && $BUILD_INCREMENTED && [[ -n "$ORIGINAL_BUILD_NUMBER" ]]; then
+        log_warning "Rolling back build number to $ORIGINAL_BUILD_NUMBER..."
+        jq --arg build "$ORIGINAL_BUILD_NUMBER" '.expo.ios.buildNumber = $build' "$APP_JSON" > "$APP_JSON.tmp"
+        if [[ -s "$APP_JSON.tmp" ]]; then
+            mv "$APP_JSON.tmp" "$APP_JSON"
+            log_warning "Build number rolled back"
+        else
+            rm -f "$APP_JSON.tmp"
+            log_error "Failed to roll back build number — check app.json manually"
+        fi
+    fi
+
+    rm -f "$APP_JSON.tmp"
 }
-
-log_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
-
-log_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
-}
-
-log_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
+trap cleanup EXIT
 
 # Check for required tools
 check_requirements() {
@@ -128,7 +137,7 @@ verify_identifiers() {
     fi
 
     log_success "Bundle ID: $BUNDLE_ID"
-    log_success "Team ID: $TEAM_ID (will be set in ExportOptions.plist)"
+    log_success "Team ID: $TEAM_ID"
 }
 
 # Increment build number
@@ -136,17 +145,31 @@ increment_build_number() {
     log_info "Incrementing build number..."
 
     CURRENT_BUILD=$(jq -r '.expo.ios.buildNumber' "$APP_JSON")
+
+    # Validate build number is a positive integer
+    if ! [[ "$CURRENT_BUILD" =~ ^[0-9]+$ ]]; then
+        log_error "Invalid build number in app.json: '$CURRENT_BUILD' (expected a positive integer)"
+        exit 1
+    fi
+
+    ORIGINAL_BUILD_NUMBER="$CURRENT_BUILD"
     NEW_BUILD=$((CURRENT_BUILD + 1))
 
     # Update app.json
     jq --arg build "$NEW_BUILD" '.expo.ios.buildNumber = $build' "$APP_JSON" > "$APP_JSON.tmp"
+    if [[ ! -s "$APP_JSON.tmp" ]]; then
+        rm -f "$APP_JSON.tmp"
+        log_error "jq produced empty output — app.json not modified"
+        exit 1
+    fi
     mv "$APP_JSON.tmp" "$APP_JSON"
+    BUILD_INCREMENTED=true
 
     VERSION=$(jq -r '.expo.version' "$APP_JSON")
 
     log_success "Version: $VERSION ($NEW_BUILD)"
 
-    # Return values for later use
+    # Store values for later use
     echo "$VERSION" > /tmp/deploy_version
     echo "$NEW_BUILD" > /tmp/deploy_build
 }
@@ -161,7 +184,7 @@ run_prebuild() {
 
     # Recreate ExportOptions.plist after prebuild clears ios directory
     log_info "Creating ExportOptions.plist..."
-    cat > "$EXPORT_OPTIONS" << 'PLIST'
+    cat > "$EXPORT_OPTIONS" << PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -179,7 +202,7 @@ run_prebuild() {
 	<key>stripSwiftSymbols</key>
 	<true/>
 	<key>teamID</key>
-	<string>D793SF6URT</string>
+	<string>${TEAM_ID}</string>
 	<key>testFlightInternalTestingOnly</key>
 	<false/>
 	<key>uploadSymbols</key>
@@ -214,15 +237,18 @@ archive_app() {
 
     cd "$IOS_DIR"
 
-    xcodebuild archive \
-        -workspace "$PROJECT_NAME.xcworkspace" \
-        -scheme "$SCHEME" \
-        -configuration Release \
-        -archivePath "$ARCHIVE_PATH" \
-        -destination "generic/platform=iOS" \
-        DEVELOPMENT_TEAM="$TEAM_ID" \
-        CODE_SIGN_STYLE=Automatic \
-        | xcbeautify || xcodebuild archive \
+    if $HAS_XCBEAUTIFY; then
+        xcodebuild archive \
+            -workspace "$PROJECT_NAME.xcworkspace" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -archivePath "$ARCHIVE_PATH" \
+            -destination "generic/platform=iOS" \
+            DEVELOPMENT_TEAM="$TEAM_ID" \
+            CODE_SIGN_STYLE=Automatic \
+            | xcbeautify
+    else
+        xcodebuild archive \
             -workspace "$PROJECT_NAME.xcworkspace" \
             -scheme "$SCHEME" \
             -configuration Release \
@@ -230,6 +256,7 @@ archive_app() {
             -destination "generic/platform=iOS" \
             DEVELOPMENT_TEAM="$TEAM_ID" \
             CODE_SIGN_STYLE=Automatic
+    fi
 
     if [[ ! -d "$ARCHIVE_PATH" ]]; then
         log_error "Archive failed - no archive created"
@@ -249,16 +276,20 @@ export_and_upload() {
     mkdir -p "$EXPORT_DIR"
 
     # Export the archive
-    xcodebuild -exportArchive \
-        -archivePath "$ARCHIVE_PATH" \
-        -exportPath "$EXPORT_DIR" \
-        -exportOptionsPlist "$EXPORT_OPTIONS" \
-        -allowProvisioningUpdates \
-        | xcbeautify || xcodebuild -exportArchive \
+    if $HAS_XCBEAUTIFY; then
+        xcodebuild -exportArchive \
+            -archivePath "$ARCHIVE_PATH" \
+            -exportPath "$EXPORT_DIR" \
+            -exportOptionsPlist "$EXPORT_OPTIONS" \
+            -allowProvisioningUpdates \
+            | xcbeautify
+    else
+        xcodebuild -exportArchive \
             -archivePath "$ARCHIVE_PATH" \
             -exportPath "$EXPORT_DIR" \
             -exportOptionsPlist "$EXPORT_OPTIONS" \
             -allowProvisioningUpdates
+    fi
 
     IPA_PATH="$EXPORT_DIR/$PROJECT_NAME.ipa"
 
@@ -276,16 +307,7 @@ export_and_upload() {
         --type ios \
         --file "$IPA_PATH" \
         --apiKey "$ASC_API_KEY_ID" \
-        --apiIssuer "$ASC_API_ISSUER_ID" \
-        || {
-            # Try with notarytool if altool fails
-            log_warning "altool upload failed, trying with xcrun notarytool..."
-            xcrun notarytool submit "$IPA_PATH" \
-                --key "$ASC_API_KEY_PATH" \
-                --key-id "$ASC_API_KEY_ID" \
-                --issuer "$ASC_API_ISSUER_ID" \
-                --wait
-        }
+        --apiIssuer "$ASC_API_ISSUER_ID"
 
     log_success "Upload complete!"
 }
@@ -307,16 +329,11 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
     log_success "Build number change committed"
 }
 
-# Cleanup temp files
-cleanup() {
-    rm -f /tmp/deploy_version /tmp/deploy_build /tmp/deploy_archive_path
-}
-
 # Main execution
 main() {
     echo ""
     echo "=========================================="
-    echo "  RGR Fleet - App Store Connect Deploy"
+    echo "  RGR - App Store Connect Deploy"
     echo "=========================================="
     echo ""
 
@@ -337,7 +354,9 @@ main() {
     archive_app
     export_and_upload
     commit_build_change
-    cleanup
+
+    # Build succeeded — no need to roll back
+    BUILD_INCREMENTED=false
 
     VERSION=$(jq -r '.expo.version' "$APP_JSON")
     BUILD=$(jq -r '.expo.ios.buildNumber' "$APP_JSON")
