@@ -41,7 +41,6 @@ export function CreateMaintenanceModal({
   const [priority, setPriority] = useState<MaintenancePriority>('medium');
   const [dueDate, setDueDate] = useState('');
   const [notes, setNotes] = useState('');
-  const [estimatedCost, setEstimatedCost] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   // Reset form when modal opens
@@ -52,7 +51,6 @@ export function CreateMaintenanceModal({
       setPriority('medium');
       setDueDate('');
       setNotes('');
-      setEstimatedCost('');
       setError(null);
     }
   }, [visible]);
@@ -79,10 +77,6 @@ export function CreateMaintenanceModal({
       reportedBy: user?.id || null,
       dueDate: dueDate.trim() || null,
       notes: notes.trim() || null,
-      estimatedCost: (() => {
-        const parsed = estimatedCost ? parseFloat(estimatedCost) : null;
-        return parsed !== null && !isNaN(parsed) ? parsed : null;
-      })(),
     };
 
     try {
@@ -91,7 +85,7 @@ export function CreateMaintenanceModal({
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create maintenance record');
     }
-  }, [title, description, priority, dueDate, notes, estimatedCost, assetId, user, createMaintenanceAsync, onClose]);
+  }, [title, description, priority, dueDate, notes, assetId, user, createMaintenanceAsync, onClose]);
 
   const isLoading = isPending;
 
@@ -143,6 +137,7 @@ export function CreateMaintenanceModal({
                 placeholderTextColor={colors.textSecondary}
                 autoCapitalize="sentences"
                 maxLength={200}
+                accessibilityLabel="Maintenance title"
               />
             </View>
 
@@ -194,6 +189,7 @@ export function CreateMaintenanceModal({
                 placeholderTextColor={colors.textSecondary}
                 autoCapitalize="none"
                 autoCorrect={false}
+                accessibilityLabel="Due date"
               />
             </View>
 
@@ -209,6 +205,7 @@ export function CreateMaintenanceModal({
                 multiline
                 numberOfLines={3}
                 textAlignVertical="top"
+                accessibilityLabel="Maintenance description"
               />
             </View>
 
@@ -224,19 +221,7 @@ export function CreateMaintenanceModal({
                 multiline
                 numberOfLines={2}
                 textAlignVertical="top"
-              />
-            </View>
-
-            {/* Estimated Cost */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Estimated Cost (optional)</Text>
-              <TextInput
-                style={styles.input}
-                value={estimatedCost}
-                onChangeText={setEstimatedCost}
-                placeholder="0.00"
-                placeholderTextColor={colors.textSecondary}
-                keyboardType="decimal-pad"
+                accessibilityLabel="Maintenance notes"
               />
             </View>
 

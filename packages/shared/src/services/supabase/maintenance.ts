@@ -93,6 +93,7 @@ export async function listMaintenance(
       asset:asset_id(asset_number, category)
     `)
     .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
     .limit(limit);
 
   // Apply filters
@@ -108,9 +109,9 @@ export async function listMaintenance(
     query = query.eq('asset_id', assetId);
   }
 
-  // Keyset pagination: fetch records created before the cursor
+  // Keyset pagination: fetch records before the cursor using composite (created_at, id)
+  // to handle ties in created_at correctly
   if (beforeId) {
-    // First get the created_at of the cursor record
     const { data: cursorData } = await supabase
       .from('maintenance_records')
       .select('created_at')
@@ -118,7 +119,9 @@ export async function listMaintenance(
       .single();
 
     if (cursorData?.created_at) {
-      query = query.lt('created_at', cursorData.created_at);
+      query = query.or(
+        `created_at.lt.${cursorData.created_at},and(created_at.eq.${cursorData.created_at},id.lt.${beforeId})`
+      );
     }
   }
 
@@ -244,8 +247,7 @@ export async function createMaintenance(
  */
 export async function updateMaintenanceStatus(
   id: string,
-  newStatus: MaintenanceStatus,
-  actualCost?: number
+  newStatus: MaintenanceStatus
 ): Promise<ServiceResult<MaintenanceRecord>> {
   const supabase = getSupabaseClient();
 
@@ -271,7 +273,7 @@ export async function updateMaintenanceStatus(
   }
 
   // Build update payload with auto-timestamps
-  const updates: { status: MaintenanceStatus; started_at?: string; completed_at?: string; actual_cost?: number } = { status: newStatus };
+  const updates: { status: MaintenanceStatus; started_at?: string; completed_at?: string } = { status: newStatus };
 
   if (newStatus === 'in_progress' && currentStatus === 'scheduled') {
     updates.started_at = new Date().toISOString();
@@ -279,9 +281,6 @@ export async function updateMaintenanceStatus(
 
   if (newStatus === 'completed' && currentStatus === 'in_progress') {
     updates.completed_at = new Date().toISOString();
-    if (actualCost !== undefined) {
-      updates.actual_cost = actualCost;
-    }
   }
 
   const { data, error } = await supabase

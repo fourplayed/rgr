@@ -24,8 +24,6 @@ export interface MaintenanceRecord {
   startedAt: string | null;
   completedAt: string | null;
   dueDate: string | null;
-  estimatedCost: number | null;
-  actualCost: number | null;
   partsUsed: Record<string, unknown>[] | null;
   hazardAlertId: string | null;
   scanEventId: string | null;
@@ -52,8 +50,6 @@ export interface MaintenanceRecordRow {
   started_at: string | null;
   completed_at: string | null;
   due_date: string | null;
-  estimated_cost: number | null;
-  actual_cost: number | null;
   parts_used: Record<string, unknown>[] | null;
   hazard_alert_id: string | null;
   scan_event_id: string | null;
@@ -84,7 +80,6 @@ export interface CreateMaintenanceInput {
   maintenanceType?: string | null;
   scheduledDate?: string | null;
   dueDate?: string | null;
-  estimatedCost?: number | null;
   hazardAlertId?: string | null;
   scanEventId?: string | null;
   notes?: string | null;
@@ -105,8 +100,6 @@ export interface UpdateMaintenanceInput {
   startedAt?: string | null;
   completedAt?: string | null;
   dueDate?: string | null;
-  estimatedCost?: number | null;
-  actualCost?: number | null;
   partsUsed?: Record<string, unknown>[] | null;
   notes?: string | null;
 }
@@ -124,7 +117,6 @@ export const CreateMaintenanceInputSchema = z.object({
   maintenanceType: z.string().max(50).nullable().optional(),
   scheduledDate: z.string().nullable().optional(),
   dueDate: z.string().nullable().optional(),
-  estimatedCost: z.number().min(0).nullable().optional(),
   hazardAlertId: z.string().uuid().nullable().optional(),
   scanEventId: z.string().uuid().nullable().optional(),
   notes: z.string().nullable().optional(),
@@ -142,8 +134,6 @@ export const UpdateMaintenanceInputSchema = z.object({
   startedAt: z.string().nullable().optional(),
   completedAt: z.string().nullable().optional(),
   dueDate: z.string().nullable().optional(),
-  estimatedCost: z.number().min(0).nullable().optional(),
-  actualCost: z.number().min(0).nullable().optional(),
   partsUsed: z.array(z.record(z.unknown())).nullable().optional(),
   notes: z.string().nullable().optional(),
 });
@@ -168,8 +158,6 @@ export function mapRowToMaintenanceRecord(
     startedAt: row.started_at,
     completedAt: row.completed_at,
     dueDate: row.due_date,
-    estimatedCost: row.estimated_cost,
-    actualCost: row.actual_cost,
     partsUsed: row.parts_used,
     hazardAlertId: row.hazard_alert_id,
     scanEventId: row.scan_event_id,
@@ -179,7 +167,7 @@ export function mapRowToMaintenanceRecord(
   };
 }
 
-export type MaintenanceInsertRow = Omit<MaintenanceRecordRow, 'id' | 'created_at' | 'updated_at' | 'completed_by' | 'started_at' | 'completed_at' | 'actual_cost' | 'parts_used'>;
+export type MaintenanceInsertRow = Omit<MaintenanceRecordRow, 'id' | 'created_at' | 'updated_at' | 'completed_by' | 'started_at' | 'completed_at' | 'parts_used'>;
 export type MaintenanceUpdateRow = Partial<Omit<MaintenanceRecordRow, 'id' | 'created_at'>>;
 
 export function mapMaintenanceToInsert(
@@ -196,7 +184,6 @@ export function mapMaintenanceToInsert(
     maintenance_type: input.maintenanceType ?? null,
     scheduled_date: input.scheduledDate ?? null,
     due_date: input.dueDate ?? null,
-    estimated_cost: input.estimatedCost ?? null,
     hazard_alert_id: input.hazardAlertId ?? null,
     scan_event_id: input.scanEventId ?? null,
     notes: input.notes ?? null,
@@ -219,8 +206,6 @@ export function mapMaintenanceToUpdate(
   if (input.startedAt !== undefined) updates['started_at'] = input.startedAt;
   if (input.completedAt !== undefined) updates['completed_at'] = input.completedAt;
   if (input.dueDate !== undefined) updates['due_date'] = input.dueDate;
-  if (input.estimatedCost !== undefined) updates['estimated_cost'] = input.estimatedCost;
-  if (input.actualCost !== undefined) updates['actual_cost'] = input.actualCost;
   if (input.partsUsed !== undefined) updates['parts_used'] = input.partsUsed;
   if (input.notes !== undefined) updates['notes'] = input.notes;
 

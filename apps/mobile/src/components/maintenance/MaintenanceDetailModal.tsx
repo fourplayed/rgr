@@ -11,8 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { formatRelativeTime } from '@rgr/shared';
-import type { MaintenanceStatus } from '@rgr/shared';
-import { LoadingDots, AlertSheet, ConfirmSheet, InputSheet } from '../common';
+import { LoadingDots, AlertSheet, ConfirmSheet } from '../common';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
 import { useMaintenance, useUpdateMaintenanceStatus, useUpdateMaintenance } from '../../hooks/useMaintenanceData';
@@ -47,8 +46,6 @@ export function MaintenanceDetailModal({
     message: string;
   }>({ visible: false, title: '', message: '' });
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [showCompleteInput, setShowCompleteInput] = useState(false);
-  const [isCompletingMaintenance, setIsCompletingMaintenance] = useState(false);
 
   const handleStartWork = useCallback(async () => {
     if (!maintenanceId) return;
@@ -67,35 +64,20 @@ export function MaintenanceDetailModal({
     }
   }, [maintenanceId, updateStatusMutation]);
 
-  const handleComplete = useCallback(() => {
-    if (!maintenanceId) return;
-    setShowCompleteInput(true);
-  }, [maintenanceId]);
-
-  const handleCompleteSubmit = useCallback(async (cost: string) => {
+  const handleComplete = useCallback(async () => {
     if (!maintenanceId) return;
 
-    setIsCompletingMaintenance(true);
     try {
-      const parsedCost = cost ? parseFloat(cost) : undefined;
-      const params: { id: string; status: MaintenanceStatus; actualCost?: number } = {
+      await updateStatusMutation.mutateAsync({
         id: maintenanceId,
         status: 'completed',
-      };
-      if (parsedCost !== undefined && !isNaN(parsedCost)) {
-        params.actualCost = parsedCost;
-      }
-      await updateStatusMutation.mutateAsync(params);
-      setShowCompleteInput(false);
+      });
     } catch (err) {
-      setShowCompleteInput(false);
       setAlertSheet({
         visible: true,
         title: 'Error',
         message: err instanceof Error ? err.message : 'Failed to complete',
       });
-    } finally {
-      setIsCompletingMaintenance(false);
     }
   }, [maintenanceId, updateStatusMutation]);
 
@@ -354,31 +336,6 @@ export function MaintenanceDetailModal({
                 )}
               </View>
 
-              {/* Cost Section */}
-              {(maintenance.estimatedCost || maintenance.actualCost) && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Cost</Text>
-
-                  {maintenance.estimatedCost && (
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Estimated</Text>
-                      <Text style={styles.detailValue}>
-                        ${maintenance.estimatedCost.toFixed(2)}
-                      </Text>
-                    </View>
-                  )}
-
-                  {maintenance.actualCost && (
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Actual</Text>
-                      <Text style={styles.detailValue}>
-                        ${maintenance.actualCost.toFixed(2)}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              )}
-
               {/* Notes Section */}
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
@@ -448,20 +405,6 @@ export function MaintenanceDetailModal({
         onConfirm={handleConfirmCancel}
         onCancel={() => setShowCancelConfirm(false)}
         isLoading={updateStatusMutation.isPending}
-      />
-
-      {/* Complete Maintenance Input Sheet */}
-      <InputSheet
-        visible={showCompleteInput}
-        title="Complete Maintenance"
-        message="Enter actual cost (optional):"
-        placeholder="0.00"
-        keyboardType="decimal-pad"
-        submitLabel="Complete"
-        cancelLabel="Cancel"
-        onSubmit={handleCompleteSubmit}
-        onCancel={() => setShowCompleteInput(false)}
-        isLoading={isCompletingMaintenance}
       />
 
       {/* Alert Sheet for errors */}
