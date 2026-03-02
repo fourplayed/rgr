@@ -34,21 +34,12 @@ export const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
     minHeight: TOP_BAR_HEIGHT,
   },
-  topBarBadges: {
+  topBarBadgesCentered: {
     flex: 1,
     flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    flexWrap: 'wrap',
     gap: spacing.sm,
-  },
-  topBarDepotName: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.bold,
-    fontFamily: 'Lato_700Bold',
-    color: colors.textInverse,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    flexShrink: 1,
   },
   topBarTitleCenter: {
     flex: 1,
@@ -70,25 +61,6 @@ export const styles = StyleSheet.create({
     letterSpacing: 1,
     marginTop: spacing.xs,
   },
-  topBarCount: {
-    minWidth: 48,
-    minHeight: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.overlayLight,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.base,
-    borderRadius: borderRadius.full,
-  },
-  topBarCountText: {
-    fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
-    color: colors.textInverse,
-  },
-  tappableCount: {
-    textDecorationLine: 'underline',
-  },
-
   // ── Floating toast container ───────────────────────────
   floatingToastContainer: {
     position: 'absolute',
@@ -207,6 +179,14 @@ export const styles = StyleSheet.create({
   },
   buttonSuccessText: {
     color: colors.textInverse,
+  },
+  buttonElectricBlue: {
+    backgroundColor: colors.electricBlue + '20',
+    borderWidth: 1,
+    borderColor: colors.electricBlue + '50',
+  },
+  buttonElectricBlueText: {
+    color: colors.electricBlue,
   },
   buttonChain: {
     backgroundColor: colors.violet + '20',

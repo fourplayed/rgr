@@ -25,10 +25,11 @@ export interface CountSummaryData {
 interface CameraOverlayProps {
   // Asset count mode
   assetCountActive: boolean;
-  assetCountDepotName: string | null;
   assetCountScanCount: number;
 
   // Footer
+  hasLocationPermission: boolean;
+  onRequestLocationPermission: () => void;
   canPerformAssetCount: boolean;
   onStartAssetCount: () => void;
   onEndAssetCount: () => void;
@@ -63,8 +64,9 @@ interface CameraOverlayProps {
 
 function CameraOverlayComponent({
   assetCountActive,
-  assetCountDepotName,
   assetCountScanCount,
+  hasLocationPermission,
+  onRequestLocationPermission,
   canPerformAssetCount,
   onStartAssetCount,
   onEndAssetCount,
@@ -105,53 +107,29 @@ function CameraOverlayComponent({
     onEndAssetCount();
   }, [onEndAssetCount]);
 
-  const showFooterTray = assetCountActive || canPerformAssetCount;
+  const showFooterTray = assetCountActive || !hasLocationPermission || canPerformAssetCount;
 
   return (
     <SafeAreaView style={styles.overlay}>
       {/* ── Top Bar ──────────────────────────────── */}
       <View style={styles.topBar} onLayout={handleTopBarLayout}>
         {assetCountActive ? (
-          <>
-            {/* Left group: badges + depot name */}
-            <View style={styles.topBarBadges}>
+          <View style={styles.topBarBadgesCentered}>
+            <PillBadge
+              icon="clipboard-outline"
+              label="Asset Count"
+              color={colors.electricBlue}
+              iconSize={14}
+            />
+            {isChainActive && (
               <PillBadge
-                icon="clipboard-outline"
-                label="Asset Count"
-                color={colors.electricBlue}
-                iconSize={14}
+                icon="link"
+                label={`Chain ${activeChainSize ?? 0}/${maxChainSize}`}
+                color={colors.violet}
+                accessibilityLabel={`Combination chain, ${activeChainSize ?? 0} of ${maxChainSize} assets`}
               />
-              {isChainActive && (
-                <PillBadge
-                  icon="link"
-                  label={`Chain ${activeChainSize ?? 0}/${maxChainSize}`}
-                  color={colors.violet}
-                  accessibilityLabel={`Combination chain, ${activeChainSize ?? 0} of ${maxChainSize} assets`}
-                />
-              )}
-              <Text
-                style={styles.topBarDepotName}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                {assetCountDepotName}
-              </Text>
-            </View>
-
-            {/* Right group: tappable count pill */}
-            <TouchableOpacity
-              style={styles.topBarCount}
-              onPress={countSummary && assetCountScanCount > 0 ? handleToggleSummary : undefined}
-              disabled={!countSummary || assetCountScanCount === 0}
-              accessibilityRole="button"
-              accessibilityLabel={`${assetCountScanCount} assets counted. Tap for summary.`}
-              accessibilityHint="Opens count summary"
-            >
-              <Text style={[styles.topBarCountText, countSummary && assetCountScanCount > 0 && styles.tappableCount]}>
-                {assetCountScanCount} ▾
-              </Text>
-            </TouchableOpacity>
-          </>
+            )}
+          </View>
         ) : (
           <View style={styles.topBarTitleCenter}>
             <Text style={styles.topBarTitleText}>Scan QR Code</Text>
@@ -167,7 +145,7 @@ function CameraOverlayComponent({
         <View
           style={[
             styles.floatingToastContainer,
-            { top: topBarHeight.current + spacing.sm },
+            { top: topBarHeight.current + spacing.sm + 35 },
           ]}
           pointerEvents="box-none"
         >
@@ -261,17 +239,31 @@ function CameraOverlayComponent({
               )}
             </>
           ) : (
-            canPerformAssetCount && (
-              <TouchableOpacity
-                style={[styles.scannerButtonBase, styles.buttonDefault]}
-                onPress={handleStartAssetCount}
-                accessibilityRole="button"
-                accessibilityLabel="Start asset count"
-              >
-                <Ionicons name="clipboard-outline" size={18} color={colors.electricBlue} />
-                <Text style={[styles.scannerButtonText, styles.buttonDefaultText]}>Asset Count</Text>
-              </TouchableOpacity>
-            )
+            <>
+              {!hasLocationPermission && (
+                <TouchableOpacity
+                  style={[styles.scannerButtonBase, styles.buttonPrimary]}
+                  onPress={onRequestLocationPermission}
+                  accessibilityRole="button"
+                  accessibilityLabel="Enable location"
+                  accessibilityHint="Double tap to grant location permission for scan tracking"
+                >
+                  <Text style={[styles.scannerButtonText, styles.buttonPrimaryText]}>Enable Location</Text>
+                </TouchableOpacity>
+              )}
+
+              {canPerformAssetCount && (
+                <TouchableOpacity
+                  style={[styles.scannerButtonBase, styles.buttonElectricBlue, { marginTop: !hasLocationPermission ? spacing.sm : 0 }]}
+                  onPress={handleStartAssetCount}
+                  accessibilityRole="button"
+                  accessibilityLabel="Start asset count"
+                >
+                  <Ionicons name="clipboard-outline" size={18} color={colors.electricBlue} />
+                  <Text style={[styles.scannerButtonText, styles.buttonElectricBlueText]}>Asset Count</Text>
+                </TouchableOpacity>
+              )}
+            </>
           )}
         </View>
       )}
