@@ -7,6 +7,7 @@ export const colors = {
   navy: '#000030',
   electricBlue: '#00A8FF',
   neonViolet: '#9D00FF',
+  violet: '#8B5CF6',
   chrome: '#E8E8E8',
   // Primary action color (buttons, links)
   primary: '#0000FF',

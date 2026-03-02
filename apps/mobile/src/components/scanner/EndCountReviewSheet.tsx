@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
-    height: '92%',
+    maxHeight: '92%',
   },
   handle: {
     width: 40,
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   content: {
-    flex: 1,
+    flexShrink: 1,
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing['2xl'],
   },
@@ -384,8 +384,7 @@ const styles = StyleSheet.create({
 
   // Scroll content
   scrollContent: {
-    flex: 1,
-    minHeight: 200,
+    flexShrink: 1,
     marginBottom: spacing.md,
   },
 

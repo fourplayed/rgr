@@ -218,7 +218,7 @@ function CombinationPhotoSheetComponent({
                   <View style={[styles.guideCorner, styles.guideBottomLeft]} />
                   <View style={[styles.guideCorner, styles.guideBottomRight]} />
                 </View>
-                <Text style={styles.guideText}>Position linked assets in frame</Text>
+                <Text style={styles.guideText}>Position combined assets in frame</Text>
               </View>
 
               <View style={styles.captureContainer}>
