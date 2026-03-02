@@ -1,6 +1,7 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
+import { HEADER_STATUS_BAR_GAP, HEADER_HEIGHT } from '../../theme/layout';
 
 export const SCAN_FRAME_SIZE = 250;
 export const TOP_BAR_HEIGHT = 56;
@@ -29,7 +30,8 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
+    paddingTop: HEADER_STATUS_BAR_GAP + HEADER_HEIGHT + spacing.xl,
+    paddingBottom: spacing.sm,
     minHeight: TOP_BAR_HEIGHT,
   },
   topBarBadges: {
