@@ -2,7 +2,7 @@
 
 # Deploy script for building and running the mobile app on iOS Simulator
 # Usage: ./scripts/deploy-sim.sh [simulator-name]
-# Example: ./scripts/deploy-sim.sh "iPhone 16 Pro"
+# Example: ./scripts/deploy-sim.sh "iPhone 17 Pro"
 
 set -eo pipefail
 
@@ -17,7 +17,7 @@ IOS_DIR="$MOBILE_DIR/ios"
 WORKSPACE="$IOS_DIR/${APP_NAME}.xcworkspace"
 SCHEME="${APP_NAME}"
 CONFIGURATION="Debug"
-SIMULATOR_NAME="${1:-iPhone 16 Pro}"
+SIMULATOR_NAME="${1:-iPhone 17 Pro}"
 DERIVED_DATA_PATH="$IOS_DIR/build/DerivedData"
 BUNDLE_ID="com.rgr.fleetmanager"
 
@@ -87,7 +87,7 @@ main() {
         xcrun simctl list devices available | grep -i "iphone"
         echo ""
         echo "Usage: $0 [simulator-name]"
-        echo "Example: $0 \"iPhone 16 Pro\""
+        echo "Example: $0 \"iPhone 17 Pro\""
         exit 1
     fi
     log_success "Found simulator: ${SIMULATOR_UDID}"
