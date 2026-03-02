@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,29 +7,18 @@ import {
   SafeAreaView,
   TouchableOpacity,
   Modal,
-  Animated,
-  LayoutAnimation,
-  Platform,
-  UIManager,
 } from 'react-native';
-
-// Enable LayoutAnimation on Android
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
 import { LoadingDots } from '../../../src/components/common/LoadingDots';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
 import { useAsset, useAssetScans, useAssetMaintenance } from '../../../src/hooks/useAssetData';
-import { useDeleteAsset, useAssetRelatedCounts } from '../../../src/hooks/useAdminAssets';
 import { useAssetPhotos } from '../../../src/hooks/usePhotos';
-import type { ScanEventWithScanner, MaintenanceRecord, PhotoListItem } from '@rgr/shared';
+import type { ScanEventWithScanner, MaintenanceRecord, MaintenanceRecordWithNames, PhotoListItem } from '@rgr/shared';
 import { AssetInfoCard } from '../../../src/components/assets/AssetInfoCard';
+import { buildAssetAssessment } from '../../../src/utils/assetAssessment';
+import { SegmentedTabs } from '../../../src/components/common/SegmentedTabs';
 import { PhotoGallery, PhotoDetailModal } from '../../../src/components/photos';
-import { CollapsibleSection } from '../../../src/components/common/CollapsibleSection';
-import { ConfirmSheet } from '../../../src/components/common/ConfirmSheet';
-import { AlertSheet } from '../../../src/components/common/AlertSheet';
 import {
   MaintenanceStatusBadge,
   MaintenancePriorityBadge,
@@ -53,6 +42,24 @@ type ActivityItem =
   | { type: 'maintenance'; data: MaintenanceRecord; timestamp: Date }
   | { type: 'photo'; data: PhotoListItem; timestamp: Date };
 
+const ASSET_DETAIL_TABS = [
+  { key: 'activity', label: 'Activity' },
+  { key: 'photos', label: 'Photos' },
+  { key: 'maintenance', label: 'Maint.' },
+] as const;
+type AssetDetailTab = typeof ASSET_DETAIL_TABS[number]['key'];
+
+const MAINTENANCE_STATUS_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
+  scheduled: 'time-outline',
+  in_progress: 'construct-outline',
+  completed: 'checkmark-circle',
+  cancelled: 'close-circle-outline',
+};
+
+function maintenanceStatusIcon(status: string): keyof typeof Ionicons.glyphMap {
+  return MAINTENANCE_STATUS_ICONS[status] ?? 'ellipse-outline';
+}
+
 export default function AssetDetailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ id: string }>();
@@ -60,34 +67,14 @@ export default function AssetDetailScreen() {
 
   // Validate route params - handle array case from Expo Router
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
+  const [activeTab, setActiveTab] = useState<AssetDetailTab>('activity');
   const [showQRModal, setShowQRModal] = useState(false);
-  const [activityExpanded, setActivityExpanded] = useState(true);
   const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
   const [showPhotoDetail, setShowPhotoDetail] = useState(false);
   const [selectedMaintenanceId, setSelectedMaintenanceId] = useState<string | null>(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteAlert, setDeleteAlert] = useState<{ visible: boolean; title: string; message: string }>({
-    visible: false, title: '', message: '',
-  });
-  const rotateAnim = useRef(new Animated.Value(1)).current;
 
   const isSuperuser = !!user?.role && hasRoleLevel(user.role, UserRole.SUPERUSER);
-  const deleteMutation = useDeleteAsset();
-  const { data: relatedCounts } = useAssetRelatedCounts(isSuperuser ? id ?? null : null);
   const { depots } = useDepotLookup();
-
-  useEffect(() => {
-    Animated.timing(rotateAnim, {
-      toValue: activityExpanded ? 1 : 0,
-      duration: 200,
-      useNativeDriver: true,
-    }).start();
-  }, [activityExpanded, rotateAnim]);
-
-  const handleToggleActivity = useCallback(() => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setActivityExpanded(prev => !prev);
-  }, []);
 
   const handlePhotoPress = useCallback((photo: PhotoListItem) => {
     setSelectedPhotoId(photo.id);
@@ -99,8 +86,6 @@ export default function AssetDetailScreen() {
     setSelectedPhotoId(null);
   }, []);
 
-
-
   const handleMaintenancePress = useCallback((item: MaintenanceRecord) => {
     setSelectedMaintenanceId(item.id);
   }, []);
@@ -108,29 +93,6 @@ export default function AssetDetailScreen() {
   const handleCloseMaintenanceDetail = useCallback(() => {
     setSelectedMaintenanceId(null);
   }, []);
-
-  const handleDeleteAsset = useCallback(() => {
-    if (!id) return;
-    deleteMutation.mutate(id, {
-      onSuccess: () => {
-        setShowDeleteConfirm(false);
-        router.back();
-      },
-      onError: (err) => {
-        setShowDeleteConfirm(false);
-        setDeleteAlert({
-          visible: true,
-          title: 'Delete Failed',
-          message: err?.message ?? 'An unexpected error occurred',
-        });
-      },
-    });
-  }, [id, deleteMutation, router]);
-
-  const chevronRotate = rotateAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '180deg'],
-  });
 
   const {
     data: asset,
@@ -184,9 +146,19 @@ export default function AssetDetailScreen() {
   }, [scans, maintenance, photos]);
 
   // Compute next service date from scheduled maintenance
-  const nextService = maintenance
-    .filter(m => m.status === 'scheduled' && m.scheduledDate)
-    .sort((a, b) => new Date(a.scheduledDate!).getTime() - new Date(b.scheduledDate!).getTime())[0];
+  const nextService = useMemo(
+    () =>
+      maintenance
+        .filter(m => m.status === 'scheduled' && m.scheduledDate)
+        .sort((a, b) => new Date(a.scheduledDate!).getTime() - new Date(b.scheduledDate!).getTime())[0],
+    [maintenance],
+  );
+
+  // Build a natural-language assessment of the asset's current state
+  const assessment = useMemo(
+    () => asset ? buildAssetAssessment({ asset, maintenance, photos, scans, depots }) : null,
+    [asset, maintenance, photos, scans, depots],
+  );
 
   // Validate required route param
   if (!id) {
@@ -244,185 +216,176 @@ export default function AssetDetailScreen() {
   return (
     <View style={styles.container}>
     <SafeAreaView style={styles.containerInner}>
-      <ScrollView contentContainerStyle={styles.content}>
-        {/* Superuser Actions */}
-        {isSuperuser && (
-          <View style={styles.superuserActions}>
-            {asset.qrCodeData && (
-              <TouchableOpacity
-                style={styles.qrLink}
-                onPress={() => setShowQRModal(true)}
-                activeOpacity={0.7}
-                accessibilityRole="button"
-                accessibilityLabel="View QR Code"
-                accessibilityHint="Double tap to view the asset QR code"
-              >
-                <Ionicons name="qr-code-outline" size={20} color={colors.neonViolet} />
-                <Text style={styles.qrLinkText}>View QR Code</Text>
-              </TouchableOpacity>
-            )}
-            <TouchableOpacity
-              style={styles.deleteLink}
-              onPress={() => setShowDeleteConfirm(true)}
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel="Delete asset"
-            >
-              <Ionicons name="trash-outline" size={20} color={colors.error} />
-              <Text style={styles.deleteLinkText}>Delete Asset</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
+      <View style={styles.pinnedHeader}>
         <AssetInfoCard
           asset={asset}
           nextServiceDate={nextService?.scheduledDate}
+          assessment={assessment}
+          onPress={isSuperuser && asset.qrCodeData ? () => setShowQRModal(true) : undefined}
         />
+        <SegmentedTabs tabs={ASSET_DETAIL_TABS} activeTab={activeTab} onTabPress={setActiveTab} />
+      </View>
 
-        {/* Photos Section */}
-        <CollapsibleSection title="Photos" defaultExpanded={true} variant="flat">
-          <PhotoGallery
-            assetId={id}
-            onPhotoPress={handlePhotoPress}
-          />
-        </CollapsibleSection>
+      <View style={styles.tabContentArea}>
+        {activeTab === 'activity' && (
+          <ScrollView contentContainerStyle={styles.tabScrollContent}>
+            {scansLoading ? (
+              <LoadingDots color={colors.electricBlue} size={6} />
+            ) : recentActivity.length === 0 ? (
+              <Text style={styles.emptyText}>No activity recorded</Text>
+            ) : (
+              <View style={styles.activityList}>
+              {recentActivity.map((item) => {
+                let activityColor: string;
+                let activityIcon: keyof typeof Ionicons.glyphMap;
 
-        {/* Maintenance Section */}
-        <CollapsibleSection title="Maintenance" defaultExpanded={true} variant="flat">
-          <View style={styles.maintenanceSection}>
+                if (item.type === 'maintenance' && item.data.status === 'completed') {
+                  activityColor = colors.maintenanceStatus.completed;
+                  activityIcon = 'checkmark-circle';
+                } else {
+                  const activityType = item.type === 'scan'
+                    ? item.data.scanType
+                    : item.type === 'photo'
+                      ? 'photo_upload'
+                      : 'maintenance';
+                  activityColor = getScanTypeColor(activityType);
+                  activityIcon = getScanTypeIcon(activityType);
+                }
+
+                return (
+                <View key={item.data.id} style={[styles.activityCard, { borderLeftColor: activityColor }]}>
+                  <View style={styles.cardRow}>
+                    <View style={styles.cardIconContainer}>
+                      <Ionicons
+                        name={activityIcon}
+                        size={31}
+                        color={activityColor}
+                      />
+                    </View>
+                    <View style={styles.cardBody}>
+                      <View style={styles.cardContentRow}>
+                        <Text style={styles.cardTitle} numberOfLines={1}>
+                          {item.type === 'scan'
+                            ? formatScanTypeLabel(item.data.scanType)
+                            : item.type === 'photo'
+                              ? 'Photo Upload'
+                              : item.data.title}
+                        </Text>
+                        <View style={styles.cardBadges}>
+                          {item.type === 'scan' && item.data.locationDescription && (() => {
+                            const matchedDepot = findDepotByLocationString(item.data.locationDescription, depots);
+                            if (!matchedDepot) return null;
+                            const badgeColors = getDepotBadgeColors(matchedDepot, colors.chrome, colors.text);
+                            return (
+                              <View style={[styles.locationBadge, { backgroundColor: badgeColors.bg }]}>
+                                <Text style={[styles.locationText, { color: badgeColors.text }]}>{matchedDepot.name}</Text>
+                              </View>
+                            );
+                          })()}
+                          {item.type === 'photo' && item.data.hazardCount > 0 && (
+                            <View style={[styles.locationBadge, { backgroundColor: item.data.maxSeverity === 'critical' || item.data.maxSeverity === 'high' ? colors.error : colors.warning }]}>
+                              <Text style={[styles.locationText, { color: colors.textInverse }]}>
+                                {item.data.hazardCount} Hazard{item.data.hazardCount !== 1 ? 's' : ''}
+                              </Text>
+                            </View>
+                          )}
+                          {item.type === 'maintenance' && (
+                            <>
+                              <MaintenanceStatusBadge status={item.data.status} />
+                              {item.data.status !== 'completed' && item.data.status !== 'cancelled' && (
+                                <MaintenancePriorityBadge priority={item.data.priority} />
+                              )}
+                            </>
+                          )}
+                        </View>
+                      </View>
+                      <View style={styles.activityFooter}>
+                        <Text style={styles.cardSecondaryText}>
+                          {item.type === 'scan'
+                            ? item.data.scannerName || 'Unknown'
+                            : item.type === 'photo'
+                              ? item.data.primaryCategory?.replace(/_/g, ' ') || item.data.photoType.replace(/_/g, ' ')
+                              : item.data.status === 'completed'
+                                ? `Completed ${item.data.completedAt ? formatRelativeTime(item.data.completedAt) : formatRelativeTime(item.data.updatedAt)}${(item.data as MaintenanceRecordWithNames).completerName ? ` by ${(item.data as MaintenanceRecordWithNames).completerName}` : ''}`
+                                : item.data.description || item.data.maintenanceType?.replace(/_/g, ' ') || item.data.status.replace(/_/g, ' ')}
+                        </Text>
+                        <Text style={styles.activityTime}>
+                          {formatRelativeTime(
+                            item.type === 'maintenance'
+                              ? (item.data.updatedAt || item.data.createdAt)
+                              : item.data.createdAt
+                          )}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+                );
+              })}
+              </View>
+            )}
+          </ScrollView>
+        )}
+
+        {activeTab === 'photos' && (
+          <View style={styles.photosTab}>
+            <PhotoGallery assetId={id} onPhotoPress={handlePhotoPress} scrollEnabled />
+          </View>
+        )}
+
+        {activeTab === 'maintenance' && (
+          <ScrollView contentContainerStyle={styles.tabScrollContent}>
             {maintenance.length === 0 ? (
               <Text style={styles.emptyText}>No maintenance records</Text>
             ) : (
               <View style={styles.maintenanceList}>
-                {maintenance.slice(0, 5).map((item) => (
-                  <TouchableOpacity
-                    key={item.id}
-                    style={[
-                      styles.maintenanceCard,
-                      { borderLeftColor: colors.maintenancePriority[item.priority as keyof typeof colors.maintenancePriority] || colors.border },
-                    ]}
-                    onPress={() => handleMaintenancePress(item)}
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.maintenanceCardContent}>
-                      <Text style={styles.maintenanceTitle} numberOfLines={1}>
-                        {item.title}
-                      </Text>
-                      <View style={styles.maintenanceBadges}>
-                        <MaintenanceStatusBadge status={item.status} />
-                        <MaintenancePriorityBadge priority={item.priority} />
-                      </View>
-                    </View>
-                    <Text style={styles.maintenanceDate}>
-                      {item.dueDate ? `Due ${formatRelativeTime(item.dueDate)}` : formatRelativeTime(item.createdAt)}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </View>
-        </CollapsibleSection>
+                {maintenance.slice(0, 10).map((item) => {
+                  const isCompleted = item.status === 'completed';
+                  const statusColor = colors.maintenanceStatus[item.status] ?? colors.textSecondary;
+                  const borderColor = isCompleted
+                    ? colors.success
+                    : colors.maintenancePriority[item.priority as keyof typeof colors.maintenancePriority] || colors.border;
 
-        {/* Recent Activity */}
-        <View style={styles.activitySectionHeader}>
-          <Text style={styles.activitySectionTitle}>Recent Activity</Text>
-          <TouchableOpacity
-            style={styles.chevronButton}
-            onPress={handleToggleActivity}
-            activeOpacity={0.7}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            accessibilityRole="button"
-            accessibilityLabel={activityExpanded ? "Collapse recent activity" : "Expand recent activity"}
-            accessibilityHint="Double tap to toggle the activity section"
-          >
-            <Animated.View style={{ transform: [{ rotate: chevronRotate }] }}>
-              <Ionicons
-                name="chevron-down"
-                size={20}
-                color={colors.text}
-              />
-            </Animated.View>
-          </TouchableOpacity>
-        </View>
-
-        {activityExpanded && (
-          scansLoading ? (
-            <LoadingDots color={colors.electricBlue} size={6} />
-          ) : recentActivity.length === 0 ? (
-            <Text style={styles.emptyText}>No activity recorded</Text>
-          ) : (
-            <View style={styles.activityList}>
-            {recentActivity.map((item) => {
-              // Determine activity type for styling
-              const activityType = item.type === 'scan'
-                ? item.data.scanType
-                : item.type === 'photo'
-                  ? 'photo_upload'
-                  : 'maintenance';
-              const activityColor = getScanTypeColor(activityType);
-
-              return (
-              <View key={item.data.id} style={[styles.activityCard, { borderLeftWidth: 4, borderLeftColor: activityColor }]}>
-                <View style={styles.activityCardContent}>
-                  <View style={styles.activityIconContainer}>
-                    <Ionicons
-                      name={getScanTypeIcon(activityType)}
-                      size={31}
-                      color={activityColor}
-                    />
-                  </View>
-                  <View style={styles.activityDetails}>
-                    <View style={styles.activityHeader}>
-                      <Text style={styles.activityTitle}>
-                        {item.type === 'scan'
-                          ? formatScanTypeLabel(item.data.scanType)
-                          : item.type === 'photo'
-                            ? 'Photo Upload'
-                            : item.data.maintenanceType?.replace(/_/g, ' ') || 'Maintenance'}
-                      </Text>
-                      {item.type === 'scan' && item.data.locationDescription && (() => {
-                        const matchedDepot = findDepotByLocationString(item.data.locationDescription, depots);
-                        if (!matchedDepot) return null;
-                        const badgeColors = getDepotBadgeColors(matchedDepot, colors.chrome, colors.text);
-                        return (
-                          <View style={[styles.locationBadge, { backgroundColor: badgeColors.bg }]}>
-                            <Text style={[styles.locationText, { color: badgeColors.text }]}>{matchedDepot.name}</Text>
+                  return (
+                    <TouchableOpacity
+                      key={item.id}
+                      style={[styles.maintenanceCard, { borderLeftColor: borderColor }]}
+                      onPress={() => handleMaintenancePress(item)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.cardRow}>
+                        <View style={styles.cardIconContainer}>
+                          <Ionicons
+                            name={maintenanceStatusIcon(item.status)}
+                            size={31}
+                            color={statusColor}
+                          />
+                        </View>
+                        <View style={styles.cardBody}>
+                          <View style={styles.cardContentRow}>
+                            <Text style={styles.cardTitle} numberOfLines={1}>
+                              {item.title}
+                            </Text>
+                            <View style={styles.cardBadges}>
+                              <MaintenanceStatusBadge status={item.status} />
+                              {!isCompleted && <MaintenancePriorityBadge priority={item.priority} />}
+                            </View>
                           </View>
-                        );
-                      })()}
-                      {item.type === 'photo' && item.data.hazardCount > 0 && (
-                        <View style={[styles.locationBadge, { backgroundColor: item.data.maxSeverity === 'critical' || item.data.maxSeverity === 'high' ? colors.error : colors.warning }]}>
-                          <Text style={[styles.locationText, { color: colors.textInverse }]}>
-                            {item.data.hazardCount} Hazard{item.data.hazardCount !== 1 ? 's' : ''}
+                          <Text style={styles.cardSecondaryText}>
+                            {isCompleted
+                              ? `Completed ${item.completedAt ? formatRelativeTime(item.completedAt) : formatRelativeTime(item.updatedAt)}${(item as MaintenanceRecordWithNames).completerName ? ` by ${(item as MaintenanceRecordWithNames).completerName}` : ''}`
+                              : item.dueDate ? `Due ${formatRelativeTime(item.dueDate)}` : formatRelativeTime(item.createdAt)}
                           </Text>
                         </View>
-                      )}
-                    </View>
-                    <View style={styles.activityFooter}>
-                      <Text style={styles.activityType}>
-                        {item.type === 'scan'
-                          ? item.data.scannerName || 'Unknown'
-                          : item.type === 'photo'
-                            ? item.data.primaryCategory?.replace(/_/g, ' ') || item.data.photoType.replace(/_/g, ' ')
-                            : item.data.description || item.data.status.replace(/_/g, ' ')}
-                      </Text>
-                      <Text style={styles.activityTime}>
-                        {formatRelativeTime(
-                          item.type === 'maintenance'
-                            ? (item.data.updatedAt || item.data.createdAt)
-                            : item.data.createdAt
-                        )}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
-              );
-            })}
-            </View>
-          )
+            )}
+          </ScrollView>
         )}
-      </ScrollView>
+      </View>
 
       {/* QR Code Modal - Superuser Only */}
       <Modal
@@ -468,42 +431,11 @@ export default function AssetDetailScreen() {
         onClose={handleClosePhotoDetail}
       />
 
-
-
       {/* Maintenance Detail Modal */}
       <MaintenanceDetailModal
         visible={selectedMaintenanceId !== null}
         maintenanceId={selectedMaintenanceId}
         onClose={handleCloseMaintenanceDetail}
-      />
-
-      {/* Delete Confirm - Superuser Only */}
-      <ConfirmSheet
-        visible={showDeleteConfirm}
-        type="danger"
-        title="Delete Asset"
-        message={
-          asset
-            ? `Soft-delete "${asset.assetNumber}"? This sets status to Out of Service.${
-                relatedCounts
-                  ? `\n\nRelated records: ${relatedCounts.scanEvents} scans, ${relatedCounts.maintenanceRecords} maintenance records (preserved).`
-                  : ''
-              }`
-            : ''
-        }
-        confirmLabel="Delete"
-        onConfirm={handleDeleteAsset}
-        onCancel={() => setShowDeleteConfirm(false)}
-        isLoading={deleteMutation.isPending}
-      />
-
-      {/* Delete Error Alert */}
-      <AlertSheet
-        visible={deleteAlert.visible}
-        type="error"
-        title={deleteAlert.title}
-        message={deleteAlert.message}
-        onDismiss={() => setDeleteAlert({ ...deleteAlert, visible: false })}
       />
     </SafeAreaView>
     </View>
@@ -518,10 +450,21 @@ const styles = StyleSheet.create({
   containerInner: {
     flex: 1,
   },
-  content: {
-    padding: spacing.base,
+  pinnedHeader: {
+    paddingHorizontal: spacing.base,
     paddingTop: CONTENT_TOP_OFFSET,
-    gap: spacing.lg,
+    gap: spacing.md,
+  },
+  tabContentArea: {
+    flex: 1,
+  },
+  photosTab: {
+    flex: 1,
+    padding: spacing.base,
+  },
+  tabScrollContent: {
+    padding: spacing.base,
+    gap: spacing.sm,
   },
   centerContent: {
     flex: 1,
@@ -554,102 +497,21 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     textTransform: 'uppercase',
   },
-  superuserActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    gap: spacing.lg,
-  },
-  qrLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  qrLinkText: {
-    fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
-    color: colors.neonViolet,
-    textTransform: 'uppercase',
-  },
-  deleteLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  deleteLinkText: {
-    fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
-    color: colors.error,
-    textTransform: 'uppercase',
-  },
-  activitySectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  chevronButton: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    width: 28,
-    height: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-    elevation: 3,
-  },
-  activitySectionTitle: {
-    fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginTop: 5,
-  },
   activityList: {
     gap: spacing.sm,
-    marginTop: -5,
   },
   activityCard: {
     backgroundColor: colors.background,
-    padding: spacing.base,
+    padding: spacing.md,
     borderRadius: borderRadius.md,
     borderWidth: 1,
     borderColor: colors.border,
-  },
-  activityCardContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  activityIconContainer: {
-    width: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: spacing.md,
-  },
-  activityDetails: {
-    flex: 1,
-  },
-  activityHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: spacing.xs,
-  },
-  activityTitle: {
-    fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
-    color: colors.electricBlue,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    borderLeftWidth: 4,
   },
   activityTime: {
     fontSize: fontSize.xs,
     fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
-    textTransform: 'uppercase',
   },
   locationBadge: {
     paddingHorizontal: spacing.sm,
@@ -666,13 +528,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  activityType: {
-    fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
-    color: colors.textSecondary,
-    textTransform: 'uppercase',
-  },
-
   // QR Code Modal
   modalOverlay: {
     flex: 1,
@@ -728,9 +583,6 @@ const styles = StyleSheet.create({
   },
 
   // Maintenance Section
-  maintenanceSection: {
-    gap: spacing.sm,
-  },
   maintenanceList: {
     gap: spacing.sm,
   },
@@ -742,24 +594,37 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderLeftWidth: 4,
   },
-  maintenanceCardContent: {
+  cardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  cardIconContainer: {
+    width: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  cardBody: {
+    flex: 1,
+  },
+  cardContentRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     gap: spacing.sm,
     marginBottom: spacing.xs,
   },
-  maintenanceTitle: {
+  cardTitle: {
     fontSize: fontSize.sm,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     flex: 1,
   },
-  maintenanceBadges: {
+  cardBadges: {
     flexDirection: 'row',
     gap: spacing.xs,
   },
-  maintenanceDate: {
+  cardSecondaryText: {
     fontSize: fontSize.xs,
     fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
