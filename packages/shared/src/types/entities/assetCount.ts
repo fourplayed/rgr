@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import type { AssetCategory } from '../enums/AssetEnums';
 import { AssetCategorySchema } from '../enums/AssetEnums';
+import type { AssetCountSessionStatus } from '../enums/AssetCountEnums';
+export type { AssetCountSessionStatus } from '../enums/AssetCountEnums';
 
 // ============================================================================
 // Asset Count Types
@@ -12,10 +14,6 @@ import { AssetCategorySchema } from '../enums/AssetEnums';
 // ── Combination Rules ──
 
 export const MAX_COMBINATION_SIZE = 5;
-
-// ── Session Status ──
-
-export type AssetCountSessionStatus = 'in_progress' | 'completed' | 'cancelled';
 
 // ── Discriminated Union for Asset Scans ──
 
@@ -69,8 +67,6 @@ export interface CombinationGroup {
   photoUri: string | null;
   /** Database photo ID after upload (null until uploaded) */
   photoId: string | null;
-  /** Ordered categories for alternation validation (optional for backward compat) */
-  assetCategories?: AssetCategory[];
 }
 
 // ── Asset Count State ──
@@ -94,8 +90,6 @@ export interface AssetCountState {
   currentScan: AssetScan | null;
   /** Combination groups keyed by combinationId */
   combinations: Record<string, CombinationGroup>;
-  /** Last scan that was standalone (candidate for linking) */
-  lastUnlinkedScanIndex: number | null;
   /** Active chain ID — when set, all scans are added to this chain's combination */
   activeChainId: string | null;
 }
@@ -262,7 +256,6 @@ export const CombinationGroupSchema = z.object({
   notes: z.string().nullable(),
   photoUri: z.string().nullable(),
   photoId: z.string().uuid().nullable(),
-  assetCategories: z.array(AssetCategorySchema).optional(),
 });
 
 export const AssetCountStateSchema = z.object({
@@ -273,9 +266,28 @@ export const AssetCountStateSchema = z.object({
   scans: z.array(AssetScanSchema),
   currentScan: AssetScanSchema.nullable(),
   combinations: z.record(z.string(), CombinationGroupSchema),
-  lastUnlinkedScanIndex: z.number().int().nullable(),
   activeChainId: z.string().uuid().nullable().optional(),
 });
+
+// ── Submit Input Schema ──
+
+export const SubmitAssetCountInputSchema = z.object({
+  depotId: z.string().uuid(),
+  countedBy: z.string().uuid(),
+  items: z.array(z.object({
+    assetId: z.string().uuid(),
+    combinationId: z.string().uuid().nullable(),
+    combinationPosition: z.number().int().nullable(),
+  })).min(1),
+  combinations: z.array(z.object({
+    combinationId: z.string().uuid(),
+    notes: z.string().nullable(),
+    photoId: z.string().uuid().nullable(),
+  })).max(50),
+  sessionNotes: z.string().nullable().optional(),
+});
+
+export type SubmitAssetCountInput = z.infer<typeof SubmitAssetCountInputSchema>;
 
 // ── Type Guards ──
 
@@ -305,33 +317,14 @@ export function isValidAssetCountState(obj: unknown): obj is AssetCountState {
 // ── Combination Rule Validators ──
 
 /**
- * Returns true only when both categories are defined and different
- * (trailer+dolly or dolly+trailer).
- */
-export function canFormNewCombination(
-  categoryA?: AssetCategory,
-  categoryB?: AssetCategory,
-): boolean {
-  if (!categoryA || !categoryB) return false;
-  return categoryA !== categoryB;
-}
-
-/**
- * Returns true when the new asset can be added to an existing combination:
- * - combo size < MAX_COMBINATION_SIZE
- * - newCategory is defined
- * - combo has assetCategories
- * - last category in combo differs from newCategory
+ * Returns true when the combination has room for another asset (size-only check).
+ * Alternation rules have been removed — any asset category can be chained.
  */
 export function canAddToCombination(
   combo: CombinationGroup,
-  newCategory?: AssetCategory,
+  _newCategory?: AssetCategory,
 ): boolean {
-  if (!newCategory) return false;
-  if (combo.assetIds.length >= MAX_COMBINATION_SIZE) return false;
-  if (!combo.assetCategories || combo.assetCategories.length === 0) return false;
-  const lastCategory = combo.assetCategories[combo.assetCategories.length - 1];
-  return lastCategory !== newCategory;
+  return combo.assetIds.length < MAX_COMBINATION_SIZE;
 }
 
 // ── Row Mappers ──

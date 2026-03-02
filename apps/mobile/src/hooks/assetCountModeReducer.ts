@@ -4,7 +4,7 @@ import type {
   CombinationScan,
   AssetCountState,
 } from '@rgr/shared';
-import { isStandaloneScan, canAddToCombination, MAX_COMBINATION_SIZE } from '@rgr/shared';
+import { isStandaloneScan, MAX_COMBINATION_SIZE } from '@rgr/shared';
 
 /**
  * Generate a UUID v4 for combination IDs.
@@ -47,7 +47,6 @@ export const initialState: AssetCountState = {
   scans: [],
   currentScan: null,
   combinations: {},
-  lastUnlinkedScanIndex: null,
   activeChainId: null,
 };
 
@@ -110,61 +109,12 @@ export function reducer(state: AssetCountState, action: Action): AssetCountState
         }
 
         const scan = state.currentScan;
-
-        // First item in chain — no alternation check needed
-        if (chainCombo.assetIds.length === 0) {
-          const combinationScan: CombinationScan = {
-            type: 'combination',
-            assetId: scan.assetId,
-            assetNumber: scan.assetNumber,
-            timestamp: scan.timestamp,
-            combinationId: state.activeChainId,
-            combinationPosition: 1,
-            ...(scan.category && { category: scan.category }),
-          };
-
-          const newCombinations = {
-            ...state.combinations,
-            [state.activeChainId]: {
-              ...chainCombo,
-              assetIds: [scan.assetId],
-              assetNumbers: [scan.assetNumber],
-              ...(scan.category ? { assetCategories: [scan.category] } : {}),
-            },
-          };
-
-          logger.assetCount('Added first item to chain', {
-            chainId: state.activeChainId,
-            assetNumber: scan.assetNumber,
-          });
-
-          return {
-            ...state,
-            scans: [...state.scans, combinationScan],
-            currentScan: null,
-            combinations: newCombinations,
-            lastUnlinkedScanIndex: state.scans.length,
-          };
-        }
-
-        // Subsequent items — validate alternation
-        if (!canAddToCombination(chainCombo, scan.category)) {
-          // Validation failed — add as standalone, chain stays active
-          logger.assetCount('Chain alternation validation failed, adding as standalone', {
-            chainId: state.activeChainId,
-            assetNumber: scan.assetNumber,
-          });
-
-          return {
-            ...state,
-            scans: [...state.scans, scan],
-            currentScan: null,
-            lastUnlinkedScanIndex: state.scans.length,
-          };
-        }
-
-        // Validation passed — add to chain
         const newPosition = chainCombo.assetIds.length + 1;
+
+        if (newPosition > MAX_COMBINATION_SIZE) {
+          return { ...state, currentScan: null };
+        }
+
         const combinationScan: CombinationScan = {
           type: 'combination',
           assetId: scan.assetId,
@@ -181,7 +131,6 @@ export function reducer(state: AssetCountState, action: Action): AssetCountState
             ...chainCombo,
             assetIds: [...chainCombo.assetIds, scan.assetId],
             assetNumbers: [...chainCombo.assetNumbers, scan.assetNumber],
-            assetCategories: [...(chainCombo.assetCategories ?? []), scan.category!],
           },
         };
 
@@ -191,7 +140,6 @@ export function reducer(state: AssetCountState, action: Action): AssetCountState
           chainSize: newPosition,
         });
 
-        // Auto-end chain at max size
         const autoEnd = newPosition >= MAX_COMBINATION_SIZE;
         if (autoEnd) {
           logger.assetCount('Chain auto-ended at max size', {
@@ -204,18 +152,15 @@ export function reducer(state: AssetCountState, action: Action): AssetCountState
           scans: [...state.scans, combinationScan],
           currentScan: null,
           combinations: newCombinations,
-          lastUnlinkedScanIndex: state.scans.length,
           activeChainId: autoEnd ? null : state.activeChainId,
         };
       }
 
-      // No active chain: existing standalone logic
-      const newIndex = state.scans.length;
+      // No active chain: standalone
       return {
         ...state,
         scans: [...state.scans, state.currentScan],
         currentScan: null,
-        lastUnlinkedScanIndex: newIndex,
       };
     }
 
@@ -248,7 +193,6 @@ export function reducer(state: AssetCountState, action: Action): AssetCountState
             notes: null,
             photoUri: null,
             photoId: null,
-            assetCategories: [],
           },
         },
       };
@@ -377,9 +321,6 @@ export function reducer(state: AssetCountState, action: Action): AssetCountState
               ...combo,
               assetIds: combo.assetIds.filter(id => id !== lastScan.assetId),
               assetNumbers: combo.assetNumbers.filter(n => n !== lastScan.assetNumber),
-              ...(combo.assetCategories && {
-                assetCategories: combo.assetCategories.slice(0, -1),
-              }),
             },
           };
 
@@ -392,7 +333,6 @@ export function reducer(state: AssetCountState, action: Action): AssetCountState
             ...state,
             scans: newScans,
             combinations: newCombinations,
-            lastUnlinkedScanIndex: newScans.length > 0 ? newScans.length - 1 : null,
           };
         }
 
@@ -424,7 +364,6 @@ export function reducer(state: AssetCountState, action: Action): AssetCountState
             ...state,
             scans: revertedScans,
             combinations: newCombinations,
-            lastUnlinkedScanIndex: revertedScans.length > 0 ? revertedScans.length - 1 : null,
           };
         } else if (combo) {
           // Combination has 3+ assets — just remove this asset from it
@@ -434,9 +373,6 @@ export function reducer(state: AssetCountState, action: Action): AssetCountState
               ...combo,
               assetIds: combo.assetIds.filter(id => id !== lastScan.assetId),
               assetNumbers: combo.assetNumbers.filter(n => n !== lastScan.assetNumber),
-              ...(combo.assetCategories && {
-                assetCategories: combo.assetCategories.slice(0, -1),
-              }),
             },
           };
 
@@ -449,7 +385,6 @@ export function reducer(state: AssetCountState, action: Action): AssetCountState
             ...state,
             scans: newScans,
             combinations: newCombinations,
-            lastUnlinkedScanIndex: newScans.length > 0 ? newScans.length - 1 : null,
           };
         }
       }
@@ -461,7 +396,6 @@ export function reducer(state: AssetCountState, action: Action): AssetCountState
       return {
         ...state,
         scans: newScans,
-        lastUnlinkedScanIndex: newScans.length > 0 ? newScans.length - 1 : null,
       };
     }
 

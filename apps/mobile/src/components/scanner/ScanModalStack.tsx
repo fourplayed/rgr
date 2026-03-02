@@ -59,7 +59,6 @@ interface ScanModalStackProps {
   showCombinationPhoto: boolean;
   activeCombinationId: string | null;
   combinationAssetNumbers: string[];
-  combinationPhotoMandatory?: boolean;
   onCombinationPhotoCapture: (photoUri: string) => void;
   onCombinationNotesChange: (notes: string) => void;
   onCombinationPhotoComplete: () => void;
@@ -154,7 +153,6 @@ export function ScanModalStack(props: ScanModalStackProps) {
         <CombinationPhotoSheet
           visible={props.showCombinationPhoto}
           assetNumbers={props.combinationAssetNumbers}
-          mandatory={props.combinationPhotoMandatory}
           onCapture={props.onCombinationPhotoCapture}
           onNotesChange={props.onCombinationNotesChange}
           onComplete={props.onCombinationPhotoComplete}

@@ -92,7 +92,6 @@ describe('assetCountModeReducer', () => {
       expect(state.scans).toHaveLength(1);
       expect(state.scans[0]).toEqual(scan);
       expect(state.currentScan).toBeNull();
-      expect(state.lastUnlinkedScanIndex).toBe(0);
     });
 
     it('returns state unchanged if no pending scan', () => {
@@ -118,7 +117,7 @@ describe('assetCountModeReducer', () => {
       expect(state.activeChainId).toBe(chainId); // chain stays active
     });
 
-    it('adds subsequent scans to chain with alternation validation', () => {
+    it('adds subsequent scans to chain (no alternation rule)', () => {
       let state = reducer(initialState, { type: 'START_COUNT', depotId: 'd', depotName: 'D' });
       state = reducer(state, { type: 'START_CHAIN' });
       const chainId = state.activeChainId!;
@@ -127,17 +126,16 @@ describe('assetCountModeReducer', () => {
       state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('TL001', 'a1', 'trailer') });
       state = reducer(state, { type: 'CONFIRM_SCAN' });
 
-      // Add dolly (alternates correctly)
+      // Add dolly
       state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('DL001', 'a2', 'dolly') });
       state = reducer(state, { type: 'CONFIRM_SCAN' });
 
       expect(state.scans).toHaveLength(2);
       expect(state.scans[1]!.type).toBe('combination');
       expect(state.combinations[chainId]!.assetIds).toEqual(['a1', 'a2']);
-      expect(state.combinations[chainId]!.assetCategories).toEqual(['trailer', 'dolly']);
     });
 
-    it('adds scan as standalone when chain alternation fails', () => {
+    it('allows same-category scans in chain (alternation removed)', () => {
       let state = reducer(initialState, { type: 'START_COUNT', depotId: 'd', depotName: 'D' });
       state = reducer(state, { type: 'START_CHAIN' });
       const chainId = state.activeChainId!;
@@ -146,13 +144,13 @@ describe('assetCountModeReducer', () => {
       state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('TL001', 'a1', 'trailer') });
       state = reducer(state, { type: 'CONFIRM_SCAN' });
 
-      // Try to add another trailer (same category — fails alternation)
+      // Add another trailer (same category — now allowed)
       state = reducer(state, { type: 'ADD_SCAN', scan: makeScan('TL002', 'a2', 'trailer') });
       state = reducer(state, { type: 'CONFIRM_SCAN' });
 
       expect(state.scans).toHaveLength(2);
-      expect(state.scans[1]!.type).toBe('standalone'); // fell through to standalone
-      expect(state.combinations[chainId]!.assetIds).toEqual(['a1']); // chain unchanged
+      expect(state.scans[1]!.type).toBe('combination'); // added to chain
+      expect(state.combinations[chainId]!.assetIds).toEqual(['a1', 'a2']);
       expect(state.activeChainId).toBe(chainId); // chain still active
     });
 
@@ -352,7 +350,6 @@ describe('assetCountModeReducer', () => {
 
       expect(state.scans).toHaveLength(1);
       expect(state.scans[0]!.assetNumber).toBe('TL001');
-      expect(state.lastUnlinkedScanIndex).toBe(0);
     });
 
     it('removes scan from active chain without dissolving chain', () => {
@@ -424,7 +421,6 @@ describe('assetCountModeReducer', () => {
       expect(state.scans[1]!.type).toBe('combination');
       expect(state.combinations[chainId]!.assetIds).toEqual(['a1', 'a2']);
       expect(state.combinations[chainId]!.assetNumbers).toEqual(['TL001', 'DL001']);
-      expect(state.combinations[chainId]!.assetCategories).toEqual(['trailer', 'dolly']);
     });
 
     it('preserves category when dissolving combo to standalone', () => {
@@ -470,7 +466,6 @@ describe('assetCountModeReducer', () => {
         scans: [makeScan('TL001')],
         currentScan: null,
         combinations: {},
-        lastUnlinkedScanIndex: 0,
         activeChainId: null,
       };
 
@@ -487,7 +482,6 @@ describe('assetCountModeReducer', () => {
         scans: [],
         currentScan: null,
         combinations: {},
-        lastUnlinkedScanIndex: null,
       } as unknown as AssetCountState;
 
       const state = reducer(initialState, { type: 'RESTORE', state: restoredState });

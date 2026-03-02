@@ -29,8 +29,6 @@ interface CombinationPhotoSheetProps {
   onComplete: () => void;
   onSkip: () => void;
   onDismiss?: () => void;
-  /** When true, hides Skip buttons and makes photo+notes mandatory */
-  mandatory?: boolean | undefined;
 }
 
 function CombinationPhotoSheetComponent({
@@ -41,7 +39,6 @@ function CombinationPhotoSheetComponent({
   onComplete,
   onSkip,
   onDismiss,
-  mandatory = false,
 }: CombinationPhotoSheetProps) {
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
@@ -124,11 +121,9 @@ function CombinationPhotoSheetComponent({
             <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
               <Text style={styles.permissionButtonText}>Grant Permission</Text>
             </TouchableOpacity>
-            {!mandatory && (
-              <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
-                <Text style={styles.skipButtonText}>Skip Photo</Text>
-              </TouchableOpacity>
-            )}
+            <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
+              <Text style={styles.skipButtonText}>Skip Photo</Text>
+            </TouchableOpacity>
           </SafeAreaView>
         </View>
       </Modal>
@@ -145,13 +140,9 @@ function CombinationPhotoSheetComponent({
           // Preview + Notes Mode
           <SafeAreaView style={styles.previewContainer}>
             <View style={styles.header}>
-              {mandatory ? (
-                <View style={styles.headerButton} />
-              ) : (
-                <TouchableOpacity style={styles.headerButton} onPress={handleSkip}>
-                  <Ionicons name="close" size={28} color={colors.textInverse} />
-                </TouchableOpacity>
-              )}
+              <TouchableOpacity style={styles.headerButton} onPress={handleSkip}>
+                <Ionicons name="close" size={28} color={colors.textInverse} />
+              </TouchableOpacity>
               <View style={styles.headerTitleContainer}>
                 <Text style={styles.headerTitle}>Combination Photo</Text>
                 <Text style={styles.headerSubtitle}>{assetsDisplay}</Text>
@@ -177,7 +168,7 @@ function CombinationPhotoSheetComponent({
               </View>
 
               <View style={styles.notesSection}>
-                <Text style={styles.notesLabel}>{mandatory ? 'Notes' : 'Notes (Optional)'}</Text>
+                <Text style={styles.notesLabel}>Notes (Optional)</Text>
                 <TextInput
                   style={styles.notesInput}
                   placeholder="Add notes about this combination..."
@@ -210,13 +201,9 @@ function CombinationPhotoSheetComponent({
           >
             <SafeAreaView style={styles.cameraOverlay}>
               <View style={styles.header}>
-                {mandatory ? (
-                  <View style={styles.headerButton} />
-                ) : (
-                  <TouchableOpacity style={styles.headerButton} onPress={handleSkip}>
-                    <Ionicons name="close" size={28} color={colors.textInverse} />
-                  </TouchableOpacity>
-                )}
+                <TouchableOpacity style={styles.headerButton} onPress={handleSkip}>
+                  <Ionicons name="close" size={28} color={colors.textInverse} />
+                </TouchableOpacity>
                 <View style={styles.headerTitleContainer}>
                   <Text style={styles.headerTitle}>Capture Combination</Text>
                   <Text style={styles.headerSubtitle}>{assetsDisplay}</Text>
@@ -235,13 +222,9 @@ function CombinationPhotoSheetComponent({
               </View>
 
               <View style={styles.captureContainer}>
-                {mandatory ? (
-                  <View style={styles.captureButtonSpacer} />
-                ) : (
-                  <TouchableOpacity style={styles.skipPhotoButton} onPress={handleSkip}>
-                    <Text style={styles.skipPhotoButtonText}>Skip Photo</Text>
-                  </TouchableOpacity>
-                )}
+                <TouchableOpacity style={styles.skipPhotoButton} onPress={handleSkip}>
+                  <Text style={styles.skipPhotoButtonText}>Skip Photo</Text>
+                </TouchableOpacity>
 
                 <TouchableOpacity
                   style={styles.captureButton}

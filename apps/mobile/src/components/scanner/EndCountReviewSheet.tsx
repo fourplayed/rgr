@@ -146,14 +146,11 @@ function EndCountReviewSheetComponent({
                         {/* Photo status */}
                         <View style={styles.statusItem}>
                           <Ionicons
-                            name={combo.photoUri ? 'checkmark-circle' : 'alert-circle'}
+                            name={combo.photoUri ? 'checkmark-circle' : 'information-circle'}
                             size={14}
-                            color={combo.photoUri ? colors.success : colors.warning}
+                            color={combo.photoUri ? colors.success : colors.textSecondary}
                           />
-                          <Text style={[
-                            styles.statusText,
-                            !combo.photoUri && styles.statusTextWarning
-                          ]}>
+                          <Text style={styles.statusText}>
                             {combo.photoUri ? 'Photo added' : 'No photo'}
                           </Text>
                         </View>
@@ -198,10 +195,10 @@ function EndCountReviewSheetComponent({
 
             {/* Warning */}
             {hasWarnings && (
-              <View style={styles.warningBanner}>
-                <Ionicons name="alert-circle" size={18} color={colors.warning} />
-                <Text style={styles.warningText}>
-                  {combinationsWithoutPhoto.length} combination{combinationsWithoutPhoto.length > 1 ? 's' : ''} missing photo
+              <View style={styles.infoBanner}>
+                <Ionicons name="information-circle" size={18} color={colors.textSecondary} />
+                <Text style={styles.infoText}>
+                  {combinationsWithoutPhoto.length} combination{combinationsWithoutPhoto.length > 1 ? 's' : ''} without photo
                 </Text>
               </View>
             )}
@@ -417,9 +414,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
   },
-  statusTextWarning: {
-    color: colors.warning,
-  },
   combinationNotes: {
     fontSize: fontSize.sm,
     fontFamily: 'Lato_400Regular',
@@ -448,21 +442,21 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
 
-  // Warning
-  warningBanner: {
+  // Info banner (missing photos)
+  infoBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.warning + '15',
+    backgroundColor: colors.surface,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     borderRadius: borderRadius.md,
     marginBottom: spacing.lg,
     gap: spacing.sm,
   },
-  warningText: {
+  infoText: {
     fontSize: fontSize.sm,
     fontFamily: 'Lato_400Regular',
-    color: colors.warning,
+    color: colors.textSecondary,
   },
 
   // Buttons

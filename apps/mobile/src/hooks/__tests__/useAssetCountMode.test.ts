@@ -141,10 +141,8 @@ describe('useAssetCountMode', () => {
             notes: null,
             photoUri: null,
             photoId: null,
-            assetCategories: ['trailer', 'dolly'],
           },
         },
-        lastUnlinkedScanIndex: 1,
         activeChainId: null,
       };
       mockGetItem.mockResolvedValue(JSON.stringify(restoredState));
@@ -176,10 +174,8 @@ describe('useAssetCountMode', () => {
             notes: null,
             photoUri: null,
             photoId: null,
-            assetCategories: ['trailer', 'dolly'],
           },
         },
-        lastUnlinkedScanIndex: 1,
         activeChainId: null,
       };
       mockGetItem.mockResolvedValue(JSON.stringify(restoredState));
@@ -362,7 +358,6 @@ describe('useAssetCountMode', () => {
         }],
         currentScan: null,
         combinations: {},
-        lastUnlinkedScanIndex: 0,
         activeChainId: null,
       };
       mockGetItem.mockResolvedValue(JSON.stringify(savedState));
@@ -395,7 +390,6 @@ describe('useAssetCountMode', () => {
         scans: [],
         currentScan: null,
         combinations: {},
-        lastUnlinkedScanIndex: null,
         activeChainId: null,
       };
       mockGetItem.mockResolvedValue(JSON.stringify(inactiveState));
