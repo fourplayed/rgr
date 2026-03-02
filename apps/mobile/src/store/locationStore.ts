@@ -3,6 +3,7 @@ import * as Location from 'expo-location';
 import { listDepots, findNearestLocation } from '@rgr/shared';
 import type { Depot } from '@rgr/shared';
 import { eventBus, AppEvents } from '../utils/eventBus';
+import { useDebugLocationStore } from './debugLocationStore';
 
 // Configuration constants
 const MAX_DEPOT_DISTANCE_KM = 100;
@@ -47,29 +48,48 @@ export const useLocationStore = create<LocationState>((set, get) => ({
     set({ isResolvingDepot: true, depotResolutionError: null });
 
     try {
-      // Check permission first
-      const { status } = await Location.getForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        const { status: newStatus } = await Location.requestForegroundPermissionsAsync();
-        if (newStatus !== 'granted') {
-          set({
-            isResolvingDepot: false,
-            depotResolutionError: 'Location permission denied',
-            resolvedDepot: null,
-          });
-          return;
+      // DEV-only: use simulated GPS when debug override is active
+      const debugLocation = __DEV__ ? useDebugLocationStore.getState() : null;
+      const useSimulatedGPS = debugLocation?.overrideEnabled === true;
+
+      // Check permission first (skip when using simulated location)
+      if (!useSimulatedGPS) {
+        const { status } = await Location.getForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          const { status: newStatus } = await Location.requestForegroundPermissionsAsync();
+          if (newStatus !== 'granted') {
+            set({
+              isResolvingDepot: false,
+              depotResolutionError: 'Location permission denied',
+              resolvedDepot: null,
+            });
+            return;
+          }
         }
       }
 
       // Fetch GPS position and depot list in parallel (they are independent)
-      const locationPromise = Promise.race([
-        Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.High,
-        }),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Location request timed out')), LOCATION_TIMEOUT_MS)
-        ),
-      ]);
+      const locationPromise: Promise<Location.LocationObject> = useSimulatedGPS
+        ? Promise.resolve({
+            coords: {
+              latitude: debugLocation!.latitude,
+              longitude: debugLocation!.longitude,
+              accuracy: 5,
+              altitude: null,
+              altitudeAccuracy: null,
+              heading: null,
+              speed: null,
+            },
+            timestamp: Date.now(),
+          } as Location.LocationObject)
+        : Promise.race([
+            Location.getCurrentPositionAsync({
+              accuracy: Location.Accuracy.High,
+            }),
+            new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error('Location request timed out')), LOCATION_TIMEOUT_MS)
+            ),
+          ]);
 
       const depotListPromise = depots
         ? Promise.resolve(depots)

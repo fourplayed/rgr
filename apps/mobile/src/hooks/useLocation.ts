@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import * as Location from 'expo-location';
 import { logger } from '../utils/logger';
+import { useDebugLocationStore } from '../store/debugLocationStore';
 
 export interface LocationData {
   latitude: number;
@@ -78,6 +79,26 @@ export function useLocation(): UseLocationResult {
     }
 
     try {
+      // DEV-only: return simulated location if debug override is active
+      if (__DEV__) {
+        const debugState = useDebugLocationStore.getState();
+        if (debugState.overrideEnabled) {
+          const locationData: LocationData = {
+            latitude: debugState.latitude,
+            longitude: debugState.longitude,
+            accuracy: 5,
+            altitude: null,
+            heading: null,
+            speed: null,
+          };
+          if (isMountedRef.current) {
+            setLocation(locationData);
+            setIsLoading(false);
+          }
+          return locationData;
+        }
+      }
+
       // Check permission first
       if (!hasPermission) {
         const granted = await requestPermission();

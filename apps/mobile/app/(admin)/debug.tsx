@@ -5,6 +5,8 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Switch,
+  TextInput,
 } from 'react-native';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,6 +20,7 @@ import { useAuthStore } from '../../src/store/authStore';
 import { fetchProfile, getSupabaseClient, isSupabaseInitialized } from '@rgr/shared';
 import { useNetworkStatus } from '../../src/hooks/useNetworkStatus';
 import { useLocationStore } from '../../src/store/locationStore';
+import { useDebugLocationStore } from '../../src/store/debugLocationStore';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../src/theme/spacing';
 import { getSession as getStoredSession } from '../../src/utils/secureStorage';
@@ -130,6 +133,79 @@ const healthColors: Record<HealthLevel, string> = {
   warning: colors.warning,
   critical: colors.error,
 };
+
+// --- Simulated location card (DEV only) ---
+
+function SimulatedLocationCard() {
+  const { overrideEnabled, latitude, longitude, setEnabled, setCoordinates } =
+    useDebugLocationStore();
+  const [latText, setLatText] = useState(latitude.toString());
+  const [lonText, setLonText] = useState(longitude.toString());
+
+  const applyCoordinates = useCallback(() => {
+    const lat = parseFloat(latText);
+    const lon = parseFloat(lonText);
+    if (
+      !isNaN(lat) && !isNaN(lon) &&
+      lat >= -90 && lat <= 90 &&
+      lon >= -180 && lon <= 180
+    ) {
+      setCoordinates(lat, lon);
+    }
+  }, [latText, lonText, setCoordinates]);
+
+  const handleToggle = useCallback(
+    (enabled: boolean) => {
+      applyCoordinates();
+      setEnabled(enabled);
+    },
+    [applyCoordinates, setEnabled],
+  );
+
+  return (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>Simulated Location</Text>
+      <View style={styles.card}>
+        <View style={styles.debugRow}>
+          <Text style={styles.debugLabel}>Enabled</Text>
+          <Switch
+            value={overrideEnabled}
+            onValueChange={handleToggle}
+            trackColor={{ true: colors.electricBlue }}
+          />
+        </View>
+        <View style={styles.debugDivider} />
+        <View style={styles.debugRow}>
+          <Text style={styles.debugLabel}>Latitude</Text>
+          <TextInput
+            style={styles.simInput}
+            value={latText}
+            onChangeText={setLatText}
+            onBlur={applyCoordinates}
+            keyboardType="numbers-and-punctuation"
+            returnKeyType="done"
+            placeholder="-90 to 90"
+            placeholderTextColor={colors.textSecondary}
+          />
+        </View>
+        <View style={styles.debugDivider} />
+        <View style={styles.debugRow}>
+          <Text style={styles.debugLabel}>Longitude</Text>
+          <TextInput
+            style={styles.simInput}
+            value={lonText}
+            onChangeText={setLonText}
+            onBlur={applyCoordinates}
+            keyboardType="numbers-and-punctuation"
+            returnKeyType="done"
+            placeholder="-180 to 180"
+            placeholderTextColor={colors.textSecondary}
+          />
+        </View>
+      </View>
+    </View>
+  );
+}
 
 // --- Main screen ---
 
@@ -425,6 +501,9 @@ export default function DebugScreen() {
               )}
             </View>
           </View>
+
+          {/* 3.5. Simulated Location (DEV only) */}
+          {__DEV__ && <SimulatedLocationCard />}
 
           {/* 4. Auth */}
           <View style={styles.section}>
@@ -784,5 +863,13 @@ const styles = StyleSheet.create({
     fontFamily: 'Lato_700Bold',
     color: colors.textInverse,
     textTransform: 'uppercase',
+  },
+  simInput: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_400Regular',
+    color: colors.text,
+    textAlign: 'right',
+    minWidth: 120,
+    paddingVertical: spacing.xs,
   },
 });
