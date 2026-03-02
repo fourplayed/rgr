@@ -154,16 +154,23 @@ export default function ScanScreen() {
 
         // Show scan toast based on chain state
         if (assetCount.isChainActive) {
-          // Check if the scan was added to chain or fell through to standalone
-          // We can check by looking at the category validation result
-          // The reducer handles this — if it added to chain, it will be combination type
-          // We show a chain message optimistically
-          setScanToast({
-            visible: true,
-            message: `${assetNumber} added to chain`,
-            type: 'link',
-            showUndo: true,
-          });
+          // confirmScan() is synchronous (useReducer), so scans is already updated
+          const lastScan = assetCount.scans[assetCount.scans.length - 1];
+          if (lastScan && lastScan.type === 'combination') {
+            setScanToast({
+              visible: true,
+              message: `${assetNumber} added to chain`,
+              type: 'link',
+              showUndo: true,
+            });
+          } else {
+            setScanToast({
+              visible: true,
+              message: `${assetNumber} — same type, counted standalone`,
+              type: 'info',
+              showUndo: true,
+            });
+          }
         } else {
           setScanToast({
             visible: true,
