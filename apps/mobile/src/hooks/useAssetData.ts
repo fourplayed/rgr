@@ -61,6 +61,7 @@ export function useAssetList(filters?: {
 }) {
   return useQuery({
     queryKey: assetKeys.list(filters),
+    staleTime: 30_000,
     queryFn: async () => {
       const params: {
         page: number;
@@ -111,6 +112,7 @@ export { useDepots } from './useDepots';
 export function useAsset(id: string | undefined) {
   return useQuery({
     queryKey: assetKeys.detail(id ?? ''),
+    staleTime: 30_000,
     queryFn: async () => {
       if (!id) throw new Error('Asset ID is required');
 
@@ -154,6 +156,7 @@ export function useAssetScans(assetId: string | undefined) {
 export function useAssetMaintenance(assetId: string | undefined) {
   return useQuery({
     queryKey: assetKeys.maintenance(assetId ?? ''),
+    staleTime: 30_000,
     queryFn: async () => {
       if (!assetId) throw new Error('Asset ID is required');
 
@@ -175,6 +178,7 @@ export function useAssetMaintenance(assetId: string | undefined) {
 export function useAssetHazards(assetId: string | undefined) {
   return useQuery({
     queryKey: assetKeys.hazards(assetId ?? ''),
+    staleTime: 30_000,
     queryFn: async () => {
       if (!assetId) throw new Error('Asset ID is required');
 

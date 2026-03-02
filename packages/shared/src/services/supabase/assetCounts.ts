@@ -427,7 +427,7 @@ export async function submitAssetCount(
     try {
       const rpcItems = input.items.map((item) => ({
         asset_id: item.assetId,
-        combination_id: item.combinationId ?? '',
+        combination_id: item.combinationId ?? null,
         combination_position: item.combinationPosition,
       }));
 
@@ -443,20 +443,22 @@ export async function submitAssetCount(
         console.warn(`${input.items.length - insertedCount} duplicate items skipped`);
       }
     } catch (rpcError) {
-      // Fallback to sequential inserts if RPC not available
-      console.warn('RPC unavailable, falling back to sequential inserts:', rpcError);
-      for (const item of input.items) {
-        const itemResult = await createAssetCountItem({
-          sessionId,
-          assetId: item.assetId,
-          combinationId: item.combinationId,
-          combinationPosition: item.combinationPosition,
-        });
+      // Fallback to bulk insert if RPC not available
+      console.warn('RPC unavailable, falling back to bulk insert:', rpcError);
+      const bulkRows = input.items.map((item) => ({
+        session_id: sessionId,
+        asset_id: item.assetId,
+        combination_id: item.combinationId ?? null,
+        combination_position: item.combinationPosition ?? null,
+      }));
 
-        if (!itemResult.success) {
-          await cancelAssetCountSession(sessionId);
-          return { success: false, data: null, error: itemResult.error };
-        }
+      const { error: bulkError } = await supabase
+        .from('asset_count_items')
+        .insert(bulkRows);
+
+      if (bulkError) {
+        await cancelAssetCountSession(sessionId);
+        return { success: false, data: null, error: `Failed to insert items: ${bulkError.message}` };
       }
     }
 
@@ -557,7 +559,6 @@ export async function listAssetCountSessions(
   query = query
     .eq('status', status)
     .order('started_at', { ascending: false })
-    .limit(pageSize + 1)
     .range(from, from + pageSize);
 
   const { data, error } = await query;

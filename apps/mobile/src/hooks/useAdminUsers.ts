@@ -22,6 +22,7 @@ export const adminUserKeys = {
 export function useUserList(filters?: ListProfilesParams) {
   return useQuery({
     queryKey: adminUserKeys.list(filters),
+    staleTime: 5 * 60_000,
     queryFn: async () => {
       const result = await listProfiles(filters);
       if (!result.success) throw new Error(result.error);

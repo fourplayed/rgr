@@ -116,7 +116,9 @@ export const AuditLogItem = memo(AuditLogItemInner, (prev, next) => {
     prev.item.action === next.item.action &&
     prev.item.tableName === next.item.tableName &&
     prev.item.userName === next.item.userName &&
-    prev.item.createdAt === next.item.createdAt
+    prev.item.createdAt === next.item.createdAt &&
+    prev.item.oldValues === next.item.oldValues &&
+    prev.item.newValues === next.item.newValues
   );
 });
 

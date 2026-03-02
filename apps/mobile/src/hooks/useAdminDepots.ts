@@ -16,6 +16,7 @@ export const adminDepotKeys = {
 export function useAllDepots() {
   return useQuery({
     queryKey: adminDepotKeys.list(),
+    staleTime: 5 * 60_000,
     queryFn: async () => {
       const result = await listAllDepots();
       if (!result.success) throw new Error(result.error);

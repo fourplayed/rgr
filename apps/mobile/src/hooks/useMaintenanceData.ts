@@ -41,6 +41,7 @@ export const maintenanceKeys = {
 export function useMaintenanceList(filters: MaintenanceFilters = {}) {
   return useQuery({
     queryKey: maintenanceKeys.list(filters),
+    staleTime: 30_000,
     queryFn: async () => {
       // Build params object, only including defined values
       const params: {
@@ -77,6 +78,7 @@ export function useMaintenanceList(filters: MaintenanceFilters = {}) {
 export function useMaintenance(id: string | null) {
   return useQuery({
     queryKey: maintenanceKeys.detail(id ?? ''),
+    staleTime: 30_000,
     queryFn: async () => {
       if (!id) throw new Error('Maintenance ID is required');
 

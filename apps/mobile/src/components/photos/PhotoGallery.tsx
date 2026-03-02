@@ -58,12 +58,6 @@ function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto, scrollEnable
     return photoItems;
   }, [photos, onAddPhoto]);
 
-  const getItemLayout = useCallback((_: ArrayLike<GalleryItem> | null | undefined, index: number) => ({
-    length: thumbnailSize + THUMBNAIL_GAP,
-    offset: (thumbnailSize + THUMBNAIL_GAP) * Math.floor(index / NUM_COLUMNS),
-    index,
-  }), [thumbnailSize]);
-
   const keyExtractor = useCallback((item: GalleryItem) => item.id, []);
 
   const renderItem = useCallback(({ item }: { item: GalleryItem }) => {
@@ -127,7 +121,6 @@ function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto, scrollEnable
       numColumns={NUM_COLUMNS}
       columnWrapperStyle={styles.row}
       contentContainerStyle={styles.container}
-      getItemLayout={getItemLayout}
       removeClippedSubviews
       scrollEnabled={scrollEnabled}
       showsVerticalScrollIndicator={false}

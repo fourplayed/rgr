@@ -155,13 +155,13 @@ export interface AssetCountSession {
   id: string;
   depotId: string;
   countedBy: string;
-  startedAt: Date;
-  completedAt: Date | null;
+  startedAt: string;
+  completedAt: string | null;
   status: AssetCountSessionStatus;
   totalAssetsCounted: number;
   notes: string | null;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 /**
@@ -334,13 +334,13 @@ export function mapRowToAssetCountSession(row: AssetCountSessionRow): AssetCount
     id: row.id,
     depotId: row.depot_id,
     countedBy: row.counted_by,
-    startedAt: new Date(row.started_at),
-    completedAt: row.completed_at ? new Date(row.completed_at) : null,
+    startedAt: row.started_at,
+    completedAt: row.completed_at,
     status: row.status,
     totalAssetsCounted: row.total_assets_counted,
     notes: row.notes,
-    createdAt: new Date(row.created_at),
-    updatedAt: new Date(row.updated_at),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 

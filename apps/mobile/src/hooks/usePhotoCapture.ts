@@ -43,6 +43,8 @@ export function usePhotoCapture() {
   // Both are updated together to stay in sync.
   const isCapturingRef = useRef(false);
   const [isCapturing, setIsCapturing] = useState(false);
+  // Guard against double-upload (same pattern as isCapturingRef)
+  const isUploadingRef = useRef(false);
 
   /**
    * Take a photo using the provided camera ref.
@@ -97,12 +99,14 @@ export function usePhotoCapture() {
   const confirmAndUpload = useCallback(async (
     photoType: PhotoType = 'freight'
   ): Promise<boolean> => {
+    if (isUploadingRef.current) return false;
     if (!capturedUri || !assetId || !user) {
       setUploadError('Missing required data for upload');
       return false;
     }
 
     try {
+      isUploadingRef.current = true;
       setIsUploading(true);
       setUploadError(null);
 
@@ -154,6 +158,7 @@ export function usePhotoCapture() {
       setUploadError(message);
       return false;
     } finally {
+      isUploadingRef.current = false;
       setIsUploading(false);
     }
   }, [capturedUri, assetId, scanEventId, locationDescription, latitude, longitude, imageWidth, imageHeight, user, uploadPhotoMutation, setIsUploading, setUploadError, reset]);
