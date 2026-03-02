@@ -99,6 +99,7 @@ export const colors = {
   // Opacity variants
   overlay: 'rgba(0, 0, 0, 0.5)',
   overlayLight: 'rgba(0, 0, 0, 0.3)',
+  overlayCard: 'rgba(0, 0, 30, 0.5)',
 } as const;
 
 export type ColorKey = keyof typeof colors;

@@ -184,8 +184,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginHorizontal: spacing.lg,
-    marginTop: spacing.sm,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.base,
     borderRadius: borderRadius.md,
