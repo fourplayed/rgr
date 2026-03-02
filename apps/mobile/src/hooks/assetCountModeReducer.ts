@@ -30,6 +30,7 @@ export type Action =
   | { type: 'CANCEL_SCAN' }
   | { type: 'START_CHAIN' }
   | { type: 'END_CHAIN' }
+  | { type: 'DISCARD_CHAIN' }
   | { type: 'SET_COMBINATION_NOTES'; combinationId: string; notes: string }
   | { type: 'SET_COMBINATION_PHOTO'; combinationId: string; photoUri: string; photoId: string | null }
   | { type: 'END_COUNT' }
@@ -259,6 +260,50 @@ export function reducer(state: AssetCountState, action: Action): AssetCountState
       return {
         ...state,
         activeChainId: null,
+      };
+    }
+
+    case 'DISCARD_CHAIN': {
+      if (!state.activeChainId) {
+        logger.assetCount('DISCARD_CHAIN ignored — no active chain');
+        return state;
+      }
+
+      const chainCombo = state.combinations[state.activeChainId];
+      if (!chainCombo) {
+        return { ...state, activeChainId: null };
+      }
+
+      const chainId = state.activeChainId;
+
+      // Remove the combination entry
+      const newCombinations = { ...state.combinations };
+      delete newCombinations[chainId];
+
+      // Revert ALL chain scans back to standalone (regardless of count)
+      const revertedScans = state.scans.map(scan => {
+        if (!isStandaloneScan(scan) && scan.combinationId === chainId) {
+          return {
+            type: 'standalone' as const,
+            assetId: scan.assetId,
+            assetNumber: scan.assetNumber,
+            timestamp: scan.timestamp,
+            ...(scan.category && { category: scan.category }),
+          };
+        }
+        return scan;
+      });
+
+      logger.assetCount('Chain discarded — all items reverted to standalone', {
+        chainId,
+        itemsReverted: chainCombo.assetIds.length,
+      });
+
+      return {
+        ...state,
+        activeChainId: null,
+        scans: revertedScans,
+        combinations: newCombinations,
       };
     }
 

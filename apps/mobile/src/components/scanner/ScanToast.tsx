@@ -67,6 +67,10 @@ export function ScanToast({
   useEffect(() => {
     if (!visible) return;
 
+    // Stop any in-flight animations to prevent race conditions
+    opacity.stopAnimation();
+    translateY.stopAnimation();
+
     // Animate in
     Animated.parallel([
       Animated.timing(opacity, {
@@ -113,6 +117,10 @@ export function ScanToast({
   // Handle hide animation when visible goes false
   useEffect(() => {
     if (!visible) {
+      // Stop any in-flight animations to prevent race conditions
+      opacity.stopAnimation();
+      translateY.stopAnimation();
+
       Animated.parallel([
         Animated.timing(opacity, {
           toValue: 0,

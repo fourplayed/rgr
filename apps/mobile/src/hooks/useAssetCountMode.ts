@@ -166,6 +166,10 @@ export function useAssetCountMode() {
     dispatch({ type: 'END_CHAIN' });
   }, []);
 
+  const discardChain = useCallback(() => {
+    dispatch({ type: 'DISCARD_CHAIN' });
+  }, []);
+
   const setCombinationNotes = useCallback((combinationId: string, notes: string) => {
     dispatch({ type: 'SET_COMBINATION_NOTES', combinationId, notes });
   }, []);
@@ -226,6 +230,7 @@ export function useAssetCountMode() {
     cancelScan,
     startChain,
     endChain,
+    discardChain,
     setCombinationNotes,
     setCombinationPhoto,
     undoLastScan,

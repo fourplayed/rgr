@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, SafeAreaView, TouchableOpacity, StyleSheet, Modal } from 'react-native';
+import { View, Text, SafeAreaView, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { CountSummarySheet } from './CountSummarySheet';
 import { ScanToast } from './ScanToast';
 import { LoadingDots } from '../common/LoadingDots';
 import { PillBadge } from '../common/PillBadge';
@@ -27,9 +28,6 @@ interface CameraOverlayProps {
   onStartAssetCount: () => void;
   onEndAssetCount: () => void;
 
-  // Debug scan (dev only)
-  onDebugScan: () => void;
-
   // Count mode inline components
   scanToast?: {
     visible: boolean;
@@ -49,6 +47,7 @@ interface CameraOverlayProps {
   maxChainSize?: number;
   onStartChain?: () => void;
   onEndChain?: () => void;
+  onDiscardChain?: () => void;
 
   // Mid-count summary
   countSummary?: CountSummaryData;
@@ -66,7 +65,6 @@ function CameraOverlayComponent({
   canPerformAssetCount,
   onStartAssetCount,
   onEndAssetCount,
-  onDebugScan,
   scanToast,
   scanToastId,
   onScanToastDismiss,
@@ -78,6 +76,7 @@ function CameraOverlayComponent({
   maxChainSize = 5,
   onStartChain,
   onEndChain,
+  onDiscardChain,
   countSummary,
   scanStatus,
 }: CameraOverlayProps) {
@@ -97,8 +96,8 @@ function CameraOverlayComponent({
             {isChainActive && (
               <PillBadge
                 icon="link"
-                label={`Linking (${activeChainSize ?? 0} of ${maxChainSize})`}
-                color={colors.warning}
+                label={`Combo Chain (${activeChainSize ?? 0} of ${maxChainSize})`}
+                color={colors.violet}
               />
             )}
             <Text style={styles.title}>{assetCountDepotName}</Text>
@@ -108,7 +107,7 @@ function CameraOverlayComponent({
               accessibilityRole="button"
               accessibilityLabel={`${assetCountScanCount} assets counted. Tap for summary.`}
             >
-              <Text style={[styles.subtitle, countSummary && assetCountScanCount > 0 && summaryStyles.tappableCount]}>
+              <Text style={[styles.subtitle, countSummary && assetCountScanCount > 0 && headerStyles.tappableCount]}>
                 {assetCountScanCount} assets counted {countSummary && assetCountScanCount > 0 ? '▾' : ''}
               </Text>
             </TouchableOpacity>
@@ -154,151 +153,98 @@ function CameraOverlayComponent({
       ) : null}
 
       <View style={styles.footer}>
-        {/* Link controls (count mode) */}
-        {assetCountActive && onStartChain && onEndChain && (
-          isChainActive ? (
-            <View style={chainStyles.chainActiveContainer}>
-              <View style={chainStyles.chainStatus}>
-                <Ionicons name="link" size={16} color={colors.electricBlue} />
-                <Text style={chainStyles.chainStatusText}>
-                  Linking Assets ({activeChainSize ?? 0} of {maxChainSize})
-                </Text>
-              </View>
+        {assetCountActive ? (
+          <>
+            {/* Chain controls (top area) */}
+            {onStartChain && onEndChain && (
+              isChainActive ? (
+                <View style={chainStyles.chainActiveContainer}>
+                  <TouchableOpacity
+                    style={chainStyles.cancelChainButton}
+                    onPress={onDiscardChain}
+                    accessibilityRole="button"
+                    accessibilityLabel="Cancel combination chain"
+                  >
+                    <Ionicons name="close-circle-outline" size={18} color={colors.error} />
+                    <Text style={chainStyles.cancelChainButtonText}>Cancel Chain</Text>
+                  </TouchableOpacity>
+                  {(activeChainSize ?? 0) >= 2 && (
+                    <TouchableOpacity
+                      style={chainStyles.endChainButton}
+                      onPress={onEndChain}
+                      accessibilityRole="button"
+                      accessibilityLabel="Done creating combination chain"
+                    >
+                      <Ionicons name="checkmark-circle-outline" size={18} color={colors.textInverse} />
+                      <Text style={chainStyles.endChainButtonText}>Done</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={chainStyles.startChainButton}
+                  onPress={onStartChain}
+                  accessibilityRole="button"
+                  accessibilityLabel="Create combination chain"
+                >
+                  <Ionicons name="link" size={18} color={colors.violet} />
+                  <Text style={chainStyles.startChainButtonText}>Create Combination Chain</Text>
+                </TouchableOpacity>
+              )
+            )}
+
+            {/* End Count (always at bottom) */}
+            {canPerformAssetCount && (
               <TouchableOpacity
-                style={chainStyles.endChainButton}
-                onPress={onEndChain}
+                style={[styles.assetCountButton, styles.assetCountButtonActive]}
+                onPress={onEndAssetCount}
                 accessibilityRole="button"
-                accessibilityLabel="Done linking assets"
+                accessibilityLabel="End asset count"
               >
-                <Ionicons name="checkmark-circle-outline" size={18} color={colors.textInverse} />
-                <Text style={chainStyles.endChainButtonText}>Done Linking</Text>
+                <Ionicons name="stop-circle-outline" size={18} color={colors.error} />
+                <Text style={[styles.assetCountButtonText, styles.assetCountButtonTextActive]}>
+                  End Asset Count Mode
+                </Text>
               </TouchableOpacity>
-            </View>
-          ) : (
-            <TouchableOpacity
-              style={chainStyles.startChainButton}
-              onPress={onStartChain}
-              accessibilityRole="button"
-              accessibilityLabel="Link assets together"
-            >
-              <Ionicons name="link" size={18} color={colors.electricBlue} />
-              <Text style={chainStyles.startChainButtonText}>Link Assets</Text>
-            </TouchableOpacity>
-          )
-        )}
+            )}
+          </>
+        ) : (
+          <>
+            {!hasLocationPermission && (
+              <TouchableOpacity
+                style={styles.permissionButton}
+                onPress={onRequestLocationPermission}
+                accessibilityRole="button"
+                accessibilityLabel="Enable location"
+                accessibilityHint="Double tap to grant location permission for scan tracking"
+              >
+                <Text style={styles.permissionButtonText}>Enable Location</Text>
+              </TouchableOpacity>
+            )}
 
-        {!hasLocationPermission && (
-          <TouchableOpacity
-            style={styles.permissionButton}
-            onPress={onRequestLocationPermission}
-            accessibilityRole="button"
-            accessibilityLabel="Enable location"
-            accessibilityHint="Double tap to grant location permission for scan tracking"
-          >
-            <Text style={styles.permissionButtonText}>Enable Location</Text>
-          </TouchableOpacity>
-        )}
-
-        {/* Debug button for testing */}
-        {__DEV__ && (
-          <TouchableOpacity
-            style={chainStyles.startChainButton}
-            onPress={onDebugScan}
-          >
-            <Ionicons name="bug-outline" size={18} color={colors.warning} />
-            <Text style={[chainStyles.startChainButtonText, { color: colors.warning }]}>Debug Scan</Text>
-          </TouchableOpacity>
-        )}
-
-        {/* Asset Count button for managers+ */}
-        {canPerformAssetCount && (
-          <TouchableOpacity
-            style={[
-              styles.assetCountButton,
-              assetCountActive && styles.assetCountButtonActive,
-            ]}
-            onPress={assetCountActive ? onEndAssetCount : onStartAssetCount}
-            accessibilityRole="button"
-            accessibilityLabel={assetCountActive ? 'End asset count' : 'Start asset count'}
-          >
-            <Ionicons
-              name={assetCountActive ? 'stop-circle-outline' : 'clipboard-outline'}
-              size={18}
-              color={assetCountActive ? colors.error : colors.electricBlue}
-            />
-            <Text
-              style={[
-                styles.assetCountButtonText,
-                assetCountActive && styles.assetCountButtonTextActive,
-              ]}
-            >
-              {assetCountActive ? 'End Count' : 'Asset Count'}
-            </Text>
-          </TouchableOpacity>
+            {canPerformAssetCount && (
+              <TouchableOpacity
+                style={styles.assetCountButton}
+                onPress={onStartAssetCount}
+                accessibilityRole="button"
+                accessibilityLabel="Start asset count"
+              >
+                <Ionicons name="clipboard-outline" size={18} color={colors.electricBlue} />
+                <Text style={styles.assetCountButtonText}>Asset Count</Text>
+              </TouchableOpacity>
+            )}
+          </>
         )}
       </View>
 
       {/* Mid-count summary sheet */}
       {countSummary && (
-        <Modal
+        <CountSummarySheet
           visible={showSummary}
-          transparent
-          animationType="slide"
-          onRequestClose={handleToggleSummary}
-        >
-          <View style={summaryStyles.backdrop}>
-            <TouchableOpacity
-              style={summaryStyles.backdropTouchable}
-              activeOpacity={1}
-              onPress={handleToggleSummary}
-            />
-            <View style={summaryStyles.sheet}>
-              <View style={summaryStyles.handle} />
-
-              <View style={summaryStyles.content}>
-                <Text style={summaryStyles.title}>Count Summary</Text>
-
-                <View style={summaryStyles.statsRow}>
-                  <View style={summaryStyles.statBox}>
-                    <Text style={summaryStyles.statValue}>{countSummary.standaloneCount}</Text>
-                    <Text style={summaryStyles.statLabel}>Standalone</Text>
-                  </View>
-                  <View style={summaryStyles.statDivider} />
-                  <View style={summaryStyles.statBox}>
-                    <Text style={summaryStyles.statValue}>{countSummary.combinationCount}</Text>
-                    <Text style={summaryStyles.statLabel}>Combinations</Text>
-                  </View>
-                  <View style={summaryStyles.statDivider} />
-                  <View style={summaryStyles.statBox}>
-                    <Text style={summaryStyles.statValue}>{assetCountScanCount}</Text>
-                    <Text style={summaryStyles.statLabel}>Total</Text>
-                  </View>
-                </View>
-
-                {countSummary.recentAssetNumbers.length > 0 && (
-                  <View style={summaryStyles.recentSection}>
-                    <Text style={summaryStyles.recentTitle}>Recent Scans</Text>
-                    {countSummary.recentAssetNumbers.map((num, i) => (
-                      <View key={`${num}-${i}`} style={summaryStyles.recentItem}>
-                        <Ionicons name="checkmark-circle" size={14} color={colors.success} />
-                        <Text style={summaryStyles.recentText}>{num}</Text>
-                      </View>
-                    ))}
-                  </View>
-                )}
-
-                <TouchableOpacity
-                  style={summaryStyles.closeButton}
-                  onPress={handleToggleSummary}
-                  accessibilityRole="button"
-                  accessibilityLabel="Close summary"
-                >
-                  <Text style={summaryStyles.closeButtonText}>Continue Scanning</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
+          countSummary={countSummary}
+          scanCount={assetCountScanCount}
+          onDismiss={handleToggleSummary}
+        />
       )}
     </SafeAreaView>
   );
@@ -331,19 +277,29 @@ const statusStyles = StyleSheet.create({
 
 const chainStyles = StyleSheet.create({
   chainActiveContainer: {
-    marginBottom: spacing.sm,
-  },
-  chainStatus: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.sm,
+    gap: spacing.md,
     marginBottom: spacing.sm,
   },
-  chainStatusText: {
+  cancelChainButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.error + '20',
+    borderWidth: 1,
+    borderColor: colors.error + '50',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.md,
+    gap: spacing.sm,
+  },
+  cancelChainButtonText: {
     fontSize: fontSize.sm,
     fontFamily: 'Lato_700Bold',
-    color: colors.electricBlue,
+    color: colors.error,
+    textTransform: 'uppercase',
   },
   endChainButton: {
     flexDirection: 'row',
@@ -365,9 +321,9 @@ const chainStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.electricBlue + '20',
+    backgroundColor: colors.violet + '20',
     borderWidth: 1,
-    borderColor: colors.electricBlue + '50',
+    borderColor: colors.violet + '50',
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.lg,
     borderRadius: borderRadius.md,
@@ -377,113 +333,13 @@ const chainStyles = StyleSheet.create({
   startChainButtonText: {
     fontSize: fontSize.sm,
     fontFamily: 'Lato_700Bold',
-    color: colors.electricBlue,
+    color: colors.violet,
     textTransform: 'uppercase',
   },
 });
 
-const summaryStyles = StyleSheet.create({
+const headerStyles = StyleSheet.create({
   tappableCount: {
     textDecorationLine: 'underline',
-  },
-  backdrop: {
-    flex: 1,
-    backgroundColor: colors.overlay,
-    justifyContent: 'flex-end',
-  },
-  backdropTouchable: {
-    flex: 1,
-  },
-  sheet: {
-    backgroundColor: colors.background,
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
-    maxHeight: '50%',
-  },
-  handle: {
-    width: 40,
-    height: 4,
-    backgroundColor: colors.border,
-    borderRadius: borderRadius.full,
-    alignSelf: 'center',
-    marginTop: spacing.md,
-    marginBottom: spacing.lg,
-  },
-  content: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing['2xl'],
-  },
-  title: {
-    fontSize: fontSize['2xl'],
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    textTransform: 'uppercase',
-    textAlign: 'center',
-    marginBottom: spacing.lg,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-    padding: spacing.base,
-    marginBottom: spacing.lg,
-  },
-  statBox: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statDivider: {
-    width: 1,
-    backgroundColor: colors.border,
-    marginVertical: spacing.xs,
-  },
-  statValue: {
-    fontSize: fontSize['2xl'],
-    fontFamily: 'Lato_700Bold',
-    color: colors.electricBlue,
-  },
-  statLabel: {
-    fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
-    color: colors.textSecondary,
-    textTransform: 'uppercase',
-    marginTop: 2,
-  },
-  recentSection: {
-    marginBottom: spacing.lg,
-  },
-  recentTitle: {
-    fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: spacing.sm,
-  },
-  recentItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.xs,
-  },
-  recentText: {
-    fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-  },
-  closeButton: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    height: 48,
-    borderRadius: borderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeButtonText: {
-    fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    textTransform: 'uppercase',
   },
 });

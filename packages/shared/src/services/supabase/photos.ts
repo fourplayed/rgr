@@ -17,7 +17,7 @@ import {
 } from '../../types/entities/photo';
 import { mapRowToFreightAnalysis } from '../../types/entities/freightAnalysis';
 import { mapRowToHazardAlert } from '../../types/entities/hazardAlert';
-import { MAX_PHOTO_SIZE_BYTES, STORAGE_BUCKETS } from '../../utils/constants';
+import { MAX_PHOTO_SIZE_BYTES, STORAGE_BUCKETS, isValidUUID } from '../../utils/constants';
 
 /**
  * Generate a unique ID for filenames.
@@ -243,6 +243,10 @@ export async function getAssetPhotos(
   // Keyset pagination: composite cursor on (created_at, id) to handle
   // items with identical timestamps correctly
   if (beforeId) {
+    if (!isValidUUID(beforeId)) {
+      return { success: true, data: [], error: null };
+    }
+
     const { data: cursorPhoto } = await supabase
       .from('photos')
       .select('created_at')

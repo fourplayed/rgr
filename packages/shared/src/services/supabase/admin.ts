@@ -13,6 +13,7 @@ import type { AuditLogWithUser, AuditLogRow } from '../../types/entities/auditLo
 import { mapRowToProfile, AdminUpdateProfileInputSchema, mapAdminProfileToUpdate } from '../../types/api/auth';
 import { mapRowToDepot, mapDepotToInsert, mapDepotToUpdate, CreateDepotInputSchema, UpdateDepotInputSchema } from '../../types/entities/depot';
 import { mapRowToAuditLog } from '../../types/entities/auditLog';
+import { isValidUUID, isValidISOTimestamp } from '../../utils/constants';
 
 // ── List Profiles ──
 
@@ -363,7 +364,13 @@ export async function listAuditLogs(
 
     // Composite cursor on (created_at, id) to handle identical timestamps
     if (cursor) {
+      if (!isValidISOTimestamp(cursor)) {
+        return { success: true, data: { data: [], hasMore: false }, error: null };
+      }
       if (cursorId) {
+        if (!isValidUUID(cursorId)) {
+          return { success: true, data: { data: [], hasMore: false }, error: null };
+        }
         query = query.or(
           `created_at.lt.${cursor},and(created_at.eq.${cursor},id.lt.${cursorId})`
         );

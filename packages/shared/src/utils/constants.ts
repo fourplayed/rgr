@@ -119,6 +119,22 @@ export const MAP_DEFAULTS = {
 };
 
 /**
+ * Validate a UUID v4 string.
+ * Used to sanitize cursor values before PostgREST .or() interpolation.
+ */
+export function isValidUUID(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+}
+
+/**
+ * Validate an ISO 8601 timestamp string.
+ * Used to sanitize cursor values before PostgREST .or() interpolation.
+ */
+export function isValidISOTimestamp(value: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value) && !isNaN(Date.parse(value));
+}
+
+/**
  * Storage bucket names — must match Supabase storage bucket IDs
  */
 export const STORAGE_BUCKETS = {

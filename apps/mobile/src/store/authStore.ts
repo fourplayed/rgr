@@ -24,6 +24,7 @@ interface AuthState {
   user: Profile | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isLoginInProgress: boolean;
   error: string | null;
   authError: string | null;
   autoLoginAttempted: boolean;
@@ -44,19 +45,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isAuthenticated: false,
   isLoading: true,
+  isLoginInProgress: false,
   error: null,
   authError: null,
   autoLoginAttempted: false,
 
   login: async (email: string, password: string) => {
-    if (get().isLoading) return { success: false, error: 'Login in progress' };
-    set({ isLoading: true, error: null });
+    if (get().isLoginInProgress) return { success: false, error: 'Login in progress' };
+    set({ isLoginInProgress: true, isLoading: true, error: null });
 
     try {
       const result = await signInWithEmailSecure({ email, password });
 
       if (!result.success) {
-        set({ error: result.error, isLoading: false });
+        set({ error: result.error, isLoading: false, isLoginInProgress: false });
         return { success: false, error: result.error };
       }
 
@@ -67,6 +69,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({
           error: profileResult.error,
           isLoading: false,
+          isLoginInProgress: false,
         });
         return { success: false, error: profileResult.error };
       }
@@ -74,7 +77,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (!profileResult.data.isActive) {
         await signOut();
         const errorMsg = 'Your account has been deactivated. Contact an administrator.';
-        set({ error: errorMsg, isLoading: false });
+        set({ error: errorMsg, isLoading: false, isLoginInProgress: false });
         return { success: false, error: errorMsg };
       }
 
@@ -93,6 +96,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         user: profileResult.data,
         isAuthenticated: true,
         isLoading: false,
+        isLoginInProgress: false,
         error: null,
       });
 
@@ -104,7 +108,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return { success: true };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Login failed';
-      set({ error: message, isLoading: false });
+      set({ error: message, isLoading: false, isLoginInProgress: false });
       return { success: false, error: message };
     }
   },

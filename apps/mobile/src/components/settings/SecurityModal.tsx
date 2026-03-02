@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -90,6 +90,7 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const sheetTranslateY = useRef(new Animated.Value(screenHeight)).current;
   const animGenRef = useRef(0);
+  const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const validation = validatePassword(newPassword);
   const passwordsMatch = newPassword === confirmPassword && confirmPassword.length > 0;
@@ -129,26 +130,14 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
     }
   }, [visible, backdropOpacity, sheetTranslateY, screenHeight]);
 
-  useEffect(() => {
-    if (visible) {
-      loadAutoLoginState();
-      resetPasswordForm();
-    }
-  }, [visible]);
-
-  const loadAutoLoginState = async () => {
+  const loadAutoLoginState = useCallback(async () => {
     setAutoLoginLoading(true);
     const enabled = await isAutoLoginEnabled();
     setAutoLogin(enabled);
     setAutoLoginLoading(false);
-  };
+  }, []);
 
-  const handleAutoLoginToggle = async (enabled: boolean) => {
-    setAutoLogin(enabled);
-    await setAutoLoginEnabled(enabled);
-  };
-
-  const resetPasswordForm = () => {
+  const resetPasswordForm = useCallback(() => {
     setShowPasswordForm(false);
     setCurrentPassword('');
     setNewPassword('');
@@ -158,6 +147,24 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
     setShowCurrentPassword(false);
     setShowNewPassword(false);
     setShowConfirmPassword(false);
+  }, []);
+
+  useEffect(() => {
+    if (visible) {
+      loadAutoLoginState();
+      resetPasswordForm();
+    } else {
+      // Clear the success timer when modal closes to prevent stale closure
+      if (successTimerRef.current) {
+        clearTimeout(successTimerRef.current);
+        successTimerRef.current = null;
+      }
+    }
+  }, [visible, loadAutoLoginState, resetPasswordForm]);
+
+  const handleAutoLoginToggle = async (enabled: boolean) => {
+    setAutoLogin(enabled);
+    await setAutoLoginEnabled(enabled);
   };
 
   const handleChangePassword = async () => {
@@ -199,7 +206,8 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
 
     if (result.success) {
       setSuccess(true);
-      setTimeout(() => {
+      successTimerRef.current = setTimeout(() => {
+        successTimerRef.current = null;
         resetPasswordForm();
       }, 2000);
     } else {

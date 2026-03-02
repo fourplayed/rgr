@@ -99,11 +99,12 @@ export async function signInWithEmailSecure(
 
     const body = await response.json();
 
-    // If the Edge Function is not deployed (404) or unavailable (5xx),
-    // fall back to direct auth rather than treating it as a login failure.
-    if (response.status === 404 || response.status >= 500) {
+    // If the Edge Function is not deployed (404), fall back to direct auth
+    // so the app remains usable during rollout. A 5xx means the function
+    // errored — do NOT fall back, as that would bypass server-side rate limiting.
+    if (response.status === 404) {
       console.warn(
-        `[auth] secure-auth Edge Function returned ${response.status}, falling back to direct sign-in`
+        '[auth] secure-auth Edge Function returned 404, falling back to direct sign-in'
       );
       return signInWithEmail(credentials);
     }

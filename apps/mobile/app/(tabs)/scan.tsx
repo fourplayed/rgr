@@ -1,12 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View,
-  Text,
-  TouchableOpacity,
   InteractionManager,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAuthStore } from '../../src/store/authStore';
 import { useLocationStore } from '../../src/store/locationStore';
@@ -21,10 +18,8 @@ import { CameraOverlay } from '../../src/components/scanner/CameraOverlay';
 import type { CountSummaryData } from '../../src/components/scanner/CameraOverlay';
 import { ScanModalStack } from '../../src/components/scanner/ScanModalStack';
 import { TutorialSheet } from '../../src/components/common';
-import type { CachedLocationData } from '../../src/store/locationStore';
 import type { CountModeAutoConfirmResult } from '../../src/hooks/scan/useScanFlow';
 import { isStandaloneScan, submitAssetCount, MAX_COMBINATION_SIZE } from '@rgr/shared';
-import { colors } from '../../src/theme/colors';
 import { styles } from '../../src/components/scanner/scan.styles';
 
 export default function ScanScreen() {
@@ -121,9 +116,6 @@ export default function ScanScreen() {
       return { ...toast, visible: true };
     });
   }, []);
-
-  // Debug state
-  const [showDebugOverlay, setShowDebugOverlay] = useState(false);
 
   // Track previous activeChainId for auto-end detection
   const prevChainIdRef = useRef<string | null>(null);
@@ -234,7 +226,7 @@ export default function ScanScreen() {
   const handleStartChain = useCallback(() => {
     assetCount.startChain();
     showScanToast({
-      message: 'Chain started — scan assets to link',
+      message: 'Combination chain started — scan assets to add',
       type: 'link',
       showUndo: false,
     });
@@ -264,6 +256,22 @@ export default function ScanScreen() {
     // which will be updated. The effect will fire and handle it.
 
     scanFlow.addDebugLog(`Chain ended (${chainSize} items)`);
+  }, [assetCount, scanFlow, showScanToast]);
+
+  const handleDiscardChain = useCallback(() => {
+    const chainSize = assetCount.activeChainSize;
+
+    assetCount.discardChain();
+
+    showScanToast({
+      message: chainSize > 0
+        ? `Chain cancelled — ${chainSize} item${chainSize !== 1 ? 's' : ''} reverted`
+        : 'Empty chain discarded',
+      type: 'info',
+      showUndo: false,
+    });
+
+    scanFlow.addDebugLog(`Chain discarded (${chainSize} items reverted)`);
   }, [assetCount, scanFlow, showScanToast]);
 
   // ── Orchestration: Confirm Sheet Dismiss ──
@@ -530,45 +538,6 @@ export default function ScanScreen() {
     });
   }, []);
 
-  // ── Debug Scan ──
-
-  const handleDebugScan = useCallback(async () => {
-    const testCodes = ['RGR-TL001', 'TL001', 'RGR-DL001', 'DL001'];
-    let asset = null;
-    for (const code of testCodes) {
-      try {
-        asset = await scanFlow.lookupAsset(code);
-        if (asset) break;
-      } catch {
-        // Try next code
-      }
-    }
-
-    if (!asset) {
-      scanFlow.setAlertSheet({
-        visible: true,
-        type: 'warning',
-        title: 'Debug Error',
-        message: 'No test assets found. Is the database seeded?',
-      });
-      return;
-    }
-
-    const mockLocation: CachedLocationData = {
-      latitude: 37.7749,
-      longitude: -122.4194,
-      accuracy: 10,
-      altitude: null,
-      heading: null,
-      speed: null,
-      timestamp: Date.now(),
-    };
-    scanFlow.setScannedAsset(asset);
-    scanFlow.setEffectiveLocation(mockLocation);
-    scanFlow.setMatchedDepot(cachedDepot);
-    scanFlow.setShowConfirmSheet(true);
-  }, [scanFlow, cachedDepot]);
-
   // ── Permission Requests ──
 
   const hasRequestedPermissions = useRef(false);
@@ -656,7 +625,6 @@ export default function ScanScreen() {
           canPerformAssetCount={canPerformAssetCount}
           onStartAssetCount={handleStartAssetCount}
           onEndAssetCount={handleEndAssetCount}
-          onDebugScan={handleDebugScan}
           // Count mode inline components
           scanToast={scanToast}
           scanToastId={toastIdRef.current}
@@ -670,6 +638,7 @@ export default function ScanScreen() {
           maxChainSize={MAX_COMBINATION_SIZE}
           onStartChain={handleStartChain}
           onEndChain={handleEndChain}
+          onDiscardChain={handleDiscardChain}
           countSummary={countSummary}
           scanStatus={scanFlow.scanStatus}
         />
@@ -754,155 +723,11 @@ export default function ScanScreen() {
         icon="clipboard-outline"
         title="Asset Count — Quick Start"
         body="Scan each asset's QR code to count it."
-        bullets={['Use "Link" for connected assets (e.g. dolly + trailer)', 'Tap "End Count" when done to review and submit']}
+        bullets={['Use "Create Combination Chain" for connected assets (e.g. dolly + trailer)', 'Tap "End Count" when done to review and submit']}
         buttonLabel="START COUNTING"
         onDismiss={handleCountTutorialDismiss}
       />
 
-      {/* Debug Overlay */}
-      {__DEV__ && (
-        <TouchableOpacity
-          style={styles.debugToggle}
-          onPress={() => setShowDebugOverlay(prev => !prev)}
-        >
-          <Text style={styles.debugToggleText}>
-            {showDebugOverlay ? '\u2715' : '\uD83D\uDC1B'}
-          </Text>
-        </TouchableOpacity>
-      )}
-
-      {__DEV__ && showDebugOverlay && (
-        <View style={styles.debugOverlay}>
-              <Text style={styles.debugTitle}>Scan Flow</Text>
-
-              {/* Step 1: QR Scanned */}
-              <View style={styles.debugStep}>
-                <Ionicons
-                  name={scanFlow.scannedAsset ? 'checkmark-circle' : 'ellipse-outline'}
-                  size={20}
-                  color={scanFlow.scannedAsset ? colors.success : colors.textSecondary}
-                />
-                <Text style={[styles.debugStepText, scanFlow.scannedAsset && styles.debugStepComplete]}>
-                  QR Code Scanned
-                </Text>
-                {scanFlow.scannedAsset && (
-                  <Text style={styles.debugStepDetail}>{scanFlow.scannedAsset.assetNumber}</Text>
-                )}
-              </View>
-
-              {/* Step 2: Location Acquired */}
-              <View style={styles.debugStep}>
-                <Ionicons
-                  name={scanFlow.effectiveLocation ? 'checkmark-circle' : 'ellipse-outline'}
-                  size={20}
-                  color={scanFlow.effectiveLocation ? colors.success : colors.textSecondary}
-                />
-                <Text style={[styles.debugStepText, scanFlow.effectiveLocation && styles.debugStepComplete]}>
-                  Location Acquired
-                </Text>
-              </View>
-
-              {/* Step 3: Depot Matched */}
-              <View style={styles.debugStep}>
-                <Ionicons
-                  name={scanFlow.matchedDepot ? 'checkmark-circle' : 'ellipse-outline'}
-                  size={20}
-                  color={scanFlow.matchedDepot ? colors.success : colors.textSecondary}
-                />
-                <Text style={[styles.debugStepText, scanFlow.matchedDepot && styles.debugStepComplete]}>
-                  Depot Matched
-                </Text>
-                {scanFlow.matchedDepot && (
-                  <Text style={styles.debugStepDetail}>{scanFlow.matchedDepot.depot.name}</Text>
-                )}
-              </View>
-
-              {/* Step 4: Confirm Sheet Shown */}
-              <View style={styles.debugStep}>
-                <Ionicons
-                  name={scanFlow.showConfirmSheet ? 'checkmark-circle' : 'ellipse-outline'}
-                  size={20}
-                  color={scanFlow.showConfirmSheet ? colors.success : colors.textSecondary}
-                />
-                <Text style={[styles.debugStepText, scanFlow.showConfirmSheet && styles.debugStepComplete]}>
-                  Awaiting Confirmation
-                </Text>
-              </View>
-
-              {/* Step 5: Scan Confirmed */}
-              <View style={styles.debugStep}>
-                <Ionicons
-                  name={scanFlow.completedAsset ? 'checkmark-circle' : 'ellipse-outline'}
-                  size={20}
-                  color={scanFlow.completedAsset ? colors.success : colors.textSecondary}
-                />
-                <Text style={[styles.debugStepText, scanFlow.completedAsset && styles.debugStepComplete]}>
-                  Scan Confirmed
-                </Text>
-              </View>
-
-              {/* Step 6: Defect Report (optional) */}
-              <View style={styles.debugStep}>
-                <Ionicons
-                  name={defectFlow.defectReportedRef.current ? 'checkmark-circle' : 'remove-circle-outline'}
-                  size={20}
-                  color={defectFlow.defectReportedRef.current ? colors.success : colors.textSecondary}
-                />
-                <Text style={[styles.debugStepText, defectFlow.defectReportedRef.current && styles.debugStepComplete]}>
-                  Defect Reported
-                </Text>
-                <Text style={styles.debugStepOptional}>(optional)</Text>
-              </View>
-
-              {/* Step 7: Photo Captured (optional) */}
-              <View style={styles.debugStep}>
-                <Ionicons
-                  name={photoFlow.photoUploadedRef.current ? 'checkmark-circle' : 'remove-circle-outline'}
-                  size={20}
-                  color={photoFlow.photoUploadedRef.current ? colors.success : colors.textSecondary}
-                />
-                <Text style={[styles.debugStepText, photoFlow.photoUploadedRef.current && styles.debugStepComplete]}>
-                  Photo Uploaded
-                </Text>
-                <Text style={styles.debugStepOptional}>(optional)</Text>
-              </View>
-
-              {/* Step 8: Flow Complete */}
-              <View style={styles.debugStep}>
-                <Ionicons
-                  name={photoFlow.showSuccessSheet ? 'checkmark-circle' : 'ellipse-outline'}
-                  size={20}
-                  color={photoFlow.showSuccessSheet ? colors.success : colors.textSecondary}
-                />
-                <Text style={[styles.debugStepText, photoFlow.showSuccessSheet && styles.debugStepComplete]}>
-                  Flow Complete
-                </Text>
-              </View>
-
-              {/* Current Modal State */}
-              <Text style={[styles.debugTitle, { marginTop: 12 }]}>Active Modal</Text>
-              <Text style={styles.debugModalState}>
-                {scanFlow.showConfirmSheet ? 'Confirm Sheet' :
-                 defectFlow.showDefectReport ? 'Defect Report' :
-                 photoFlow.showPhotoPrompt ? 'Photo Prompt' :
-                 photoFlow.showCamera ? 'Camera' :
-                 photoFlow.showSuccessSheet ? 'Success Sheet' :
-                 'None (Scanning)'}
-              </Text>
-
-              {/* Reset Button */}
-              <TouchableOpacity
-                style={styles.debugResetButton}
-                onPress={() => {
-                  scanFlow.addDebugLog('Force reset scanner triggered');
-                  resetAllScanState();
-                }}
-              >
-                <Ionicons name="refresh" size={16} color={colors.textInverse} />
-                <Text style={styles.debugResetButtonText}>Reset Flow</Text>
-              </TouchableOpacity>
-            </View>
-          )}
     </View>
   );
 }

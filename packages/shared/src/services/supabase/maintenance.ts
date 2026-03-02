@@ -1,4 +1,5 @@
 import { getSupabaseClient } from './client';
+import { isValidUUID } from '../../utils/constants';
 import type { ServiceResult } from '../../types';
 import type {
   MaintenanceRecord,
@@ -112,6 +113,10 @@ export async function listMaintenance(
   // Keyset pagination: fetch records before the cursor using composite (created_at, id)
   // to handle ties in created_at correctly
   if (beforeId) {
+    if (!isValidUUID(beforeId)) {
+      return { success: true, data: [], error: null };
+    }
+
     const { data: cursorData } = await supabase
       .from('maintenance_records')
       .select('created_at')
