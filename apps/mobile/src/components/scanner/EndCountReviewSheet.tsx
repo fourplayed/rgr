@@ -1,4 +1,4 @@
-import React, { memo, useMemo, useState } from 'react';
+import React, { memo, useMemo, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LoadingDots } from '../common/LoadingDots';
 import { ConfirmSheet } from '../common/ConfirmSheet';
+import { InputSheet } from '../common/InputSheet';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 import type { AssetScan, CombinationGroup } from '@rgr/shared';
@@ -22,6 +23,7 @@ interface EndCountReviewSheetProps {
   combinations: Record<string, CombinationGroup>;
   isSubmitting: boolean;
   onEditCombination?: (combinationId: string) => void;
+  onNotesChange?: ((combinationId: string, notes: string) => void) | undefined;
   onSubmit: () => void;
   onCancel: () => void;
   onDiscard: () => void;
@@ -35,6 +37,7 @@ function EndCountReviewSheetComponent({
   combinations,
   isSubmitting,
   onEditCombination,
+  onNotesChange,
   onSubmit,
   onCancel,
   onDiscard,
@@ -55,6 +58,18 @@ function EndCountReviewSheetComponent({
   const standaloneCount = standaloneScans.length;
 
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+  const [editingNotesCombinationId, setEditingNotesCombinationId] = useState<string | null>(null);
+
+  const editingNotesCombo = editingNotesCombinationId
+    ? combinationList.find(c => c.combinationId === editingNotesCombinationId)
+    : null;
+
+  const handleNotesSubmit = useCallback((notes: string) => {
+    if (editingNotesCombinationId && onNotesChange) {
+      onNotesChange(editingNotesCombinationId, notes);
+    }
+    setEditingNotesCombinationId(null);
+  }, [editingNotesCombinationId, onNotesChange]);
 
   // Check for missing data
   const combinationsWithoutPhoto = combinationList.filter(c => !c.photoUri);
@@ -155,17 +170,23 @@ function EndCountReviewSheetComponent({
                           </Text>
                         </View>
 
-                        {/* Notes status */}
-                        <View style={styles.statusItem}>
+                        {/* Notes status — tappable to add/edit */}
+                        <TouchableOpacity
+                          style={styles.statusItem}
+                          onPress={onNotesChange ? () => setEditingNotesCombinationId(combo.combinationId) : undefined}
+                          disabled={!onNotesChange}
+                          accessibilityRole="button"
+                          accessibilityLabel={combo.notes ? 'Edit notes' : 'Add notes'}
+                        >
                           <Ionicons
-                            name={combo.notes ? 'checkmark-circle' : 'remove-circle-outline'}
+                            name={combo.notes ? 'checkmark-circle' : 'create-outline'}
                             size={14}
-                            color={combo.notes ? colors.success : colors.textSecondary}
+                            color={combo.notes ? colors.success : colors.electricBlue}
                           />
-                          <Text style={styles.statusText}>
-                            {combo.notes ? 'Notes added' : 'No notes'}
+                          <Text style={[styles.statusText, !combo.notes && { color: colors.electricBlue }]}>
+                            {combo.notes ? 'Edit Note' : 'Add Note'}
                           </Text>
-                        </View>
+                        </TouchableOpacity>
                       </View>
 
                       {combo.notes && (
@@ -229,13 +250,18 @@ function EndCountReviewSheetComponent({
               </TouchableOpacity>
             </View>
 
+            {/* Divider before discard — visual separation from primary actions */}
+            <View style={styles.discardDivider} />
+
             {/* Discard */}
             <TouchableOpacity
               style={styles.discardButton}
               onPress={() => setShowDiscardConfirm(true)}
               disabled={isSubmitting}
+              accessibilityRole="button"
+              accessibilityLabel="Discard count"
             >
-              <Ionicons name="trash-outline" size={16} color={colors.error} />
+              <Ionicons name="trash-outline" size={14} color={colors.textSecondary} />
               <Text style={styles.discardButtonText}>Discard Count</Text>
             </TouchableOpacity>
           </View>
@@ -254,6 +280,20 @@ function EndCountReviewSheetComponent({
           onDiscard();
         }}
         onCancel={() => setShowDiscardConfirm(false)}
+      />
+
+      <InputSheet
+        visible={editingNotesCombinationId !== null}
+        title="Combination Notes"
+        message={editingNotesCombo
+          ? `Notes for ${editingNotesCombo.assetNumbers.join(' + ')}`
+          : ''}
+        placeholder="e.g. Damaged hitch, mismatched plates…"
+        submitLabel="Save"
+        cancelLabel="Cancel"
+        defaultValue={editingNotesCombo?.notes ?? ''}
+        onSubmit={handleNotesSubmit}
+        onCancel={() => setEditingNotesCombinationId(null)}
       />
     </Modal>
   );
@@ -286,6 +326,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   content: {
+    flex: 1,
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing['2xl'],
   },
@@ -340,7 +381,8 @@ const styles = StyleSheet.create({
 
   // Scroll content
   scrollContent: {
-    maxHeight: 300,
+    flex: 1,
+    minHeight: 200,
     marginBottom: spacing.md,
   },
 
@@ -498,17 +540,22 @@ const styles = StyleSheet.create({
     color: colors.textInverse,
     textTransform: 'uppercase',
   },
+  discardDivider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginTop: spacing.lg,
+    marginBottom: spacing.xs,
+  },
   discardButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.xs,
     paddingVertical: spacing.md,
-    marginTop: spacing.sm,
   },
   discardButtonText: {
     fontSize: fontSize.sm,
     fontFamily: 'Lato_400Regular',
-    color: colors.error,
+    color: colors.textSecondary,
   },
 });

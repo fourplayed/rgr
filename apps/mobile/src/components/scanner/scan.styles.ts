@@ -162,22 +162,6 @@ export const styles = StyleSheet.create({
   },
 
   // Asset Count Mode
-  assetCountBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.electricBlue,
-    paddingVertical: 4,
-    paddingHorizontal: spacing.sm,
-    borderRadius: borderRadius.full,
-    marginBottom: spacing.xs,
-    gap: 4,
-  },
-  assetCountBadgeText: {
-    fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
-    color: colors.textInverse,
-    textTransform: 'uppercase',
-  },
   assetCountButton: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -9,6 +9,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { UNDO_TOAST_DURATION_MS } from './constants';
 
 interface ScanToastProps {
   visible: boolean;
@@ -17,6 +18,12 @@ interface ScanToastProps {
   onUndo?: (() => void) | undefined;
   onDismiss: () => void;
   duration?: number | undefined;
+  /** Unique ID per toast — change triggers remount-like reset of timer/animation. */
+  toastId?: number | undefined;
+  /** Called when undo window opens (toast with onUndo becomes visible). */
+  onUndoWindowOpen?: (() => void) | undefined;
+  /** Called when undo window closes (timeout, manual dismiss, or undo pressed). */
+  onUndoWindowClose?: (() => void) | undefined;
 }
 
 export function ScanToast({
@@ -25,41 +32,85 @@ export function ScanToast({
   type = 'success',
   onUndo,
   onDismiss,
-  duration = 3000,
+  duration = UNDO_TOAST_DURATION_MS,
+  toastId,
+  onUndoWindowOpen,
+  onUndoWindowClose,
 }: ScanToastProps) {
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(-20)).current;
+  // Countdown opacity: 1 → 0 over the full duration (visual hint of time remaining)
+  const countdownOpacity = useRef(new Animated.Value(1)).current;
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const countdownAnimRef = useRef<Animated.CompositeAnimation | null>(null);
   const onDismissRef = useRef(onDismiss);
+  const onUndoWindowCloseRef = useRef(onUndoWindowClose);
+  const hasUndoRef = useRef(!!onUndo);
   useEffect(() => { onDismissRef.current = onDismiss; }, [onDismiss]);
+  useEffect(() => { onUndoWindowCloseRef.current = onUndoWindowClose; }, [onUndoWindowClose]);
+  useEffect(() => { hasUndoRef.current = !!onUndo; }, [onUndo]);
 
   const clearTimer = useCallback(() => {
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
     }
+    if (countdownAnimRef.current) {
+      countdownAnimRef.current.stop();
+      countdownAnimRef.current = null;
+    }
   }, []);
 
+  // Reset timer and animation when toastId changes (new toast replaces old)
   useEffect(() => {
-    if (visible) {
-      Animated.parallel([
-        Animated.timing(opacity, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(translateY, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-      ]).start();
+    if (!visible) return;
 
-      clearTimer();
-      timerRef.current = setTimeout(() => {
-        onDismissRef.current();
-      }, duration);
-    } else {
+    // Animate in
+    Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateY, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    // Reset and start countdown
+    clearTimer();
+    countdownOpacity.setValue(1);
+
+    if (onUndo) {
+      // Start the fading countdown for undo toasts
+      const anim = Animated.timing(countdownOpacity, {
+        toValue: 0.3,
+        duration,
+        useNativeDriver: true,
+      });
+      countdownAnimRef.current = anim;
+      anim.start();
+
+      // Notify that undo window is open
+      onUndoWindowOpen?.();
+    }
+
+    timerRef.current = setTimeout(() => {
+      if (hasUndoRef.current) {
+        onUndoWindowCloseRef.current?.();
+      }
+      onDismissRef.current();
+    }, duration);
+
+    return clearTimer;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- toastId triggers full reset
+  }, [toastId, visible]);
+
+  // Handle hide animation when visible goes false
+  useEffect(() => {
+    if (!visible) {
       Animated.parallel([
         Animated.timing(opacity, {
           toValue: 0,
@@ -74,9 +125,7 @@ export function ScanToast({
       ]).start();
       clearTimer();
     }
-
-    return clearTimer;
-  }, [visible, duration, opacity, translateY, clearTimer]);
+  }, [visible, opacity, translateY, clearTimer]);
 
   if (!visible) return null;
 
@@ -99,16 +148,22 @@ export function ScanToast({
         </Text>
       </View>
       {onUndo && (
-        <TouchableOpacity
-          style={styles.undoButton}
-          onPress={() => {
-            clearTimer();
-            onUndo();
-          }}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Text style={styles.undoText}>Undo</Text>
-        </TouchableOpacity>
+        <Animated.View style={{ opacity: countdownOpacity }}>
+          <TouchableOpacity
+            style={styles.undoButton}
+            onPress={() => {
+              clearTimer();
+              onUndoWindowClose?.();
+              onUndo();
+            }}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            accessibilityRole="button"
+            accessibilityLabel="Undo last scan"
+          >
+            <Ionicons name="arrow-undo" size={16} color={colors.textInverse} />
+            <Text style={styles.undoText}>Undo</Text>
+          </TouchableOpacity>
+        </Animated.View>
       )}
     </Animated.View>
   );
@@ -137,8 +192,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   undoButton: {
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.base,
+    borderRadius: borderRadius.md,
     marginLeft: spacing.sm,
   },
   undoText: {

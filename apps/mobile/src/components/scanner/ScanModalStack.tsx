@@ -71,6 +71,7 @@ interface ScanModalStackProps {
   endCountCombinations: Record<string, CombinationGroup>;
   isSubmittingCount: boolean;
   onEditCombination: (combinationId: string) => void;
+  onNotesChange?: (combinationId: string, notes: string) => void;
   onSubmitCount: () => void;
   onCancelEndCount: () => void;
   onDiscardCount: () => void;
@@ -169,6 +170,7 @@ export function ScanModalStack(props: ScanModalStackProps) {
         combinations={props.endCountCombinations}
         isSubmitting={props.isSubmittingCount}
         onEditCombination={props.onEditCombination}
+        onNotesChange={props.onNotesChange}
         onSubmit={props.onSubmitCount}
         onCancel={props.onCancelEndCount}
         onDiscard={props.onDiscardCount}

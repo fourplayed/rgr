@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
+  InteractionManager,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,10 +17,11 @@ import { usePhotoFlow } from '../../src/hooks/scan/usePhotoFlow';
 import { useDefectFlow } from '../../src/hooks/scan/useDefectFlow';
 import { PermissionScreen } from '../../src/components/scanner/PermissionScreen';
 import { CameraOverlay } from '../../src/components/scanner/CameraOverlay';
+import type { CountSummaryData } from '../../src/components/scanner/CameraOverlay';
 import { ScanModalStack } from '../../src/components/scanner/ScanModalStack';
 import type { CachedLocationData } from '../../src/store/locationStore';
 import type { CountModeAutoConfirmResult } from '../../src/hooks/scan/useScanFlow';
-import { isStandaloneScan, submitAssetCount } from '@rgr/shared';
+import { isStandaloneScan, submitAssetCount, MAX_COMBINATION_SIZE } from '@rgr/shared';
 import { colors } from '../../src/theme/colors';
 import { styles } from '../../src/components/scanner/scan.styles';
 
@@ -78,6 +80,37 @@ export default function ScanScreen() {
     showUndo: boolean;
   }>({ visible: false, message: '', type: 'success', showUndo: false });
 
+  // Toast ID counter: incrementing forces ScanToast to reset timer/animation
+  const toastIdRef = useRef(0);
+
+  // Queued toast waiting for an active undo toast to expire
+  const queuedToastRef = useRef<{
+    message: string;
+    type: 'success' | 'info' | 'link';
+    showUndo: boolean;
+  } | null>(null);
+
+  /** Show a scan toast and increment toastId for proper timer reset.
+   *  If an undo toast is currently visible, non-undo toasts queue behind it. */
+  const showScanToast = useCallback((toast: {
+    message: string;
+    type: 'success' | 'info' | 'link';
+    showUndo: boolean;
+  }) => {
+    setScanToast(prev => {
+      // If an undo toast is visible and the new toast is not undo-enabled,
+      // queue it to show after the undo toast expires
+      if (prev.visible && prev.showUndo && !toast.showUndo) {
+        queuedToastRef.current = toast;
+        return prev;
+      }
+      // Otherwise, replace immediately
+      queuedToastRef.current = null;
+      toastIdRef.current += 1;
+      return { ...toast, visible: true };
+    });
+  }, []);
+
   // Debug state
   const [showDebugOverlay, setShowDebugOverlay] = useState(false);
 
@@ -93,8 +126,7 @@ export default function ScanScreen() {
     if (prevId !== null && currentId === null) {
       const combo = assetCount.combinations[prevId];
       if (combo && combo.assetIds.length >= 2) {
-        setScanToast({
-          visible: true,
+        showScanToast({
           message: `Chain complete (${combo.assetIds.length} assets)`,
           type: 'link',
           showUndo: false,
@@ -118,8 +150,7 @@ export default function ScanScreen() {
         const isDuplicate = assetCount.scans.some(s => s.assetId === asset.id);
         if (isDuplicate) {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-          setScanToast({
-            visible: true,
+          showScanToast({
             message: `${assetNumber} already counted`,
             type: 'info',
             showUndo: false,
@@ -140,15 +171,13 @@ export default function ScanScreen() {
 
         // Show scan toast based on chain state
         if (assetCount.isChainActive) {
-          setScanToast({
-            visible: true,
+          showScanToast({
             message: `${assetNumber} added to chain`,
             type: 'link',
             showUndo: true,
           });
         } else {
-          setScanToast({
-            visible: true,
+          showScanToast({
             message: `${assetNumber} counted`,
             type: 'success',
             showUndo: true,
@@ -163,6 +192,14 @@ export default function ScanScreen() {
   }, [assetCount.isActive, assetCount, scanFlow]);
 
   const handleScanToastDismiss = useCallback(() => {
+    // If there's a queued toast, show it instead of hiding
+    const queued = queuedToastRef.current;
+    if (queued) {
+      queuedToastRef.current = null;
+      toastIdRef.current += 1;
+      setScanToast({ ...queued, visible: true });
+      return;
+    }
     setScanToast(prev => ({ ...prev, visible: false }));
   }, []);
 
@@ -172,18 +209,26 @@ export default function ScanScreen() {
     setScanToast(prev => ({ ...prev, visible: false }));
   }, [assetCount, scanFlow]);
 
+  // Persistence sync: defer writes while undo window is open
+  const handleUndoWindowOpen = useCallback(() => {
+    assetCount.deferPersistence();
+  }, [assetCount]);
+
+  const handleUndoWindowClose = useCallback(() => {
+    assetCount.flushPersistence();
+  }, [assetCount]);
+
   // ── Chain Mode Handlers ──
 
   const handleStartChain = useCallback(() => {
     assetCount.startChain();
-    setScanToast({
-      visible: true,
+    showScanToast({
       message: 'Chain started — scan assets to link',
       type: 'link',
       showUndo: false,
     });
     scanFlow.addDebugLog('Chain started');
-  }, [assetCount, scanFlow]);
+  }, [assetCount, scanFlow, showScanToast]);
 
   const handleEndChain = useCallback(() => {
     const chainSize = assetCount.activeChainSize;
@@ -191,15 +236,13 @@ export default function ScanScreen() {
     assetCount.endChain();
 
     if (chainSize === 0) {
-      setScanToast({
-        visible: true,
+      showScanToast({
         message: 'Empty chain discarded',
         type: 'info',
         showUndo: false,
       });
     } else if (chainSize === 1) {
-      setScanToast({
-        visible: true,
+      showScanToast({
         message: 'Need 2+ for a chain',
         type: 'info',
         showUndo: false,
@@ -311,18 +354,29 @@ export default function ScanScreen() {
   }, [cachedDepot, assetCount, scanFlow]);
 
   const handleEndAssetCount = useCallback(() => {
-    // Prevent ending count while chain is active
+    // Auto-finalize or discard active chain before showing review
     if (assetCount.isChainActive) {
-      setScanToast({
-        visible: true,
-        message: 'End chain first',
-        type: 'info',
-        showUndo: false,
-      });
-      return;
+      const chainSize = assetCount.activeChainSize;
+      assetCount.endChain();
+
+      if (chainSize >= 2) {
+        showScanToast({
+          message: `Chain auto-saved (${chainSize} assets)`,
+          type: 'link',
+          showUndo: false,
+        });
+      } else if (chainSize === 1) {
+        showScanToast({
+          message: 'Incomplete chain reverted to standalone',
+          type: 'info',
+          showUndo: false,
+        });
+      }
+      // For 0 assets, chain is silently discarded
+      scanFlow.addDebugLog(`Auto-ended chain (${chainSize} items) for End Count`);
     }
     setShowEndCountReview(true);
-  }, [assetCount.isChainActive]);
+  }, [assetCount, showScanToast, scanFlow]);
 
   // Combination Photo handlers
   const handleCombinationPhotoCapture = useCallback((photoUri: string) => {
@@ -337,18 +391,28 @@ export default function ScanScreen() {
     }
   }, [activeCombinationId, assetCount]);
 
+  // Notes change from the review sheet (takes combinationId directly)
+  const handleReviewNotesChange = useCallback((combinationId: string, notes: string) => {
+    assetCount.setCombinationNotes(combinationId, notes);
+  }, [assetCount]);
+
   const handleCombinationPhotoComplete = useCallback(() => {
     scanFlow.addDebugLog('Combination photo complete');
     setShowCombinationPhoto(false);
     setActiveCombinationId(null);
-    setShowEndCountReview(true);
+    // Delay showing review sheet until the photo sheet dismiss animation completes
+    InteractionManager.runAfterInteractions(() => {
+      setShowEndCountReview(true);
+    });
   }, [scanFlow]);
 
   const handleCombinationPhotoSkip = useCallback(() => {
     scanFlow.addDebugLog('Combination photo skipped');
     setShowCombinationPhoto(false);
     setActiveCombinationId(null);
-    setShowEndCountReview(true);
+    InteractionManager.runAfterInteractions(() => {
+      setShowEndCountReview(true);
+    });
   }, [scanFlow]);
 
   // End Count Review handlers
@@ -400,8 +464,7 @@ export default function ScanScreen() {
 
       // Show inline toast instead of modal
       const comboText = comboCount > 0 ? ` (${comboCount} combos)` : '';
-      setScanToast({
-        visible: true,
+      showScanToast({
         message: `Count submitted: ${count} assets${comboText}`,
         type: 'success',
         showUndo: false,
@@ -434,7 +497,10 @@ export default function ScanScreen() {
   const handleEditCombination = useCallback((combinationId: string) => {
     setActiveCombinationId(combinationId);
     setShowEndCountReview(false);
-    setShowCombinationPhoto(true);
+    // Delay showing photo sheet until the review sheet dismiss animation completes
+    InteractionManager.runAfterInteractions(() => {
+      setShowCombinationPhoto(true);
+    });
   }, []);
 
   const handleEndCountReviewDismiss = useCallback(() => {
@@ -442,7 +508,10 @@ export default function ScanScreen() {
   }, []);
 
   const handleCombinationPhotoDismiss = useCallback(() => {
-    setShowEndCountReview(true);
+    // Delay showing review sheet until the photo sheet dismiss animation completes
+    InteractionManager.runAfterInteractions(() => {
+      setShowEndCountReview(true);
+    });
   }, []);
 
   // ── Debug Scan ──
@@ -500,6 +569,20 @@ export default function ScanScreen() {
     }
   }, [permission?.granted, scanFlow, requestPermission]);
 
+  // ── Mid-count summary data ──
+  const countSummary: CountSummaryData | undefined = useMemo(() => {
+    if (!assetCount.isActive) return undefined;
+    const recentAssetNumbers = assetCount.scans
+      .slice(-5)
+      .reverse()
+      .map(s => s.assetNumber);
+    return {
+      standaloneCount: assetCount.standaloneCount,
+      combinationCount: assetCount.combinationCount,
+      recentAssetNumbers,
+    };
+  }, [assetCount.isActive, assetCount.scans, assetCount.standaloneCount, assetCount.combinationCount]);
+
   // ── Render ──
 
   if (!permission || !permission.granted) {
@@ -533,13 +616,18 @@ export default function ScanScreen() {
           onDebugScan={handleDebugScan}
           // Count mode inline components
           scanToast={scanToast}
+          scanToastId={toastIdRef.current}
           onScanToastDismiss={handleScanToastDismiss}
           onScanToastUndo={handleScanToastUndo}
-          // Chain mode
+          onUndoWindowOpen={handleUndoWindowOpen}
+          onUndoWindowClose={handleUndoWindowClose}
+          // Chain (linking) mode
           isChainActive={assetCount.isChainActive}
           activeChainSize={assetCount.activeChainSize}
+          maxChainSize={MAX_COMBINATION_SIZE}
           onStartChain={handleStartChain}
           onEndChain={handleEndChain}
+          countSummary={countSummary}
           scanStatus={scanFlow.scanStatus}
         />
       </CameraView>
@@ -601,6 +689,7 @@ export default function ScanScreen() {
         endCountCombinations={assetCount.combinations}
         isSubmittingCount={isSubmittingCount}
         onEditCombination={handleEditCombination}
+        onNotesChange={handleReviewNotesChange}
         onSubmitCount={handleSubmitCount}
         onCancelEndCount={handleCancelEndCount}
         onDiscardCount={handleDiscardCount}

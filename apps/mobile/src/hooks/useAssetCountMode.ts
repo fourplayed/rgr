@@ -28,15 +28,46 @@ export function useAssetCountMode() {
   const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Guard to skip redundant persistence write immediately after a RESTORE dispatch
   const isRestoredRef = useRef(false);
+  // When true, persistence writes are deferred (e.g. while undo window is open)
+  const persistDeferredRef = useRef(false);
   // Always-current state ref for AppState background flush
   const stateRef = useRef(state);
   stateRef.current = state;
+
+  /** Pause debounced persistence writes (e.g. while undo toast is visible). */
+  const deferPersistence = useCallback(() => {
+    persistDeferredRef.current = true;
+    // Cancel any pending write so it doesn't fire during the undo window
+    if (persistTimeoutRef.current) {
+      clearTimeout(persistTimeoutRef.current);
+      persistTimeoutRef.current = null;
+    }
+  }, []);
+
+  /** Resume and flush persistence (e.g. when undo window closes without undo). */
+  const flushPersistence = useCallback(() => {
+    persistDeferredRef.current = false;
+    const current = stateRef.current;
+    // Flush immediately — the undo window is over
+    if (current.isActive) {
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(current)).catch((error) => {
+        logger.error('Failed to flush asset count session', error);
+      });
+    } else {
+      AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
+    }
+  }, []);
 
   // Persist to AsyncStorage after state changes (debounced)
   useEffect(() => {
     // Skip writing state back right after a RESTORE — it's already in storage
     if (isRestoredRef.current) {
       isRestoredRef.current = false;
+      return;
+    }
+
+    // Don't schedule writes while persistence is deferred (undo window open)
+    if (persistDeferredRef.current) {
       return;
     }
 
@@ -199,5 +230,9 @@ export function useAssetCountMode() {
     setCombinationPhoto,
     undoLastScan,
     endCount,
+
+    // Persistence control (for undo window sync)
+    deferPersistence,
+    flushPersistence,
   };
 }

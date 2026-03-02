@@ -1,11 +1,18 @@
-import React from 'react';
-import { View, Text, SafeAreaView, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, SafeAreaView, TouchableOpacity, StyleSheet, Modal, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ScanToast } from './ScanToast';
 import { LoadingDots } from '../common/LoadingDots';
+import { PillBadge } from '../common/PillBadge';
 import { colors } from '../../theme/colors';
 import { styles } from './scan.styles';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+
+export interface CountSummaryData {
+  standaloneCount: number;
+  combinationCount: number;
+  recentAssetNumbers: string[];
+}
 
 interface CameraOverlayProps {
   // Asset count mode
@@ -30,14 +37,21 @@ interface CameraOverlayProps {
     type: 'success' | 'info' | 'link';
     showUndo: boolean;
   };
+  scanToastId?: number;
   onScanToastDismiss?: () => void;
   onScanToastUndo?: () => void;
+  onUndoWindowOpen?: () => void;
+  onUndoWindowClose?: () => void;
 
-  // Chain mode
+  // Chain (linking) mode
   isChainActive?: boolean;
   activeChainSize?: number;
+  maxChainSize?: number;
   onStartChain?: () => void;
   onEndChain?: () => void;
+
+  // Mid-count summary
+  countSummary?: CountSummaryData;
 
   // Scan status overlay
   scanStatus?: string | null;
@@ -54,33 +68,50 @@ function CameraOverlayComponent({
   onEndAssetCount,
   onDebugScan,
   scanToast,
+  scanToastId,
   onScanToastDismiss,
   onScanToastUndo,
+  onUndoWindowOpen,
+  onUndoWindowClose,
   isChainActive,
   activeChainSize,
+  maxChainSize = 5,
   onStartChain,
   onEndChain,
+  countSummary,
   scanStatus,
 }: CameraOverlayProps) {
+  const [showSummary, setShowSummary] = useState(false);
+  const handleToggleSummary = useCallback(() => setShowSummary(v => !v), []);
   return (
     <SafeAreaView style={styles.overlay}>
       <View style={styles.header}>
         {assetCountActive ? (
           <>
-            <View style={styles.assetCountBadge}>
-              <Ionicons name="clipboard-outline" size={14} color={colors.textInverse} />
-              <Text style={styles.assetCountBadgeText}>Asset Count Mode</Text>
-            </View>
+            <PillBadge
+              icon="clipboard-outline"
+              label="Asset Count Mode"
+              color={colors.electricBlue}
+              iconSize={14}
+            />
             {isChainActive && (
-              <View style={chainStyles.chainingBadge}>
-                <Ionicons name="link" size={12} color={colors.textInverse} />
-                <Text style={chainStyles.chainingBadgeText}>Chaining</Text>
-              </View>
+              <PillBadge
+                icon="link"
+                label={`Linking (${activeChainSize ?? 0} of ${maxChainSize})`}
+                color={colors.warning}
+              />
             )}
             <Text style={styles.title}>{assetCountDepotName}</Text>
-            <Text style={styles.subtitle}>
-              {assetCountScanCount} assets counted
-            </Text>
+            <TouchableOpacity
+              onPress={countSummary && assetCountScanCount > 0 ? handleToggleSummary : undefined}
+              disabled={!countSummary || assetCountScanCount === 0}
+              accessibilityRole="button"
+              accessibilityLabel={`${assetCountScanCount} assets counted. Tap for summary.`}
+            >
+              <Text style={[styles.subtitle, countSummary && assetCountScanCount > 0 && summaryStyles.tappableCount]}>
+                {assetCountScanCount} assets counted {countSummary && assetCountScanCount > 0 ? '▾' : ''}
+              </Text>
+            </TouchableOpacity>
           </>
         ) : (
           <>
@@ -99,6 +130,9 @@ function CameraOverlayComponent({
             type={scanToast.type}
             onUndo={scanToast.showUndo ? onScanToastUndo : undefined}
             onDismiss={onScanToastDismiss}
+            toastId={scanToastId}
+            onUndoWindowOpen={onUndoWindowOpen}
+            onUndoWindowClose={onUndoWindowClose}
           />
         )}
       </View>
@@ -120,24 +154,24 @@ function CameraOverlayComponent({
       ) : null}
 
       <View style={styles.footer}>
-        {/* Chain controls (count mode) */}
+        {/* Link controls (count mode) */}
         {assetCountActive && onStartChain && onEndChain && (
           isChainActive ? (
             <View style={chainStyles.chainActiveContainer}>
               <View style={chainStyles.chainStatus}>
                 <Ionicons name="link" size={16} color={colors.electricBlue} />
                 <Text style={chainStyles.chainStatusText}>
-                  Building Chain ({activeChainSize ?? 0} {(activeChainSize ?? 0) === 1 ? 'asset' : 'assets'})
+                  Linking Assets ({activeChainSize ?? 0} of {maxChainSize})
                 </Text>
               </View>
               <TouchableOpacity
                 style={chainStyles.endChainButton}
                 onPress={onEndChain}
                 accessibilityRole="button"
-                accessibilityLabel="End chain"
+                accessibilityLabel="Done linking assets"
               >
                 <Ionicons name="checkmark-circle-outline" size={18} color={colors.textInverse} />
-                <Text style={chainStyles.endChainButtonText}>End Chain</Text>
+                <Text style={chainStyles.endChainButtonText}>Done Linking</Text>
               </TouchableOpacity>
             </View>
           ) : (
@@ -145,10 +179,10 @@ function CameraOverlayComponent({
               style={chainStyles.startChainButton}
               onPress={onStartChain}
               accessibilityRole="button"
-              accessibilityLabel="Start chain"
+              accessibilityLabel="Link assets together"
             >
               <Ionicons name="link" size={18} color={colors.electricBlue} />
-              <Text style={chainStyles.startChainButtonText}>Start Chain</Text>
+              <Text style={chainStyles.startChainButtonText}>Link Assets</Text>
             </TouchableOpacity>
           )
         )}
@@ -203,6 +237,69 @@ function CameraOverlayComponent({
           </TouchableOpacity>
         )}
       </View>
+
+      {/* Mid-count summary sheet */}
+      {countSummary && (
+        <Modal
+          visible={showSummary}
+          transparent
+          animationType="slide"
+          onRequestClose={handleToggleSummary}
+        >
+          <View style={summaryStyles.backdrop}>
+            <TouchableOpacity
+              style={summaryStyles.backdropTouchable}
+              activeOpacity={1}
+              onPress={handleToggleSummary}
+            />
+            <View style={summaryStyles.sheet}>
+              <View style={summaryStyles.handle} />
+
+              <View style={summaryStyles.content}>
+                <Text style={summaryStyles.title}>Count Summary</Text>
+
+                <View style={summaryStyles.statsRow}>
+                  <View style={summaryStyles.statBox}>
+                    <Text style={summaryStyles.statValue}>{countSummary.standaloneCount}</Text>
+                    <Text style={summaryStyles.statLabel}>Standalone</Text>
+                  </View>
+                  <View style={summaryStyles.statDivider} />
+                  <View style={summaryStyles.statBox}>
+                    <Text style={summaryStyles.statValue}>{countSummary.combinationCount}</Text>
+                    <Text style={summaryStyles.statLabel}>Combinations</Text>
+                  </View>
+                  <View style={summaryStyles.statDivider} />
+                  <View style={summaryStyles.statBox}>
+                    <Text style={summaryStyles.statValue}>{assetCountScanCount}</Text>
+                    <Text style={summaryStyles.statLabel}>Total</Text>
+                  </View>
+                </View>
+
+                {countSummary.recentAssetNumbers.length > 0 && (
+                  <View style={summaryStyles.recentSection}>
+                    <Text style={summaryStyles.recentTitle}>Recent Scans</Text>
+                    {countSummary.recentAssetNumbers.map((num, i) => (
+                      <View key={`${num}-${i}`} style={summaryStyles.recentItem}>
+                        <Ionicons name="checkmark-circle" size={14} color={colors.success} />
+                        <Text style={summaryStyles.recentText}>{num}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+
+                <TouchableOpacity
+                  style={summaryStyles.closeButton}
+                  onPress={handleToggleSummary}
+                  accessibilityRole="button"
+                  accessibilityLabel="Close summary"
+                >
+                  <Text style={summaryStyles.closeButtonText}>Continue Scanning</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
     </SafeAreaView>
   );
 }
@@ -233,22 +330,6 @@ const statusStyles = StyleSheet.create({
 });
 
 const chainStyles = StyleSheet.create({
-  chainingBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.warning,
-    paddingVertical: 3,
-    paddingHorizontal: spacing.sm,
-    borderRadius: borderRadius.full,
-    marginBottom: spacing.xs,
-    gap: 4,
-  },
-  chainingBadgeText: {
-    fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
-    color: colors.textInverse,
-    textTransform: 'uppercase',
-  },
   chainActiveContainer: {
     marginBottom: spacing.sm,
   },
@@ -297,6 +378,112 @@ const chainStyles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontFamily: 'Lato_700Bold',
     color: colors.electricBlue,
+    textTransform: 'uppercase',
+  },
+});
+
+const summaryStyles = StyleSheet.create({
+  tappableCount: {
+    textDecorationLine: 'underline',
+  },
+  backdrop: {
+    flex: 1,
+    backgroundColor: colors.overlay,
+    justifyContent: 'flex-end',
+  },
+  backdropTouchable: {
+    flex: 1,
+  },
+  sheet: {
+    backgroundColor: colors.background,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
+    maxHeight: '50%',
+  },
+  handle: {
+    width: 40,
+    height: 4,
+    backgroundColor: colors.border,
+    borderRadius: borderRadius.full,
+    alignSelf: 'center',
+    marginTop: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  content: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing['2xl'],
+  },
+  title: {
+    fontSize: fontSize['2xl'],
+    fontFamily: 'Lato_700Bold',
+    color: colors.text,
+    textTransform: 'uppercase',
+    textAlign: 'center',
+    marginBottom: spacing.lg,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    padding: spacing.base,
+    marginBottom: spacing.lg,
+  },
+  statBox: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statDivider: {
+    width: 1,
+    backgroundColor: colors.border,
+    marginVertical: spacing.xs,
+  },
+  statValue: {
+    fontSize: fontSize['2xl'],
+    fontFamily: 'Lato_700Bold',
+    color: colors.electricBlue,
+  },
+  statLabel: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_400Regular',
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    marginTop: 2,
+  },
+  recentSection: {
+    marginBottom: spacing.lg,
+  },
+  recentTitle: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_700Bold',
+    color: colors.text,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: spacing.sm,
+  },
+  recentItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  recentText: {
+    fontSize: fontSize.base,
+    fontFamily: 'Lato_700Bold',
+    color: colors.text,
+  },
+  closeButton: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    height: 48,
+    borderRadius: borderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeButtonText: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_700Bold',
+    color: colors.text,
     textTransform: 'uppercase',
   },
 });
