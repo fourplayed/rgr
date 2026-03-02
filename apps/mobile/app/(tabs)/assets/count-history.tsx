@@ -30,8 +30,9 @@ const STATUS_LABELS: Record<AssetCountSessionStatus, string> = {
   cancelled: 'Cancelled',
 };
 
-function formatSessionDate(date: Date): string {
-  return date.toLocaleDateString('en-AU', {
+function formatSessionDate(date: string | Date): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return d.toLocaleDateString('en-AU', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
@@ -103,7 +104,7 @@ export default function CountHistoryScreen() {
   }, [resolvedDepot, selectedDepotId]);
 
   const { data, isLoading, error, refetch, isRefetching } = useCountHistorySessions({
-    depotId: selectedDepotId ?? undefined,
+    ...(selectedDepotId && { depotId: selectedDepotId }),
     page: 1,
   });
 

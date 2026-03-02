@@ -31,16 +31,18 @@ const STATUS_LABELS: Record<AssetCountSessionStatus, string> = {
   cancelled: 'Cancelled',
 };
 
-function formatDate(date: Date): string {
-  return date.toLocaleDateString('en-AU', {
+function formatDate(date: string | Date): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return d.toLocaleDateString('en-AU', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
   });
 }
 
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString('en-AU', {
+function formatTime(date: string | Date): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return d.toLocaleTimeString('en-AU', {
     hour: '2-digit',
     minute: '2-digit',
   });

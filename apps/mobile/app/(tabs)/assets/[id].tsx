@@ -221,7 +221,7 @@ export default function AssetDetailScreen() {
           asset={asset}
           nextServiceDate={nextService?.scheduledDate}
           assessment={assessment}
-          onPress={isSuperuser && asset.qrCodeData ? () => setShowQRModal(true) : undefined}
+          {...(isSuperuser && asset.qrCodeData ? { onPress: () => setShowQRModal(true) } : {})}
         />
         <SegmentedTabs tabs={ASSET_DETAIL_TABS} activeTab={activeTab} onTabPress={setActiveTab} />
       </View>

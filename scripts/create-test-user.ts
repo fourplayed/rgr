@@ -9,8 +9,8 @@ import { createClient } from '@supabase/supabase-js';
 import * as readline from 'readline';
 
 // Load environment variables
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://eryhwfkqbbuftepjvgwq.supabase.co';
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_URL = process.env['SUPABASE_URL'] || 'https://eryhwfkqbbuftepjvgwq.supabase.co';
+const SUPABASE_SERVICE_ROLE_KEY = process.env['SUPABASE_SERVICE_ROLE_KEY'];
 
 if (!SUPABASE_SERVICE_ROLE_KEY) {
   console.error('Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required');

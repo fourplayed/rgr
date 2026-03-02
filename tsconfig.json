@@ -24,5 +24,11 @@
     "noImplicitOverride": true,
     "useUnknownInCatchVariables": true
   },
-  "extends": "expo/tsconfig.base"
+  "extends": "expo/tsconfig.base",
+  "exclude": [
+    "node_modules",
+    "apps/web",
+    "supabase",
+    "apps/mobile/e2e"
+  ]
 }

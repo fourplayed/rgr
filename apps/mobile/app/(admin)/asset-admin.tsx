@@ -49,7 +49,7 @@ export default function AssetAdminScreen() {
   }, []);
 
   const { data, isLoading, error, refetch } = useAssetList({
-    search: debouncedSearch || undefined,
+    ...(debouncedSearch && { search: debouncedSearch }),
     pageSize: 50,
   });
 

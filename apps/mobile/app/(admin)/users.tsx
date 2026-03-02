@@ -40,9 +40,9 @@ export default function UsersScreen() {
 
   const filters = useMemo(
     () => ({
-      search: debouncedSearch || undefined,
-      roles: selectedRoles.length > 0 ? selectedRoles : undefined,
-      isActive: showInactive,
+      ...(debouncedSearch && { search: debouncedSearch }),
+      ...(selectedRoles.length > 0 && { roles: selectedRoles }),
+      ...(showInactive !== undefined && { isActive: showInactive }),
     }),
     [debouncedSearch, selectedRoles, showInactive]
   );

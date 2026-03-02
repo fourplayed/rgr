@@ -639,7 +639,7 @@ export default function ScanScreen() {
           onStartChain={handleStartChain}
           onEndChain={handleEndChain}
           onDiscardChain={handleDiscardChain}
-          countSummary={countSummary}
+          {...(countSummary !== undefined && { countSummary })}
           scanStatus={scanFlow.scanStatus}
         />
       </CameraView>

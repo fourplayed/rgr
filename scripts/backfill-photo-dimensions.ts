@@ -24,8 +24,8 @@ const LIMIT = process.argv.find(arg => arg.startsWith('--limit='))?.split('=')[1
 const DRY_RUN = process.argv.includes('--dry-run');
 
 // Load environment variables
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://eryhwfkqbbuftepjvgwq.supabase.co';
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_URL = process.env['SUPABASE_URL'] || 'https://eryhwfkqbbuftepjvgwq.supabase.co';
+const SUPABASE_SERVICE_ROLE_KEY = process.env['SUPABASE_SERVICE_ROLE_KEY'];
 
 if (!SUPABASE_SERVICE_ROLE_KEY) {
   console.error('Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required');
@@ -163,7 +163,7 @@ async function processPhoto(photo: PhotoRow): Promise<ProcessResult> {
       success: true,
       width: metadata.width,
       height: metadata.height,
-      thumbnailPath: thumbnailPath || undefined,
+      ...(thumbnailPath && { thumbnailPath }),
     };
   } catch (error) {
     return {

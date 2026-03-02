@@ -41,8 +41,8 @@ export default function MaintenanceScreen() {
 
   // Fetch maintenance list with filters
   const filters = useMemo(() => ({
-    status: statuses.length > 0 ? statuses : undefined,
-    priority: priorities.length > 0 ? priorities : undefined,
+    ...(statuses.length > 0 && { status: statuses }),
+    ...(priorities.length > 0 && { priority: priorities }),
   }), [statuses, priorities]);
 
   const {
