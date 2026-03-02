@@ -48,6 +48,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   autoLoginAttempted: false,
 
   login: async (email: string, password: string) => {
+    if (get().isLoading) return { success: false, error: 'Login in progress' };
     set({ isLoading: true, error: null });
 
     try {

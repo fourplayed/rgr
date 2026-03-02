@@ -89,12 +89,14 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
 
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const sheetTranslateY = useRef(new Animated.Value(screenHeight)).current;
+  const animGenRef = useRef(0);
 
   const validation = validatePassword(newPassword);
   const passwordsMatch = newPassword === confirmPassword && confirmPassword.length > 0;
 
   // Handle open/close animations
   useEffect(() => {
+    const gen = ++animGenRef.current;
     if (visible) {
       setModalVisible(true);
       Animated.parallel([
@@ -122,7 +124,7 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
           useNativeDriver: true,
         }),
       ]).start(() => {
-        setModalVisible(false);
+        if (animGenRef.current === gen) setModalVisible(false);
       });
     }
   }, [visible, backdropOpacity, sheetTranslateY, screenHeight]);
@@ -286,6 +288,7 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
                               secureTextEntry={!showCurrentPassword}
                               autoCapitalize="none"
                               autoCorrect={false}
+                              accessibilityLabel="Current password"
                             />
                             <TouchableOpacity
                               style={styles.eyeButton}
@@ -312,6 +315,7 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
                               secureTextEntry={!showNewPassword}
                               autoCapitalize="none"
                               autoCorrect={false}
+                              accessibilityLabel="New password"
                             />
                             <TouchableOpacity
                               style={styles.eyeButton}
@@ -345,6 +349,7 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
                               secureTextEntry={!showConfirmPassword}
                               autoCapitalize="none"
                               autoCorrect={false}
+                              accessibilityLabel="Confirm new password"
                             />
                             <TouchableOpacity
                               style={styles.eyeButton}

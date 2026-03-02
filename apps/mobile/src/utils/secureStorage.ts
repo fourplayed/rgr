@@ -79,5 +79,6 @@ export async function setAutoLoginEnabled(enabled: boolean): Promise<void> {
     await SecureStore.setItemAsync(KEYS.AUTO_LOGIN_ENABLED, 'true');
   } else {
     await SecureStore.deleteItemAsync(KEYS.AUTO_LOGIN_ENABLED);
+    await SecureStore.deleteItemAsync(KEYS.SESSION);
   }
 }

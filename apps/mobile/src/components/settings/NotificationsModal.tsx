@@ -53,11 +53,13 @@ export function NotificationsModal({ visible, onClose }: NotificationsModalProps
 
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const sheetTranslateY = useRef(new Animated.Value(screenHeight)).current;
+  const animGenRef = useRef(0);
 
   const isPushDisabled = !notifications.pushEnabled;
 
   // Handle open/close animations
   useEffect(() => {
+    const gen = ++animGenRef.current;
     if (visible) {
       setModalVisible(true);
       Animated.parallel([
@@ -85,7 +87,7 @@ export function NotificationsModal({ visible, onClose }: NotificationsModalProps
           useNativeDriver: true,
         }),
       ]).start(() => {
-        setModalVisible(false);
+        if (animGenRef.current === gen) setModalVisible(false);
       });
     }
   }, [visible, backdropOpacity, sheetTranslateY, screenHeight]);

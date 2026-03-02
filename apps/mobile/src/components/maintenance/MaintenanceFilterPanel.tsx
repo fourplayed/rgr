@@ -161,7 +161,7 @@ export const MaintenanceFilterPanel = memo(function MaintenanceFilterPanel({
                   label={MaintenanceStatusLabels[status]}
                   isSelected={statuses.includes(status)}
                   onPress={() => toggleStatus(status)}
-                  selectedColor={colors.maintenanceStatus[status as keyof typeof colors.maintenanceStatus] ?? colors.electricBlue}
+                  selectedColor={colors.maintenanceStatus[status] ?? colors.electricBlue}
                 />
               ))}
             </View>

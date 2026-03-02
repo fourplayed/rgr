@@ -111,7 +111,13 @@ function AuditLogItemInner({ item }: AuditLogItemProps) {
 }
 
 export const AuditLogItem = memo(AuditLogItemInner, (prev, next) => {
-  return prev.item.id === next.item.id;
+  return (
+    prev.item.id === next.item.id &&
+    prev.item.action === next.item.action &&
+    prev.item.tableName === next.item.tableName &&
+    prev.item.userName === next.item.userName &&
+    prev.item.createdAt === next.item.createdAt
+  );
 });
 
 const styles = StyleSheet.create({

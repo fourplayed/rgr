@@ -126,6 +126,7 @@ export function DepotFormSheet({
                 placeholderTextColor={colors.textSecondary}
                 autoCapitalize="words"
                 maxLength={100}
+                accessibilityLabel="Depot name"
               />
             </View>
 
@@ -139,6 +140,7 @@ export function DepotFormSheet({
                 placeholderTextColor={colors.textSecondary}
                 autoCapitalize="characters"
                 maxLength={20}
+                accessibilityLabel="Depot code"
               />
             </View>
 
@@ -151,6 +153,7 @@ export function DepotFormSheet({
                 placeholder="Optional"
                 placeholderTextColor={colors.textSecondary}
                 autoCapitalize="words"
+                accessibilityLabel="Depot address"
               />
             </View>
 

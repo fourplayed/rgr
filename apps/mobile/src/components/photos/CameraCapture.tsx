@@ -42,6 +42,17 @@ function CameraCaptureComponent({
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
 
+  // Store location params in refs so the effect always reads the latest values
+  // without re-triggering on every parent render
+  const scanEventIdRef = useRef(scanEventId);
+  const locationDescriptionRef = useRef(locationDescription);
+  const latitudeRef = useRef(latitude);
+  const longitudeRef = useRef(longitude);
+  useEffect(() => { scanEventIdRef.current = scanEventId; }, [scanEventId]);
+  useEffect(() => { locationDescriptionRef.current = locationDescription; }, [locationDescription]);
+  useEffect(() => { latitudeRef.current = latitude; }, [latitude]);
+  useEffect(() => { longitudeRef.current = longitude; }, [longitude]);
+
   const {
     capturedUri,
     isUploading,
@@ -54,16 +65,14 @@ function CameraCaptureComponent({
   } = usePhotoCapture();
 
   // Initialize capture state when modal opens
-  // Only depend on visible and assetId for reset logic to prevent re-triggering
-  // when parent re-renders with the same location params
   useEffect(() => {
     if (visible) {
       startCapture({
         assetId,
-        scanEventId,
-        locationDescription,
-        latitude,
-        longitude,
+        scanEventId: scanEventIdRef.current,
+        locationDescription: locationDescriptionRef.current,
+        latitude: latitudeRef.current,
+        longitude: longitudeRef.current,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

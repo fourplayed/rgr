@@ -14,3 +14,4 @@ export type { ConfirmType } from './ConfirmSheet';
 export { InputSheet } from './InputSheet';
 export { ScreenHeader } from './ScreenHeader';
 export { PillBadge } from './PillBadge';
+export { SteppedProgressOverlay } from './SteppedProgressOverlay';

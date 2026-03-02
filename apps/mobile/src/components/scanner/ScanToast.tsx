@@ -45,9 +45,11 @@ export function ScanToast({
   const countdownAnimRef = useRef<Animated.CompositeAnimation | null>(null);
   const onDismissRef = useRef(onDismiss);
   const onUndoWindowCloseRef = useRef(onUndoWindowClose);
+  const onUndoWindowOpenRef = useRef(onUndoWindowOpen);
   const hasUndoRef = useRef(!!onUndo);
   useEffect(() => { onDismissRef.current = onDismiss; }, [onDismiss]);
   useEffect(() => { onUndoWindowCloseRef.current = onUndoWindowClose; }, [onUndoWindowClose]);
+  useEffect(() => { onUndoWindowOpenRef.current = onUndoWindowOpen; }, [onUndoWindowOpen]);
   useEffect(() => { hasUndoRef.current = !!onUndo; }, [onUndo]);
 
   const clearTimer = useCallback(() => {
@@ -94,7 +96,7 @@ export function ScanToast({
       anim.start();
 
       // Notify that undo window is open
-      onUndoWindowOpen?.();
+      onUndoWindowOpenRef.current?.();
     }
 
     timerRef.current = setTimeout(() => {

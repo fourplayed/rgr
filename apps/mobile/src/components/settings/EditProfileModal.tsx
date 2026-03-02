@@ -34,12 +34,13 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
 
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const sheetTranslateY = useRef(new Animated.Value(screenHeight)).current;
+  const animGenRef = useRef(0);
 
   // Handle open/close animations
   useEffect(() => {
+    const gen = ++animGenRef.current;
     if (visible) {
       setModalVisible(true);
-      // Animate in: fade backdrop, slide sheet
       Animated.parallel([
         Animated.timing(backdropOpacity, {
           toValue: 1,
@@ -53,7 +54,6 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
         }),
       ]).start();
     } else {
-      // Animate out: fade backdrop, slide sheet
       Animated.parallel([
         Animated.timing(backdropOpacity, {
           toValue: 0,
@@ -66,7 +66,7 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
           useNativeDriver: true,
         }),
       ]).start(() => {
-        setModalVisible(false);
+        if (animGenRef.current === gen) setModalVisible(false);
       });
     }
   }, [visible, backdropOpacity, sheetTranslateY, screenHeight]);
@@ -137,6 +137,7 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
                 placeholderTextColor={colors.textSecondary}
                 autoCapitalize="words"
                 autoCorrect={false}
+                accessibilityLabel="Full name"
               />
             </View>
 
@@ -150,6 +151,7 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
                 placeholderTextColor={colors.textSecondary}
                 keyboardType="phone-pad"
                 autoCorrect={false}
+                accessibilityLabel="Phone number"
               />
             </View>
 

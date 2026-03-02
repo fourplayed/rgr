@@ -48,7 +48,12 @@ export function AuditLogFilterSheet({
     }
   }, [visible, filtersAction, filtersStartDate, filtersEndDate]);
 
+  const isValidDate = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(Date.parse(s));
+
   const handleApply = () => {
+    if (startDate && !isValidDate(startDate)) return;
+    if (endDate && !isValidDate(endDate)) return;
+    if (startDate && endDate && startDate > endDate) return;
     const next: AuditLogFilters = {};
     if (action) next.action = action;
     if (startDate) next.startDate = startDate;
@@ -131,6 +136,7 @@ export function AuditLogFilterSheet({
                   placeholder="YYYY-MM-DD"
                   placeholderTextColor={colors.textSecondary}
                   maxLength={10}
+                  accessibilityLabel="Start date"
                 />
                 <Text style={styles.dateSeparator}>to</Text>
                 <TextInput
@@ -140,6 +146,7 @@ export function AuditLogFilterSheet({
                   placeholder="YYYY-MM-DD"
                   placeholderTextColor={colors.textSecondary}
                   maxLength={10}
+                  accessibilityLabel="End date"
                 />
               </View>
             </View>

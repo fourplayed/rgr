@@ -27,7 +27,7 @@ export const colors = {
     in_progress: '#F59E0B',
     completed: '#22C55E',
     cancelled: '#6B7280',
-  } as Record<string, string>,
+  } satisfies Record<string, string>,
 
   // Maintenance priority
   maintenancePriority: {

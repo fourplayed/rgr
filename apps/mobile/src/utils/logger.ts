@@ -68,10 +68,11 @@ export const logger = {
   },
 
   /**
-   * Log error events (always logs, even in production for debugging)
+   * Log error events (always logs, even in production for debugging).
+   * Data payload is only included in dev builds to avoid leaking PII.
    */
   error: (message: string, data?: LogData) => {
-    if (data !== undefined) {
+    if (isDev && data !== undefined) {
       console.error(formatMessage('Error', message), data);
     } else {
       console.error(formatMessage('Error', message));
