@@ -11,8 +11,8 @@ import { Ionicons } from '@expo/vector-icons';
 import type { MaintenanceStatus, MaintenancePriority, MaintenanceListItem as MaintenanceListItemType } from '@rgr/shared';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../src/theme/spacing';
-import { CONTENT_TOP_OFFSET } from '../../src/theme/layout';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
+import { ScreenHeader } from '../../src/components/common/ScreenHeader';
 import {
   MaintenanceListItem,
   MaintenanceFilterPanel,
@@ -103,26 +103,22 @@ export default function MaintenanceScreen() {
     <View style={styles.container}>
       <SafeAreaView style={styles.containerInner}>
         {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerContent}>
-            <View>
-              <Text style={styles.title}>Maintenance</Text>
-              <Text style={styles.subtitle}>Track service and repairs</Text>
-            </View>
-            {canMarkMaintenance && (
-              <TouchableOpacity
-                style={styles.addButton}
-                onPress={handleOpenCreate}
-                activeOpacity={0.7}
-                accessibilityRole="button"
-                accessibilityLabel="Create maintenance record"
-                accessibilityHint="Double tap to schedule new maintenance"
-              >
-                <Ionicons name="add" size={24} color={colors.textInverse} />
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
+        <ScreenHeader
+          title="Maintenance"
+          subtitle="Track service and repairs"
+          rightAction={canMarkMaintenance ? (
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={handleOpenCreate}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Create maintenance record"
+              accessibilityHint="Double tap to schedule new maintenance"
+            >
+              <Ionicons name="add" size={24} color={colors.textInverse} />
+            </TouchableOpacity>
+          ) : undefined}
+        />
 
         {/* Filters */}
         <MaintenanceFilterPanel
@@ -190,32 +186,6 @@ const styles = StyleSheet.create({
   },
   containerInner: {
     flex: 1,
-  },
-  header: {
-    paddingHorizontal: spacing.base,
-    paddingTop: CONTENT_TOP_OFFSET,
-    paddingBottom: spacing.md,
-  },
-  headerContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  title: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.bold,
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  subtitle: {
-    fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
-    color: colors.text,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginTop: spacing.xs,
   },
   addButton: {
     width: 44,

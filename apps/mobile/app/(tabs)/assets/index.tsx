@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LoadingDots } from '../../../src/components/common/LoadingDots';
+import { ScreenHeader } from '../../../src/components/common/ScreenHeader';
 import { useRouter } from 'expo-router';
 import type { AssetStatus, AssetCategory, AssetWithRelations } from '@rgr/shared';
 import { useAssetList, useDepots } from '../../../src/hooks/useAssetData';
@@ -21,7 +22,6 @@ import { AssetFilterPanel } from '../../../src/components/assets/AssetFilterPane
 import { useUserPermissions } from '../../../src/contexts/UserPermissionsContext';
 import { colors } from '../../../src/theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../../src/theme/spacing';
-import { CONTENT_TOP_OFFSET } from '../../../src/theme/layout';
 
 /**
  * Fixed height for FlatList optimization (getItemLayout)
@@ -60,7 +60,7 @@ export default function AssetListScreen() {
   const debouncedSearch = useDebounce(searchInput, 300);
 
   // Fetch depots for filter panel and list item display
-  const { data: depots = [] } = useDepots();
+  const { data: depots = [], isLoading: isDepotsLoading } = useDepots();
   const depotLookup = useDepotLookup();
 
   // Build query filters
@@ -138,9 +138,10 @@ export default function AssetListScreen() {
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.containerInner}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Fleet Assets</Text>
-          {canPerformAssetCount && (
+        <ScreenHeader
+          title="Fleet Assets"
+          compact
+          rightAction={canPerformAssetCount ? (
             <TouchableOpacity
               style={styles.historyButton}
               onPress={() => router.push('/(tabs)/assets/count-history')}
@@ -152,8 +153,8 @@ export default function AssetListScreen() {
               <Ionicons name="clipboard-outline" size={18} color={colors.electricBlue} />
               <Text style={styles.historyButtonText}>Count History</Text>
             </TouchableOpacity>
-          )}
-        </View>
+          ) : undefined}
+        />
 
         <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
@@ -187,7 +188,7 @@ export default function AssetListScreen() {
         onToggleExpanded={handleToggleExpanded}
       />
 
-      {isLoading && !isRefetching ? (
+      {(isLoading || isDepotsLoading) && !isRefetching ? (
         <View style={styles.centerContent}>
           <LoadingDots color={colors.electricBlue} size={12} />
         </View>
@@ -207,6 +208,7 @@ export default function AssetListScreen() {
       ) : (
         <FlatList
           data={filteredAssets}
+          extraData={depotLookup}
           keyExtractor={(item) => item.id}
           renderItem={renderAssetItem}
           contentContainerStyle={styles.listContent}
@@ -242,18 +244,10 @@ export default function AssetListScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E8E8E8',
+    backgroundColor: colors.chrome,
   },
   containerInner: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.base,
-    paddingTop: CONTENT_TOP_OFFSET,
-    paddingBottom: spacing.sm,
   },
   historyButton: {
     flexDirection: 'row',
@@ -267,14 +261,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Lato_700Bold',
     color: colors.electricBlue,
     textTransform: 'uppercase',
-  },
-  title: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.bold,
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
   },
   searchContainer: {
     paddingHorizontal: spacing.base,

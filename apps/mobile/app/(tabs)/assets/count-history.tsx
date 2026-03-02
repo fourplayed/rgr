@@ -11,14 +11,14 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { LoadingDots } from '../../../src/components/common/LoadingDots';
+import { ScreenHeader } from '../../../src/components/common/ScreenHeader';
 import { DepotFilterChips } from '../../../src/components/assets/DepotFilterChips';
 import { useCountHistorySessions } from '../../../src/hooks/useCountHistoryData';
 import { useDepots } from '../../../src/hooks/useDepots';
 import { useUserPermissions } from '../../../src/contexts/UserPermissionsContext';
 import { useLocationStore } from '../../../src/store/locationStore';
 import { colors } from '../../../src/theme/colors';
-import { spacing, fontSize, fontWeight, borderRadius } from '../../../src/theme/spacing';
-import { CONTENT_TOP_OFFSET } from '../../../src/theme/layout';
+import { spacing, fontSize, borderRadius } from '../../../src/theme/spacing';
 import type { AssetCountSessionWithNames, AssetCountSessionStatus } from '@rgr/shared';
 
 const SESSION_CARD_HEIGHT = 88;
@@ -145,18 +145,7 @@ export default function CountHistoryScreen() {
     <View style={styles.container}>
       <SafeAreaView style={styles.containerInner}>
         {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backButton}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={styles.title}>Count History</Text>
-        </View>
+        <ScreenHeader title="Count History" onBack={() => router.back()} />
 
         {/* Depot filter */}
         <DepotFilterChips
@@ -221,32 +210,10 @@ export default function CountHistoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E8E8E8',
+    backgroundColor: colors.chrome,
   },
   containerInner: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.base,
-    paddingTop: CONTENT_TOP_OFFSET,
-    paddingBottom: spacing.md,
-    gap: spacing.md,
-  },
-  backButton: {
-    width: 32,
-    height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.bold,
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
   },
   listContent: {
     padding: spacing.base,
