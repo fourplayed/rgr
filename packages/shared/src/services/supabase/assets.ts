@@ -50,10 +50,11 @@ interface ScanEventRowWithJoins extends ScanEventRow {
   assets: { asset_number: string; category: string } | null;
 }
 
-/** Maintenance record row with joined reporter and assignee */
+/** Maintenance record row with joined reporter, assignee, and completer */
 interface MaintenanceRowWithJoins extends MaintenanceRecordRow {
   reporter: { full_name: string } | null;
   assignee: { full_name: string } | null;
+  completer: { full_name: string } | null;
 }
 
 // ── Types ──
@@ -574,7 +575,8 @@ export async function getAssetMaintenance(
       `
       *,
       reporter:reported_by(full_name),
-      assignee:assigned_to(full_name)
+      assignee:assigned_to(full_name),
+      completer:completed_by(full_name)
     `,
       { count: 'exact' }
     )
@@ -588,12 +590,13 @@ export async function getAssetMaintenance(
 
   const total = count ?? 0;
   const records = (data || []).map((row: MaintenanceRowWithJoins) => {
-    const { reporter, assignee, ...maintenanceRow } = row;
+    const { reporter, assignee, completer, ...maintenanceRow } = row;
     const record = mapRowToMaintenanceRecord(maintenanceRow as MaintenanceRecordRow);
     return {
       ...record,
       reporterName: reporter?.full_name ?? null,
       assigneeName: assignee?.full_name ?? null,
+      completerName: completer?.full_name ?? null,
     } as MaintenanceRecordWithNames;
   });
 

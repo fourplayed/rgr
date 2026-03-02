@@ -64,6 +64,7 @@ export interface MaintenanceRecordRow {
 export interface MaintenanceRecordWithNames extends MaintenanceRecord {
   reporterName: string | null;
   assigneeName: string | null;
+  completerName: string | null;
 }
 
 /**

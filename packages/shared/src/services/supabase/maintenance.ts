@@ -178,7 +178,8 @@ export async function getMaintenanceById(
     .select(`
       *,
       reporter:reported_by(full_name),
-      assignee:assigned_to(full_name)
+      assignee:assigned_to(full_name),
+      completer:completed_by(full_name)
     `)
     .eq('id', id)
     .maybeSingle();
@@ -191,7 +192,7 @@ export async function getMaintenanceById(
     return { success: false, data: null, error: 'Maintenance record not found' };
   }
 
-  const { reporter, assignee, ...maintenanceRow } = data as MaintenanceRowWithJoins & { assignee: { full_name: string } | null };
+  const { reporter, assignee, completer, ...maintenanceRow } = data as MaintenanceRowWithJoins & { assignee: { full_name: string } | null; completer: { full_name: string } | null };
   const record = mapRowToMaintenanceRecord(maintenanceRow as MaintenanceRecordRow);
 
   return {
@@ -200,6 +201,7 @@ export async function getMaintenanceById(
       ...record,
       reporterName: reporter?.full_name ?? null,
       assigneeName: assignee?.full_name ?? null,
+      completerName: completer?.full_name ?? null,
     },
     error: null,
   };
