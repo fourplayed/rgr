@@ -33,7 +33,7 @@ import { useDepotLookup } from '../../src/hooks/useDepots';
 export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { resolvedDepot, isResolvingDepot } = useLocationStore();
+  const { resolvedDepot, isResolvingDepot, resolveDepot } = useLocationStore();
   const isFocused = useIsFocused();
   const { depots } = useDepotLookup();
 
@@ -254,7 +254,17 @@ export default function HomeScreen() {
                       Your location is within the <Text style={styles.geofenceLocation}>{resolvedDepot.depot.name}</Text> geofence
                     </Text>
                   ) : (
-                    <Text style={styles.geofenceText}>You are not within any depot geofence</Text>
+                    <View style={styles.geofenceRow}>
+                      <Text style={styles.geofenceText}>You are not within any depot geofence</Text>
+                      <TouchableOpacity
+                        onPress={() => resolveDepot()}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        accessibilityLabel="Retry geofence detection"
+                        accessibilityRole="button"
+                      >
+                        <Ionicons name="refresh-outline" size={14} color={colors.textSecondary} />
+                      </TouchableOpacity>
+                    </View>
                   )}
                 </Animated.View>
               </View>
@@ -354,6 +364,11 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: spacing.xs,
     marginLeft: 16,
+  },
+  geofenceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
   },
   geofenceText: {
     fontSize: fontSize.sm,
