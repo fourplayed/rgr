@@ -8,6 +8,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LoadingDots } from '../common/LoadingDots';
 import { ConfirmSheet } from '../common/ConfirmSheet';
 import { InputSheet } from '../common/InputSheet';
@@ -43,6 +44,8 @@ function EndCountReviewSheetComponent({
   onDiscard,
   onDismiss,
 }: EndCountReviewSheetProps) {
+  const insets = useSafeAreaInsets();
+
   // Compute standalone scans and combination info
   const { standaloneScans, combinationList } = useMemo(() => {
     const standalone = scans.filter(isStandaloneScan);
@@ -95,7 +98,7 @@ function EndCountReviewSheetComponent({
         <View style={styles.sheet}>
           <View style={styles.handle} />
 
-          <View style={styles.content}>
+          <View style={[styles.content, { paddingBottom: Math.max(spacing['2xl'], insets.bottom + spacing.md) }]}>
             {/* Header */}
             <View style={styles.header}>
               <Text style={styles.title}>Review Count</Text>
@@ -314,7 +317,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
-    maxHeight: '85%',
+    height: '92%',
   },
   handle: {
     width: 40,
