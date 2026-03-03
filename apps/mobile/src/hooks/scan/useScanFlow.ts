@@ -3,12 +3,10 @@ import * as Haptics from 'expo-haptics';
 import { useAssetByQRCode, useCreateScanEvent, useUpdateAsset } from '../useAssetData';
 import { useLocation } from '../useLocation';
 import { useQRScanner } from '../useQRScanner';
-import { useDepots, findNearestDepot } from '../useDepots';
 import { useAuthStore } from '../../store/authStore';
 import { useLocationStore } from '../../store/locationStore';
 import type { Asset, Depot } from '@rgr/shared';
 import type { CachedLocationData } from '../../store/locationStore';
-import type { LocationData } from '../useLocation';
 import { logger } from '../../utils/logger';
 
 export interface AlertSheetState {
@@ -45,13 +43,12 @@ export function useScanFlow() {
   const {
     resolvedDepot: cachedDepot,
     lastLocation: cachedLocation,
-    isLocationStale,
   } = useLocationStore();
 
   const [scannedAsset, setScannedAsset] = useState<Asset | null>(null);
   const [showConfirmSheet, setShowConfirmSheet] = useState(false);
   const [matchedDepot, setMatchedDepot] = useState<{ depot: Depot; distanceKm: number } | null>(null);
-  const [effectiveLocation, setEffectiveLocation] = useState<LocationData | CachedLocationData | null>(null);
+  const [effectiveLocation, setEffectiveLocation] = useState<CachedLocationData | null>(null);
   const [lastScanEventId, setLastScanEventId] = useState<string | null>(null);
   const [completedAsset, setCompletedAsset] = useState<Asset | null>(null);
   const [markForMaintenance, setMarkForMaintenance] = useState(false);
@@ -76,12 +73,10 @@ export function useScanFlow() {
   }, []);
 
   const {
-    requestLocation,
     hasPermission: hasLocationPermission,
     requestPermission: requestLocationPermission,
   } = useLocation();
 
-  const { data: depots } = useDepots();
   const { mutateAsync: lookupAsset } = useAssetByQRCode();
   const { mutateAsync: createScan, isPending: isCreatingScan } = useCreateScanEvent();
   const { mutateAsync: updateAssetMutation } = useUpdateAsset();
@@ -92,66 +87,31 @@ export function useScanFlow() {
         logger.scan(`QR code detected: ${qrData.substring(0, 30)}...`);
         setScanStatus('QR detected');
 
-        const useCachedLocation = cachedLocation && !isLocationStale() && cachedDepot;
-
-        let scanLocation: LocationData | CachedLocationData;
-        let nearestDepot: { depot: Depot; distanceKm: number } | null = null;
-
-        let asset: Asset;
-
-        if (useCachedLocation) {
-          logger.scan('Using cached location from sign-in');
-          scanLocation = cachedLocation;
-          nearestDepot = cachedDepot;
-          logger.scan(`Cached location: ${scanLocation.latitude.toFixed(4)}, ${scanLocation.longitude.toFixed(4)}`);
-          logger.scan(`Cached depot: ${nearestDepot.depot.name} (${nearestDepot.distanceKm.toFixed(2)} km)`);
-
-          logger.scan('Looking up asset...');
-          setScanStatus('Looking up asset...');
-          asset = await lookupAsset(qrData);
-          logger.scan(`Asset found: ${asset.assetNumber}`);
-        } else {
-          // Cold-start: parallelize GPS request and asset lookup since they are independent reads.
-          // Note: when cachedLocation is available (common case after sign-in), location is instant
-          // and this parallelization only helps cold-start scans.
-          logger.scan('Requesting current location and looking up asset in parallel...');
-          setScanStatus('Getting location...');
-          const [freshLocation, lookedUpAsset] = await Promise.all([
-            requestLocation(),
-            lookupAsset(qrData),
-          ]);
-
-          if (!freshLocation) {
-            logger.scan('Failed to get location');
-            setScanStatus(null);
-            setAlertSheet({
-              visible: true,
-              type: 'error',
-              title: 'Location Required',
-              message: 'Unable to get current location',
-            });
-            resetScanner();
-            return;
-          }
-          scanLocation = freshLocation;
-          asset = lookedUpAsset;
-          logger.scan(`Location acquired: ${scanLocation.latitude.toFixed(4)}, ${scanLocation.longitude.toFixed(4)}`);
-          logger.scan(`Asset found: ${asset.assetNumber}`);
-
-          logger.scan('Searching for nearest depot...');
-          if (depots && depots.length > 0) {
-            nearestDepot = findNearestDepot(
-              scanLocation.latitude,
-              scanLocation.longitude,
-              depots
-            );
-          }
-          if (nearestDepot) {
-            logger.scan(`Matched depot: ${nearestDepot.depot.name} (${nearestDepot.distanceKm.toFixed(2)} km)`);
-          } else {
-            logger.warn('No depot matched');
-          }
+        // Always use location resolved at login / home screen
+        if (!cachedLocation) {
+          logger.scan('No resolved location available');
+          setScanStatus(null);
+          setAlertSheet({
+            visible: true,
+            type: 'error',
+            title: 'Location Not Available',
+            message: 'Please return to the home screen and ensure your location is resolved before scanning.',
+          });
+          resetScanner();
+          return;
         }
+
+        const scanLocation = cachedLocation;
+        const nearestDepot: { depot: Depot; distanceKm: number } | null = cachedDepot;
+        logger.scan(`Using resolved location: ${scanLocation.latitude.toFixed(4)}, ${scanLocation.longitude.toFixed(4)}`);
+        if (nearestDepot) {
+          logger.scan(`Resolved depot: ${nearestDepot.depot.name} (${nearestDepot.distanceKm.toFixed(2)} km)`);
+        }
+
+        logger.scan('Looking up asset...');
+        setScanStatus('Looking up asset...');
+        const asset = await lookupAsset(qrData);
+        logger.scan(`Asset found: ${asset.assetNumber}`);
 
         setEffectiveLocation(scanLocation);
         setMatchedDepot(nearestDepot);

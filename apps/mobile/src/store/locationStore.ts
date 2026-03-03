@@ -7,7 +7,6 @@ import { useDebugLocationStore } from './debugLocationStore';
 
 // Configuration constants
 const MAX_DEPOT_DISTANCE_KM = 100;
-const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
 const LOCATION_TIMEOUT_MS = 15000; // 15 seconds - GPS timeout for indoor environments
 
 export interface CachedLocationData {
@@ -29,7 +28,6 @@ interface LocationState {
 
   resolveDepot: (depots?: Depot[]) => Promise<void>;
   clearResolvedDepot: () => void;
-  isLocationStale: () => boolean;
 }
 
 export const useLocationStore = create<LocationState>((set, get) => ({
@@ -168,13 +166,6 @@ export const useLocationStore = create<LocationState>((set, get) => ({
     });
   },
 
-  isLocationStale: () => {
-    const { lastResolvedAt } = get();
-    if (!lastResolvedAt) {
-      return true;
-    }
-    return Date.now() - lastResolvedAt.getTime() > CACHE_DURATION_MS;
-  },
 }));
 
 // Subscribe to app events for cross-store coordination
