@@ -34,6 +34,8 @@ import {
   getScanTypeColor,
   formatScanTypeLabel,
 } from '../../../src/utils/scanFormatters';
+import { isDefectReport, getMaintenanceIconProps } from '../../../src/utils/maintenanceHelpers';
+import { PillBadge } from '../../../src/components/common/PillBadge';
 import { findDepotByLocationString, getDepotBadgeColors } from '@rgr/shared';
 import { useDepotLookup } from '../../../src/hooks/useDepots';
 
@@ -55,10 +57,6 @@ const MAINTENANCE_STATUS_ICONS: Record<string, keyof typeof Ionicons.glyphMap> =
   completed: 'checkmark-circle',
   cancelled: 'close-circle-outline',
 };
-
-function maintenanceStatusIcon(status: string): keyof typeof Ionicons.glyphMap {
-  return MAINTENANCE_STATUS_ICONS[status] ?? 'ellipse-outline';
-}
 
 export default function AssetDetailScreen() {
   const router = useRouter();
@@ -239,87 +237,108 @@ export default function AssetDetailScreen() {
                 let activityColor: string;
                 let activityIcon: keyof typeof Ionicons.glyphMap;
 
-                if (item.type === 'maintenance' && item.data.status === 'completed') {
-                  activityColor = colors.maintenanceStatus.completed;
-                  activityIcon = 'checkmark-circle';
+                if (item.type === 'maintenance') {
+                  if (item.data.status === 'completed') {
+                    activityColor = colors.maintenanceStatus.completed;
+                    activityIcon = 'checkmark-circle';
+                  } else {
+                    const props = getMaintenanceIconProps(item.data.maintenanceType, item.data.status, MAINTENANCE_STATUS_ICONS);
+                    activityColor = props.color;
+                    activityIcon = props.icon;
+                  }
                 } else {
                   const activityType = item.type === 'scan'
                     ? item.data.scanType
-                    : item.type === 'photo'
-                      ? 'photo_upload'
-                      : 'maintenance';
+                    : 'photo_upload';
                   activityColor = getScanTypeColor(activityType);
                   activityIcon = getScanTypeIcon(activityType);
                 }
 
-                return (
-                <View key={item.data.id} style={[styles.activityCard, { borderLeftColor: activityColor }]}>
-                  <View style={styles.cardRow}>
-                    <View style={styles.cardIconContainer}>
-                      <Ionicons
-                        name={activityIcon}
-                        size={31}
-                        color={activityColor}
-                      />
-                    </View>
-                    <View style={styles.cardBody}>
-                      <View style={styles.cardContentRow}>
-                        <Text style={styles.cardTitle} numberOfLines={1}>
-                          {item.type === 'scan'
-                            ? formatScanTypeLabel(item.data.scanType)
-                            : item.type === 'photo'
-                              ? 'Photo Upload'
-                              : item.data.title}
-                        </Text>
-                        <View style={styles.cardBadges}>
-                          {item.type === 'scan' && item.data.locationDescription && (() => {
-                            const matchedDepot = findDepotByLocationString(item.data.locationDescription, depots);
-                            if (!matchedDepot) return null;
-                            const badgeColors = getDepotBadgeColors(matchedDepot, colors.chrome, colors.text);
-                            return (
-                              <View style={[styles.locationBadge, { backgroundColor: badgeColors.bg }]}>
-                                <Text style={[styles.locationText, { color: badgeColors.text }]}>{matchedDepot.name}</Text>
-                              </View>
-                            );
-                          })()}
-                          {item.type === 'photo' && item.data.hazardCount > 0 && (
-                            <View style={[styles.locationBadge, { backgroundColor: item.data.maxSeverity === 'critical' || item.data.maxSeverity === 'high' ? colors.error : colors.warning }]}>
-                              <Text style={[styles.locationText, { color: colors.textInverse }]}>
-                                {item.data.hazardCount} Hazard{item.data.hazardCount !== 1 ? 's' : ''}
-                              </Text>
-                            </View>
-                          )}
-                          {item.type === 'maintenance' && (
-                            <>
-                              <MaintenanceStatusBadge status={item.data.status} />
-                              {item.data.status !== 'completed' && item.data.status !== 'cancelled' && (
-                                <MaintenancePriorityBadge priority={item.data.priority} />
-                              )}
-                            </>
-                          )}
-                        </View>
+                const cardContent = (
+                  <View style={[styles.activityCard, { borderLeftColor: activityColor }]}>
+                    <View style={styles.cardRow}>
+                      <View style={styles.cardIconContainer}>
+                        <Ionicons
+                          name={activityIcon}
+                          size={31}
+                          color={activityColor}
+                        />
                       </View>
-                      <View style={styles.activityFooter}>
-                        <Text style={styles.cardSecondaryText}>
-                          {item.type === 'scan'
-                            ? item.data.scannerName || 'Unknown'
-                            : item.type === 'photo'
-                              ? item.data.primaryCategory?.replace(/_/g, ' ') || item.data.photoType.replace(/_/g, ' ')
-                              : item.data.status === 'completed'
-                                ? `Completed ${item.data.completedAt ? formatRelativeTime(item.data.completedAt) : formatRelativeTime(item.data.updatedAt)}${(item.data as MaintenanceRecordWithNames).completerName ? ` by ${(item.data as MaintenanceRecordWithNames).completerName}` : ''}`
-                                : item.data.description || item.data.maintenanceType?.replace(/_/g, ' ') || item.data.status.replace(/_/g, ' ')}
-                        </Text>
-                        <Text style={styles.activityTime}>
-                          {formatRelativeTime(
-                            item.type === 'maintenance'
-                              ? (item.data.updatedAt || item.data.createdAt)
-                              : item.data.createdAt
-                          )}
-                        </Text>
+                      <View style={styles.cardBody}>
+                        <View style={styles.cardContentRow}>
+                          <Text style={styles.cardTitle} numberOfLines={1}>
+                            {item.type === 'scan'
+                              ? formatScanTypeLabel(item.data.scanType)
+                              : item.type === 'photo'
+                                ? 'Photo Upload'
+                                : item.data.title}
+                          </Text>
+                          <View style={styles.cardBadges}>
+                            {item.type === 'scan' && item.data.locationDescription && (() => {
+                              const matchedDepot = findDepotByLocationString(item.data.locationDescription, depots);
+                              if (!matchedDepot) return null;
+                              const badgeColors = getDepotBadgeColors(matchedDepot, colors.chrome, colors.text);
+                              return (
+                                <View style={[styles.locationBadge, { backgroundColor: badgeColors.bg }]}>
+                                  <Text style={[styles.locationText, { color: badgeColors.text }]}>{matchedDepot.name}</Text>
+                                </View>
+                              );
+                            })()}
+                            {item.type === 'photo' && item.data.hazardCount > 0 && (
+                              <View style={[styles.locationBadge, { backgroundColor: item.data.maxSeverity === 'critical' || item.data.maxSeverity === 'high' ? colors.error : colors.warning }]}>
+                                <Text style={[styles.locationText, { color: colors.textInverse }]}>
+                                  {item.data.hazardCount} Hazard{item.data.hazardCount !== 1 ? 's' : ''}
+                                </Text>
+                              </View>
+                            )}
+                            {item.type === 'maintenance' && (
+                              <>
+                                {isDefectReport(item.data.maintenanceType) && (
+                                  <PillBadge icon="warning" label="Defect" color={colors.warning} />
+                                )}
+                                <MaintenanceStatusBadge status={item.data.status} />
+                                {!isDefectReport(item.data.maintenanceType) && item.data.status !== 'completed' && item.data.status !== 'cancelled' && (
+                                  <MaintenancePriorityBadge priority={item.data.priority} />
+                                )}
+                              </>
+                            )}
+                          </View>
+                        </View>
+                        <View style={styles.activityFooter}>
+                          <Text style={styles.cardSecondaryText}>
+                            {item.type === 'scan'
+                              ? item.data.scannerName || 'Unknown'
+                              : item.type === 'photo'
+                                ? item.data.primaryCategory?.replace(/_/g, ' ') || item.data.photoType.replace(/_/g, ' ')
+                                : item.data.status === 'completed'
+                                  ? `Completed ${item.data.completedAt ? formatRelativeTime(item.data.completedAt) : formatRelativeTime(item.data.updatedAt)}${(item.data as MaintenanceRecordWithNames).completerName ? ` by ${(item.data as MaintenanceRecordWithNames).completerName}` : ''}`
+                                  : item.data.description || item.data.maintenanceType?.replace(/_/g, ' ') || item.data.status.replace(/_/g, ' ')}
+                          </Text>
+                          <Text style={styles.activityTime}>
+                            {formatRelativeTime(
+                              item.type === 'maintenance'
+                                ? (item.data.updatedAt || item.data.createdAt)
+                                : item.data.createdAt
+                            )}
+                          </Text>
+                        </View>
                       </View>
                     </View>
                   </View>
-                </View>
+                );
+
+                return item.type === 'maintenance' ? (
+                  <TouchableOpacity
+                    key={item.data.id}
+                    onPress={() => handleMaintenancePress(item.data)}
+                    activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${isDefectReport(item.data.maintenanceType) ? 'Defect report: ' : ''}${item.data.title}`}
+                  >
+                    {cardContent}
+                  </TouchableOpacity>
+                ) : (
+                  <View key={item.data.id}>{cardContent}</View>
                 );
               })}
               </View>
@@ -329,7 +348,7 @@ export default function AssetDetailScreen() {
 
         {activeTab === 'photos' && (
           <View style={styles.photosTab}>
-            <PhotoGallery assetId={id} onPhotoPress={handlePhotoPress} scrollEnabled />
+            <PhotoGallery assetId={id} onPhotoPress={handlePhotoPress} />
           </View>
         )}
 
@@ -341,10 +360,15 @@ export default function AssetDetailScreen() {
               <View style={styles.maintenanceList}>
                 {maintenance.slice(0, 10).map((item) => {
                   const isCompleted = item.status === 'completed';
-                  const statusColor = colors.maintenanceStatus[item.status] ?? colors.textSecondary;
+                  const isDefect = isDefectReport(item.maintenanceType);
+                  const { icon: maintIcon, color: maintIconColor } = isCompleted
+                    ? { icon: 'checkmark-circle' as const, color: colors.maintenanceStatus.completed }
+                    : getMaintenanceIconProps(item.maintenanceType, item.status, MAINTENANCE_STATUS_ICONS);
                   const borderColor = isCompleted
                     ? colors.success
-                    : colors.maintenancePriority[item.priority as keyof typeof colors.maintenancePriority] || colors.border;
+                    : isDefect
+                      ? colors.warning
+                      : colors.maintenancePriority[item.priority as keyof typeof colors.maintenancePriority] || colors.border;
 
                   return (
                     <TouchableOpacity
@@ -356,9 +380,9 @@ export default function AssetDetailScreen() {
                       <View style={styles.cardRow}>
                         <View style={styles.cardIconContainer}>
                           <Ionicons
-                            name={maintenanceStatusIcon(item.status)}
+                            name={maintIcon}
                             size={31}
-                            color={statusColor}
+                            color={maintIconColor}
                           />
                         </View>
                         <View style={styles.cardBody}>
@@ -367,8 +391,13 @@ export default function AssetDetailScreen() {
                               {item.title}
                             </Text>
                             <View style={styles.cardBadges}>
+                              {isDefect && (
+                                <PillBadge icon="warning" label="Defect" color={colors.warning} />
+                              )}
                               <MaintenanceStatusBadge status={item.status} />
-                              {!isCompleted && <MaintenancePriorityBadge priority={item.priority} />}
+                              {!isDefect && !isCompleted && item.status !== 'cancelled' && (
+                                <MaintenancePriorityBadge priority={item.priority} />
+                              )}
                             </View>
                           </View>
                           <Text style={styles.cardSecondaryText}>

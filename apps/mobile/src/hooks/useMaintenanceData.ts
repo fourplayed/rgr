@@ -30,6 +30,7 @@ export const maintenanceKeys = {
   all: ['maintenance'] as const,
   lists: () => [...maintenanceKeys.all, 'list'] as const,
   list: (filters: MaintenanceFilters) => [...maintenanceKeys.lists(), filters] as const,
+  recent: (limit: number) => [...maintenanceKeys.lists(), 'recent', limit] as const,
   details: () => [...maintenanceKeys.all, 'detail'] as const,
   detail: (id: string) => [...maintenanceKeys.details(), id] as const,
   stats: () => [...maintenanceKeys.all, 'stats'] as const,
@@ -67,6 +68,21 @@ export function useMaintenanceList(filters: MaintenanceFilters = {}) {
         throw new Error(result.error);
       }
 
+      return result.data;
+    },
+  });
+}
+
+/**
+ * Fetch recent maintenance records for dashboard activity feed
+ */
+export function useRecentMaintenance(limit: number = 5) {
+  return useQuery({
+    queryKey: maintenanceKeys.recent(limit),
+    staleTime: 30_000,
+    queryFn: async () => {
+      const result = await listMaintenance({ limit });
+      if (!result.success) throw new Error(result.error ?? 'Failed to load');
       return result.data;
     },
   });

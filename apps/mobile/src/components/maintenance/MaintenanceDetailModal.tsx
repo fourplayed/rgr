@@ -8,6 +8,7 @@ import {
   StyleSheet,
   ScrollView,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { formatRelativeTime } from '@rgr/shared';
@@ -15,9 +16,11 @@ import { LoadingDots, AlertSheet, ConfirmSheet } from '../common';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
 import { useMaintenance, useUpdateMaintenanceStatus, useUpdateMaintenance } from '../../hooks/useMaintenanceData';
+import { useScanEventPhotos, useSignedUrl } from '../../hooks/usePhotos';
 import { useUserPermissions } from '../../contexts/UserPermissionsContext';
 import { MaintenanceStatusBadge } from './MaintenanceStatusBadge';
 import { MaintenancePriorityBadge } from './MaintenancePriorityBadge';
+import { PillBadge } from '../common/PillBadge';
 
 interface MaintenanceDetailModalProps {
   visible: boolean;
@@ -35,6 +38,15 @@ export function MaintenanceDetailModal({
   const { data: maintenance, isLoading } = useMaintenance(maintenanceId);
   const updateStatusMutation = useUpdateMaintenanceStatus();
   const updateMutation = useUpdateMaintenance();
+
+  // Defect photo data
+  const { data: scanEventPhotos } = useScanEventPhotos(maintenance?.scanEventId ?? null);
+  const defectPhoto = scanEventPhotos?.find((p) => p.photoType === 'damage') ?? null;
+  const {
+    data: defectPhotoUrl,
+    isLoading: isPhotoLoading,
+    error: photoError,
+  } = useSignedUrl(defectPhoto?.thumbnailPath ?? defectPhoto?.storagePath ?? undefined);
 
   const [editingNotes, setEditingNotes] = useState(false);
   const [notes, setNotes] = useState('');
@@ -242,6 +254,9 @@ export function MaintenanceDetailModal({
               >
                 {/* Badges */}
                 <View style={styles.badgeRow}>
+                  {maintenance.maintenanceType === 'defect_report' && (
+                    <PillBadge icon="warning" label="Defect" color={colors.warning} />
+                  )}
                   <MaintenanceStatusBadge status={maintenance.status} />
                   <MaintenancePriorityBadge priority={maintenance.priority} />
                 </View>
@@ -308,6 +323,40 @@ export function MaintenanceDetailModal({
                     )}
                   </View>
                 </View>
+
+                {/* Defect Photo Section */}
+                {defectPhoto && (
+                  <View style={styles.sectionGroup}>
+                    <Text style={styles.sectionTitle}>Defect Photo</Text>
+                    <View style={styles.sectionCard}>
+                      {isPhotoLoading ? (
+                        <View style={styles.defectPhotoPlaceholder}>
+                          <LoadingDots color={colors.textSecondary} size={8} />
+                        </View>
+                      ) : photoError || !defectPhotoUrl ? (
+                        <View style={styles.defectPhotoPlaceholder}>
+                          <Ionicons name="image-outline" size={28} color={colors.textSecondary} />
+                          <Text style={styles.defectPhotoErrorText}>Photo unavailable</Text>
+                        </View>
+                      ) : (
+                        <View
+                          style={styles.defectPhotoContainer}
+                          accessible
+                          accessibilityRole="image"
+                          accessibilityLabel="Defect photo for this maintenance record"
+                        >
+                          <Image
+                            source={{ uri: defectPhotoUrl }}
+                            style={styles.defectPhoto}
+                            contentFit="cover"
+                            transition={200}
+                            cachePolicy="memory-disk"
+                          />
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                )}
 
                 {/* Timestamps Section */}
                 <View style={styles.sectionGroup}>
@@ -665,5 +714,28 @@ const styles = StyleSheet.create({
     fontFamily: 'Lato_700Bold',
     color: colors.textSecondary,
     textTransform: 'uppercase',
+  },
+  defectPhotoContainer: {
+    borderRadius: borderRadius.md,
+    overflow: 'hidden',
+    aspectRatio: 4 / 3,
+  },
+  defectPhoto: {
+    flex: 1,
+  },
+  defectPhotoPlaceholder: {
+    aspectRatio: 4 / 3,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  defectPhotoErrorText: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_400Regular',
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
 });
