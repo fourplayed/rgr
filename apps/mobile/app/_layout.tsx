@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, Text } from 'react-native';
+import { AppState, View, StyleSheet, Text } from 'react-native';
 import { LoadingDots } from '../src/components/common/LoadingDots';
 import { StatusBar } from 'expo-status-bar';
 import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-router';
@@ -17,7 +17,7 @@ import {
   Lato_900Black,
   Lato_900Black_Italic,
 } from '@expo-google-fonts/lato';
-import { onAuthStateChange } from '@rgr/shared';
+import { onAuthStateChange, getSupabaseClient } from '@rgr/shared';
 import { initializeMobileSupabase } from '../src/config/supabase';
 import { useAuthStore } from '../src/store/authStore';
 import { useLocationStore } from '../src/store/locationStore';
@@ -107,6 +107,22 @@ export default function RootLayout() {
       }
     });
     return unsubscribe;
+  }, []);
+
+  // Proactively refresh auth session when app returns to foreground.
+  // iOS suspends the JS thread when backgrounded, which stops Supabase JS's
+  // autoRefreshToken timer. This ensures the token is refreshed before any
+  // data queries fire on resume.
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') {
+        const { isAuthenticated } = useAuthStore.getState();
+        if (isAuthenticated) {
+          getSupabaseClient().auth.getSession();
+        }
+      }
+    });
+    return () => subscription.remove();
   }, []);
 
   // Clear React Query cache when user logs out to prevent stale data on next login
