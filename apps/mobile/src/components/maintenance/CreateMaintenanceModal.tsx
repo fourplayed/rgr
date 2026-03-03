@@ -100,7 +100,7 @@ export function CreateMaintenanceModal({
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create maintenance record');
     }
-  }, [title, description, priority, dueDate, notes, assetId, user, createMaintenanceAsync, onClose]);
+  }, [title, description, priority, dueDate, notes, assetId, user, createMaintenanceAsync, onClose, onCreated]);
 
   const isLoading = isPending;
 
