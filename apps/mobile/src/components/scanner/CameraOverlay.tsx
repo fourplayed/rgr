@@ -1,166 +1,43 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useCallback, useRef } from 'react';
 import {
   View,
   Text,
   SafeAreaView,
   TouchableOpacity,
-  LayoutAnimation,
   type LayoutChangeEvent,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { CountSummarySheet } from './CountSummarySheet';
-import { ScanToast } from './ScanToast';
 import { LoadingDots } from '../common/LoadingDots';
-import { PillBadge } from '../common/PillBadge';
 import { colors } from '../../theme/colors';
 import { styles, TOP_BAR_HEIGHT } from './scan.styles';
-import { spacing } from '../../theme/spacing';
-
-export interface CountSummaryData {
-  standaloneCount: number;
-  combinationCount: number;
-  recentAssetNumbers: string[];
-}
 
 interface CameraOverlayProps {
-  // Asset count mode
-  assetCountActive: boolean;
-  assetCountScanCount: number;
-
-  // Footer
   hasLocationPermission: boolean;
   onRequestLocationPermission: () => void;
-  canPerformAssetCount: boolean;
-  onStartAssetCount: () => void;
-  onEndAssetCount: () => void;
-
-  // Count mode inline components
-  scanToast?: {
-    visible: boolean;
-    message: string;
-    type: 'success' | 'info' | 'link';
-    showUndo: boolean;
-  };
-  scanToastId?: number;
-  onScanToastDismiss?: () => void;
-  onScanToastUndo?: () => void;
-  onUndoWindowOpen?: () => void;
-  onUndoWindowClose?: () => void;
-
-  // Chain (linking) mode
-  isChainActive?: boolean;
-  activeChainSize?: number;
-  maxChainSize?: number;
-  onStartChain?: () => void;
-  onEndChain?: () => void;
-  onDiscardChain?: () => void;
-
-  // Mid-count summary
-  countSummary?: CountSummaryData;
-
-  // Scan status overlay
   scanStatus?: string | null;
 }
 
 function CameraOverlayComponent({
-  assetCountActive,
-  assetCountScanCount,
   hasLocationPermission,
   onRequestLocationPermission,
-  canPerformAssetCount,
-  onStartAssetCount,
-  onEndAssetCount,
-  scanToast,
-  scanToastId,
-  onScanToastDismiss,
-  onScanToastUndo,
-  onUndoWindowOpen,
-  onUndoWindowClose,
-  isChainActive,
-  activeChainSize,
-  maxChainSize = 5,
-  onStartChain,
-  onEndChain,
-  onDiscardChain,
-  countSummary,
   scanStatus,
 }: CameraOverlayProps) {
-  const [showSummary, setShowSummary] = useState(false);
   const topBarHeight = useRef(TOP_BAR_HEIGHT);
-
-  const handleToggleSummary = useCallback(() => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setShowSummary(v => !v);
-  }, []);
 
   const handleTopBarLayout = useCallback((e: LayoutChangeEvent) => {
     topBarHeight.current = e.nativeEvent.layout.height;
   }, []);
 
-  const handleStartAssetCount = useCallback(() => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    onStartAssetCount();
-  }, [onStartAssetCount]);
-
-  const handleEndAssetCount = useCallback(() => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    onEndAssetCount();
-  }, [onEndAssetCount]);
-
-  const showFooterTray = assetCountActive || !hasLocationPermission || canPerformAssetCount;
-
   return (
     <SafeAreaView style={styles.overlay}>
       {/* ── Top Bar ──────────────────────────────── */}
       <View style={styles.topBar} onLayout={handleTopBarLayout}>
-        {assetCountActive ? (
-          <View style={styles.topBarBadgesCentered}>
-            <PillBadge
-              icon="clipboard-outline"
-              label="Asset Count"
-              color={colors.electricBlue}
-              iconSize={14}
-            />
-            {isChainActive && (
-              <PillBadge
-                icon="link"
-                label={`Chain ${activeChainSize ?? 0}/${maxChainSize}`}
-                color={colors.violet}
-                accessibilityLabel={`Combination chain, ${activeChainSize ?? 0} of ${maxChainSize} assets`}
-              />
-            )}
-          </View>
-        ) : (
-          <View style={styles.topBarTitleCenter}>
-            <Text style={styles.topBarTitleText}>Scan QR Code</Text>
-            <Text style={styles.topBarSubtitleText}>
-              Point camera at asset QR code
-            </Text>
-          </View>
-        )}
-      </View>
-
-      {/* ── Floating Toast ───────────────────────── */}
-      {scanToast && onScanToastDismiss && (
-        <View
-          style={[
-            styles.floatingToastContainer,
-            { top: topBarHeight.current + spacing.sm + 35 },
-          ]}
-          pointerEvents="box-none"
-        >
-          <ScanToast
-            visible={scanToast.visible}
-            message={scanToast.message}
-            type={scanToast.type}
-            onUndo={scanToast.showUndo ? onScanToastUndo : undefined}
-            onDismiss={onScanToastDismiss}
-            toastId={scanToastId}
-            onUndoWindowOpen={onUndoWindowOpen}
-            onUndoWindowClose={onUndoWindowClose}
-          />
+        <View style={styles.topBarTitleCenter}>
+          <Text style={styles.topBarTitleText}>Scan QR Code</Text>
+          <Text style={styles.topBarSubtitleText}>
+            Point camera at asset QR code
+          </Text>
         </View>
-      )}
+      </View>
 
       {/* ── Scan Frame ───────────────────────────── */}
       <View style={styles.scanFrame}>
@@ -181,101 +58,18 @@ function CameraOverlayComponent({
       </View>
 
       {/* ── Footer Tray ──────────────────────────── */}
-      {showFooterTray && (
+      {!hasLocationPermission && (
         <View style={styles.footerTray}>
-          {assetCountActive ? (
-            <>
-              {/* Chain controls */}
-              {onStartChain && onEndChain && (
-                isChainActive ? (
-                  <View style={styles.chainActionRow}>
-                    <TouchableOpacity
-                      style={[styles.scannerButtonBase, styles.buttonError]}
-                      onPress={onDiscardChain}
-                      accessibilityRole="button"
-                      accessibilityLabel="Cancel combination chain"
-                    >
-                      <Ionicons name="close-circle-outline" size={18} color={colors.error} />
-                      <Text style={[styles.scannerButtonText, styles.buttonErrorText]}>Cancel</Text>
-                    </TouchableOpacity>
-                    {(activeChainSize ?? 0) >= 2 && (
-                      <TouchableOpacity
-                        style={[styles.scannerButtonBase, styles.buttonSuccess]}
-                        onPress={onEndChain}
-                        accessibilityRole="button"
-                        accessibilityLabel="Done creating combination chain"
-                      >
-                        <Ionicons name="checkmark-circle-outline" size={18} color={colors.textInverse} />
-                        <Text style={[styles.scannerButtonText, styles.buttonSuccessText]}>Done</Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                ) : (
-                  <TouchableOpacity
-                    style={[styles.scannerButtonBase, styles.buttonChain, { marginBottom: spacing.sm }]}
-                    onPress={onStartChain}
-                    accessibilityRole="button"
-                    accessibilityLabel="Create combination chain"
-                  >
-                    <Ionicons name="link" size={18} color={colors.violet} />
-                    <Text style={[styles.scannerButtonText, styles.buttonChainText]}>Create Combination Chain</Text>
-                  </TouchableOpacity>
-                )
-              )}
-
-              {/* End Count (always at bottom) */}
-              {canPerformAssetCount && (
-                <TouchableOpacity
-                  style={[styles.scannerButtonBase, styles.buttonError]}
-                  onPress={handleEndAssetCount}
-                  accessibilityRole="button"
-                  accessibilityLabel="End asset count"
-                >
-                  <Ionicons name="stop-circle-outline" size={18} color={colors.error} />
-                  <Text style={[styles.scannerButtonText, styles.buttonErrorText]}>
-                    End Asset Count Mode
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </>
-          ) : (
-            <>
-              {!hasLocationPermission && (
-                <TouchableOpacity
-                  style={[styles.scannerButtonBase, styles.buttonPrimary]}
-                  onPress={onRequestLocationPermission}
-                  accessibilityRole="button"
-                  accessibilityLabel="Enable location"
-                  accessibilityHint="Double tap to grant location permission for scan tracking"
-                >
-                  <Text style={[styles.scannerButtonText, styles.buttonPrimaryText]}>Enable Location</Text>
-                </TouchableOpacity>
-              )}
-
-              {canPerformAssetCount && (
-                <TouchableOpacity
-                  style={[styles.scannerButtonBase, styles.buttonElectricBlue, { marginTop: !hasLocationPermission ? spacing.sm : 0 }]}
-                  onPress={handleStartAssetCount}
-                  accessibilityRole="button"
-                  accessibilityLabel="Start asset count"
-                >
-                  <Ionicons name="clipboard-outline" size={18} color={colors.electricBlue} />
-                  <Text style={[styles.scannerButtonText, styles.buttonElectricBlueText]}>Asset Count</Text>
-                </TouchableOpacity>
-              )}
-            </>
-          )}
+          <TouchableOpacity
+            style={[styles.scannerButtonBase, styles.buttonPrimary]}
+            onPress={onRequestLocationPermission}
+            accessibilityRole="button"
+            accessibilityLabel="Enable location"
+            accessibilityHint="Double tap to grant location permission for scan tracking"
+          >
+            <Text style={[styles.scannerButtonText, styles.buttonPrimaryText]}>Enable Location</Text>
+          </TouchableOpacity>
         </View>
-      )}
-
-      {/* Mid-count summary sheet */}
-      {countSummary && (
-        <CountSummarySheet
-          visible={showSummary}
-          countSummary={countSummary}
-          scanCount={assetCountScanCount}
-          onDismiss={handleToggleSummary}
-        />
       )}
     </SafeAreaView>
   );

@@ -34,13 +34,6 @@ export const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
     minHeight: TOP_BAR_HEIGHT,
   },
-  topBarBadgesCentered: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
   topBarTitleCenter: {
     flex: 1,
     alignItems: 'center',
@@ -61,14 +54,6 @@ export const styles = StyleSheet.create({
     letterSpacing: 1,
     marginTop: spacing.xs,
   },
-  // ── Floating toast container ───────────────────────────
-  floatingToastContainer: {
-    position: 'absolute',
-    left: spacing.lg,
-    right: spacing.lg,
-    zIndex: 10,
-  },
-
   // ── Scan frame ─────────────────────────────────────────
   scanFrame: {
     flex: 1,
@@ -180,30 +165,6 @@ export const styles = StyleSheet.create({
   buttonSuccessText: {
     color: colors.textInverse,
   },
-  buttonElectricBlue: {
-    backgroundColor: colors.electricBlue + '20',
-    borderWidth: 1,
-    borderColor: colors.electricBlue + '50',
-  },
-  buttonElectricBlueText: {
-    color: colors.electricBlue,
-  },
-  buttonChain: {
-    backgroundColor: colors.violet + '20',
-    borderWidth: 1,
-    borderColor: colors.violet + '50',
-  },
-  buttonChainText: {
-    color: colors.violet,
-  },
-
-  // ── Chain action row ───────────────────────────────────
-  chainActionRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    marginBottom: spacing.sm,
-  },
-
   // ── Kept for non-overlay screens ───────────────────────
   statusRow: {
     flexDirection: 'row',

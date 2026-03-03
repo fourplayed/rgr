@@ -55,7 +55,7 @@ function SettingsItem({ icon, title, subtitle, onPress, showChevron = true }: Se
 export default function SettingsScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { canAccessAdmin, canViewAuditLog, canPerformAssetCount } = useUserPermissions();
+  const { canAccessAdmin, canViewAuditLog } = useUserPermissions();
   const resetTutorials = useTutorialStore(s => s.resetAll);
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -151,9 +151,7 @@ export default function SettingsScreen() {
               <SettingsItem
                 icon="book-outline"
                 title="View Tutorials"
-                subtitle={canPerformAssetCount
-                  ? 'Re-watch the scanning and counting guides'
-                  : 'Re-watch the scanning guide'}
+                subtitle="Re-watch the scanning guide"
                 onPress={handleResetTutorials}
               />
             </View>

@@ -7,14 +7,10 @@ interface UserPermissions {
   canMarkMaintenance: boolean;
   /** Mechanic+ can select photo type (freight, damage, inspection, general) */
   canSelectPhotoType: boolean;
-  /** Manager+ can perform asset count sessions */
-  canPerformAssetCount: boolean;
   /** Manager+ can view audit logs */
   canViewAuditLog: boolean;
   /** Superuser only — access admin screens */
   canAccessAdmin: boolean;
-  /** Superuser only — delete asset count sessions */
-  canDeleteAssetCount: boolean;
 }
 
 const UserPermissionsContext = createContext<UserPermissions | null>(null);
@@ -38,10 +34,8 @@ export function UserPermissionsProvider({
       role: userRole,
       canMarkMaintenance: level >= mechanicLevel,
       canSelectPhotoType: level >= mechanicLevel,
-      canPerformAssetCount: level >= managerLevel,
       canViewAuditLog: level >= managerLevel,
       canAccessAdmin: level >= superuserLevel,
-      canDeleteAssetCount: level >= superuserLevel,
     };
   }, [userRole]);
 
@@ -65,10 +59,8 @@ export function useUserPermissions(): UserPermissions {
       role: null,
       canMarkMaintenance: false,
       canSelectPhotoType: false,
-      canPerformAssetCount: false,
       canViewAuditLog: false,
       canAccessAdmin: false,
-      canDeleteAssetCount: false,
     };
   }
 

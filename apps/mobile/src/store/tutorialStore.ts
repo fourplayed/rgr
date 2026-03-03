@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-type TutorialKey = 'scan' | 'count';
+type TutorialKey = 'scan';
 
 interface TutorialState {
   _hasHydrated: boolean;
@@ -14,7 +14,6 @@ interface TutorialState {
 
 const defaultSeen: Record<TutorialKey, boolean> = {
   scan: false,
-  count: false,
 };
 
 export const useTutorialStore = create<TutorialState>()(

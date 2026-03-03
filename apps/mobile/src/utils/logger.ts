@@ -29,19 +29,6 @@ export const logger = {
   },
 
   /**
-   * Log asset count mode events
-   */
-  assetCount: (message: string, data?: LogData) => {
-    if (isDev) {
-      if (data !== undefined) {
-        console.log(formatMessage('AssetCount', message), data);
-      } else {
-        console.log(formatMessage('AssetCount', message));
-      }
-    }
-  },
-
-  /**
    * Log general info events
    */
   info: (message: string, data?: LogData) => {

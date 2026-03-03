@@ -6,8 +6,6 @@ export default function AssetsLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="[id]" />
-      <Stack.Screen name="count-history" />
-      <Stack.Screen name="session/[id]" />
     </Stack>
   );
 }

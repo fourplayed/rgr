@@ -1,12 +1,10 @@
 import React from 'react';
-import type { Asset, Depot, AssetScan, CombinationGroup } from '@rgr/shared';
+import type { Asset, Depot } from '@rgr/shared';
 import type { LocationData } from '../../hooks/useLocation';
 import { ScanConfirmSheet } from './ScanConfirmSheet';
 import { MaintenanceCheckbox } from './MaintenanceCheckbox';
 import { DefectReportSheet } from './DefectReportSheet';
 import { ScanSuccessSheet } from './ScanSuccessSheet';
-import { CombinationPhotoSheet } from './CombinationPhotoSheet';
-import { EndCountReviewSheet } from './EndCountReviewSheet';
 import { PhotoPromptSheet, CameraCapture } from '../photos';
 import { AlertSheet, ErrorBoundary } from '../common';
 import type { AlertSheetState } from '../../hooks/scan/useScanFlow';
@@ -55,28 +53,6 @@ interface ScanModalStackProps {
   alertSheet: AlertSheetState;
   onAlertDismiss: () => void;
 
-  // Combination photo
-  showCombinationPhoto: boolean;
-  activeCombinationId: string | null;
-  combinationAssetNumbers: string[];
-  onCombinationPhotoCapture: (photoUri: string) => void;
-  onCombinationNotesChange: (notes: string) => void;
-  onCombinationPhotoComplete: () => void;
-  onCombinationPhotoSkip: () => void;
-
-  // End count review
-  showEndCountReview: boolean;
-  endCountDepotName: string;
-  endCountScans: AssetScan[];
-  endCountCombinations: Record<string, CombinationGroup>;
-  isSubmittingCount: boolean;
-  onEditCombination: (combinationId: string) => void;
-  onNotesChange?: (combinationId: string, notes: string) => void;
-  onSubmitCount: () => void;
-  onCancelEndCount: () => void;
-  onDiscardCount: () => void;
-  onEndCountReviewDismiss: () => void;
-  onCombinationPhotoDismiss: () => void;
 }
 
 export function ScanModalStack(props: ScanModalStackProps) {
@@ -149,33 +125,6 @@ export function ScanModalStack(props: ScanModalStackProps) {
         onDismiss={props.onAlertDismiss}
       />
 
-      {/* Combination Photo Sheet */}
-      {props.activeCombinationId && props.combinationAssetNumbers.length > 0 && (
-        <CombinationPhotoSheet
-          visible={props.showCombinationPhoto}
-          assetNumbers={props.combinationAssetNumbers}
-          onCapture={props.onCombinationPhotoCapture}
-          onNotesChange={props.onCombinationNotesChange}
-          onComplete={props.onCombinationPhotoComplete}
-          onSkip={props.onCombinationPhotoSkip}
-          onDismiss={props.onCombinationPhotoDismiss}
-        />
-      )}
-
-      {/* End Count Review Sheet */}
-      <EndCountReviewSheet
-        visible={props.showEndCountReview}
-        depotName={props.endCountDepotName}
-        scans={props.endCountScans}
-        combinations={props.endCountCombinations}
-        isSubmitting={props.isSubmittingCount}
-        onEditCombination={props.onEditCombination}
-        onNotesChange={props.onNotesChange}
-        onSubmit={props.onSubmitCount}
-        onCancel={props.onCancelEndCount}
-        onDiscard={props.onDiscardCount}
-        onDismiss={props.onEndCountReviewDismiss}
-      />
     </>
   );
 }

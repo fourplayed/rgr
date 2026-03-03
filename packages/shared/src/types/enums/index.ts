@@ -4,4 +4,3 @@ export * from './ScanEnums';
 export * from './MaintenanceEnums';
 export * from './HazardEnums';
 export * from './PhotoEnums';
-export * from './AssetCountEnums';
