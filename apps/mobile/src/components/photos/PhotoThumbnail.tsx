@@ -29,7 +29,7 @@ function PhotoThumbnailComponent({ photo, size, onPress }: PhotoThumbnailProps) 
   if (isLoading || !imageUrl) {
     return (
       <TouchableOpacity
-        style={[styles.container, styles.placeholder, { width: size, height: size }]}
+        style={[styles.container, styles.placeholder, { width: size, height: size }, photo.photoType === 'damage' && styles.defectBorder]}
         onPress={handlePress}
         activeOpacity={0.8}
         accessibilityRole="image"
@@ -44,7 +44,7 @@ function PhotoThumbnailComponent({ photo, size, onPress }: PhotoThumbnailProps) 
 
   return (
     <TouchableOpacity
-      style={[styles.container, { width: size, height: size }]}
+      style={[styles.container, { width: size, height: size }, photo.photoType === 'damage' && styles.defectBorder]}
       onPress={handlePress}
       activeOpacity={0.8}
       accessibilityRole="image"
@@ -123,5 +123,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     borderRadius: 10,
     padding: 2,
+  },
+  defectBorder: {
+    borderWidth: 2,
+    borderColor: colors.error,
   },
 });

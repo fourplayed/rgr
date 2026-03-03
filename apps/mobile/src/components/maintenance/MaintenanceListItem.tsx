@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import type { MaintenanceListItem as MaintenanceListItemType, MaintenancePriority } from '@rgr/shared';
 import { formatRelativeTime } from '@rgr/shared';
 import { colors } from '../../theme/colors';
@@ -21,6 +22,7 @@ const getPriorityBorderColor = (priority: MaintenancePriority): string => {
 
 function MaintenanceListItemComponent({ maintenance, onPress }: MaintenanceListItemProps) {
   const borderColor = getPriorityBorderColor(maintenance.priority);
+  const isDefect = maintenance.maintenanceType === 'defect_report';
   const dueDateText = maintenance.dueDate
     ? `Due ${formatRelativeTime(maintenance.dueDate)}`
     : 'No due date';
@@ -31,14 +33,19 @@ function MaintenanceListItemComponent({ maintenance, onPress }: MaintenanceListI
       onPress={() => onPress(maintenance)}
       activeOpacity={0.7}
       accessibilityRole="button"
-      accessibilityLabel={`Maintenance ${maintenance.title}, status ${maintenance.status}, priority ${maintenance.priority}`}
+      accessibilityLabel={`${isDefect ? 'Defect report' : 'Maintenance'} ${maintenance.title}, status ${maintenance.status}, priority ${maintenance.priority}`}
     >
       <View style={styles.cardContent}>
         <View style={styles.details}>
           <View style={styles.headerRow}>
-            <Text style={styles.title} numberOfLines={1}>
-              {maintenance.title}
-            </Text>
+            <View style={styles.titleRow}>
+              {isDefect && (
+                <Ionicons name="warning" size={16} color={colors.warning} style={styles.defectIcon} />
+              )}
+              <Text style={styles.title} numberOfLines={1}>
+                {maintenance.title}
+              </Text>
+            </View>
             <View style={styles.badgeRow}>
               <MaintenanceStatusBadge status={maintenance.status} />
               <MaintenancePriorityBadge priority={maintenance.priority} />
@@ -64,6 +71,7 @@ export const MaintenanceListItem = memo(
     prev.maintenance.title === next.maintenance.title &&
     prev.maintenance.status === next.maintenance.status &&
     prev.maintenance.priority === next.maintenance.priority &&
+    prev.maintenance.maintenanceType === next.maintenance.maintenanceType &&
     prev.maintenance.dueDate === next.maintenance.dueDate &&
     prev.maintenance.assetNumber === next.maintenance.assetNumber &&
     prev.onPress === next.onPress
@@ -95,6 +103,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     gap: spacing.sm,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  defectIcon: {
+    marginRight: spacing.xs,
   },
   title: {
     fontSize: fontSize.base,

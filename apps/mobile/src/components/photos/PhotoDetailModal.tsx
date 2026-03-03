@@ -20,6 +20,10 @@ import { formatRelativeTime } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 
+const formatPhotoType = (type: string): string => {
+  return type.charAt(0).toUpperCase() + type.slice(1).replace(/_/g, ' ');
+};
+
 interface PhotoDetailModalProps {
   visible: boolean;
   photoId: string | null;
@@ -84,10 +88,6 @@ function PhotoDetailModalComponent({
   const handleCancelDelete = useCallback(() => {
     setShowDeleteConfirm(false);
   }, []);
-
-  const formatPhotoType = (type: string): string => {
-    return type.charAt(0).toUpperCase() + type.slice(1).replace(/_/g, ' ');
-  };
 
   return (
     <Modal

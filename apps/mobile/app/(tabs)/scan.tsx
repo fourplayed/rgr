@@ -105,7 +105,7 @@ export default function ScanScreen() {
       lastScanEventId: scanFlow.lastScanEventId,
       matchedDepot: scanFlow.matchedDepot,
       setAlertSheet: scanFlow.setAlertSheet,
-      queueCamera: (depot) => photoFlow.queueCamera(depot),
+      queueCamera: (depot, photoType) => photoFlow.queueCamera(depot, photoType),
       showSuccess: (items) => photoFlow.showSuccessWithItems(items),
     });
   }, [defectFlow, scanFlow, user, photoFlow]);
@@ -212,6 +212,7 @@ export default function ScanScreen() {
         onPhotoPromptDismiss={photoFlow.handlePhotoPromptDismiss}
         // Camera
         showCamera={photoFlow.showCamera}
+        photoType={photoFlow.photoTypeRef.current}
         lastScanEventId={scanFlow.lastScanEventId}
         onCameraClose={handleCameraClose}
         onPhotoUploaded={photoFlow.handlePhotoUploaded}

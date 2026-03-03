@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import * as Haptics from 'expo-haptics';
 import { useCreateMaintenance } from '../useMaintenanceData';
-import type { Asset, Depot } from '@rgr/shared';
+import type { Asset, Depot, PhotoType } from '@rgr/shared';
 import type { AlertSheetState } from './useScanFlow';
 
 export function useDefectFlow(deps: {
@@ -30,7 +30,7 @@ export function useDefectFlow(deps: {
       lastScanEventId: string | null;
       matchedDepot: { depot: Depot; distanceKm: number } | null;
       setAlertSheet: (state: AlertSheetState) => void;
-      queueCamera: (matchedDepot: { depot: Depot; distanceKm: number } | null) => void;
+      queueCamera: (matchedDepot: { depot: Depot; distanceKm: number } | null, photoType?: PhotoType) => void;
       showSuccess: (items: Array<{ label: string; value?: string }>) => void;
     }
   ) => {
@@ -56,6 +56,7 @@ export function useDefectFlow(deps: {
         description: notes,
         priority: 'high',
         status: 'scheduled',
+        maintenanceType: 'defect_report',
         scanEventId: lastScanEventId,
       });
       addDebugLog('Defect report created');
@@ -65,7 +66,7 @@ export function useDefectFlow(deps: {
       if (wantsPhoto) {
         addDebugLog('User wants defect photo - pending camera');
         defectReportedRef.current = true;
-        queueCamera(matchedDepot);
+        queueCamera(matchedDepot, 'damage');
         setShowDefectReport(false);
       } else {
         setShowDefectReport(false);

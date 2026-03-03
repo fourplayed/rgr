@@ -3,6 +3,7 @@ import { useEffect, useMemo } from 'react';
 import {
   getAssetPhotos,
   getPhotoById,
+  getPhotosByScanEventId,
   uploadPhoto,
   deletePhoto,
   bulkDeletePhotos,
@@ -18,6 +19,7 @@ import { logger } from '../utils/logger';
 export const photoKeys = {
   all: ['photos'] as const,
   asset: (assetId: string) => [...photoKeys.all, 'asset', assetId] as const,
+  scanEvent: (id: string) => [...photoKeys.all, 'scanEvent', id] as const,
   detail: (photoId: string) => [...photoKeys.all, 'detail', photoId] as const,
   signedUrl: (storagePath: string) => [...photoKeys.all, 'signedUrl', storagePath] as const,
 };
@@ -41,6 +43,28 @@ export function useAssetPhotos(assetId: string | undefined) {
     },
     enabled: !!assetId,
     staleTime: 60000, // Photos don't change frequently - cache for 60s
+  });
+}
+
+/**
+ * Fetch photos linked to a scan event
+ */
+export function useScanEventPhotos(scanEventId: string | null) {
+  return useQuery({
+    queryKey: photoKeys.scanEvent(scanEventId ?? ''),
+    queryFn: async () => {
+      if (!scanEventId) throw new Error('Scan event ID is required');
+
+      const result = await getPhotosByScanEventId(scanEventId);
+
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+
+      return result.data;
+    },
+    enabled: !!scanEventId,
+    staleTime: 60_000,
   });
 }
 

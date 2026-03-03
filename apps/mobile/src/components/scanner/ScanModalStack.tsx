@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Asset, Depot } from '@rgr/shared';
+import type { Asset, Depot, PhotoType } from '@rgr/shared';
 import type { LocationData } from '../../hooks/useLocation';
 import { ScanConfirmSheet } from './ScanConfirmSheet';
 import { MaintenanceCheckbox } from './MaintenanceCheckbox';
@@ -39,6 +39,7 @@ interface ScanModalStackProps {
 
   // Camera
   showCamera: boolean;
+  photoType: PhotoType;
   lastScanEventId: string | null;
   onCameraClose: () => void;
   onPhotoUploaded: () => void;
@@ -99,6 +100,7 @@ export function ScanModalStack(props: ScanModalStackProps) {
           <CameraCapture
             visible={props.showCamera}
             assetId={props.completedAsset.id}
+            photoType={props.photoType}
             scanEventId={props.lastScanEventId}
             locationDescription={props.matchedDepot?.depot.name ?? null}
             latitude={props.effectiveLocation?.latitude ?? null}

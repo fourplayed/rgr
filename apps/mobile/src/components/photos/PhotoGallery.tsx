@@ -1,8 +1,8 @@
-import React, { memo, useCallback, useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 import {
   View,
   Text,
-  FlatList,
+  ScrollView,
   TouchableOpacity,
   StyleSheet,
   useWindowDimensions,
@@ -22,16 +22,12 @@ interface PhotoGalleryProps {
   assetId: string;
   onPhotoPress: (photo: PhotoListItem) => void;
   onAddPhoto?: () => void;
-  scrollEnabled?: boolean;
 }
 
-interface GalleryItem {
-  type: 'photo' | 'add';
-  photo?: PhotoListItem;
-  id: string;
-}
-
-function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto, scrollEnabled = false }: PhotoGalleryProps) {
+// Uses ScrollView instead of FlatList/SectionList because:
+// - SectionList doesn't support numColumns in React Native
+// - The query returns ≤20 photos, so virtualization is unnecessary
+function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto }: PhotoGalleryProps) {
   const { width } = useWindowDimensions();
   const { data: photos, isLoading, error } = useAssetPhotos(assetId);
 
@@ -44,54 +40,15 @@ function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto, scrollEnable
     return Math.floor(availableWidth / NUM_COLUMNS);
   }, [width]);
 
-  // Prepare data - only include add button if onAddPhoto is provided
-  const galleryData = useMemo((): GalleryItem[] => {
-    const photoItems: GalleryItem[] = (photos || []).map(photo => ({
-      type: 'photo' as const,
-      photo,
-      id: photo.id,
-    }));
-    if (onAddPhoto) {
-      const addItem: GalleryItem = { type: 'add', id: 'add-photo' };
-      return [addItem, ...photoItems];
-    }
-    return photoItems;
-  }, [photos, onAddPhoto]);
-
-  const keyExtractor = useCallback((item: GalleryItem) => item.id, []);
-
-  const renderItem = useCallback(({ item }: { item: GalleryItem }) => {
-    if (item.type === 'add') {
-      return (
-        <TouchableOpacity
-          style={[
-            styles.addButton,
-            { width: thumbnailSize, height: thumbnailSize },
-          ]}
-          onPress={onAddPhoto}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel="Add photo"
-          accessibilityHint="Double tap to open camera and take a photo"
-        >
-          <Ionicons name="camera" size={32} color={colors.electricBlue} />
-          <Text style={styles.addButtonText}>Add Photo</Text>
-        </TouchableOpacity>
-      );
-    }
-
-    if (item.photo) {
-      return (
-        <PhotoThumbnail
-          photo={item.photo}
-          size={thumbnailSize}
-          onPress={onPhotoPress}
-        />
-      );
-    }
-
-    return null;
-  }, [thumbnailSize, onAddPhoto, onPhotoPress]);
+  // Split photos into freight (catches legacy inspection/general too) and defects
+  const freightPhotos = useMemo(
+    () => (photos || []).filter(p => p.photoType !== 'damage'),
+    [photos],
+  );
+  const defectPhotos = useMemo(
+    () => (photos || []).filter(p => p.photoType === 'damage'),
+    [photos],
+  );
 
   if (isLoading) {
     return (
@@ -109,33 +66,116 @@ function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto, scrollEnable
     );
   }
 
-  if (galleryData.length === 0) {
+  const hasPhotos = (photos || []).length > 0;
+
+  // No photos and no add button — simple empty state
+  if (!hasPhotos && !onAddPhoto) {
     return <Text style={styles.emptyText}>No photos uploaded</Text>;
   }
 
+  // No photos but add button available — show just the add button without noisy section headers
+  if (!hasPhotos && onAddPhoto) {
+    return (
+      <View style={styles.grid}>
+        <TouchableOpacity
+          style={[
+            styles.addButton,
+            { width: thumbnailSize, height: thumbnailSize },
+          ]}
+          onPress={onAddPhoto}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Add photo"
+          accessibilityHint="Double tap to open camera and take a photo"
+        >
+          <Ionicons name="camera" size={32} color={colors.electricBlue} />
+          <Text style={styles.addButtonText}>Add Photo</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   return (
-    <FlatList
-      data={galleryData}
-      renderItem={renderItem}
-      keyExtractor={keyExtractor}
-      numColumns={NUM_COLUMNS}
-      columnWrapperStyle={styles.row}
-      contentContainerStyle={styles.container}
-      removeClippedSubviews
-      scrollEnabled={scrollEnabled}
+    <ScrollView
+      style={styles.scrollView}
+      contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}
-      {...(scrollEnabled && { style: { flex: 1 } })}
-    />
+    >
+      {/* Freight Section */}
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>
+          FREIGHT{' '}
+          <Text style={styles.sectionCount}>({freightPhotos.length})</Text>
+        </Text>
+      </View>
+      {freightPhotos.length === 0 && !onAddPhoto ? (
+        <Text style={styles.sectionEmptyText}>No freight photos</Text>
+      ) : (
+        <View style={styles.grid}>
+          {onAddPhoto && (
+            <TouchableOpacity
+              style={[
+                styles.addButton,
+                { width: thumbnailSize, height: thumbnailSize },
+              ]}
+              onPress={onAddPhoto}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Add photo"
+              accessibilityHint="Double tap to open camera and take a photo"
+            >
+              <Ionicons name="camera" size={32} color={colors.electricBlue} />
+              <Text style={styles.addButtonText}>Add Photo</Text>
+            </TouchableOpacity>
+          )}
+          {freightPhotos.map(photo => (
+            <PhotoThumbnail
+              key={photo.id}
+              photo={photo}
+              size={thumbnailSize}
+              onPress={onPhotoPress}
+            />
+          ))}
+        </View>
+      )}
+
+      {/* Defects Section */}
+      <View style={[styles.sectionHeader, styles.defectSectionHeader]}>
+        <Text style={styles.defectSectionTitle}>
+          DEFECTS{' '}
+          <Text style={styles.sectionCount}>({defectPhotos.length})</Text>
+        </Text>
+      </View>
+      {defectPhotos.length === 0 ? (
+        <Text style={styles.sectionEmptyText}>No defect photos</Text>
+      ) : (
+        <View style={styles.grid}>
+          {defectPhotos.map(photo => (
+            <PhotoThumbnail
+              key={photo.id}
+              photo={photo}
+              size={thumbnailSize}
+              onPress={onPhotoPress}
+            />
+          ))}
+        </View>
+      )}
+    </ScrollView>
   );
 }
 
 export const PhotoGallery = memo(PhotoGalleryComponent);
 
 const styles = StyleSheet.create({
-  container: {
-    gap: THUMBNAIL_GAP,
+  scrollView: {
+    flex: 1,
   },
-  row: {
+  scrollContent: {
+    paddingBottom: spacing.xl,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: THUMBNAIL_GAP,
   },
   loadingContainer: {
@@ -152,6 +192,36 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   emptyText: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_400Regular',
+    color: colors.textSecondary,
+    fontStyle: 'italic',
+    textTransform: 'uppercase',
+  },
+  sectionHeader: {
+    marginBottom: spacing.sm,
+  },
+  defectSectionHeader: {
+    marginTop: spacing.lg,
+  },
+  sectionTitle: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_700Bold',
+    color: colors.text,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  defectSectionTitle: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_700Bold',
+    color: colors.error,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  sectionCount: {
+    color: colors.textSecondary,
+  },
+  sectionEmptyText: {
     fontSize: fontSize.xs,
     fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,

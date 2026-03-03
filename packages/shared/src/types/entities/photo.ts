@@ -100,7 +100,7 @@ export function mapRowToPhoto(row: PhotoRow): Photo {
     assetId: row.asset_id,
     scanEventId: row.scan_event_id,
     uploadedBy: row.uploaded_by,
-    photoType: safeParseEnum(PhotoTypeSchema, row.photo_type, 'general'),
+    photoType: safeParseEnum(PhotoTypeSchema, row.photo_type, 'freight'),
     storagePath: row.storage_path,
     thumbnailPath: row.thumbnail_path,
     filename: row.filename,

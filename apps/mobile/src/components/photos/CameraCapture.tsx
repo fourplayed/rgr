@@ -11,6 +11,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import type { PhotoType } from '@rgr/shared';
 import { usePhotoCapture } from '../../hooks/usePhotoCapture';
 import { LoadingDots } from '../common/LoadingDots';
 import { colors } from '../../theme/colors';
@@ -19,6 +20,7 @@ import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 interface CameraCaptureProps {
   visible: boolean;
   assetId: string;
+  photoType?: PhotoType;
   scanEventId?: string | null;
   locationDescription?: string | null;
   latitude?: number | null;
@@ -28,9 +30,18 @@ interface CameraCaptureProps {
   onDismiss?: () => void;
 }
 
+const getGuideText = (type: PhotoType): string => {
+  switch (type) {
+    case 'damage': return 'Position defect in frame';
+    case 'freight':
+    default: return 'Position freight in frame';
+  }
+};
+
 function CameraCaptureComponent({
   visible,
   assetId,
+  photoType = 'freight',
   scanEventId,
   locationDescription,
   latitude,
@@ -88,7 +99,7 @@ function CameraCaptureComponent({
   }, [retakePhoto]);
 
   const handleConfirm = useCallback(async () => {
-    const success = await confirmAndUpload('freight');
+    const success = await confirmAndUpload(photoType);
     if (success) {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       onPhotoUploaded?.();
@@ -96,47 +107,61 @@ function CameraCaptureComponent({
     } else {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
-  }, [confirmAndUpload, onPhotoUploaded, onClose]);
+  }, [confirmAndUpload, photoType, onPhotoUploaded, onClose]);
 
   const handleClose = useCallback(() => {
     cancelCapture();
     onClose();
   }, [cancelCapture, onClose]);
 
+  const isDamage = photoType === 'damage';
+
+  // Permission checking state
   if (!permission) {
     return (
       <Modal visible={visible} animationType="slide" onRequestClose={handleClose} onDismiss={onDismiss}>
         <View style={styles.container}>
           <SafeAreaView style={styles.centered}>
-            <Text style={styles.messageText}>Checking camera permission...</Text>
+            <Ionicons name="camera-outline" size={48} color={colors.electricBlue} style={styles.checkingIcon} />
+            <Text style={styles.messageText}>Checking Camera...</Text>
+            <LoadingDots color={colors.electricBlue} size={8} />
           </SafeAreaView>
         </View>
       </Modal>
     );
   }
 
+  // Permission denied state
   if (!permission.granted) {
     return (
       <Modal visible={visible} animationType="slide" onRequestClose={handleClose} onDismiss={onDismiss}>
         <View style={styles.container}>
           <SafeAreaView style={styles.centered}>
-            <Text style={styles.messageText}>Camera permission is required</Text>
-            <TouchableOpacity
-              style={styles.permissionButton}
-              onPress={requestPermission}
-              accessibilityRole="button"
-              accessibilityLabel="Grant camera permission"
-            >
-              <Text style={styles.permissionButtonText}>Grant Permission</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={handleClose}
-              accessibilityRole="button"
-              accessibilityLabel="Cancel"
-            >
-              <Text style={styles.closeButtonText}>Cancel</Text>
-            </TouchableOpacity>
+            <View style={styles.permissionCard}>
+              <Ionicons name="ban-outline" size={48} color={colors.error} style={styles.permissionIcon} />
+              <Text style={styles.permissionTitle}>Camera Access Required</Text>
+              <Text style={styles.permissionBody}>
+                Camera permission is needed to capture photos. Enable it in your device Settings.
+              </Text>
+              <View style={styles.permissionButtonRow}>
+                <TouchableOpacity
+                  style={styles.permissionCancelButton}
+                  onPress={handleClose}
+                  accessibilityRole="button"
+                  accessibilityLabel="Cancel"
+                >
+                  <Text style={styles.permissionCancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.permissionGrantButton}
+                  onPress={requestPermission}
+                  accessibilityRole="button"
+                  accessibilityLabel="Grant camera permission"
+                >
+                  <Text style={styles.permissionGrantButtonText}>Grant</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </SafeAreaView>
         </View>
       </Modal>
@@ -149,16 +174,16 @@ function CameraCaptureComponent({
         {capturedUri ? (
           // Preview Mode
           <SafeAreaView style={styles.previewContainer}>
-            <View style={styles.header}>
+            <View style={styles.previewHeader}>
               <TouchableOpacity
                 style={styles.headerButton}
                 onPress={handleClose}
                 accessibilityRole="button"
                 accessibilityLabel="Close camera"
               >
-                <Ionicons name="close" size={28} color={colors.textInverse} />
+                <Ionicons name="close" size={28} color={colors.text} />
               </TouchableOpacity>
-              <Text style={styles.headerTitle}>Review Photo</Text>
+              <Text style={styles.previewHeaderTitle}>Review Photo</Text>
               <View style={styles.headerButton} />
             </View>
 
@@ -172,7 +197,13 @@ function CameraCaptureComponent({
 
             {uploadError && (
               <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>{uploadError}</Text>
+                <View style={styles.errorRow}>
+                  <Ionicons name="alert-circle" size={18} color={colors.error} />
+                  <View>
+                    <Text style={styles.errorTitle}>Upload Failed</Text>
+                    <Text style={styles.errorText}>{uploadError}</Text>
+                  </View>
+                </View>
               </View>
             )}
 
@@ -215,42 +246,46 @@ function CameraCaptureComponent({
             facing="back"
           >
             <SafeAreaView style={styles.cameraOverlay}>
-              <View style={styles.header}>
-                <TouchableOpacity
-                  style={styles.headerButton}
-                  onPress={handleClose}
-                  accessibilityRole="button"
-                  accessibilityLabel="Close camera"
-                >
-                  <Ionicons name="close" size={28} color={colors.textInverse} />
-                </TouchableOpacity>
-                <View style={styles.headerTitleContainer}>
-                  <Text style={styles.headerTitle}>Capture Photo</Text>
-                  <Text style={styles.guideText}>Position freight in frame</Text>
+              <View style={styles.cameraHeaderBand}>
+                <View style={styles.header}>
+                  <TouchableOpacity
+                    style={styles.headerButton}
+                    onPress={handleClose}
+                    accessibilityRole="button"
+                    accessibilityLabel="Close camera"
+                  >
+                    <Ionicons name="close" size={28} color={colors.textInverse} />
+                  </TouchableOpacity>
+                  <View style={styles.headerTitleContainer}>
+                    <Text style={styles.headerTitle}>Capture Photo</Text>
+                    <Text style={styles.guideText}>{getGuideText(photoType)}</Text>
+                  </View>
+                  <View style={styles.headerButton} />
                 </View>
-                <View style={styles.headerButton} />
               </View>
 
               <View style={styles.cameraGuide}>
                 <View style={styles.guideFrame}>
-                  <View style={[styles.guideCorner, styles.guideTopLeft]} />
-                  <View style={[styles.guideCorner, styles.guideTopRight]} />
-                  <View style={[styles.guideCorner, styles.guideBottomLeft]} />
-                  <View style={[styles.guideCorner, styles.guideBottomRight]} />
+                  <View style={[styles.guideCorner, styles.guideTopLeft, isDamage && { borderColor: colors.error }]} />
+                  <View style={[styles.guideCorner, styles.guideTopRight, isDamage && { borderColor: colors.error }]} />
+                  <View style={[styles.guideCorner, styles.guideBottomLeft, isDamage && { borderColor: colors.error }]} />
+                  <View style={[styles.guideCorner, styles.guideBottomRight, isDamage && { borderColor: colors.error }]} />
                 </View>
               </View>
 
-              <View style={styles.captureContainer}>
-                <TouchableOpacity
-                  style={styles.captureButton}
-                  onPress={handleCapture}
-                  activeOpacity={0.7}
-                  accessibilityRole="button"
-                  accessibilityLabel="Take photo"
-                  accessibilityHint="Double tap to capture a photo"
-                >
-                  <View style={styles.captureButtonInner} />
-                </TouchableOpacity>
+              <View style={styles.cameraCaptureBand}>
+                <View style={styles.captureContainer}>
+                  <TouchableOpacity
+                    style={[styles.captureButton, isDamage && { borderColor: colors.error }]}
+                    onPress={handleCapture}
+                    activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel="Take photo"
+                    accessibilityHint="Double tap to capture a photo"
+                  >
+                    <View style={[styles.captureButtonInner, isDamage && { backgroundColor: colors.error }]} />
+                  </TouchableOpacity>
+                </View>
               </View>
             </SafeAreaView>
           </CameraView>
@@ -277,36 +312,60 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: spacing.xl,
   },
-  messageText: {
-    fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
-    color: colors.textInverse,
-    textAlign: 'center',
+
+  // Permission checking
+  checkingIcon: {
     marginBottom: spacing.lg,
   },
-  permissionButton: {
-    backgroundColor: colors.primary,
-    height: 48,
-    paddingHorizontal: spacing.xl,
-    borderRadius: borderRadius.md,
+  messageText: {
+    fontSize: fontSize.lg,
+    fontFamily: 'Lato_700Bold',
+    color: colors.textInverse,
+    textAlign: 'center',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
     marginBottom: spacing.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.6,
-    shadowRadius: 6,
-    elevation: 6,
   },
-  permissionButtonText: {
+
+  // Permission denied — frosted card
+  permissionCard: {
+    width: '100%',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    padding: spacing.xl,
+    alignItems: 'center',
+  },
+  permissionIcon: {
+    marginBottom: spacing.lg,
+  },
+  permissionTitle: {
     fontSize: fontSize.lg,
     fontFamily: 'Lato_700Bold',
     color: colors.textInverse,
     textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: spacing.md,
+    textAlign: 'center',
   },
-  closeButton: {
+  permissionBody: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_400Regular',
+    color: colors.textInverse,
+    opacity: 0.7,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: spacing.xl,
+  },
+  permissionButtonRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    width: '100%',
+  },
+  permissionCancelButton: {
+    flex: 1,
     height: 48,
-    paddingHorizontal: spacing.xl,
     borderRadius: borderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
@@ -314,10 +373,29 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  closeButtonText: {
+  permissionCancelButtonText: {
     fontSize: fontSize.lg,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
+    textTransform: 'uppercase',
+  },
+  permissionGrantButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: borderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.6,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  permissionGrantButtonText: {
+    fontSize: fontSize.lg,
+    fontFamily: 'Lato_700Bold',
+    color: colors.textInverse,
     textTransform: 'uppercase',
   },
 
@@ -327,7 +405,14 @@ const styles = StyleSheet.create({
   },
   cameraOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 48, 0.3)',
+  },
+  cameraHeaderBand: {
+    backgroundColor: 'rgba(0,0,48,0.6)',
+    paddingBottom: spacing.lg,
+  },
+  cameraCaptureBand: {
+    backgroundColor: 'rgba(0,0,48,0.6)',
+    paddingTop: spacing.xl,
   },
   header: {
     flexDirection: 'row',
@@ -430,9 +515,28 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.navy,
   },
+  previewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.base,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.background,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  previewHeaderTitle: {
+    fontSize: fontSize.lg,
+    fontFamily: 'Lato_700Bold',
+    color: colors.text,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
   previewImageContainer: {
     flex: 1,
     margin: spacing.base,
+    backgroundColor: colors.surface,
+    overflow: 'hidden',
   },
   previewImage: {
     flex: 1,
@@ -442,19 +546,32 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.base,
     marginBottom: spacing.md,
     padding: spacing.md,
-    backgroundColor: 'rgba(239, 68, 68, 0.2)',
-    borderRadius: borderRadius.md,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.error,
+    backgroundColor: 'rgba(239,68,68,0.12)',
+    borderRadius: borderRadius.sm,
+  },
+  errorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  errorTitle: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_700Bold',
+    color: colors.error,
+    textTransform: 'uppercase',
   },
   errorText: {
     fontSize: fontSize.sm,
     fontFamily: 'Lato_400Regular',
-    color: colors.error,
-    textAlign: 'center',
+    color: colors.textInverse,
+    opacity: 0.8,
   },
   previewActions: {
     flexDirection: 'row',
     paddingHorizontal: spacing.base,
-    paddingBottom: spacing['2xl'],
+    paddingBottom: spacing['3xl'],
     gap: spacing.md,
   },
   actionButton: {

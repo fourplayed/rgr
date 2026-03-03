@@ -8,6 +8,8 @@ import type {
   HazardAlert,
 } from '../../types/entities';
 import type { PhotoType } from '../../types/enums/PhotoEnums';
+import { PhotoTypeSchema } from '../../types/enums/PhotoEnums';
+import { safeParseEnum } from '../../utils/safeParseEnum';
 import type { FreightAnalysisRow } from '../../types/entities/freightAnalysis';
 import type { HazardAlertRow } from '../../types/entities/hazardAlert';
 import {
@@ -41,7 +43,7 @@ export interface PhotoListItem {
   id: string;
   storagePath: string;
   thumbnailPath: string | null;
-  photoType: string;
+  photoType: PhotoType;
   createdAt: string;
   // Analysis summary (excluding raw_response)
   primaryCategory: string | null;
@@ -295,7 +297,82 @@ export async function getAssetPhotos(
       id: row.id,
       storagePath: row.storage_path,
       thumbnailPath: row.thumbnail_path,
-      photoType: row.photo_type,
+      photoType: safeParseEnum(PhotoTypeSchema, row.photo_type, 'freight'),
+      createdAt: row.created_at,
+      primaryCategory: analysis?.primary_category ?? null,
+      confidence: analysis?.confidence ?? null,
+      hazardCount: analysis?.hazard_count ?? 0,
+      maxSeverity: analysis?.max_severity ?? null,
+      requiresAcknowledgment: analysis?.requires_acknowledgment ?? false,
+      blockedFromDeparture: analysis?.blocked_from_departure ?? false,
+    };
+  });
+
+  return { success: true, data: photos, error: null };
+}
+
+/**
+ * Get photos linked to a scan event with analysis summary data.
+ * Uses the same optimized query as getAssetPhotos (excluding raw_response JSONB).
+ * No pagination — a scan event typically has at most 1-2 photos.
+ */
+export async function getPhotosByScanEventId(
+  scanEventId: string
+): Promise<ServiceResult<PhotoListItem[]>> {
+  const supabase = getSupabaseClient();
+
+  const { data, error } = await supabase
+    .from('photos')
+    .select(`
+      id,
+      storage_path,
+      thumbnail_path,
+      photo_type,
+      created_at,
+      freight_analysis!left(
+        primary_category,
+        confidence,
+        hazard_count,
+        max_severity,
+        requires_acknowledgment,
+        blocked_from_departure
+      )
+    `)
+    .eq('scan_event_id', scanEventId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    return { success: false, data: null, error: `Failed to fetch photos: ${error.message}` };
+  }
+
+  interface FreightAnalysisSummary {
+    primary_category: string | null;
+    confidence: number | null;
+    hazard_count: number;
+    max_severity: string | null;
+    requires_acknowledgment: boolean;
+    blocked_from_departure: boolean;
+  }
+
+  interface PhotoListRow {
+    id: string;
+    storage_path: string;
+    thumbnail_path: string | null;
+    photo_type: string;
+    created_at: string;
+    freight_analysis: FreightAnalysisSummary | FreightAnalysisSummary[] | null;
+  }
+
+  const photos: PhotoListItem[] = (data || []).map((row: PhotoListRow) => {
+    const analysis = Array.isArray(row.freight_analysis)
+      ? row.freight_analysis[0]
+      : row.freight_analysis;
+
+    return {
+      id: row.id,
+      storagePath: row.storage_path,
+      thumbnailPath: row.thumbnail_path,
+      photoType: safeParseEnum(PhotoTypeSchema, row.photo_type, 'freight'),
       createdAt: row.created_at,
       primaryCategory: analysis?.primary_category ?? null,
       confidence: analysis?.confidence ?? null,

@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import type { Depot } from '@rgr/shared';
+import type { Depot, PhotoType } from '@rgr/shared';
 import { logger } from '../../utils/logger';
 
 export function usePhotoFlow(deps: {
@@ -17,6 +17,7 @@ export function usePhotoFlow(deps: {
   const [successItems, setSuccessItems] = useState<Array<{ label: string; value?: string }>>([]);
 
   const photoUploadedRef = useRef(false);
+  const photoTypeRef = useRef<PhotoType>('freight');
   // Capture matchedDepot when camera opens to prevent stale closure issues
   const matchedDepotForCameraRef = useRef<{ depot: Depot; distanceKm: number } | null>(null);
 
@@ -26,14 +27,16 @@ export function usePhotoFlow(deps: {
   }, []);
 
   /** Queue the camera to show after the current modal's dismiss animation */
-  const queueCamera = useCallback((currentMatchedDepot: { depot: Depot; distanceKm: number } | null) => {
+  const queueCamera = useCallback((currentMatchedDepot: { depot: Depot; distanceKm: number } | null, photoType: PhotoType = 'freight') => {
     matchedDepotForCameraRef.current = currentMatchedDepot;
+    photoTypeRef.current = photoType;
     setPendingCamera(true);
   }, []);
 
   const handlePhotoPromptAddPhoto = useCallback((matchedDepot: { depot: Depot; distanceKm: number } | null) => {
     addDebugLog('Add Photo tapped - pending camera');
     matchedDepotForCameraRef.current = matchedDepot;
+    photoTypeRef.current = 'freight';
     setPendingCamera(true);
     setShowPhotoPrompt(false);
   }, [addDebugLog]);
@@ -133,6 +136,7 @@ export function usePhotoFlow(deps: {
     setPendingSuccessSheet(false);
     setSuccessItems([]);
     photoUploadedRef.current = false;
+    photoTypeRef.current = 'freight';
     matchedDepotForCameraRef.current = null;
   }, []);
 
@@ -163,6 +167,7 @@ export function usePhotoFlow(deps: {
 
     // Refs (for external read)
     photoUploadedRef,
+    photoTypeRef,
     matchedDepotForCameraRef,
   };
 }

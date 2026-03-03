@@ -5,11 +5,9 @@ import { usePhotoCaptureStore } from '../store/photoCaptureStore';
 import { useUploadPhoto } from './usePhotos';
 import { useAuthStore } from '../store/authStore';
 import { MAX_PHOTO_SIZE_BYTES } from '@rgr/shared';
+import type { PhotoType } from '@rgr/shared';
 import { generateThumbnail } from '../utils/imageUtils';
 import { logger } from '../utils/logger';
-
-/** Valid photo types matching the database photo_type enum */
-type PhotoType = 'freight' | 'damage' | 'inspection' | 'general';
 
 /**
  * Hook for managing photo capture workflow.
