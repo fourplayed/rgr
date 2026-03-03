@@ -14,7 +14,8 @@ import { Ionicons } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
 import { useAsset, useAssetScans, useAssetMaintenance } from '../../../src/hooks/useAssetData';
 import { useAssetPhotos } from '../../../src/hooks/usePhotos';
-import type { ScanEventWithScanner, MaintenanceRecord, MaintenanceRecordWithNames, PhotoListItem } from '@rgr/shared';
+import { useAssetDefectReports } from '../../../src/hooks/useDefectData';
+import type { ScanEventWithScanner, MaintenanceRecord, MaintenanceRecordWithNames, PhotoListItem, DefectReportListItem } from '@rgr/shared';
 import { AssetInfoCard } from '../../../src/components/assets/AssetInfoCard';
 import { buildAssetAssessment } from '../../../src/utils/assetAssessment';
 import { SegmentedTabs } from '../../../src/components/common/SegmentedTabs';
@@ -23,6 +24,8 @@ import {
   MaintenanceStatusBadge,
   MaintenancePriorityBadge,
   MaintenanceDetailModal,
+  DefectStatusBadge,
+  DefectReportDetailModal,
 } from '../../../src/components/maintenance';
 import { useAuthStore } from '../../../src/store/authStore';
 import { formatRelativeTime, hasRoleLevel, UserRole } from '@rgr/shared';
@@ -34,15 +37,14 @@ import {
   getScanTypeColor,
   formatScanTypeLabel,
 } from '../../../src/utils/scanFormatters';
-import { isDefectReport, getMaintenanceIconProps } from '../../../src/utils/maintenanceHelpers';
-import { PillBadge } from '../../../src/components/common/PillBadge';
 import { findDepotByLocationString, getDepotBadgeColors } from '@rgr/shared';
 import { useDepotLookup } from '../../../src/hooks/useDepots';
 
 type ActivityItem =
   | { type: 'scan'; data: ScanEventWithScanner; timestamp: Date }
   | { type: 'maintenance'; data: MaintenanceRecord; timestamp: Date }
-  | { type: 'photo'; data: PhotoListItem; timestamp: Date };
+  | { type: 'photo'; data: PhotoListItem; timestamp: Date }
+  | { type: 'defect'; data: DefectReportListItem; timestamp: Date };
 
 const ASSET_DETAIL_TABS = [
   { key: 'activity', label: 'Activity' },
@@ -70,6 +72,7 @@ export default function AssetDetailScreen() {
   const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
   const [showPhotoDetail, setShowPhotoDetail] = useState(false);
   const [selectedMaintenanceId, setSelectedMaintenanceId] = useState<string | null>(null);
+  const [selectedDefectId, setSelectedDefectId] = useState<string | null>(null);
 
   const isSuperuser = !!user?.role && hasRoleLevel(user.role, UserRole.SUPERUSER);
   const { depots } = useDepotLookup();
@@ -111,9 +114,11 @@ export default function AssetDetailScreen() {
     data: photos = [],
   } = useAssetPhotos(id);
 
-  // Merge scans, maintenance, and photos into a unified activity feed
-  // Optimization: Sort by timestamp string first, slice, then create Date objects
-  // This avoids creating Date objects for items we won't display
+  const {
+    data: defectReports = [],
+  } = useAssetDefectReports(id);
+
+  // Merge scans, maintenance, defects, and photos into a unified activity feed
   const recentActivity: ActivityItem[] = useMemo(() => {
     const allItems = [
       ...scans.map(scan => ({
@@ -126,6 +131,13 @@ export default function AssetDetailScreen() {
         data: m,
         timestampStr: m.updatedAt || m.createdAt,
       })),
+      ...defectReports
+        .filter(d => d.status !== 'dismissed')
+        .map(d => ({
+          type: 'defect' as const,
+          data: d,
+          timestampStr: d.createdAt,
+        })),
       ...photos.map(photo => ({
         type: 'photo' as const,
         data: photo,
@@ -135,13 +147,12 @@ export default function AssetDetailScreen() {
       .sort((a, b) => b.timestampStr.localeCompare(a.timestampStr))
       .slice(0, 10);
 
-    // Create Date objects only for items we'll render
     return allItems.map(item => ({
       type: item.type,
       data: item.data,
       timestamp: new Date(item.timestampStr),
     })) as ActivityItem[];
-  }, [scans, maintenance, photos]);
+  }, [scans, maintenance, defectReports, photos]);
 
   // Compute next service date from scheduled maintenance
   const nextService = useMemo(
@@ -154,8 +165,8 @@ export default function AssetDetailScreen() {
 
   // Build a natural-language assessment of the asset's current state
   const assessment = useMemo(
-    () => asset ? buildAssetAssessment({ asset, maintenance, photos, scans, depots }) : null,
-    [asset, maintenance, photos, scans, depots],
+    () => asset ? buildAssetAssessment({ asset, maintenance, photos, scans, depots, defectReports }) : null,
+    [asset, maintenance, photos, scans, depots, defectReports],
   );
 
   // Validate required route param
@@ -238,14 +249,14 @@ export default function AssetDetailScreen() {
                 let activityIcon: keyof typeof Ionicons.glyphMap;
 
                 if (item.type === 'maintenance') {
-                  if (item.data.status === 'completed') {
-                    activityColor = colors.maintenanceStatus.completed;
-                    activityIcon = 'checkmark-circle';
-                  } else {
-                    const props = getMaintenanceIconProps(item.data.maintenanceType, item.data.status, MAINTENANCE_STATUS_ICONS);
-                    activityColor = props.color;
-                    activityIcon = props.icon;
-                  }
+                  const maintStatusIcon = MAINTENANCE_STATUS_ICONS[item.data.status] ?? 'construct-outline';
+                  activityColor = item.data.status === 'completed'
+                    ? colors.maintenanceStatus.completed
+                    : colors.maintenanceStatus[item.data.status as keyof typeof colors.maintenanceStatus] ?? colors.textSecondary;
+                  activityIcon = maintStatusIcon;
+                } else if (item.type === 'defect') {
+                  activityColor = colors.warning;
+                  activityIcon = 'warning';
                 } else {
                   const activityType = item.type === 'scan'
                     ? item.data.scanType
@@ -271,7 +282,9 @@ export default function AssetDetailScreen() {
                               ? formatScanTypeLabel(item.data.scanType)
                               : item.type === 'photo'
                                 ? 'Photo Upload'
-                                : item.data.title}
+                                : item.type === 'defect'
+                                  ? 'Defect Report'
+                                  : item.data.title}
                           </Text>
                           <View style={styles.cardBadges}>
                             {item.type === 'scan' && item.data.locationDescription && (() => {
@@ -291,13 +304,13 @@ export default function AssetDetailScreen() {
                                 </Text>
                               </View>
                             )}
+                            {item.type === 'defect' && (
+                              <DefectStatusBadge status={item.data.status} />
+                            )}
                             {item.type === 'maintenance' && (
                               <>
-                                {isDefectReport(item.data.maintenanceType) && (
-                                  <PillBadge icon="warning" label="Defect" color={colors.warning} />
-                                )}
                                 <MaintenanceStatusBadge status={item.data.status} />
-                                {!isDefectReport(item.data.maintenanceType) && item.data.status !== 'completed' && item.data.status !== 'cancelled' && (
+                                {item.data.status !== 'completed' && item.data.status !== 'cancelled' && (
                                   <MaintenancePriorityBadge priority={item.data.priority} />
                                 )}
                               </>
@@ -310,9 +323,11 @@ export default function AssetDetailScreen() {
                               ? item.data.scannerName || 'Unknown'
                               : item.type === 'photo'
                                 ? item.data.primaryCategory?.replace(/_/g, ' ') || item.data.photoType.replace(/_/g, ' ')
-                                : item.data.status === 'completed'
-                                  ? `Completed ${item.data.completedAt ? formatRelativeTime(item.data.completedAt) : formatRelativeTime(item.data.updatedAt)}${(item.data as MaintenanceRecordWithNames).completerName ? ` by ${(item.data as MaintenanceRecordWithNames).completerName}` : ''}`
-                                  : item.data.description || item.data.maintenanceType?.replace(/_/g, ' ') || item.data.status.replace(/_/g, ' ')}
+                                : item.type === 'defect'
+                                  ? item.data.title
+                                  : item.data.status === 'completed'
+                                    ? `Completed ${item.data.completedAt ? formatRelativeTime(item.data.completedAt) : formatRelativeTime(item.data.updatedAt)}${(item.data as MaintenanceRecordWithNames).completerName ? ` by ${(item.data as MaintenanceRecordWithNames).completerName}` : ''}`
+                                    : item.data.description || item.data.maintenanceType?.replace(/_/g, ' ') || item.data.status.replace(/_/g, ' ')}
                           </Text>
                           <Text style={styles.activityTime}>
                             {formatRelativeTime(
@@ -327,19 +342,33 @@ export default function AssetDetailScreen() {
                   </View>
                 );
 
-                return item.type === 'maintenance' ? (
-                  <TouchableOpacity
-                    key={item.data.id}
-                    onPress={() => handleMaintenancePress(item.data)}
-                    activeOpacity={0.7}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${isDefectReport(item.data.maintenanceType) ? 'Defect report: ' : ''}${item.data.title}`}
-                  >
-                    {cardContent}
-                  </TouchableOpacity>
-                ) : (
-                  <View key={item.data.id}>{cardContent}</View>
-                );
+                if (item.type === 'maintenance') {
+                  return (
+                    <TouchableOpacity
+                      key={`m-${item.data.id}`}
+                      onPress={() => handleMaintenancePress(item.data)}
+                      activeOpacity={0.7}
+                      accessibilityRole="button"
+                      accessibilityLabel={item.data.title}
+                    >
+                      {cardContent}
+                    </TouchableOpacity>
+                  );
+                }
+                if (item.type === 'defect') {
+                  return (
+                    <TouchableOpacity
+                      key={`d-${item.data.id}`}
+                      onPress={() => setSelectedDefectId(item.data.id)}
+                      activeOpacity={0.7}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Defect report: ${item.data.title}`}
+                    >
+                      {cardContent}
+                    </TouchableOpacity>
+                  );
+                }
+                return <View key={item.data.id}>{cardContent}</View>;
               })}
               </View>
             )}
@@ -360,15 +389,13 @@ export default function AssetDetailScreen() {
               <View style={styles.maintenanceList}>
                 {maintenance.slice(0, 10).map((item) => {
                   const isCompleted = item.status === 'completed';
-                  const isDefect = isDefectReport(item.maintenanceType);
-                  const { icon: maintIcon, color: maintIconColor } = isCompleted
-                    ? { icon: 'checkmark-circle' as const, color: colors.maintenanceStatus.completed }
-                    : getMaintenanceIconProps(item.maintenanceType, item.status, MAINTENANCE_STATUS_ICONS);
+                  const maintIcon = MAINTENANCE_STATUS_ICONS[item.status] ?? 'construct-outline';
+                  const maintIconColor = isCompleted
+                    ? colors.maintenanceStatus.completed
+                    : colors.maintenanceStatus[item.status as keyof typeof colors.maintenanceStatus] ?? colors.textSecondary;
                   const borderColor = isCompleted
                     ? colors.success
-                    : isDefect
-                      ? colors.warning
-                      : colors.maintenancePriority[item.priority as keyof typeof colors.maintenancePriority] || colors.border;
+                    : colors.maintenancePriority[item.priority as keyof typeof colors.maintenancePriority] || colors.border;
 
                   return (
                     <TouchableOpacity
@@ -391,11 +418,8 @@ export default function AssetDetailScreen() {
                               {item.title}
                             </Text>
                             <View style={styles.cardBadges}>
-                              {isDefect && (
-                                <PillBadge icon="warning" label="Defect" color={colors.warning} />
-                              )}
                               <MaintenanceStatusBadge status={item.status} />
-                              {!isDefect && !isCompleted && item.status !== 'cancelled' && (
+                              {!isCompleted && item.status !== 'cancelled' && (
                                 <MaintenancePriorityBadge priority={item.priority} />
                               )}
                             </View>
@@ -465,6 +489,13 @@ export default function AssetDetailScreen() {
         visible={selectedMaintenanceId !== null}
         maintenanceId={selectedMaintenanceId}
         onClose={handleCloseMaintenanceDetail}
+      />
+
+      {/* Defect Report Detail Modal */}
+      <DefectReportDetailModal
+        visible={selectedDefectId !== null}
+        defectId={selectedDefectId}
+        onClose={() => setSelectedDefectId(null)}
       />
     </SafeAreaView>
     </View>

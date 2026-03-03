@@ -14,33 +14,35 @@ import { useRouter } from 'expo-router';
 import { useIsFocused } from '@react-navigation/native';
 import { useRecentScans, useAssetCountsByStatus, useTotalScanCount } from '../../src/hooks/useAssetData';
 import { useRecentMaintenance } from '../../src/hooks/useMaintenanceData';
+import { useRecentDefectReports } from '../../src/hooks/useDefectData';
 import { useAuthStore } from '../../src/store/authStore';
 import { useLocationStore } from '../../src/store/locationStore';
 import { formatRelativeTime, UserRoleLabels } from '@rgr/shared';
-import type { ScanEventWithScanner, MaintenanceListItem as MaintenanceListItemData } from '@rgr/shared';
+import type { ScanEventWithScanner, MaintenanceListItem as MaintenanceListItemData, DefectReportListItem as DefectReportListItemData } from '@rgr/shared';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, borderRadius } from '../../src/theme/spacing';
 import { CONTENT_TOP_OFFSET } from '../../src/theme/layout';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
 import { RefreshLoadingDots } from '../../src/components/common/RefreshLoadingDots';
-import { PillBadge } from '../../src/components/common/PillBadge';
 import {
   MaintenanceStatusBadge,
   MaintenancePriorityBadge,
   MaintenanceDetailModal,
+  DefectStatusBadge,
+  DefectReportDetailModal,
 } from '../../src/components/maintenance';
 import {
   getScanTypeIcon,
   getScanTypeColor,
   formatScanTypeLabel,
 } from '../../src/utils/scanFormatters';
-import { isDefectReport, getMaintenanceIconProps } from '../../src/utils/maintenanceHelpers';
 import { findDepotByLocationString, getDepotBadgeColors } from '@rgr/shared';
 import { useDepotLookup } from '../../src/hooks/useDepots';
 
 type DashboardActivityItem =
   | { type: 'scan'; data: ScanEventWithScanner; timestamp: string }
-  | { type: 'maintenance'; data: MaintenanceListItemData; timestamp: string };
+  | { type: 'maintenance'; data: MaintenanceListItemData; timestamp: string }
+  | { type: 'defect'; data: DefectReportListItemData; timestamp: string };
 
 const MAINTENANCE_STATUS_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   scheduled: 'time-outline',
@@ -57,6 +59,7 @@ export default function HomeScreen() {
   const { depots } = useDepotLookup();
 
   const [selectedMaintenanceId, setSelectedMaintenanceId] = useState<string | null>(null);
+  const [selectedDefectId, setSelectedDefectId] = useState<string | null>(null);
 
   // Recent scans across all users (global activity)
   const {
@@ -74,6 +77,14 @@ export default function HomeScreen() {
     isRefetching: maintenanceRefetching,
   } = useRecentMaintenance(5);
 
+  // Recent defect reports for activity feed
+  const {
+    data: defectData,
+    isLoading: defectsLoading,
+    refetch: refetchDefects,
+    isRefetching: defectsRefetching,
+  } = useRecentDefectReports(5);
+
   // Asset counts by status using efficient RPC call (single query instead of 3)
   const {
     data: assetStats,
@@ -90,15 +101,16 @@ export default function HomeScreen() {
     isRefetching: scanCountRefetching,
   } = useTotalScanCount();
 
-  const isLoading = scansLoading || maintenanceLoading || statsLoading || scanCountLoading;
-  const isRefetching = scansRefetching || maintenanceRefetching || statsRefetching || scanCountRefetching;
+  const isLoading = scansLoading || maintenanceLoading || defectsLoading || statsLoading || scanCountLoading;
+  const isRefetching = scansRefetching || maintenanceRefetching || defectsRefetching || statsRefetching || scanCountRefetching;
 
   const handleRefresh = useCallback(() => {
     refetchScans();
     refetchMaintenance();
+    refetchDefects();
     refetchStats();
     refetchScanCount();
-  }, [refetchScans, refetchMaintenance, refetchStats, refetchScanCount]);
+  }, [refetchScans, refetchMaintenance, refetchDefects, refetchStats, refetchScanCount]);
 
   // Get time-based greeting
   const hour = new Date().getHours();
@@ -188,14 +200,19 @@ export default function HomeScreen() {
     { label: 'Out of Service', value: outOfServiceCount, color: colors.status.outOfService, icon: 'close-circle-outline' as const },
   ], [totalAssets, servicedCount, totalScanCount, outOfServiceCount]);
 
-  // Merge scans and maintenance into a unified activity feed
+  // Merge scans, maintenance, and defects into a unified activity feed
   const recentActivity = useMemo<DashboardActivityItem[]>(() => {
     const scanItems: DashboardActivityItem[] = (scans ?? []).map(s => ({ type: 'scan' as const, data: s, timestamp: s.createdAt }));
-    const maintItems: DashboardActivityItem[] = (maintenanceData ?? []).map(m => ({ type: 'maintenance' as const, data: m, timestamp: m.createdAt }));
-    return [...scanItems, ...maintItems]
+    const maintItems: DashboardActivityItem[] = (maintenanceData ?? [])
+      .filter(m => m.status !== 'cancelled')
+      .map(m => ({ type: 'maintenance' as const, data: m, timestamp: m.createdAt }));
+    const defectItems: DashboardActivityItem[] = (defectData ?? [])
+      .filter(d => d.status !== 'dismissed')
+      .map(d => ({ type: 'defect' as const, data: d, timestamp: d.createdAt }));
+    return [...scanItems, ...maintItems, ...defectItems]
       .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
       .slice(0, 5);
-  }, [scans, maintenanceData]);
+  }, [scans, maintenanceData, defectData]);
 
   // Memoized render function for FlatList items
   // Note: Must be before any early returns to maintain hook order
@@ -245,16 +262,49 @@ export default function HomeScreen() {
       );
     }
 
+    if (item.type === 'defect') {
+      // Defect report item
+      return (
+        <TouchableOpacity
+          style={[styles.scanCard, { borderLeftColor: colors.warning }]}
+          onPress={() => setSelectedDefectId(item.data.id)}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={`Defect report: ${item.data.title}`}
+        >
+          <View style={styles.cardRow}>
+            <View style={styles.cardIconContainer}>
+              <Ionicons name="warning" size={31} color={colors.warning} />
+            </View>
+            <View style={styles.cardBody}>
+              <View style={styles.cardContentRow}>
+                <Text style={styles.cardTitle} numberOfLines={1}>
+                  {item.data.assetNumber || 'Unknown Asset'}
+                </Text>
+                <View style={styles.cardBadges}>
+                  <DefectStatusBadge status={item.data.status} />
+                </View>
+              </View>
+              <View style={styles.scanFooter}>
+                <Text style={styles.cardSecondaryText}>Defect Report</Text>
+                <Text style={styles.scanTime}>
+                  {formatRelativeTime(item.data.createdAt)}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </TouchableOpacity>
+      );
+    }
+
     // Maintenance item
-    const isDefect = isDefectReport(item.data.maintenanceType);
-    const { icon: maintIcon, color: maintColor } = item.data.status === 'completed'
-      ? { icon: 'checkmark-circle' as const, color: colors.maintenanceStatus.completed }
-      : getMaintenanceIconProps(item.data.maintenanceType, item.data.status, MAINTENANCE_STATUS_ICONS);
+    const maintIcon = MAINTENANCE_STATUS_ICONS[item.data.status] ?? 'construct-outline';
+    const maintColor = item.data.status === 'completed'
+      ? colors.maintenanceStatus.completed
+      : colors.maintenanceStatus[item.data.status as keyof typeof colors.maintenanceStatus] ?? colors.textSecondary;
     const borderColor = item.data.status === 'completed'
       ? colors.success
-      : isDefect
-        ? colors.warning
-        : colors.maintenanceStatus[item.data.status as keyof typeof colors.maintenanceStatus] ?? colors.border;
+      : colors.maintenanceStatus[item.data.status as keyof typeof colors.maintenanceStatus] ?? colors.border;
 
     return (
       <TouchableOpacity
@@ -262,7 +312,7 @@ export default function HomeScreen() {
         onPress={() => setSelectedMaintenanceId(item.data.id)}
         activeOpacity={0.7}
         accessibilityRole="button"
-        accessibilityLabel={`${isDefect ? 'Defect report: ' : ''}${item.data.title}`}
+        accessibilityLabel={item.data.title}
       >
         <View style={styles.cardRow}>
           <View style={styles.cardIconContainer}>
@@ -271,22 +321,17 @@ export default function HomeScreen() {
           <View style={styles.cardBody}>
             <View style={styles.cardContentRow}>
               <Text style={styles.cardTitle} numberOfLines={1}>
-                {item.data.title}
+                {item.data.assetNumber || 'Unknown Asset'}
               </Text>
               <View style={styles.cardBadges}>
-                {isDefect && (
-                  <PillBadge icon="warning" label="Defect" color={colors.warning} />
-                )}
                 <MaintenanceStatusBadge status={item.data.status} />
-                {!isDefect && item.data.status !== 'completed' && item.data.status !== 'cancelled' && (
+                {item.data.status !== 'completed' && item.data.status !== 'cancelled' && (
                   <MaintenancePriorityBadge priority={item.data.priority} />
                 )}
               </View>
             </View>
             <View style={styles.scanFooter}>
-              <Text style={styles.cardSecondaryText}>
-                {item.data.assetNumber || 'Unknown Asset'}
-              </Text>
+              <Text style={styles.cardSecondaryText}>{item.data.title}</Text>
               <Text style={styles.scanTime}>
                 {formatRelativeTime(item.data.createdAt)}
               </Text>
@@ -379,7 +424,6 @@ export default function HomeScreen() {
               {/* Recent Activity Header */}
               <View style={styles.activityHeader}>
                 <Text style={styles.sectionTitle}>Recent Activity</Text>
-                <Text style={styles.activitySubtitle}>Recent activity</Text>
               </View>
             </>
           }
@@ -407,6 +451,13 @@ export default function HomeScreen() {
           visible={selectedMaintenanceId !== null}
           maintenanceId={selectedMaintenanceId}
           onClose={() => setSelectedMaintenanceId(null)}
+        />
+
+        {/* Defect Report Detail Modal */}
+        <DefectReportDetailModal
+          visible={selectedDefectId !== null}
+          defectId={selectedDefectId}
+          onClose={() => setSelectedDefectId(null)}
         />
       </SafeAreaView>
     </View>
@@ -545,12 +596,6 @@ const styles = StyleSheet.create({
     marginTop: spacing['2xl'] - 5,
     marginBottom: spacing.xs,
   },
-  activitySubtitle: {
-    fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
-    color: colors.textSecondary,
-  },
-
   // Scan Cards
   scanCard: {
     backgroundColor: colors.background,

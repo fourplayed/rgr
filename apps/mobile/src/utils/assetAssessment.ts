@@ -1,4 +1,4 @@
-import type { AssetWithRelations, MaintenanceRecordWithNames, PhotoListItem, ScanEventWithScanner, Depot } from '@rgr/shared';
+import type { AssetWithRelations, MaintenanceRecordWithNames, PhotoListItem, ScanEventWithScanner, Depot, DefectReportListItem } from '@rgr/shared';
 import { formatDate, findDepotByLocationString } from '@rgr/shared';
 
 const DAY_MS = 86_400_000;
@@ -9,6 +9,7 @@ export interface AssetAssessmentInput {
   photos: PhotoListItem[];
   scans: ScanEventWithScanner[];
   depots: Depot[];
+  defectReports?: DefectReportListItem[];
   now?: Date;
 }
 
@@ -124,6 +125,7 @@ export function buildAssetAssessment({
   photos,
   scans,
   depots,
+  defectReports = [],
   now = new Date(),
 }: AssetAssessmentInput): string {
   const type =
@@ -141,11 +143,9 @@ export function buildAssetAssessment({
     if (photo.blockedFromDeparture) isBlocked = true;
   }
 
-  // ── Categorize maintenance records ──
-  const openDefects = maintenance.filter(
-    m =>
-      (m.status === 'scheduled' || m.status === 'in_progress') &&
-      m.title.toLowerCase().includes('defect'),
+  // ── Categorize defects and maintenance ──
+  const openDefects = defectReports.filter(
+    d => d.status === 'reported' || d.status === 'accepted',
   );
 
   const overdue = maintenance.filter(

@@ -93,6 +93,8 @@ export async function listMaintenance(
       reporter:reported_by(full_name),
       asset:asset_id(asset_number, category)
     `)
+    // Transitional filter: hide legacy defect rows (now in defect_reports table)
+    .not('maintenance_type', 'eq', 'defect_report')
     .order('created_at', { ascending: false })
     .order('id', { ascending: false })
     .limit(limit);

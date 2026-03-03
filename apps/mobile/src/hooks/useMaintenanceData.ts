@@ -13,6 +13,7 @@ import type {
   CreateMaintenanceInput,
   UpdateMaintenanceInput,
 } from '@rgr/shared';
+import { defectKeys } from './useDefectData';
 
 /**
  * Maintenance filter state
@@ -161,6 +162,9 @@ export function useUpdateMaintenanceStatus() {
       queryClient.invalidateQueries({ queryKey: maintenanceKeys.lists() });
       queryClient.invalidateQueries({ queryKey: maintenanceKeys.detail(data.id) });
       queryClient.invalidateQueries({ queryKey: maintenanceKeys.stats() });
+      // Cross-cache: auto-resolved defects need to refresh
+      queryClient.invalidateQueries({ queryKey: defectKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: defectKeys.stats() });
     },
   });
 }

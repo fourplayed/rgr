@@ -20,7 +20,7 @@ import { useScanEventPhotos, useSignedUrl } from '../../hooks/usePhotos';
 import { useUserPermissions } from '../../contexts/UserPermissionsContext';
 import { MaintenanceStatusBadge } from './MaintenanceStatusBadge';
 import { MaintenancePriorityBadge } from './MaintenancePriorityBadge';
-import { PillBadge } from '../common/PillBadge';
+
 
 interface MaintenanceDetailModalProps {
   visible: boolean;
@@ -254,9 +254,6 @@ export function MaintenanceDetailModal({
               >
                 {/* Badges */}
                 <View style={styles.badgeRow}>
-                  {maintenance.maintenanceType === 'defect_report' && (
-                    <PillBadge icon="warning" label="Defect" color={colors.warning} />
-                  )}
                   <MaintenanceStatusBadge status={maintenance.status} />
                   <MaintenancePriorityBadge priority={maintenance.priority} />
                 </View>

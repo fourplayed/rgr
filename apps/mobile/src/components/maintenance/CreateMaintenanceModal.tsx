@@ -10,6 +10,7 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import type { MaintenancePriority, CreateMaintenanceInput } from '@rgr/shared';
 import { MaintenancePriorityLabels } from '@rgr/shared';
 import { LoadingDots } from '../common/LoadingDots';
@@ -23,6 +24,12 @@ interface CreateMaintenanceModalProps {
   onClose: () => void;
   assetId?: string; // Pre-selected asset (from asset detail page)
   assetNumber?: string; // Display name for pre-selected asset
+  // Defect context: pre-fill form when creating from a defect report
+  defectReportId?: string;
+  defaultTitle?: string;
+  defaultDescription?: string;
+  defaultPriority?: MaintenancePriority;
+  onCreated?: (maintenanceId: string) => void;
 }
 
 const PRIORITY_ORDER: MaintenancePriority[] = ['low', 'medium', 'high', 'critical'];
@@ -32,6 +39,11 @@ export function CreateMaintenanceModal({
   onClose,
   assetId,
   assetNumber,
+  defectReportId,
+  defaultTitle,
+  defaultDescription,
+  defaultPriority,
+  onCreated,
 }: CreateMaintenanceModalProps) {
   const { user } = useAuthStore();
   const { mutateAsync: createMaintenanceAsync, isPending } = useCreateMaintenance();
@@ -43,17 +55,17 @@ export function CreateMaintenanceModal({
   const [notes, setNotes] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  // Reset form when modal opens
+  // Reset form when modal opens, pre-filling from defect context if provided
   useEffect(() => {
     if (visible) {
-      setTitle('');
-      setDescription('');
-      setPriority('medium');
+      setTitle(defaultTitle ?? '');
+      setDescription(defaultDescription ?? '');
+      setPriority(defaultPriority ?? 'medium');
       setDueDate('');
       setNotes('');
       setError(null);
     }
-  }, [visible]);
+  }, [visible, defaultTitle, defaultDescription, defaultPriority]);
 
   const handleSubmit = useCallback(async () => {
     if (!title.trim()) {
@@ -80,7 +92,10 @@ export function CreateMaintenanceModal({
     };
 
     try {
-      await createMaintenanceAsync(input);
+      const record = await createMaintenanceAsync(input);
+      if (onCreated) {
+        onCreated(record.id);
+      }
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create maintenance record');
@@ -115,6 +130,14 @@ export function CreateMaintenanceModal({
             keyboardShouldPersistTaps="handled"
           >
             <Text style={styles.title}>Schedule Maintenance</Text>
+
+            {/* Defect context banner */}
+            {defectReportId && (
+              <View style={styles.defectBanner}>
+                <Ionicons name="warning" size={16} color={colors.warningText} />
+                <Text style={styles.defectBannerText}>From Defect Report</Text>
+              </View>
+            )}
 
             {/* Asset (read-only if pre-selected) */}
             {assetId && assetNumber && (
@@ -396,5 +419,24 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.6,
+  },
+  defectBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    backgroundColor: '#FEF3C7',
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    marginBottom: spacing.md,
+  },
+  defectBannerText: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_700Bold',
+    color: colors.warningText,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 });

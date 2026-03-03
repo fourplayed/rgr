@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import * as Haptics from 'expo-haptics';
-import { useCreateMaintenance } from '../useMaintenanceData';
+import { useCreateDefectReport } from '../useDefectData';
 import type { Asset, Depot, PhotoType } from '@rgr/shared';
 import type { AlertSheetState } from './useScanFlow';
 
@@ -14,7 +14,7 @@ export function useDefectFlow(deps: {
   const [isSubmittingDefect, setIsSubmittingDefect] = useState(false);
   const defectReportedRef = useRef(false);
 
-  const { mutateAsync: createMaintenance } = useCreateMaintenance();
+  const { mutateAsync: createDefectReport } = useCreateDefectReport();
 
   /** Queue the defect report to show after the current modal's dismiss animation */
   const queueDefectReport = useCallback(() => {
@@ -49,14 +49,11 @@ export function useDefectFlow(deps: {
     addDebugLog('Submitting defect report...');
 
     try {
-      await createMaintenance({
+      await createDefectReport({
         assetId: completedAsset.id,
         reportedBy: userId,
         title: `Defect reported - ${completedAsset.assetNumber}`,
         description: notes,
-        priority: 'high',
-        status: 'scheduled',
-        maintenanceType: 'defect_report',
         scanEventId: lastScanEventId,
       });
       addDebugLog('Defect report created');
@@ -90,7 +87,7 @@ export function useDefectFlow(deps: {
     } finally {
       setIsSubmittingDefect(false);
     }
-  }, [createMaintenance, addDebugLog]);
+  }, [createDefectReport, addDebugLog]);
 
   const handleDefectReportCancel = useCallback((queuePhotoPrompt: () => void) => {
     addDebugLog('Defect report cancelled');

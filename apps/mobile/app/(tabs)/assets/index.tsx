@@ -48,7 +48,7 @@ export default function AssetListScreen() {
   const [searchInput, setSearchInput] = useState('');
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
   const [filters, setFilters] = useState<AssetFilters>({
-    statuses: ['serviced', 'maintenance'],
+    statuses: [],
     categories: [],
     subtypes: [],
     depotIds: [],
