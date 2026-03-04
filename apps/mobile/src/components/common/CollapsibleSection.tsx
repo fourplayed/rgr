@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, LayoutAnimation, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
 import '../../utils/enableLayoutAnimation';
 
 interface CollapsibleSectionProps {
@@ -113,11 +113,7 @@ const styles = StyleSheet.create({
     height: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-    elevation: 3,
+    ...shadows.sm,
   },
   content: {
     paddingHorizontal: spacing.base,

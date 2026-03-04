@@ -112,78 +112,52 @@ export default function HomeScreen() {
     refetchScanCount();
   }, [refetchScans, refetchMaintenance, refetchDefects, refetchStats, refetchScanCount]);
 
-  // Get time-based greeting
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  // Get time-based greeting (memoized — only changes on focus)
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+    return hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  }, [isFocused]);
 
   // Staggered fade in animations
   const greetingOpacity = useRef(new Animated.Value(0)).current;
   const usernameOpacity = useRef(new Animated.Value(0)).current;
   const geofenceOpacity = useRef(new Animated.Value(0)).current;
 
+  const animRef = useRef<Animated.CompositeAnimation | null>(null);
+
   useEffect(() => {
     // Don't run animation when screen isn't focused (saves CPU/battery)
     if (!isFocused) return;
 
-    let cancelled = false;
+    // Reset
+    greetingOpacity.setValue(0);
+    usernameOpacity.setValue(0);
+    geofenceOpacity.setValue(0);
 
-    const runAnimation = () => {
-      if (cancelled) return;
+    // Play once — staggered fade-in, then stay visible
+    const anim = Animated.sequence([
+      Animated.timing(greetingOpacity, {
+        toValue: 1,
+        duration: 1200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(usernameOpacity, {
+        toValue: 1,
+        duration: 1200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(geofenceOpacity, {
+        toValue: 1,
+        duration: 1200,
+        useNativeDriver: true,
+      }),
+    ]);
+    animRef.current = anim;
+    anim.start();
 
-      // Reset
-      greetingOpacity.setValue(0);
-      usernameOpacity.setValue(0);
-      geofenceOpacity.setValue(0);
-
-      Animated.sequence([
-        // Fade in greeting
-        Animated.timing(greetingOpacity, {
-          toValue: 1,
-          duration: 1200,
-          useNativeDriver: true,
-        }),
-        // Fade in username
-        Animated.timing(usernameOpacity, {
-          toValue: 1,
-          duration: 1200,
-          useNativeDriver: true,
-        }),
-        // Fade in geofence
-        Animated.timing(geofenceOpacity, {
-          toValue: 1,
-          duration: 1200,
-          useNativeDriver: true,
-        }),
-        // Hold for 15 seconds
-        Animated.delay(15000),
-        // Fade out all
-        Animated.parallel([
-          Animated.timing(greetingOpacity, {
-            toValue: 0,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-          Animated.timing(usernameOpacity, {
-            toValue: 0,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-          Animated.timing(geofenceOpacity, {
-            toValue: 0,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-        ]),
-      ]).start(() => {
-        if (!cancelled) runAnimation();
-      });
-    };
-
-    runAnimation();
-
-    // Cleanup: stop animation loop when unmounted or unfocused
     return () => {
-      cancelled = true;
+      anim.stop();
+      animRef.current = null;
     };
   }, [isFocused, greetingOpacity, usernameOpacity, geofenceOpacity]);
 

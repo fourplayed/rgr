@@ -3,9 +3,9 @@ import { Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { AssetStatusColors, AssetStatusLabels } from '@rgr/shared';
 import type { AssetStatus } from '@rgr/shared';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 
-interface FilterChipsProps {
+interface AssetStatusFilterChipsProps {
   selectedStatuses: AssetStatus[];
   onToggleStatus: (status: AssetStatus) => void;
 }
@@ -16,7 +16,7 @@ const AVAILABLE_STATUSES: AssetStatus[] = [
   'out_of_service',
 ];
 
-export const FilterChips = React.memo(function FilterChips({ selectedStatuses, onToggleStatus }: FilterChipsProps) {
+export const AssetStatusFilterChips = React.memo(function AssetStatusFilterChips({ selectedStatuses, onToggleStatus }: AssetStatusFilterChipsProps) {
   return (
     <ScrollView
       horizontal
@@ -74,13 +74,11 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium,
     fontFamily: 'Lato_400Regular',
     color: colors.text,
   },
   labelSelected: {
     color: colors.textInverse,
-    fontWeight: fontWeight.semibold,
     fontFamily: 'Lato_700Bold',
   },
 });

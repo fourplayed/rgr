@@ -10,7 +10,8 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { Button } from '../common/Button';
 import { useSettingsStore } from '../../store/settingsStore';
 
 const ANIMATION_DURATION = 300;
@@ -155,12 +156,9 @@ export function NotificationsModal({ visible, onClose }: NotificationsModalProps
               />
             </View>
 
-            <TouchableOpacity
-              style={styles.doneButton}
-              onPress={onClose}
-            >
-              <Text style={styles.doneButtonText}>Done</Text>
-            </TouchableOpacity>
+            <Button onPress={onClose}>
+              Done
+            </Button>
           </View>
         </Animated.View>
       </View>
@@ -200,7 +198,6 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: fontSize.lg,
-    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     textTransform: 'uppercase',
@@ -236,7 +233,6 @@ const styles = StyleSheet.create({
   },
   toggleTitle: {
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     textTransform: 'uppercase',
@@ -254,23 +250,5 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: colors.border,
-  },
-  doneButton: {
-    backgroundColor: colors.primary,
-    height: 48,
-    borderRadius: borderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.6,
-    shadowRadius: 6,
-    elevation: 6,
-  },
-  doneButtonText: {
-    fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
-    color: colors.textInverse,
-    textTransform: 'uppercase',
   },
 });

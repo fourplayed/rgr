@@ -1,14 +1,10 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  Modal,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize } from '../../theme/spacing';
+import { BottomSheet } from './BottomSheet';
+import { Button } from './Button';
 
 export type AlertType = 'error' | 'warning' | 'info' | 'success';
 
@@ -36,78 +32,35 @@ export function AlertSheet({
   onDismiss,
   buttonLabel = 'OK',
 }: AlertSheetProps) {
-  if (!visible) return null;
-
   const config = alertConfig[type];
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onDismiss}
-    >
-      <View style={styles.backdrop}>
-        <TouchableOpacity
-          style={styles.backdropTouchable}
-          activeOpacity={1}
-          onPress={onDismiss}
-        />
-
-        <View style={styles.sheet}>
-          <View style={styles.handle} />
-
-          <View style={styles.content}>
-            <View style={[styles.iconContainer, { backgroundColor: config.color + '20' }]}>
-              <Ionicons
-                name={config.icon}
-                size={48}
-                color={config.color}
-              />
-            </View>
-
-            <Text style={styles.title}>{title}</Text>
-            <Text style={styles.message}>{message}</Text>
-
-            <TouchableOpacity
-              style={styles.button}
-              onPress={onDismiss}
-              accessibilityRole="button"
-              accessibilityLabel={buttonLabel}
-            >
-              <Text style={styles.buttonText}>{buttonLabel}</Text>
-            </TouchableOpacity>
-          </View>
+    <BottomSheet visible={visible} onDismiss={onDismiss}>
+      <View style={styles.content}>
+        <View style={[styles.iconContainer, { backgroundColor: config.color + '20' }]}>
+          <Ionicons
+            name={config.icon}
+            size={48}
+            color={config.color}
+          />
         </View>
+
+        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.message}>{message}</Text>
+
+        <Button
+          onPress={onDismiss}
+          style={styles.fullWidth}
+          accessibilityLabel={buttonLabel}
+        >
+          {buttonLabel}
+        </Button>
       </View>
-    </Modal>
+    </BottomSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: colors.overlay,
-    justifyContent: 'flex-end',
-  },
-  backdropTouchable: {
-    flex: 1,
-  },
-  sheet: {
-    backgroundColor: colors.background,
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
-    paddingBottom: spacing['2xl'],
-  },
-  handle: {
-    width: 40,
-    height: 4,
-    backgroundColor: colors.border,
-    borderRadius: borderRadius.full,
-    alignSelf: 'center',
-    marginTop: spacing.md,
-    marginBottom: spacing.lg,
-  },
   content: {
     paddingHorizontal: spacing.lg,
     alignItems: 'center',
@@ -136,23 +89,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
     lineHeight: 22,
   },
-  button: {
-    backgroundColor: colors.primary,
-    height: 48,
-    borderRadius: borderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
+  fullWidth: {
     alignSelf: 'stretch',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.6,
-    shadowRadius: 6,
-    elevation: 6,
-  },
-  buttonText: {
-    fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
-    color: colors.textInverse,
-    textTransform: 'uppercase',
   },
 });

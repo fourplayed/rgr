@@ -1,41 +1,18 @@
 import React, { memo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
 import type { MaintenanceStatus } from '@rgr/shared';
 import { MaintenanceStatusLabels } from '@rgr/shared';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { Badge } from '../common/StatusBadge';
 
 interface MaintenanceStatusBadgeProps {
   status: MaintenanceStatus;
 }
 
-const getStatusColor = (status: MaintenanceStatus): string => {
-  return colors.maintenanceStatus[status] ?? colors.textSecondary;
-};
-
-function MaintenanceStatusBadgeComponent({ status }: MaintenanceStatusBadgeProps) {
-  const backgroundColor = getStatusColor(status);
-  const label = MaintenanceStatusLabels[status] || status;
-
+export const MaintenanceStatusBadge = memo(function MaintenanceStatusBadge({ status }: MaintenanceStatusBadgeProps) {
   return (
-    <View style={[styles.badge, { backgroundColor }]}>
-      <Text style={styles.text}>{label}</Text>
-    </View>
+    <Badge
+      label={MaintenanceStatusLabels[status] || status}
+      color={colors.maintenanceStatus[status] ?? colors.textSecondary}
+    />
   );
-}
-
-export const MaintenanceStatusBadge = memo(MaintenanceStatusBadgeComponent);
-
-const styles = StyleSheet.create({
-  badge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: borderRadius.sm,
-  },
-  text: {
-    fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
-    color: colors.textInverse,
-    textTransform: 'uppercase',
-  },
 });

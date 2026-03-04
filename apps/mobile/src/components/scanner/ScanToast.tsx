@@ -165,7 +165,7 @@ export function ScanToast({
             style={styles.undoButton}
             onPress={() => {
               clearTimer();
-              onUndoWindowClose?.();
+              onUndoWindowCloseRef.current?.();
               onUndo();
             }}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}

@@ -272,12 +272,25 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
           effectiveLocation: scanLocation,
         });
 
-        // 4. Auto-create scan event
+        // 4. Guard against expired session
+        if (!user) {
+          dispatch({ type: 'RESET' });
+          setAlertSheet({
+            visible: true,
+            type: 'error',
+            title: 'Session Expired',
+            message: 'Please log in again.',
+          });
+          resetScanner();
+          return;
+        }
+
+        // 5. Auto-create scan event
         addDebugLog('Auto-creating scan event...');
         logger.scan('Submitting scan event...');
         const scanEvent = await createScan({
           assetId: asset.id,
-          scannedBy: user!.id,
+          scannedBy: user.id,
           scanType: 'qr_scan',
           latitude: scanLocation.latitude,
           longitude: scanLocation.longitude,
@@ -290,7 +303,7 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
         addDebugLog('Scan created: ' + scanEvent.id.substring(0, 8));
         logger.scan('Scan event created successfully');
 
-        // 5. Update depot assignment if matched
+        // 6. Update depot assignment if matched
         if (nearestDepot) {
           try {
             logger.scan(`Updating asset depot to ${nearestDepot.depot.name}...`);
@@ -304,11 +317,11 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
           }
         }
 
-        // 6. Success!
+        // 7. Success!
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         dispatch({ type: 'SCAN_CREATED', lastScanEventId: scanEvent.id });
 
-        // 7. Show undo toast
+        // 8. Show undo toast
         setToastId((prev) => prev + 1);
         setShowUndoToast(true);
       } catch (error) {
@@ -421,10 +434,19 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
       if (state.phase !== 'active') return;
 
       addDebugLog('Submitting defect report...');
+      if (!user) {
+        setAlertSheet({
+          visible: true,
+          type: 'error',
+          title: 'Session Expired',
+          message: 'Please log in again.',
+        });
+        return;
+      }
       try {
         await createDefectReport({
           assetId: state.scannedAsset.id,
-          reportedBy: user!.id,
+          reportedBy: user.id,
           title: `Defect reported - ${state.scannedAsset.assetNumber}`,
           description: notes,
           scanEventId: state.lastScanEventId,

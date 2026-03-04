@@ -11,9 +11,9 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { formatRelativeTime } from '@rgr/shared';
-import { LoadingDots, AlertSheet, ConfirmSheet } from '../common';
+import { LoadingDots, AlertSheet, InputSheet } from '../common';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, fontWeight, borderRadius, shadows } from '../../theme/spacing';
 import { useDefectReport, useUpdateDefectReportStatus } from '../../hooks/useDefectData';
 import { useScanEventPhotos, useSignedUrl } from '../../hooks/usePhotos';
 import { useUserPermissions } from '../../contexts/UserPermissionsContext';
@@ -53,7 +53,7 @@ export function DefectReportDetailModal({
 
   // Dismiss flow
   const [showDismissConfirm, setShowDismissConfirm] = useState(false);
-  const [dismissReason, setDismissReason] = useState('');
+  // dismissReason is now collected inline by InputSheet
 
   // Alert sheet
   const [alertSheet, setAlertSheet] = useState<{
@@ -94,23 +94,22 @@ export function DefectReportDetailModal({
   }, []);
 
   const handleDismiss = useCallback(() => {
-    setDismissReason('');
     setShowDismissConfirm(true);
   }, []);
 
-  const handleConfirmDismiss = useCallback(async () => {
+  const handleConfirmDismiss = useCallback(async (reason: string) => {
     if (!defectId) return;
 
     setShowDismissConfirm(false);
     try {
-      const mutationArgs: { id: string; status: 'dismissed'; extras?: { maintenanceRecordId?: string; dismissedReason?: string } } = {
+      const args: { id: string; status: 'dismissed'; extras?: { dismissedReason: string } } = {
         id: defectId,
         status: 'dismissed',
       };
-      if (dismissReason.trim()) {
-        mutationArgs.extras = { dismissedReason: dismissReason.trim() };
+      if (reason.trim()) {
+        args.extras = { dismissedReason: reason.trim() };
       }
-      await updateStatusMutation.mutateAsync(mutationArgs);
+      await updateStatusMutation.mutateAsync(args);
     } catch (err) {
       setAlertSheet({
         visible: true,
@@ -118,7 +117,7 @@ export function DefectReportDetailModal({
         message: err instanceof Error ? err.message : 'Failed to dismiss defect',
       });
     }
-  }, [defectId, dismissReason, updateStatusMutation]);
+  }, [defectId, updateStatusMutation]);
 
   const handleNavigateToAsset = useCallback(() => {
     if (defect?.assetId) {
@@ -401,15 +400,15 @@ export function DefectReportDetailModal({
         />
       )}
 
-      {/* Dismiss Confirmation */}
-      <ConfirmSheet
+      {/* Dismiss with Reason */}
+      <InputSheet
         visible={showDismissConfirm}
-        type="danger"
         title="Dismiss Defect Report"
-        message="Are you sure you want to dismiss this defect report? This cannot be undone."
-        confirmLabel="Dismiss"
+        message="Please provide a reason for dismissing this defect report."
+        placeholder="Reason for dismissal..."
+        submitLabel="Dismiss"
         cancelLabel="Cancel"
-        onConfirm={handleConfirmDismiss}
+        onSubmit={handleConfirmDismiss}
         onCancel={() => setShowDismissConfirm(false)}
         isLoading={updateStatusMutation.isPending}
       />
@@ -577,11 +576,7 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     backgroundColor: colors.primary,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.6,
-    shadowRadius: 6,
-    elevation: 6,
+    ...shadows.md,
   },
   dangerButton: {
     backgroundColor: colors.surface,

@@ -230,35 +230,7 @@ export async function deleteDepot(
 
 // ── Asset Administration ──
 
-export async function deleteAsset(
-  id: string
-): Promise<ServiceResult<void>> {
-  try {
-    const supabase = getSupabaseClient();
-
-    const { error } = await supabase
-      .from('assets')
-      .update({
-        deleted_at: new Date().toISOString(),
-        status: 'out_of_service',
-      })
-      .eq('id', id)
-      .is('deleted_at', null)
-      .select('id')
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return { success: false, data: null, error: 'Asset not found or already deleted' };
-      }
-      return { success: false, data: null, error: error.message };
-    }
-
-    return { success: true, data: undefined, error: null };
-  } catch (err) {
-    return { success: false, data: null, error: 'Failed to delete asset' };
-  }
-}
+export { softDeleteAsset as deleteAsset } from './assets';
 
 export async function getAssetRelatedCounts(
   id: string

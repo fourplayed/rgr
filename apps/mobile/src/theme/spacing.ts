@@ -50,6 +50,33 @@ export const fontSize = {
 /**
  * Font weights
  */
+/**
+ * Shadow presets
+ */
+export const shadows = {
+  sm: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  md: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.6,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  lg: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+} as const;
+
 export const fontWeight = {
   normal: '400' as const,
   medium: '500' as const,

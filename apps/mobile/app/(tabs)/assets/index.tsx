@@ -15,7 +15,7 @@ import { RefreshLoadingDots } from '../../../src/components/common/RefreshLoadin
 import { ScreenHeader } from '../../../src/components/common/ScreenHeader';
 import { useRouter } from 'expo-router';
 import type { AssetStatus, AssetCategory, AssetWithRelations } from '@rgr/shared';
-import { useAssetList, useDepots } from '../../../src/hooks/useAssetData';
+import { useInfiniteAssetList, useDepots } from '../../../src/hooks/useAssetData';
 import { useDepotLookup } from '../../../src/hooks/useDepots';
 import { useDebounce } from '../../../src/hooks/useDebounce';
 import { AssetListItem } from '../../../src/components/assets/AssetListItem';
@@ -61,46 +61,58 @@ export default function AssetListScreen() {
   const { data: depots = [], isLoading: isDepotsLoading } = useDepots();
   const depotLookup = useDepotLookup();
 
-  // Build query filters
-  const queryFilters: {
-    page: number;
-    pageSize: number;
-    search?: string;
-    statuses?: AssetStatus[];
-    categories?: AssetCategory[];
-    depotIds?: string[];
-  } = {
-    page: 1,
-    pageSize: 50,
-  };
+  // Build query filters for cursor-based infinite list
+  const queryFilters = React.useMemo(() => {
+    const f: {
+      pageSize?: number;
+      search?: string;
+      statuses?: AssetStatus[];
+      categories?: AssetCategory[];
+      depotIds?: string[];
+    } = { pageSize: 30 };
 
-  if (debouncedSearch) {
-    queryFilters.search = debouncedSearch;
-  }
-  if (filters.statuses.length > 0) {
-    queryFilters.statuses = filters.statuses;
-  }
-  if (filters.categories.length > 0) {
-    queryFilters.categories = filters.categories;
-  }
-  if (filters.depotIds.length > 0) {
-    queryFilters.depotIds = filters.depotIds;
-  }
+    if (debouncedSearch) f.search = debouncedSearch;
+    if (filters.statuses.length > 0) f.statuses = filters.statuses;
+    if (filters.categories.length > 0) f.categories = filters.categories;
+    if (filters.depotIds.length > 0) f.depotIds = filters.depotIds;
 
-  const { data, isLoading, error, refetch, isRefetching } = useAssetList(queryFilters);
+    return f;
+  }, [debouncedSearch, filters.statuses, filters.categories, filters.depotIds]);
+
+  const {
+    data,
+    isLoading,
+    error,
+    refetch,
+    isRefetching,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteAssetList(queryFilters);
+
+  // Flatten pages into single array
+  const allAssets = React.useMemo(
+    () => data?.pages.flatMap((page) => page.data) ?? [],
+    [data?.pages]
+  );
 
   // Client-side subtype filtering (if backend doesn't support it)
   const filteredAssets = React.useMemo(() => {
-    if (!data?.data) return [];
-    if (filters.subtypes.length === 0) return data.data;
+    if (filters.subtypes.length === 0) return allAssets;
 
-    return data.data.filter((asset) => {
+    return allAssets.filter((asset) => {
       if (!asset.subtype) return false;
       return filters.subtypes.some((subtype) =>
         asset.subtype?.toLowerCase().includes(subtype.toLowerCase())
       );
     });
-  }, [data?.data, filters.subtypes]);
+  }, [allAssets, filters.subtypes]);
+
+  const handleEndReached = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   // Memoized callbacks to prevent unnecessary re-renders of AssetFilterPanel
   const handleStatusChange = useCallback((statuses: AssetStatus[]) => {
@@ -215,6 +227,8 @@ export default function AssetListScreen() {
             offset: ASSET_ITEM_HEIGHT * index,
             index,
           })}
+          onEndReached={handleEndReached}
+          onEndReachedThreshold={0.5}
           removeClippedSubviews={true}
           maxToRenderPerBatch={10}
           windowSize={5}

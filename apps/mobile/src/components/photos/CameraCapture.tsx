@@ -15,7 +15,7 @@ import type { PhotoType } from '@rgr/shared';
 import { usePhotoCapture } from '../../hooks/usePhotoCapture';
 import { LoadingDots } from '../common/LoadingDots';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
 
 interface CameraCaptureProps {
   visible: boolean;
@@ -388,11 +388,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.primary,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.6,
-    shadowRadius: 6,
-    elevation: 6,
+    ...shadows.md,
   },
   permissionGrantButtonText: {
     fontSize: fontSize.lg,
@@ -598,11 +594,7 @@ const styles = StyleSheet.create({
   },
   confirmButton: {
     backgroundColor: colors.primary,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.6,
-    shadowRadius: 6,
-    elevation: 6,
+    ...shadows.md,
   },
   confirmButtonText: {
     fontSize: fontSize.lg,

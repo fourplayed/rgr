@@ -48,7 +48,7 @@ export const assetKeys = {
     search?: string;
   }) => [...assetKeys.lists(), 'infinite', filters] as const,
   myScans: (userId: string) => ['scans', 'my', userId] as const,
-  recentScans: () => ['scans', 'recent'] as const,
+  recentScans: (limit?: number) => ['scans', 'recent', limit] as const,
   countsByStatus: () => [...assetKeys.all, 'countsByStatus'] as const,
   totalScanCount: () => ['scans', 'totalCount'] as const,
   scanContext: (assetId: string) => [...assetKeys.all, 'scanContext', assetId] as const,
@@ -294,7 +294,7 @@ export function useMyRecentScans(userId: string | undefined) {
  */
 export function useRecentScans(limit: number = 10) {
   return useQuery({
-    queryKey: assetKeys.recentScans(),
+    queryKey: assetKeys.recentScans(limit),
     queryFn: async () => {
       const result = await getRecentScans(limit);
 
@@ -319,7 +319,9 @@ export function useTotalScanCount() {
       if (!result.success) throw new Error(result.error);
       return result.data;
     },
-    staleTime: 30000,
+    // Full table COUNT(*) on scan_events is expensive on large tables.
+    // 5 minutes is acceptable for a dashboard statistic.
+    staleTime: 5 * 60 * 1000,
   });
 }
 

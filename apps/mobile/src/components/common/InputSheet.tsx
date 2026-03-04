@@ -12,8 +12,9 @@ import {
 } from 'react-native';
 import type { KeyboardTypeOptions } from 'react-native';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
 import { LoadingDots } from './LoadingDots';
+import { Button } from './Button';
 
 interface InputSheetProps {
   visible: boolean;
@@ -108,18 +109,18 @@ export function InputSheet({
               />
 
               <View style={styles.buttonRow}>
-                <TouchableOpacity
-                  style={[styles.button, styles.cancelButton]}
+                <Button
+                  variant="secondary"
                   onPress={handleCancel}
                   disabled={isLoading}
-                  accessibilityRole="button"
+                  flex
                   accessibilityLabel={cancelLabel}
                 >
-                  <Text style={styles.cancelButtonText}>{cancelLabel}</Text>
-                </TouchableOpacity>
+                  {cancelLabel}
+                </Button>
 
                 <TouchableOpacity
-                  style={[styles.button, styles.submitButton]}
+                  style={[styles.submitButton]}
                   onPress={handleSubmit}
                   disabled={isLoading}
                   accessibilityRole="button"
@@ -202,31 +203,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
   },
-  button: {
+  submitButton: {
     flex: 1,
     height: 48,
     borderRadius: borderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  cancelButton: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  cancelButtonText: {
-    fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    textTransform: 'uppercase',
-  },
-  submitButton: {
     backgroundColor: colors.primary,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.6,
-    shadowRadius: 6,
-    elevation: 6,
+    ...shadows.md,
   },
   submitButtonText: {
     fontSize: fontSize.lg,

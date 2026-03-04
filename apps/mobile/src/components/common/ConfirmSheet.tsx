@@ -1,14 +1,10 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  Modal,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize } from '../../theme/spacing';
+import { BottomSheet } from './BottomSheet';
+import { Button } from './Button';
 
 export type ConfirmType = 'danger' | 'warning';
 
@@ -40,95 +36,49 @@ export function ConfirmSheet({
   onCancel,
   isLoading = false,
 }: ConfirmSheetProps) {
-  if (!visible) return null;
-
   const config = confirmConfig[type];
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onCancel}
-    >
-      <View style={styles.backdrop}>
-        <TouchableOpacity
-          style={styles.backdropTouchable}
-          activeOpacity={1}
-          onPress={onCancel}
-        />
+    <BottomSheet visible={visible} onDismiss={onCancel}>
+      <View style={styles.content}>
+        <View style={[styles.iconContainer, { backgroundColor: config.color + '20' }]}>
+          <Ionicons
+            name={config.icon}
+            size={48}
+            color={config.color}
+          />
+        </View>
 
-        <View style={styles.sheet}>
-          <View style={styles.handle} />
+        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.message}>{message}</Text>
 
-          <View style={styles.content}>
-            <View style={[styles.iconContainer, { backgroundColor: config.color + '20' }]}>
-              <Ionicons
-                name={config.icon}
-                size={48}
-                color={config.color}
-              />
-            </View>
+        <View style={styles.buttonRow}>
+          <Button
+            variant="secondary"
+            onPress={onCancel}
+            disabled={isLoading}
+            flex
+            accessibilityLabel={cancelLabel}
+          >
+            {cancelLabel}
+          </Button>
 
-            <Text style={styles.title}>{title}</Text>
-            <Text style={styles.message}>{message}</Text>
-
-            <View style={styles.buttonRow}>
-              <TouchableOpacity
-                style={[styles.button, styles.cancelButton]}
-                onPress={onCancel}
-                disabled={isLoading}
-                accessibilityRole="button"
-                accessibilityLabel={cancelLabel}
-              >
-                <Text style={styles.cancelButtonText}>{cancelLabel}</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.button,
-                  styles.confirmButton,
-                  { backgroundColor: config.color },
-                ]}
-                onPress={onConfirm}
-                disabled={isLoading}
-                accessibilityRole="button"
-                accessibilityLabel={confirmLabel}
-              >
-                <Text style={styles.confirmButtonText}>{confirmLabel}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+          <Button
+            onPress={onConfirm}
+            disabled={isLoading}
+            color={config.color}
+            flex
+            accessibilityLabel={confirmLabel}
+          >
+            {confirmLabel}
+          </Button>
         </View>
       </View>
-    </Modal>
+    </BottomSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: colors.overlay,
-    justifyContent: 'flex-end',
-  },
-  backdropTouchable: {
-    flex: 1,
-  },
-  sheet: {
-    backgroundColor: colors.background,
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
-    paddingBottom: spacing['2xl'],
-  },
-  handle: {
-    width: 40,
-    height: 4,
-    backgroundColor: colors.border,
-    borderRadius: borderRadius.full,
-    alignSelf: 'center',
-    marginTop: spacing.md,
-    marginBottom: spacing.lg,
-  },
   content: {
     paddingHorizontal: spacing.lg,
     alignItems: 'center',
@@ -161,36 +111,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
     alignSelf: 'stretch',
-  },
-  button: {
-    flex: 1,
-    height: 48,
-    borderRadius: borderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelButton: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  cancelButtonText: {
-    fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    textTransform: 'uppercase',
-  },
-  confirmButton: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.6,
-    shadowRadius: 6,
-    elevation: 6,
-  },
-  confirmButtonText: {
-    fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
-    color: colors.textInverse,
-    textTransform: 'uppercase',
   },
 });

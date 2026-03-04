@@ -15,7 +15,7 @@ import type { MaintenancePriority, CreateMaintenanceInput } from '@rgr/shared';
 import { MaintenancePriorityLabels } from '@rgr/shared';
 import { LoadingDots } from '../common/LoadingDots';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, fontWeight, borderRadius, shadows } from '../../theme/spacing';
 import { useAuthStore } from '../../store/authStore';
 import { useCreateMaintenance } from '../../hooks/useMaintenanceData';
 
@@ -204,16 +204,40 @@ export function CreateMaintenanceModal({
             {/* Due Date */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Due Date (optional)</Text>
-              <TextInput
-                style={styles.input}
-                value={dueDate}
-                onChangeText={setDueDate}
-                placeholder="YYYY-MM-DD"
-                placeholderTextColor={colors.textSecondary}
-                autoCapitalize="none"
-                autoCorrect={false}
-                accessibilityLabel="Due date"
-              />
+              <View style={styles.datePresets}>
+                {([
+                  { label: 'Today', days: 0 },
+                  { label: 'Tomorrow', days: 1 },
+                  { label: 'Next Week', days: 7 },
+                  { label: 'Clear', days: -1 },
+                ] as const).map(({ label, days }) => {
+                  const presetDate: string = days >= 0
+                    ? new Date(Date.now() + days * 86400000).toISOString().split('T')[0]!
+                    : '';
+                  const isSelected = days >= 0 && dueDate === presetDate;
+                  return (
+                    <TouchableOpacity
+                      key={label}
+                      style={[styles.datePresetChip, isSelected && styles.datePresetChipActive]}
+                      onPress={() => setDueDate(presetDate)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Set due date to ${label}`}
+                      accessibilityState={{ selected: isSelected }}
+                    >
+                      <Text style={[styles.datePresetText, isSelected && styles.datePresetTextActive]}>
+                        {label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              {dueDate ? (
+                <Text style={styles.dateDisplay}>
+                  {new Date(dueDate + 'T00:00:00').toLocaleDateString(undefined, {
+                    weekday: 'short', year: 'numeric', month: 'short', day: 'numeric',
+                  })}
+                </Text>
+              ) : null}
             </View>
 
             {/* Description */}
@@ -405,11 +429,7 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     backgroundColor: colors.primary,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.6,
-    shadowRadius: 6,
-    elevation: 6,
+    ...shadows.md,
   },
   saveButtonText: {
     fontSize: fontSize.lg,
@@ -438,5 +458,37 @@ const styles = StyleSheet.create({
     color: colors.warningText,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  datePresets: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  datePresetChip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  datePresetChipActive: {
+    borderColor: colors.electricBlue,
+    backgroundColor: colors.electricBlue + '15',
+  },
+  datePresetText: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_700Bold',
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+  },
+  datePresetTextActive: {
+    color: colors.electricBlue,
+  },
+  dateDisplay: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_400Regular',
+    color: colors.text,
+    marginTop: spacing.sm,
   },
 });

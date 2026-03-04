@@ -16,7 +16,7 @@ import { MaintenancePriorityBadge } from '../maintenance/MaintenancePriorityBadg
 import { MaintenanceStatusBadge } from '../maintenance/MaintenanceStatusBadge';
 import { LoadingDots } from '../common/LoadingDots';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -273,11 +273,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     borderRadius: borderRadius.lg,
     padding: spacing.base,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    ...shadows.lg,
   },
 
   // Header

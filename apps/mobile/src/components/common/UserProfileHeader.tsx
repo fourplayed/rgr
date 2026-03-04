@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useSegments } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
+import { ConfirmSheet } from './ConfirmSheet';
 import {
   HEADER_STATUS_BAR_GAP,
   HEADER_ACCENT_LINE_HEIGHT,
@@ -29,14 +30,25 @@ export function UserProfileHeader() {
     router.navigate('/(tabs)/assets');
   };
 
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
   const handleSettings = () => {
     router.push('/settings');
   };
 
-  const handleLogout = async () => {
+  const handleLogoutPress = useCallback(() => {
+    setShowLogoutConfirm(true);
+  }, []);
+
+  const handleLogoutConfirm = useCallback(async () => {
+    setShowLogoutConfirm(false);
     await logout();
     router.replace('/(auth)/login');
-  };
+  }, [logout, router]);
+
+  const handleLogoutCancel = useCallback(() => {
+    setShowLogoutConfirm(false);
+  }, []);
 
   return (
     <View style={[styles.wrapper, { marginTop: insets.top + HEADER_STATUS_BAR_GAP }]}>
@@ -70,7 +82,7 @@ export function UserProfileHeader() {
               <Ionicons name="settings-outline" size={24} color="#FFFFFF" />
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={handleLogout}
+              onPress={handleLogoutPress}
               style={styles.actionButton}
               accessibilityRole="button"
               accessibilityLabel="Logout"
@@ -85,6 +97,15 @@ export function UserProfileHeader() {
         source={require('../../assets/logo.png')}
         style={styles.logo}
         resizeMode="contain"
+      />
+      <ConfirmSheet
+        visible={showLogoutConfirm}
+        type="warning"
+        title="Sign Out"
+        message="Are you sure you want to sign out?"
+        confirmLabel="Sign Out"
+        onConfirm={handleLogoutConfirm}
+        onCancel={handleLogoutCancel}
       />
     </View>
   );

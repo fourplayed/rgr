@@ -5,15 +5,16 @@ import type { AssetStatus } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 
-interface StatusBadgeProps {
-  status: AssetStatus;
-  size?: 'small' | 'medium';
+type BadgeSize = 'small' | 'medium';
+
+/** Generic badge — accepts any label + color. Used as the base for all domain-specific badges. */
+interface BadgeProps {
+  label: string;
+  color: string;
+  size?: BadgeSize;
 }
 
-export function StatusBadge({ status, size = 'medium' }: StatusBadgeProps) {
-  const color = AssetStatusColors[status];
-  const label = AssetStatusLabels[status];
-
+export function Badge({ label, color, size = 'small' }: BadgeProps) {
   return (
     <View
       style={[
@@ -23,7 +24,7 @@ export function StatusBadge({ status, size = 'medium' }: StatusBadgeProps) {
       ]}
       accessible={true}
       accessibilityRole="text"
-      accessibilityLabel={`Status: ${label}`}
+      accessibilityLabel={label}
     >
       <Text
         style={[
@@ -34,6 +35,22 @@ export function StatusBadge({ status, size = 'medium' }: StatusBadgeProps) {
         {label}
       </Text>
     </View>
+  );
+}
+
+/** Asset status badge — resolves color and label from AssetStatus enum. */
+interface StatusBadgeProps {
+  status: AssetStatus;
+  size?: BadgeSize;
+}
+
+export function StatusBadge({ status, size = 'medium' }: StatusBadgeProps) {
+  return (
+    <Badge
+      label={AssetStatusLabels[status]}
+      color={AssetStatusColors[status]}
+      size={size}
+    />
   );
 }
 

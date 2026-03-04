@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  Modal,
   ScrollView,
   TextInput,
   TouchableOpacity,
@@ -10,6 +9,8 @@ import {
 } from 'react-native';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { BottomSheet } from '../common/BottomSheet';
+import { Button } from '../common/Button';
 
 const ACTION_TYPES = ['INSERT', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT'] as const;
 
@@ -98,137 +99,88 @@ export function AuditLogFilterSheet({
     onApply({});
   };
 
-  if (!visible) return null;
-
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-    >
-      <View style={styles.backdrop}>
-        <TouchableOpacity
-          style={styles.backdropTouchable}
-          activeOpacity={1}
-          onPress={onClose}
-        />
+    <BottomSheet visible={visible} onDismiss={onClose}>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Text style={styles.title}>Filters</Text>
 
-        <View style={styles.sheet}>
-          <View style={styles.handle} />
-
-          <ScrollView contentContainerStyle={styles.content}>
-            <Text style={styles.title}>Filters</Text>
-
-            {/* Action Type */}
-            <View style={styles.section}>
-              <Text style={styles.label}>Action Type</Text>
-              <View style={styles.chipContainer}>
-                {ACTION_TYPES.map((type) => {
-                  const isSelected = action === type;
-                  return (
-                    <TouchableOpacity
-                      key={type}
-                      style={[
-                        styles.chip,
-                        isSelected && styles.chipSelected,
-                      ]}
-                      onPress={() =>
-                        setAction(isSelected ? undefined : type)
-                      }
-                      activeOpacity={0.7}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Filter by ${type}`}
-                      accessibilityState={{ selected: isSelected }}
-                    >
-                      <Text
-                        style={[
-                          styles.chipText,
-                          isSelected && styles.chipTextSelected,
-                        ]}
-                      >
-                        {type}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
-
-            {/* Date Range */}
-            <View style={styles.section}>
-              <Text style={styles.label}>Date Range</Text>
-              <View style={styles.dateRow}>
-                <TextInput
-                  style={[styles.dateInput, dateError ? styles.dateInputError : undefined]}
-                  value={startDate}
-                  onChangeText={handleStartDateChange}
-                  placeholder="YYYY-MM-DD"
-                  placeholderTextColor={colors.textSecondary}
-                  maxLength={10}
-                  accessibilityLabel="Start date"
-                />
-                <Text style={styles.dateSeparator}>to</Text>
-                <TextInput
-                  style={[styles.dateInput, dateError ? styles.dateInputError : undefined]}
-                  value={endDate}
-                  onChangeText={handleEndDateChange}
-                  placeholder="YYYY-MM-DD"
-                  placeholderTextColor={colors.textSecondary}
-                  maxLength={10}
-                  accessibilityLabel="End date"
-                />
-              </View>
-              {dateError ? <Text style={styles.dateErrorText}>{dateError}</Text> : null}
-            </View>
-
-            {/* Buttons */}
-            <View style={styles.buttonRow}>
-              <TouchableOpacity
-                style={[styles.button, styles.clearButton]}
-                onPress={handleClear}
-              >
-                <Text style={styles.clearButtonText}>Clear</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.button, styles.applyButton]}
-                onPress={handleApply}
-              >
-                <Text style={styles.applyButtonText}>Apply</Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
+        {/* Action Type */}
+        <View style={styles.section}>
+          <Text style={styles.label}>Action Type</Text>
+          <View style={styles.chipContainer}>
+            {ACTION_TYPES.map((type) => {
+              const isSelected = action === type;
+              return (
+                <TouchableOpacity
+                  key={type}
+                  style={[
+                    styles.chip,
+                    isSelected && styles.chipSelected,
+                  ]}
+                  onPress={() =>
+                    setAction(isSelected ? undefined : type)
+                  }
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Filter by ${type}`}
+                  accessibilityState={{ selected: isSelected }}
+                >
+                  <Text
+                    style={[
+                      styles.chipText,
+                      isSelected && styles.chipTextSelected,
+                    ]}
+                  >
+                    {type}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
-      </View>
-    </Modal>
+
+        {/* Date Range */}
+        <View style={styles.section}>
+          <Text style={styles.label}>Date Range</Text>
+          <View style={styles.dateRow}>
+            <TextInput
+              style={[styles.dateInput, dateError ? styles.dateInputError : undefined]}
+              value={startDate}
+              onChangeText={handleStartDateChange}
+              placeholder="YYYY-MM-DD"
+              placeholderTextColor={colors.textSecondary}
+              maxLength={10}
+              accessibilityLabel="Start date"
+            />
+            <Text style={styles.dateSeparator}>to</Text>
+            <TextInput
+              style={[styles.dateInput, dateError ? styles.dateInputError : undefined]}
+              value={endDate}
+              onChangeText={handleEndDateChange}
+              placeholder="YYYY-MM-DD"
+              placeholderTextColor={colors.textSecondary}
+              maxLength={10}
+              accessibilityLabel="End date"
+            />
+          </View>
+          {dateError ? <Text style={styles.dateErrorText}>{dateError}</Text> : null}
+        </View>
+
+        {/* Buttons */}
+        <View style={styles.buttonRow}>
+          <Button variant="secondary" onPress={handleClear} flex>
+            Clear
+          </Button>
+          <Button onPress={handleApply} flex>
+            Apply
+          </Button>
+        </View>
+      </ScrollView>
+    </BottomSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: colors.overlay,
-    justifyContent: 'flex-end',
-  },
-  backdropTouchable: {
-    flex: 1,
-  },
-  sheet: {
-    backgroundColor: colors.background,
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
-    paddingBottom: spacing['2xl'],
-  },
-  handle: {
-    width: 40,
-    height: 4,
-    backgroundColor: colors.border,
-    borderRadius: borderRadius.full,
-    alignSelf: 'center',
-    marginTop: spacing.md,
-    marginBottom: spacing.lg,
-  },
   content: {
     paddingHorizontal: spacing.lg,
   },
@@ -313,37 +265,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
     marginTop: spacing.sm,
-  },
-  button: {
-    flex: 1,
-    height: 48,
-    borderRadius: borderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  clearButton: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  clearButtonText: {
-    fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    textTransform: 'uppercase',
-  },
-  applyButton: {
-    backgroundColor: colors.primary,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.6,
-    shadowRadius: 6,
-    elevation: 6,
-  },
-  applyButtonText: {
-    fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
-    color: colors.textInverse,
-    textTransform: 'uppercase',
   },
 });

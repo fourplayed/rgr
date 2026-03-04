@@ -14,7 +14,7 @@ import type {
   Depot,
   DepotRow,
 } from '../../types/entities';
-import type { AssetStatus, AssetCategory } from '../../types/enums';
+import type { AssetStatus, AssetCategory, DefectStatus, MaintenanceStatus, MaintenancePriority } from '../../types/enums';
 import type { ScanEventRow } from '../../types/entities/scanEvent';
 import type { MaintenanceRecordRow } from '../../types/entities/maintenanceRecord';
 import type { HazardAlertRow } from '../../types/entities/hazardAlert';
@@ -456,45 +456,19 @@ export async function getAssetByQRCode(
   qrData: string
 ): Promise<ServiceResult<Asset>> {
   const supabase = getSupabaseClient();
-  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-  // 1. Try exact qr_code_data match (handles full QR strings like "rgr://asset/{UUID}")
-  const { data: exactMatch, error: exactError } = await supabase
-    .from('assets')
-    .select('*')
-    .eq('qr_code_data', qrData)
-    .is('deleted_at', null)
+  const { data, error } = await supabase
+    .rpc('lookup_asset_by_qr', { p_qr_data: qrData })
     .maybeSingle();
 
-  if (exactError) {
-    return { success: false, data: null, error: `Failed to lookup asset: ${exactError.message}` };
+  if (error) {
+    return { success: false, data: null, error: `Failed to lookup asset: ${error.message}` };
   }
-  if (exactMatch) {
-    return { success: true, data: mapRowToAsset(exactMatch as AssetRow), error: null };
-  }
-
-  // 2. Parse the input using shared extractAssetInfo (handles QR URIs, raw UUIDs, asset numbers)
-  const info = extractAssetInfo(qrData);
-  if (info) {
-    const isUUID = UUID_RE.test(info.assetId);
-    const column = isUUID ? 'id' : 'asset_number';
-
-    const { data: parsed, error: parsedError } = await supabase
-      .from('assets')
-      .select('*')
-      .eq(column, info.assetId)
-      .is('deleted_at', null)
-      .maybeSingle();
-
-    if (parsedError) {
-      return { success: false, data: null, error: `Failed to lookup asset: ${parsedError.message}` };
-    }
-    if (parsed) {
-      return { success: true, data: mapRowToAsset(parsed as AssetRow), error: null };
-    }
+  if (!data) {
+    return { success: false, data: null, error: 'Asset not found for this QR code' };
   }
 
-  return { success: false, data: null, error: 'Asset not found for this QR code' };
+  return { success: true, data: mapRowToAsset(data as AssetRow), error: null };
 }
 
 /**
@@ -759,14 +733,14 @@ export interface AssetScanContext {
   openDefects: Array<{
     id: string;
     title: string;
-    status: string;
+    status: DefectStatus;
     createdAt: string;
   }>;
   activeTasks: Array<{
     id: string;
     title: string;
-    status: string;
-    priority: string;
+    status: MaintenanceStatus;
+    priority: MaintenancePriority;
     createdAt: string;
   }>;
 }
@@ -803,14 +777,14 @@ export async function getAssetScanContext(
       openDefects: (raw.open_defects ?? []).map((d) => ({
         id: d.id,
         title: d.title,
-        status: d.status,
+        status: d.status as DefectStatus,
         createdAt: d.created_at,
       })),
       activeTasks: (raw.active_tasks ?? []).map((t) => ({
         id: t.id,
         title: t.title,
-        status: t.status,
-        priority: t.priority,
+        status: t.status as MaintenanceStatus,
+        priority: t.priority as MaintenancePriority,
         createdAt: t.created_at,
       })),
     },

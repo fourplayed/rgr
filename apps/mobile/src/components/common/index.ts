@@ -1,7 +1,8 @@
 export { LoadingDots } from './LoadingDots';
 export { RefreshLoadingDots } from './RefreshLoadingDots';
-export { StatusBadge } from './StatusBadge';
-export { FilterChips } from './FilterChips';
+export { StatusBadge, Badge } from './StatusBadge';
+export { BottomSheet } from './BottomSheet';
+export { Button } from './Button';
 export { OfflineBanner } from './OfflineBanner';
 export { UserProfileHeader } from './UserProfileHeader';
 export { CollapsibleSection } from './CollapsibleSection';

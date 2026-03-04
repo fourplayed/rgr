@@ -14,9 +14,10 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { LoadingDots } from '../common/LoadingDots';
+import { Button } from '../common/Button';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
 import { isAutoLoginEnabled, setAutoLoginEnabled } from '../../utils/secureStorage';
 import { updatePassword, verifyCurrentPassword } from '@rgr/shared';
 import { useAuthStore } from '../../store/authStore';
@@ -399,17 +400,17 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
                         {error && <Text style={styles.errorText}>{error}</Text>}
 
                         <View style={styles.passwordButtonRow}>
-                          <TouchableOpacity
-                            style={[styles.button, styles.cancelButton]}
+                          <Button
+                            variant="secondary"
                             onPress={resetPasswordForm}
                             disabled={isLoading}
+                            flex
                           >
-                            <Text style={styles.cancelButtonText}>Cancel</Text>
-                          </TouchableOpacity>
+                            Cancel
+                          </Button>
 
                           <TouchableOpacity
                             style={[
-                              styles.button,
                               styles.saveButton,
                               isLoading && styles.buttonDisabled,
                             ]}
@@ -429,9 +430,9 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
                 )}
               </View>
 
-              <TouchableOpacity style={styles.doneButton} onPress={onClose}>
-                <Text style={styles.doneButtonText}>Done</Text>
-              </TouchableOpacity>
+              <Button onPress={onClose}>
+                Done
+              </Button>
             </View>
           </ScrollView>
         </Animated.View>
@@ -476,7 +477,6 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: fontSize.lg,
-    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     textTransform: 'uppercase',
@@ -488,7 +488,6 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     textTransform: 'uppercase',
@@ -512,7 +511,6 @@ const styles = StyleSheet.create({
   },
   toggleTitle: {
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     textTransform: 'uppercase',
@@ -537,7 +535,6 @@ const styles = StyleSheet.create({
   },
   changePasswordText: {
     fontSize: fontSize.base,
-    fontWeight: fontWeight.medium,
     fontFamily: 'Lato_400Regular',
     color: colors.electricBlue,
   },
@@ -553,7 +550,6 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     textTransform: 'uppercase',
@@ -623,31 +619,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
   },
-  button: {
+  saveButton: {
     flex: 1,
     height: 48,
     borderRadius: borderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  cancelButton: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  cancelButtonText: {
-    fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    textTransform: 'uppercase',
-  },
-  saveButton: {
     backgroundColor: colors.primary,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.6,
-    shadowRadius: 6,
-    elevation: 6,
+    ...shadows.md,
   },
   saveButtonText: {
     fontSize: fontSize.lg,
@@ -665,26 +644,7 @@ const styles = StyleSheet.create({
   },
   successText: {
     fontSize: fontSize.base,
-    fontWeight: fontWeight.medium,
     fontFamily: 'Lato_400Regular',
     color: colors.success,
-  },
-  doneButton: {
-    backgroundColor: colors.primary,
-    height: 48,
-    borderRadius: borderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.6,
-    shadowRadius: 6,
-    elevation: 6,
-  },
-  doneButtonText: {
-    fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
-    color: colors.textInverse,
-    textTransform: 'uppercase',
   },
 });

@@ -13,8 +13,9 @@ import {
 } from 'react-native';
 import type { Depot, CreateDepotInput, UpdateDepotInput } from '@rgr/shared';
 import { LoadingDots } from '../common/LoadingDots';
+import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
 
 interface DepotFormSheetProps {
   visible: boolean;
@@ -174,17 +175,17 @@ export function DepotFormSheet({
             {error && <Text style={styles.errorText}>{error}</Text>}
 
             <View style={styles.buttonRow}>
-              <TouchableOpacity
-                style={[styles.button, styles.cancelButton]}
+              <Button
+                variant="secondary"
                 onPress={onClose}
                 disabled={isLoading}
+                flex
               >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
+                Cancel
+              </Button>
 
               <TouchableOpacity
                 style={[
-                  styles.button,
                   styles.saveButton,
                   (!isValid || isLoading) && styles.buttonDisabled,
                 ]}
@@ -284,31 +285,14 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     marginTop: spacing.sm,
   },
-  button: {
+  saveButton: {
     flex: 1,
     height: 48,
     borderRadius: borderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  cancelButton: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  cancelButtonText: {
-    fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    textTransform: 'uppercase',
-  },
-  saveButton: {
     backgroundColor: colors.primary,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.6,
-    shadowRadius: 6,
-    elevation: 6,
+    ...shadows.md,
   },
   saveButtonText: {
     fontSize: fontSize.base,

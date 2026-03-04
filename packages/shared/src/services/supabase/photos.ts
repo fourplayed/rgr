@@ -10,6 +10,7 @@ import type {
 import type { PhotoType } from '../../types/enums/PhotoEnums';
 import { PhotoTypeSchema } from '../../types/enums/PhotoEnums';
 import { safeParseEnum } from '../../utils/safeParseEnum';
+import { SUPPORTED_IMAGE_TYPES } from '../../utils/constants';
 import type { FreightAnalysisRow } from '../../types/entities/freightAnalysis';
 import type { HazardAlertRow } from '../../types/entities/hazardAlert';
 import {
@@ -80,8 +81,7 @@ export async function uploadPhoto(
 ): Promise<ServiceResult<Photo>> {
   const { assetId, scanEventId, uploadedBy, photoType, fileUri, mimeType = 'image/jpeg', locationDescription, latitude, longitude, width, height, thumbnailFileUri } = options;
 
-  const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-  if (!ALLOWED_MIME_TYPES.includes(mimeType)) {
+  if (!SUPPORTED_IMAGE_TYPES.includes(mimeType as typeof SUPPORTED_IMAGE_TYPES[number])) {
     return { success: false, data: null, error: `Unsupported image type: ${mimeType}` };
   }
 
@@ -207,6 +207,26 @@ export async function uploadPhoto(
   }
 }
 
+// ── Shared interfaces for photo list queries ──
+
+interface FreightAnalysisSummary {
+  primary_category: string | null;
+  confidence: number | null;
+  hazard_count: number;
+  max_severity: string | null;
+  requires_acknowledgment: boolean;
+  blocked_from_departure: boolean;
+}
+
+interface PhotoListRow {
+  id: string;
+  storage_path: string;
+  thumbnail_path: string | null;
+  photo_type: string;
+  created_at: string;
+  freight_analysis: FreightAnalysisSummary | FreightAnalysisSummary[] | null;
+}
+
 /**
  * Get photos for an asset with analysis summary data.
  * Uses optimized query excluding raw_response JSONB.
@@ -268,25 +288,6 @@ export async function getAssetPhotos(
     return { success: false, data: null, error: `Failed to fetch photos: ${error.message}` };
   }
 
-  interface FreightAnalysisSummary {
-    primary_category: string | null;
-    confidence: number | null;
-    hazard_count: number;
-    max_severity: string | null;
-    requires_acknowledgment: boolean;
-    blocked_from_departure: boolean;
-  }
-
-  interface PhotoListRow {
-    id: string;
-    storage_path: string;
-    thumbnail_path: string | null;
-    photo_type: string;
-    created_at: string;
-    // Supabase returns single joined row as object, not array
-    freight_analysis: FreightAnalysisSummary | FreightAnalysisSummary[] | null;
-  }
-
   const photos: PhotoListItem[] = (data || []).map((row: PhotoListRow) => {
     // Handle both single object and array (Supabase join quirk)
     const analysis = Array.isArray(row.freight_analysis)
@@ -343,24 +344,6 @@ export async function getPhotosByScanEventId(
 
   if (error) {
     return { success: false, data: null, error: `Failed to fetch photos: ${error.message}` };
-  }
-
-  interface FreightAnalysisSummary {
-    primary_category: string | null;
-    confidence: number | null;
-    hazard_count: number;
-    max_severity: string | null;
-    requires_acknowledgment: boolean;
-    blocked_from_departure: boolean;
-  }
-
-  interface PhotoListRow {
-    id: string;
-    storage_path: string;
-    thumbnail_path: string | null;
-    photo_type: string;
-    created_at: string;
-    freight_analysis: FreightAnalysisSummary | FreightAnalysisSummary[] | null;
   }
 
   const photos: PhotoListItem[] = (data || []).map((row: PhotoListRow) => {

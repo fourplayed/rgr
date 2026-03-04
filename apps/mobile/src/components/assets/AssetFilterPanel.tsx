@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { AssetStatus, AssetCategory, Depot } from '@rgr/shared';
 import { AssetStatusLabels, AssetStatusColors, AssetCategoryLabels, AssetSubtypesByCategory } from '@rgr/shared';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
 import { DEPOT_ORDER, getDepotColor, getDepotTextColor } from '../../utils/depotDisplay';
 import { FilterChip } from '../common/FilterChip';
 import '../../utils/enableLayoutAnimation';
@@ -291,11 +291,7 @@ const styles = StyleSheet.create({
     height: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-    elevation: 3,
+    ...shadows.sm,
   },
   headerLeft: {
     flexDirection: 'row',

@@ -1,43 +1,22 @@
 import React, { memo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
 import type { MaintenancePriority } from '@rgr/shared';
 import { MaintenancePriorityLabels } from '@rgr/shared';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { Badge } from '../common/StatusBadge';
 
 interface MaintenancePriorityBadgeProps {
   priority: MaintenancePriority;
 }
 
-const getPriorityColor = (priority: MaintenancePriority): string => {
-  return (priority in colors.maintenancePriority
+export const MaintenancePriorityBadge = memo(function MaintenancePriorityBadge({ priority }: MaintenancePriorityBadgeProps) {
+  const color = (priority in colors.maintenancePriority
     ? colors.maintenancePriority[priority as keyof typeof colors.maintenancePriority]
     : undefined) ?? colors.textSecondary;
-};
-
-function MaintenancePriorityBadgeComponent({ priority }: MaintenancePriorityBadgeProps) {
-  const backgroundColor = getPriorityColor(priority);
-  const label = MaintenancePriorityLabels[priority] || priority;
 
   return (
-    <View style={[styles.badge, { backgroundColor }]}>
-      <Text style={styles.text}>{label}</Text>
-    </View>
+    <Badge
+      label={MaintenancePriorityLabels[priority] || priority}
+      color={color}
+    />
   );
-}
-
-export const MaintenancePriorityBadge = memo(MaintenancePriorityBadgeComponent);
-
-const styles = StyleSheet.create({
-  badge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: borderRadius.sm,
-  },
-  text: {
-    fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
-    color: colors.textInverse,
-    textTransform: 'uppercase',
-  },
 });

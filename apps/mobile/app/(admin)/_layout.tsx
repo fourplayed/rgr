@@ -1,18 +1,18 @@
 import React, { useEffect } from 'react';
 import { Stack, useRouter } from 'expo-router';
-import { useAuthStore } from '../../src/store/authStore';
+import { useUserPermissions } from '../../src/contexts/UserPermissionsContext';
 
 export default function AdminLayout() {
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { canAccessAdmin } = useUserPermissions();
 
   useEffect(() => {
-    if (user?.role !== 'superuser') {
+    if (!canAccessAdmin) {
       router.replace('/(tabs)');
     }
-  }, [user?.role, router]);
+  }, [canAccessAdmin, router]);
 
-  if (user?.role !== 'superuser') {
+  if (!canAccessAdmin) {
     return null;
   }
 

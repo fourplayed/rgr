@@ -120,7 +120,13 @@ export default function TabsLayout() {
           elevation: 16,
           overflow: 'hidden',
         },
-        tabBarShowLabel: false,
+        tabBarShowLabel: true,
+        tabBarLabelStyle: {
+          fontSize: 10,
+          fontFamily: 'Lato_700Bold',
+          textTransform: 'uppercase',
+          letterSpacing: 0.5,
+        },
         tabBarItemStyle: {
           flex: 1,
           padding: 0,

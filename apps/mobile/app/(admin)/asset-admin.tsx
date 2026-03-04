@@ -91,15 +91,10 @@ export default function AssetAdminScreen() {
 
   const handleBulkDelete = useCallback(async () => {
     if (bulkDeleteIds.length === 0) return;
-    let successCount = 0;
-    for (const id of bulkDeleteIds) {
-      try {
-        await deleteMutation.mutateAsync(id);
-        successCount++;
-      } catch {
-        // continue with remaining
-      }
-    }
+    const results = await Promise.allSettled(
+      bulkDeleteIds.map((id) => deleteMutation.mutateAsync(id))
+    );
+    const successCount = results.filter((r) => r.status === 'fulfilled').length;
     setBulkDeleteIds([]);
     if (successCount > 0) {
       clearSelection();

@@ -39,11 +39,54 @@ export default function ScanScreen() {
 
   const flow = useScanActionFlow({ canMarkMaintenance });
 
+  // ── Destructure stable handlers from flow (avoids object reference instability) ──
+
+  const {
+    scannedAsset,
+    matchedDepot,
+    isCreatingScan,
+    scanContext,
+    isContextLoading,
+    contextError,
+    refetchContext,
+    handleInlineItemPress,
+    handleDonePress,
+    handlePhotoPress,
+    handleDefectPress,
+    handleTaskPress,
+    photoCompleted,
+    defectCompleted,
+    buttonsDisabled,
+    showCard,
+    handleBarCodeScanned,
+    hasLocationPermission,
+    requestLocationPermission,
+    scanStatus,
+    resolvedDepot: flowResolvedDepot,
+    showUndoToast,
+    handleUndoPress,
+    handleToastDismiss,
+    toastId: flowToastId,
+    activeSheet,
+    lastScanEventId,
+    effectiveLocation,
+    handleCameraClose,
+    handlePhotoUploaded,
+    handleSheetDismiss,
+    handleCloseSheet,
+    isSubmittingDefect,
+    handleDefectCancel,
+    handleDefectSubmit: flowDefectSubmit,
+    selectedItemId,
+    alertSheet,
+    setAlertSheet,
+  } = flow;
+
   // ── Badge data for CameraOverlay (memoized for React.memo) ──
 
   const depotName = useMemo(
-    () => flow.resolvedDepot?.depot.name ?? null,
-    [flow.resolvedDepot],
+    () => flowResolvedDepot?.depot.name ?? null,
+    [flowResolvedDepot],
   );
 
   const roleBadge = useMemo(() => {
@@ -66,10 +109,10 @@ export default function ScanScreen() {
     if (!permission?.granted) {
       requestPermission();
     }
-    if (!flow.hasLocationPermission) {
-      flow.requestLocationPermission();
+    if (!hasLocationPermission) {
+      requestLocationPermission();
     }
-  }, [permission?.granted, flow, requestPermission]);
+  }, [permission?.granted, hasLocationPermission, requestLocationPermission, requestPermission]);
 
   // ── Scan Tutorial (first visit, after camera ready) ──
 
@@ -93,22 +136,22 @@ export default function ScanScreen() {
 
   const handleDetailSheetDismiss = useCallback(() => {
     // Invalidate scan context so the card refreshes after status changes
-    if (flow.scannedAsset) {
+    if (scannedAsset) {
       queryClient.invalidateQueries({
-        queryKey: assetKeys.scanContext(flow.scannedAsset.id),
+        queryKey: assetKeys.scanContext(scannedAsset.id),
       });
     }
-    flow.handleSheetDismiss();
-  }, [flow, queryClient]);
+    handleSheetDismiss();
+  }, [scannedAsset, queryClient, handleSheetDismiss]);
 
   // ── Defect submit wrapper (adapts onSubmit signature) ──
 
   const handleDefectSubmit = useCallback(
     (notes: string, _wantsPhoto: boolean) => {
       // wantsPhoto is always false in new flow (showPhotoOption={false})
-      flow.handleDefectSubmit(notes);
+      flowDefectSubmit(notes);
     },
-    [flow],
+    [flowDefectSubmit],
   );
 
   // ── Render ──
@@ -126,50 +169,50 @@ export default function ScanScreen() {
   const variant = canMarkMaintenance ? 'mechanic' : 'driver';
 
   // Build ScanCard element
-  const scanCardElement = flow.showCard && flow.scannedAsset ? (
+  const scanCardElement = showCard && scannedAsset ? (
     variant === 'mechanic' ? (
       <ScanCard
         variant="mechanic"
-        asset={flow.scannedAsset}
-        matchedDepot={flow.matchedDepot}
-        isCreating={flow.isCreatingScan}
-        scanContext={flow.scanContext}
-        isContextLoading={flow.isContextLoading}
-        contextError={flow.contextError}
-        onRetryContext={flow.refetchContext}
-        onDefectPress={(id) => flow.handleInlineItemPress('defect', id)}
-        onTaskPress={(id) => flow.handleInlineItemPress('task', id)}
-        onDonePress={flow.handleDonePress}
+        asset={scannedAsset}
+        matchedDepot={matchedDepot}
+        isCreating={isCreatingScan}
+        scanContext={scanContext}
+        isContextLoading={isContextLoading}
+        contextError={contextError}
+        onRetryContext={refetchContext}
+        onDefectPress={(id) => handleInlineItemPress('defect', id)}
+        onTaskPress={(id) => handleInlineItemPress('task', id)}
+        onDonePress={handleDonePress}
       />
     ) : (
       <ScanCard
         variant="driver"
-        asset={flow.scannedAsset}
-        matchedDepot={flow.matchedDepot}
-        isCreating={flow.isCreatingScan}
+        asset={scannedAsset}
+        matchedDepot={matchedDepot}
+        isCreating={isCreatingScan}
       />
     )
   ) : null;
 
   // Build ScanActionBar element
-  const scanActionBarElement = flow.showCard ? (
+  const scanActionBarElement = showCard ? (
     variant === 'mechanic' ? (
       <ScanActionBar
         variant="mechanic"
-        onPhotoPress={flow.handlePhotoPress}
-        onDefectPress={flow.handleDefectPress}
-        onTaskPress={flow.handleTaskPress}
-        photoCompleted={flow.photoCompleted}
-        defectCompleted={flow.defectCompleted}
-        disabled={flow.buttonsDisabled}
+        onPhotoPress={handlePhotoPress}
+        onDefectPress={handleDefectPress}
+        onTaskPress={handleTaskPress}
+        photoCompleted={photoCompleted}
+        defectCompleted={defectCompleted}
+        disabled={buttonsDisabled}
       />
     ) : (
       <ScanActionBar
         variant="driver"
-        onPhotoPress={flow.handlePhotoPress}
-        onDonePress={flow.handleDonePress}
-        photoCompleted={flow.photoCompleted}
-        disabled={flow.buttonsDisabled}
+        onPhotoPress={handlePhotoPress}
+        onDonePress={handleDonePress}
+        photoCompleted={photoCompleted}
+        disabled={buttonsDisabled}
       />
     )
   ) : null;
@@ -177,12 +220,12 @@ export default function ScanScreen() {
   // Build ScanToast element
   const scanToastElement = (
     <ScanToast
-      visible={flow.showUndoToast}
-      message={`Scanned ${flow.scannedAsset?.assetNumber ?? 'asset'}`}
+      visible={showUndoToast}
+      message={`Scanned ${scannedAsset?.assetNumber ?? 'asset'}`}
       type="success"
-      onUndo={flow.handleUndoPress}
-      onDismiss={flow.handleToastDismiss}
-      toastId={flow.toastId}
+      onUndo={handleUndoPress}
+      onDismiss={handleToastDismiss}
+      toastId={flowToastId}
     />
   );
 
@@ -191,15 +234,15 @@ export default function ScanScreen() {
       <CameraView
         style={styles.camera}
         facing="back"
-        onBarcodeScanned={flow.handleBarCodeScanned}
+        onBarcodeScanned={handleBarCodeScanned}
         barcodeScannerSettings={{
           barcodeTypes: ['qr'],
         }}
       >
         <CameraOverlay
-          hasLocationPermission={flow.hasLocationPermission}
-          onRequestLocationPermission={flow.requestLocationPermission}
-          scanStatus={flow.scanStatus}
+          hasLocationPermission={hasLocationPermission}
+          onRequestLocationPermission={requestLocationPermission}
+          scanStatus={scanStatus}
           depotName={depotName}
           roleBadge={roleBadge}
           scanCard={scanCardElement}
@@ -211,67 +254,67 @@ export default function ScanScreen() {
       {/* ── Sheet modals (controlled by activeSheet enum) ── */}
 
       {/* Camera */}
-      {flow.scannedAsset && (
+      {scannedAsset && (
         <ErrorBoundary>
           <CameraCapture
-            visible={flow.activeSheet === 'camera'}
-            assetId={flow.scannedAsset.id}
+            visible={activeSheet === 'camera'}
+            assetId={scannedAsset.id}
             photoType="freight"
-            scanEventId={flow.lastScanEventId}
-            locationDescription={flow.matchedDepot?.depot.name ?? null}
-            latitude={flow.effectiveLocation?.latitude ?? null}
-            longitude={flow.effectiveLocation?.longitude ?? null}
-            onClose={flow.handleCameraClose}
-            onPhotoUploaded={flow.handlePhotoUploaded}
-            onDismiss={flow.handleSheetDismiss}
+            scanEventId={lastScanEventId}
+            locationDescription={matchedDepot?.depot.name ?? null}
+            latitude={effectiveLocation?.latitude ?? null}
+            longitude={effectiveLocation?.longitude ?? null}
+            onClose={handleCameraClose}
+            onPhotoUploaded={handlePhotoUploaded}
+            onDismiss={handleSheetDismiss}
           />
         </ErrorBoundary>
       )}
 
       {/* Defect Report (no photo option in new flow) */}
       <DefectReportSheet
-        visible={flow.activeSheet === 'defect'}
-        assetNumber={flow.scannedAsset?.assetNumber ?? ''}
-        isSubmitting={flow.isSubmittingDefect}
+        visible={activeSheet === 'defect'}
+        assetNumber={scannedAsset?.assetNumber ?? ''}
+        isSubmitting={isSubmittingDefect}
         onSubmit={handleDefectSubmit}
-        onCancel={flow.handleDefectCancel}
-        onDismiss={flow.handleSheetDismiss}
+        onCancel={handleDefectCancel}
+        onDismiss={handleSheetDismiss}
         showPhotoOption={false}
       />
 
       {/* Create Maintenance Task */}
-      {flow.scannedAsset && (
+      {scannedAsset && (
         <CreateMaintenanceModal
-          visible={flow.activeSheet === 'createTask'}
-          onClose={() => flow.handleCloseSheet()}
-          assetId={flow.scannedAsset.id}
-          assetNumber={flow.scannedAsset.assetNumber}
+          visible={activeSheet === 'createTask'}
+          onClose={handleCloseSheet}
+          assetId={scannedAsset.id}
+          assetNumber={scannedAsset.assetNumber}
         />
       )}
 
       {/* Maintenance Detail (compact variant) */}
       <MaintenanceDetailModal
-        visible={flow.activeSheet === 'taskDetail'}
-        maintenanceId={flow.selectedItemId}
-        onClose={() => flow.handleCloseSheet()}
+        visible={activeSheet === 'taskDetail'}
+        maintenanceId={selectedItemId}
+        onClose={handleCloseSheet}
         variant="compact"
       />
 
       {/* Defect Report Detail (compact variant) */}
       <DefectReportDetailModal
-        visible={flow.activeSheet === 'defectDetail'}
-        defectId={flow.selectedItemId}
-        onClose={() => flow.handleCloseSheet()}
+        visible={activeSheet === 'defectDetail'}
+        defectId={selectedItemId}
+        onClose={handleCloseSheet}
         variant="compact"
       />
 
       {/* Alert Sheet for errors */}
       <AlertSheet
-        visible={flow.alertSheet.visible}
-        type={flow.alertSheet.type}
-        title={flow.alertSheet.title}
-        message={flow.alertSheet.message}
-        onDismiss={() => flow.setAlertSheet(prev => ({ ...prev, visible: false }))}
+        visible={alertSheet.visible}
+        type={alertSheet.type}
+        title={alertSheet.title}
+        message={alertSheet.message}
+        onDismiss={() => setAlertSheet(prev => ({ ...prev, visible: false }))}
       />
 
       <TutorialSheet

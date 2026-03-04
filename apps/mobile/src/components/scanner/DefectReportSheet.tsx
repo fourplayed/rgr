@@ -12,8 +12,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LoadingDots } from '../common/LoadingDots';
+import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
 
 interface DefectReportSheetProps {
   visible: boolean;
@@ -103,11 +104,12 @@ function DefectReportSheetComponent({
                   onChangeText={setNotes}
                   multiline
                   numberOfLines={4}
+                  maxLength={2000}
                   textAlignVertical="top"
                   autoFocus
                 />
                 <Text style={styles.charCount}>
-                  {notes.length > 0 ? `${notes.length} characters` : 'Required'}
+                  {notes.length > 0 ? `${notes.length}/2000` : 'Required'}
                 </Text>
               </View>
 
@@ -143,16 +145,17 @@ function DefectReportSheetComponent({
 
               {/* Buttons */}
               <View style={styles.buttonRow}>
-                <TouchableOpacity
-                  style={[styles.button, styles.cancelButton]}
+                <Button
+                  variant="secondary"
                   onPress={handleCancel}
                   disabled={isSubmitting}
+                  flex
                 >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
-                </TouchableOpacity>
+                  Cancel
+                </Button>
 
                 <TouchableOpacity
-                  style={[styles.button, styles.submitButton, !canSubmit && styles.submitButtonDisabled]}
+                  style={[styles.submitButton, !canSubmit && styles.submitButtonDisabled]}
                   onPress={handleSubmit}
                   disabled={isSubmitting || !canSubmit}
                 >
@@ -332,7 +335,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
   },
-  button: {
+  submitButton: {
     flex: 1,
     height: 48,
     borderRadius: borderRadius.md,
@@ -340,25 +343,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexDirection: 'row',
     gap: spacing.sm,
-  },
-  cancelButton: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  cancelButtonText: {
-    fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    textTransform: 'uppercase',
-  },
-  submitButton: {
     backgroundColor: colors.primary,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.6,
-    shadowRadius: 6,
-    elevation: 6,
+    ...shadows.md,
   },
   submitButtonDisabled: {
     backgroundColor: colors.border,

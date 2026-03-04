@@ -21,7 +21,7 @@ export function OfflineBanner() {
 
   return (
     <View style={styles.banner}>
-      <Text style={styles.text}>No Internet Connection</Text>
+      <Text style={styles.text}>Offline — recent data shown, scanning unavailable</Text>
     </View>
   );
 }

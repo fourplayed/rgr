@@ -10,6 +10,7 @@ import type {
   DefectReportListItem,
 } from '../../types/entities';
 import type { DefectStatus } from '../../types/enums';
+import type { MaintenancePriority, MaintenanceStatus } from '../../types/enums';
 import {
   mapRowToDefectReport,
   mapDefectReportToInsert,
@@ -313,8 +314,8 @@ export async function acceptDefectReport(
     assetId: string;
     title: string;
     description?: string | null;
-    priority?: string;
-    status?: string;
+    priority?: MaintenancePriority;
+    status?: MaintenanceStatus;
     maintenanceType?: string | null;
     reportedBy?: string | null;
     assignedTo?: string | null;

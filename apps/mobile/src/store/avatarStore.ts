@@ -1,9 +1,7 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Ionicons } from '@expo/vector-icons';
-import { logger } from '../utils/logger';
-
-const AVATAR_STORAGE_KEY = '@rgr_avatar_id';
 
 export type AvatarIconName = keyof typeof Ionicons.glyphMap;
 
@@ -31,44 +29,38 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
 ];
 
 interface AvatarState {
+  _hasHydrated: boolean;
   selectedAvatarId: string;
-  isLoading: boolean;
-  loadAvatar: () => Promise<void>;
-  setAvatar: (avatarId: string) => Promise<void>;
+  setAvatar: (avatarId: string) => void;
   getSelectedAvatar: () => AvatarOption;
 }
 
-export const useAvatarStore = create<AvatarState>((set, get) => ({
-  selectedAvatarId: 'person',
-  isLoading: true,
+export const useAvatarStore = create<AvatarState>()(
+  persist(
+    (set, get) => ({
+      _hasHydrated: false,
+      selectedAvatarId: 'person',
 
-  loadAvatar: async () => {
-    try {
-      const storedAvatarId = await AsyncStorage.getItem(AVATAR_STORAGE_KEY);
-      if (storedAvatarId && AVATAR_OPTIONS.some(opt => opt.id === storedAvatarId)) {
-        set({ selectedAvatarId: storedAvatarId, isLoading: false });
-      } else {
-        set({ isLoading: false });
-      }
-    } catch (error) {
-      logger.error('Failed to load avatar from storage', error);
-      set({ isLoading: false });
+      setAvatar: (avatarId: string) => {
+        set({ selectedAvatarId: avatarId });
+      },
+
+      getSelectedAvatar: (): AvatarOption => {
+        const { selectedAvatarId } = get();
+        const found = AVATAR_OPTIONS.find(opt => opt.id === selectedAvatarId);
+        return found ?? DEFAULT_AVATAR;
+      },
+    }),
+    {
+      name: 'rgr-avatar',
+      version: 1,
+      storage: createJSONStorage(() => AsyncStorage),
+      partialize: (state) => ({
+        selectedAvatarId: state.selectedAvatarId,
+      }),
+      onRehydrateStorage: () => () => {
+        useAvatarStore.setState({ _hasHydrated: true });
+      },
     }
-  },
-
-  setAvatar: async (avatarId: string) => {
-    try {
-      await AsyncStorage.setItem(AVATAR_STORAGE_KEY, avatarId);
-      set({ selectedAvatarId: avatarId });
-    } catch (error) {
-      // Keep current selection, but log for debugging
-      logger.error('Failed to save avatar to storage', error);
-    }
-  },
-
-  getSelectedAvatar: (): AvatarOption => {
-    const { selectedAvatarId } = get();
-    const found = AVATAR_OPTIONS.find(opt => opt.id === selectedAvatarId);
-    return found ?? DEFAULT_AVATAR;
-  },
-}));
+  )
+);
