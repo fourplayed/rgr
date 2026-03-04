@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+import { Text, View } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -12,17 +12,21 @@ const TAB_ICON_COLOR = '#FFFFFF';
 // Custom tab icon with enhanced visual depth
 const TabIcon = ({
   name,
+  label,
   focused,
+  edge,
 }: {
   name: keyof typeof Ionicons.glyphMap;
+  label: string;
   focused: boolean;
+  edge?: 'left' | 'right';
 }) => (
   <View
     style={{
-      width: 110,
-      height: 50,
-      justifyContent: 'center',
+      width: '100%',
       alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 4,
     }}
   >
     {/* Background gradient for active state */}
@@ -33,10 +37,10 @@ const TabIcon = ({
         end={{ x: 0, y: 1 }}
         style={{
           position: 'absolute',
-          left: 0,
-          right: 0,
-          top: -15,
-          bottom: -25,
+          left: edge === 'left' ? -20 : -2,
+          right: edge === 'right' ? -20 : -2,
+          top: -8,
+          bottom: -50,
         }}
       />
     )}
@@ -49,9 +53,9 @@ const TabIcon = ({
         end={{ x: 1, y: 0 }}
         style={{
           position: 'absolute',
-          left: 0,
-          top: -15,
-          bottom: -25,
+          left: edge === 'left' ? -20 : -2,
+          top: -8,
+          bottom: -50,
           width: 6,
         }}
       />
@@ -65,17 +69,29 @@ const TabIcon = ({
         end={{ x: 1, y: 0 }}
         style={{
           position: 'absolute',
-          right: 0,
-          top: -15,
-          bottom: -25,
+          right: edge === 'right' ? -20 : -2,
+          top: -8,
+          bottom: -50,
           width: 6,
         }}
       />
     )}
 
+    <Text
+      style={{
+        fontSize: 10,
+        fontFamily: 'Lato_700Bold',
+        textTransform: 'uppercase',
+        color: TAB_ICON_COLOR,
+        marginBottom: 4,
+      }}
+    >
+      {label}
+    </Text>
+
     <Ionicons
       name={name}
-      size={30}
+      size={28}
       color={TAB_ICON_COLOR}
       style={{
         textShadowColor: 'rgba(0, 0, 0, 0.3)',
@@ -111,26 +127,23 @@ export default function TabsLayout() {
           borderTopWidth: 0,
           height: 70,
           paddingBottom: 20,
-          paddingTop: 12,
+          paddingTop: 6,
           // Black glow surrounding the tab bar
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 0 },
           shadowOpacity: 0.5,
           shadowRadius: 4,
           elevation: 16,
-          overflow: 'hidden',
+          overflow: 'visible',
         },
-        tabBarShowLabel: true,
-        tabBarLabelStyle: {
-          fontSize: 10,
-          fontFamily: 'Lato_700Bold',
-          textTransform: 'uppercase',
-          letterSpacing: 0.5,
-        },
+        tabBarShowLabel: false,
         tabBarItemStyle: {
           flex: 1,
           padding: 0,
           margin: 0,
+        },
+        tabBarIconStyle: {
+          width: '100%',
         },
         // Custom tab bar background with gradient
         tabBarBackground: () => (
@@ -161,7 +174,7 @@ export default function TabsLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ focused }) => (
-            <TabIcon name="home-outline" focused={focused} />
+            <TabIcon name="home-outline" label="Home" focused={focused} edge="left" />
           ),
         }}
       />
@@ -170,7 +183,7 @@ export default function TabsLayout() {
         options={{
           title: 'Scan',
           tabBarIcon: ({ focused }) => (
-            <TabIcon name="qr-code-outline" focused={focused} />
+            <TabIcon name="qr-code-outline" label="Scan" focused={focused} />
           ),
         }}
       />
@@ -179,7 +192,7 @@ export default function TabsLayout() {
         options={{
           title: 'Assets',
           tabBarIcon: ({ focused }) => (
-            <TabIcon name="cube-outline" focused={focused} />
+            <TabIcon name="cube-outline" label="Assets" focused={focused} />
           ),
         }}
       />
@@ -188,7 +201,7 @@ export default function TabsLayout() {
         options={{
           title: 'Maintenance',
           tabBarIcon: ({ focused }) => (
-            <TabIcon name="construct-outline" focused={focused} />
+            <TabIcon name="construct-outline" label="Maintenance" focused={focused} edge="right" />
           ),
         }}
       />

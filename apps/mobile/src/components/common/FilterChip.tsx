@@ -33,10 +33,7 @@ export const FilterChip = memo(function FilterChip({ label, isSelected, onPress,
       <Text
         style={[
           styles.chipText,
-          {
-            color: textColor,
-            fontFamily: isSelected ? 'Lato_700Bold' : 'Lato_400Regular',
-          },
+          { color: textColor },
         ]}
       >
         {label}
@@ -48,12 +45,13 @@ export const FilterChip = memo(function FilterChip({ label, isSelected, onPress,
 const styles = StyleSheet.create({
   chip: {
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
     borderWidth: 1,
   },
   chipText: {
-    fontSize: fontSize.sm,
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_700Bold',
     textTransform: 'uppercase',
   },
 });
