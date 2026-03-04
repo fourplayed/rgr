@@ -63,25 +63,29 @@ export function DepotFormSheet({
 
   const isValid = name.trim() && code.trim();
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!isValid) return;
     setError(null);
-    if (isEdit) {
-      const update: UpdateDepotInput = {
-        name: name.trim(),
-        code: code.trim(),
-        address: address.trim() || null,
-        isActive,
-      };
-      onSubmit(update);
-    } else {
-      const create: CreateDepotInput = {
-        name: name.trim(),
-        code: code.trim(),
-        address: address.trim() || null,
-        isActive,
-      };
-      onSubmit(create);
+    try {
+      if (isEdit) {
+        const update: UpdateDepotInput = {
+          name: name.trim(),
+          code: code.trim(),
+          address: address.trim() || null,
+          isActive,
+        };
+        await onSubmit(update);
+      } else {
+        const create: CreateDepotInput = {
+          name: name.trim(),
+          code: code.trim(),
+          address: address.trim() || null,
+          isActive,
+        };
+        await onSubmit(create);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
     }
   };
 

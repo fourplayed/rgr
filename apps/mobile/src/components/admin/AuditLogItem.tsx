@@ -8,6 +8,21 @@ import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 
 type AuditAction = 'INSERT' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'LOGOUT';
 
+/** Fields that may contain sensitive data — redact before display */
+const REDACTED_FIELDS = new Set([
+  'password', 'password_hash', 'encrypted_password',
+  'access_token', 'refresh_token', 'token',
+  'secret', 'api_key', 'ssn', 'tax_id',
+]);
+
+function redactSensitiveFields(obj: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    result[key] = REDACTED_FIELDS.has(key.toLowerCase()) ? '[REDACTED]' : value;
+  }
+  return result;
+}
+
 const ACTION_ICONS: Partial<Record<AuditAction, keyof typeof Ionicons.glyphMap>> = {
   INSERT: 'add-circle-outline',
   UPDATE: 'create-outline',
@@ -33,13 +48,9 @@ function AuditLogItemInner({ item }: AuditLogItemProps) {
 
   const toggleExpand = useCallback(() => setExpanded((prev) => !prev), []);
 
-  const actionKey = item.action.toUpperCase();
-  const icon = actionKey in ACTION_ICONS
-    ? ACTION_ICONS[actionKey as keyof typeof ACTION_ICONS]
-    : 'document-outline';
-  const iconColor = actionKey in ACTION_COLORS
-    ? ACTION_COLORS[actionKey as keyof typeof ACTION_COLORS]
-    : colors.textSecondary;
+  const actionKey = item.action.toUpperCase() as keyof typeof ACTION_ICONS;
+  const icon = ACTION_ICONS[actionKey] ?? 'document-outline';
+  const iconColor = ACTION_COLORS[actionKey] ?? colors.textSecondary;
 
   const description = item.tableName
     ? `${item.action} on ${item.tableName}`
@@ -89,7 +100,7 @@ function AuditLogItemInner({ item }: AuditLogItemProps) {
               <Text style={styles.detailLabel}>Old Values</Text>
               <View style={styles.jsonBox}>
                 <Text style={styles.jsonText}>
-                  {JSON.stringify(item.oldValues, null, 2)}
+                  {JSON.stringify(redactSensitiveFields(item.oldValues as Record<string, unknown>), null, 2)}
                 </Text>
               </View>
             </View>
@@ -99,7 +110,7 @@ function AuditLogItemInner({ item }: AuditLogItemProps) {
               <Text style={styles.detailLabel}>New Values</Text>
               <View style={styles.jsonBox}>
                 <Text style={styles.jsonText}>
-                  {JSON.stringify(item.newValues, null, 2)}
+                  {JSON.stringify(redactSensitiveFields(item.newValues as Record<string, unknown>), null, 2)}
                 </Text>
               </View>
             </View>

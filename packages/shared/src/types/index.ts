@@ -28,6 +28,8 @@ export interface PaginatedResult<T> {
   page: number;
   pageSize: number;
   totalPages: number;
+  /** Present when using cursor-based pagination — indicates more pages available */
+  hasMore?: boolean;
 }
 
 // Re-export all types from subdirectories

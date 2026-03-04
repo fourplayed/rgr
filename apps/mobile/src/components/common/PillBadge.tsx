@@ -14,13 +14,16 @@ interface PillBadgeProps {
   style?: StyleProp<ViewStyle>;
   /** Optional accessibility label (defaults to display label) */
   accessibilityLabel?: string;
+  /** Optional accessibility role (e.g. "text" for informational badges) */
+  accessibilityRole?: 'text' | 'button' | 'none';
 }
 
-export function PillBadge({ icon, label, color, iconSize = 12, style, accessibilityLabel }: PillBadgeProps) {
+export function PillBadge({ icon, label, color, iconSize = 12, style, accessibilityLabel, accessibilityRole }: PillBadgeProps) {
   return (
     <View
       style={[styles.badge, { backgroundColor: color }, style]}
       accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityRole={accessibilityRole}
     >
       <Ionicons name={icon} size={iconSize} color={colors.textInverse} />
       <Text style={styles.label}>{label}</Text>

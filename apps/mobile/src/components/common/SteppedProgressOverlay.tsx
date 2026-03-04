@@ -56,6 +56,8 @@ export function SteppedProgressOverlay({
 
   // Start staggered progression when overlay becomes visible
   useEffect(() => {
+    let mounted = true;
+
     if (visible) {
       setCompletedSteps(0);
       setFailed(false);
@@ -78,6 +80,7 @@ export function SteppedProgressOverlay({
       setCompletedSteps(1);
       let step = 1;
       timerRef.current = setInterval(() => {
+        if (!mounted) return;
         step++;
         if (step >= steps.length) {
           clearTimer();
@@ -91,7 +94,10 @@ export function SteppedProgressOverlay({
       cardScale.setValue(0.9);
     }
 
-    return clearTimer;
+    return () => {
+      mounted = false;
+      clearTimer();
+    };
   }, [visible, backdropOpacity, cardScale, clearTimer, steps.length]);
 
   // On success — complete all steps, then auto-dismiss

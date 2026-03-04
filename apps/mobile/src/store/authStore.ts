@@ -62,8 +62,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         return { success: false, error: result.error };
       }
 
-      // Fetch full profile data after successful login
-      const profileResult = await fetchProfile(result.data.user.id);
+      // Fetch profile and update last login in parallel (both only need user ID)
+      const [profileResult] = await Promise.all([
+        fetchProfile(result.data.user.id),
+        updateLastLogin(result.data.user.id).catch((err) =>
+          logger.error('Failed to update last login', err)
+        ),
+      ]);
 
       if (!profileResult.success) {
         set({
@@ -99,11 +104,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isLoginInProgress: false,
         error: null,
       });
-
-      // Fire-and-forget: update last login timestamp
-      updateLastLogin(result.data.user.id).catch((err) =>
-        logger.error('Failed to update last login', err)
-      );
 
       return { success: true };
     } catch (error) {

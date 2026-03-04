@@ -4,7 +4,6 @@ export { StatusBadge } from './StatusBadge';
 export { FilterChips } from './FilterChips';
 export { OfflineBanner } from './OfflineBanner';
 export { UserProfileHeader } from './UserProfileHeader';
-export { AppText } from './AppText';
 export { CollapsibleSection } from './CollapsibleSection';
 export { ErrorBoundary } from './ErrorBoundary';
 export { AlertSheet } from './AlertSheet';

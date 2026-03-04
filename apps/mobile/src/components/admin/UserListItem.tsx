@@ -5,6 +5,9 @@ import { UserRoleLabels } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 
+const getUserRoleColor = (role: string): string | undefined =>
+  role in colors.userRole ? colors.userRole[role as keyof typeof colors.userRole] : undefined;
+
 export const USER_ITEM_HEIGHT = 88;
 
 interface UserListItemProps {
@@ -18,9 +21,7 @@ function UserListItemInner({ user, onPress }: UserListItemProps) {
       style={[
         styles.container,
         {
-          borderLeftColor:
-            colors.userRole[user.role as keyof typeof colors.userRole] ??
-            colors.border,
+          borderLeftColor: getUserRoleColor(user.role) ?? colors.border,
         },
       ]}
       onPress={() => onPress(user)}
@@ -37,9 +38,7 @@ function UserListItemInner({ user, onPress }: UserListItemProps) {
             style={[
               styles.roleBadge,
               {
-                backgroundColor:
-                  colors.userRole[user.role as keyof typeof colors.userRole] ??
-                  colors.backgroundDark,
+                backgroundColor: getUserRoleColor(user.role) ?? colors.backgroundDark,
               },
             ]}
           >

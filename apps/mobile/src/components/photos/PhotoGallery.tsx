@@ -10,7 +10,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { PhotoThumbnail } from './PhotoThumbnail';
 import { LoadingDots } from '../common/LoadingDots';
-import { useAssetPhotos, usePrefetchImages } from '../../hooks/usePhotos';
+import { useAssetPhotos, usePrefetchImages, useBatchSignedUrls } from '../../hooks/usePhotos';
 import type { PhotoListItem } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
@@ -33,6 +33,13 @@ function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto }: PhotoGalle
 
   // Prefetch first 6 thumbnail URLs for faster gallery loading
   usePrefetchImages(photos);
+
+  // Batch-fetch all signed URLs in a single request instead of N individual requests
+  const allPaths = useMemo(
+    () => (photos || []).map(p => p.thumbnailPath || p.storagePath).filter((p): p is string => !!p),
+    [photos]
+  );
+  const { data: signedUrlMap } = useBatchSignedUrls(allPaths);
 
   // Calculate thumbnail size based on screen width
   const thumbnailSize = useMemo(() => {
@@ -134,6 +141,7 @@ function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto }: PhotoGalle
               photo={photo}
               size={thumbnailSize}
               onPress={onPhotoPress}
+              resolvedUrl={signedUrlMap?.[photo.thumbnailPath || photo.storagePath]}
             />
           ))}
         </View>
@@ -156,6 +164,7 @@ function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto }: PhotoGalle
               photo={photo}
               size={thumbnailSize}
               onPress={onPhotoPress}
+              resolvedUrl={signedUrlMap?.[photo.thumbnailPath || photo.storagePath]}
             />
           ))}
         </View>

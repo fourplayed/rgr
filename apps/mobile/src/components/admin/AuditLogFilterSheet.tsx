@@ -13,6 +13,16 @@ import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 
 const ACTION_TYPES = ['INSERT', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT'] as const;
 
+/** Validates YYYY-MM-DD format and that the date is a real calendar date */
+function isValidDate(s: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const d = new Date(s + 'T00:00:00');
+  // Verify the parsed date matches input (catches Feb 30, etc.)
+  return d.getFullYear() === Number(s.slice(0, 4))
+    && d.getMonth() + 1 === Number(s.slice(5, 7))
+    && d.getDate() === Number(s.slice(8, 10));
+}
+
 export interface AuditLogFilters {
   action?: string;
   startDate?: string;
@@ -49,8 +59,6 @@ export function AuditLogFilterSheet({
       setDateError('');
     }
   }, [visible, filtersAction, filtersStartDate, filtersEndDate]);
-
-  const isValidDate = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(Date.parse(s));
 
   const handleStartDateChange = (text: string) => {
     setStartDate(text);

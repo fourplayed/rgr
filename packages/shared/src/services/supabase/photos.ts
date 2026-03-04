@@ -611,6 +611,39 @@ export async function getSignedUrl(
 }
 
 /**
+ * Generate signed URLs for multiple photos in a single batch request.
+ * Returns a map of { storagePath → signedUrl } for easy lookup.
+ * URLs are valid for 1 hour by default.
+ */
+export async function getSignedUrls(
+  storagePaths: string[],
+  expiresIn: number = 3600
+): Promise<ServiceResult<Record<string, string>>> {
+  if (storagePaths.length === 0) {
+    return { success: true, data: {}, error: null };
+  }
+
+  const supabase = getSupabaseClient();
+
+  const { data, error } = await supabase.storage
+    .from(STORAGE_BUCKETS.photos)
+    .createSignedUrls(storagePaths, expiresIn);
+
+  if (error) {
+    return { success: false, data: null, error: `Failed to generate signed URLs: ${error.message}` };
+  }
+
+  const urlMap: Record<string, string> = {};
+  for (const item of data) {
+    if (item.signedUrl && item.path) {
+      urlMap[item.path] = item.signedUrl;
+    }
+  }
+
+  return { success: true, data: urlMap, error: null };
+}
+
+/**
  * Get public URL for a photo (if bucket is public).
  * Use this for thumbnails or when signed URLs aren't needed.
  */

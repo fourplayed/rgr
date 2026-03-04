@@ -70,6 +70,10 @@ export interface ListAssetsParams {
   hasLocation?: boolean;
   sortField?: string;
   sortDirection?: 'asc' | 'desc';
+  /** Cursor for keyset pagination — value of the sort field from last item */
+  cursor?: string;
+  /** UUID of the last item for tie-breaking when cursor values collide */
+  cursorId?: string;
 }
 
 // PaginatedResult<T> is now defined in '../../types' and imported above
@@ -106,15 +110,20 @@ export async function listAssets(
     hasLocation,
     sortField = 'assetNumber',
     sortDirection = 'asc',
+    cursor,
+    cursorId,
   } = params;
 
   const supabase = getSupabaseClient();
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
+  const useCursorPagination = cursor !== undefined;
 
+  // When using cursor pagination, fetch pageSize + 1 to detect hasMore
+  const fetchLimit = useCursorPagination ? pageSize + 1 : pageSize;
+
+  const selectOptions = useCursorPagination ? {} : { count: 'exact' as const };
   let query = supabase
     .from('assets')
-    .select('*, depot:assigned_depot_id(name, code), photos(count)', { count: 'exact' })
+    .select('*, depot:assigned_depot_id(name, code), photos(count)', selectOptions)
     .is('deleted_at', null);
 
   // Filters
@@ -151,10 +160,32 @@ export async function listAssets(
   if (!dbSortField) {
     console.warn(`[listAssets] Unknown sort field "${sortField}", falling back to asset_number`);
   }
-  query = query.order(dbSortField || 'asset_number', { ascending: sortDirection === 'asc' });
+  const resolvedSortField = dbSortField || 'asset_number';
+  const ascending = sortDirection === 'asc';
+  query = query.order(resolvedSortField, { ascending });
+  // Secondary sort on id for deterministic ordering with ties
+  query = query.order('id', { ascending });
 
-  // Pagination
-  query = query.range(from, to);
+  // Pagination: cursor-based or offset-based
+  if (useCursorPagination && cursorId) {
+    // Composite cursor on (sortField, id) to handle ties
+    const op = ascending ? 'gt' : 'lt';
+    query = query.or(
+      `${resolvedSortField}.${op}.${cursor},and(${resolvedSortField}.eq.${cursor},id.${op}.${cursorId})`
+    );
+  } else if (useCursorPagination && cursor) {
+    const op = ascending ? 'gt' : 'lt';
+    query = query.filter(resolvedSortField, op, cursor);
+  }
+
+  // Limit
+  if (useCursorPagination) {
+    query = query.limit(fetchLimit);
+  } else {
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+    query = query.range(from, to);
+  }
 
   const { data, error, count } = await query;
 
@@ -162,14 +193,17 @@ export async function listAssets(
     return { success: false, data: null, error: `Failed to list assets: ${error.message}` };
   }
 
-  const total = count ?? 0;
-
   interface ListAssetRow extends AssetRow {
     depot: { name: string; code: string } | null;
     photos: [{ count: number }];
   }
 
-  const assets = (data || []).map((row: ListAssetRow) => {
+  const rows = data || [];
+  const hasMore = useCursorPagination && rows.length > pageSize;
+  const pageRows = hasMore ? rows.slice(0, pageSize) : rows;
+  const total = useCursorPagination ? -1 : (count ?? 0);
+
+  const assets = pageRows.map((row: ListAssetRow) => {
     const { depot, photos, ...assetRow } = row;
     const asset = mapRowToAsset(assetRow as AssetRow);
     return {
@@ -187,9 +221,10 @@ export async function listAssets(
     data: {
       data: assets,
       total,
-      page,
+      page: useCursorPagination ? 1 : page,
       pageSize,
-      totalPages: Math.ceil(total / pageSize),
+      totalPages: useCursorPagination ? -1 : Math.ceil(total / pageSize),
+      hasMore,
     },
     error: null,
   };

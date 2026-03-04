@@ -154,12 +154,19 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
       loadAutoLoginState();
       resetPasswordForm();
     } else {
-      // Clear the success timer when modal closes to prevent stale closure
       if (successTimerRef.current) {
         clearTimeout(successTimerRef.current);
         successTimerRef.current = null;
       }
     }
+
+    // Cleanup on unmount — prevents stale timer firing after component is gone
+    return () => {
+      if (successTimerRef.current) {
+        clearTimeout(successTimerRef.current);
+        successTimerRef.current = null;
+      }
+    };
   }, [visible, loadAutoLoginState, resetPasswordForm]);
 
   const handleAutoLoginToggle = async (enabled: boolean) => {

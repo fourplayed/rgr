@@ -79,12 +79,12 @@ function isValidTransition(from: MaintenanceStatus, to: MaintenanceStatus): bool
  */
 export async function listMaintenance(
   params: ListMaintenanceParams = {}
-): Promise<ServiceResult<MaintenanceListItem[]>> {
+): Promise<ServiceResult<{ data: MaintenanceListItem[]; hasMore: boolean }>> {
   const { status, priority, assetId, limit = 20, beforeId } = params;
 
   const supabase = getSupabaseClient();
 
-  // Select only columns needed for list display (excludes notes, parts_used)
+  // Fetch limit + 1 to detect if more pages exist
   let query = supabase
     .from('maintenance_records')
     .select(`
@@ -97,7 +97,7 @@ export async function listMaintenance(
     .not('maintenance_type', 'eq', 'defect_report')
     .order('created_at', { ascending: false })
     .order('id', { ascending: false })
-    .limit(limit);
+    .limit(limit + 1);
 
   // Apply filters
   if (status && status.length > 0) {
@@ -116,7 +116,7 @@ export async function listMaintenance(
   // to handle ties in created_at correctly
   if (beforeId) {
     if (!isValidUUID(beforeId)) {
-      return { success: true, data: [], error: null };
+      return { success: true, data: { data: [], hasMore: false }, error: null };
     }
 
     const { data: cursorData } = await supabase
@@ -152,7 +152,11 @@ export async function listMaintenance(
     asset: { asset_number: string; category: string } | null;
   }
 
-  const items: MaintenanceListItem[] = ((data || []) as unknown as MaintenanceListRow[]).map((row) => ({
+  const rows = ((data || []) as unknown as MaintenanceListRow[]);
+  const hasMore = rows.length > limit;
+  const pageRows = hasMore ? rows.slice(0, limit) : rows;
+
+  const items: MaintenanceListItem[] = pageRows.map((row) => ({
     id: row.id,
     assetId: row.asset_id,
     title: row.title,
@@ -167,7 +171,7 @@ export async function listMaintenance(
     assetCategory: row.asset?.category ?? null,
   }));
 
-  return { success: true, data: items, error: null };
+  return { success: true, data: { data: items, hasMore }, error: null };
 }
 
 // ── Get Single Maintenance Record ──

@@ -393,7 +393,7 @@ export default function HomeScreen() {
                     <View style={styles.geofenceRow}>
                       <Text style={styles.geofenceText}>You are not within any depot geofence</Text>
                       <TouchableOpacity
-                        onPress={() => resolveDepot()}
+                        onPress={() => resolveDepot(depots)}
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                         accessibilityLabel="Retry geofence detection"
                         accessibilityRole="button"

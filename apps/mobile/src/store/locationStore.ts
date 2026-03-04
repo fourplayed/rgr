@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import * as Location from 'expo-location';
-import { listDepots, findNearestLocation } from '@rgr/shared';
+import { findNearestLocation } from '@rgr/shared';
 import type { Depot } from '@rgr/shared';
 import { eventBus, AppEvents } from '../utils/eventBus';
 import { useDebugLocationStore } from './debugLocationStore';
@@ -26,7 +26,7 @@ interface LocationState {
   lastResolvedAt: Date | null;
   lastLocation: CachedLocationData | null;
 
-  resolveDepot: (depots?: Depot[]) => Promise<void>;
+  resolveDepot: (depots: Depot[]) => Promise<void>;
   clearResolvedDepot: () => void;
 }
 
@@ -37,7 +37,7 @@ export const useLocationStore = create<LocationState>((set, get) => ({
   lastResolvedAt: null,
   lastLocation: null,
 
-  resolveDepot: async (depots?: Depot[]) => {
+  resolveDepot: async (depots: Depot[]) => {
     // Don't resolve if already resolving
     if (get().isResolvingDepot) {
       return;
@@ -66,7 +66,7 @@ export const useLocationStore = create<LocationState>((set, get) => ({
         }
       }
 
-      // Fetch GPS position and depot list in parallel (they are independent)
+      // Get GPS position (depot list is now provided by caller from React Query cache)
       const locationPromise: Promise<Location.LocationObject> = useSimulatedGPS
         ? Promise.resolve({
             coords: {
@@ -89,22 +89,11 @@ export const useLocationStore = create<LocationState>((set, get) => ({
             ),
           ]);
 
-      const depotListPromise = depots
-        ? Promise.resolve(depots)
-        : listDepots().then((result) => {
-            if (!result.success || !result.data) {
-              throw new Error('Failed to fetch depots');
-            }
-            return result.data;
-          });
-
       let locationResult: Location.LocationObject;
-      let depotList: Depot[];
       try {
-        [locationResult, depotList] = await Promise.all([locationPromise, depotListPromise]);
+        locationResult = await locationPromise;
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to resolve depot';
-        // If we got a location before the depot fetch failed, still cache it
         set({
           isResolvingDepot: false,
           depotResolutionError: message,
@@ -112,6 +101,8 @@ export const useLocationStore = create<LocationState>((set, get) => ({
         });
         return;
       }
+
+      const depotList = depots;
 
       const { coords } = locationResult;
 

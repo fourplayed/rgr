@@ -11,16 +11,21 @@ interface PhotoThumbnailProps {
   photo: PhotoListItem;
   size: number;
   onPress: (photo: PhotoListItem) => void;
+  /** Pre-resolved signed URL from batch fetch — skips individual query when provided */
+  resolvedUrl?: string | undefined;
 }
 
-function PhotoThumbnailComponent({ photo, size, onPress }: PhotoThumbnailProps) {
+function PhotoThumbnailComponent({ photo, size, onPress, resolvedUrl }: PhotoThumbnailProps) {
   const handlePress = useCallback(() => {
     onPress(photo);
   }, [photo, onPress]);
 
   // Use thumbnail if available, otherwise fall back to full image
   const storagePath = photo.thumbnailPath || photo.storagePath;
-  const { data: imageUrl, isLoading, error } = useSignedUrl(storagePath);
+  const { data: fetchedUrl, isLoading, error } = useSignedUrl(resolvedUrl ? undefined : storagePath);
+
+  // Prefer pre-resolved URL from batch, fall back to individual query
+  const imageUrl = resolvedUrl || fetchedUrl;
 
   const hasHazard = photo.hazardCount > 0;
   const hasCriticalHazard = photo.maxSeverity === 'critical' || photo.maxSeverity === 'high';

@@ -27,6 +27,8 @@ interface ScanConfirmSheetProps {
   onDismiss?: () => void;
   /** Optional role-specific content (e.g., maintenance checkbox) */
   children?: ReactNode;
+  /** Whether the defect toggle is on — drives dynamic confirm button label */
+  hasDefectToggled?: boolean;
 }
 
 export function ScanConfirmSheet({
@@ -39,6 +41,7 @@ export function ScanConfirmSheet({
   onCancel,
   onDismiss,
   children,
+  hasDefectToggled = false,
 }: ScanConfirmSheetProps) {
   if (!asset) return null;
 
@@ -130,6 +133,11 @@ export function ScanConfirmSheet({
             {/* Role-specific content (e.g., defect report checkbox) */}
             {children}
 
+            {/* Hint: what happens after confirming */}
+            <Text style={styles.hintText}>
+              You'll be asked to add a photo after confirming.
+            </Text>
+
             <View style={styles.buttonRow}>
               <TouchableOpacity
                 style={[styles.button, styles.cancelButton]}
@@ -155,7 +163,9 @@ export function ScanConfirmSheet({
                 {isSubmitting ? (
                   <LoadingDots color={colors.textInverse} size={8} />
                 ) : (
-                  <Text style={styles.confirmButtonText}>Confirm</Text>
+                  <Text style={styles.confirmButtonText}>
+                    {hasDefectToggled ? 'Confirm & Report' : 'Confirm'}
+                  </Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -337,5 +347,12 @@ const styles = StyleSheet.create({
     fontFamily: 'Lato_700Bold',
     color: colors.textInverse,
     textTransform: 'uppercase',
+  },
+  hintText: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_400Regular',
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: spacing.md,
   },
 });

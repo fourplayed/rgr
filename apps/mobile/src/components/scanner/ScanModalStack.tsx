@@ -56,7 +56,7 @@ interface ScanModalStackProps {
 
 }
 
-export function ScanModalStack(props: ScanModalStackProps) {
+export const ScanModalStack = React.memo(function ScanModalStack(props: ScanModalStackProps) {
   return (
     <>
       <ScanConfirmSheet
@@ -68,6 +68,7 @@ export function ScanModalStack(props: ScanModalStackProps) {
         onConfirm={props.onConfirmScan}
         onCancel={props.onCancelScan}
         onDismiss={props.onConfirmSheetDismiss}
+        hasDefectToggled={props.markForMaintenance}
       >
         {props.canMarkMaintenance && (
           <MaintenanceCheckbox
@@ -129,4 +130,4 @@ export function ScanModalStack(props: ScanModalStackProps) {
 
     </>
   );
-}
+});

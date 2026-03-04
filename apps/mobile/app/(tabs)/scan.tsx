@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   InteractionManager,
@@ -7,6 +7,8 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useAuthStore } from '../../src/store/authStore';
 import { useTutorialStore } from '../../src/store/tutorialStore';
 import { useUserPermissions } from '../../src/contexts/UserPermissionsContext';
+import { UserRoleLabels } from '@rgr/shared';
+import { colors } from '../../src/theme/colors';
 import { useScanFlow } from '../../src/hooks/scan/useScanFlow';
 import { usePhotoFlow } from '../../src/hooks/scan/usePhotoFlow';
 import { useDefectFlow } from '../../src/hooks/scan/useDefectFlow';
@@ -18,7 +20,8 @@ import { styles } from '../../src/components/scanner/scan.styles';
 
 export default function ScanScreen() {
   const { user } = useAuthStore();
-  const { canMarkMaintenance } = useUserPermissions();
+  const permissions = useUserPermissions();
+  const { canMarkMaintenance } = permissions;
   const [permission, requestPermission] = useCameraPermissions();
 
   // Tutorial state
@@ -30,6 +33,22 @@ export default function ScanScreen() {
   // ── Extracted Hooks ──
 
   const scanFlow = useScanFlow();
+
+  // ── Badge data for CameraOverlay (memoized for React.memo) ──
+
+  const depotName = useMemo(
+    () => scanFlow.resolvedDepot?.depot.name ?? null,
+    [scanFlow.resolvedDepot],
+  );
+
+  const roleBadge = useMemo(() => {
+    const r = permissions.role;
+    if (!r) return null;
+    return {
+      label: UserRoleLabels[r] ?? r,
+      color: colors.userRole[r] ?? colors.textSecondary,
+    };
+  }, [permissions.role]);
 
   // resetAllScanState is defined as a ref-based callback to avoid circular init issues
   // (photoFlow needs resetAllScanState, but resetAllScanState needs photoFlow)
@@ -182,6 +201,8 @@ export default function ScanScreen() {
           hasLocationPermission={scanFlow.hasLocationPermission}
           onRequestLocationPermission={scanFlow.requestLocationPermission}
           scanStatus={scanFlow.scanStatus}
+          depotName={depotName}
+          roleBadge={roleBadge}
         />
       </CameraView>
 

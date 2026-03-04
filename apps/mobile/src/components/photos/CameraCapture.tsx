@@ -59,10 +59,12 @@ function CameraCaptureComponent({
   const locationDescriptionRef = useRef(locationDescription);
   const latitudeRef = useRef(latitude);
   const longitudeRef = useRef(longitude);
-  useEffect(() => { scanEventIdRef.current = scanEventId; }, [scanEventId]);
-  useEffect(() => { locationDescriptionRef.current = locationDescription; }, [locationDescription]);
-  useEffect(() => { latitudeRef.current = latitude; }, [latitude]);
-  useEffect(() => { longitudeRef.current = longitude; }, [longitude]);
+  useEffect(() => {
+    scanEventIdRef.current = scanEventId;
+    locationDescriptionRef.current = locationDescription;
+    latitudeRef.current = latitude;
+    longitudeRef.current = longitude;
+  }, [scanEventId, locationDescription, latitude, longitude]);
 
   const {
     capturedUri,

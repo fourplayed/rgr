@@ -79,11 +79,20 @@ export default function MaintenanceScreen() {
   }), [statuses, priorities]);
 
   const {
-    data: maintenance = [],
+    data: maintenanceData,
     isLoading: isMaintenanceLoading,
     error: maintenanceError,
     refetch: refetchMaintenance,
+    fetchNextPage: fetchNextMaintenancePage,
+    hasNextPage: hasNextMaintenancePage,
+    isFetchingNextPage: isFetchingNextMaintenancePage,
   } = useMaintenanceList(maintenanceFilters);
+
+  // Flatten infinite query pages into a single array for FlatList
+  const maintenance = useMemo(
+    () => maintenanceData?.pages.flatMap(p => p.data) ?? [],
+    [maintenanceData]
+  );
 
   // Fetch defect report list with filters
   const defectFilters = useMemo(() => ({
@@ -91,11 +100,19 @@ export default function MaintenanceScreen() {
   }), [defectStatuses]);
 
   const {
-    data: defects = [],
+    data: defectsData,
     isLoading: isDefectsLoading,
     error: defectsError,
     refetch: refetchDefects,
+    fetchNextPage: fetchNextDefectsPage,
+    hasNextPage: hasNextDefectsPage,
+    isFetchingNextPage: isFetchingNextDefectsPage,
   } = useDefectReportList(defectFilters);
+
+  const defects = useMemo(
+    () => defectsData?.pages.flatMap(p => p.data) ?? [],
+    [defectsData]
+  );
 
   const handleToggleFilters = useCallback(() => {
     setFiltersExpanded(prev => !prev);
@@ -287,6 +304,12 @@ export default function MaintenanceScreen() {
             removeClippedSubviews={true}
             maxToRenderPerBatch={10}
             windowSize={5}
+            onEndReached={() => {
+              if (hasNextMaintenancePage && !isFetchingNextMaintenancePage) {
+                fetchNextMaintenancePage();
+              }
+            }}
+            onEndReachedThreshold={0.5}
           />
         ) : (
           <FlatList
@@ -301,6 +324,12 @@ export default function MaintenanceScreen() {
             removeClippedSubviews={true}
             maxToRenderPerBatch={10}
             windowSize={5}
+            onEndReached={() => {
+              if (hasNextDefectsPage && !isFetchingNextDefectsPage) {
+                fetchNextDefectsPage();
+              }
+            }}
+            onEndReachedThreshold={0.5}
           />
         )}
 

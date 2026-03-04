@@ -19,7 +19,6 @@ import { useScanEventPhotos, useSignedUrl } from '../../hooks/usePhotos';
 import { useUserPermissions } from '../../contexts/UserPermissionsContext';
 import { DefectStatusBadge } from './DefectStatusBadge';
 import { CreateMaintenanceModal } from './CreateMaintenanceModal';
-import { useAcceptDefect } from '../../hooks/useAcceptDefect';
 
 interface DefectReportDetailModalProps {
   visible: boolean;
@@ -36,7 +35,6 @@ export function DefectReportDetailModal({
   const { canMarkMaintenance } = useUserPermissions();
   const { data: defect, isLoading } = useDefectReport(defectId);
   const updateStatusMutation = useUpdateDefectReportStatus();
-  const acceptDefectMutation = useAcceptDefect();
 
   // Defect photo data
   const { data: scanEventPhotos } = useScanEventPhotos(defect?.scanEventId ?? null);
@@ -71,30 +69,20 @@ export function DefectReportDetailModal({
     setShowCreateModal(false);
 
     try {
-      await acceptDefectMutation.mutateAsync({
-        defectReportId: defectId,
-        // The maintenance was already created by CreateMaintenanceModal;
-        // we just need to link it. But useAcceptDefect creates the task too.
-        // Instead, update status directly since task is already created.
-        maintenanceInput: { assetId: '', title: '' }, // unused — see below
+      // Link the already-created maintenance record to this defect
+      await updateStatusMutation.mutateAsync({
+        id: defectId,
+        status: 'accepted',
+        extras: { maintenanceRecordId: maintenanceId },
       });
-    } catch {
-      // Fallback: directly update status with the link
-      try {
-        await updateStatusMutation.mutateAsync({
-          id: defectId,
-          status: 'accepted',
-          extras: { maintenanceRecordId: maintenanceId },
-        });
-      } catch (err) {
-        setAlertSheet({
-          visible: true,
-          title: 'Error',
-          message: err instanceof Error ? err.message : 'Failed to accept defect',
-        });
-      }
+    } catch (err) {
+      setAlertSheet({
+        visible: true,
+        title: 'Error',
+        message: err instanceof Error ? err.message : 'Failed to accept defect',
+      });
     }
-  }, [defectId, acceptDefectMutation, updateStatusMutation]);
+  }, [defectId, updateStatusMutation]);
 
   // Better approach: when CreateMaintenanceModal closes after creating,
   // we link the defect via direct status update
@@ -157,7 +145,7 @@ export function DefectReportDetailModal({
             <TouchableOpacity
               style={[styles.actionButton, styles.primaryButton]}
               onPress={handleAccept}
-              disabled={updateStatusMutation.isPending || acceptDefectMutation.isPending}
+              disabled={updateStatusMutation.isPending}
             >
               <Ionicons name="checkmark-circle" size={18} color={colors.textInverse} />
               <Text style={styles.primaryButtonText}>Accept</Text>

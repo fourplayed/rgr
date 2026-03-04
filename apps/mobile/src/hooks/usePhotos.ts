@@ -8,6 +8,7 @@ import {
   deletePhoto,
   bulkDeletePhotos,
   getSignedUrl,
+  getSignedUrls,
 } from '@rgr/shared';
 import type { UploadPhotoOptions, PhotoListItem } from '@rgr/shared';
 import { assetKeys } from './useAssetData';
@@ -197,8 +198,41 @@ export function useBulkDeletePhotos() {
 }
 
 /**
- * Prefetch thumbnail signed URLs for the first N photos.
- * Uses TanStack Query's prefetchQuery for cache integration.
+ * Batch-fetch signed URLs for multiple storage paths in a single request.
+ * Returns a map of { storagePath → signedUrl }.
+ * Seeds individual photoKeys.signedUrl(path) cache entries from the batch result.
+ */
+export function useBatchSignedUrls(storagePaths: string[]) {
+  const queryClient = useQueryClient();
+
+  // Create a stable cache key from sorted paths
+  const pathsKey = useMemo(
+    () => storagePaths.slice().sort().join(','),
+    [storagePaths]
+  );
+
+  return useQuery({
+    queryKey: [...photoKeys.all, 'signedUrls', pathsKey],
+    queryFn: async () => {
+      const result = await getSignedUrls(storagePaths);
+      if (!result.success) throw new Error(result.error ?? 'Failed to fetch signed URLs');
+
+      // Seed individual signedUrl cache entries so components using
+      // useSignedUrl(path) get cache hits for free
+      for (const [path, url] of Object.entries(result.data)) {
+        queryClient.setQueryData(photoKeys.signedUrl(path), url);
+      }
+
+      return result.data;
+    },
+    enabled: storagePaths.length > 0,
+    staleTime: 2_700_000, // 45 min — safer buffer vs 1hr expiry
+  });
+}
+
+/**
+ * Prefetch thumbnail signed URLs for the first N photos using batch API.
+ * Uses a single request instead of N individual requests.
  */
 export function usePrefetchImages(photos: PhotoListItem[] | undefined) {
   const queryClient = useQueryClient();
@@ -212,20 +246,30 @@ export function usePrefetchImages(photos: PhotoListItem[] | undefined) {
   useEffect(() => {
     if (!photos?.length) return;
 
-    // Prefetch first 6 thumbnails into TanStack Query cache
-    photos.slice(0, 6).forEach((photo) => {
-      const path = photo.thumbnailPath || photo.storagePath;
-      if (!path) return;
+    // Collect first 6 thumbnail paths for batch prefetch
+    const paths = photos
+      .slice(0, 6)
+      .map((photo) => photo.thumbnailPath || photo.storagePath)
+      .filter((p): p is string => !!p);
 
-      queryClient.prefetchQuery({
-        queryKey: photoKeys.signedUrl(path),
-        queryFn: async () => {
-          const result = await getSignedUrl(path);
-          if (!result.success) throw new Error(result.error ?? 'Failed');
-          return result.data;
-        },
-        staleTime: 3000000, // Match existing cache time
-      });
+    if (paths.length === 0) return;
+
+    const pathsKey = paths.slice().sort().join(',');
+
+    queryClient.prefetchQuery({
+      queryKey: [...photoKeys.all, 'signedUrls', pathsKey],
+      queryFn: async () => {
+        const result = await getSignedUrls(paths);
+        if (!result.success) throw new Error(result.error ?? 'Failed');
+
+        // Seed individual cache entries
+        for (const [path, url] of Object.entries(result.data)) {
+          queryClient.setQueryData(photoKeys.signedUrl(path), url);
+        }
+
+        return result.data;
+      },
+      staleTime: 2_700_000,
     });
     // Using photoIds as stable dependency to avoid re-running on array reference changes
     // eslint-disable-next-line react-hooks/exhaustive-deps

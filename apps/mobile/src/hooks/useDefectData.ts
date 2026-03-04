@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   listDefectReports,
   getDefectReportById,
@@ -37,33 +37,34 @@ export const defectKeys = {
 };
 
 /**
- * Fetch defect report list with filters
+ * Fetch defect report list with filters — uses cursor-based infinite query
+ * so records beyond the first page are accessible via loadMore.
  */
 export function useDefectReportList(filters: DefectFilters = {}) {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: defectKeys.list(filters),
     staleTime: 30_000,
-    queryFn: async () => {
+    queryFn: async ({ pageParam }) => {
       const params: {
         status?: DefectStatus[];
         assetId?: string;
         limit: number;
-      } = { limit: 50 };
+        beforeId?: string;
+      } = { limit: 20 };
 
-      if (filters.status) {
-        params.status = filters.status;
-      }
-      if (filters.assetId) {
-        params.assetId = filters.assetId;
-      }
+      if (filters.status) params.status = filters.status;
+      if (filters.assetId) params.assetId = filters.assetId;
+      if (pageParam) params.beforeId = pageParam;
 
       const result = await listDefectReports(params);
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
+      if (!result.success) throw new Error(result.error);
       return result.data;
+    },
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => {
+      if (!lastPage.hasMore || lastPage.data.length === 0) return undefined;
+      const lastItem = lastPage.data[lastPage.data.length - 1];
+      return lastItem?.id;
     },
   });
 }
@@ -78,7 +79,7 @@ export function useRecentDefectReports(limit: number = 5) {
     queryFn: async () => {
       const result = await listDefectReports({ limit });
       if (!result.success) throw new Error(result.error ?? 'Failed to load');
-      return result.data;
+      return result.data.data;
     },
   });
 }
@@ -121,7 +122,7 @@ export function useAssetDefectReports(assetId: string | null) {
         throw new Error(result.error);
       }
 
-      return result.data;
+      return result.data.data;
     },
     enabled: !!assetId,
   });

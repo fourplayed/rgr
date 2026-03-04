@@ -16,7 +16,9 @@ interface MaintenanceListItemProps {
 }
 
 const getPriorityBorderColor = (priority: MaintenancePriority): string => {
-  return colors.maintenancePriority[priority as keyof typeof colors.maintenancePriority] ?? colors.border;
+  return (priority in colors.maintenancePriority
+    ? colors.maintenancePriority[priority as keyof typeof colors.maintenancePriority]
+    : undefined) ?? colors.border;
 };
 
 function MaintenanceListItemComponent({ maintenance, onPress }: MaintenanceListItemProps) {

@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   chevronButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.background,
     borderRadius: 14,
     width: 28,
     height: 28,

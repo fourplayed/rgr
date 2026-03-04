@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   listMaintenance,
   getMaintenanceById,
@@ -38,38 +38,36 @@ export const maintenanceKeys = {
 };
 
 /**
- * Fetch maintenance list with filters
+ * Fetch maintenance list with filters — uses cursor-based infinite query
+ * so records beyond the first page are accessible via loadMore.
  */
 export function useMaintenanceList(filters: MaintenanceFilters = {}) {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: maintenanceKeys.list(filters),
     staleTime: 30_000,
-    queryFn: async () => {
-      // Build params object, only including defined values
+    queryFn: async ({ pageParam }) => {
       const params: {
         status?: MaintenanceStatus[];
         priority?: MaintenancePriority[];
         assetId?: string;
         limit: number;
-      } = { limit: 50 };
+        beforeId?: string;
+      } = { limit: 20 };
 
-      if (filters.status) {
-        params.status = filters.status;
-      }
-      if (filters.priority) {
-        params.priority = filters.priority;
-      }
-      if (filters.assetId) {
-        params.assetId = filters.assetId;
-      }
+      if (filters.status) params.status = filters.status;
+      if (filters.priority) params.priority = filters.priority;
+      if (filters.assetId) params.assetId = filters.assetId;
+      if (pageParam) params.beforeId = pageParam;
 
       const result = await listMaintenance(params);
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
+      if (!result.success) throw new Error(result.error);
       return result.data;
+    },
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => {
+      if (!lastPage.hasMore || lastPage.data.length === 0) return undefined;
+      const lastItem = lastPage.data[lastPage.data.length - 1];
+      return lastItem?.id;
     },
   });
 }
@@ -84,7 +82,7 @@ export function useRecentMaintenance(limit: number = 5) {
     queryFn: async () => {
       const result = await listMaintenance({ limit });
       if (!result.success) throw new Error(result.error ?? 'Failed to load');
-      return result.data;
+      return result.data.data;
     },
   });
 }

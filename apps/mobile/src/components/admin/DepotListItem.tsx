@@ -18,7 +18,7 @@ function DepotListItemInner({ depot, onPress, onLongPress }: DepotListItemProps)
       style={[
         styles.container,
         {
-          borderLeftColor: depot.isActive ? colors.success : '#6B7280',
+          borderLeftColor: depot.isActive ? colors.success : colors.textSecondary,
         },
       ]}
       onPress={() => onPress(depot)}
@@ -34,7 +34,7 @@ function DepotListItemInner({ depot, onPress, onLongPress }: DepotListItemProps)
         <Text
           style={[
             styles.statusText,
-            { color: depot.isActive ? colors.success : '#6B7280' },
+            { color: depot.isActive ? colors.success : colors.textSecondary },
           ]}
         >
           {depot.isActive ? 'Active' : 'Inactive'}

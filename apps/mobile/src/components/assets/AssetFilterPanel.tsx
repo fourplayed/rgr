@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback, memo } from 'react';
+import React, { useRef, useEffect, useCallback, useMemo, memo } from 'react';
 import {
   View,
   Text,
@@ -114,6 +114,19 @@ export const AssetFilterPanel = memo(function AssetFilterPanel({
     }
   }, [depotIds, onDepotChange]);
 
+  // Sort depots by display order (memoized to avoid re-sorting on every render)
+  const sortedDepots = useMemo(
+    () =>
+      [...depots].sort((a, b) => {
+        const aIndex = DEPOT_ORDER.indexOf(a.code.toLowerCase());
+        const bIndex = DEPOT_ORDER.indexOf(b.code.toLowerCase());
+        const aPos = aIndex === -1 ? 999 : aIndex;
+        const bPos = bIndex === -1 ? 999 : bIndex;
+        return aPos - bPos;
+      }),
+    [depots],
+  );
+
   // Count active filters
   const activeFilterCount = statuses.length + categories.length + subtypes.length + depotIds.length;
 
@@ -195,16 +208,7 @@ export const AssetFilterPanel = memo(function AssetFilterPanel({
           <View style={styles.filterSection}>
             <Text style={styles.sectionLabel}>Location</Text>
             <View style={styles.chipsContainer}>
-              {[...depots]
-                .sort((a, b) => {
-                  const aIndex = DEPOT_ORDER.indexOf(a.code.toLowerCase());
-                  const bIndex = DEPOT_ORDER.indexOf(b.code.toLowerCase());
-                  // If not in DEPOT_ORDER, sort to end
-                  const aPos = aIndex === -1 ? 999 : aIndex;
-                  const bPos = bIndex === -1 ? 999 : bIndex;
-                  return aPos - bPos;
-                })
-                .map((depot) => {
+              {sortedDepots.map((depot) => {
                 const isSelected = depotIds.includes(depot.id);
                 const chipColor = getDepotColor(depot);
                 return (

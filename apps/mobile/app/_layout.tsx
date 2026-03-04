@@ -17,10 +17,11 @@ import {
   Lato_900Black,
   Lato_900Black_Italic,
 } from '@expo-google-fonts/lato';
-import { onAuthStateChange, getSupabaseClient } from '@rgr/shared';
+import { onAuthStateChange, getSupabaseClient, listDepots } from '@rgr/shared';
 import { initializeMobileSupabase } from '../src/config/supabase';
 import { useAuthStore } from '../src/store/authStore';
 import { useLocationStore } from '../src/store/locationStore';
+import { depotKeys } from '../src/hooks/useDepots';
 import { UserPermissionsProvider } from '../src/contexts/UserPermissionsContext';
 import { ErrorBoundary } from '../src/components/common/ErrorBoundary';
 import { OfflineBanner } from '../src/components/common/OfflineBanner';
@@ -82,8 +83,18 @@ export default function RootLayout() {
       const autoLoginSuccess = await attemptAutoLogin();
 
       if (autoLoginSuccess) {
-        // Fire and forget: resolve depot based on GPS location
-        resolveDepot();
+        // Fetch depots through React Query cache, then resolve location
+        queryClient.fetchQuery({
+          queryKey: depotKeys.list(),
+          queryFn: async () => {
+            const result = await listDepots();
+            if (!result.success) throw new Error(result.error);
+            return result.data;
+          },
+          staleTime: 1000 * 60 * 10,
+        }).then((depots) => resolveDepot(depots)).catch(() => {
+          // Non-fatal: user can still use the app without depot resolution
+        });
       } else {
         // If auto-login didn't succeed, check for existing session
         await checkAuth();

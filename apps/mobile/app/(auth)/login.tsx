@@ -15,8 +15,11 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFonts, Lato_700Bold } from '@expo-google-fonts/lato';
 import Constants from 'expo-constants';
+import { useQueryClient } from '@tanstack/react-query';
+import { listDepots } from '@rgr/shared';
 import { useAuthStore } from '../../src/store/authStore';
 import { useLocationStore } from '../../src/store/locationStore';
+import { depotKeys } from '../../src/hooks/useDepots';
 import { SaveCredentialsModal } from '../../src/components/auth/SaveCredentialsModal';
 import { isAutoLoginEnabled } from '../../src/utils/secureStorage';
 import { colors } from '../../src/theme/colors';
@@ -33,6 +36,7 @@ const ACCENT_LINE_GAP = 6;
 
 export default function LoginScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { login, isLoading, clearError, clearSavedSession } = useAuthStore();
   const { resolveDepot } = useLocationStore();
   const [email, setEmail] = useState('');
@@ -141,9 +145,17 @@ export default function LoginScreen() {
     const result = await login(email.trim(), password);
 
     if (result.success) {
-      // Fire and forget: resolve depot based on GPS location
+      // Fire and forget: fetch depots via React Query cache, then resolve location
       // Errors are non-fatal - user can still use the app without depot resolution
-      resolveDepot().catch((err) => {
+      queryClient.fetchQuery({
+        queryKey: depotKeys.list(),
+        queryFn: async () => {
+          const result = await listDepots();
+          if (!result.success) throw new Error(result.error);
+          return result.data;
+        },
+        staleTime: 1000 * 60 * 10,
+      }).then((depots) => resolveDepot(depots)).catch((err) => {
         logger.warn('Failed to resolve depot on login', err);
       });
 

@@ -52,11 +52,12 @@ function isValidDefectTransition(from: DefectStatus, to: DefectStatus): boolean 
 
 export async function listDefectReports(
   params: ListDefectReportsParams = {}
-): Promise<ServiceResult<DefectReportListItem[]>> {
+): Promise<ServiceResult<{ data: DefectReportListItem[]; hasMore: boolean }>> {
   const { status, assetId, limit = 20, beforeId } = params;
 
   const supabase = getSupabaseClient();
 
+  // Fetch limit + 1 to detect if more pages exist
   let query = supabase
     .from('defect_reports')
     .select(`
@@ -66,7 +67,7 @@ export async function listDefectReports(
     `)
     .order('created_at', { ascending: false })
     .order('id', { ascending: false })
-    .limit(limit);
+    .limit(limit + 1);
 
   if (status && status.length > 0) {
     query = query.in('status', status);
@@ -78,7 +79,7 @@ export async function listDefectReports(
 
   if (beforeId) {
     if (!isValidUUID(beforeId)) {
-      return { success: true, data: [], error: null };
+      return { success: true, data: { data: [], hasMore: false }, error: null };
     }
 
     const { data: cursorData } = await supabase
@@ -111,7 +112,11 @@ export async function listDefectReports(
     asset: { asset_number: string; category: string } | null;
   }
 
-  const items: DefectReportListItem[] = ((data || []) as unknown as DefectListRow[]).map((row) => ({
+  const rows = ((data || []) as unknown as DefectListRow[]);
+  const hasMore = rows.length > limit;
+  const pageRows = hasMore ? rows.slice(0, limit) : rows;
+
+  const items: DefectReportListItem[] = pageRows.map((row) => ({
     id: row.id,
     assetId: row.asset_id,
     title: row.title,
@@ -123,7 +128,7 @@ export async function listDefectReports(
     assetCategory: row.asset?.category ?? null,
   }));
 
-  return { success: true, data: items, error: null };
+  return { success: true, data: { data: items, hasMore }, error: null };
 }
 
 // ── Get Single Defect Report ──
@@ -291,6 +296,71 @@ export async function updateDefectReport(
   return { success: true, data: mapRowToDefectReport(data as DefectReportRow), error: null };
 }
 
+// ── Atomic Defect Acceptance ──
+
+export interface AcceptDefectResult {
+  maintenanceId: string;
+  defectReportId: string;
+}
+
+/**
+ * Atomically accept a defect report by creating a linked maintenance record
+ * in a single database transaction. Prevents orphaned maintenance records.
+ */
+export async function acceptDefectReport(
+  defectReportId: string,
+  maintenanceInput: {
+    assetId: string;
+    title: string;
+    description?: string | null;
+    priority?: string;
+    status?: string;
+    maintenanceType?: string | null;
+    reportedBy?: string | null;
+    assignedTo?: string | null;
+    scheduledDate?: string | null;
+    dueDate?: string | null;
+    hazardAlertId?: string | null;
+    scanEventId?: string | null;
+    notes?: string | null;
+  }
+): Promise<ServiceResult<AcceptDefectResult>> {
+  const supabase = getSupabaseClient();
+
+  const { data, error } = await supabase.rpc('accept_defect_report', {
+    p_defect_report_id: defectReportId,
+    p_maintenance_input: {
+      asset_id: maintenanceInput.assetId,
+      title: maintenanceInput.title,
+      description: maintenanceInput.description ?? null,
+      priority: maintenanceInput.priority ?? 'medium',
+      status: maintenanceInput.status ?? 'scheduled',
+      maintenance_type: maintenanceInput.maintenanceType ?? null,
+      reported_by: maintenanceInput.reportedBy ?? null,
+      assigned_to: maintenanceInput.assignedTo ?? null,
+      scheduled_date: maintenanceInput.scheduledDate ?? null,
+      due_date: maintenanceInput.dueDate ?? null,
+      hazard_alert_id: maintenanceInput.hazardAlertId ?? null,
+      scan_event_id: maintenanceInput.scanEventId ?? null,
+      notes: maintenanceInput.notes ?? null,
+    },
+  });
+
+  if (error) {
+    return { success: false, data: null, error: error.message };
+  }
+
+  const result = data as { maintenance_id: string; defect_report_id: string };
+  return {
+    success: true,
+    data: {
+      maintenanceId: result.maintenance_id,
+      defectReportId: result.defect_report_id,
+    },
+    error: null,
+  };
+}
+
 // ── Dashboard Statistics ──
 
 export async function getDefectReportStats(): Promise<ServiceResult<DefectReportStats>> {
@@ -321,6 +391,6 @@ export async function getDefectReportStats(): Promise<ServiceResult<DefectReport
 
 export async function getAssetDefectReports(
   assetId: string
-): Promise<ServiceResult<DefectReportListItem[]>> {
+): Promise<ServiceResult<{ data: DefectReportListItem[]; hasMore: boolean }>> {
   return listDefectReports({ assetId, limit: 50 });
 }

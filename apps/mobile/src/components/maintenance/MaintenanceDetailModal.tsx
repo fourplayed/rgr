@@ -521,6 +521,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   title: {
+    flex: 1,
     fontSize: fontSize.lg,
     fontFamily: 'Lato_700Bold',
     color: colors.text,

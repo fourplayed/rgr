@@ -11,6 +11,9 @@ import { UserRole, UserRoleLabels, UserRoleDescriptions } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 
+const getUserRoleColor = (role: string): string | undefined =>
+  role in colors.userRole ? colors.userRole[role as keyof typeof colors.userRole] : undefined;
+
 const ROLES: UserRole[] = ['driver', 'mechanic', 'manager', 'superuser'];
 
 interface UserRolePickerProps {
@@ -50,9 +53,7 @@ export function UserRolePicker({
 
             {ROLES.map((role) => {
               const isSelected = role === currentRole;
-              const roleColor =
-                colors.userRole[role as keyof typeof colors.userRole] ??
-                colors.backgroundDark;
+              const roleColor = getUserRoleColor(role) ?? colors.backgroundDark;
 
               return (
                 <TouchableOpacity

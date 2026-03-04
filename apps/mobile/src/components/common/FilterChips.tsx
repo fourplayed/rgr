@@ -16,7 +16,7 @@ const AVAILABLE_STATUSES: AssetStatus[] = [
   'out_of_service',
 ];
 
-export function FilterChips({ selectedStatuses, onToggleStatus }: FilterChipsProps) {
+export const FilterChips = React.memo(function FilterChips({ selectedStatuses, onToggleStatus }: FilterChipsProps) {
   return (
     <ScrollView
       horizontal
@@ -55,7 +55,7 @@ export function FilterChips({ selectedStatuses, onToggleStatus }: FilterChipsPro
       })}
     </ScrollView>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

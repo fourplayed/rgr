@@ -45,7 +45,9 @@ export function LoadingDots({ color = colors.primaryDark, size = 10 }: LoadingDo
       anim2.stop();
       anim3.stop();
     };
-  }, [dot1, dot2, dot3]);
+    // dot1, dot2, dot3 are stable refs from useRef — safe to omit
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const dotStyle = (anim: Animated.Value) => ({
     width: size,

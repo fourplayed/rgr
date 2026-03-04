@@ -7,6 +7,7 @@ import {
   type LayoutChangeEvent,
 } from 'react-native';
 import { LoadingDots } from '../common/LoadingDots';
+import { PillBadge } from '../common/PillBadge';
 import { colors } from '../../theme/colors';
 import { styles, TOP_BAR_HEIGHT } from './scan.styles';
 
@@ -14,12 +15,18 @@ interface CameraOverlayProps {
   hasLocationPermission: boolean;
   onRequestLocationPermission: () => void;
   scanStatus?: string | null;
+  /** Resolved depot name — null hides the badge entirely */
+  depotName: string | null;
+  /** User role badge config — null hides the badge */
+  roleBadge: { label: string; color: string } | null;
 }
 
 function CameraOverlayComponent({
   hasLocationPermission,
   onRequestLocationPermission,
   scanStatus,
+  depotName,
+  roleBadge,
 }: CameraOverlayProps) {
   const topBarHeight = useRef(TOP_BAR_HEIGHT);
 
@@ -55,6 +62,30 @@ function CameraOverlayComponent({
             <Text style={styles.scanStatusText}>{scanStatus}</Text>
           </View>
         ) : null}
+
+        {/* Depot & role context badges */}
+        {(depotName || roleBadge) && (
+          <View style={styles.contextBadgeRow}>
+            {depotName && (
+              <PillBadge
+                icon="location"
+                label={depotName}
+                color="rgba(0, 0, 0, 0.6)"
+                accessibilityRole="text"
+                accessibilityLabel={`Depot: ${depotName}`}
+              />
+            )}
+            {roleBadge && (
+              <PillBadge
+                icon="person"
+                label={roleBadge.label}
+                color={roleBadge.color}
+                accessibilityRole="text"
+                accessibilityLabel={`Role: ${roleBadge.label}`}
+              />
+            )}
+          </View>
+        )}
       </View>
 
       {/* ── Footer Tray ──────────────────────────── */}

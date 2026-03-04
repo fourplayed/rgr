@@ -14,16 +14,16 @@ import { UNDO_TOAST_DURATION_MS } from './constants';
 interface ScanToastProps {
   visible: boolean;
   message: string;
-  type?: 'success' | 'info' | 'link' | undefined;
-  onUndo?: (() => void) | undefined;
+  type?: 'success' | 'info' | 'link';
+  onUndo?: () => void;
   onDismiss: () => void;
-  duration?: number | undefined;
+  duration?: number;
   /** Unique ID per toast — change triggers remount-like reset of timer/animation. */
-  toastId?: number | undefined;
+  toastId?: number;
   /** Called when undo window opens (toast with onUndo becomes visible). */
-  onUndoWindowOpen?: (() => void) | undefined;
+  onUndoWindowOpen?: () => void;
   /** Called when undo window closes (timeout, manual dismiss, or undo pressed). */
-  onUndoWindowClose?: (() => void) | undefined;
+  onUndoWindowClose?: () => void;
 }
 
 export function ScanToast({
@@ -67,9 +67,11 @@ export function ScanToast({
   useEffect(() => {
     if (!visible) return;
 
-    // Stop any in-flight animations to prevent race conditions
+    // Stop any in-flight animations and reset to start values
     opacity.stopAnimation();
     translateY.stopAnimation();
+    opacity.setValue(0);
+    translateY.setValue(-20);
 
     // Animate in
     Animated.parallel([

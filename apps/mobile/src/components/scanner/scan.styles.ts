@@ -59,6 +59,7 @@ export const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingBottom: '20%',
   },
   scanReticle: {
     width: SCAN_FRAME_SIZE,
@@ -111,6 +112,14 @@ export const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontFamily: 'Lato_700Bold',
     color: colors.textInverse,
+  },
+
+  // ── Context badge row (below reticle, inside scanFrame) ─
+  contextBadgeRow: {
+    flexDirection: 'row',
+    alignSelf: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.lg,
   },
 
   // ── Footer tray (replaces footer) ─────────────────────

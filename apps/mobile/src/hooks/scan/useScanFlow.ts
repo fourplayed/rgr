@@ -1,11 +1,13 @@
 import { useState, useCallback, useRef } from 'react';
 import * as Haptics from 'expo-haptics';
-import { useAssetByQRCode, useCreateScanEvent, useUpdateAsset } from '../useAssetData';
+import { useQueryClient } from '@tanstack/react-query';
+import { assetKeys, useCreateScanEvent, useUpdateAsset } from '../useAssetData';
 import { useLocation } from '../useLocation';
 import { useQRScanner } from '../useQRScanner';
 import { useAuthStore } from '../../store/authStore';
 import { useLocationStore } from '../../store/locationStore';
 import type { Asset, Depot } from '@rgr/shared';
+import { getAssetByQRCode } from '@rgr/shared';
 import type { CachedLocationData } from '../../store/locationStore';
 import { logger } from '../../utils/logger';
 
@@ -64,7 +66,18 @@ export function useScanFlow() {
     requestPermission: requestLocationPermission,
   } = useLocation();
 
-  const { mutateAsync: lookupAsset } = useAssetByQRCode();
+  const queryClient = useQueryClient();
+  const lookupAsset = useCallback(async (qrData: string) => {
+    return queryClient.fetchQuery({
+      queryKey: assetKeys.byQRCode(qrData),
+      queryFn: async () => {
+        const result = await getAssetByQRCode(qrData);
+        if (!result.success) throw new Error(result.error);
+        return result.data;
+      },
+      staleTime: 30_000, // Cache for 30s — same QR scanned twice is instant
+    });
+  }, [queryClient]);
   const { mutateAsync: createScan, isPending: isCreatingScan } = useCreateScanEvent();
   const { mutateAsync: updateAssetMutation } = useUpdateAsset();
 
@@ -266,7 +279,8 @@ export function useScanFlow() {
     setMatchedDepot,
     setShowConfirmSheet,
 
-    // Exposed for camera ref capture
+    // Pre-scan resolved depot from location store (for overlay badges + camera ref)
+    resolvedDepot: cachedDepot,
     cachedDepot,
 
   };

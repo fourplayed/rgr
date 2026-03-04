@@ -1,9 +1,8 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   listAssets,
   getAsset,
   getAssetScans,
-  getAssetByQRCode,
   getMyRecentScans,
   getRecentScans,
   createScanEvent,
@@ -39,11 +38,82 @@ export const assetKeys = {
   scans: (id: string) => [...assetKeys.detail(id), 'scans'] as const,
   maintenance: (id: string) => [...assetKeys.detail(id), 'maintenance'] as const,
   hazards: (id: string) => [...assetKeys.detail(id), 'hazards'] as const,
+  byQRCode: (qrData: string) => [...assetKeys.all, 'qr', qrData] as const,
+  infinite: (filters?: {
+    statuses?: AssetStatus[];
+    categories?: AssetCategory[];
+    depotIds?: string[];
+    search?: string;
+  }) => [...assetKeys.lists(), 'infinite', filters] as const,
   myScans: (userId: string) => ['scans', 'my', userId] as const,
   recentScans: () => ['scans', 'recent'] as const,
   countsByStatus: () => [...assetKeys.all, 'countsByStatus'] as const,
   totalScanCount: () => ['scans', 'totalCount'] as const,
 };
+
+/**
+ * Cursor-based infinite list of assets.
+ * More efficient than offset pagination for large datasets —
+ * Postgres can use an index to start at the cursor instead of scanning.
+ */
+
+interface AssetCursor {
+  sortValue: string;
+  id: string;
+}
+
+export function useInfiniteAssetList(filters?: {
+  pageSize?: number;
+  statuses?: AssetStatus[];
+  categories?: AssetCategory[];
+  depotIds?: string[];
+  search?: string;
+}) {
+  const pageSize = filters?.pageSize ?? 20;
+
+  return useInfiniteQuery({
+    queryKey: assetKeys.infinite(filters),
+    queryFn: async ({ pageParam }) => {
+      const params: {
+        pageSize: number;
+        statuses?: AssetStatus[];
+        categories?: AssetCategory[];
+        depotIds?: string[];
+        search?: string;
+        cursor?: string;
+        cursorId?: string;
+        sortField: string;
+        sortDirection: 'asc' | 'desc';
+      } = {
+        pageSize,
+        sortField: 'assetNumber',
+        sortDirection: 'asc',
+      };
+
+      if (filters?.statuses) params.statuses = filters.statuses;
+      if (filters?.categories) params.categories = filters.categories;
+      if (filters?.depotIds) params.depotIds = filters.depotIds;
+      if (filters?.search) params.search = filters.search;
+
+      if (pageParam) {
+        params.cursor = pageParam.sortValue;
+        params.cursorId = pageParam.id;
+      }
+
+      const result = await listAssets(params);
+      if (!result.success) throw new Error(result.error);
+      return result.data;
+    },
+    initialPageParam: undefined as AssetCursor | undefined,
+    getNextPageParam: (lastPage) => {
+      if (!lastPage.hasMore || lastPage.data.length === 0) return undefined;
+      const lastItem = lastPage.data[lastPage.data.length - 1];
+      if (!lastItem) return undefined;
+      return { sortValue: lastItem.assetNumber, id: lastItem.id };
+    },
+    staleTime: 30_000,
+  });
+}
 
 // Note: depotKeys and useDepots are defined in useDepots.ts
 // Import from there to avoid duplication
@@ -219,7 +289,7 @@ export function useMyRecentScans(userId: string | undefined) {
 /**
  * Fetch recent scans across all users (global activity)
  */
-export function useRecentScans(limit: number = 50) {
+export function useRecentScans(limit: number = 10) {
   return useQuery({
     queryKey: assetKeys.recentScans(),
     queryFn: async () => {
@@ -250,22 +320,8 @@ export function useTotalScanCount() {
   });
 }
 
-/**
- * Lookup asset by QR code
- */
-export function useAssetByQRCode() {
-  return useMutation({
-    mutationFn: async (qrData: string) => {
-      const result = await getAssetByQRCode(qrData);
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
-      return result.data;
-    },
-  });
-}
+// useAssetByQRCode has been replaced by direct queryClient.fetchQuery usage
+// in useScanFlow.ts — see assetKeys.byQRCode for the cache key
 
 /**
  * Create scan event
