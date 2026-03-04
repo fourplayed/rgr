@@ -23,7 +23,15 @@ BEGIN;
 
 -- ── 1. Drop scan_events from realtime ──────────────────────────────────────
 
-ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS scan_events;
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM pg_publication_tables
+        WHERE pubname = 'supabase_realtime' AND tablename = 'scan_events'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime DROP TABLE scan_events;
+    END IF;
+END $$;
 
 
 -- ── 2. Cache is_user_active() ──────────────────────────────────────────────
