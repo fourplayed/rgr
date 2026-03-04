@@ -24,12 +24,15 @@ interface DefectReportDetailModalProps {
   visible: boolean;
   defectId: string | null;
   onClose: () => void;
+  /** 'compact' hides timeline, defect photo, linked task, notes, and asset nav link. Default 'full'. */
+  variant?: 'full' | 'compact';
 }
 
 export function DefectReportDetailModal({
   visible,
   defectId,
   onClose,
+  variant = 'full',
 }: DefectReportDetailModalProps) {
   const router = useRouter();
   const { canMarkMaintenance } = useUserPermissions();
@@ -234,16 +237,18 @@ export function DefectReportDetailModal({
                   <DefectStatusBadge status={defect.status} />
                 </View>
 
-                {/* Asset Link */}
-                <TouchableOpacity
-                  style={styles.assetLink}
-                  onPress={handleNavigateToAsset}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="cube-outline" size={20} color={colors.electricBlue} />
-                  <Text style={styles.assetLinkText}>View Asset</Text>
-                  <Ionicons name="chevron-forward" size={18} color={colors.electricBlue} />
-                </TouchableOpacity>
+                {/* Asset Link (hidden in compact mode) */}
+                {variant === 'full' && (
+                  <TouchableOpacity
+                    style={styles.assetLink}
+                    onPress={handleNavigateToAsset}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="cube-outline" size={20} color={colors.electricBlue} />
+                    <Text style={styles.assetLinkText}>View Asset</Text>
+                    <Ionicons name="chevron-forward" size={18} color={colors.electricBlue} />
+                  </TouchableOpacity>
+                )}
 
                 {/* Description */}
                 {defect.description && (
@@ -255,8 +260,8 @@ export function DefectReportDetailModal({
                   </View>
                 )}
 
-                {/* Defect Photo */}
-                {defectPhoto && (
+                {/* Defect Photo (hidden in compact mode) */}
+                {variant === 'full' && defectPhoto && (
                   <View style={styles.sectionGroup}>
                     <Text style={styles.sectionTitle}>Defect Photo</Text>
                     <View style={styles.sectionCard}>
@@ -289,8 +294,8 @@ export function DefectReportDetailModal({
                   </View>
                 )}
 
-                {/* Linked Maintenance Task */}
-                {defect.maintenanceRecordId && (
+                {/* Linked Maintenance Task (hidden in compact mode) */}
+                {variant === 'full' && defect.maintenanceRecordId && (
                   <View style={styles.sectionGroup}>
                     <Text style={styles.sectionTitle}>Linked Maintenance Task</Text>
                     <TouchableOpacity
@@ -305,55 +310,57 @@ export function DefectReportDetailModal({
                   </View>
                 )}
 
-                {/* Details */}
-                <View style={styles.sectionGroup}>
-                  <Text style={styles.sectionTitle}>Timeline</Text>
-                  <View style={styles.sectionCard}>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Reported</Text>
-                      <Text style={styles.detailValue}>
-                        {formatRelativeTime(defect.createdAt)}
-                      </Text>
+                {/* Timeline (hidden in compact mode) */}
+                {variant === 'full' && (
+                  <View style={styles.sectionGroup}>
+                    <Text style={styles.sectionTitle}>Timeline</Text>
+                    <View style={styles.sectionCard}>
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Reported</Text>
+                        <Text style={styles.detailValue}>
+                          {formatRelativeTime(defect.createdAt)}
+                        </Text>
+                      </View>
+
+                      {defect.reporterName && (
+                        <View style={styles.detailRow}>
+                          <Text style={styles.detailLabel}>Reported By</Text>
+                          <Text style={styles.detailValue}>{defect.reporterName}</Text>
+                        </View>
+                      )}
+
+                      {defect.acceptedAt && (
+                        <View style={styles.detailRow}>
+                          <Text style={styles.detailLabel}>Accepted</Text>
+                          <Text style={styles.detailValue}>
+                            {formatRelativeTime(defect.acceptedAt)}
+                          </Text>
+                        </View>
+                      )}
+
+                      {defect.resolvedAt && (
+                        <View style={styles.detailRow}>
+                          <Text style={styles.detailLabel}>Resolved</Text>
+                          <Text style={styles.detailValue}>
+                            {formatRelativeTime(defect.resolvedAt)}
+                          </Text>
+                        </View>
+                      )}
+
+                      {defect.dismissedAt && (
+                        <View style={styles.detailRow}>
+                          <Text style={styles.detailLabel}>Dismissed</Text>
+                          <Text style={styles.detailValue}>
+                            {formatRelativeTime(defect.dismissedAt)}
+                          </Text>
+                        </View>
+                      )}
                     </View>
-
-                    {defect.reporterName && (
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Reported By</Text>
-                        <Text style={styles.detailValue}>{defect.reporterName}</Text>
-                      </View>
-                    )}
-
-                    {defect.acceptedAt && (
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Accepted</Text>
-                        <Text style={styles.detailValue}>
-                          {formatRelativeTime(defect.acceptedAt)}
-                        </Text>
-                      </View>
-                    )}
-
-                    {defect.resolvedAt && (
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Resolved</Text>
-                        <Text style={styles.detailValue}>
-                          {formatRelativeTime(defect.resolvedAt)}
-                        </Text>
-                      </View>
-                    )}
-
-                    {defect.dismissedAt && (
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Dismissed</Text>
-                        <Text style={styles.detailValue}>
-                          {formatRelativeTime(defect.dismissedAt)}
-                        </Text>
-                      </View>
-                    )}
                   </View>
-                </View>
+                )}
 
-                {/* Dismissed Reason */}
-                {defect.dismissedReason && (
+                {/* Dismissed Reason (hidden in compact mode) */}
+                {variant === 'full' && defect.dismissedReason && (
                   <View style={styles.sectionGroup}>
                     <Text style={styles.sectionTitle}>Dismiss Reason</Text>
                     <View style={styles.sectionCard}>
@@ -362,8 +369,8 @@ export function DefectReportDetailModal({
                   </View>
                 )}
 
-                {/* Notes */}
-                {defect.notes && (
+                {/* Notes (hidden in compact mode) */}
+                {variant === 'full' && defect.notes && (
                   <View style={styles.sectionGroup}>
                     <Text style={styles.sectionTitle}>Notes</Text>
                     <View style={styles.sectionCard}>

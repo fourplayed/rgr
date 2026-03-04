@@ -26,12 +26,15 @@ interface MaintenanceDetailModalProps {
   visible: boolean;
   maintenanceId: string | null;
   onClose: () => void;
+  /** 'compact' hides timeline, notes, defect photo, and asset nav link. Default 'full'. */
+  variant?: 'full' | 'compact';
 }
 
 export function MaintenanceDetailModal({
   visible,
   maintenanceId,
   onClose,
+  variant = 'full',
 }: MaintenanceDetailModalProps) {
   const router = useRouter();
   const { canMarkMaintenance } = useUserPermissions();
@@ -258,18 +261,20 @@ export function MaintenanceDetailModal({
                   <MaintenancePriorityBadge priority={maintenance.priority} />
                 </View>
 
-                {/* Asset Link */}
-                <TouchableOpacity
-                  style={styles.assetLink}
-                  onPress={handleNavigateToAsset}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="cube-outline" size={20} color={colors.electricBlue} />
-                  <Text style={styles.assetLinkText}>
-                    View Asset
-                  </Text>
-                  <Ionicons name="chevron-forward" size={18} color={colors.electricBlue} />
-                </TouchableOpacity>
+                {/* Asset Link (hidden in compact mode) */}
+                {variant === 'full' && (
+                  <TouchableOpacity
+                    style={styles.assetLink}
+                    onPress={handleNavigateToAsset}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="cube-outline" size={20} color={colors.electricBlue} />
+                    <Text style={styles.assetLinkText}>
+                      View Asset
+                    </Text>
+                    <Ionicons name="chevron-forward" size={18} color={colors.electricBlue} />
+                  </TouchableOpacity>
+                )}
 
                 {/* Details Section */}
                 <View style={styles.sectionGroup}>
@@ -321,8 +326,8 @@ export function MaintenanceDetailModal({
                   </View>
                 </View>
 
-                {/* Defect Photo Section */}
-                {defectPhoto && (
+                {/* Defect Photo Section (hidden in compact mode) */}
+                {variant === 'full' && defectPhoto && (
                   <View style={styles.sectionGroup}>
                     <Text style={styles.sectionTitle}>Defect Photo</Text>
                     <View style={styles.sectionCard}>
@@ -355,90 +360,94 @@ export function MaintenanceDetailModal({
                   </View>
                 )}
 
-                {/* Timestamps Section */}
-                <View style={styles.sectionGroup}>
-                  <Text style={styles.sectionTitle}>Timeline</Text>
-                  <View style={styles.sectionCard}>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Created</Text>
-                      <Text style={styles.detailValue}>
-                        {formatRelativeTime(maintenance.createdAt)}
-                      </Text>
-                    </View>
-
-                    {maintenance.startedAt && (
+                {/* Timestamps Section (hidden in compact mode) */}
+                {variant === 'full' && (
+                  <View style={styles.sectionGroup}>
+                    <Text style={styles.sectionTitle}>Timeline</Text>
+                    <View style={styles.sectionCard}>
                       <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Started</Text>
+                        <Text style={styles.detailLabel}>Created</Text>
                         <Text style={styles.detailValue}>
-                          {formatRelativeTime(maintenance.startedAt)}
+                          {formatRelativeTime(maintenance.createdAt)}
                         </Text>
                       </View>
-                    )}
 
-                    {maintenance.completedAt && (
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Completed</Text>
-                        <Text style={styles.detailValue}>
-                          {formatRelativeTime(maintenance.completedAt)}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                </View>
+                      {maintenance.startedAt && (
+                        <View style={styles.detailRow}>
+                          <Text style={styles.detailLabel}>Started</Text>
+                          <Text style={styles.detailValue}>
+                            {formatRelativeTime(maintenance.startedAt)}
+                          </Text>
+                        </View>
+                      )}
 
-                {/* Notes Section */}
-                <View style={styles.sectionGroup}>
-                  <View style={styles.sectionCard}>
-                    <View style={styles.sectionHeader}>
-                      <Text style={styles.sectionTitle}>Notes</Text>
-                      {canMarkMaintenance && !editingNotes && maintenance.status !== 'completed' && maintenance.status !== 'cancelled' && (
-                        <TouchableOpacity
-                          onPress={handleEditNotes}
-                          style={styles.iconButton}
-                          accessibilityRole="button"
-                          accessibilityLabel="Edit notes"
-                          accessibilityHint="Double tap to edit maintenance notes"
-                        >
-                          <Ionicons name="pencil" size={18} color={colors.electricBlue} />
-                        </TouchableOpacity>
+                      {maintenance.completedAt && (
+                        <View style={styles.detailRow}>
+                          <Text style={styles.detailLabel}>Completed</Text>
+                          <Text style={styles.detailValue}>
+                            {formatRelativeTime(maintenance.completedAt)}
+                          </Text>
+                        </View>
                       )}
                     </View>
-
-                    {editingNotes ? (
-                      <View style={styles.notesEdit}>
-                        <TextInput
-                          style={styles.notesInput}
-                          value={notes}
-                          onChangeText={setNotes}
-                          placeholder="Add notes..."
-                          placeholderTextColor={colors.textSecondary}
-                          multiline
-                          numberOfLines={4}
-                          textAlignVertical="top"
-                        />
-                        <View style={styles.notesButtonRow}>
-                          <TouchableOpacity
-                            style={styles.notesCancel}
-                            onPress={() => setEditingNotes(false)}
-                          >
-                            <Text style={styles.notesCancelText}>Cancel</Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            style={styles.notesSave}
-                            onPress={handleSaveNotes}
-                            disabled={updateMutation.isPending}
-                          >
-                            <Text style={styles.notesSaveText}>Save</Text>
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                    ) : (
-                      <Text style={styles.notesText}>
-                        {maintenance.notes || 'No notes'}
-                      </Text>
-                    )}
                   </View>
-                </View>
+                )}
+
+                {/* Notes Section (hidden in compact mode) */}
+                {variant === 'full' && (
+                  <View style={styles.sectionGroup}>
+                    <View style={styles.sectionCard}>
+                      <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionTitle}>Notes</Text>
+                        {canMarkMaintenance && !editingNotes && maintenance.status !== 'completed' && maintenance.status !== 'cancelled' && (
+                          <TouchableOpacity
+                            onPress={handleEditNotes}
+                            style={styles.iconButton}
+                            accessibilityRole="button"
+                            accessibilityLabel="Edit notes"
+                            accessibilityHint="Double tap to edit maintenance notes"
+                          >
+                            <Ionicons name="pencil" size={18} color={colors.electricBlue} />
+                          </TouchableOpacity>
+                        )}
+                      </View>
+
+                      {editingNotes ? (
+                        <View style={styles.notesEdit}>
+                          <TextInput
+                            style={styles.notesInput}
+                            value={notes}
+                            onChangeText={setNotes}
+                            placeholder="Add notes..."
+                            placeholderTextColor={colors.textSecondary}
+                            multiline
+                            numberOfLines={4}
+                            textAlignVertical="top"
+                          />
+                          <View style={styles.notesButtonRow}>
+                            <TouchableOpacity
+                              style={styles.notesCancel}
+                              onPress={() => setEditingNotes(false)}
+                            >
+                              <Text style={styles.notesCancelText}>Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={styles.notesSave}
+                              onPress={handleSaveNotes}
+                              disabled={updateMutation.isPending}
+                            >
+                              <Text style={styles.notesSaveText}>Save</Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      ) : (
+                        <Text style={styles.notesText}>
+                          {maintenance.notes || 'No notes'}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+                )}
 
                 {/* Status Actions */}
                 {renderStatusActions()}

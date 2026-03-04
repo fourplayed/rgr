@@ -22,6 +22,8 @@ interface DefectReportSheetProps {
   onSubmit: (notes: string, wantsPhoto: boolean) => void;
   onCancel: () => void;
   onDismiss?: () => void;
+  /** When false, hides the "Add Photo of Defect" checkbox. Default true. */
+  showPhotoOption?: boolean;
 }
 
 function DefectReportSheetComponent({
@@ -31,6 +33,7 @@ function DefectReportSheetComponent({
   onSubmit,
   onCancel,
   onDismiss,
+  showPhotoOption = true,
 }: DefectReportSheetProps) {
   const [notes, setNotes] = useState('');
   const [wantsPhoto, setWantsPhoto] = useState(false);
@@ -108,33 +111,35 @@ function DefectReportSheetComponent({
                 </Text>
               </View>
 
-              {/* Photo Option */}
-              <TouchableOpacity
-                style={[styles.photoOption, wantsPhoto && styles.photoOptionSelected]}
-                onPress={() => setWantsPhoto(!wantsPhoto)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.photoOptionIcon}>
-                  <Ionicons
-                    name={wantsPhoto ? "camera" : "camera-outline"}
-                    size={24}
-                    color={wantsPhoto ? colors.electricBlue : colors.textSecondary}
-                  />
-                </View>
-                <View style={styles.photoOptionText}>
-                  <Text style={[styles.photoOptionLabel, wantsPhoto && styles.photoOptionLabelSelected]}>
-                    Add Photo of Defect
-                  </Text>
-                  <Text style={styles.photoOptionDescription}>
-                    Capture an image to help identify the issue
-                  </Text>
-                </View>
-                <View style={[styles.checkbox, wantsPhoto && styles.checkboxChecked]}>
-                  {wantsPhoto && (
-                    <Ionicons name="checkmark" size={14} color={colors.textInverse} />
-                  )}
-                </View>
-              </TouchableOpacity>
+              {/* Photo Option (hidden when showPhotoOption is false) */}
+              {showPhotoOption && (
+                <TouchableOpacity
+                  style={[styles.photoOption, wantsPhoto && styles.photoOptionSelected]}
+                  onPress={() => setWantsPhoto(!wantsPhoto)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.photoOptionIcon}>
+                    <Ionicons
+                      name={wantsPhoto ? "camera" : "camera-outline"}
+                      size={24}
+                      color={wantsPhoto ? colors.electricBlue : colors.textSecondary}
+                    />
+                  </View>
+                  <View style={styles.photoOptionText}>
+                    <Text style={[styles.photoOptionLabel, wantsPhoto && styles.photoOptionLabelSelected]}>
+                      Add Photo of Defect
+                    </Text>
+                    <Text style={styles.photoOptionDescription}>
+                      Capture an image to help identify the issue
+                    </Text>
+                  </View>
+                  <View style={[styles.checkbox, wantsPhoto && styles.checkboxChecked]}>
+                    {wantsPhoto && (
+                      <Ionicons name="checkmark" size={14} color={colors.textInverse} />
+                    )}
+                  </View>
+                </TouchableOpacity>
+              )}
 
               {/* Buttons */}
               <View style={styles.buttonRow}>

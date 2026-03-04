@@ -6,11 +6,13 @@ import {
   getMyRecentScans,
   getRecentScans,
   createScanEvent,
+  deleteScanEvent,
   getAssetMaintenance,
   getAssetHazards,
   getAssetCountsByStatus,
   getTotalScanCount,
   updateAsset,
+  getAssetScanContext,
 } from '@rgr/shared';
 import type {
   AssetStatus,
@@ -49,6 +51,7 @@ export const assetKeys = {
   recentScans: () => ['scans', 'recent'] as const,
   countsByStatus: () => [...assetKeys.all, 'countsByStatus'] as const,
   totalScanCount: () => ['scans', 'totalCount'] as const,
+  scanContext: (assetId: string) => [...assetKeys.all, 'scanContext', assetId] as const,
 };
 
 /**
@@ -429,6 +432,47 @@ export function useUpdateAsset() {
         queryKey: assetKeys.lists(),
         refetchType: 'none',
       });
+    },
+  });
+}
+
+/**
+ * Fetch mechanic scan context (open defects/tasks + counts) for an asset.
+ * Single round-trip via the `get_asset_scan_context` RPC.
+ */
+export function useAssetScanContext(assetId: string | undefined) {
+  return useQuery({
+    queryKey: assetKeys.scanContext(assetId ?? ''),
+    queryFn: async () => {
+      if (!assetId) throw new Error('Asset ID is required');
+      const result = await getAssetScanContext(assetId);
+      if (!result.success) throw new Error(result.error);
+      return result.data;
+    },
+    enabled: !!assetId,
+    staleTime: 10_000, // Short stale time — context card should stay fresh
+  });
+}
+
+/**
+ * Delete a scan event (undo support).
+ * RLS limits this to the scanner's own recent scans (< 30s old).
+ */
+export function useDeleteScanEvent() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (scanEventId: string) => {
+      const result = await deleteScanEvent(scanEventId);
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+      return result.data;
+    },
+    onSuccess: (_data, _scanEventId) => {
+      // Mark all scan-related queries stale
+      queryClient.invalidateQueries({ queryKey: assetKeys.lists(), refetchType: 'none' });
+      queryClient.invalidateQueries({ queryKey: ['scans'], refetchType: 'none' });
     },
   });
 }

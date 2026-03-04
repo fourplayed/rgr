@@ -748,6 +748,99 @@ export async function getAssetCountsByStatus(): Promise<ServiceResult<AssetCount
   };
 }
 
+// ── Asset Scan Context (mechanic context card) ──
+
+/**
+ * Shape returned by the `get_asset_scan_context` RPC.
+ */
+export interface AssetScanContext {
+  openDefectCount: number;
+  activeTaskCount: number;
+  openDefects: Array<{
+    id: string;
+    title: string;
+    status: string;
+    createdAt: string;
+  }>;
+  activeTasks: Array<{
+    id: string;
+    title: string;
+    status: string;
+    priority: string;
+    createdAt: string;
+  }>;
+}
+
+/**
+ * Fetch open defect/task counts + top-3 items for a given asset
+ * in a single DB round-trip. Used by the mechanic scan context card.
+ */
+export async function getAssetScanContext(
+  assetId: string
+): Promise<ServiceResult<AssetScanContext>> {
+  const supabase = getSupabaseClient();
+
+  const { data, error } = await supabase.rpc('get_asset_scan_context', {
+    p_asset_id: assetId,
+  });
+
+  if (error) {
+    return { success: false, data: null, error: `Failed to fetch scan context: ${error.message}` };
+  }
+
+  const raw = data as {
+    open_defect_count: number;
+    active_task_count: number;
+    open_defects: Array<{ id: string; title: string; status: string; created_at: string }>;
+    active_tasks: Array<{ id: string; title: string; status: string; priority: string; created_at: string }>;
+  };
+
+  return {
+    success: true,
+    data: {
+      openDefectCount: raw.open_defect_count,
+      activeTaskCount: raw.active_task_count,
+      openDefects: (raw.open_defects ?? []).map((d) => ({
+        id: d.id,
+        title: d.title,
+        status: d.status,
+        createdAt: d.created_at,
+      })),
+      activeTasks: (raw.active_tasks ?? []).map((t) => ({
+        id: t.id,
+        title: t.title,
+        status: t.status,
+        priority: t.priority,
+        createdAt: t.created_at,
+      })),
+    },
+    error: null,
+  };
+}
+
+// ── Delete Scan Event (undo support) ──
+
+/**
+ * Delete a scan event by ID. Used by the mobile undo flow.
+ * RLS restricts this to the scanner's own recent scans (< 30s).
+ */
+export async function deleteScanEvent(
+  id: string
+): Promise<ServiceResult<null>> {
+  const supabase = getSupabaseClient();
+
+  const { error } = await supabase
+    .from('scan_events')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    return { success: false, data: null, error: `Failed to delete scan event: ${error.message}` };
+  }
+
+  return { success: true, data: null, error: null };
+}
+
 // ── Helpers ──
 
 /**
