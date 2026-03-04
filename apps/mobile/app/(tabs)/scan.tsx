@@ -4,14 +4,11 @@ import {
   InteractionManager,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { useQueryClient } from '@tanstack/react-query';
-import { useAuthStore } from '../../src/store/authStore';
 import { useTutorialStore } from '../../src/store/tutorialStore';
 import { useUserPermissions } from '../../src/contexts/UserPermissionsContext';
 import { UserRoleLabels } from '@rgr/shared';
 import { colors } from '../../src/theme/colors';
 import { useScanActionFlow } from '../../src/hooks/scan/useScanActionFlow';
-import { assetKeys } from '../../src/hooks/useAssetData';
 import { PermissionScreen, CameraOverlay } from '../../src/components/scanner';
 import { ScanCard } from '../../src/components/scanner/ScanCard';
 import { ScanActionBar } from '../../src/components/scanner/ScanActionBar';
@@ -23,11 +20,9 @@ import { TutorialSheet, AlertSheet, ErrorBoundary } from '../../src/components/c
 import { styles } from '../../src/components/scanner/scan.styles';
 
 export default function ScanScreen() {
-  const { user } = useAuthStore();
   const permissions = useUserPermissions();
   const { canMarkMaintenance } = permissions;
   const [permission, requestPermission] = useCameraPermissions();
-  const queryClient = useQueryClient();
 
   // Tutorial state
   const hasSeenScan = useTutorialStore(s => s.seen.scan);
@@ -131,18 +126,6 @@ export default function ScanScreen() {
     setShowScanTutorial(false);
     markSeen('scan');
   }, [markSeen]);
-
-  // ── Sheet dismiss: invalidate scan context after detail modals ──
-
-  const handleDetailSheetDismiss = useCallback(() => {
-    // Invalidate scan context so the card refreshes after status changes
-    if (scannedAsset) {
-      queryClient.invalidateQueries({
-        queryKey: assetKeys.scanContext(scannedAsset.id),
-      });
-    }
-    handleSheetDismiss();
-  }, [scannedAsset, queryClient, handleSheetDismiss]);
 
   // ── Defect submit wrapper (adapts onSubmit signature) ──
 

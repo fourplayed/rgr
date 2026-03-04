@@ -116,6 +116,7 @@ export default function HomeScreen() {
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
     return hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFocused]);
 
   // Staggered fade in animations
