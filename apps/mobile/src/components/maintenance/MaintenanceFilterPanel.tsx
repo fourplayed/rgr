@@ -24,7 +24,7 @@ interface MaintenanceFilterPanelProps {
   onToggleExpanded: () => void;
 }
 
-const STATUS_ORDER: MaintenanceStatus[] = ['scheduled', 'in_progress', 'completed', 'cancelled'];
+const STATUS_ORDER: MaintenanceStatus[] = ['scheduled', 'completed', 'cancelled'];
 const PRIORITY_ORDER: MaintenancePriority[] = ['low', 'medium', 'high', 'critical'];
 
 export const MaintenanceFilterPanel = memo(function MaintenanceFilterPanel({
@@ -147,13 +147,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   container: {
-    backgroundColor: colors.background,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    overflow: 'hidden',
-    padding: spacing.base,
-    marginTop: spacing.sm,
+    paddingTop: spacing.sm,
   },
   header: {
     flexDirection: 'row',

@@ -30,7 +30,6 @@ export interface ListMaintenanceParams {
 export interface MaintenanceStats {
   total: number;
   scheduled: number;
-  in_progress: number;
   completed: number;
   cancelled: number;
   overdue: number;
@@ -61,8 +60,7 @@ export interface MaintenanceListItem {
 // ── Status Transition Validation ──
 
 const VALID_TRANSITIONS: Record<MaintenanceStatus, MaintenanceStatus[]> = {
-  scheduled: ['in_progress', 'cancelled'],
-  in_progress: ['completed', 'cancelled'],
+  scheduled: ['completed', 'cancelled'],
   completed: [],
   cancelled: [],
 };
@@ -253,8 +251,7 @@ export async function createMaintenance(
 
 /**
  * Update maintenance status with transition validation.
- * Automatically sets started_at when moving to in_progress,
- * and completed_at when moving to completed.
+ * Automatically sets completed_at when moving to completed.
  */
 export async function updateMaintenanceStatus(
   id: string,
@@ -284,13 +281,9 @@ export async function updateMaintenanceStatus(
   }
 
   // Build update payload with auto-timestamps
-  const updates: { status: MaintenanceStatus; started_at?: string; completed_at?: string } = { status: newStatus };
+  const updates: { status: MaintenanceStatus; completed_at?: string } = { status: newStatus };
 
-  if (newStatus === 'in_progress' && currentStatus === 'scheduled') {
-    updates.started_at = new Date().toISOString();
-  }
-
-  if (newStatus === 'completed' && currentStatus === 'in_progress') {
+  if (newStatus === 'completed' && currentStatus === 'scheduled') {
     updates.completed_at = new Date().toISOString();
   }
 
@@ -369,7 +362,6 @@ export async function getMaintenanceStats(): Promise<ServiceResult<MaintenanceSt
     data: {
       total: stats.total ?? 0,
       scheduled: stats.scheduled ?? 0,
-      in_progress: stats.in_progress ?? 0,
       completed: stats.completed ?? 0,
       cancelled: stats.cancelled ?? 0,
       overdue: stats.overdue ?? 0,

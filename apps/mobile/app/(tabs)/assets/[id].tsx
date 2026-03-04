@@ -55,7 +55,6 @@ type AssetDetailTab = typeof ASSET_DETAIL_TABS[number]['key'];
 
 const MAINTENANCE_STATUS_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   scheduled: 'time-outline',
-  in_progress: 'construct-outline',
   completed: 'checkmark-circle',
   cancelled: 'close-circle-outline',
 };

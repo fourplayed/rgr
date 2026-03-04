@@ -243,7 +243,7 @@ function MechanicContext({
             {task.title}
           </Text>
           <MaintenancePriorityBadge priority={task.priority as 'low' | 'medium' | 'high' | 'critical'} />
-          <MaintenanceStatusBadge status={task.status as 'scheduled' | 'in_progress' | 'completed' | 'cancelled'} />
+          <MaintenanceStatusBadge status={task.status as 'scheduled' | 'completed' | 'cancelled'} />
           <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
         </TouchableOpacity>
       ))}

@@ -62,23 +62,6 @@ export function MaintenanceDetailModal({
   }>({ visible: false, title: '', message: '' });
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
-  const handleStartWork = useCallback(async () => {
-    if (!maintenanceId) return;
-
-    try {
-      await updateStatusMutation.mutateAsync({
-        id: maintenanceId,
-        status: 'in_progress',
-      });
-    } catch (err) {
-      setAlertSheet({
-        visible: true,
-        title: 'Error',
-        message: err instanceof Error ? err.message : 'Failed to start work',
-      });
-    }
-  }, [maintenanceId, updateStatusMutation]);
-
   const handleComplete = useCallback(async () => {
     if (!maintenanceId) return;
 
@@ -157,26 +140,6 @@ export function MaintenanceDetailModal({
     return (
       <View style={styles.actionsContainer}>
         {canMarkMaintenance && status === 'scheduled' && (
-          <>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.primaryButton]}
-              onPress={handleStartWork}
-              disabled={updateStatusMutation.isPending}
-            >
-              <Ionicons name="play" size={18} color={colors.textInverse} />
-              <Text style={styles.primaryButtonText}>Start Work</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.dangerButton]}
-              onPress={handleCancelMaintenance}
-              disabled={updateStatusMutation.isPending}
-            >
-              <Text style={styles.dangerButtonText}>Cancel</Text>
-            </TouchableOpacity>
-          </>
-        )}
-
-        {canMarkMaintenance && status === 'in_progress' && (
           <>
             <TouchableOpacity
               style={[styles.actionButton, styles.successButton]}

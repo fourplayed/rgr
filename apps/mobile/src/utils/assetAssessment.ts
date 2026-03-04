@@ -150,12 +150,10 @@ export function buildAssetAssessment({
 
   const overdue = maintenance.filter(
     m =>
-      (m.status === 'scheduled' || m.status === 'in_progress') &&
+      m.status === 'scheduled' &&
       m.dueDate &&
       new Date(m.dueDate).getTime() < nowMs,
   );
-
-  const inProgress = maintenance.find(m => m.status === 'in_progress');
 
   const nextScheduled = maintenance
     .filter(m => m.status === 'scheduled' && m.scheduledDate)
@@ -189,13 +187,6 @@ export function buildAssetAssessment({
     isIssue = true;
   } else if (overdue.length > 0) {
     sentenceB = `there ${overdue.length === 1 ? 'is' : 'are'} ${overdue.length} overdue maintenance task${overdue.length !== 1 ? 's' : ''} that need${overdue.length === 1 ? 's' : ''} attention.`;
-    isIssue = true;
-  } else if (inProgress) {
-    const title =
-      inProgress.title.length > 40
-        ? inProgress.title.slice(0, 37) + '...'
-        : inProgress.title;
-    sentenceB = `${title.charAt(0).toLowerCase()}${title.slice(1)} is currently in progress.`;
     isIssue = true;
   } else if (nextScheduled) {
     sentenceB = `Next service is coming up on ${formatDate(nextScheduled.scheduledDate!)}.`;

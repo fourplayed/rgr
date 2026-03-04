@@ -8,7 +8,6 @@ export function getStatusBadgeVariant(status: string): BadgeVariant {
       return 'success';
     case 'in_maintenance':
     case 'pending':
-    case 'in_progress':
       return 'warning';
     case 'inactive':
     case 'retired':

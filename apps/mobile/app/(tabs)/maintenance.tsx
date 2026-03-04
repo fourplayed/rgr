@@ -41,8 +41,8 @@ const TABS = [
   { key: 'defects' as const, label: 'Defects' },
 ] as const;
 
-// Default filters: show scheduled and in_progress
-const DEFAULT_STATUSES: MaintenanceStatus[] = ['scheduled', 'in_progress'];
+// Default filters: show scheduled tasks
+const DEFAULT_STATUSES: MaintenanceStatus[] = ['scheduled'];
 const DEFAULT_PRIORITIES: MaintenancePriority[] = [];
 
 // Defect status filter chips

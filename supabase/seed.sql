@@ -214,7 +214,7 @@ BEGIN
 
   -- TL003 — frame issue (why it's in maintenance)
   INSERT INTO maintenance_records (asset_id, title, description, priority, status, maintenance_type, scheduled_date, due_date, estimated_cost, notes)
-  VALUES (a03, 'Tautliner frame repair', 'Frame showing signs of stress — needs inspection and potential reinforcement.', 'high', 'in_progress', 'repair', CURRENT_DATE - 2, CURRENT_DATE + 5, 8500.00, 'Perth depot workshop bay 7.');
+  VALUES (a03, 'Tautliner frame repair', 'Frame showing signs of stress — needs inspection and potential reinforcement.', 'high', 'scheduled', 'repair', CURRENT_DATE - 2, CURRENT_DATE + 5, 8500.00, 'Perth depot workshop bay 7.');
 
   -- TL010 — tyre replacement (why it's in maintenance)
   INSERT INTO maintenance_records (asset_id, title, description, priority, status, maintenance_type, scheduled_date, due_date, estimated_cost, notes)
@@ -226,7 +226,7 @@ BEGIN
 
   -- DL003 — turntable bearing (why it's in maintenance)
   INSERT INTO maintenance_records (asset_id, title, description, priority, status, maintenance_type, scheduled_date, due_date, estimated_cost, notes)
-  VALUES (a23, 'Turntable bearing replacement', 'Excessive play in turntable. Bearing needs full replacement. Howard Porter parts on order.', 'high', 'in_progress', 'repair', CURRENT_DATE - 3, CURRENT_DATE + 2, 3800.00, 'Perth depot workshop bay 2.');
+  VALUES (a23, 'Turntable bearing replacement', 'Excessive play in turntable. Bearing needs full replacement. Howard Porter parts on order.', 'high', 'scheduled', 'repair', CURRENT_DATE - 3, CURRENT_DATE + 2, 3800.00, 'Perth depot workshop bay 2.');
 
   -- TL001 — scheduled service (routine)
   INSERT INTO maintenance_records (asset_id, title, description, priority, status, maintenance_type, scheduled_date, due_date, estimated_cost, notes)
