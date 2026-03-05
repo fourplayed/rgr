@@ -83,7 +83,7 @@ export function MaintenanceDetailModal({
         id: maintenanceId,
         status: 'completed',
       });
-    } catch (err) {
+    } catch (err: unknown) {
       setAlertSheet({
         visible: true,
         title: 'Error',
@@ -106,7 +106,7 @@ export function MaintenanceDetailModal({
         id: maintenanceId,
         status: 'cancelled',
       });
-    } catch (err) {
+    } catch (err: unknown) {
       setAlertSheet({
         visible: true,
         title: 'Error',
@@ -124,7 +124,7 @@ export function MaintenanceDetailModal({
         input: { notes },
       });
       setEditingNotes(false);
-    } catch (err) {
+    } catch (err: unknown) {
       setAlertSheet({
         visible: true,
         title: 'Error',

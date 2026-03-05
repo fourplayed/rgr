@@ -86,7 +86,7 @@ export function DepotFormSheet({
         };
         await onSubmit(create);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
     }
   }), [guard, isValid, isEdit, name, code, address, isActive, onSubmit]);

@@ -73,7 +73,7 @@ export function usePhotoCapture() {
       }
 
       return null;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to take photo', error);
       return null;
     } finally {
@@ -127,7 +127,7 @@ export function usePhotoCapture() {
         try {
           const thumbnail = await generateThumbnail(capturedUri);
           thumbnailFileUri = thumbnail.uri;
-        } catch (thumbError) {
+        } catch (thumbError: unknown) {
           logger.warn('Failed to generate thumbnail', thumbError);
           // Continue without thumbnail
         }
@@ -151,7 +151,7 @@ export function usePhotoCapture() {
       // Success - reset the capture state
       reset();
       return true;
-    } catch (error) {
+    } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Failed to upload photo';
       setUploadError(message);
       return false;

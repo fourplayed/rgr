@@ -60,7 +60,7 @@ class EventBus {
           } else {
             (callback as () => void)();
           }
-        } catch (error) {
+        } catch (error: unknown) {
           logger.error(`Error in event handler for '${event}'`, error);
         }
       });

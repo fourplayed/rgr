@@ -65,7 +65,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       // Fetch profile and update last login in parallel (both only need user ID)
       const [profileResult] = await Promise.all([
         fetchProfile(result.data.user.id),
-        updateLastLogin(result.data.user.id).catch((err) =>
+        updateLastLogin(result.data.user.id).catch((err: unknown) =>
           logger.error('Failed to update last login', err)
         ),
       ]);
@@ -106,7 +106,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
 
       return { success: true };
-    } catch (error) {
+    } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Login failed';
       set({ error: message, isLoading: false, isLoginInProgress: false });
       return { success: false, error: message };
@@ -131,7 +131,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         error: null,
         autoLoginAttempted: false,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Logout failed';
       set({ error: message, isLoading: false });
     }
@@ -176,7 +176,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isAuthenticated: true,
         isLoading: false,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Auth check failed:', error);
       set({
         user: null,
@@ -274,11 +274,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
 
       return true;
-    } catch (error) {
+    } catch (error: unknown) {
       // If auto-login fails, clear session tokens and set error
       try {
         await clearSession();
-      } catch (e) {
+      } catch (e: unknown) {
         logger.warn('clearSession failed during error recovery', e);
       }
       set({ authError: 'Session expired. Please log in again.' });
@@ -324,7 +324,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       set({ user: result.data });
       return { success: true };
-    } catch (error) {
+    } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Failed to update profile';
       return { success: false, error: message };
     }

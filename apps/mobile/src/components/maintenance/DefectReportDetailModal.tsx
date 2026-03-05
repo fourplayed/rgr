@@ -116,7 +116,7 @@ export function DefectReportDetailModal({
         args.extras = { dismissedReason: reason.trim() };
       }
       await updateDefectStatus(args);
-    } catch (err) {
+    } catch (err: unknown) {
       if (isMountedRef.current) {
         setAlertSheet({
           visible: true,

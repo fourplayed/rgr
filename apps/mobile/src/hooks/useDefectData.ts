@@ -13,6 +13,7 @@ import type {
   CreateDefectReportInput,
   UpdateDefectReportInput,
 } from '@rgr/shared';
+import { assetKeys } from './useAssetData';
 
 /**
  * Defect report filter state
@@ -150,9 +151,12 @@ export function useCreateDefectReport() {
 
       return result.data;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: defectKeys.lists() });
       queryClient.invalidateQueries({ queryKey: defectKeys.stats() });
+      queryClient.invalidateQueries({
+        queryKey: assetKeys.scanContext(variables.assetId),
+      });
     },
   });
 }

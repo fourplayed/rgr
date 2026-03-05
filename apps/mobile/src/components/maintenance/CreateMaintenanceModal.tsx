@@ -109,7 +109,7 @@ export function CreateMaintenanceModal({
       if (!onExternalSubmit) {
         onClose();
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to create maintenance record');
     }
   }), [guard, title, description, priority, dueDate, notes, assetId, user, createMaintenanceAsync, onClose, onCreated, onExternalSubmit]);

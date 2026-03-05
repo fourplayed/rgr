@@ -93,7 +93,7 @@ export const useLocationStore = create<LocationState>((set, get) => ({
       let locationResult: Location.LocationObject;
       try {
         locationResult = await locationPromise;
-      } catch (error) {
+      } catch (error: unknown) {
         const message = error instanceof Error ? error.message : 'Failed to resolve depot';
         set({
           isResolvingDepot: false,
@@ -135,7 +135,7 @@ export const useLocationStore = create<LocationState>((set, get) => ({
         lastLocation: cachedLocation,
         lastResolvedAt: new Date(),
       });
-    } catch (error) {
+    } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Failed to resolve depot';
       set({
         isResolvingDepot: false,

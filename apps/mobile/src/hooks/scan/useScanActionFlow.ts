@@ -1,22 +1,15 @@
 import { useReducer, useCallback, useRef, useState } from 'react';
-import * as Haptics from 'expo-haptics';
-import { useQueryClient } from '@tanstack/react-query';
-import {
-  assetKeys,
-  useCreateScanEvent,
-  useUpdateAsset,
-  useDeleteScanEvent,
-  useAssetScanContext,
-} from '../useAssetData';
-import { useCreateDefectReport } from '../useDefectData';
+import { useAssetScanContext } from '../useAssetData';
 import { useLocation } from '../useLocation';
 import { useQRScanner } from '../useQRScanner';
 import { useAuthStore } from '../../store/authStore';
 import { useLocationStore } from '../../store/locationStore';
 import type { CachedLocationData } from '../../store/locationStore';
 import type { Asset, Depot } from '@rgr/shared';
-import { getAssetByQRCode, listAssets } from '@rgr/shared';
-import { logger } from '../../utils/logger';
+import type { BarcodeScanningResult } from 'expo-camera';
+import { useScanProcessing } from './useScanProcessing';
+import { useDefectSubmission } from './useDefectSubmission';
+import { useSheetLifecycle } from './useSheetLifecycle';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -26,8 +19,6 @@ export type SheetId =
   | 'camera'
   | 'defect'
   | 'createTask'
-  | 'taskDetail'
-  | 'defectDetail'
   | null;
 
 export type ScanFlowState =
@@ -52,7 +43,6 @@ export type ScanFlowState =
       pendingSheet: SheetId;
       selectedItemId: string | null;
     }
-  | { phase: 'error'; error: string };
 
 export interface AlertSheetState {
   visible: boolean;
@@ -63,7 +53,7 @@ export interface AlertSheetState {
 
 // ── Reducer ──────────────────────────────────────────────────────────────────
 
-type ScanFlowAction =
+export type ScanFlowAction =
   | { type: 'QR_DETECTED'; scanStatus: string }
   | { type: 'UPDATE_SCAN_STATUS'; scanStatus: string }
   | {
@@ -167,6 +157,48 @@ function reducer(state: ScanFlowState, action: ScanFlowAction): ScanFlowState {
   }
 }
 
+// ── Return type ──────────────────────────────────────────────────────────────
+
+interface UseScanActionFlowReturn {
+  state: ScanFlowState;
+  scannedAsset: Asset | null;
+  matchedDepot: MatchedDepot | null;
+  effectiveLocation: CachedLocationData | null;
+  lastScanEventId: string | null;
+  activeSheet: SheetId;
+  isCreatingScan: boolean;
+  scanStatus: string | null;
+  showCard: boolean;
+  buttonsDisabled: boolean;
+  photoCompleted: boolean;
+  defectCompleted: boolean;
+  handleBarCodeScanned: (result: BarcodeScanningResult) => void;
+  handlePhotoPress: () => void;
+  handleDefectPress: () => void;
+  handleTaskPress: () => void;
+  handleDonePress: () => void;
+  handleUndoPress: () => void;
+  isDeletingScan: boolean;
+  handleSheetDismiss: () => void;
+  handleCloseSheet: (pendingSheet?: SheetId) => void;
+  handleCameraClose: () => void;
+  handlePhotoUploaded: () => void;
+  handleDefectSubmit: (notes: string, wantsPhoto: boolean) => void;
+  handleDefectCancel: () => void;
+  isSubmittingDefect: boolean;
+  scanContext: unknown;
+  isContextLoading: boolean;
+  contextError: Error | null;
+  refetchContext: () => void;
+  alertSheet: AlertSheetState;
+  setAlertSheet: React.Dispatch<React.SetStateAction<AlertSheetState>>;
+  hasLocationPermission: boolean;
+  requestLocationPermission: () => Promise<boolean>;
+  resolvedDepot: MatchedDepot | null;
+  addDebugLog: (msg: string) => void;
+  triggerDebugScan: () => void;
+}
+
 // ── Hook ─────────────────────────────────────────────────────────────────────
 
 interface UseScanActionFlowOptions {
@@ -176,22 +208,11 @@ interface UseScanActionFlowOptions {
 export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptions) {
   const [state, dispatch] = useReducer(reducer, { phase: 'idle' });
   const { user } = useAuthStore();
-  const {
-    resolvedDepot: cachedDepot,
-  } = useLocationStore();
-
+  const { resolvedDepot: cachedDepot } = useLocationStore();
   const {
     hasPermission: hasLocationPermission,
     requestPermission: requestLocationPermission,
   } = useLocation();
-
-  const queryClient = useQueryClient();
-
-  // ── Mutations ──
-  const { mutateAsync: createScan } = useCreateScanEvent();
-  const { mutateAsync: updateAssetMutation } = useUpdateAsset();
-  const { mutateAsync: doDeleteScan, isPending: isDeletingScan } = useDeleteScanEvent();
-  const { mutateAsync: createDefectReport, isPending: isSubmittingDefect } = useCreateDefectReport();
 
   // ── Alert sheet ──
   const [alertSheet, setAlertSheet] = useState<AlertSheetState>({
@@ -201,9 +222,6 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
     message: '',
   });
 
-  // ── Photo capture tracking ──
-  const photoUploadedRef = useRef(false);
-
   // ── Debug logging ──
   const debugLogRef = useRef<string[]>([]);
   const addDebugLog = useCallback((msg: string) => {
@@ -212,164 +230,31 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
     log.push(`${new Date().toLocaleTimeString()}: ${msg}`);
   }, []);
 
-  // ── Asset lookup (via React Query cache) ──
-  const lookupAsset = useCallback(
-    async (qrData: string) => {
-      return queryClient.fetchQuery({
-        queryKey: assetKeys.byQRCode(qrData),
-        queryFn: async () => {
-          const result = await getAssetByQRCode(qrData);
-          if (!result.success) throw new Error(result.error);
-          return result.data;
-        },
-        staleTime: 30_000,
-      });
-    },
-    [queryClient]
-  );
-
   // Ref to break circular dep: processScan needs resetScanner, but
   // resetScanner comes from useQRScanner which takes processScan.
   const resetScannerRef = useRef<() => void>(() => {});
 
-  // ── Core scan processing (extracted so it can be called directly for debug) ──
-  const processScan = useCallback(
-    async (qrData: string) => {
-      try {
-        logger.scan(`QR code detected: ${qrData.substring(0, 30)}...`);
-        dispatch({ type: 'QR_DETECTED', scanStatus: 'QR detected' });
+  // ── Sub-hooks ──
+  const scanProcessing = useScanProcessing(dispatch, {
+    user,
+    setAlertSheet,
+    addDebugLog,
+    resetScannerRef,
+  });
 
-        // 1. Read fresh location from the Zustand store to avoid stale closures
-        const { lastLocation: freshLocation, resolvedDepot: freshDepot } =
-          useLocationStore.getState();
+  const defectSubmission = useDefectSubmission(dispatch, {
+    user,
+    setAlertSheet,
+    addDebugLog,
+  });
 
-        if (!freshLocation) {
-          logger.scan('No resolved location available');
-          dispatch({ type: 'RESET' });
-          setAlertSheet({
-            visible: true,
-            type: 'error',
-            title: 'Location Not Available',
-            message:
-              'Please return to the home screen and ensure your location is resolved before scanning.',
-          });
-          resetScannerRef.current();
-          return;
-        }
-
-        const scanLocation = freshLocation;
-        const nearestDepot: MatchedDepot | null = freshDepot;
-
-        // 2. Lookup asset
-        logger.scan('Looking up asset...');
-        dispatch({ type: 'UPDATE_SCAN_STATUS', scanStatus: 'Looking up asset...' });
-        const asset = await lookupAsset(qrData);
-        logger.scan(`Asset found: ${asset.assetNumber}`);
-
-        // 3. Transition to confirming (card shown, buttons disabled)
-        dispatch({
-          type: 'ASSET_FOUND',
-          scannedAsset: asset,
-          matchedDepot: nearestDepot,
-          effectiveLocation: scanLocation,
-        });
-
-        // 4. Guard against expired session
-        if (!user) {
-          dispatch({ type: 'RESET' });
-          setAlertSheet({
-            visible: true,
-            type: 'error',
-            title: 'Session Expired',
-            message: 'Please log in again.',
-          });
-          resetScannerRef.current();
-          return;
-        }
-
-        // 5. Auto-create scan event
-        addDebugLog('Auto-creating scan event...');
-        logger.scan('Submitting scan event...');
-        const scanEvent = await createScan({
-          assetId: asset.id,
-          scannedBy: user.id,
-          scanType: 'qr_scan',
-          latitude: scanLocation.latitude,
-          longitude: scanLocation.longitude,
-          accuracy: scanLocation.accuracy,
-          altitude: scanLocation.altitude,
-          heading: scanLocation.heading,
-          speed: scanLocation.speed,
-          locationDescription: nearestDepot ? nearestDepot.depot.name : null,
-        });
-        addDebugLog('Scan created: ' + scanEvent.id.substring(0, 8));
-        logger.scan('Scan event created successfully');
-
-        // 6. Update depot assignment if matched (fire-and-forget)
-        if (nearestDepot) {
-          logger.scan(`Updating asset depot to ${nearestDepot.depot.name}...`);
-          updateAssetMutation({
-            id: asset.id,
-            input: { assignedDepotId: nearestDepot.depot.id },
-          })
-            .then(() => logger.scan('Asset depot updated'))
-            .catch((depotError) =>
-              logger.warn('Depot update failed after successful scan:', depotError)
-            );
-        }
-
-        // 7. Success!
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        dispatch({ type: 'SCAN_CREATED', lastScanEventId: scanEvent.id });
-
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'Failed to scan QR code';
-        logger.error(`Scan error: ${message}`);
-        dispatch({ type: 'RESET' });
-        setAlertSheet({
-          visible: true,
-          type: 'error',
-          title: 'Scan Failed',
-          message,
-        });
-        resetScannerRef.current();
-      }
-    },
-    [user, lookupAsset, createScan, updateAssetMutation, addDebugLog, setAlertSheet]
-  );
+  const sheetLifecycle = useSheetLifecycle(dispatch);
 
   // ── QR Scanner ──
-  const { handleBarCodeScanned, resetScanner } = useQRScanner(processScan);
+  const { handleBarCodeScanned, resetScanner } = useQRScanner(scanProcessing.processScan);
   resetScannerRef.current = resetScanner;
 
-  // ── Debug: trigger scan with first asset from DB ──
-  const triggerDebugScan = useCallback(async () => {
-    const result = await listAssets({ pageSize: 1 });
-    if (!result.success) {
-      logger.warn('Debug scan: failed to fetch assets');
-      return;
-    }
-    const asset = result.data.data[0];
-    if (!asset) {
-      logger.warn('Debug scan: no assets found');
-      return;
-    }
-    const qrCode = `rgr://asset/${asset.id}`;
-    resetScanner();
-    await processScan(qrCode);
-  }, [processScan, resetScanner]);
-
-  // ── Action handlers ──
-
-  const handlePhotoPress = useCallback(() => {
-    photoUploadedRef.current = false;
-    dispatch({ type: 'OPEN_SHEET', sheet: 'camera' });
-  }, []);
-
-  const handleDefectPress = useCallback(() => {
-    dispatch({ type: 'OPEN_SHEET', sheet: 'defect' });
-  }, []);
-
+  // ── Action handlers (depend on resetScanner) ──
   const handleTaskPress = useCallback(() => {
     dispatch({ type: 'OPEN_SHEET', sheet: 'createTask' });
   }, []);
@@ -379,113 +264,34 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
     resetScanner();
   }, [resetScanner]);
 
-  // ── Undo ──
-
-  const handleUndoPress = useCallback(async () => {
+  // Wrap undo to extract narrow state slices
+  const handleUndoPress = useCallback(() => {
     if (state.phase !== 'active') return;
+    scanProcessing.handleUndoPress(
+      state.lastScanEventId,
+      state.scannedAsset.id,
+      resetScanner,
+    );
+  }, [state, scanProcessing, resetScanner]);
 
-    addDebugLog('Undo pressed — deleting scan event');
-    const scanEventId = state.lastScanEventId;
-    const assetId = state.scannedAsset.id;
-    dispatch({ type: 'RESET' });
-    resetScanner();
+  // Wrap triggerDebugScan to pass resetScanner
+  const triggerDebugScan = useCallback(() => {
+    scanProcessing.triggerDebugScan(resetScanner);
+  }, [scanProcessing, resetScanner]);
 
-    try {
-      await doDeleteScan({ scanEventId, assetId });
-      addDebugLog('Scan event deleted');
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    } catch (error) {
-      logger.warn('Failed to delete scan event during undo:', error);
-      // Non-fatal: scan was already removed from UI, just log the failure
-    }
-  }, [state, addDebugLog, doDeleteScan, resetScanner]);
-
-  // ── Sheet lifecycle ──
-
-  const handleSheetDismiss = useCallback(() => {
-    dispatch({ type: 'RESOLVE_PENDING' });
-  }, []);
-
-  const handleCloseSheet = useCallback((pendingSheet?: SheetId) => {
-    if (pendingSheet) {
-      dispatch({ type: 'CLOSE_SHEET', pendingSheet });
-    } else {
-      dispatch({ type: 'CLOSE_SHEET' });
-    }
-  }, []);
-
-  // ── Camera handlers ──
-
-  const handlePhotoUploaded = useCallback(() => {
-    logger.scan('Photo uploaded successfully');
-    photoUploadedRef.current = true;
-  }, []);
-
-  const handleCameraClose = useCallback(() => {
-    if (photoUploadedRef.current) {
-      dispatch({ type: 'MARK_PHOTO_COMPLETED' });
-    }
-    photoUploadedRef.current = false;
-    dispatch({ type: 'CLOSE_SHEET' });
-  }, []);
-
-  // ── Defect report handlers ──
-
+  // Wrap handleDefectSubmit to extract narrow state slices
   const handleDefectSubmit = useCallback(
-    async (notes: string, wantsPhoto: boolean) => {
+    (notes: string, wantsPhoto: boolean) => {
       if (state.phase !== 'active') return;
-
-      addDebugLog('Submitting defect report...');
-      if (!user) {
-        setAlertSheet({
-          visible: true,
-          type: 'error',
-          title: 'Session Expired',
-          message: 'Please log in again.',
-        });
-        return;
-      }
-      try {
-        await createDefectReport({
-          assetId: state.scannedAsset.id,
-          reportedBy: user.id,
-          title: 'Defect reported',
-          description: notes,
-          scanEventId: state.lastScanEventId,
-        });
-
-        addDebugLog('Defect report created');
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-        dispatch({ type: 'MARK_DEFECT_COMPLETED' });
-        if (wantsPhoto) {
-          dispatch({ type: 'CLOSE_SHEET', pendingSheet: 'camera' });
-        } else {
-          dispatch({ type: 'CLOSE_SHEET' });
-        }
-
-        // Invalidate scan context so the card updates
-        queryClient.invalidateQueries({
-          queryKey: assetKeys.scanContext(state.scannedAsset.id),
-        });
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Failed to submit defect report';
-        addDebugLog(`ERROR: ${message}`);
-        setAlertSheet({
-          visible: true,
-          type: 'error',
-          title: 'Error',
-          message,
-        });
-      }
+      defectSubmission.handleDefectSubmit(
+        notes,
+        wantsPhoto,
+        state.scannedAsset.id,
+        state.lastScanEventId,
+      );
     },
-    [state, user, createDefectReport, addDebugLog, queryClient]
+    [state, defectSubmission],
   );
-
-  const handleDefectCancel = useCallback(() => {
-    dispatch({ type: 'CLOSE_SHEET' });
-  }, []);
 
   // ── Scan context query (mechanic only) ──
   const scanContextAssetId =
@@ -553,27 +359,27 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
     handleBarCodeScanned,
 
     // Action handlers
-    handlePhotoPress,
-    handleDefectPress,
+    handlePhotoPress: sheetLifecycle.handlePhotoPress,
+    handleDefectPress: defectSubmission.handleDefectPress,
     handleTaskPress,
     handleDonePress,
 
     // Undo
     handleUndoPress,
-    isDeletingScan,
+    isDeletingScan: scanProcessing.isDeletingScan,
 
     // Sheet lifecycle
-    handleSheetDismiss,
-    handleCloseSheet,
+    handleSheetDismiss: sheetLifecycle.handleSheetDismiss,
+    handleCloseSheet: sheetLifecycle.handleCloseSheet,
 
     // Camera
-    handleCameraClose,
-    handlePhotoUploaded,
+    handleCameraClose: sheetLifecycle.handleCameraClose,
+    handlePhotoUploaded: sheetLifecycle.handlePhotoUploaded,
 
     // Defect
     handleDefectSubmit,
-    handleDefectCancel,
-    isSubmittingDefect,
+    handleDefectCancel: defectSubmission.handleDefectCancel,
+    isSubmittingDefect: defectSubmission.isSubmittingDefect,
 
     // Scan context (mechanic)
     scanContext: scanContextQuery.data ?? null,
@@ -595,5 +401,5 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
     // Debug
     addDebugLog,
     triggerDebugScan,
-  };
+  } satisfies UseScanActionFlowReturn;
 }

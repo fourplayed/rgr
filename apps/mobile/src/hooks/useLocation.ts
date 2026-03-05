@@ -43,7 +43,7 @@ export function useLocation(): UseLocationResult {
         if (isMountedRef.current) {
           setHasPermission(status === 'granted');
         }
-      } catch (err) {
+      } catch (err: unknown) {
         logger.error('Error checking location permission', err);
         if (isMountedRef.current) {
           setHasPermission(false);
@@ -64,7 +64,7 @@ export function useLocation(): UseLocationResult {
         setHasPermission(granted);
       }
       return granted;
-    } catch (err) {
+    } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to request location permission';
       if (isMountedRef.current) {
         setError(message);
@@ -135,7 +135,7 @@ export function useLocation(): UseLocationResult {
         setIsLoading(false);
       }
       return locationData;
-    } catch (err) {
+    } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to get location';
       if (isMountedRef.current) {
         setError(message);
