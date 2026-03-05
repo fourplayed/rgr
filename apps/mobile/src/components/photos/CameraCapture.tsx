@@ -126,7 +126,7 @@ function CameraCaptureComponent({
           <SafeAreaView style={styles.centered}>
             <Ionicons name="camera-outline" size={48} color={colors.electricBlue} style={styles.checkingIcon} />
             <Text style={styles.messageText}>Checking Camera...</Text>
-            <LoadingDots color={colors.electricBlue} size={8} />
+            <LoadingDots color={colors.textSecondary} size={8} />
           </SafeAreaView>
         </View>
       </Modal>

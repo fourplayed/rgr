@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, type ReactNode } from 'react';
+import React, { useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -19,12 +19,6 @@ interface CameraOverlayProps {
   depotBadge: { label: string; bgColor: string; textColor: string } | null;
   /** User role badge config — null hides the badge */
   roleBadge: { label: string; color: string } | null;
-  /** Optional scan result card rendered between top bar and scan frame */
-  scanCard?: ReactNode;
-  /** Optional action bar rendered in footer area */
-  scanActionBar?: ReactNode;
-  /** Optional undo toast rendered at top of scan frame */
-  scanToast?: ReactNode;
 }
 
 function CameraOverlayComponent({
@@ -33,9 +27,6 @@ function CameraOverlayComponent({
   scanStatus,
   depotBadge,
   roleBadge,
-  scanCard,
-  scanActionBar,
-  scanToast,
 }: CameraOverlayProps) {
   const topBarHeight = useRef(TOP_BAR_HEIGHT);
 
@@ -54,12 +45,6 @@ function CameraOverlayComponent({
           </Text>
         </View>
       </View>
-
-      {/* ── Scan Card (between top bar and scan frame) ── */}
-      {scanCard}
-
-      {/* ── Undo Toast ── */}
-      {scanToast}
 
       {/* ── Depot & role context badges (above scan frame) ── */}
       {(depotBadge || roleBadge) && (
@@ -104,10 +89,8 @@ function CameraOverlayComponent({
         ) : null}
       </View>
 
-      {/* ── Footer: Action bar or location prompt ── */}
-      {scanActionBar ? (
-        scanActionBar
-      ) : !hasLocationPermission ? (
+      {/* ── Footer: location prompt ── */}
+      {!hasLocationPermission ? (
         <View style={styles.footerTray}>
           <TouchableOpacity
             style={[styles.scannerButtonBase, styles.buttonPrimary]}

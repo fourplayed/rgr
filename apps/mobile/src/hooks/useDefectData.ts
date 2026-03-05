@@ -40,6 +40,11 @@ export const defectKeys = {
  * Fetch defect report list with filters — uses cursor-based infinite query
  * so records beyond the first page are accessible via loadMore.
  */
+interface DefectCursor {
+  createdAt: string;
+  id: string;
+}
+
 export function useDefectReportList(filters: DefectFilters = {}) {
   return useInfiniteQuery({
     queryKey: defectKeys.list(filters),
@@ -49,22 +54,23 @@ export function useDefectReportList(filters: DefectFilters = {}) {
         status?: DefectStatus[];
         assetId?: string;
         limit: number;
-        beforeId?: string;
+        cursor?: DefectCursor;
       } = { limit: 20 };
 
       if (filters.status) params.status = filters.status;
       if (filters.assetId) params.assetId = filters.assetId;
-      if (pageParam) params.beforeId = pageParam;
+      if (pageParam) params.cursor = pageParam;
 
       const result = await listDefectReports(params);
       if (!result.success) throw new Error(result.error);
       return result.data;
     },
-    initialPageParam: undefined as string | undefined,
+    initialPageParam: undefined as DefectCursor | undefined,
     getNextPageParam: (lastPage) => {
       if (!lastPage.hasMore || lastPage.data.length === 0) return undefined;
       const lastItem = lastPage.data[lastPage.data.length - 1];
-      return lastItem?.id;
+      if (!lastItem) return undefined;
+      return { createdAt: lastItem.createdAt, id: lastItem.id };
     },
   });
 }

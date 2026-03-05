@@ -14,6 +14,7 @@ import type {
   UpdateMaintenanceInput,
 } from '@rgr/shared';
 import { defectKeys } from './useDefectData';
+import { assetKeys } from './useAssetData';
 
 /**
  * Maintenance filter state
@@ -41,6 +42,11 @@ export const maintenanceKeys = {
  * Fetch maintenance list with filters — uses cursor-based infinite query
  * so records beyond the first page are accessible via loadMore.
  */
+interface MaintenanceCursor {
+  createdAt: string;
+  id: string;
+}
+
 export function useMaintenanceList(filters: MaintenanceFilters = {}) {
   return useInfiniteQuery({
     queryKey: maintenanceKeys.list(filters),
@@ -51,23 +57,24 @@ export function useMaintenanceList(filters: MaintenanceFilters = {}) {
         priority?: MaintenancePriority[];
         assetId?: string;
         limit: number;
-        beforeId?: string;
+        cursor?: MaintenanceCursor;
       } = { limit: 20 };
 
       if (filters.status) params.status = filters.status;
       if (filters.priority) params.priority = filters.priority;
       if (filters.assetId) params.assetId = filters.assetId;
-      if (pageParam) params.beforeId = pageParam;
+      if (pageParam) params.cursor = pageParam;
 
       const result = await listMaintenance(params);
       if (!result.success) throw new Error(result.error);
       return result.data;
     },
-    initialPageParam: undefined as string | undefined,
+    initialPageParam: undefined as MaintenanceCursor | undefined,
     getNextPageParam: (lastPage) => {
       if (!lastPage.hasMore || lastPage.data.length === 0) return undefined;
       const lastItem = lastPage.data[lastPage.data.length - 1];
-      return lastItem?.id;
+      if (!lastItem) return undefined;
+      return { createdAt: lastItem.createdAt, id: lastItem.id };
     },
   });
 }
@@ -125,10 +132,12 @@ export function useCreateMaintenance() {
 
       return result.data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       // Invalidate all list queries to refresh filtered views
       queryClient.invalidateQueries({ queryKey: maintenanceKeys.lists() });
       queryClient.invalidateQueries({ queryKey: maintenanceKeys.stats() });
+      // Cross-cache: refresh asset detail's maintenance data so assessment updates
+      queryClient.invalidateQueries({ queryKey: assetKeys.maintenance(data.assetId) });
     },
   });
 }
@@ -163,6 +172,8 @@ export function useUpdateMaintenanceStatus() {
       // Cross-cache: auto-resolved defects need to refresh
       queryClient.invalidateQueries({ queryKey: defectKeys.lists() });
       queryClient.invalidateQueries({ queryKey: defectKeys.stats() });
+      // Cross-cache: refresh asset detail's maintenance data so assessment updates
+      queryClient.invalidateQueries({ queryKey: assetKeys.maintenance(data.assetId) });
     },
   });
 }
@@ -187,6 +198,8 @@ export function useUpdateMaintenance() {
       // Invalidate lists and the specific detail
       queryClient.invalidateQueries({ queryKey: maintenanceKeys.lists() });
       queryClient.invalidateQueries({ queryKey: maintenanceKeys.detail(data.id) });
+      // Cross-cache: refresh asset detail's maintenance data so assessment updates
+      queryClient.invalidateQueries({ queryKey: assetKeys.maintenance(data.assetId) });
     },
   });
 }

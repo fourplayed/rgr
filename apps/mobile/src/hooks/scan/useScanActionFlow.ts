@@ -178,7 +178,6 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
   const { user } = useAuthStore();
   const {
     resolvedDepot: cachedDepot,
-    lastLocation: cachedLocation,
   } = useLocationStore();
 
   const {
@@ -193,10 +192,6 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
   const { mutateAsync: updateAssetMutation } = useUpdateAsset();
   const { mutateAsync: doDeleteScan, isPending: isDeletingScan } = useDeleteScanEvent();
   const { mutateAsync: createDefectReport, isPending: isSubmittingDefect } = useCreateDefectReport();
-
-  // ── Toast state ──
-  const [showUndoToast, setShowUndoToast] = useState(false);
-  const [toastId, setToastId] = useState(0);
 
   // ── Alert sheet ──
   const [alertSheet, setAlertSheet] = useState<AlertSheetState>({
@@ -240,8 +235,11 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
         logger.scan(`QR code detected: ${qrData.substring(0, 30)}...`);
         dispatch({ type: 'QR_DETECTED', scanStatus: 'QR detected' });
 
-        // 1. Check cached location
-        if (!cachedLocation) {
+        // 1. Read fresh location from the Zustand store to avoid stale closures
+        const { lastLocation: freshLocation, resolvedDepot: freshDepot } =
+          useLocationStore.getState();
+
+        if (!freshLocation) {
           logger.scan('No resolved location available');
           dispatch({ type: 'RESET' });
           setAlertSheet({
@@ -255,8 +253,8 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
           return;
         }
 
-        const scanLocation = cachedLocation;
-        const nearestDepot: MatchedDepot | null = cachedDepot;
+        const scanLocation = freshLocation;
+        const nearestDepot: MatchedDepot | null = freshDepot;
 
         // 2. Lookup asset
         logger.scan('Looking up asset...');
@@ -303,27 +301,23 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
         addDebugLog('Scan created: ' + scanEvent.id.substring(0, 8));
         logger.scan('Scan event created successfully');
 
-        // 6. Update depot assignment if matched
+        // 6. Update depot assignment if matched (fire-and-forget)
         if (nearestDepot) {
-          try {
-            logger.scan(`Updating asset depot to ${nearestDepot.depot.name}...`);
-            await updateAssetMutation({
-              id: asset.id,
-              input: { assignedDepotId: nearestDepot.depot.id },
-            });
-            logger.scan('Asset depot updated');
-          } catch (depotError) {
-            logger.warn('Depot update failed after successful scan:', depotError);
-          }
+          logger.scan(`Updating asset depot to ${nearestDepot.depot.name}...`);
+          updateAssetMutation({
+            id: asset.id,
+            input: { assignedDepotId: nearestDepot.depot.id },
+          })
+            .then(() => logger.scan('Asset depot updated'))
+            .catch((depotError) =>
+              logger.warn('Depot update failed after successful scan:', depotError)
+            );
         }
 
         // 7. Success!
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         dispatch({ type: 'SCAN_CREATED', lastScanEventId: scanEvent.id });
 
-        // 8. Show undo toast
-        setToastId((prev) => prev + 1);
-        setShowUndoToast(true);
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to scan QR code';
         logger.error(`Scan error: ${message}`);
@@ -354,16 +348,7 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
     dispatch({ type: 'OPEN_SHEET', sheet: 'createTask' });
   }, []);
 
-  const handleInlineItemPress = useCallback(
-    (type: 'defect' | 'task', id: string) => {
-      const sheet: SheetId = type === 'defect' ? 'defectDetail' : 'taskDetail';
-      dispatch({ type: 'OPEN_SHEET', sheet, selectedItemId: id });
-    },
-    []
-  );
-
   const handleDonePress = useCallback(() => {
-    setShowUndoToast(false);
     dispatch({ type: 'RESET' });
     resetScanner();
   }, [resetScanner]);
@@ -374,7 +359,6 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
     if (state.phase !== 'active') return;
 
     addDebugLog('Undo pressed — deleting scan event');
-    setShowUndoToast(false);
     const scanEventId = state.lastScanEventId;
     dispatch({ type: 'RESET' });
     resetScanner();
@@ -388,15 +372,6 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
       // Non-fatal: scan was already removed from UI, just log the failure
     }
   }, [state, addDebugLog, doDeleteScan, resetScanner]);
-
-  const handleToastDismiss = useCallback(() => {
-    setShowUndoToast(false);
-    // For drivers: auto-dismiss the card after the undo window closes
-    if (!canMarkMaintenance) {
-      dispatch({ type: 'RESET' });
-      resetScanner();
-    }
-  }, [canMarkMaintenance, resetScanner]);
 
   // ── Sheet lifecycle ──
 
@@ -516,9 +491,6 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
   const activeSheet =
     state.phase === 'active' ? state.activeSheet : null;
 
-  const selectedItemId =
-    state.phase === 'active' ? state.selectedItemId : null;
-
   const isCreatingScan = state.phase === 'confirming';
 
   const scanStatus =
@@ -543,7 +515,6 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
     effectiveLocation,
     lastScanEventId,
     activeSheet,
-    selectedItemId,
     isCreatingScan,
     scanStatus,
     showCard,
@@ -558,17 +529,11 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
     handlePhotoPress,
     handleDefectPress,
     handleTaskPress,
-    handleInlineItemPress,
     handleDonePress,
 
     // Undo
     handleUndoPress,
     isDeletingScan,
-
-    // Toast
-    showUndoToast,
-    toastId,
-    handleToastDismiss,
 
     // Sheet lifecycle
     handleSheetDismiss,

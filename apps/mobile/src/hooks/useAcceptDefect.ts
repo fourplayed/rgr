@@ -3,6 +3,7 @@ import { acceptDefectReport } from '@rgr/shared';
 import type { CreateMaintenanceInput } from '@rgr/shared';
 import { defectKeys } from './useDefectData';
 import { maintenanceKeys } from './useMaintenanceData';
+import { assetKeys } from './useAssetData';
 
 /**
  * Accept a defect report by creating a linked maintenance task atomically.
@@ -28,12 +29,14 @@ export function useAcceptDefect() {
 
       return result.data;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       // Invalidate both caches
       queryClient.invalidateQueries({ queryKey: defectKeys.lists() });
       queryClient.invalidateQueries({ queryKey: defectKeys.stats() });
       queryClient.invalidateQueries({ queryKey: maintenanceKeys.lists() });
       queryClient.invalidateQueries({ queryKey: maintenanceKeys.stats() });
+      // Cross-cache: refresh asset detail's maintenance data so assessment updates
+      queryClient.invalidateQueries({ queryKey: assetKeys.maintenance(variables.maintenanceInput.assetId) });
     },
   });
 }

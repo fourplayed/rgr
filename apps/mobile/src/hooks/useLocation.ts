@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import * as Location from 'expo-location';
 import { logger } from '../utils/logger';
+import { sanitizeNonNegative } from '../utils/location';
 import { useDebugLocationStore } from '../store/debugLocationStore';
 
 export interface LocationData {
@@ -120,9 +121,6 @@ export function useLocation(): UseLocationResult {
 
       // Sanitize GPS values: expo-location returns -1 for heading/speed when unavailable
       // Convert negative values to null to avoid Zod validation failures (min: 0)
-      const sanitizeNonNegative = (val: number | null): number | null =>
-        val !== null && val >= 0 ? val : null;
-
       const locationData: LocationData = {
         latitude: result.coords.latitude,
         longitude: result.coords.longitude,

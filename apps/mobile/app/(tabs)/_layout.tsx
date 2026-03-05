@@ -19,7 +19,7 @@ const TAB_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
 };
 
 // ── Animated tab bar with sliding active indicator ──────────────
-function AnimatedTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+function AnimatedTabBar({ state, navigation }: BottomTabBarProps) {
   const translateX = useRef(new Animated.Value(0)).current;
   const [barWidth, setBarWidth] = useState(0);
   const isInitial = useRef(true);

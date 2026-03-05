@@ -3,7 +3,8 @@ import { AppState, View, StyleSheet, Text } from 'react-native';
 import { LoadingDots } from '../src/components/common/LoadingDots';
 import { StatusBar } from 'expo-status-bar';
 import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-router';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from '@tanstack/react-query';
+import { isAuthError } from '../src/utils/authErrors';
 import {
   useFonts,
   Lato_100Thin,
@@ -59,13 +60,32 @@ export default function RootLayout() {
   const [queryClient] = useState(
     () =>
       new QueryClient({
+        queryCache: new QueryCache({
+          onError: (error) => {
+            if (isAuthError(error)) {
+              const { isAuthenticated, handleSessionExpired } = useAuthStore.getState();
+              if (isAuthenticated) handleSessionExpired();
+            }
+          },
+        }),
+        mutationCache: new MutationCache({
+          onError: (error) => {
+            if (isAuthError(error)) {
+              const { isAuthenticated, handleSessionExpired } = useAuthStore.getState();
+              if (isAuthenticated) handleSessionExpired();
+            }
+          },
+        }),
         defaultOptions: {
           queries: {
-            staleTime: 1000 * 60 * 5, // 5 minutes
-            gcTime: 1000 * 60 * 10, // Keep inactive queries in cache for 10 min
-            retry: 1,
-            refetchOnWindowFocus: false, // Critical for mobile - prevents refetch on app resume
-            refetchOnReconnect: 'always', // Refetch when network reconnects
+            staleTime: 1000 * 60 * 5,
+            gcTime: 1000 * 60 * 10,
+            retry: (failureCount, error) => {
+              if (isAuthError(error)) return false;
+              return failureCount < 1;
+            },
+            refetchOnWindowFocus: false,
+            refetchOnReconnect: false,
           },
         },
       })
@@ -170,7 +190,7 @@ export default function RootLayout() {
   if (!fontsLoaded) {
     return (
       <View style={styles.loadingContainer}>
-        <LoadingDots color={colors.electricBlue} size={12} />
+        <LoadingDots color={colors.textSecondary} size={12} />
       </View>
     );
   }

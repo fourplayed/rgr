@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { MaintenanceStatus, MaintenancePriority } from '@rgr/shared';
 import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '@rgr/shared';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
+import { spacing, fontSize, shadows } from '../../theme/spacing';
 import { FilterChip } from '../common/FilterChip';
 import '../../utils/enableLayoutAnimation';
 
@@ -38,11 +38,13 @@ export const MaintenanceFilterPanel = memo(function MaintenanceFilterPanel({
   const rotateAnim = useRef(new Animated.Value(isExpanded ? 1 : 0)).current;
 
   useEffect(() => {
-    Animated.timing(rotateAnim, {
+    const anim = Animated.timing(rotateAnim, {
       toValue: isExpanded ? 1 : 0,
       duration: 200,
       useNativeDriver: true,
-    }).start();
+    });
+    anim.start();
+    return () => anim.stop();
   }, [isExpanded, rotateAnim]);
 
   const handleToggle = useCallback(() => {

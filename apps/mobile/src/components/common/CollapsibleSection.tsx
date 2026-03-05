@@ -19,11 +19,13 @@ export function CollapsibleSection({ title, children, defaultExpanded = true, ba
   const rotateAnim = useRef(new Animated.Value(defaultExpanded ? 1 : 0)).current;
 
   useEffect(() => {
-    Animated.timing(rotateAnim, {
+    const anim = Animated.timing(rotateAnim, {
       toValue: expanded ? 1 : 0,
       duration: 200,
       useNativeDriver: true,
-    }).start();
+    });
+    anim.start();
+    return () => anim.stop();
   }, [expanded, rotateAnim]);
 
   const chevronRotate = rotateAnim.interpolate({

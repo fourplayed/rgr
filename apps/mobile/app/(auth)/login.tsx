@@ -37,7 +37,7 @@ const ACCENT_LINE_GAP = 6;
 export default function LoginScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { login, isLoading, clearError, clearSavedSession } = useAuthStore();
+  const { login, isLoading, clearError, clearSavedSession, authError, clearAuthError } = useAuthStore();
   const { resolveDepot } = useLocationStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -48,6 +48,18 @@ export default function LoginScreen() {
     title: string;
     message: string;
   }>({ visible: false, type: 'error', title: '', message: '' });
+
+  useEffect(() => {
+    if (authError) {
+      setAlertSheet({
+        visible: true,
+        type: 'warning',
+        title: 'Session Expired',
+        message: authError,
+      });
+      clearAuthError();
+    }
+  }, [authError, clearAuthError]);
   const tiltAnim = useRef(new Animated.Value(-1)).current;
   const keyboardOffset = useRef(new Animated.Value(0)).current;
   const accentAnim = useRef(new Animated.Value(0)).current;
@@ -129,6 +141,7 @@ export default function LoginScreen() {
   const handleLogin = async () => {
     // Clear previous errors
     clearError();
+    clearAuthError();
 
     // Validate inputs
     if (!email.trim() || !password.trim()) {

@@ -52,11 +52,13 @@ export const AssetFilterPanel = memo(function AssetFilterPanel({
   const rotateAnim = useRef(new Animated.Value(isExpanded ? 1 : 0)).current;
 
   useEffect(() => {
-    Animated.timing(rotateAnim, {
+    const anim = Animated.timing(rotateAnim, {
       toValue: isExpanded ? 1 : 0,
       duration: 200,
       useNativeDriver: true,
-    }).start();
+    });
+    anim.start();
+    return () => anim.stop();
   }, [isExpanded, rotateAnim]);
 
   const handleToggle = useCallback(() => {

@@ -80,7 +80,7 @@ export default function UserDetailScreen() {
             <View style={styles.headerSpacer} />
           </View>
           <View style={styles.loadingContainer}>
-            <LoadingDots color={colors.electricBlue} size={12} />
+            <LoadingDots color={colors.textSecondary} size={12} />
           </View>
         </SafeAreaView>
       </LinearGradient>
@@ -186,7 +186,7 @@ export default function UserDetailScreen() {
                   accessibilityLabel="Change role"
                 >
                   <View style={styles.actionContent}>
-                    <Ionicons name="shield-outline" size={24} color={colors.electricBlue} />
+                    <Ionicons name="shield-outline" size={24} color={colors.textSecondary} />
                     <View style={styles.actionText}>
                       <Text style={styles.actionTitle}>Change Role</Text>
                       <Text style={styles.actionSubtitle}>
@@ -195,7 +195,7 @@ export default function UserDetailScreen() {
                     </View>
                   </View>
                   {updateRoleMutation.isPending ? (
-                    <LoadingDots color={colors.electricBlue} size={6} />
+                    <LoadingDots color={colors.textSecondary} size={6} />
                   ) : (
                     <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
                   )}
@@ -231,7 +231,7 @@ export default function UserDetailScreen() {
                   </View>
                   {updateStatusMutation.isPending ? (
                     <LoadingDots
-                      color={profile.isActive ? colors.error : colors.success}
+                      color={colors.textInverse}
                       size={6}
                     />
                   ) : (

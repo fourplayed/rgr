@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,13 +9,15 @@ import {
   ScrollView,
 } from 'react-native';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { formatRelativeTime } from '@rgr/shared';
+import { formatRelativeTime, formatAssetNumber } from '@rgr/shared';
 import { LoadingDots, AlertSheet, ConfirmSheet } from '../common';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
 import { useMaintenance, useUpdateMaintenanceStatus, useUpdateMaintenance } from '../../hooks/useMaintenanceData';
+import { useAsset } from '../../hooks/useAssetData';
 import { useScanEventPhotos, useSignedUrl } from '../../hooks/usePhotos';
 import { useUserPermissions } from '../../contexts/UserPermissionsContext';
 import { MaintenanceStatusBadge } from './MaintenanceStatusBadge';
@@ -40,8 +42,11 @@ export function MaintenanceDetailModal({
   const router = useRouter();
   const { canMarkMaintenance } = useUserPermissions();
   const { data: maintenance, isLoading } = useMaintenance(maintenanceId);
+  const { data: asset } = useAsset(maintenance?.assetId);
   const updateStatusMutation = useUpdateMaintenanceStatus();
+  const { mutateAsync: updateMaintenanceStatus } = updateStatusMutation;
   const updateMutation = useUpdateMaintenance();
+  const { mutateAsync: updateMaintenance } = updateMutation;
 
   // Defect photo data
   const { data: scanEventPhotos } = useScanEventPhotos(maintenance?.scanEventId ?? null);
@@ -55,6 +60,13 @@ export function MaintenanceDetailModal({
   const [editingNotes, setEditingNotes] = useState(false);
   const [notes, setNotes] = useState('');
 
+  // Reset notes editing state when the modal switches to a different record.
+  // Modal visible={false} keeps the tree mounted, so stale state persists otherwise.
+  useEffect(() => {
+    setEditingNotes(false);
+    setNotes('');
+  }, [maintenanceId]);
+
   // Sheet states
   const [alertSheet, setAlertSheet] = useState<{
     visible: boolean;
@@ -67,7 +79,7 @@ export function MaintenanceDetailModal({
     if (!maintenanceId) return;
 
     try {
-      await updateStatusMutation.mutateAsync({
+      await updateMaintenanceStatus({
         id: maintenanceId,
         status: 'completed',
       });
@@ -78,7 +90,7 @@ export function MaintenanceDetailModal({
         message: err instanceof Error ? err.message : 'Failed to complete',
       });
     }
-  }, [maintenanceId, updateStatusMutation]);
+  }, [maintenanceId, updateMaintenanceStatus]);
 
   const handleCancelMaintenance = useCallback(() => {
     if (!maintenanceId) return;
@@ -90,7 +102,7 @@ export function MaintenanceDetailModal({
 
     setShowCancelConfirm(false);
     try {
-      await updateStatusMutation.mutateAsync({
+      await updateMaintenanceStatus({
         id: maintenanceId,
         status: 'cancelled',
       });
@@ -101,13 +113,13 @@ export function MaintenanceDetailModal({
         message: err instanceof Error ? err.message : 'Failed to cancel',
       });
     }
-  }, [maintenanceId, updateStatusMutation]);
+  }, [maintenanceId, updateMaintenanceStatus]);
 
   const handleSaveNotes = useCallback(async () => {
     if (!maintenanceId) return;
 
     try {
-      await updateMutation.mutateAsync({
+      await updateMaintenance({
         id: maintenanceId,
         input: { notes },
       });
@@ -119,7 +131,7 @@ export function MaintenanceDetailModal({
         message: err instanceof Error ? err.message : 'Failed to save notes',
       });
     }
-  }, [maintenanceId, notes, updateMutation]);
+  }, [maintenanceId, notes, updateMaintenance]);
 
   const handleEditNotes = useCallback(() => {
     setNotes(maintenance?.notes || '');
@@ -193,52 +205,65 @@ export function MaintenanceDetailModal({
         />
 
         <View style={styles.sheet}>
-          <View style={styles.handle} />
-
           {isLoading || !maintenance ? (
-            <View style={styles.loadingContainer}>
-              <LoadingDots color={colors.electricBlue} size={10} />
-            </View>
+            <>
+              <View style={styles.handle} />
+              <View style={styles.loadingContainer}>
+                <LoadingDots color={colors.textSecondary} size={10} />
+              </View>
+            </>
           ) : (
             <>
-              {/* Header */}
-              <View style={styles.header}>
-                <View style={styles.headerButton} />
-                <Text style={styles.title} numberOfLines={2}>{maintenance.title}</Text>
-                <TouchableOpacity
-                  onPress={onClose}
-                  style={styles.headerButton}
-                  accessibilityRole="button"
-                  accessibilityLabel="Close maintenance details"
-                >
-                  <Ionicons name="close" size={28} color={colors.text} />
-                </TouchableOpacity>
-              </View>
+              {/* Header with gradient */}
+              <LinearGradient
+                colors={[...colors.brandGradientHeader]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+                style={styles.headerGradient}
+              >
+                <View style={styles.handleLight} />
+                <View style={styles.header}>
+                  <View style={styles.headerTitleRow}>
+                    <Ionicons name="construct-outline" size={32} color={colors.textInverse} />
+                    <Text style={styles.title} numberOfLines={2}>{maintenance.title}</Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={onClose}
+                    style={styles.headerButton}
+                    accessibilityRole="button"
+                    accessibilityLabel="Close maintenance details"
+                  >
+                    <Ionicons name="close" size={28} color={colors.textInverse} />
+                  </TouchableOpacity>
+                </View>
+              </LinearGradient>
 
               <ScrollView
                 style={styles.scrollView}
                 contentContainerStyle={styles.content}
               >
-                {/* Badges */}
+                {/* Info Row: Asset Number + View Asset */}
+                <View style={styles.infoRow}>
+                  {asset?.assetNumber && (
+                    <Text style={styles.assetNumberText}>{formatAssetNumber(asset.assetNumber)}</Text>
+                  )}
+                  {variant === 'full' && (
+                    <TouchableOpacity
+                      style={styles.assetLink}
+                      onPress={handleNavigateToAsset}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.assetLinkText}>View Asset</Text>
+                      <Ionicons name="chevron-forward" size={16} color={colors.electricBlue} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+
+                {/* Status & Priority Badges */}
                 <View style={styles.badgeRow}>
                   <MaintenanceStatusBadge status={maintenance.status} />
                   <MaintenancePriorityBadge priority={maintenance.priority} />
                 </View>
-
-                {/* Asset Link (hidden in compact mode) */}
-                {variant === 'full' && (
-                  <TouchableOpacity
-                    style={styles.assetLink}
-                    onPress={handleNavigateToAsset}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons name="cube-outline" size={20} color={colors.electricBlue} />
-                    <Text style={styles.assetLinkText}>
-                      View Asset
-                    </Text>
-                    <Ionicons name="chevron-forward" size={18} color={colors.electricBlue} />
-                  </TouchableOpacity>
-                )}
 
                 {/* Details Section */}
                 <View style={styles.sectionGroup}>
@@ -469,6 +494,18 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginTop: spacing.md,
   },
+  headerGradient: {
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
+  },
+  handleLight: {
+    width: 40,
+    height: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: borderRadius.full,
+    alignSelf: 'center',
+    marginTop: spacing.md,
+  },
   loadingContainer: {
     padding: spacing['3xl'],
     alignItems: 'center',
@@ -487,26 +524,40 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.base,
+    paddingLeft: spacing.base,
+    paddingRight: spacing.sm,
     paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    backgroundColor: colors.background,
+  },
+  headerTitleRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
   },
   title: {
     flex: 1,
-    fontSize: fontSize.lg,
+    fontSize: fontSize.xl,
     fontFamily: 'Lato_700Bold',
-    color: colors.text,
+    color: colors.textInverse,
     textTransform: 'uppercase',
     letterSpacing: 1,
-    textAlign: 'center',
   },
   headerButton: {
     width: 44,
     height: 44,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  assetNumberText: {
+    fontSize: fontSize.xl,
+    fontFamily: 'Lato_700Bold',
+    color: colors.text,
+    textTransform: 'uppercase',
   },
   badgeRow: {
     flexDirection: 'row',
@@ -515,22 +566,16 @@ const styles = StyleSheet.create({
   assetLink: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.base,
-    backgroundColor: colors.background,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
+    gap: spacing.xs,
   },
   assetLinkText: {
     fontSize: fontSize.sm,
     fontFamily: 'Lato_700Bold',
     color: colors.electricBlue,
     textTransform: 'uppercase',
-    flex: 1,
   },
   sectionGroup: {
+    gap: spacing.sm,
   },
   sectionCard: {
     backgroundColor: colors.background,

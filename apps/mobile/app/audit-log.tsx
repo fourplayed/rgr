@@ -72,7 +72,7 @@ export default function AuditLogScreen() {
     if (!isFetchingNextPage) return null;
     return (
       <View style={styles.footerLoader}>
-        <LoadingDots color={colors.electricBlue} size={8} />
+        <LoadingDots color={colors.textSecondary} size={8} />
       </View>
     );
   }, [isFetchingNextPage]);
@@ -134,7 +134,7 @@ export default function AuditLogScreen() {
 
         {isLoading ? (
           <View style={styles.loadingContainer}>
-            <LoadingDots color={colors.electricBlue} size={12} />
+            <LoadingDots color={colors.textSecondary} size={12} />
           </View>
         ) : error ? (
           <View style={styles.centerContent}>

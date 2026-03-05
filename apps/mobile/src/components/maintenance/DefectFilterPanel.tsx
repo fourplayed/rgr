@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { DefectStatus } from '@rgr/shared';
 import { DefectStatusLabels } from '@rgr/shared';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
+import { spacing, fontSize, shadows } from '../../theme/spacing';
 import { FilterChip } from '../common/FilterChip';
 import '../../utils/enableLayoutAnimation';
 
@@ -40,11 +40,13 @@ export const DefectFilterPanel = memo(function DefectFilterPanel({
   const rotateAnim = useRef(new Animated.Value(isExpanded ? 1 : 0)).current;
 
   useEffect(() => {
-    Animated.timing(rotateAnim, {
+    const anim = Animated.timing(rotateAnim, {
       toValue: isExpanded ? 1 : 0,
       duration: 200,
       useNativeDriver: true,
-    }).start();
+    });
+    anim.start();
+    return () => anim.stop();
   }, [isExpanded, rotateAnim]);
 
   const handleToggle = useCallback(() => {

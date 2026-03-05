@@ -25,6 +25,15 @@ CREATE TYPE maintenance_status_new AS ENUM ('scheduled', 'completed', 'cancelled
 DROP INDEX IF EXISTS idx_maintenance_asset_active;
 DROP INDEX IF EXISTS idx_maintenance_assigned;
 
+-- ── 3b. Drop trigger + function that reference OLD.status / NEW.status ───
+DROP TRIGGER IF EXISTS trg_resolve_linked_defects ON maintenance_records;
+DROP FUNCTION IF EXISTS resolve_linked_defects();
+
+-- ── 3c. Drop remaining indexes on the status column ─────────────────────
+DROP INDEX IF EXISTS idx_maintenance_status_priority_created;
+DROP INDEX IF EXISTS idx_maintenance_status_only;
+DROP INDEX IF EXISTS idx_maintenance_overdue;
+
 -- ── 4. Swap column type ────────────────────────────────────────────────────
 ALTER TABLE maintenance_records
   ALTER COLUMN status DROP DEFAULT;
@@ -48,6 +57,17 @@ CREATE INDEX idx_maintenance_asset_active
 CREATE INDEX idx_maintenance_assigned
   ON maintenance_records(assigned_to, status)
   WHERE assigned_to IS NOT NULL AND status = 'scheduled';
+
+-- ── 6b. Recreate remaining indexes ──────────────────────────────────────
+CREATE INDEX idx_maintenance_status_priority_created
+  ON maintenance_records (status, priority, created_at DESC);
+
+CREATE INDEX idx_maintenance_status_only
+  ON maintenance_records (status);
+
+CREATE INDEX idx_maintenance_overdue
+  ON maintenance_records(due_date)
+  WHERE status = 'scheduled' AND due_date IS NOT NULL;
 
 -- ── 7. Recreate get_maintenance_stats() without in_progress ────────────────
 CREATE OR REPLACE FUNCTION get_maintenance_stats()
@@ -100,3 +120,33 @@ BEGIN
   );
 END;
 $$;
+
+-- ── 9. Recreate trigger function and trigger ────────────────────────────
+--    Uses the expanded version that handles both
+--    completed → resolve and cancelled → dismiss, since 'in_progress'
+--    no longer exists as a possible OLD.status value.
+CREATE OR REPLACE FUNCTION resolve_linked_defects()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.status = 'completed' AND (OLD.status IS DISTINCT FROM 'completed') THEN
+        UPDATE defect_reports
+        SET status = 'resolved',
+            resolved_at = NOW()
+        WHERE maintenance_record_id = NEW.id
+          AND status = 'accepted';
+    END IF;
+    IF NEW.status = 'cancelled' AND (OLD.status IS DISTINCT FROM 'cancelled') THEN
+        UPDATE defect_reports
+        SET status = 'dismissed',
+            dismissed_at = NOW(),
+            dismissed_reason = 'Linked maintenance task was cancelled'
+        WHERE maintenance_record_id = NEW.id
+          AND status = 'accepted';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER trg_resolve_linked_defects
+    AFTER UPDATE ON maintenance_records
+    FOR EACH ROW EXECUTE FUNCTION resolve_linked_defects();

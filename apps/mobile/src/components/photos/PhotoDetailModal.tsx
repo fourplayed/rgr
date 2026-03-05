@@ -118,7 +118,7 @@ function PhotoDetailModalComponent({
                 accessibilityHint="Double tap to delete this photo"
               >
                 {isDeleting ? (
-                  <LoadingDots color={colors.error} size={6} />
+                  <LoadingDots color={colors.textInverse} size={6} />
                 ) : (
                   <Ionicons name="trash-outline" size={24} color={colors.error} />
                 )}
@@ -130,7 +130,7 @@ function PhotoDetailModalComponent({
 
           {isLoading ? (
             <View style={styles.loadingContainer}>
-              <LoadingDots color={colors.electricBlue} size={12} />
+              <LoadingDots color={colors.textSecondary} size={12} />
             </View>
           ) : photoData ? (
             <ScrollView

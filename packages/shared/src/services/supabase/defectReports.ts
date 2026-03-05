@@ -1,5 +1,4 @@
 import { getSupabaseClient } from './client';
-import { isValidUUID } from '../../utils/constants';
 import type { ServiceResult } from '../../types';
 import type {
   DefectReport,
@@ -25,7 +24,8 @@ export interface ListDefectReportsParams {
   status?: DefectStatus[];
   assetId?: string;
   limit?: number;
-  beforeId?: string;
+  /** Composite cursor for keyset pagination — pass both values from the last item */
+  cursor?: { createdAt: string; id: string };
 }
 
 export interface DefectReportStats {
@@ -54,7 +54,7 @@ function isValidDefectTransition(from: DefectStatus, to: DefectStatus): boolean 
 export async function listDefectReports(
   params: ListDefectReportsParams = {}
 ): Promise<ServiceResult<{ data: DefectReportListItem[]; hasMore: boolean }>> {
-  const { status, assetId, limit = 20, beforeId } = params;
+  const { status, assetId, limit = 20, cursor } = params;
 
   const supabase = getSupabaseClient();
 
@@ -78,22 +78,12 @@ export async function listDefectReports(
     query = query.eq('asset_id', assetId);
   }
 
-  if (beforeId) {
-    if (!isValidUUID(beforeId)) {
-      return { success: true, data: { data: [], hasMore: false }, error: null };
-    }
-
-    const { data: cursorData } = await supabase
-      .from('defect_reports')
-      .select('created_at')
-      .eq('id', beforeId)
-      .single();
-
-    if (cursorData?.created_at) {
-      query = query.or(
-        `created_at.lt.${cursorData.created_at},and(created_at.eq.${cursorData.created_at},id.lt.${beforeId})`
-      );
-    }
+  // Composite cursor keyset pagination — no extra lookup query needed.
+  // Handles ties in created_at by using id as a tiebreaker.
+  if (cursor) {
+    query = query.or(
+      `created_at.lt.${cursor.createdAt},and(created_at.eq.${cursor.createdAt},id.lt.${cursor.id})`
+    );
   }
 
   const { data, error } = await query;

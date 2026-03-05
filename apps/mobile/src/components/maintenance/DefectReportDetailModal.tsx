@@ -18,10 +18,10 @@ import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
 import type { CreateMaintenanceInput } from '@rgr/shared';
 import { useDefectReport, useUpdateDefectReportStatus } from '../../hooks/useDefectData';
 import { useAsset } from '../../hooks/useAssetData';
+import { useMaintenance } from '../../hooks/useMaintenanceData';
 import { useScanEventPhotos, useSignedUrl } from '../../hooks/usePhotos';
 import { useAcceptDefect } from '../../hooks/useAcceptDefect';
 import { useUserPermissions } from '../../contexts/UserPermissionsContext';
-import { DefectStatusBadge } from './DefectStatusBadge';
 import { CreateMaintenanceModal } from './CreateMaintenanceModal';
 import { MaintenanceDetailModal } from './MaintenanceDetailModal';
 
@@ -43,8 +43,11 @@ export function DefectReportDetailModal({
   const { canMarkMaintenance } = useUserPermissions();
   const { data: defect, isLoading } = useDefectReport(defectId);
   const { data: asset } = useAsset(defect?.assetId);
+  const { data: linkedMaintenance } = useMaintenance(defect?.maintenanceRecordId ?? null);
   const updateStatusMutation = useUpdateDefectReportStatus();
+  const { mutateAsync: updateDefectStatus } = updateStatusMutation;
   const acceptDefectMutation = useAcceptDefect();
+  const { mutateAsync: acceptDefect } = acceptDefectMutation;
 
   // Defect photo data
   const { data: scanEventPhotos } = useScanEventPhotos(defect?.scanEventId ?? null);
@@ -81,11 +84,19 @@ export function DefectReportDetailModal({
   const handleAcceptSubmit = useCallback(async (maintenanceInput: CreateMaintenanceInput) => {
     if (!defectId) return;
 
-    await acceptDefectMutation.mutateAsync({
-      defectReportId: defectId,
-      maintenanceInput,
-    });
-  }, [defectId, acceptDefectMutation]);
+    try {
+      await acceptDefect({
+        defectReportId: defectId,
+        maintenanceInput,
+      });
+    } catch (err) {
+      setAlertSheet({
+        visible: true,
+        title: 'Error',
+        message: err instanceof Error ? err.message : 'Failed to accept defect',
+      });
+    }
+  }, [defectId, acceptDefect]);
 
   const handleMaintenanceModalClose = useCallback(() => {
     setShowCreateModal(false);
@@ -107,7 +118,7 @@ export function DefectReportDetailModal({
       if (reason.trim()) {
         args.extras = { dismissedReason: reason.trim() };
       }
-      await updateStatusMutation.mutateAsync(args);
+      await updateDefectStatus(args);
     } catch (err) {
       setAlertSheet({
         visible: true,
@@ -115,7 +126,7 @@ export function DefectReportDetailModal({
         message: err instanceof Error ? err.message : 'Failed to dismiss defect',
       });
     }
-  }, [defectId, updateStatusMutation]);
+  }, [defectId, updateDefectStatus]);
 
   const handleNavigateToAsset = useCallback(() => {
     if (defect?.assetId) {
@@ -142,7 +153,6 @@ export function DefectReportDetailModal({
               onPress={handleAccept}
               disabled={updateStatusMutation.isPending || acceptDefectMutation.isPending}
             >
-              <Ionicons name="checkmark-circle" size={18} color={colors.textInverse} />
               <Text style={styles.primaryButtonText}>Accept</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -192,7 +202,7 @@ export function DefectReportDetailModal({
             <>
               <View style={styles.handle} />
               <View style={styles.loadingContainer}>
-                <LoadingDots color={colors.electricBlue} size={10} />
+                <LoadingDots color={colors.textSecondary} size={10} />
               </View>
             </>
           ) : (
@@ -286,14 +296,16 @@ export function DefectReportDetailModal({
                 {variant === 'full' && defect.maintenanceRecordId && (
                   <View style={styles.sectionGroup}>
                     <Text style={styles.sectionTitle}>Linked Maintenance Task</Text>
+                    {linkedMaintenance && (
+                      <Text style={styles.detailValue}>{linkedMaintenance.title}</Text>
+                    )}
                     <TouchableOpacity
-                      style={styles.linkedTaskCard}
+                      style={styles.linkedTaskLink}
                       onPress={handleViewLinkedTask}
                       activeOpacity={0.7}
                     >
-                      <Ionicons name="construct-outline" size={20} color={colors.electricBlue} />
-                      <Text style={styles.linkedTaskText}>View maintenance task</Text>
-                      <Ionicons name="chevron-forward" size={18} color={colors.electricBlue} />
+                      <Text style={styles.linkedTaskLinkText}>View Task</Text>
+                      <Ionicons name="chevron-forward" size={16} color={colors.electricBlue} />
                     </TouchableOpacity>
                   </View>
                 )}
@@ -379,6 +391,7 @@ export function DefectReportDetailModal({
           visible={showCreateModal}
           onClose={handleMaintenanceModalClose}
           assetId={defect.assetId}
+          {...(asset?.assetNumber ? { assetNumber: asset.assetNumber } : {})}
           defectReportId={defect.id}
           defaultTitle={defect.title}
           {...(defect.description ? { defaultDescription: defect.description } : {})}
@@ -473,6 +486,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingLeft: spacing.base,
+    paddingRight: spacing.sm,
     paddingVertical: spacing.md,
   },
   headerTitleRow: {
@@ -557,23 +571,16 @@ const styles = StyleSheet.create({
     fontFamily: 'Lato_700Bold',
     color: colors.text,
   },
-  linkedTaskCard: {
+  linkedTaskLink: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.base,
-    backgroundColor: colors.background,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
+    gap: spacing.xs,
   },
-  linkedTaskText: {
+  linkedTaskLinkText: {
     fontSize: fontSize.sm,
     fontFamily: 'Lato_700Bold',
     color: colors.electricBlue,
     textTransform: 'uppercase',
-    flex: 1,
   },
   actionsContainer: {
     flexDirection: 'row',
@@ -590,7 +597,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
   },
   primaryButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.electricBlue,
     ...shadows.md,
   },
   dangerButton: {

@@ -316,7 +316,7 @@ export default function HomeScreen() {
       <View style={styles.container}>
         <SafeAreaView style={styles.containerInner}>
           <View style={styles.centerContent}>
-            <LoadingDots size={12} />
+            <LoadingDots color={colors.textSecondary} size={12} />
           </View>
         </SafeAreaView>
       </View>

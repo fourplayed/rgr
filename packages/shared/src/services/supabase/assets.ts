@@ -33,7 +33,6 @@ import {
 import { mapRowToMaintenanceRecord } from '../../types/entities/maintenanceRecord';
 import { mapRowToHazardAlert } from '../../types/entities/hazardAlert';
 import { mapRowToDepot } from '../../types/entities/depot';
-import { extractAssetInfo } from '../../utils/qrCode';
 
 // ── Join Result Types ──
 

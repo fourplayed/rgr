@@ -187,7 +187,7 @@ export default function AssetListScreen() {
 
       {(isLoading || isDepotsLoading) && !isRefetching ? (
         <View style={styles.centerContent}>
-          <LoadingDots size={12} />
+          <LoadingDots color={colors.textSecondary} size={12} />
         </View>
       ) : error ? (
         <View style={styles.centerContent}>

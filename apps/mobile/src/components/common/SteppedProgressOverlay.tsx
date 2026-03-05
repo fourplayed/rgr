@@ -182,7 +182,7 @@ function StepIcon({ status }: { status: StepStatus }) {
     case 'in_progress':
       return (
         <View style={styles.dotsContainer}>
-          <LoadingDots color={colors.electricBlue} size={5} />
+          <LoadingDots color={colors.textSecondary} size={5} />
         </View>
       );
     case 'failed':

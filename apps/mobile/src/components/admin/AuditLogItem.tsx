@@ -8,6 +8,11 @@ import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 
 type AuditAction = 'INSERT' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'LOGOUT';
 
+/** Runtime guard: true only for plain (non-array, non-null) objects. */
+function isPlainObject(v: unknown): v is Record<string, unknown> {
+  return v !== null && typeof v === 'object' && !Array.isArray(v);
+}
+
 /** Fields that may contain sensitive data — redact before display */
 const REDACTED_FIELDS = new Set([
   'password', 'password_hash', 'encrypted_password',
@@ -22,12 +27,10 @@ function redactSensitiveFields(obj: Record<string, unknown>): Record<string, unk
       result[key] = '[REDACTED]';
     } else if (Array.isArray(value)) {
       result[key] = value.map((item) =>
-        item !== null && typeof item === 'object'
-          ? redactSensitiveFields(item as Record<string, unknown>)
-          : item
+        isPlainObject(item) ? redactSensitiveFields(item) : item
       );
-    } else if (value !== null && typeof value === 'object') {
-      result[key] = redactSensitiveFields(value as Record<string, unknown>);
+    } else if (isPlainObject(value)) {
+      result[key] = redactSensitiveFields(value);
     } else {
       result[key] = value;
     }
@@ -112,7 +115,7 @@ function AuditLogItemInner({ item }: AuditLogItemProps) {
               <Text style={styles.detailLabel}>Old Values</Text>
               <View style={styles.jsonBox}>
                 <Text style={styles.jsonText}>
-                  {JSON.stringify(redactSensitiveFields(item.oldValues as Record<string, unknown>), null, 2)}
+                  {JSON.stringify(isPlainObject(item.oldValues) ? redactSensitiveFields(item.oldValues) : item.oldValues, null, 2)}
                 </Text>
               </View>
             </View>
@@ -122,7 +125,7 @@ function AuditLogItemInner({ item }: AuditLogItemProps) {
               <Text style={styles.detailLabel}>New Values</Text>
               <View style={styles.jsonBox}>
                 <Text style={styles.jsonText}>
-                  {JSON.stringify(redactSensitiveFields(item.newValues as Record<string, unknown>), null, 2)}
+                  {JSON.stringify(isPlainObject(item.newValues) ? redactSensitiveFields(item.newValues) : item.newValues, null, 2)}
                 </Text>
               </View>
             </View>

@@ -319,7 +319,7 @@ export default function AssetAdminScreen() {
         {/* Content */}
         {isLoading ? (
           <View style={styles.loadingContainer}>
-            <LoadingDots color={colors.electricBlue} size={12} />
+            <LoadingDots color={colors.textSecondary} size={12} />
           </View>
         ) : error ? (
           <View style={styles.centerContent}>

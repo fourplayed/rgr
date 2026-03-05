@@ -3,6 +3,7 @@ import * as Location from 'expo-location';
 import { findNearestLocation } from '@rgr/shared';
 import type { Depot } from '@rgr/shared';
 import { eventBus, AppEvents } from '../utils/eventBus';
+import { sanitizeNonNegative } from '../utils/location';
 import { useDebugLocationStore } from './debugLocationStore';
 
 // Configuration constants
@@ -107,9 +108,6 @@ export const useLocationStore = create<LocationState>((set, get) => ({
       const { coords } = locationResult;
 
       // Sanitize GPS values: expo-location returns -1 for heading/speed when unavailable
-      const sanitizeNonNegative = (val: number | null): number | null =>
-        val !== null && val >= 0 ? val : null;
-
       const cachedLocation: CachedLocationData = {
         latitude: coords.latitude,
         longitude: coords.longitude,

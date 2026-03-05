@@ -155,7 +155,7 @@ export default function AssetDetailScreen() {
       data: item.data,
       timestamp: new Date(item.timestampStr),
     })) as ActivityItem[];
-  }, [scans, maintenance, defectReports, photos]);
+  }, [scans, maintenance, defectReports, photos, defectLinkedMaintenanceIds]);
 
   // Compute next service date from scheduled maintenance
   const nextService = useMemo(
@@ -198,7 +198,7 @@ export default function AssetDetailScreen() {
       <View style={styles.container}>
       <SafeAreaView style={styles.containerInner}>
         <View style={styles.centerContent}>
-          <LoadingDots color={colors.electricBlue} size={12} />
+          <LoadingDots color={colors.textSecondary} size={12} />
         </View>
       </SafeAreaView>
       </View>
@@ -242,7 +242,7 @@ export default function AssetDetailScreen() {
         {activeTab === 'activity' && (
           <ScrollView contentContainerStyle={styles.tabScrollContent}>
             {scansLoading ? (
-              <LoadingDots color={colors.electricBlue} size={6} />
+              <LoadingDots color={colors.textSecondary} size={6} />
             ) : recentActivity.length === 0 ? (
               <View style={styles.emptyState}>
                 <View style={styles.emptyIconContainer}>

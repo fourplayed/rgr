@@ -1,5 +1,4 @@
 import { getSupabaseClient } from './client';
-import { isValidUUID } from '../../utils/constants';
 import type { ServiceResult } from '../../types';
 import type {
   MaintenanceRecord,
@@ -24,7 +23,8 @@ export interface ListMaintenanceParams {
   priority?: MaintenancePriority[];
   assetId?: string;
   limit?: number;
-  beforeId?: string; // Keyset pagination cursor
+  /** Composite cursor for keyset pagination — pass both values from the last item */
+  cursor?: { createdAt: string; id: string };
 }
 
 export interface MaintenanceStats {
@@ -79,7 +79,7 @@ function isValidTransition(from: MaintenanceStatus, to: MaintenanceStatus): bool
 export async function listMaintenance(
   params: ListMaintenanceParams = {}
 ): Promise<ServiceResult<{ data: MaintenanceListItem[]; hasMore: boolean }>> {
-  const { status, priority, assetId, limit = 20, beforeId } = params;
+  const { status, priority, assetId, limit = 20, cursor } = params;
 
   const supabase = getSupabaseClient();
 
@@ -109,24 +109,12 @@ export async function listMaintenance(
     query = query.eq('asset_id', assetId);
   }
 
-  // Keyset pagination: fetch records before the cursor using composite (created_at, id)
-  // to handle ties in created_at correctly
-  if (beforeId) {
-    if (!isValidUUID(beforeId)) {
-      return { success: true, data: { data: [], hasMore: false }, error: null };
-    }
-
-    const { data: cursorData } = await supabase
-      .from('maintenance_records')
-      .select('created_at')
-      .eq('id', beforeId)
-      .single();
-
-    if (cursorData?.created_at) {
-      query = query.or(
-        `created_at.lt.${cursorData.created_at},and(created_at.eq.${cursorData.created_at},id.lt.${beforeId})`
-      );
-    }
+  // Composite cursor keyset pagination — no extra lookup query needed.
+  // Handles ties in created_at by using id as a tiebreaker.
+  if (cursor) {
+    query = query.or(
+      `created_at.lt.${cursor.createdAt},and(created_at.eq.${cursor.createdAt},id.lt.${cursor.id})`
+    );
   }
 
   const { data, error } = await query;

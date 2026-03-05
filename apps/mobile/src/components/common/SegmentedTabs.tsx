@@ -31,12 +31,14 @@ export function SegmentedTabs<T extends string>({
 
   useEffect(() => {
     if (pillWidth === 0) return;
-    Animated.spring(translateX, {
+    const anim = Animated.spring(translateX, {
       toValue: activeIndex * pillWidth,
       friction: 8,
       tension: 80,
       useNativeDriver: true,
-    }).start();
+    });
+    anim.start();
+    return () => anim.stop();
   }, [activeIndex, pillWidth, translateX]);
 
   const handleLayout = (e: LayoutChangeEvent) => {

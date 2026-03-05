@@ -60,7 +60,7 @@ function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto }: PhotoGalle
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <LoadingDots size={8} />
+        <LoadingDots color={colors.textSecondary} size={8} />
       </View>
     );
   }

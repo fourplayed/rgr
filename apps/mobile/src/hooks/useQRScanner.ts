@@ -124,7 +124,9 @@ export function useQRScanner(
       try {
         await callback(data);
       } catch {
-        // If callback fails, reset the lock so user can retry (only if mounted)
+        // Error handling is done by the caller; lock is released in finally
+      } finally {
+        // Always release the lock after callback completes (success or failure)
         if (isMountedRef.current) {
           isProcessingRef.current = false;
           setIsProcessing(false);

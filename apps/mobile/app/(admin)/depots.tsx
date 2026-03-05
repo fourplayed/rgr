@@ -52,19 +52,15 @@ export default function DepotsScreen() {
   }, []);
 
   const handleFormSubmit = useCallback(
-    (input: CreateDepotInput | UpdateDepotInput) => {
+    async (input: CreateDepotInput | UpdateDepotInput) => {
       if (editingDepot) {
-        updateMutation.mutate(
+        await updateMutation.mutateAsync(
           { id: editingDepot.id, input: input as UpdateDepotInput },
-          {
-            onSuccess: () => setShowForm(false),
-          }
         );
       } else {
-        createMutation.mutate(input as CreateDepotInput, {
-          onSuccess: () => setShowForm(false),
-        });
+        await createMutation.mutateAsync(input as CreateDepotInput);
       }
+      setShowForm(false);
     },
     [editingDepot, updateMutation, createMutation]
   );
@@ -149,7 +145,7 @@ export default function DepotsScreen() {
 
         {isLoading ? (
           <View style={styles.loadingContainer}>
-            <LoadingDots color={colors.electricBlue} size={12} />
+            <LoadingDots color={colors.textSecondary} size={12} />
           </View>
         ) : error ? (
           <View style={styles.centerContent}>
