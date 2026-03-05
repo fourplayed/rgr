@@ -15,6 +15,8 @@ import { MaintenanceStatusBadge } from '../maintenance/MaintenanceStatusBadge';
 import { MaintenancePriorityBadge } from '../maintenance/MaintenancePriorityBadge';
 import { StatusBadge } from '../common/StatusBadge';
 import { LoadingDots } from '../common/LoadingDots';
+import { Button } from '../common/Button';
+import { DepotBadge } from '../common/DepotBadge';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
 import type { MatchedDepot } from '../../hooks/scan/useScanActionFlow';
@@ -113,12 +115,12 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
           <View style={styles.subtypeRow}>
             <Text style={styles.subtype}>{subtypeDisplay}</Text>
             {matchedDepot && depotBadgeColors ? (
-              <View style={[styles.depotBadge, { backgroundColor: depotBadgeColors.bg }]}>
-                <Ionicons name="location" size={12} color={depotBadgeColors.text} />
-                <Text style={[styles.depotBadgeText, { color: depotBadgeColors.text }]}>
-                  {matchedDepot.depot.name}
-                </Text>
-              </View>
+              <DepotBadge
+                label={matchedDepot.depot.name}
+                bgColor={depotBadgeColors.bg}
+                textColor={depotBadgeColors.text}
+                showIcon
+              />
             ) : null}
           </View>
         </View>
@@ -174,17 +176,14 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
         </View>
 
         {/* ── Done button ── */}
-        <TouchableOpacity
-          style={[styles.doneButton, disabled && styles.doneButtonDisabled]}
+        <Button
           onPress={props.onDonePress}
           disabled={disabled}
-          activeOpacity={0.8}
-          accessibilityRole="button"
+          style={styles.doneButton}
           accessibilityLabel="Done"
-          accessibilityHint="Double tap to finish and return to scanner"
         >
-          <Text style={styles.doneButtonText}>DONE</Text>
-        </TouchableOpacity>
+          DONE
+        </Button>
 
         {/* ── Undo link ── */}
         <TouchableOpacity
@@ -452,20 +451,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  depotBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: borderRadius.sm,
-  },
-  depotBadgeText: {
-    fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
-    textTransform: 'uppercase',
-  },
-
   // Context row
   contextCard: {
     flexDirection: 'row',
@@ -591,22 +576,7 @@ const styles = StyleSheet.create({
 
   // Done button
   doneButton: {
-    backgroundColor: colors.primary,
-    borderRadius: borderRadius.md,
-    paddingVertical: spacing.base,
-    alignItems: 'center',
-    justifyContent: 'center',
     marginTop: spacing.lg,
-  },
-  doneButtonDisabled: {
-    opacity: 0.5,
-  },
-  doneButtonText: {
-    fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
-    color: colors.textInverse,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
   },
 
   // Undo link

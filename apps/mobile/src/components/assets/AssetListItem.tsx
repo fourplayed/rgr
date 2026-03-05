@@ -4,7 +4,9 @@ import { Ionicons } from '@expo/vector-icons';
 import type { AssetWithRelations, AssetStatus } from '@rgr/shared';
 import { AssetStatusColors, AssetStatusLabels, getDepotBadgeColors, formatAssetNumber } from '@rgr/shared';
 import type { useDepotLookup } from '../../hooks/useDepots';
+import { DepotBadge } from '../common/DepotBadge';
 import { colors } from '../../theme/colors';
+import { cardStyles } from '../../theme/cardStyles';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 
 const ASSET_STATUS_ICONS: Record<AssetStatus, keyof typeof Ionicons.glyphMap> = {
@@ -36,7 +38,7 @@ function AssetListItemComponent({ asset, onPress, depotLookup }: AssetListItemPr
 
   return (
     <TouchableOpacity
-      style={[styles.container, { borderLeftColor: statusColor }]}
+      style={[cardStyles.container, { borderLeftColor: statusColor }]}
       onPress={() => onPress(asset)}
       activeOpacity={0.7}
       accessibilityRole="button"
@@ -60,11 +62,11 @@ function AssetListItemComponent({ asset, onPress, depotLookup }: AssetListItemPr
               {asset.subtype ? asset.subtype : asset.category === 'dolly' ? 'Dolly' : 'Trailer'}
             </Text>
             {asset.depotName && depotBadgeColors && (
-              <View style={[styles.depotBadge, { backgroundColor: depotBadgeColors.bg }]}>
-                <Text style={[styles.depotBadgeText, { color: depotBadgeColors.text }]}>
-                  {asset.depotName}
-                </Text>
-              </View>
+              <DepotBadge
+                label={asset.depotName}
+                bgColor={depotBadgeColors.bg}
+                textColor={depotBadgeColors.text}
+              />
             )}
           </View>
         </View>
@@ -85,15 +87,6 @@ export const AssetListItem = memo(
 );
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.background,
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderLeftWidth: 4,
-    marginBottom: spacing.sm,
-  },
   cardRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -127,16 +120,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     fontFamily: 'Lato_700Bold',
     color: colors.textInverse,
-    textTransform: 'uppercase',
-  },
-  depotBadge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: borderRadius.sm,
-  },
-  depotBadgeText: {
-    fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
     textTransform: 'uppercase',
   },
   footerRow: {

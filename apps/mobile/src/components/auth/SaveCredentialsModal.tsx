@@ -6,8 +6,9 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
+import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 
 interface SaveCredentialsModalProps {
   visible: boolean;
@@ -47,23 +48,22 @@ export function SaveCredentialsModal({
             </Text>
 
             <View style={styles.buttonRow}>
-              <TouchableOpacity
-                style={[styles.button, styles.skipButton]}
+              <Button
+                variant="secondary"
                 onPress={onSkip}
-                accessibilityRole="button"
+                flex
                 accessibilityLabel="Skip saving login credentials"
               >
-                <Text style={styles.skipButtonText}>Not Now</Text>
-              </TouchableOpacity>
+                Not Now
+              </Button>
 
-              <TouchableOpacity
-                style={[styles.button, styles.saveButton]}
+              <Button
                 onPress={onSave}
-                accessibilityRole="button"
+                flex
                 accessibilityLabel="Save login credentials"
               >
-                <Text style={styles.saveButtonText}>Save</Text>
-              </TouchableOpacity>
+                Save
+              </Button>
             </View>
           </View>
         </View>
@@ -104,6 +104,8 @@ const styles = StyleSheet.create({
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     marginBottom: spacing.md,
+    textAlign: 'center',
+    textTransform: 'uppercase',
   },
   description: {
     fontSize: fontSize.base,
@@ -115,33 +117,5 @@ const styles = StyleSheet.create({
   buttonRow: {
     flexDirection: 'row',
     gap: spacing.md,
-  },
-  button: {
-    flex: 1,
-    height: 48,
-    borderRadius: borderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  skipButton: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  skipButtonText: {
-    fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    textTransform: 'uppercase',
-  },
-  saveButton: {
-    backgroundColor: colors.primary,
-    ...shadows.md,
-  },
-  saveButtonText: {
-    fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
-    color: colors.textInverse,
-    textTransform: 'uppercase',
   },
 });

@@ -5,6 +5,7 @@ import { colors } from '../../theme/colors';
 import { spacing, fontSize } from '../../theme/spacing';
 import { BottomSheet } from './BottomSheet';
 import { Button } from './Button';
+import { IconCircle } from './IconCircle';
 
 export type AlertType = 'error' | 'warning' | 'info' | 'success';
 
@@ -37,12 +38,8 @@ export function AlertSheet({
   return (
     <BottomSheet visible={visible} onDismiss={onDismiss}>
       <View style={styles.content}>
-        <View style={[styles.iconContainer, { backgroundColor: config.color + '20' }]}>
-          <Ionicons
-            name={config.icon}
-            size={48}
-            color={config.color}
-          />
+        <View style={styles.iconWrapper}>
+          <IconCircle icon={config.icon} color={config.color} />
         </View>
 
         <Text style={styles.title}>{title}</Text>
@@ -65,12 +62,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     alignItems: 'center',
   },
-  iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
+  iconWrapper: {
     marginBottom: spacing.lg,
   },
   title: {

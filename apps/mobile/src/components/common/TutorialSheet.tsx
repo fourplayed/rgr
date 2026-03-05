@@ -5,6 +5,7 @@ import { colors } from '../../theme/colors';
 import { spacing, fontSize } from '../../theme/spacing';
 import { BottomSheet } from './BottomSheet';
 import { Button } from './Button';
+import { IconCircle } from './IconCircle';
 
 export interface TutorialSheetProps {
   visible: boolean;
@@ -28,12 +29,8 @@ export const TutorialSheet = React.memo(function TutorialSheet({
   return (
     <BottomSheet visible={visible} onDismiss={onDismiss}>
       <View style={styles.content}>
-        <View style={styles.iconContainer}>
-          <Ionicons
-            name={icon}
-            size={48}
-            color={colors.electricBlue}
-          />
+        <View style={styles.iconWrapper}>
+          <IconCircle icon={icon} color={colors.electricBlue} />
         </View>
 
         <Text style={styles.title}>{title}</Text>
@@ -67,13 +64,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     alignItems: 'center',
   },
-  iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.electricBlue + '20',
-    alignItems: 'center',
-    justifyContent: 'center',
+  iconWrapper: {
     marginBottom: spacing.lg,
   },
   title: {

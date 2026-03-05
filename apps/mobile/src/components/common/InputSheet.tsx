@@ -12,8 +12,7 @@ import {
 } from 'react-native';
 import type { KeyboardTypeOptions } from 'react-native';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
-import { LoadingDots } from './LoadingDots';
+import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 import { Button } from './Button';
 
 interface InputSheetProps {
@@ -119,19 +118,14 @@ export function InputSheet({
                   {cancelLabel}
                 </Button>
 
-                <TouchableOpacity
-                  style={[styles.submitButton]}
+                <Button
                   onPress={handleSubmit}
-                  disabled={isLoading}
-                  accessibilityRole="button"
+                  isLoading={isLoading}
+                  flex
                   accessibilityLabel={submitLabel}
                 >
-                  {isLoading ? (
-                    <LoadingDots color={colors.textInverse} size={8} />
-                  ) : (
-                    <Text style={styles.submitButtonText}>{submitLabel}</Text>
-                  )}
-                </TouchableOpacity>
+                  {submitLabel}
+                </Button>
               </View>
             </View>
           </View>
@@ -202,20 +196,5 @@ const styles = StyleSheet.create({
   buttonRow: {
     flexDirection: 'row',
     gap: spacing.md,
-  },
-  submitButton: {
-    flex: 1,
-    height: 48,
-    borderRadius: borderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary,
-    ...shadows.md,
-  },
-  submitButtonText: {
-    fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
-    color: colors.textInverse,
-    textTransform: 'uppercase',
   },
 });

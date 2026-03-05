@@ -1,5 +1,7 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, type ViewStyle, type StyleProp } from 'react-native';
+import { View, TouchableOpacity, Text, StyleSheet, type ViewStyle, type StyleProp } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { LoadingDots } from './LoadingDots';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
 
@@ -12,6 +14,10 @@ interface ButtonProps {
   /** Override background color (e.g. for dynamic confirm buttons) */
   color?: string;
   disabled?: boolean;
+  /** Show loading dots instead of children */
+  isLoading?: boolean;
+  /** Render an icon left of the label */
+  icon?: keyof typeof Ionicons.glyphMap;
   /** Fill available width when used in a flex row */
   flex?: boolean;
   style?: StyleProp<ViewStyle>;
@@ -24,6 +30,8 @@ export function Button({
   variant = 'primary',
   color,
   disabled = false,
+  isLoading = false,
+  icon,
   flex = false,
   style,
   accessibilityLabel,
@@ -31,6 +39,18 @@ export function Button({
   const variantStyle = variantStyles[variant];
   const textStyle = textStyles[variant];
   const bgOverride = color ? { backgroundColor: color } : undefined;
+  const isDisabled = disabled || isLoading;
+
+  const content = isLoading ? (
+    <LoadingDots color={textStyle.color} size={8} />
+  ) : icon ? (
+    <View style={styles.iconRow}>
+      <Ionicons name={icon} size={18} color={textStyle.color} />
+      <Text style={textStyle}>{children}</Text>
+    </View>
+  ) : (
+    <Text style={textStyle}>{children}</Text>
+  );
 
   return (
     <TouchableOpacity
@@ -39,16 +59,16 @@ export function Button({
         variantStyle,
         bgOverride,
         flex && styles.flex,
-        disabled && styles.disabled,
+        isDisabled && styles.disabled,
         style,
       ]}
       onPress={onPress}
-      disabled={disabled}
+      disabled={isDisabled}
       activeOpacity={0.8}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? children}
     >
-      <Text style={textStyle}>{children}</Text>
+      {content}
     </TouchableOpacity>
   );
 }
@@ -66,6 +86,11 @@ const styles = StyleSheet.create({
   },
   disabled: {
     opacity: 0.5,
+  },
+  iconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
   },
 });
 

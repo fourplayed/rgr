@@ -6,6 +6,7 @@ import type { AssetStatus } from '@rgr/shared';
 import { formatDate, AssetStatusColors, getDepotBadgeColors, formatAssetNumber } from '@rgr/shared';
 import { useDepotLookup } from '../../hooks/useDepots';
 import { StatusBadge } from '../common/StatusBadge';
+import { DepotBadge } from '../common/DepotBadge';
 import { CollapsibleSection } from '../common/CollapsibleSection';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
@@ -43,9 +44,11 @@ export function AssetInfoCard({ asset, nextServiceDate, assessment, onPress }: A
         <View style={styles.badgeColumn}>
           <StatusBadge status={asset.status} size="small" />
           {asset.depotName && (
-            <View style={[styles.depotBadge, { backgroundColor: depotColor }]}>
-              <Text style={[styles.depotText, { color: depotTextColor }]}>{asset.depotName}</Text>
-            </View>
+            <DepotBadge
+              label={asset.depotName}
+              bgColor={depotColor}
+              textColor={depotTextColor}
+            />
           )}
         </View>
       </View>
@@ -119,16 +122,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize['2xl'],
     fontFamily: 'Lato_700Bold',
     color: colors.text,
-    textTransform: 'uppercase',
-  },
-  depotBadge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: borderRadius.sm,
-  },
-  depotText: {
-    fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
     textTransform: 'uppercase',
   },
   infoGrid: {
