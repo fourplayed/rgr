@@ -15,7 +15,7 @@ import { useAuthStore } from '../../store/authStore';
 import { useLocationStore } from '../../store/locationStore';
 import type { CachedLocationData } from '../../store/locationStore';
 import type { Asset, Depot } from '@rgr/shared';
-import { getAssetByQRCode } from '@rgr/shared';
+import { getAssetByQRCode, listAssets } from '@rgr/shared';
 import { logger } from '../../utils/logger';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -228,9 +228,13 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
     [queryClient]
   );
 
-  // ── QR Scanner ──
-  const { handleBarCodeScanned, resetScanner } = useQRScanner(
-    async (qrData) => {
+  // Ref to break circular dep: processScan needs resetScanner, but
+  // resetScanner comes from useQRScanner which takes processScan.
+  const resetScannerRef = useRef<() => void>(() => {});
+
+  // ── Core scan processing (extracted so it can be called directly for debug) ──
+  const processScan = useCallback(
+    async (qrData: string) => {
       try {
         logger.scan(`QR code detected: ${qrData.substring(0, 30)}...`);
         dispatch({ type: 'QR_DETECTED', scanStatus: 'QR detected' });
@@ -249,7 +253,7 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
             message:
               'Please return to the home screen and ensure your location is resolved before scanning.',
           });
-          resetScanner();
+          resetScannerRef.current();
           return;
         }
 
@@ -279,7 +283,7 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
             title: 'Session Expired',
             message: 'Please log in again.',
           });
-          resetScanner();
+          resetScannerRef.current();
           return;
         }
 
@@ -328,10 +332,32 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
           title: 'Scan Failed',
           message,
         });
-        resetScanner();
+        resetScannerRef.current();
       }
-    }
+    },
+    [user, lookupAsset, createScan, updateAssetMutation, addDebugLog, setAlertSheet]
   );
+
+  // ── QR Scanner ──
+  const { handleBarCodeScanned, resetScanner } = useQRScanner(processScan);
+  resetScannerRef.current = resetScanner;
+
+  // ── Debug: trigger scan with first asset from DB ──
+  const triggerDebugScan = useCallback(async () => {
+    const result = await listAssets({ pageSize: 1 });
+    if (!result.success) {
+      logger.warn('Debug scan: failed to fetch assets');
+      return;
+    }
+    const asset = result.data.data[0];
+    if (!asset) {
+      logger.warn('Debug scan: no assets found');
+      return;
+    }
+    const qrCode = `rgr://asset/${asset.id}`;
+    resetScanner();
+    await processScan(qrCode);
+  }, [processScan, resetScanner]);
 
   // ── Action handlers ──
 
@@ -567,5 +593,6 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
 
     // Debug
     addDebugLog,
+    triggerDebugScan,
   };
 }

@@ -19,6 +19,8 @@ interface CameraOverlayProps {
   depotBadge: { label: string; bgColor: string; textColor: string } | null;
   /** User role badge config — null hides the badge */
   roleBadge: { label: string; color: string } | null;
+  /** __DEV__-only: triggers a scan using the first asset from the database */
+  onDebugScan?: () => void;
 }
 
 function CameraOverlayComponent({
@@ -27,6 +29,7 @@ function CameraOverlayComponent({
   scanStatus,
   depotBadge,
   roleBadge,
+  onDebugScan,
 }: CameraOverlayProps) {
   const topBarHeight = useRef(TOP_BAR_HEIGHT);
 
@@ -89,20 +92,32 @@ function CameraOverlayComponent({
         ) : null}
       </View>
 
-      {/* ── Footer: location prompt ── */}
-      {!hasLocationPermission ? (
+      {/* ── Footer: location prompt + debug scan ── */}
+      {(!hasLocationPermission || (__DEV__ && onDebugScan)) && (
         <View style={styles.footerTray}>
-          <TouchableOpacity
-            style={[styles.scannerButtonBase, styles.buttonPrimary]}
-            onPress={onRequestLocationPermission}
-            accessibilityRole="button"
-            accessibilityLabel="Enable location"
-            accessibilityHint="Double tap to grant location permission for scan tracking"
-          >
-            <Text style={[styles.scannerButtonText, styles.buttonPrimaryText]}>Enable Location</Text>
-          </TouchableOpacity>
+          {!hasLocationPermission && (
+            <TouchableOpacity
+              style={[styles.scannerButtonBase, styles.buttonPrimary]}
+              onPress={onRequestLocationPermission}
+              accessibilityRole="button"
+              accessibilityLabel="Enable location"
+              accessibilityHint="Double tap to grant location permission for scan tracking"
+            >
+              <Text style={[styles.scannerButtonText, styles.buttonPrimaryText]}>Enable Location</Text>
+            </TouchableOpacity>
+          )}
+          {__DEV__ && onDebugScan && (
+            <TouchableOpacity
+              style={[styles.scannerButtonBase, styles.buttonDefault, !hasLocationPermission && { marginTop: 8 }]}
+              onPress={onDebugScan}
+              accessibilityRole="button"
+              accessibilityLabel="Debug scan"
+            >
+              <Text style={[styles.scannerButtonText, styles.buttonDefaultText]}>Debug Scan</Text>
+            </TouchableOpacity>
+          )}
         </View>
-      ) : null}
+      )}
     </SafeAreaView>
   );
 }

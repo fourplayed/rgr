@@ -68,6 +68,7 @@ export default function ScanScreen() {
     handleDefectSubmit: flowDefectSubmit,
     alertSheet,
     setAlertSheet,
+    triggerDebugScan,
   } = flow;
 
   // ── Badge data for CameraOverlay (memoized for React.memo) ──
@@ -194,6 +195,7 @@ export default function ScanScreen() {
             scanStatus={scanStatus}
             depotBadge={depotBadge}
             roleBadge={roleBadge}
+            onDebugScan={__DEV__ ? triggerDebugScan : undefined}
           />
         </CameraView>
       )}
