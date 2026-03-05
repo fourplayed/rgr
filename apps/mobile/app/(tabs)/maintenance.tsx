@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import type {
   MaintenanceListItem as MaintenanceListItemType,
   DefectStatus,
   DefectReportListItem as DefectReportListItemType,
+  CreateMaintenanceInput,
 } from '@rgr/shared';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, borderRadius } from '../../src/theme/spacing';
@@ -33,7 +34,15 @@ import {
 } from '../../src/components/maintenance';
 import { useMaintenanceList } from '../../src/hooks/useMaintenanceData';
 import { useDefectReportList } from '../../src/hooks/useDefectData';
+import { useAcceptDefect } from '../../src/hooks/useAcceptDefect';
 import { useUserPermissions } from '../../src/contexts/UserPermissionsContext';
+
+type ModalState =
+  | { type: 'none' }
+  | { type: 'defectDetail'; defectId: string }
+  | { type: 'acceptDefect'; defectId: string; assetId: string; assetNumber?: string; title: string; description?: string | null }
+  | { type: 'maintenanceDetail'; maintenanceId: string }
+  | { type: 'createMaintenance' };
 
 // Segment tabs
 type TabKey = 'tasks' | 'defects';
@@ -61,10 +70,51 @@ export default function MaintenanceScreen() {
   const [defectStatuses, setDefectStatuses] = useState<DefectStatus[]>([]);
   const [defectFiltersExpanded, setDefectFiltersExpanded] = useState(false);
 
-  // Modal state
-  const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
-  const [selectedMaintenanceId, setSelectedMaintenanceId] = useState<string | null>(null);
-  const [selectedDefectId, setSelectedDefectId] = useState<string | null>(null);
+  // Modal state machine — only one modal visible at a time
+  const [modal, setModal] = useState<ModalState>({ type: 'none' });
+  const pendingTransition = useRef<ModalState | null>(null);
+
+  const close = useCallback(() => setModal({ type: 'none' }), []);
+
+  /** Close current modal, wait one frame for native unmount, then open next. */
+  const transitionTo = useCallback((next: ModalState) => {
+    pendingTransition.current = next;
+    setModal({ type: 'none' });
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (pendingTransition.current) {
+          setModal(pendingTransition.current);
+          pendingTransition.current = null;
+        }
+      });
+    });
+  }, []);
+
+  // Accept defect hook (moved up from DefectReportDetailModal)
+  const { mutateAsync: acceptDefect } = useAcceptDefect();
+
+  const handleAcceptPress = useCallback((context: {
+    defectId: string;
+    assetId: string;
+    assetNumber?: string;
+    title: string;
+    description?: string | null;
+  }) => {
+    transitionTo({ type: 'acceptDefect', ...context });
+  }, [transitionTo]);
+
+  const handleViewTaskPress = useCallback((maintenanceId: string) => {
+    transitionTo({ type: 'maintenanceDetail', maintenanceId });
+  }, [transitionTo]);
+
+  const handleAcceptSubmit = useCallback(async (input: CreateMaintenanceInput) => {
+    if (modal.type !== 'acceptDefect') return;
+    await acceptDefect({
+      defectReportId: modal.defectId,
+      maintenanceInput: input,
+    });
+    close();
+  }, [modal, acceptDefect, close]);
 
   // Fetch maintenance list with filters
   const maintenanceFilters = useMemo(() => ({
@@ -117,27 +167,15 @@ export default function MaintenanceScreen() {
   }, []);
 
   const handleMaintenancePress = useCallback((item: MaintenanceListItemType) => {
-    setSelectedMaintenanceId(item.id);
+    setModal({ type: 'maintenanceDetail', maintenanceId: item.id });
   }, []);
 
   const handleDefectPress = useCallback((item: DefectReportListItemType) => {
-    setSelectedDefectId(item.id);
-  }, []);
-
-  const handleCloseMaintenanceDetail = useCallback(() => {
-    setSelectedMaintenanceId(null);
-  }, []);
-
-  const handleCloseDefectDetail = useCallback(() => {
-    setSelectedDefectId(null);
+    setModal({ type: 'defectDetail', defectId: item.id });
   }, []);
 
   const handleOpenCreate = useCallback(() => {
-    setIsCreateModalVisible(true);
-  }, []);
-
-  const handleCloseCreate = useCallback(() => {
-    setIsCreateModalVisible(false);
+    setModal({ type: 'createMaintenance' });
   }, []);
 
   // Maintenance list renderers
@@ -311,22 +349,33 @@ export default function MaintenanceScreen() {
           />
         )}
 
-        {/* Modals */}
+        {/* Modals — flat siblings, never nested */}
+        <DefectReportDetailModal
+          visible={modal.type === 'defectDetail'}
+          defectId={modal.type === 'defectDetail' ? modal.defectId : null}
+          onClose={close}
+          onAcceptPress={handleAcceptPress}
+          onViewTaskPress={handleViewTaskPress}
+        />
+
         <CreateMaintenanceModal
-          visible={isCreateModalVisible}
-          onClose={handleCloseCreate}
+          visible={modal.type === 'acceptDefect' || modal.type === 'createMaintenance'}
+          onClose={close}
+          {...(modal.type === 'acceptDefect' ? {
+            assetId: modal.assetId,
+            assetNumber: modal.assetNumber,
+            defectReportId: modal.defectId,
+            defaultTitle: modal.title,
+            defaultDescription: modal.description ?? undefined,
+            defaultPriority: 'high' as const,
+            onExternalSubmit: handleAcceptSubmit,
+          } : {})}
         />
 
         <MaintenanceDetailModal
-          visible={selectedMaintenanceId !== null}
-          maintenanceId={selectedMaintenanceId}
-          onClose={handleCloseMaintenanceDetail}
-        />
-
-        <DefectReportDetailModal
-          visible={selectedDefectId !== null}
-          defectId={selectedDefectId}
-          onClose={handleCloseDefectDetail}
+          visible={modal.type === 'maintenanceDetail'}
+          maintenanceId={modal.type === 'maintenanceDetail' ? modal.maintenanceId : null}
+          onClose={close}
         />
       </SafeAreaView>
     </View>

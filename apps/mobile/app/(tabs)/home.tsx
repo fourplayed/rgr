@@ -18,7 +18,7 @@ import { useRecentDefectReports } from '../../src/hooks/useDefectData';
 import { useAuthStore } from '../../src/store/authStore';
 import { useLocationStore } from '../../src/store/locationStore';
 import { formatRelativeTime, UserRoleLabels, formatAssetNumber } from '@rgr/shared';
-import type { ScanEventWithScanner, MaintenanceListItem as MaintenanceListItemData, DefectReportListItem as DefectReportListItemData } from '@rgr/shared';
+import type { ScanEventWithScanner, MaintenanceListItem as MaintenanceListItemData, DefectReportListItem as DefectReportListItemData, CreateMaintenanceInput } from '@rgr/shared';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, borderRadius } from '../../src/theme/spacing';
 import { CONTENT_TOP_OFFSET } from '../../src/theme/layout';
@@ -27,6 +27,7 @@ import { RefreshLoadingDots } from '../../src/components/common/RefreshLoadingDo
 import {
   MaintenanceStatusBadge,
   MaintenanceDetailModal,
+  CreateMaintenanceModal,
   DefectStatusBadge,
   DefectReportDetailModal,
   DEFECT_STATUS_CONFIG,
@@ -39,6 +40,13 @@ import {
 } from '../../src/utils/scanFormatters';
 import { findDepotByLocationString, getDepotBadgeColors } from '@rgr/shared';
 import { useDepotLookup } from '../../src/hooks/useDepots';
+import { useAcceptDefect } from '../../src/hooks/useAcceptDefect';
+
+type HomeModalState =
+  | { type: 'none' }
+  | { type: 'defectDetail'; defectId: string }
+  | { type: 'acceptDefect'; defectId: string; assetId: string; assetNumber?: string; title: string; description?: string | null }
+  | { type: 'maintenanceDetail'; maintenanceId: string };
 
 type DashboardActivityItem =
   | { type: 'scan'; data: ScanEventWithScanner; timestamp: string }
@@ -53,8 +61,49 @@ export default function HomeScreen() {
   const isFocused = useIsFocused();
   const { depots } = useDepotLookup();
 
-  const [selectedMaintenanceId, setSelectedMaintenanceId] = useState<string | null>(null);
-  const [selectedDefectId, setSelectedDefectId] = useState<string | null>(null);
+  // Modal state machine — only one modal visible at a time
+  const [modal, setModal] = useState<HomeModalState>({ type: 'none' });
+  const pendingTransition = useRef<HomeModalState | null>(null);
+
+  const closeModal = useCallback(() => setModal({ type: 'none' }), []);
+
+  const transitionTo = useCallback((next: HomeModalState) => {
+    pendingTransition.current = next;
+    setModal({ type: 'none' });
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (pendingTransition.current) {
+          setModal(pendingTransition.current);
+          pendingTransition.current = null;
+        }
+      });
+    });
+  }, []);
+
+  const { mutateAsync: acceptDefect } = useAcceptDefect();
+
+  const handleAcceptPress = useCallback((context: {
+    defectId: string;
+    assetId: string;
+    assetNumber?: string;
+    title: string;
+    description?: string | null;
+  }) => {
+    transitionTo({ type: 'acceptDefect', ...context });
+  }, [transitionTo]);
+
+  const handleViewTaskPress = useCallback((maintenanceId: string) => {
+    transitionTo({ type: 'maintenanceDetail', maintenanceId });
+  }, [transitionTo]);
+
+  const handleAcceptSubmit = useCallback(async (input: CreateMaintenanceInput) => {
+    if (modal.type !== 'acceptDefect') return;
+    await acceptDefect({
+      defectReportId: modal.defectId,
+      maintenanceInput: input,
+    });
+    closeModal();
+  }, [modal, acceptDefect, closeModal]);
 
   // Recent scans across all users (global activity)
   const {
@@ -238,7 +287,7 @@ export default function HomeScreen() {
       return (
         <TouchableOpacity
           style={[styles.scanCard, { borderLeftColor: defectConfig.color }]}
-          onPress={() => setSelectedDefectId(item.data.id)}
+          onPress={() => setModal({ type: 'defectDetail', defectId: item.data.id })}
           activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel={`Defect report: ${item.data.title}`}
@@ -274,7 +323,7 @@ export default function HomeScreen() {
     return (
       <TouchableOpacity
         style={[styles.scanCard, { borderLeftColor: maintConfig.color }]}
-        onPress={() => setSelectedMaintenanceId(item.data.id)}
+        onPress={() => setModal({ type: 'maintenanceDetail', maintenanceId: item.data.id })}
         activeOpacity={0.7}
         accessibilityRole="button"
         accessibilityLabel={`Maintenance ${item.data.title}, status ${item.data.status}`}
@@ -411,18 +460,33 @@ export default function HomeScreen() {
           }
         />
 
-        {/* Maintenance Detail Modal */}
-        <MaintenanceDetailModal
-          visible={selectedMaintenanceId !== null}
-          maintenanceId={selectedMaintenanceId}
-          onClose={() => setSelectedMaintenanceId(null)}
+        {/* Defect / Maintenance modals — flat siblings, never nested */}
+        <DefectReportDetailModal
+          visible={modal.type === 'defectDetail'}
+          defectId={modal.type === 'defectDetail' ? modal.defectId : null}
+          onClose={closeModal}
+          onAcceptPress={handleAcceptPress}
+          onViewTaskPress={handleViewTaskPress}
         />
 
-        {/* Defect Report Detail Modal */}
-        <DefectReportDetailModal
-          visible={selectedDefectId !== null}
-          defectId={selectedDefectId}
-          onClose={() => setSelectedDefectId(null)}
+        <CreateMaintenanceModal
+          visible={modal.type === 'acceptDefect'}
+          onClose={closeModal}
+          {...(modal.type === 'acceptDefect' ? {
+            assetId: modal.assetId,
+            assetNumber: modal.assetNumber,
+            defectReportId: modal.defectId,
+            defaultTitle: modal.title,
+            defaultDescription: modal.description ?? undefined,
+            defaultPriority: 'high' as const,
+            onExternalSubmit: handleAcceptSubmit,
+          } : {})}
+        />
+
+        <MaintenanceDetailModal
+          visible={modal.type === 'maintenanceDetail'}
+          maintenanceId={modal.type === 'maintenanceDetail' ? modal.maintenanceId : null}
+          onClose={closeModal}
         />
       </SafeAreaView>
     </View>

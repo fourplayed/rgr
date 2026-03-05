@@ -104,7 +104,9 @@ export function CreateMaintenanceModal({
           onCreated(record.id);
         }
       }
-      onClose();
+      if (!onExternalSubmit) {
+        onClose();
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create maintenance record');
     }

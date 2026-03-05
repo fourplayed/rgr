@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,7 @@ import QRCode from 'react-native-qrcode-svg';
 import { useAsset, useAssetScans, useAssetMaintenance } from '../../../src/hooks/useAssetData';
 import { useAssetPhotos } from '../../../src/hooks/usePhotos';
 import { useAssetDefectReports } from '../../../src/hooks/useDefectData';
-import type { ScanEventWithScanner, MaintenanceRecord, MaintenanceRecordWithNames, PhotoListItem, DefectReportListItem } from '@rgr/shared';
+import type { ScanEventWithScanner, MaintenanceRecord, MaintenanceRecordWithNames, PhotoListItem, DefectReportListItem, CreateMaintenanceInput } from '@rgr/shared';
 import { AssetInfoCard } from '../../../src/components/assets/AssetInfoCard';
 import { buildAssetAssessment } from '../../../src/utils/assetAssessment';
 import { SegmentedTabs } from '../../../src/components/common/SegmentedTabs';
@@ -24,6 +24,7 @@ import {
   MaintenanceStatusBadge,
   MaintenancePriorityBadge,
   MaintenanceDetailModal,
+  CreateMaintenanceModal,
   DefectStatusBadge,
   DefectReportDetailModal,
   getMaintenanceVisualConfig,
@@ -41,6 +42,13 @@ import {
 } from '../../../src/utils/scanFormatters';
 import { findDepotByLocationString, getDepotBadgeColors } from '@rgr/shared';
 import { useDepotLookup } from '../../../src/hooks/useDepots';
+import { useAcceptDefect } from '../../../src/hooks/useAcceptDefect';
+
+type AssetModalState =
+  | { type: 'none' }
+  | { type: 'defectDetail'; defectId: string }
+  | { type: 'acceptDefect'; defectId: string; assetId: string; assetNumber?: string; title: string; description?: string | null }
+  | { type: 'maintenanceDetail'; maintenanceId: string };
 
 type ActivityItem =
   | { type: 'scan'; data: ScanEventWithScanner; timestamp: Date }
@@ -66,8 +74,50 @@ export default function AssetDetailScreen() {
   const [showQRModal, setShowQRModal] = useState(false);
   const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
   const [showPhotoDetail, setShowPhotoDetail] = useState(false);
-  const [selectedMaintenanceId, setSelectedMaintenanceId] = useState<string | null>(null);
-  const [selectedDefectId, setSelectedDefectId] = useState<string | null>(null);
+
+  // Modal state machine for defect/maintenance flow — only one at a time
+  const [modal, setModal] = useState<AssetModalState>({ type: 'none' });
+  const pendingTransition = useRef<AssetModalState | null>(null);
+
+  const closeModal = useCallback(() => setModal({ type: 'none' }), []);
+
+  const transitionTo = useCallback((next: AssetModalState) => {
+    pendingTransition.current = next;
+    setModal({ type: 'none' });
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (pendingTransition.current) {
+          setModal(pendingTransition.current);
+          pendingTransition.current = null;
+        }
+      });
+    });
+  }, []);
+
+  const { mutateAsync: acceptDefect } = useAcceptDefect();
+
+  const handleAcceptPress = useCallback((context: {
+    defectId: string;
+    assetId: string;
+    assetNumber?: string;
+    title: string;
+    description?: string | null;
+  }) => {
+    transitionTo({ type: 'acceptDefect', ...context });
+  }, [transitionTo]);
+
+  const handleViewTaskPress = useCallback((maintenanceId: string) => {
+    transitionTo({ type: 'maintenanceDetail', maintenanceId });
+  }, [transitionTo]);
+
+  const handleAcceptSubmit = useCallback(async (input: CreateMaintenanceInput) => {
+    if (modal.type !== 'acceptDefect') return;
+    await acceptDefect({
+      defectReportId: modal.defectId,
+      maintenanceInput: input,
+    });
+    closeModal();
+  }, [modal, acceptDefect, closeModal]);
 
   const isSuperuser = !!user?.role && hasRoleLevel(user.role, UserRole.SUPERUSER);
   const { depots } = useDepotLookup();
@@ -83,11 +133,7 @@ export default function AssetDetailScreen() {
   }, []);
 
   const handleMaintenancePress = useCallback((item: MaintenanceRecord) => {
-    setSelectedMaintenanceId(item.id);
-  }, []);
-
-  const handleCloseMaintenanceDetail = useCallback(() => {
-    setSelectedMaintenanceId(null);
+    setModal({ type: 'maintenanceDetail', maintenanceId: item.id });
   }, []);
 
   const {
@@ -366,7 +412,7 @@ export default function AssetDetailScreen() {
                   return (
                     <TouchableOpacity
                       key={`d-${item.data.id}`}
-                      onPress={() => setSelectedDefectId(item.data.id)}
+                      onPress={() => setModal({ type: 'defectDetail', defectId: item.data.id })}
                       activeOpacity={0.7}
                       accessibilityRole="button"
                       accessibilityLabel={`Defect report: ${item.data.title}`}
@@ -492,18 +538,33 @@ export default function AssetDetailScreen() {
         onClose={handleClosePhotoDetail}
       />
 
-      {/* Maintenance Detail Modal */}
-      <MaintenanceDetailModal
-        visible={selectedMaintenanceId !== null}
-        maintenanceId={selectedMaintenanceId}
-        onClose={handleCloseMaintenanceDetail}
+      {/* Defect / Maintenance modals — flat siblings, never nested */}
+      <DefectReportDetailModal
+        visible={modal.type === 'defectDetail'}
+        defectId={modal.type === 'defectDetail' ? modal.defectId : null}
+        onClose={closeModal}
+        onAcceptPress={handleAcceptPress}
+        onViewTaskPress={handleViewTaskPress}
       />
 
-      {/* Defect Report Detail Modal */}
-      <DefectReportDetailModal
-        visible={selectedDefectId !== null}
-        defectId={selectedDefectId}
-        onClose={() => setSelectedDefectId(null)}
+      <CreateMaintenanceModal
+        visible={modal.type === 'acceptDefect'}
+        onClose={closeModal}
+        {...(modal.type === 'acceptDefect' ? {
+          assetId: modal.assetId,
+          assetNumber: modal.assetNumber,
+          defectReportId: modal.defectId,
+          defaultTitle: modal.title,
+          defaultDescription: modal.description ?? undefined,
+          defaultPriority: 'high' as const,
+          onExternalSubmit: handleAcceptSubmit,
+        } : {})}
+      />
+
+      <MaintenanceDetailModal
+        visible={modal.type === 'maintenanceDetail'}
+        maintenanceId={modal.type === 'maintenanceDetail' ? modal.maintenanceId : null}
+        onClose={closeModal}
       />
     </SafeAreaView>
     </View>

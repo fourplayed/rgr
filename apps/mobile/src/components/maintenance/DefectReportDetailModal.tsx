@@ -15,15 +15,11 @@ import { formatRelativeTime, formatAssetNumber } from '@rgr/shared';
 import { LoadingDots, AlertSheet, InputSheet } from '../common';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
-import type { CreateMaintenanceInput } from '@rgr/shared';
 import { useDefectReport, useUpdateDefectReportStatus } from '../../hooks/useDefectData';
 import { useAsset } from '../../hooks/useAssetData';
 import { useMaintenance } from '../../hooks/useMaintenanceData';
 import { useScanEventPhotos, useSignedUrl } from '../../hooks/usePhotos';
-import { useAcceptDefect } from '../../hooks/useAcceptDefect';
 import { useUserPermissions } from '../../contexts/UserPermissionsContext';
-import { CreateMaintenanceModal } from './CreateMaintenanceModal';
-import { MaintenanceDetailModal } from './MaintenanceDetailModal';
 
 interface DefectReportDetailModalProps {
   visible: boolean;
@@ -31,6 +27,16 @@ interface DefectReportDetailModalProps {
   onClose: () => void;
   /** 'compact' hides timeline, defect photo, linked task, notes, and asset nav link. Default 'full'. */
   variant?: 'full' | 'compact';
+  /** Called when mechanic taps Accept — parent opens CreateMaintenanceModal. */
+  onAcceptPress?: (context: {
+    defectId: string;
+    assetId: string;
+    assetNumber?: string;
+    title: string;
+    description?: string | null;
+  }) => void;
+  /** Called when user taps "View Task" on a linked maintenance record. */
+  onViewTaskPress?: (maintenanceId: string) => void;
 }
 
 export function DefectReportDetailModal({
@@ -38,6 +44,8 @@ export function DefectReportDetailModal({
   defectId,
   onClose,
   variant = 'full',
+  onAcceptPress,
+  onViewTaskPress,
 }: DefectReportDetailModalProps) {
   const router = useRouter();
   const { canMarkMaintenance } = useUserPermissions();
@@ -46,8 +54,6 @@ export function DefectReportDetailModal({
   const { data: linkedMaintenance } = useMaintenance(defect?.maintenanceRecordId ?? null);
   const updateStatusMutation = useUpdateDefectReportStatus();
   const { mutateAsync: updateDefectStatus } = updateStatusMutation;
-  const acceptDefectMutation = useAcceptDefect();
-  const { mutateAsync: acceptDefect } = acceptDefectMutation;
 
   // Defect photo data
   const { data: scanEventPhotos } = useScanEventPhotos(defect?.scanEventId ?? null);
@@ -58,15 +64,8 @@ export function DefectReportDetailModal({
     error: photoError,
   } = useSignedUrl(defectPhoto?.thumbnailPath ?? defectPhoto?.storagePath ?? undefined);
 
-  // Accept flow: show CreateMaintenanceModal pre-filled
-  const [showCreateModal, setShowCreateModal] = useState(false);
-
-  // View linked maintenance task
-  const [showMaintenanceDetail, setShowMaintenanceDetail] = useState(false);
-
   // Dismiss flow
   const [showDismissConfirm, setShowDismissConfirm] = useState(false);
-  // dismissReason is now collected inline by InputSheet
 
   // Alert sheet
   const [alertSheet, setAlertSheet] = useState<{
@@ -76,31 +75,22 @@ export function DefectReportDetailModal({
   }>({ visible: false, title: '', message: '' });
 
   const handleAccept = useCallback(() => {
-    setShowCreateModal(true);
-  }, []);
+    if (!defect || !onAcceptPress) return;
+    onAcceptPress({
+      defectId: defect.id,
+      assetId: defect.assetId,
+      ...(asset?.assetNumber ? { assetNumber: asset.assetNumber } : {}),
+      title: defect.title,
+      description: defect.description,
+    });
+    onClose();
+  }, [defect, asset, onAcceptPress, onClose]);
 
-  /** Atomic accept: CreateMaintenanceModal collects form data, we handle both
-   *  operations in a single server-side transaction via useAcceptDefect. */
-  const handleAcceptSubmit = useCallback(async (maintenanceInput: CreateMaintenanceInput) => {
-    if (!defectId) return;
-
-    try {
-      await acceptDefect({
-        defectReportId: defectId,
-        maintenanceInput,
-      });
-    } catch (err) {
-      setAlertSheet({
-        visible: true,
-        title: 'Error',
-        message: err instanceof Error ? err.message : 'Failed to accept defect',
-      });
-    }
-  }, [defectId, acceptDefect]);
-
-  const handleMaintenanceModalClose = useCallback(() => {
-    setShowCreateModal(false);
-  }, []);
+  const handleViewLinkedTask = useCallback(() => {
+    if (!defect?.maintenanceRecordId || !onViewTaskPress) return;
+    onViewTaskPress(defect.maintenanceRecordId);
+    onClose();
+  }, [defect, onViewTaskPress, onClose]);
 
   const handleDismiss = useCallback(() => {
     setShowDismissConfirm(true);
@@ -135,10 +125,6 @@ export function DefectReportDetailModal({
     }
   }, [defect, router, onClose]);
 
-  const handleViewLinkedTask = useCallback(() => {
-    setShowMaintenanceDetail(true);
-  }, []);
-
   const renderStatusActions = () => {
     if (!defect || !canMarkMaintenance) return null;
 
@@ -151,7 +137,7 @@ export function DefectReportDetailModal({
             <TouchableOpacity
               style={[styles.actionButton, styles.primaryButton]}
               onPress={handleAccept}
-              disabled={updateStatusMutation.isPending || acceptDefectMutation.isPending}
+              disabled={!onAcceptPress || updateStatusMutation.isPending}
             >
               <Text style={styles.primaryButtonText}>Accept</Text>
             </TouchableOpacity>
@@ -384,28 +370,6 @@ export function DefectReportDetailModal({
           )}
         </View>
       </View>
-
-      {/* Create Maintenance Modal for Accept flow */}
-      {defect && (
-        <CreateMaintenanceModal
-          visible={showCreateModal}
-          onClose={handleMaintenanceModalClose}
-          assetId={defect.assetId}
-          {...(asset?.assetNumber ? { assetNumber: asset.assetNumber } : {})}
-          defectReportId={defect.id}
-          defaultTitle={defect.title}
-          {...(defect.description ? { defaultDescription: defect.description } : {})}
-          defaultPriority="high"
-          onExternalSubmit={handleAcceptSubmit}
-        />
-      )}
-
-      {/* Linked Maintenance Task Detail */}
-      <MaintenanceDetailModal
-        visible={showMaintenanceDetail}
-        maintenanceId={defect?.maintenanceRecordId ?? null}
-        onClose={() => setShowMaintenanceDetail(false)}
-      />
 
       {/* Dismiss with Reason */}
       <InputSheet
