@@ -152,7 +152,7 @@ export function MaintenanceDetailModal({
 
     return (
       <View style={styles.actionsContainer}>
-        {canMarkMaintenance && status === 'scheduled' && (
+        {canMarkMaintenance && (status === 'scheduled' || status === 'in_progress') && (
           <>
             <TouchableOpacity
               style={[styles.actionButton, styles.successButton]}

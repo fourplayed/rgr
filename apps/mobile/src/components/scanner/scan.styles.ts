@@ -228,4 +228,10 @@ export const styles = StyleSheet.create({
     color: colors.textInverse,
     textTransform: 'uppercase',
   },
+
+  // ── Slide-in panel overlay ──────────────────────────────
+  slidePanel: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: colors.background,
+  },
 });

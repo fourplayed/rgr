@@ -26,6 +26,7 @@ export const colors = {
   // Maintenance status (keys match MaintenanceStatus enum values)
   maintenanceStatus: {
     scheduled: '#F59E0B',
+    in_progress: '#3B82F6',
     completed: '#22C55E',
     cancelled: '#6B7280',
   } satisfies Record<string, string>,

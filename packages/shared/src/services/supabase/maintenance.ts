@@ -30,6 +30,7 @@ export interface ListMaintenanceParams {
 export interface MaintenanceStats {
   total: number;
   scheduled: number;
+  inProgress: number;
   completed: number;
   cancelled: number;
   overdue: number;
@@ -61,7 +62,8 @@ export interface MaintenanceListItem {
 // ── Status Transition Validation ──
 
 const VALID_TRANSITIONS: Record<MaintenanceStatus, MaintenanceStatus[]> = {
-  scheduled: ['completed', 'cancelled'],
+  scheduled: ['in_progress', 'completed', 'cancelled'],
+  in_progress: ['completed', 'cancelled'],
   completed: [],
   cancelled: [],
 };
@@ -274,7 +276,7 @@ export async function updateMaintenanceStatus(
   // Build update payload with auto-timestamps
   const updates: { status: MaintenanceStatus; completed_at?: string } = { status: newStatus };
 
-  if (newStatus === 'completed' && currentStatus === 'scheduled') {
+  if (newStatus === 'completed' && (currentStatus === 'scheduled' || currentStatus === 'in_progress')) {
     updates.completed_at = new Date().toISOString();
   }
 
@@ -345,17 +347,18 @@ export async function getMaintenanceStats(): Promise<ServiceResult<MaintenanceSt
     return { success: false, data: null, error: `Failed to fetch maintenance stats: ${error.message}` };
   }
 
-  // RPC returns JSON object directly
-  const stats = data as MaintenanceStats;
+  // RPC returns JSON with snake_case keys — use bracket access for index signature
+  const stats = data as Record<string, number>;
 
   return {
     success: true,
     data: {
-      total: stats.total ?? 0,
-      scheduled: stats.scheduled ?? 0,
-      completed: stats.completed ?? 0,
-      cancelled: stats.cancelled ?? 0,
-      overdue: stats.overdue ?? 0,
+      total: stats['total'] ?? 0,
+      scheduled: stats['scheduled'] ?? 0,
+      inProgress: stats['in_progress'] ?? 0,
+      completed: stats['completed'] ?? 0,
+      cancelled: stats['cancelled'] ?? 0,
+      overdue: stats['overdue'] ?? 0,
     },
     error: null,
   };

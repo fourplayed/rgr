@@ -34,6 +34,8 @@ interface CreateMaintenanceModalProps {
   /** When provided, the modal collects form data but delegates creation to this callback.
    *  Used by the atomic accept-defect flow to wrap both operations in a transaction. */
   onExternalSubmit?: (input: CreateMaintenanceInput) => Promise<void>;
+  /** Show "Begin Immediately" toggle to create task as in_progress */
+  showBeginOption?: boolean;
 }
 
 const PRIORITY_ORDER: MaintenancePriority[] = ['low', 'medium', 'high', 'critical'];
@@ -49,6 +51,7 @@ export function CreateMaintenanceModal({
   defaultPriority,
   onCreated,
   onExternalSubmit,
+  showBeginOption,
 }: CreateMaintenanceModalProps) {
   const user = useAuthStore(s => s.user);
   const { mutateAsync: createMaintenanceAsync, isPending } = useCreateMaintenance();
@@ -59,6 +62,7 @@ export function CreateMaintenanceModal({
   const [priority, setPriority] = useState<MaintenancePriority>('medium');
   const [dueDate, setDueDate] = useState('');
   const [notes, setNotes] = useState('');
+  const [beginImmediately, setBeginImmediately] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Reset form when modal opens, pre-filling from defect context if provided
@@ -69,6 +73,7 @@ export function CreateMaintenanceModal({
       setPriority(defaultPriority ?? 'medium');
       setDueDate('');
       setNotes('');
+      setBeginImmediately(false);
       setError(null);
     }
   }, [visible, defaultTitle, defaultDescription, defaultPriority]);
@@ -91,7 +96,7 @@ export function CreateMaintenanceModal({
       title: title.trim(),
       description: description.trim() || null,
       priority,
-      status: 'scheduled',
+      status: beginImmediately ? 'in_progress' : 'scheduled',
       reportedBy: user?.id || null,
       dueDate: dueDate.trim() || null,
       notes: notes.trim() || null,
@@ -112,7 +117,7 @@ export function CreateMaintenanceModal({
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to create maintenance record');
     }
-  }), [guard, title, description, priority, dueDate, notes, assetId, user, createMaintenanceAsync, onClose, onCreated, onExternalSubmit]);
+  }), [guard, title, description, priority, dueDate, notes, beginImmediately, assetId, user, createMaintenanceAsync, onClose, onCreated, onExternalSubmit]);
 
   const isLoading = isPending;
 
@@ -300,6 +305,30 @@ export function CreateMaintenanceModal({
               />
             </View>
 
+            {/* Begin Immediately toggle */}
+            {showBeginOption && (
+              <TouchableOpacity
+                style={styles.beginToggle}
+                onPress={() => setBeginImmediately(prev => !prev)}
+                activeOpacity={0.7}
+                accessibilityRole="switch"
+                accessibilityLabel="Begin task immediately"
+                accessibilityState={{ checked: beginImmediately }}
+              >
+                <Ionicons
+                  name={beginImmediately ? 'play-circle' : 'play-circle-outline'}
+                  size={22}
+                  color={beginImmediately ? colors.info : colors.textSecondary}
+                />
+                <Text style={[
+                  styles.beginToggleText,
+                  beginImmediately && styles.beginToggleTextActive,
+                ]}>
+                  Begin Immediately
+                </Text>
+              </TouchableOpacity>
+            )}
+
             {error && <Text style={styles.errorText}>{error}</Text>}
 
             <View style={styles.buttonRow}>
@@ -485,5 +514,22 @@ const styles = StyleSheet.create({
     fontFamily: 'Lato_400Regular',
     color: colors.text,
     marginTop: spacing.sm,
+  },
+  beginToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  beginToggleText: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_700Bold',
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  beginToggleTextActive: {
+    color: colors.info,
   },
 });

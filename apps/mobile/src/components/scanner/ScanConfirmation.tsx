@@ -88,21 +88,35 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ContentWrapper {...contentWrapperProps}>
-        {/* ── Status header ── */}
-        <View style={styles.statusHeader}>
+      {/* ── Panel header: back chevron + centered title ── */}
+      <View style={styles.panelHeader}>
+        <TouchableOpacity
+          style={styles.panelBackButton}
+          onPress={props.onDonePress}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
+          <Ionicons name="chevron-back" size={28} color={colors.text} />
+        </TouchableOpacity>
+        <View style={styles.panelTitleContainer}>
           {isCreating ? (
-            <>
-              <LoadingDots color={colors.electricBlue} size={8} />
-              <Text style={styles.creatingText}>Creating scan...</Text>
-            </>
+            <View style={styles.panelTitleRow}>
+              <LoadingDots color={colors.electricBlue} size={6} />
+              <Text style={styles.panelTitleText}>Confirming...</Text>
+            </View>
           ) : (
-            <>
-              <Ionicons name="checkmark-circle" size={48} color={colors.success} />
-              <Text style={styles.recordedText}>Scan Recorded</Text>
-            </>
+            <View style={styles.panelTitleRow}>
+              <Ionicons name="checkmark-circle" size={20} color={colors.success} />
+              <Text style={styles.panelTitleText}>Scan Confirmed</Text>
+            </View>
           )}
         </View>
+        {/* Spacer to balance back button */}
+        <View style={styles.panelBackButton} />
+      </View>
+
+      <ContentWrapper {...contentWrapperProps}>
 
         {/* ── Asset card ── */}
         <View style={[styles.assetCard, { borderLeftColor: statusColor }]}>
@@ -385,6 +399,39 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+
+  // Panel header
+  panelHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  panelBackButton: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  panelTitleContainer: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  panelTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  panelTitleText: {
+    fontSize: fontSize.base,
+    fontFamily: 'Lato_700Bold',
+    color: colors.text,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+
   content: {
     flex: 1,
     justifyContent: 'center',
@@ -398,30 +445,8 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   scrollContent: {
-    paddingTop: spacing['2xl'],
+    paddingTop: spacing.lg,
     paddingBottom: spacing.lg,
-  },
-
-  // Status header
-  statusHeader: {
-    alignItems: 'center',
-    marginBottom: spacing['2xl'],
-    gap: spacing.sm,
-  },
-  creatingText: {
-    fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
-    color: colors.electricBlue,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  recordedText: {
-    fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginTop: spacing.sm,
   },
 
   // Asset card

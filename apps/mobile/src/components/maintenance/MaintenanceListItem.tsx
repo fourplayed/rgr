@@ -8,9 +8,10 @@ import { MaintenanceStatusBadge } from './MaintenanceStatusBadge';
 import { cardStyles } from './maintenance.styles';
 
 export const MAINTENANCE_STATUS_CONFIG: Record<MaintenanceStatus, { icon: keyof typeof Ionicons.glyphMap; color: string }> = {
-  scheduled: { icon: 'construct-outline',     color: colors.maintenanceStatus.scheduled },
-  completed: { icon: 'checkmark-circle',     color: colors.maintenanceStatus.completed },
-  cancelled: { icon: 'close-circle-outline', color: colors.maintenanceStatus.cancelled },
+  scheduled:   { icon: 'construct-outline',     color: colors.maintenanceStatus.scheduled },
+  in_progress: { icon: 'play-circle',           color: colors.maintenanceStatus.in_progress },
+  completed:   { icon: 'checkmark-circle',      color: colors.maintenanceStatus.completed },
+  cancelled:   { icon: 'close-circle-outline',  color: colors.maintenanceStatus.cancelled },
 };
 
 /** Derived visual state for overdue tasks (scheduled + past due date) */

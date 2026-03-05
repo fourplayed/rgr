@@ -24,7 +24,7 @@ interface MaintenanceFilterPanelProps {
   onToggleExpanded: () => void;
 }
 
-const STATUS_ORDER: MaintenanceStatus[] = ['scheduled', 'completed', 'cancelled'];
+const STATUS_ORDER: MaintenanceStatus[] = ['scheduled', 'in_progress', 'completed', 'cancelled'];
 const PRIORITY_ORDER: MaintenancePriority[] = ['low', 'medium', 'high', 'critical'];
 
 export const MaintenanceFilterPanel = memo(function MaintenanceFilterPanel({

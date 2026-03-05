@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View,
+  Animated,
   InteractionManager,
+  useWindowDimensions,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { router } from 'expo-router';
@@ -27,6 +29,17 @@ export default function ScanScreen() {
   const hasHydrated = useTutorialStore(s => s._hasHydrated);
   const markSeen = useTutorialStore(s => s.markSeen);
   const [showScanTutorial, setShowScanTutorial] = useState(false);
+
+  // ── Slide-in panel animation state ──
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  const [isPanelMounted, setIsPanelMounted] = useState(false);
+  const lastAssetRef = useRef(scannedAsset);
+
+  // Preserve asset content during exit animation
+  if (scannedAsset) {
+    lastAssetRef.current = scannedAsset;
+  }
 
   // ── Context detail modal state ──
   const [contextDefectId, setContextDefectId] = useState<string | null>(null);
@@ -126,6 +139,34 @@ export default function ScanScreen() {
     markSeen('scan');
   }, [markSeen]);
 
+  // ── Slide-in / slide-out animation ──
+  useEffect(() => {
+    if (showCard) {
+      setIsPanelMounted(true);
+      Animated.spring(slideAnim, {
+        toValue: 1,
+        friction: 8,
+        tension: 65,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }).start(({ finished }) => {
+        if (finished) {
+          setIsPanelMounted(false);
+        }
+      });
+    }
+  }, [showCard, slideAnim]);
+
+  const panelTranslateX = slideAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [SCREEN_WIDTH, 0],
+  });
+
   // ── Context item handlers (mechanic taps individual defect/task) ──
 
   const handleDefectItemPress = useCallback((defectId: string) => {
@@ -150,6 +191,12 @@ export default function ScanScreen() {
     handleUndoPress();
   }, [handleUndoPress]);
 
+  // ── Task created callback (refresh scan context) ──
+
+  const handleTaskCreated = useCallback(() => {
+    refetchContext();
+  }, [refetchContext]);
+
   // ── Context press (mechanic taps summary row → navigate to asset detail) ──
 
   const handleContextPress = useCallback(() => {
@@ -172,53 +219,21 @@ export default function ScanScreen() {
   // Determine variant
   const variant = canMarkMaintenance ? 'mechanic' : 'driver';
 
+  // Use lastAssetRef during exit animation so content doesn't vanish mid-slide
+  const displayAsset = scannedAsset ?? lastAssetRef.current;
+
   return (
     <View style={styles.container}>
-      {showCard && scannedAsset ? (
-        variant === 'mechanic' ? (
-          <ScanConfirmation
-            variant="mechanic"
-            asset={scannedAsset}
-            matchedDepot={matchedDepot}
-            isCreating={isCreatingScan}
-            scanContext={scanContext}
-            isContextLoading={isContextLoading}
-            contextError={contextError}
-            onRetryContext={refetchContext}
-            onPhotoPress={handlePhotoPress}
-            onDefectPress={handleDefectPress}
-            onTaskPress={handleTaskPress}
-            onDonePress={handleDonePressWithReset}
-            onUndoPress={handleUndoPressWithReset}
-            onContextPress={handleContextPress}
-            onDefectItemPress={handleDefectItemPress}
-            onTaskItemPress={handleTaskItemPress}
-            photoCompleted={photoCompleted}
-            defectCompleted={defectCompleted}
-            disabled={buttonsDisabled}
-          />
-        ) : (
-          <ScanConfirmation
-            variant="driver"
-            asset={scannedAsset}
-            matchedDepot={matchedDepot}
-            isCreating={isCreatingScan}
-            onPhotoPress={handlePhotoPress}
-            onDonePress={handleDonePressWithReset}
-            onUndoPress={handleUndoPressWithReset}
-            photoCompleted={photoCompleted}
-            disabled={buttonsDisabled}
-          />
-        )
-      ) : (
-        <CameraView
-          style={styles.camera}
-          facing="back"
-          onBarcodeScanned={handleBarCodeScanned}
-          barcodeScannerSettings={{
-            barcodeTypes: ['qr'],
-          }}
-        >
+      {/* Camera always rendered underneath */}
+      <CameraView
+        style={styles.camera}
+        facing="back"
+        onBarcodeScanned={handleBarCodeScanned}
+        barcodeScannerSettings={{
+          barcodeTypes: ['qr'],
+        }}
+      >
+        {!showCard && (
           <CameraOverlay
             hasLocationPermission={hasLocationPermission}
             onRequestLocationPermission={requestLocationPermission}
@@ -227,7 +242,53 @@ export default function ScanScreen() {
             roleBadge={roleBadge}
             onDebugScan={__DEV__ ? triggerDebugScan : undefined}
           />
-        </CameraView>
+        )}
+      </CameraView>
+
+      {/* Slide-in confirmation panel */}
+      {isPanelMounted && displayAsset && (
+        <Animated.View
+          style={[
+            styles.slidePanel,
+            { transform: [{ translateX: panelTranslateX }] },
+          ]}
+        >
+          {variant === 'mechanic' ? (
+            <ScanConfirmation
+              variant="mechanic"
+              asset={displayAsset}
+              matchedDepot={matchedDepot}
+              isCreating={isCreatingScan}
+              scanContext={scanContext}
+              isContextLoading={isContextLoading}
+              contextError={contextError}
+              onRetryContext={refetchContext}
+              onPhotoPress={handlePhotoPress}
+              onDefectPress={handleDefectPress}
+              onTaskPress={handleTaskPress}
+              onDonePress={handleDonePressWithReset}
+              onUndoPress={handleUndoPressWithReset}
+              onContextPress={handleContextPress}
+              onDefectItemPress={handleDefectItemPress}
+              onTaskItemPress={handleTaskItemPress}
+              photoCompleted={photoCompleted}
+              defectCompleted={defectCompleted}
+              disabled={buttonsDisabled}
+            />
+          ) : (
+            <ScanConfirmation
+              variant="driver"
+              asset={displayAsset}
+              matchedDepot={matchedDepot}
+              isCreating={isCreatingScan}
+              onPhotoPress={handlePhotoPress}
+              onDonePress={handleDonePressWithReset}
+              onUndoPress={handleUndoPressWithReset}
+              photoCompleted={photoCompleted}
+              disabled={buttonsDisabled}
+            />
+          )}
+        </Animated.View>
       )}
 
       {/* ── Sheet modals (controlled by activeSheet enum) ── */}
@@ -258,7 +319,7 @@ export default function ScanScreen() {
         onSubmit={flowDefectSubmit}
         onCancel={handleDefectCancel}
         onDismiss={handleSheetDismiss}
-        showPhotoOption={false}
+        showPhotoOption={true}
       />
 
       {/* Create Maintenance Task */}
@@ -268,6 +329,8 @@ export default function ScanScreen() {
           onClose={handleCloseSheet}
           assetId={scannedAsset.id}
           assetNumber={scannedAsset.assetNumber}
+          onCreated={handleTaskCreated}
+          showBeginOption={canMarkMaintenance}
         />
       )}
 
