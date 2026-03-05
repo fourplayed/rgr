@@ -13,9 +13,9 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import type { MaintenancePriority, CreateMaintenanceInput } from '@rgr/shared';
 import { MaintenancePriorityLabels } from '@rgr/shared';
-import { LoadingDots } from '../common/LoadingDots';
+import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 import { useAuthStore } from '../../store/authStore';
 import { useCreateMaintenance } from '../../hooks/useMaintenanceData';
 import { useSubmitGuard } from '../../hooks/useSubmitGuard';
@@ -303,25 +303,8 @@ export function CreateMaintenanceModal({
             {error && <Text style={styles.errorText}>{error}</Text>}
 
             <View style={styles.buttonRow}>
-              <TouchableOpacity
-                style={[styles.button, styles.cancelButton]}
-                onPress={onClose}
-                disabled={isLoading}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.button, styles.saveButton, isLoading && styles.buttonDisabled]}
-                onPress={handleSubmit}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <LoadingDots color={colors.textInverse} size={8} />
-                ) : (
-                  <Text style={styles.saveButtonText}>Create</Text>
-                )}
-              </TouchableOpacity>
+              <Button variant="secondary" onPress={onClose} disabled={isLoading} flex>Cancel</Button>
+              <Button isLoading={isLoading} onPress={handleSubmit} flex>Create</Button>
             </View>
           </ScrollView>
         </View>
@@ -368,7 +351,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     flex: 1,
-    fontSize: fontSize.lg,
+    fontSize: fontSize['2xl'],
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     textTransform: 'uppercase',
@@ -451,37 +434,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
     marginTop: spacing.md,
-  },
-  button: {
-    flex: 1,
-    height: 48,
-    borderRadius: borderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelButton: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  cancelButtonText: {
-    fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    textTransform: 'uppercase',
-  },
-  saveButton: {
-    backgroundColor: colors.primary,
-    ...shadows.md,
-  },
-  saveButtonText: {
-    fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
-    color: colors.textInverse,
-    textTransform: 'uppercase',
-  },
-  buttonDisabled: {
-    opacity: 0.6,
   },
   defectBanner: {
     flexDirection: 'row',

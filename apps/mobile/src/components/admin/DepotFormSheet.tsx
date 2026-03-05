@@ -12,10 +12,9 @@ import {
   StyleSheet,
 } from 'react-native';
 import type { Depot, CreateDepotInput, UpdateDepotInput } from '@rgr/shared';
-import { LoadingDots } from '../common/LoadingDots';
 import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 import { useSubmitGuard } from '../../hooks/useSubmitGuard';
 
 interface DepotFormSheetProps {
@@ -186,22 +185,9 @@ export function DepotFormSheet({
                 Cancel
               </Button>
 
-              <TouchableOpacity
-                style={[
-                  styles.saveButton,
-                  (!isValid || isLoading) && styles.buttonDisabled,
-                ]}
-                onPress={handleSubmit}
-                disabled={!isValid || isLoading}
-              >
-                {isLoading ? (
-                  <LoadingDots color={colors.textInverse} size={8} />
-                ) : (
-                  <Text style={styles.saveButtonText}>
-                    {isEdit ? 'Save' : 'Create'}
-                  </Text>
-                )}
-              </TouchableOpacity>
+              <Button isLoading={isLoading} onPress={handleSubmit} disabled={!isValid} flex>
+                {isEdit ? 'Save' : 'Create'}
+              </Button>
             </View>
           </ScrollView>
         </View>
@@ -286,23 +272,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
     marginTop: spacing.sm,
-  },
-  saveButton: {
-    flex: 1,
-    height: 48,
-    borderRadius: borderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary,
-    ...shadows.md,
-  },
-  saveButtonText: {
-    fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
-    color: colors.textInverse,
-    textTransform: 'uppercase',
-  },
-  buttonDisabled: {
-    opacity: 0.5,
   },
 });

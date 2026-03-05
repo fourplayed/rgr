@@ -6,13 +6,11 @@ import {
   TouchableOpacity,
   Switch,
   StyleSheet,
-  Animated,
 } from 'react-native';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 import { Button } from '../common/Button';
 import { useSettingsStore } from '../../store/settingsStore';
-import { useAnimatedSheet } from '../../hooks/useAnimatedSheet';
 
 interface NotificationsModalProps {
   visible: boolean;
@@ -47,27 +45,26 @@ function ToggleRow({ title, subtitle, value, onValueChange, disabled }: ToggleRo
 
 export function NotificationsModal({ visible, onClose }: NotificationsModalProps) {
   const { notifications, setNotificationSetting } = useSettingsStore();
-  const { modalVisible, backdropStyle, sheetStyle } = useAnimatedSheet(visible);
 
   const isPushDisabled = !notifications.pushEnabled;
 
   return (
     <Modal
-      visible={modalVisible}
+      visible={visible}
       transparent
-      animationType="none"
+      animationType="slide"
       onRequestClose={onClose}
     >
       <View style={styles.container}>
-        <Animated.View style={[styles.backdrop, backdropStyle]}>
+        <View style={styles.backdrop}>
           <TouchableOpacity
             style={styles.backdropTouchable}
             activeOpacity={1}
             onPress={onClose}
           />
-        </Animated.View>
+        </View>
 
-        <Animated.View style={[styles.sheet, sheetStyle]}>
+        <View style={styles.sheet}>
           <View style={styles.handle} />
 
           <View style={styles.content}>
@@ -118,7 +115,7 @@ export function NotificationsModal({ visible, onClose }: NotificationsModalProps
               Done
             </Button>
           </View>
-        </Animated.View>
+        </View>
       </View>
     </Modal>
   );
@@ -130,7 +127,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    flex: 1,
     backgroundColor: colors.overlay,
   },
   backdropTouchable: {
@@ -155,10 +152,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   title: {
-    fontSize: fontSize.lg,
+    fontSize: fontSize['2xl'],
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     textTransform: 'uppercase',
+    textAlign: 'center',
     letterSpacing: 1,
     marginBottom: spacing.sm,
   },

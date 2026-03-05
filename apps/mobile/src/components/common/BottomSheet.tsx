@@ -20,6 +20,17 @@ interface BottomSheetProps {
   style?: StyleProp<ViewStyle>;
 }
 
+/**
+ * Standard bottom sheet wrapper with backdrop dismiss.
+ *
+ * Modal tiers:
+ * - **Simple sheets** (Alert, Confirm, Input, Tutorial, SaveCredentials):
+ *   No maxHeight, content determines height. paddingHorizontal: spacing.lg.
+ * - **Form sheets** (CreateMaintenance, DepotForm, DefectReport, Settings):
+ *   maxHeight: '85%'. paddingHorizontal: spacing.lg.
+ * - **Detail sheets** (DefectReportDetail, MaintenanceDetail):
+ *   maxHeight: '90%'. paddingHorizontal: spacing.base (denser content).
+ */
 export function BottomSheet({
   visible,
   onDismiss,

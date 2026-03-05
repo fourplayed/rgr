@@ -7,6 +7,15 @@ interface LoadingDotsProps {
   size?: number;
 }
 
+/**
+ * Animated loading indicator with 3 pulsing dots.
+ *
+ * Size convention:
+ * - `5-6` — compact inline indicators (camera overlay, progress steps)
+ * - `8`   — standard button/action loading (default for Button isLoading)
+ * - `10`  — modal full-page loading spinners
+ * - `12`  — prominent standalone spinners (e.g., photo detail)
+ */
 export function LoadingDots({ color = colors.primaryDark, size = 10 }: LoadingDotsProps) {
   const dot1 = useRef(new Animated.Value(0)).current;
   const dot2 = useRef(new Animated.Value(0)).current;

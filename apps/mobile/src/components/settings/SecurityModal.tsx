@@ -10,17 +10,15 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Animated,
 } from 'react-native';
 import { LoadingDots } from '../common/LoadingDots';
 import { Button } from '../common/Button';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 import { isAutoLoginEnabled, setAutoLoginEnabled } from '../../utils/secureStorage';
 import { updatePassword, verifyCurrentPassword } from '@rgr/shared';
 import { useAuthStore } from '../../store/authStore';
-import { useAnimatedSheet } from '../../hooks/useAnimatedSheet';
 
 interface SecurityModalProps {
   visible: boolean;
@@ -71,8 +69,6 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
   const { user } = useAuthStore();
   const [autoLogin, setAutoLogin] = useState(false);
   const [autoLoginLoading, setAutoLoginLoading] = useState(true);
-  const { modalVisible, backdropStyle, sheetStyle } = useAnimatedSheet(visible);
-
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -184,24 +180,24 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
 
   return (
     <Modal
-      visible={modalVisible}
+      visible={visible}
       transparent
-      animationType="none"
+      animationType="slide"
       onRequestClose={onClose}
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
       >
-        <Animated.View style={[styles.backdrop, backdropStyle]}>
+        <View style={styles.backdrop}>
           <TouchableOpacity
             style={styles.backdropTouchable}
             activeOpacity={1}
             onPress={onClose}
           />
-        </Animated.View>
+        </View>
 
-        <Animated.View style={[styles.sheet, sheetStyle]}>
+        <View style={styles.sheet}>
           <View style={styles.handle} />
 
           <ScrollView style={styles.scrollContent} bounces={false}>
@@ -368,20 +364,7 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
                             Cancel
                           </Button>
 
-                          <TouchableOpacity
-                            style={[
-                              styles.saveButton,
-                              isLoading && styles.buttonDisabled,
-                            ]}
-                            onPress={handleChangePassword}
-                            disabled={isLoading}
-                          >
-                            {isLoading ? (
-                              <LoadingDots color={colors.textInverse} size={8} />
-                            ) : (
-                              <Text style={styles.saveButtonText}>Update Password</Text>
-                            )}
-                          </TouchableOpacity>
+                          <Button isLoading={isLoading} onPress={handleChangePassword} flex>Update Password</Button>
                         </View>
                       </>
                     )}
@@ -394,7 +377,7 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
               </Button>
             </View>
           </ScrollView>
-        </Animated.View>
+        </View>
       </KeyboardAvoidingView>
     </Modal>
   );
@@ -406,7 +389,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    flex: 1,
     backgroundColor: colors.overlay,
   },
   backdropTouchable: {
@@ -435,10 +418,11 @@ const styles = StyleSheet.create({
     paddingBottom: spacing['2xl'],
   },
   title: {
-    fontSize: fontSize.lg,
+    fontSize: fontSize['2xl'],
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     textTransform: 'uppercase',
+    textAlign: 'center',
     letterSpacing: 1,
     marginBottom: spacing.lg,
   },
@@ -577,24 +561,6 @@ const styles = StyleSheet.create({
   passwordButtonRow: {
     flexDirection: 'row',
     gap: spacing.md,
-  },
-  saveButton: {
-    flex: 1,
-    height: 48,
-    borderRadius: borderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary,
-    ...shadows.md,
-  },
-  saveButtonText: {
-    fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
-    color: colors.textInverse,
-    textTransform: 'uppercase',
-  },
-  buttonDisabled: {
-    opacity: 0.6,
   },
   successMessage: {
     alignItems: 'center',

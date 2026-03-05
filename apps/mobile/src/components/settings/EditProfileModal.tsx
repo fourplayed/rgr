@@ -8,15 +8,12 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  Animated,
 } from 'react-native';
-import { LoadingDots } from '../common/LoadingDots';
 import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 import { useAuthStore } from '../../store/authStore';
 import { useSubmitGuard } from '../../hooks/useSubmitGuard';
-import { useAnimatedSheet } from '../../hooks/useAnimatedSheet';
 
 interface EditProfileModalProps {
   visible: boolean;
@@ -29,8 +26,6 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
   const [phone, setPhone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { modalVisible, backdropStyle, sheetStyle } = useAnimatedSheet(visible);
-
   useEffect(() => {
     if (visible && user) {
       setFullName(user.fullName || '');
@@ -66,24 +61,24 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
 
   return (
     <Modal
-      visible={modalVisible}
+      visible={visible}
       transparent
-      animationType="none"
+      animationType="slide"
       onRequestClose={onClose}
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
       >
-        <Animated.View style={[styles.backdrop, backdropStyle]}>
+        <View style={styles.backdrop}>
           <TouchableOpacity
             style={styles.backdropTouchable}
             activeOpacity={1}
             onPress={onClose}
           />
-        </Animated.View>
+        </View>
 
-        <Animated.View style={[styles.sheet, sheetStyle]}>
+        <View style={styles.sheet}>
           <View style={styles.handle} />
 
           <View style={styles.content}>
@@ -129,20 +124,10 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
                 Cancel
               </Button>
 
-              <TouchableOpacity
-                style={[styles.saveButton, isLoading && styles.buttonDisabled]}
-                onPress={handleSave}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <LoadingDots color={colors.textInverse} size={8} />
-                ) : (
-                  <Text style={styles.saveButtonText}>Save</Text>
-                )}
-              </TouchableOpacity>
+              <Button isLoading={isLoading} onPress={handleSave} flex>Save</Button>
             </View>
           </View>
-        </Animated.View>
+        </View>
       </KeyboardAvoidingView>
     </Modal>
   );
@@ -154,7 +139,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    flex: 1,
     backgroundColor: colors.overlay,
   },
   backdropTouchable: {
@@ -179,10 +164,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   title: {
-    fontSize: fontSize.lg,
+    fontSize: fontSize['2xl'],
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     textTransform: 'uppercase',
+    textAlign: 'center',
     letterSpacing: 1,
     marginBottom: spacing.lg,
   },
@@ -218,23 +204,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
     marginTop: spacing.md,
-  },
-  saveButton: {
-    flex: 1,
-    height: 48,
-    borderRadius: borderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary,
-    ...shadows.md,
-  },
-  saveButtonText: {
-    fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
-    color: colors.textInverse,
-    textTransform: 'uppercase',
-  },
-  buttonDisabled: {
-    opacity: 0.6,
   },
 });

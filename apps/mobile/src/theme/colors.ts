@@ -81,6 +81,7 @@ export const colors = {
   warningText: '#B45309',
   warningSurface: '#FEF3C7',
   warningBorder: '#FDE68A',
+  warningGradient: ['#F59E0B', '#D97706'] as const,
   error: '#EF4444',
   info: '#3B82F6',
 

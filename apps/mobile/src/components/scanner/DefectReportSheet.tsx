@@ -12,10 +12,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { formatAssetNumber } from '@rgr/shared';
-import { LoadingDots } from '../common/LoadingDots';
 import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 
 interface DefectReportSheetProps {
   visible: boolean;
@@ -155,20 +154,9 @@ function DefectReportSheetComponent({
                   Cancel
                 </Button>
 
-                <TouchableOpacity
-                  style={[styles.submitButton, !canSubmit && styles.submitButtonDisabled]}
-                  onPress={handleSubmit}
-                  disabled={isSubmitting || !canSubmit}
-                >
-                  {isSubmitting ? (
-                    <LoadingDots color={colors.textInverse} size={8} />
-                  ) : (
-                    <>
-                      <Ionicons name="send" size={18} color={colors.textInverse} />
-                      <Text style={styles.submitButtonText}>Submit Report</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
+                <Button isLoading={isSubmitting} icon="send" onPress={handleSubmit} disabled={!canSubmit} flex>
+                  Submit Report
+                </Button>
               </View>
             </View>
           </ScrollView>
@@ -335,27 +323,5 @@ const styles = StyleSheet.create({
   buttonRow: {
     flexDirection: 'row',
     gap: spacing.md,
-  },
-  submitButton: {
-    flex: 1,
-    height: 48,
-    borderRadius: borderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    gap: spacing.sm,
-    backgroundColor: colors.primary,
-    ...shadows.md,
-  },
-  submitButtonDisabled: {
-    backgroundColor: colors.border,
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  submitButtonText: {
-    fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
-    color: colors.textInverse,
-    textTransform: 'uppercase',
   },
 });

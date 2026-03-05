@@ -204,7 +204,7 @@ export function DefectReportDetailModal({
             <>
               {/* Header with gradient extending to top of modal */}
               <LinearGradient
-                colors={['#F59E0B', '#D97706']}
+                colors={[...colors.warningGradient]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 0, y: 1 }}
                 style={styles.headerGradient}
