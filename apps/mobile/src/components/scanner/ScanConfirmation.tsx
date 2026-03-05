@@ -8,19 +8,30 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import type { Asset, AssetScanContext } from '@rgr/shared';
-import { getDepotBadgeColors, formatAssetNumber, formatRelativeTime } from '@rgr/shared';
+import type { Asset, AssetScanContext, AssetStatus } from '@rgr/shared';
+import { AssetStatusColors, getDepotBadgeColors, formatAssetNumber, formatRelativeTime } from '@rgr/shared';
 import { DefectStatusBadge } from '../maintenance/DefectStatusBadge';
 import { MaintenanceStatusBadge } from '../maintenance/MaintenanceStatusBadge';
 import { MaintenancePriorityBadge } from '../maintenance/MaintenancePriorityBadge';
 import { CollapsibleSection } from '../common/CollapsibleSection';
-import { StatusBadge } from '../common/StatusBadge';
 import { LoadingDots } from '../common/LoadingDots';
 import { Button } from '../common/Button';
 import { DepotBadge } from '../common/DepotBadge';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
+import { cardStyles } from '../../theme/cardStyles';
 import type { MatchedDepot } from '../../hooks/scan/useScanActionFlow';
+
+// ── Status helpers (mirrors AssetListItem) ───────────────────────────────────
+
+const STATUS_ICONS: Record<AssetStatus, keyof typeof Ionicons.glyphMap> = {
+  serviced: 'checkmark-circle',
+  maintenance: 'construct-outline',
+  out_of_service: 'close-circle-outline',
+};
+
+const getStatusColor = (status: AssetStatus): string =>
+  AssetStatusColors[status] || colors.electricBlue;
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -70,24 +81,26 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
   const depotBadgeColors = matchedDepot
     ? getDepotBadgeColors(matchedDepot.depot, colors.chrome, colors.text)
     : null;
+  const statusColor = asset.status ? getStatusColor(asset.status) : colors.electricBlue;
+  const statusIcon = asset.status ? STATUS_ICONS[asset.status] ?? 'ellipse-outline' : 'ellipse-outline';
 
   return (
     <View style={styles.container}>
-      {/* ── Handle bar ── */}
-      <View style={styles.handleRow}>
-        <View style={styles.handle} />
+      {/* ── Header bar ── */}
+      <View style={styles.header}>
+        <Ionicons name="checkmark-circle" size={30} color={colors.textInverse} />
+        <Text style={styles.headerTitle}>Scan Successful</Text>
+        <TouchableOpacity
+          onPress={props.onUndoPress}
+          disabled={disabled}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Undo scan and close"
+          style={styles.headerCloseButton}
+        >
+          <Ionicons name="close" size={26} color={colors.textInverse} />
+        </TouchableOpacity>
       </View>
-
-      {/* ── Back / close button ── */}
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={props.onDonePress}
-        activeOpacity={0.7}
-        accessibilityRole="button"
-        accessibilityLabel="Close"
-      >
-        <Ionicons name="chevron-back" size={28} color={colors.text} />
-      </TouchableOpacity>
 
       {/* ── Scrollable content ── */}
       <ScrollView
@@ -96,64 +109,90 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
         bounces={true}
         showsVerticalScrollIndicator={false}
       >
-        {/* ── Hero section ── */}
-        <View style={styles.heroSection}>
-          {isCreating ? (
-            <View style={styles.heroStatusRow}>
-              <LoadingDots color={colors.electricBlue} size={6} />
-              <Text style={styles.heroStatusText}>Confirming...</Text>
+        {/* ── Asset identity card (matches AssetListItem style) ── */}
+        <View style={[cardStyles.containerInline, styles.assetCard, { borderLeftColor: statusColor }]}>
+          <View style={styles.assetCardRow}>
+            <View style={styles.assetIconContainer}>
+              <Ionicons name={statusIcon} size={31} color={statusColor} />
             </View>
-          ) : (
-            <View style={styles.heroStatusRow}>
-              <Ionicons name="checkmark-circle" size={28} color={colors.success} />
-              <Text style={styles.heroStatusText}>Scan Confirmed</Text>
+            <View style={styles.assetCardBody}>
+              <View style={styles.assetHeaderRow}>
+                <Text style={styles.assetNumber} numberOfLines={1}>
+                  {asset.assetNumber ? formatAssetNumber(asset.assetNumber) : 'Unknown'}
+                </Text>
+                {asset.status && (
+                  <View style={[styles.assetStatusBadge, { backgroundColor: statusColor }]}>
+                    <Text style={styles.assetStatusBadgeText}>
+                      {asset.status.replace('_', ' ')}
+                    </Text>
+                  </View>
+                )}
+              </View>
+              <View style={styles.assetFooterRow}>
+                <Text style={styles.assetSubtype}>{subtypeDisplay}</Text>
+                {matchedDepot && depotBadgeColors ? (
+                  <DepotBadge
+                    label={matchedDepot.depot.name}
+                    bgColor={depotBadgeColors.bg}
+                    textColor={depotBadgeColors.text}
+                  />
+                ) : null}
+              </View>
             </View>
-          )}
-
-          <Text style={styles.heroAssetNumber}>
-            {asset.assetNumber ? formatAssetNumber(asset.assetNumber) : 'Unknown'}
-          </Text>
-
-          <View style={styles.heroMetaRow}>
-            <Text style={styles.heroSubtype}>{subtypeDisplay}</Text>
-            {asset.status && <StatusBadge status={asset.status} size="small" />}
           </View>
-
-          {matchedDepot && depotBadgeColors ? (
-            <View style={styles.heroDepotRow}>
-              <DepotBadge
-                label={matchedDepot.depot.name}
-                bgColor={depotBadgeColors.bg}
-                textColor={depotBadgeColors.text}
-                showIcon
-              />
-            </View>
-          ) : null}
         </View>
-
-        {/* ── Hairline separator ── */}
-        <View style={styles.separator} />
 
         {/* ── Context section (mechanic only) ── */}
         {props.variant === 'mechanic' && !isCreating && (
-          <ContextSection
-            scanContext={props.scanContext}
-            isLoading={props.isContextLoading}
-            error={props.contextError}
-            onRetry={props.onRetryContext}
-            onPress={props.onContextPress}
-            onDefectItemPress={props.onDefectItemPress}
-            onTaskItemPress={props.onTaskItemPress}
-          />
+          <>
+            <View style={styles.sectionDivider} />
+            <ContextSection
+              scanContext={props.scanContext}
+              isLoading={props.isContextLoading}
+              error={props.contextError}
+              onRetry={props.onRetryContext}
+              onPress={props.onContextPress}
+              onDefectItemPress={props.onDefectItemPress}
+              onTaskItemPress={props.onTaskItemPress}
+            />
+          </>
         )}
       </ScrollView>
 
       {/* ── Pinned footer (outside ScrollView) ── */}
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.lg) }]}>
-        {/* Action buttons row */}
-        <View style={styles.actionRow}>
-          {props.variant === 'mechanic' ? (
-            <>
+        {/* Unified footer card */}
+        <View style={styles.footerCardShadow}>
+        <View style={styles.footerCard}>
+          {/* Action buttons row */}
+          <View style={styles.actionRow}>
+            {props.variant === 'mechanic' ? (
+              <>
+                <ActionButton
+                  icon={props.photoCompleted ? 'checkmark-circle' : 'camera'}
+                  label="Photo"
+                  completed={props.photoCompleted}
+                  onPress={props.onPhotoPress}
+                  disabled={disabled}
+                />
+                <View style={styles.actionSeparator} />
+                <ActionButton
+                  icon={props.defectCompleted ? 'checkmark-circle' : 'warning'}
+                  label="Defect"
+                  completed={props.defectCompleted}
+                  onPress={props.onDefectPress}
+                  disabled={disabled}
+                />
+                <View style={styles.actionSeparator} />
+                <ActionButton
+                  icon="construct"
+                  label="Task"
+                  completed={false}
+                  onPress={props.onTaskPress}
+                  disabled={disabled}
+                />
+              </>
+            ) : (
               <ActionButton
                 icon={props.photoCompleted ? 'checkmark-circle' : 'camera'}
                 label="Photo"
@@ -161,56 +200,23 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
                 onPress={props.onPhotoPress}
                 disabled={disabled}
               />
-              <ActionButton
-                icon={props.defectCompleted ? 'checkmark-circle' : 'warning'}
-                label="Defect"
-                completed={props.defectCompleted}
-                onPress={props.onDefectPress}
-                disabled={disabled}
-              />
-              <ActionButton
-                icon="construct"
-                label="Task"
-                completed={false}
-                onPress={props.onTaskPress}
-                disabled={disabled}
-              />
-            </>
-          ) : (
-            <ActionButton
-              icon={props.photoCompleted ? 'checkmark-circle' : 'camera'}
-              label="Photo"
-              completed={props.photoCompleted}
-              onPress={props.onPhotoPress}
-              disabled={disabled}
-            />
-          )}
+            )}
+          </View>
+
+        </View>
         </View>
 
-        {/* Done button */}
+        {/* Confirm button (separate, below action card) */}
         <Button
           onPress={props.onDonePress}
           disabled={disabled}
-          style={styles.doneButton}
-          accessibilityLabel="Done"
+          style={styles.confirmButton}
+          color={colors.success}
+          accessibilityLabel="Confirm"
         >
-          DONE
+          CONFIRM
         </Button>
 
-        {/* Undo link */}
-        <TouchableOpacity
-          style={styles.undoLink}
-          onPress={props.onUndoPress}
-          disabled={disabled}
-          activeOpacity={0.6}
-          accessibilityRole="button"
-          accessibilityLabel="Undo scan"
-          accessibilityHint="Double tap to undo the last scan"
-        >
-          <Text style={[styles.undoLinkText, disabled && styles.undoLinkDisabled]}>
-            Undo scan
-          </Text>
-        </TouchableOpacity>
       </View>
     </View>
   );
@@ -271,9 +277,14 @@ function ContextSection({
 
   return (
     <CollapsibleSection
-      title={`Open Items (${totalCount})`}
+      title="Open Items"
       variant="flat"
-      defaultExpanded
+      defaultExpanded={false}
+      badge={
+        <View style={styles.countBadge}>
+          <Text style={styles.countBadgeText}>{totalCount}</Text>
+        </View>
+      }
     >
       <View style={styles.contextItemsList}>
         {/* Individual defect rows */}
@@ -355,13 +366,13 @@ function ActionButton({
     ? colors.textSecondary
     : completed
       ? colors.success
-      : colors.text;
+      : colors.textInverse;
 
   const labelColor = disabled
     ? colors.textSecondary
     : completed
       ? colors.success
-      : colors.text;
+      : colors.textInverse;
 
   return (
     <TouchableOpacity
@@ -386,35 +397,36 @@ export const ScanConfirmation = React.memo(ScanConfirmationComponent);
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.chrome,
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
     overflow: 'hidden',
   },
 
-  // Handle bar
-  handleRow: {
+  // Header bar
+  header: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.xs,
+    backgroundColor: colors.success,
+    paddingVertical: spacing.base,
+    paddingHorizontal: spacing.lg,
+    gap: spacing.sm,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
   },
-  handle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.chrome,
+  headerTitle: {
+    flex: 1,
+    fontSize: fontSize.lg,
+    fontFamily: 'Lato_700Bold',
+    color: colors.textInverse,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-
-  // Back button
-  backButton: {
-    position: 'absolute',
-    top: spacing.sm,
-    left: spacing.xs,
-    width: 44,
-    height: 44,
+  headerCloseButton: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1,
   },
 
   // Scrollable content
@@ -423,58 +435,82 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
     paddingBottom: spacing.base,
   },
 
-  // Hero section
-  heroSection: {
-    alignItems: 'center',
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.lg,
+  // Asset identity card (mirrors AssetListItem)
+  assetCard: {
+    marginTop: spacing.base,
   },
-  heroStatusRow: {
+  assetCardRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    marginBottom: spacing.base,
   },
-  heroStatusText: {
-    fontSize: fontSize.base,
+  assetIconContainer: {
+    width: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  assetCardBody: {
+    flex: 1,
+  },
+  assetHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  assetNumber: {
+    fontSize: fontSize.lg,
+    fontFamily: 'Lato_700Bold',
+    color: colors.text,
+  },
+  assetStatusBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: borderRadius.sm,
+  },
+  assetStatusBadgeText: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_700Bold',
+    color: colors.textInverse,
+    textTransform: 'uppercase',
+  },
+  assetFooterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  assetSubtype: {
+    fontSize: fontSize.xs,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-  },
-  heroAssetNumber: {
-    fontSize: fontSize['2xl'],
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    textAlign: 'center',
-    marginBottom: spacing.sm,
-  },
-  heroMetaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    marginBottom: spacing.sm,
-  },
-  heroSubtype: {
-    fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
-    color: colors.electricBlue,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  heroDepotRow: {
-    marginTop: spacing.xs,
   },
 
-  // Separator
-  separator: {
+  // Section divider (hairline between hero and context)
+  sectionDivider: {
     height: StyleSheet.hairlineWidth,
     backgroundColor: colors.border,
-    marginBottom: spacing.base,
+    marginBottom: spacing.sm,
+  },
+
+  // Count badge (on CollapsibleSection title)
+  countBadge: {
+    backgroundColor: colors.electricBlue,
+    borderRadius: borderRadius.full,
+    minWidth: 22,
+    height: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xs,
+  },
+  countBadgeText: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_700Bold',
+    color: colors.textInverse,
   },
 
   // Context section
@@ -508,6 +544,8 @@ const styles = StyleSheet.create({
   contextItemsList: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
     overflow: 'hidden',
   },
   contextItemRow: {
@@ -560,26 +598,40 @@ const styles = StyleSheet.create({
   // Pinned footer
   footer: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
+    paddingTop: spacing.base,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,
-    backgroundColor: colors.background,
+    backgroundColor: colors.chrome,
   },
 
-  // Action buttons
+  // Unified footer card
+  footerCardShadow: {
+    borderRadius: borderRadius.lg,
+    ...shadows.sm,
+  },
+  footerCard: {
+    borderRadius: borderRadius.lg,
+    overflow: 'hidden',
+  },
+
+  // Action buttons (inside footer card)
   actionRow: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    gap: spacing.sm,
+    alignItems: 'center',
   },
   actionButton: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: spacing.md,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.electricBlue,
     gap: spacing.xs,
+  },
+  actionSeparator: {
+    width: StyleSheet.hairlineWidth,
+    alignSelf: 'stretch',
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    marginVertical: spacing.sm,
   },
   actionButtonDisabled: {
     opacity: 0.5,
@@ -591,22 +643,10 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 
-  // Done button
-  doneButton: {
+  // Confirm button (separate, below action card)
+  confirmButton: {
     marginTop: spacing.sm,
+    ...shadows.sm,
   },
 
-  // Undo link
-  undoLink: {
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-  },
-  undoLinkText: {
-    fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
-    color: colors.textSecondary,
-  },
-  undoLinkDisabled: {
-    opacity: 0.5,
-  },
 });
