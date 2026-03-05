@@ -8,3 +8,4 @@ export { MaintenanceDetailModal } from './MaintenanceDetailModal';
 export { DefectStatusBadge } from './DefectStatusBadge';
 export { DefectReportListItem, DEFECT_ITEM_HEIGHT, DEFECT_STATUS_CONFIG } from './DefectReportListItem';
 export { DefectReportDetailModal } from './DefectReportDetailModal';
+export { cardStyles } from './maintenance.styles';

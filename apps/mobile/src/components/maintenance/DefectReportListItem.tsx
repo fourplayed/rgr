@@ -1,11 +1,11 @@
 import React, { memo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { DefectReportListItem as DefectReportListItemType, DefectStatus } from '@rgr/shared';
 import { formatRelativeTime, formatAssetNumber } from '@rgr/shared';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 import { DefectStatusBadge } from './DefectStatusBadge';
+import { cardStyles } from './maintenance.styles';
 
 export const DEFECT_STATUS_CONFIG: Record<DefectStatus, { icon: keyof typeof Ionicons.glyphMap; color: string }> = {
   reported:  { icon: 'warning',          color: colors.warning },
@@ -26,30 +26,30 @@ function DefectReportListItemComponent({ defect, onPress }: DefectReportListItem
 
   return (
     <TouchableOpacity
-      style={[styles.container, { borderLeftColor: color }]}
+      style={[cardStyles.container, { borderLeftColor: color }]}
       onPress={() => onPress(defect)}
       activeOpacity={0.7}
       accessibilityRole="button"
       accessibilityLabel={`Defect report ${defect.title}, status ${defect.status}`}
     >
-      <View style={styles.cardRow}>
-        <View style={styles.cardIconContainer}>
+      <View style={cardStyles.cardRow}>
+        <View style={cardStyles.cardIconContainer}>
           <Ionicons name={icon} size={31} color={color} />
         </View>
-        <View style={styles.cardBody}>
-          <View style={styles.cardContentRow}>
-            <Text style={styles.cardTitle} numberOfLines={1}>
+        <View style={cardStyles.cardBody}>
+          <View style={cardStyles.cardContentRow}>
+            <Text style={cardStyles.cardTitle} numberOfLines={1}>
               {defect.assetNumber ? formatAssetNumber(defect.assetNumber) : 'Unknown Asset'}
             </Text>
-            <View style={styles.cardBadges}>
-              <DefectStatusBadge status={defect.status} label={defect.status === 'accepted' ? 'Task Created' : undefined} />
+            <View style={cardStyles.cardBadges}>
+              <DefectStatusBadge status={defect.status} {...(defect.status === 'accepted' ? { label: 'Task Created' } : {})} />
             </View>
           </View>
-          <View style={styles.cardFooter}>
-            <Text style={styles.cardSecondaryText} numberOfLines={1}>
+          <View style={cardStyles.cardFooter}>
+            <Text style={cardStyles.cardSecondaryText} numberOfLines={1}>
               {defect.description || defect.title}
             </Text>
-            <Text style={styles.cardTime}>
+            <Text style={cardStyles.cardTime}>
               {formatRelativeTime(defect.createdAt)}
             </Text>
           </View>
@@ -70,61 +70,3 @@ export const DefectReportListItem = memo(
     prev.onPress === next.onPress
 );
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.background,
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderLeftWidth: 4,
-    marginBottom: spacing.sm,
-  },
-  cardRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  cardIconContainer: {
-    width: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: spacing.md,
-  },
-  cardBody: {
-    flex: 1,
-  },
-  cardContentRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: spacing.sm,
-    marginBottom: spacing.xs,
-  },
-  cardTitle: {
-    fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    flex: 1,
-  },
-  cardBadges: {
-    flexDirection: 'row',
-    gap: spacing.xs,
-  },
-  cardFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  cardSecondaryText: {
-    fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
-    color: colors.textSecondary,
-    flex: 1,
-    marginRight: spacing.sm,
-  },
-  cardTime: {
-    fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
-    color: colors.textSecondary,
-  },
-});

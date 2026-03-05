@@ -8,14 +8,16 @@ import {
   ScrollView,
 } from 'react-native';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { formatRelativeTime } from '@rgr/shared';
+import { formatRelativeTime, formatAssetNumber } from '@rgr/shared';
 import { LoadingDots, AlertSheet, InputSheet } from '../common';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
 import type { CreateMaintenanceInput } from '@rgr/shared';
 import { useDefectReport, useUpdateDefectReportStatus } from '../../hooks/useDefectData';
+import { useAsset } from '../../hooks/useAssetData';
 import { useScanEventPhotos, useSignedUrl } from '../../hooks/usePhotos';
 import { useAcceptDefect } from '../../hooks/useAcceptDefect';
 import { useUserPermissions } from '../../contexts/UserPermissionsContext';
@@ -40,6 +42,7 @@ export function DefectReportDetailModal({
   const router = useRouter();
   const { canMarkMaintenance } = useUserPermissions();
   const { data: defect, isLoading } = useDefectReport(defectId);
+  const { data: asset } = useAsset(defect?.assetId);
   const updateStatusMutation = useUpdateDefectReportStatus();
   const acceptDefectMutation = useAcceptDefect();
 
@@ -185,49 +188,59 @@ export function DefectReportDetailModal({
         />
 
         <View style={styles.sheet}>
-          <View style={styles.handle} />
-
           {isLoading || !defect ? (
-            <View style={styles.loadingContainer}>
-              <LoadingDots color={colors.electricBlue} size={10} />
-            </View>
+            <>
+              <View style={styles.handle} />
+              <View style={styles.loadingContainer}>
+                <LoadingDots color={colors.electricBlue} size={10} />
+              </View>
+            </>
           ) : (
             <>
-              {/* Header */}
-              <View style={styles.header}>
-                <View style={styles.headerButton} />
-                <Text style={styles.title} numberOfLines={1}>Defect Report</Text>
-                <TouchableOpacity
-                  onPress={onClose}
-                  style={styles.headerButton}
-                  accessibilityRole="button"
-                  accessibilityLabel="Close defect report details"
-                >
-                  <Ionicons name="close" size={28} color={colors.text} />
-                </TouchableOpacity>
-              </View>
+              {/* Header with gradient extending to top of modal */}
+              <LinearGradient
+                colors={['#F59E0B', '#D97706']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+                style={styles.headerGradient}
+              >
+                <View style={styles.handleLight} />
+                <View style={styles.header}>
+                  <View style={styles.headerTitleRow}>
+                    <Ionicons name="warning" size={32} color={colors.textInverse} />
+                    <Text style={styles.title} numberOfLines={2}>Defect Report</Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={onClose}
+                    style={styles.headerButton}
+                    accessibilityRole="button"
+                    accessibilityLabel="Close defect report details"
+                  >
+                    <Ionicons name="close" size={28} color={colors.textInverse} />
+                  </TouchableOpacity>
+                </View>
+              </LinearGradient>
 
               <ScrollView
                 style={styles.scrollView}
                 contentContainerStyle={styles.content}
               >
-                {/* Badges */}
+                {/* Asset ID + Asset Link */}
                 <View style={styles.badgeRow}>
-                  <DefectStatusBadge status={defect.status} />
+                  {asset?.assetNumber && (
+                    <Text style={styles.assetNumberText}>{formatAssetNumber(asset.assetNumber)}</Text>
+                  )}
+                  {variant === 'full' && (
+                    <TouchableOpacity
+                      style={styles.assetLink}
+                      onPress={handleNavigateToAsset}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.assetLinkText}>View Asset</Text>
+                      <Ionicons name="chevron-forward" size={16} color={colors.electricBlue} />
+                    </TouchableOpacity>
+                  )}
                 </View>
-
-                {/* Asset Link (hidden in compact mode) */}
-                {variant === 'full' && (
-                  <TouchableOpacity
-                    style={styles.assetLink}
-                    onPress={handleNavigateToAsset}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons name="cube-outline" size={20} color={colors.electricBlue} />
-                    <Text style={styles.assetLinkText}>View Asset</Text>
-                    <Ionicons name="chevron-forward" size={18} color={colors.electricBlue} />
-                  </TouchableOpacity>
-                )}
 
                 {/* Description */}
                 {defect.description && (
@@ -288,20 +301,20 @@ export function DefectReportDetailModal({
                 {/* Timeline (hidden in compact mode) */}
                 {variant === 'full' && (
                   <View style={styles.sectionGroup}>
-                    <Text style={styles.sectionTitle}>Timeline</Text>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Reported</Text>
-                      <Text style={styles.detailValue}>
-                        {formatRelativeTime(defect.createdAt)}
-                      </Text>
-                    </View>
-
-                    {defect.reporterName && (
+                    <View style={styles.detailRowInline}>
                       <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Reported By</Text>
-                        <Text style={styles.detailValue}>{defect.reporterName}</Text>
+                        <Text style={styles.detailLabel}>Reported</Text>
+                        <Text style={styles.detailValue}>
+                          {formatRelativeTime(defect.createdAt)}
+                        </Text>
                       </View>
-                    )}
+                      {defect.reporterName && (
+                        <View style={styles.detailRowEnd}>
+                          <Text style={styles.detailLabel}>Reported By</Text>
+                          <Text style={styles.detailValue}>{defect.reporterName}</Text>
+                        </View>
+                      )}
+                    </View>
 
                     {defect.acceptedAt && (
                       <View style={styles.detailRow}>
@@ -336,7 +349,9 @@ export function DefectReportDetailModal({
                 {variant === 'full' && defect.dismissedReason && (
                   <View style={styles.sectionGroup}>
                     <Text style={styles.sectionTitle}>Dismiss Reason</Text>
-                    <Text style={styles.detailValue}>{defect.dismissedReason}</Text>
+                    <View style={styles.sectionCard}>
+                      <Text style={styles.detailValue}>{defect.dismissedReason}</Text>
+                    </View>
                   </View>
                 )}
 
@@ -344,7 +359,9 @@ export function DefectReportDetailModal({
                 {variant === 'full' && defect.notes && (
                   <View style={styles.sectionGroup}>
                     <Text style={styles.sectionTitle}>Notes</Text>
-                    <Text style={styles.detailValue}>{defect.notes}</Text>
+                    <View style={styles.sectionCard}>
+                      <Text style={styles.detailValue}>{defect.notes}</Text>
+                    </View>
                   </View>
                 )}
 
@@ -425,6 +442,18 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginTop: spacing.md,
   },
+  headerGradient: {
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
+  },
+  handleLight: {
+    width: 40,
+    height: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: borderRadius.full,
+    alignSelf: 'center',
+    marginTop: spacing.md,
+  },
   loadingContainer: {
     padding: spacing['3xl'],
     alignItems: 'center',
@@ -443,20 +472,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.base,
+    paddingLeft: spacing.base,
     paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    backgroundColor: colors.background,
+  },
+  headerTitleRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
   },
   title: {
-    fontSize: fontSize.lg,
+    fontSize: fontSize.xl,
     fontFamily: 'Lato_700Bold',
-    color: colors.text,
+    color: colors.textInverse,
     textTransform: 'uppercase',
     letterSpacing: 1,
-    textAlign: 'center',
-    flex: 1,
   },
   headerButton: {
     width: 44,
@@ -466,27 +496,37 @@ const styles = StyleSheet.create({
   },
   badgeRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     gap: spacing.sm,
+  },
+  assetNumberText: {
+    fontSize: fontSize.xl,
+    fontFamily: 'Lato_700Bold',
+    color: colors.text,
+    textTransform: 'uppercase',
   },
   assetLink: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.base,
-    backgroundColor: colors.background,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
+    gap: spacing.xs,
   },
   assetLinkText: {
     fontSize: fontSize.sm,
     fontFamily: 'Lato_700Bold',
     color: colors.electricBlue,
     textTransform: 'uppercase',
-    flex: 1,
   },
   sectionGroup: {
+    gap: spacing.sm,
+  },
+  sectionCard: {
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.md,
+    padding: spacing.base,
+    gap: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   sectionTitle: {
     fontSize: fontSize.sm,
@@ -494,9 +534,16 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 1,
-    marginBottom: spacing.xs,
+  },
+  detailRowInline: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
   detailRow: {
+  },
+  detailRowEnd: {
+    alignItems: 'flex-end',
   },
   detailLabel: {
     fontSize: fontSize.xs,

@@ -20,6 +20,7 @@ import { useScanEventPhotos, useSignedUrl } from '../../hooks/usePhotos';
 import { useUserPermissions } from '../../contexts/UserPermissionsContext';
 import { MaintenanceStatusBadge } from './MaintenanceStatusBadge';
 import { MaintenancePriorityBadge } from './MaintenancePriorityBadge';
+import { MAINTENANCE_STATUS_CONFIG } from './MaintenanceListItem';
 
 
 interface MaintenanceDetailModalProps {
@@ -162,9 +163,9 @@ export function MaintenanceDetailModal({
         {(status === 'completed' || status === 'cancelled') && (
           <View style={styles.closedStatus}>
             <Ionicons
-              name={status === 'completed' ? 'checkmark-circle' : 'close-circle'}
+              name={MAINTENANCE_STATUS_CONFIG[status]?.icon ?? 'construct-outline'}
               size={20}
-              color={status === 'completed' ? colors.success : colors.textSecondary}
+              color={MAINTENANCE_STATUS_CONFIG[status]?.color ?? colors.textSecondary}
             />
             <Text style={styles.closedStatusText}>
               {status === 'completed' ? 'Completed' : 'Cancelled'}

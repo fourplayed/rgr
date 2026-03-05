@@ -26,6 +26,8 @@ import {
   MaintenanceDetailModal,
   DefectStatusBadge,
   DefectReportDetailModal,
+  getMaintenanceVisualConfig,
+  cardStyles,
 } from '../../../src/components/maintenance';
 import { useAuthStore } from '../../../src/store/authStore';
 import { formatRelativeTime, hasRoleLevel, UserRole, formatAssetNumber } from '@rgr/shared';
@@ -52,12 +54,6 @@ const ASSET_DETAIL_TABS = [
   { key: 'maintenance', label: 'Maint.' },
 ] as const;
 type AssetDetailTab = typeof ASSET_DETAIL_TABS[number]['key'];
-
-const MAINTENANCE_STATUS_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
-  scheduled: 'construct-outline',
-  completed: 'checkmark-circle',
-  cancelled: 'close-circle-outline',
-};
 
 export default function AssetDetailScreen() {
   const router = useRouter();
@@ -117,6 +113,12 @@ export default function AssetDetailScreen() {
     data: defectReports = [],
   } = useAssetDefectReports(id);
 
+  // Maintenance IDs that are linked to defect reports (used by activity + maintenance tabs)
+  const defectLinkedMaintenanceIds = useMemo(
+    () => new Set(defectReports.filter(d => d.maintenanceRecordId).map(d => d.maintenanceRecordId)),
+    [defectReports]
+  );
+
   // Merge scans, maintenance, defects, and photos into a unified activity feed
   const recentActivity: ActivityItem[] = useMemo(() => {
     const allItems = [
@@ -125,11 +127,13 @@ export default function AssetDetailScreen() {
         data: scan,
         timestampStr: scan.createdAt,
       })),
-      ...maintenance.map(m => ({
-        type: 'maintenance' as const,
-        data: m,
-        timestampStr: m.updatedAt || m.createdAt,
-      })),
+      ...maintenance
+        .filter(m => !defectLinkedMaintenanceIds.has(m.id))
+        .map(m => ({
+          type: 'maintenance' as const,
+          data: m,
+          timestampStr: m.updatedAt || m.createdAt,
+        })),
       ...defectReports
         .filter(d => d.status !== 'dismissed')
         .map(d => ({
@@ -254,11 +258,9 @@ export default function AssetDetailScreen() {
                 let activityIcon: keyof typeof Ionicons.glyphMap;
 
                 if (item.type === 'maintenance') {
-                  const maintStatusIcon = MAINTENANCE_STATUS_ICONS[item.data.status] ?? 'construct-outline';
-                  activityColor = item.data.status === 'completed'
-                    ? colors.maintenanceStatus.completed
-                    : colors.maintenanceStatus[item.data.status as keyof typeof colors.maintenanceStatus] ?? colors.textSecondary;
-                  activityIcon = maintStatusIcon;
+                  const visual = getMaintenanceVisualConfig(item.data.status, item.data.dueDate);
+                  activityColor = visual.color;
+                  activityIcon = visual.icon;
                 } else if (item.type === 'defect') {
                   activityColor = colors.warning;
                   activityIcon = 'warning';
@@ -271,18 +273,18 @@ export default function AssetDetailScreen() {
                 }
 
                 const cardContent = (
-                  <View style={[styles.activityCard, { borderLeftColor: activityColor }]}>
-                    <View style={styles.cardRow}>
-                      <View style={styles.cardIconContainer}>
+                  <View style={[cardStyles.containerInline, { borderLeftColor: activityColor }]}>
+                    <View style={cardStyles.cardRow}>
+                      <View style={cardStyles.cardIconContainer}>
                         <Ionicons
                           name={activityIcon}
                           size={31}
                           color={activityColor}
                         />
                       </View>
-                      <View style={styles.cardBody}>
-                        <View style={styles.cardContentRow}>
-                          <Text style={styles.cardTitle} numberOfLines={1}>
+                      <View style={cardStyles.cardBody}>
+                        <View style={cardStyles.cardContentRow}>
+                          <Text style={cardStyles.cardTitle} numberOfLines={1}>
                             {item.type === 'scan'
                               ? formatScanTypeLabel(item.data.scanType)
                               : item.type === 'photo'
@@ -291,7 +293,7 @@ export default function AssetDetailScreen() {
                                   ? 'Defect Report'
                                   : item.data.title}
                           </Text>
-                          <View style={styles.cardBadges}>
+                          <View style={cardStyles.cardBadges}>
                             {item.type === 'scan' && item.data.locationDescription && (() => {
                               const matchedDepot = findDepotByLocationString(item.data.locationDescription, depots);
                               if (!matchedDepot) return null;
@@ -310,7 +312,7 @@ export default function AssetDetailScreen() {
                               </View>
                             )}
                             {item.type === 'defect' && (
-                              <DefectStatusBadge status="reported" />
+                              <DefectStatusBadge status={item.data.status} />
                             )}
                             {item.type === 'maintenance' && (
                               <>
@@ -322,19 +324,19 @@ export default function AssetDetailScreen() {
                             )}
                           </View>
                         </View>
-                        <View style={styles.activityFooter}>
-                          <Text style={styles.cardSecondaryText}>
+                        <View style={cardStyles.cardFooter}>
+                          <Text style={cardStyles.cardSecondaryText}>
                             {item.type === 'scan'
                               ? item.data.scannerName || 'Unknown'
                               : item.type === 'photo'
                                 ? item.data.primaryCategory?.replace(/_/g, ' ') || item.data.photoType.replace(/_/g, ' ')
                                 : item.type === 'defect'
-                                  ? item.data.title
+                                  ? item.data.description || item.data.title
                                   : item.data.status === 'completed'
                                     ? `Completed ${item.data.completedAt ? formatRelativeTime(item.data.completedAt) : formatRelativeTime(item.data.updatedAt)}${(item.data as MaintenanceRecordWithNames).completerName ? ` by ${(item.data as MaintenanceRecordWithNames).completerName}` : ''}`
                                     : item.data.description || item.data.maintenanceType?.replace(/_/g, ' ') || item.data.status.replace(/_/g, ' ')}
                           </Text>
-                          <Text style={styles.activityTime}>
+                          <Text style={cardStyles.cardTime}>
                             {formatRelativeTime(
                               item.type === 'maintenance'
                                 ? (item.data.updatedAt || item.data.createdAt)
@@ -354,7 +356,7 @@ export default function AssetDetailScreen() {
                       onPress={() => handleMaintenancePress(item.data)}
                       activeOpacity={0.7}
                       accessibilityRole="button"
-                      accessibilityLabel={item.data.title}
+                      accessibilityLabel={`Maintenance ${item.data.title}, status ${item.data.status}`}
                     >
                       {cardContent}
                     </TouchableOpacity>
@@ -399,47 +401,42 @@ export default function AssetDetailScreen() {
             ) : (
               <View style={styles.maintenanceList}>
                 {maintenance.slice(0, 10).map((item) => {
-                  const isCompleted = item.status === 'completed';
-                  const maintIcon = MAINTENANCE_STATUS_ICONS[item.status] ?? 'construct-outline';
-                  const maintIconColor = isCompleted
-                    ? colors.maintenanceStatus.completed
-                    : colors.maintenanceStatus[item.status as keyof typeof colors.maintenanceStatus] ?? colors.textSecondary;
-                  const borderColor = isCompleted
-                    ? colors.success
-                    : colors.maintenancePriority[item.priority as keyof typeof colors.maintenancePriority] || colors.border;
+                  const { icon: maintIcon, color: statusColor } = getMaintenanceVisualConfig(item.status, item.dueDate);
 
                   return (
                     <TouchableOpacity
                       key={item.id}
-                      style={[styles.maintenanceCard, { borderLeftColor: borderColor }]}
+                      style={[cardStyles.containerInline, { borderLeftColor: statusColor }]}
                       onPress={() => handleMaintenancePress(item)}
                       activeOpacity={0.7}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Maintenance ${item.title}, status ${item.status}`}
                     >
-                      <View style={styles.cardRow}>
-                        <View style={styles.cardIconContainer}>
+                      <View style={cardStyles.cardRow}>
+                        <View style={cardStyles.cardIconContainer}>
                           <Ionicons
                             name={maintIcon}
                             size={31}
-                            color={maintIconColor}
+                            color={statusColor}
                           />
                         </View>
-                        <View style={styles.cardBody}>
-                          <View style={styles.cardContentRow}>
-                            <Text style={styles.cardTitle} numberOfLines={1}>
+                        <View style={cardStyles.cardBody}>
+                          <View style={cardStyles.cardContentRow}>
+                            <Text style={cardStyles.cardTitle} numberOfLines={1}>
                               {item.title}
                             </Text>
-                            <View style={styles.cardBadges}>
+                            <View style={cardStyles.cardBadges}>
                               <MaintenanceStatusBadge status={item.status} />
-                              {!isCompleted && item.status !== 'cancelled' && (
-                                <MaintenancePriorityBadge priority={item.priority} />
-                              )}
                             </View>
                           </View>
-                          <Text style={styles.cardSecondaryText}>
-                            {isCompleted
-                              ? `Completed ${item.completedAt ? formatRelativeTime(item.completedAt) : formatRelativeTime(item.updatedAt)}${(item as MaintenanceRecordWithNames).completerName ? ` by ${(item as MaintenanceRecordWithNames).completerName}` : ''}`
-                              : item.dueDate ? `Due ${formatRelativeTime(item.dueDate)}` : formatRelativeTime(item.createdAt)}
-                          </Text>
+                          <View style={cardStyles.cardFooter}>
+                            <Text style={cardStyles.cardSecondaryText} numberOfLines={1}>
+                              {item.description || item.title}
+                            </Text>
+                            <Text style={cardStyles.cardTime}>
+                              {formatRelativeTime(item.createdAt)}
+                            </Text>
+                          </View>
                         </View>
                       </View>
                     </TouchableOpacity>
@@ -570,7 +567,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    backgroundColor: colors.surfaceSubtle,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.lg,
@@ -592,19 +589,6 @@ const styles = StyleSheet.create({
   activityList: {
     gap: spacing.sm,
   },
-  activityCard: {
-    backgroundColor: colors.background,
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderLeftWidth: 4,
-  },
-  activityTime: {
-    fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
-    color: colors.textSecondary,
-  },
   locationBadge: {
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
@@ -614,11 +598,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     fontFamily: 'Lato_700Bold',
     textTransform: 'uppercase',
-  },
-  activityFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
   },
   // QR Code Modal
   modalOverlay: {
@@ -677,48 +656,5 @@ const styles = StyleSheet.create({
   // Maintenance Section
   maintenanceList: {
     gap: spacing.sm,
-  },
-  maintenanceCard: {
-    backgroundColor: colors.background,
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderLeftWidth: 4,
-  },
-  cardRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  cardIconContainer: {
-    width: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: spacing.md,
-  },
-  cardBody: {
-    flex: 1,
-  },
-  cardContentRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: spacing.sm,
-    marginBottom: spacing.xs,
-  },
-  cardTitle: {
-    fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    flex: 1,
-  },
-  cardBadges: {
-    flexDirection: 'row',
-    gap: spacing.xs,
-  },
-  cardSecondaryText: {
-    fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
-    color: colors.textSecondary,
   },
 });

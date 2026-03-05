@@ -66,6 +66,7 @@ export const colors = {
   backgroundDark: '#0000CC',
   surface: '#F8FAFC',
   surfaceDark: '#1E3A8A',
+  surfaceSubtle: 'rgba(0, 0, 0, 0.05)',
   border: '#E2E8F0',
   borderDark: '#334155',
 
