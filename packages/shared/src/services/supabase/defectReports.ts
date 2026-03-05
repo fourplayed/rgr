@@ -40,7 +40,7 @@ export interface DefectReportStats {
 
 const VALID_DEFECT_TRANSITIONS: Record<DefectStatus, DefectStatus[]> = {
   reported: ['accepted', 'dismissed'],
-  accepted: ['resolved'],
+  accepted: ['resolved', 'dismissed'],
   resolved: [],
   dismissed: [],
 };
@@ -62,7 +62,7 @@ export async function listDefectReports(
   let query = supabase
     .from('defect_reports')
     .select(`
-      id, asset_id, title, status, maintenance_record_id, created_at,
+      id, asset_id, title, description, status, maintenance_record_id, created_at,
       reporter:reported_by(full_name),
       asset:asset_id(asset_number, category)
     `)
@@ -106,6 +106,7 @@ export async function listDefectReports(
     id: string;
     asset_id: string;
     title: string;
+    description: string | null;
     status: DefectStatus;
     maintenance_record_id: string | null;
     created_at: string;
@@ -121,6 +122,7 @@ export async function listDefectReports(
     id: row.id,
     assetId: row.asset_id,
     title: row.title,
+    description: row.description,
     status: row.status,
     maintenanceRecordId: row.maintenance_record_id,
     createdAt: row.created_at,
