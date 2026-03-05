@@ -23,7 +23,7 @@ import { useDepots } from '../../src/hooks/useDepots';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
 import { CreateAssetOverlay } from '../../src/components/admin/CreateAssetOverlay';
 import { colors } from '../../src/theme/colors';
-import { spacing, fontSize, fontWeight, borderRadius } from '../../src/theme/spacing';
+import { spacing, fontSize, borderRadius } from '../../src/theme/spacing';
 
 const CATEGORIES: AssetCategoryType[] = ['trailer', 'dolly'];
 const ASSET_NUMBER_REGEX = /^[A-Z]{2}\d{3,}$/;
@@ -479,7 +479,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: fontSize.lg,
-    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     textTransform: 'uppercase',

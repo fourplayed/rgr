@@ -6,7 +6,7 @@ import {
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useTutorialStore } from '../../src/store/tutorialStore';
 import { useUserPermissions } from '../../src/contexts/UserPermissionsContext';
-import { UserRoleLabels } from '@rgr/shared';
+import { UserRoleLabels, getDepotBadgeColors, formatAssetNumber } from '@rgr/shared';
 import { colors } from '../../src/theme/colors';
 import { useScanActionFlow } from '../../src/hooks/scan/useScanActionFlow';
 import { PermissionScreen, CameraOverlay } from '../../src/components/scanner';
@@ -79,10 +79,11 @@ export default function ScanScreen() {
 
   // ── Badge data for CameraOverlay (memoized for React.memo) ──
 
-  const depotName = useMemo(
-    () => flowResolvedDepot?.depot.name ?? null,
-    [flowResolvedDepot],
-  );
+  const depotBadge = useMemo(() => {
+    if (!flowResolvedDepot) return null;
+    const { bg, text } = getDepotBadgeColors(flowResolvedDepot.depot);
+    return { label: flowResolvedDepot.depot.name, bgColor: bg, textColor: text };
+  }, [flowResolvedDepot]);
 
   const roleBadge = useMemo(() => {
     const r = permissions.role;
@@ -126,16 +127,6 @@ export default function ScanScreen() {
     setShowScanTutorial(false);
     markSeen('scan');
   }, [markSeen]);
-
-  // ── Defect submit wrapper (adapts onSubmit signature) ──
-
-  const handleDefectSubmit = useCallback(
-    (notes: string, _wantsPhoto: boolean) => {
-      // wantsPhoto is always false in new flow (showPhotoOption={false})
-      flowDefectSubmit(notes);
-    },
-    [flowDefectSubmit],
-  );
 
   // ── Render ──
 
@@ -204,7 +195,7 @@ export default function ScanScreen() {
   const scanToastElement = (
     <ScanToast
       visible={showUndoToast}
-      message={`Scanned ${scannedAsset?.assetNumber ?? 'asset'}`}
+      message={`Scanned ${scannedAsset?.assetNumber ? formatAssetNumber(scannedAsset.assetNumber) : 'asset'}`}
       type="success"
       onUndo={handleUndoPress}
       onDismiss={handleToastDismiss}
@@ -226,7 +217,7 @@ export default function ScanScreen() {
           hasLocationPermission={hasLocationPermission}
           onRequestLocationPermission={requestLocationPermission}
           scanStatus={scanStatus}
-          depotName={depotName}
+          depotBadge={depotBadge}
           roleBadge={roleBadge}
           scanCard={scanCardElement}
           scanActionBar={scanActionBarElement}
@@ -259,7 +250,7 @@ export default function ScanScreen() {
         visible={activeSheet === 'defect'}
         assetNumber={scannedAsset?.assetNumber ?? ''}
         isSubmitting={isSubmittingDefect}
-        onSubmit={handleDefectSubmit}
+        onSubmit={flowDefectSubmit}
         onCancel={handleDefectCancel}
         onDismiss={handleSheetDismiss}
         showPhotoOption={false}

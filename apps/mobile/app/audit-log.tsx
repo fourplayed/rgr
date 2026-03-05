@@ -20,7 +20,7 @@ import {
 import { LoadingDots } from '../src/components/common/LoadingDots';
 import { useUserPermissions } from '../src/contexts/UserPermissionsContext';
 import { colors } from '../src/theme/colors';
-import { spacing, fontSize, fontWeight, borderRadius } from '../src/theme/spacing';
+import { spacing, fontSize, borderRadius } from '../src/theme/spacing';
 
 export default function AuditLogScreen() {
   const router = useRouter();
@@ -182,7 +182,6 @@ const styles = StyleSheet.create({
   backButton: { padding: spacing.sm },
   headerTitle: {
     fontSize: fontSize.lg,
-    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     textTransform: 'uppercase',

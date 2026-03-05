@@ -15,7 +15,7 @@ import type { MaintenancePriority, CreateMaintenanceInput } from '@rgr/shared';
 import { MaintenancePriorityLabels } from '@rgr/shared';
 import { LoadingDots } from '../common/LoadingDots';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, fontWeight, borderRadius, shadows } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
 import { useAuthStore } from '../../store/authStore';
 import { useCreateMaintenance } from '../../hooks/useMaintenanceData';
 
@@ -30,6 +30,9 @@ interface CreateMaintenanceModalProps {
   defaultDescription?: string;
   defaultPriority?: MaintenancePriority;
   onCreated?: (maintenanceId: string) => void;
+  /** When provided, the modal collects form data but delegates creation to this callback.
+   *  Used by the atomic accept-defect flow to wrap both operations in a transaction. */
+  onExternalSubmit?: (input: CreateMaintenanceInput) => Promise<void>;
 }
 
 const PRIORITY_ORDER: MaintenancePriority[] = ['low', 'medium', 'high', 'critical'];
@@ -44,6 +47,7 @@ export function CreateMaintenanceModal({
   defaultDescription,
   defaultPriority,
   onCreated,
+  onExternalSubmit,
 }: CreateMaintenanceModalProps) {
   const { user } = useAuthStore();
   const { mutateAsync: createMaintenanceAsync, isPending } = useCreateMaintenance();
@@ -92,15 +96,19 @@ export function CreateMaintenanceModal({
     };
 
     try {
-      const record = await createMaintenanceAsync(input);
-      if (onCreated) {
-        onCreated(record.id);
+      if (onExternalSubmit) {
+        await onExternalSubmit(input);
+      } else {
+        const record = await createMaintenanceAsync(input);
+        if (onCreated) {
+          onCreated(record.id);
+        }
       }
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create maintenance record');
     }
-  }, [title, description, priority, dueDate, notes, assetId, user, createMaintenanceAsync, onClose, onCreated]);
+  }, [title, description, priority, dueDate, notes, assetId, user, createMaintenanceAsync, onClose, onCreated, onExternalSubmit]);
 
   const isLoading = isPending;
 
@@ -124,12 +132,25 @@ export function CreateMaintenanceModal({
         <View style={styles.sheet}>
           <View style={styles.handle} />
 
+          {/* Header */}
+          <View style={styles.header}>
+            <View style={styles.headerButton} />
+            <Text style={styles.headerTitle} numberOfLines={1}>Schedule Maintenance</Text>
+            <TouchableOpacity
+              onPress={onClose}
+              style={styles.headerButton}
+              accessibilityRole="button"
+              accessibilityLabel="Close create maintenance"
+            >
+              <Ionicons name="close" size={28} color={colors.text} />
+            </TouchableOpacity>
+          </View>
+
           <ScrollView
             style={styles.scrollView}
             contentContainerStyle={styles.content}
             keyboardShouldPersistTaps="handled"
           >
-            <Text style={styles.title}>Schedule Maintenance</Text>
 
             {/* Defect context banner */}
             {defectReportId && (
@@ -328,26 +349,41 @@ const styles = StyleSheet.create({
   scrollView: {
     flexGrow: 0,
   },
-  content: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing['2xl'],
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.base,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    backgroundColor: colors.background,
   },
-  title: {
+  headerTitle: {
+    flex: 1,
     fontSize: fontSize.lg,
-    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,
-    marginBottom: spacing.lg,
+    textAlign: 'center',
+  },
+  headerButton: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  content: {
+    paddingHorizontal: spacing.base,
+    paddingTop: spacing.base,
+    paddingBottom: spacing['2xl'],
   },
   inputGroup: {
     marginBottom: spacing.md,
   },
   label: {
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     textTransform: 'uppercase',
@@ -391,7 +427,7 @@ const styles = StyleSheet.create({
   chip: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.full,
     borderWidth: 1,
   },
   chipText: {
@@ -446,10 +482,10 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
-    backgroundColor: '#FEF3C7',
+    backgroundColor: colors.warningSurface,
     borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: '#FDE68A',
+    borderColor: colors.warningBorder,
     marginBottom: spacing.md,
   },
   defectBannerText: {
@@ -467,7 +503,7 @@ const styles = StyleSheet.create({
   datePresetChip: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.full,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,

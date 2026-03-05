@@ -22,7 +22,7 @@ import { useNetworkStatus } from '../../src/hooks/useNetworkStatus';
 import { useLocationStore } from '../../src/store/locationStore';
 import { useDebugLocationStore } from '../../src/store/debugLocationStore';
 import { colors } from '../../src/theme/colors';
-import { spacing, fontSize, fontWeight, borderRadius } from '../../src/theme/spacing';
+import { spacing, fontSize, borderRadius } from '../../src/theme/spacing';
 import { getSession as getStoredSession } from '../../src/utils/secureStorage';
 import type { Profile } from '@rgr/shared';
 
@@ -700,7 +700,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: fontSize.lg,
-    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     textTransform: 'uppercase',
@@ -726,7 +725,6 @@ const styles = StyleSheet.create({
   },
   healthBannerText: {
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.textInverse,
     textTransform: 'uppercase',
@@ -738,7 +736,6 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     textTransform: 'uppercase',
@@ -762,7 +759,6 @@ const styles = StyleSheet.create({
   },
   debugLabel: {
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     textTransform: 'uppercase',
@@ -798,7 +794,6 @@ const styles = StyleSheet.create({
   },
   debugSubtitle: {
     fontSize: fontSize.xs,
-    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     textTransform: 'uppercase',
@@ -819,7 +814,6 @@ const styles = StyleSheet.create({
   debugDataTextBold: {
     fontSize: fontSize.xs,
     fontFamily: 'Lato_700Bold',
-    fontWeight: fontWeight.bold,
     color: colors.text,
     marginBottom: spacing.xs,
   },
@@ -841,7 +835,6 @@ const styles = StyleSheet.create({
   },
   syncButtonText: {
     fontSize: fontSize.base,
-    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.textInverse,
     textTransform: 'uppercase',
@@ -859,7 +852,6 @@ const styles = StyleSheet.create({
   },
   copyButtonText: {
     fontSize: fontSize.base,
-    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.textInverse,
     textTransform: 'uppercase',

@@ -15,7 +15,7 @@ import { useTutorialStore } from '../src/store/tutorialStore';
 import { useUserPermissions } from '../src/contexts/UserPermissionsContext';
 import { UserRoleLabels } from '@rgr/shared';
 import { colors } from '../src/theme/colors';
-import { spacing, fontSize, fontWeight, borderRadius } from '../src/theme/spacing';
+import { spacing, fontSize, borderRadius } from '../src/theme/spacing';
 import { AlertSheet } from '../src/components/common';
 import { EditProfileModal } from '../src/components/settings/EditProfileModal';
 import { NotificationsModal } from '../src/components/settings/NotificationsModal';
@@ -256,7 +256,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: fontSize.lg,
-    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     textTransform: 'uppercase',
@@ -277,7 +276,6 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     textTransform: 'uppercase',
@@ -303,7 +301,6 @@ const styles = StyleSheet.create({
   },
   profileName: {
     fontSize: fontSize.lg,
-    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
   },
@@ -320,7 +317,6 @@ const styles = StyleSheet.create({
   },
   roleText: {
     fontSize: fontSize.xs,
-    fontWeight: fontWeight.semibold,
     fontFamily: 'Lato_700Bold',
     color: colors.textInverse,
     textTransform: 'uppercase',
@@ -345,7 +341,6 @@ const styles = StyleSheet.create({
   },
   settingsItemTitle: {
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     textTransform: 'uppercase',

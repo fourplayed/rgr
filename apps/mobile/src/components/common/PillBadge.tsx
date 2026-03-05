@@ -8,6 +8,8 @@ interface PillBadgeProps {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   color: string;
+  /** Override text & icon color (default: textInverse / white) */
+  textColor?: string;
   /** Icon size override (default 12) */
   iconSize?: number;
   /** Optional outer style (e.g. margin) — badge layout is the parent's concern */
@@ -18,15 +20,16 @@ interface PillBadgeProps {
   accessibilityRole?: 'text' | 'button' | 'none';
 }
 
-export function PillBadge({ icon, label, color, iconSize = 12, style, accessibilityLabel, accessibilityRole }: PillBadgeProps) {
+export function PillBadge({ icon, label, color, textColor, iconSize = 12, style, accessibilityLabel, accessibilityRole }: PillBadgeProps) {
+  const foreground = textColor ?? colors.textInverse;
   return (
     <View
       style={[styles.badge, { backgroundColor: color }, style]}
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityRole={accessibilityRole}
     >
-      <Ionicons name={icon} size={iconSize} color={colors.textInverse} />
-      <Text style={styles.label}>{label}</Text>
+      <Ionicons name={icon} size={iconSize} color={foreground} />
+      <Text style={[styles.label, textColor != null && { color: foreground }]}>{label}</Text>
     </View>
   );
 }

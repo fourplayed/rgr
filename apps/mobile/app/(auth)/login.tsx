@@ -438,7 +438,6 @@ const styles = StyleSheet.create({
   label: {
     fontSize: fontSize.sm,
     fontFamily: 'Lato_700Bold',
-    fontWeight: fontWeight.bold,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -469,7 +468,6 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: fontSize.lg,
     fontFamily: 'Lato_700Bold',
-    fontWeight: fontWeight.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
   },

@@ -2,12 +2,12 @@ import React, { memo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { AssetWithRelations, AssetStatus } from '@rgr/shared';
-import { AssetStatusColors, AssetStatusLabels, getDepotBadgeColors } from '@rgr/shared';
+import { AssetStatusColors, AssetStatusLabels, getDepotBadgeColors, formatAssetNumber } from '@rgr/shared';
 import type { useDepotLookup } from '../../hooks/useDepots';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 
-const ASSET_STATUS_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
+const ASSET_STATUS_ICONS: Record<AssetStatus, keyof typeof Ionicons.glyphMap> = {
   serviced: 'checkmark-circle',
   maintenance: 'construct-outline',
   out_of_service: 'close-circle-outline',
@@ -40,7 +40,7 @@ function AssetListItemComponent({ asset, onPress, depotLookup }: AssetListItemPr
       onPress={() => onPress(asset)}
       activeOpacity={0.7}
       accessibilityRole="button"
-      accessibilityLabel={`Asset ${asset.assetNumber}, status ${asset.status}`}
+      accessibilityLabel={`Asset ${formatAssetNumber(asset.assetNumber)}, status ${getStatusLabel(asset.status)}`}
     >
       <View style={styles.cardRow}>
         <View style={styles.iconContainer}>
@@ -48,7 +48,7 @@ function AssetListItemComponent({ asset, onPress, depotLookup }: AssetListItemPr
         </View>
         <View style={styles.cardBody}>
           <View style={styles.headerRow}>
-            <Text style={styles.assetNumber} numberOfLines={1}>{asset.assetNumber}</Text>
+            <Text style={styles.assetNumber} numberOfLines={1}>{formatAssetNumber(asset.assetNumber)}</Text>
             <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
               <Text style={styles.statusBadgeText}>
                 {getStatusLabel(asset.status)}
@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   assetNumber: {
-    fontSize: fontSize.base,
+    fontSize: fontSize.sm,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
   },
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
   subtypeLabel: {
     fontSize: fontSize.xs,
     fontFamily: 'Lato_700Bold',
-    color: colors.electricBlue,
+    color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },

@@ -1,13 +1,20 @@
 import React, { memo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import type { DefectReportListItem as DefectReportListItemType } from '@rgr/shared';
-import { formatRelativeTime } from '@rgr/shared';
+import type { DefectReportListItem as DefectReportListItemType, DefectStatus } from '@rgr/shared';
+import { formatRelativeTime, formatAssetNumber } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 import { DefectStatusBadge } from './DefectStatusBadge';
 
-export const DEFECT_ITEM_HEIGHT = 88;
+export const DEFECT_STATUS_CONFIG: Record<DefectStatus, { icon: keyof typeof Ionicons.glyphMap; color: string }> = {
+  reported:  { icon: 'warning',          color: colors.warning },
+  accepted:  { icon: 'construct',        color: colors.info },
+  resolved:  { icon: 'checkmark-circle', color: colors.success },
+  dismissed: { icon: 'close-circle',     color: colors.textSecondary },
+};
+
+export const DEFECT_ITEM_HEIGHT = 72;
 
 interface DefectReportListItemProps {
   defect: DefectReportListItemType;
@@ -15,31 +22,34 @@ interface DefectReportListItemProps {
 }
 
 function DefectReportListItemComponent({ defect, onPress }: DefectReportListItemProps) {
+  const { icon, color } = DEFECT_STATUS_CONFIG[defect.status] ?? DEFECT_STATUS_CONFIG.reported;
+
   return (
     <TouchableOpacity
-      style={styles.container}
+      style={[styles.container, { borderLeftColor: color }]}
       onPress={() => onPress(defect)}
       activeOpacity={0.7}
       accessibilityRole="button"
       accessibilityLabel={`Defect report ${defect.title}, status ${defect.status}`}
     >
-      <View style={styles.cardContent}>
-        <View style={styles.iconContainer}>
-          <Ionicons name="warning" size={20} color={colors.warning} />
+      <View style={styles.cardRow}>
+        <View style={styles.cardIconContainer}>
+          <Ionicons name={icon} size={31} color={color} />
         </View>
-        <View style={styles.details}>
-          <View style={styles.headerRow}>
-            <Text style={styles.assetNumber} numberOfLines={1}>
-              {defect.assetNumber || 'Unknown Asset'}
+        <View style={styles.cardBody}>
+          <View style={styles.cardContentRow}>
+            <Text style={styles.cardTitle} numberOfLines={1}>
+              {defect.assetNumber ? formatAssetNumber(defect.assetNumber) : 'Unknown Asset'}
             </Text>
-            <DefectStatusBadge status={defect.status} />
+            <View style={styles.cardBadges}>
+              <DefectStatusBadge status={defect.status} label={defect.status === 'accepted' ? 'Task Created' : undefined} />
+            </View>
           </View>
-          <Text style={styles.subtitle} numberOfLines={1}>Defect Report</Text>
-          <View style={styles.footerRow}>
-            <Text style={styles.title} numberOfLines={1}>
-              {defect.title}
+          <View style={styles.cardFooter}>
+            <Text style={styles.cardSecondaryText} numberOfLines={1}>
+              {defect.description || defect.title}
             </Text>
-            <Text style={styles.timestamp}>
+            <Text style={styles.cardTime}>
               {formatRelativeTime(defect.createdAt)}
             </Text>
           </View>
@@ -54,6 +64,7 @@ export const DefectReportListItem = memo(
   (prev, next) =>
     prev.defect.id === next.defect.id &&
     prev.defect.title === next.defect.title &&
+    prev.defect.description === next.defect.description &&
     prev.defect.status === next.defect.status &&
     prev.defect.assetNumber === next.defect.assetNumber &&
     prev.onPress === next.onPress
@@ -62,62 +73,56 @@ export const DefectReportListItem = memo(
 const styles = StyleSheet.create({
   container: {
     backgroundColor: colors.background,
-    padding: spacing.base,
+    padding: spacing.md,
     borderRadius: borderRadius.md,
     borderWidth: 1,
     borderColor: colors.border,
     borderLeftWidth: 4,
-    borderLeftColor: colors.warning,
     marginBottom: spacing.sm,
-    height: DEFECT_ITEM_HEIGHT - spacing.sm,
   },
-  cardContent: {
+  cardRow: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  cardIconContainer: {
+    width: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  cardBody: {
     flex: 1,
   },
-  iconContainer: {
-    marginRight: spacing.sm,
-  },
-  details: {
-    flex: 1,
-    justifyContent: 'space-between',
-    height: '100%',
-  },
-  headerRow: {
+  cardContentRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    marginBottom: spacing.xs,
   },
-  assetNumber: {
-    fontSize: fontSize.base,
+  cardTitle: {
+    fontSize: fontSize.sm,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     flex: 1,
-    marginRight: spacing.sm,
   },
-  subtitle: {
-    fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
-    color: colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginTop: 1,
+  cardBadges: {
+    flexDirection: 'row',
+    gap: spacing.xs,
   },
-  footerRow: {
+  cardFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: spacing.xs,
   },
-  title: {
+  cardSecondaryText: {
     fontSize: fontSize.xs,
     fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
     flex: 1,
     marginRight: spacing.sm,
   },
-  timestamp: {
+  cardTime: {
     fontSize: fontSize.xs,
     fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,

@@ -36,7 +36,7 @@ function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto }: PhotoGalle
 
   // Batch-fetch all signed URLs in a single request instead of N individual requests
   const allPaths = useMemo(
-    () => (photos || []).map(p => p.thumbnailPath || p.storagePath).filter((p): p is string => !!p),
+    () => (photos || []).map(p => p.thumbnailPath ?? p.storagePath).filter((p): p is string => !!p),
     [photos]
   );
   const { data: signedUrlMap } = useBatchSignedUrls(allPaths);
@@ -141,7 +141,7 @@ function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto }: PhotoGalle
               photo={photo}
               size={thumbnailSize}
               onPress={onPhotoPress}
-              resolvedUrl={signedUrlMap?.[photo.thumbnailPath || photo.storagePath]}
+              resolvedUrl={signedUrlMap?.[photo.thumbnailPath ?? photo.storagePath]}
             />
           ))}
         </View>
@@ -164,7 +164,7 @@ function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto }: PhotoGalle
               photo={photo}
               size={thumbnailSize}
               onPress={onPhotoPress}
-              resolvedUrl={signedUrlMap?.[photo.thumbnailPath || photo.storagePath]}
+              resolvedUrl={signedUrlMap?.[photo.thumbnailPath ?? photo.storagePath]}
             />
           ))}
         </View>

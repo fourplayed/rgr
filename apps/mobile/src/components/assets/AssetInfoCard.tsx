@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { AssetWithRelations } from '@rgr/shared';
 import type { AssetStatus } from '@rgr/shared';
-import { formatDate, AssetStatusColors, getDepotBadgeColors } from '@rgr/shared';
+import { formatDate, AssetStatusColors, getDepotBadgeColors, formatAssetNumber } from '@rgr/shared';
 import { useDepotLookup } from '../../hooks/useDepots';
 import { StatusBadge } from '../common/StatusBadge';
 import { CollapsibleSection } from '../common/CollapsibleSection';
@@ -35,7 +35,7 @@ export function AssetInfoCard({ asset, nextServiceDate, assessment, onPress }: A
       <View style={styles.header}>
         <Ionicons name={STATUS_ICONS[asset.status]} size={36} color={statusColor} />
         <View style={styles.assetColumn}>
-          <Text style={styles.assetNumber}>{asset.assetNumber}</Text>
+          <Text style={styles.assetNumber}>{formatAssetNumber(asset.assetNumber)}</Text>
           <Text style={styles.categoryText}>
             {asset.subtype ? asset.subtype : asset.category === 'dolly' ? 'Dolly' : 'Trailer'}
           </Text>

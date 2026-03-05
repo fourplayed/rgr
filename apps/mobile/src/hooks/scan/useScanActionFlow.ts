@@ -430,7 +430,7 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
   // ── Defect report handlers ──
 
   const handleDefectSubmit = useCallback(
-    async (notes: string) => {
+    async (notes: string, wantsPhoto: boolean) => {
       if (state.phase !== 'active') return;
 
       addDebugLog('Submitting defect report...');
@@ -447,7 +447,7 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
         await createDefectReport({
           assetId: state.scannedAsset.id,
           reportedBy: user.id,
-          title: `Defect reported - ${state.scannedAsset.assetNumber}`,
+          title: 'Defect reported',
           description: notes,
           scanEventId: state.lastScanEventId,
         });
@@ -456,7 +456,11 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
         dispatch({ type: 'MARK_DEFECT_COMPLETED' });
-        dispatch({ type: 'CLOSE_SHEET' });
+        if (wantsPhoto) {
+          dispatch({ type: 'CLOSE_SHEET', pendingSheet: 'camera' });
+        } else {
+          dispatch({ type: 'CLOSE_SHEET' });
+        }
 
         // Invalidate scan context so the card updates
         queryClient.invalidateQueries({

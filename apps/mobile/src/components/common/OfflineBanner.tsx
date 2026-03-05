@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useNetworkStatus } from '../../hooks/useNetworkStatus';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, fontWeight } from '../../theme/spacing';
+import { spacing, fontSize } from '../../theme/spacing';
 
 /**
  * OfflineBanner - Displays a warning banner when the device is offline
@@ -37,7 +37,6 @@ const styles = StyleSheet.create({
   text: {
     color: colors.textInverse,
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.semibold,
     fontFamily: 'Lato_700Bold',
   },
 });

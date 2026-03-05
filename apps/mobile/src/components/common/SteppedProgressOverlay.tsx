@@ -10,7 +10,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LoadingDots } from './LoadingDots';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 
 const STEP_INTERVAL = 600;
 const SUCCESS_DISMISS_DELAY = 1000;
@@ -211,7 +211,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.lg,
     fontFamily: 'Lato_700Bold',
-    fontWeight: fontWeight.bold,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,

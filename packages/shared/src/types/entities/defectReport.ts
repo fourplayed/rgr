@@ -59,6 +59,7 @@ export interface DefectReportListItem {
   id: string;
   assetId: string;
   title: string;
+  description: string | null;
   status: DefectStatus;
   maintenanceRecordId: string | null;
   createdAt: string;

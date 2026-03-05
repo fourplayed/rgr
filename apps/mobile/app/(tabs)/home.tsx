@@ -17,7 +17,7 @@ import { useRecentMaintenance } from '../../src/hooks/useMaintenanceData';
 import { useRecentDefectReports } from '../../src/hooks/useDefectData';
 import { useAuthStore } from '../../src/store/authStore';
 import { useLocationStore } from '../../src/store/locationStore';
-import { formatRelativeTime, UserRoleLabels } from '@rgr/shared';
+import { formatRelativeTime, UserRoleLabels, formatAssetNumber } from '@rgr/shared';
 import type { ScanEventWithScanner, MaintenanceListItem as MaintenanceListItemData, DefectReportListItem as DefectReportListItemData } from '@rgr/shared';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, borderRadius } from '../../src/theme/spacing';
@@ -26,10 +26,11 @@ import { LoadingDots } from '../../src/components/common/LoadingDots';
 import { RefreshLoadingDots } from '../../src/components/common/RefreshLoadingDots';
 import {
   MaintenanceStatusBadge,
-  MaintenancePriorityBadge,
   MaintenanceDetailModal,
   DefectStatusBadge,
   DefectReportDetailModal,
+  DEFECT_STATUS_CONFIG,
+  getMaintenanceVisualConfig,
 } from '../../src/components/maintenance';
 import {
   getScanTypeIcon,
@@ -44,11 +45,6 @@ type DashboardActivityItem =
   | { type: 'maintenance'; data: MaintenanceListItemData; timestamp: string }
   | { type: 'defect'; data: DefectReportListItemData; timestamp: string };
 
-const MAINTENANCE_STATUS_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
-  scheduled: 'time-outline',
-  completed: 'checkmark-circle',
-  cancelled: 'close-circle-outline',
-};
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -202,7 +198,7 @@ export default function HomeScreen() {
           onPress={() => router.navigate(`/(tabs)/assets/${item.data.assetId}`)}
           activeOpacity={0.7}
           accessibilityRole="button"
-          accessibilityLabel={`${formatScanTypeLabel(item.data.scanType)} scan for asset ${item.data.assetNumber || 'Unknown'}`}
+          accessibilityLabel={`${formatScanTypeLabel(item.data.scanType)} scan for asset ${item.data.assetNumber ? formatAssetNumber(item.data.assetNumber) : 'Unknown'}`}
           accessibilityHint="Double tap to view asset details"
         >
           <View style={styles.cardRow}>
@@ -212,7 +208,7 @@ export default function HomeScreen() {
             <View style={styles.cardBody}>
               <View style={styles.cardContentRow}>
                 <Text style={styles.cardTitle} numberOfLines={1}>
-                  {item.data.assetNumber || 'Unknown Asset'}
+                  {item.data.assetNumber ? formatAssetNumber(item.data.assetNumber) : 'Unknown Asset'}
                 </Text>
                 <View style={styles.cardBadges}>
                   {matchedDepot && badgeColors && (
@@ -238,9 +234,10 @@ export default function HomeScreen() {
 
     if (item.type === 'defect') {
       // Defect report item
+      const defectConfig = DEFECT_STATUS_CONFIG[item.data.status] ?? DEFECT_STATUS_CONFIG.reported;
       return (
         <TouchableOpacity
-          style={[styles.scanCard, { borderLeftColor: colors.warning }]}
+          style={[styles.scanCard, { borderLeftColor: defectConfig.color }]}
           onPress={() => setSelectedDefectId(item.data.id)}
           activeOpacity={0.7}
           accessibilityRole="button"
@@ -248,12 +245,12 @@ export default function HomeScreen() {
         >
           <View style={styles.cardRow}>
             <View style={styles.cardIconContainer}>
-              <Ionicons name="warning" size={31} color={colors.warning} />
+              <Ionicons name={defectConfig.icon} size={31} color={defectConfig.color} />
             </View>
             <View style={styles.cardBody}>
               <View style={styles.cardContentRow}>
                 <Text style={styles.cardTitle} numberOfLines={1}>
-                  {item.data.assetNumber || 'Unknown Asset'}
+                  {item.data.assetNumber ? formatAssetNumber(item.data.assetNumber) : 'Unknown Asset'}
                 </Text>
                 <View style={styles.cardBadges}>
                   <DefectStatusBadge status={item.data.status} />
@@ -272,36 +269,27 @@ export default function HomeScreen() {
     }
 
     // Maintenance item
-    const maintIcon = MAINTENANCE_STATUS_ICONS[item.data.status] ?? 'construct-outline';
-    const maintColor = item.data.status === 'completed'
-      ? colors.maintenanceStatus.completed
-      : colors.maintenanceStatus[item.data.status as keyof typeof colors.maintenanceStatus] ?? colors.textSecondary;
-    const borderColor = item.data.status === 'completed'
-      ? colors.success
-      : colors.maintenanceStatus[item.data.status as keyof typeof colors.maintenanceStatus] ?? colors.border;
+    const maintConfig = getMaintenanceVisualConfig(item.data.status, item.data.dueDate);
 
     return (
       <TouchableOpacity
-        style={[styles.scanCard, { borderLeftColor: borderColor }]}
+        style={[styles.scanCard, { borderLeftColor: maintConfig.color }]}
         onPress={() => setSelectedMaintenanceId(item.data.id)}
         activeOpacity={0.7}
         accessibilityRole="button"
-        accessibilityLabel={item.data.title}
+        accessibilityLabel={`Maintenance ${item.data.title}, status ${item.data.status}`}
       >
         <View style={styles.cardRow}>
           <View style={styles.cardIconContainer}>
-            <Ionicons name={maintIcon} size={31} color={maintColor} />
+            <Ionicons name={maintConfig.icon} size={31} color={maintConfig.color} />
           </View>
           <View style={styles.cardBody}>
             <View style={styles.cardContentRow}>
               <Text style={styles.cardTitle} numberOfLines={1}>
-                {item.data.assetNumber || 'Unknown Asset'}
+                {item.data.assetNumber ? formatAssetNumber(item.data.assetNumber) : 'Unknown Asset'}
               </Text>
               <View style={styles.cardBadges}>
                 <MaintenanceStatusBadge status={item.data.status} />
-                {item.data.status !== 'completed' && item.data.status !== 'cancelled' && (
-                  <MaintenancePriorityBadge priority={item.data.priority} />
-                )}
               </View>
             </View>
             <View style={styles.scanFooter}>
@@ -412,7 +400,10 @@ export default function HomeScreen() {
           }
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>No recent activity</Text>
+              <View style={styles.emptyIconContainer}>
+                <Ionicons name="scan-outline" size={64} color={colors.textSecondary} />
+              </View>
+              <Text style={styles.emptyTitle}>No recent activity</Text>
               <Text style={styles.emptySubtext}>
                 Start scanning assets to see your activity here
               </Text>
@@ -638,11 +629,21 @@ const styles = StyleSheet.create({
 
   // Empty State
   emptyState: {
-    padding: spacing['2xl'],
     alignItems: 'center',
+    paddingHorizontal: spacing['3xl'],
+    paddingVertical: spacing['2xl'],
   },
-  emptyText: {
-    fontSize: fontSize.base,
+  emptyIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
+  emptyTitle: {
+    fontSize: fontSize.xl,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     marginBottom: spacing.sm,
@@ -653,5 +654,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
     textAlign: 'center',
+    lineHeight: 20,
   },
 });

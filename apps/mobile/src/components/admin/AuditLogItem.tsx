@@ -18,7 +18,19 @@ const REDACTED_FIELDS = new Set([
 function redactSensitiveFields(obj: Record<string, unknown>): Record<string, unknown> {
   const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(obj)) {
-    result[key] = REDACTED_FIELDS.has(key.toLowerCase()) ? '[REDACTED]' : value;
+    if (REDACTED_FIELDS.has(key.toLowerCase())) {
+      result[key] = '[REDACTED]';
+    } else if (Array.isArray(value)) {
+      result[key] = value.map((item) =>
+        item !== null && typeof item === 'object'
+          ? redactSensitiveFields(item as Record<string, unknown>)
+          : item
+      );
+    } else if (value !== null && typeof value === 'object') {
+      result[key] = redactSensitiveFields(value as Record<string, unknown>);
+    } else {
+      result[key] = value;
+    }
   }
   return result;
 }

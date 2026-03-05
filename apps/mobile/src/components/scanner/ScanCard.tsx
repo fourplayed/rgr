@@ -5,11 +5,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   Animated,
-  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Asset, Depot, AssetScanContext } from '@rgr/shared';
-import { AssetStatusColors, getDepotBadgeColors } from '@rgr/shared';
+import { AssetStatusColors, getDepotBadgeColors, formatAssetNumber } from '@rgr/shared';
 import { StatusBadge } from '../common/StatusBadge';
 import { DefectStatusBadge } from '../maintenance/DefectStatusBadge';
 import { MaintenancePriorityBadge } from '../maintenance/MaintenancePriorityBadge';
@@ -96,7 +95,7 @@ function ScanCardComponent(props: ScanCardProps) {
             >
               <View style={styles.assetHeader}>
                 <Text style={styles.assetNumber}>
-                  {asset.assetNumber ?? 'Unknown'}
+                  {asset.assetNumber ? formatAssetNumber(asset.assetNumber) : 'Unknown'}
                 </Text>
                 {asset.status && <StatusBadge status={asset.status} size="small" />}
               </View>
@@ -178,7 +177,7 @@ function MechanicContext({
   if (isLoading) {
     return (
       <View style={styles.contextLoading}>
-        <ActivityIndicator size="small" color={colors.electricBlue} />
+        <LoadingDots color={colors.electricBlue} size={8} />
         <Text style={styles.contextLoadingText}>Loading context...</Text>
       </View>
     );
@@ -210,7 +209,7 @@ function MechanicContext({
   return (
     <View style={styles.contextSection}>
       {/* Defect items */}
-      {scanContext.openDefects.map((defect: { id: string; title: string; status: string; createdAt: string }) => (
+      {scanContext.openDefects.map((defect) => (
         <TouchableOpacity
           key={defect.id}
           style={styles.inlineItem}
@@ -223,13 +222,13 @@ function MechanicContext({
           <Text style={styles.itemTitle} numberOfLines={1}>
             {defect.title}
           </Text>
-          <DefectStatusBadge status={defect.status as 'reported' | 'accepted' | 'resolved' | 'dismissed'} />
+          <DefectStatusBadge status={defect.status} />
           <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
         </TouchableOpacity>
       ))}
 
       {/* Task items */}
-      {scanContext.activeTasks.map((task: { id: string; title: string; status: string; priority: string; createdAt: string }) => (
+      {scanContext.activeTasks.map((task) => (
         <TouchableOpacity
           key={task.id}
           style={styles.inlineItem}
@@ -242,8 +241,8 @@ function MechanicContext({
           <Text style={styles.itemTitle} numberOfLines={1}>
             {task.title}
           </Text>
-          <MaintenancePriorityBadge priority={task.priority as 'low' | 'medium' | 'high' | 'critical'} />
-          <MaintenanceStatusBadge status={task.status as 'scheduled' | 'completed' | 'cancelled'} />
+          <MaintenancePriorityBadge priority={task.priority} />
+          <MaintenanceStatusBadge status={task.status} />
           <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
         </TouchableOpacity>
       ))}

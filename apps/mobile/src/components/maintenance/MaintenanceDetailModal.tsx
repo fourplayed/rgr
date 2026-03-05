@@ -14,7 +14,7 @@ import { useRouter } from 'expo-router';
 import { formatRelativeTime } from '@rgr/shared';
 import { LoadingDots, AlertSheet, ConfirmSheet } from '../common';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, fontWeight, borderRadius, shadows } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
 import { useMaintenance, useUpdateMaintenanceStatus, useUpdateMaintenance } from '../../hooks/useMaintenanceData';
 import { useScanEventPhotos, useSignedUrl } from '../../hooks/usePhotos';
 import { useUserPermissions } from '../../contexts/UserPermissionsContext';
@@ -546,7 +546,6 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.textSecondary,
     textTransform: 'uppercase',

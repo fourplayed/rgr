@@ -7,7 +7,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, fontWeight, borderRadius, shadows } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
 
 interface SaveCredentialsModalProps {
   visible: boolean;
@@ -95,7 +95,6 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: fontSize['2xl'],
-    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     marginBottom: spacing.md,

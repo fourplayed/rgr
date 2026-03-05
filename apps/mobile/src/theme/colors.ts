@@ -24,7 +24,7 @@ export const colors = {
 
   // Maintenance status (keys match MaintenanceStatus enum values)
   maintenanceStatus: {
-    scheduled: '#3B82F6',
+    scheduled: '#F59E0B',
     completed: '#22C55E',
     cancelled: '#6B7280',
   } satisfies Record<string, string>,
@@ -78,6 +78,8 @@ export const colors = {
   success: '#22C55E',
   warning: '#F59E0B',
   warningText: '#B45309',
+  warningSurface: '#FEF3C7',
+  warningBorder: '#FDE68A',
   error: '#EF4444',
   info: '#3B82F6',
 
@@ -94,6 +96,12 @@ export const colors = {
   // Legacy arrays for backwards compatibility
   gradientLight: ['#C0C0C0', '#E8E8E8', '#F5F5F5'] as const,
   gradientDark: ['#C0C0C0', '#E8E8E8', '#F5F5F5'] as const,
+
+  // Brand gradient (tab bar, header)
+  brandGradient: ['#000099', '#0000CC', '#000099'] as const,
+  brandGradientHeader: ['#0000DD', '#000099'] as const,
+  brandTabBar: '#0000CC',
+  brandTabActive: '#000099',
 
   // Opacity variants
   overlay: 'rgba(0, 0, 0, 0.5)',

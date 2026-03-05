@@ -14,6 +14,9 @@ import type { UploadPhotoOptions, PhotoListItem } from '@rgr/shared';
 import { assetKeys } from './useAssetData';
 import { logger } from '../utils/logger';
 
+/** Supabase signed URLs expire at 60 min — use 45 min for a safe buffer. */
+const SIGNED_URL_STALE_TIME = 2_700_000;
+
 /**
  * Query keys for photo-related data
  */
@@ -112,7 +115,7 @@ export function useSignedUrl(storagePath: string | undefined) {
       return result.data;
     },
     enabled: !!storagePath,
-    staleTime: 3000000, // Cache signed URLs for ~50 minutes (they expire in 1 hour)
+    staleTime: SIGNED_URL_STALE_TIME,
   });
 }
 
@@ -226,7 +229,7 @@ export function useBatchSignedUrls(storagePaths: string[]) {
       return result.data;
     },
     enabled: storagePaths.length > 0,
-    staleTime: 2_700_000, // 45 min — safer buffer vs 1hr expiry
+    staleTime: SIGNED_URL_STALE_TIME,
   });
 }
 
@@ -249,7 +252,7 @@ export function usePrefetchImages(photos: PhotoListItem[] | undefined) {
     // Collect first 6 thumbnail paths for batch prefetch
     const paths = photos
       .slice(0, 6)
-      .map((photo) => photo.thumbnailPath || photo.storagePath)
+      .map((photo) => photo.thumbnailPath ?? photo.storagePath)
       .filter((p): p is string => !!p);
 
     if (paths.length === 0) return;
@@ -269,7 +272,7 @@ export function usePrefetchImages(photos: PhotoListItem[] | undefined) {
 
         return result.data;
       },
-      staleTime: 2_700_000,
+      staleTime: SIGNED_URL_STALE_TIME,
     });
     // Using photoIds as stable dependency to avoid re-running on array reference changes
     // eslint-disable-next-line react-hooks/exhaustive-deps

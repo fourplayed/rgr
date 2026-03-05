@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, fontWeight, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 import { useAvatarStore, AVATAR_OPTIONS } from '../../store/avatarStore';
 
 interface AvatarPickerProps {
@@ -142,7 +142,6 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: fontSize.lg,
-    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
   },
@@ -192,7 +191,6 @@ const styles = StyleSheet.create({
   },
   avatarLabelSelected: {
     color: colors.backgroundDark,
-    fontWeight: fontWeight.semibold,
     fontFamily: 'Lato_700Bold',
   },
 });

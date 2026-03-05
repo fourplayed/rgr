@@ -13,12 +13,15 @@ import { useRouter } from 'expo-router';
 import { formatRelativeTime } from '@rgr/shared';
 import { LoadingDots, AlertSheet, InputSheet } from '../common';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, fontWeight, borderRadius, shadows } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
+import type { CreateMaintenanceInput } from '@rgr/shared';
 import { useDefectReport, useUpdateDefectReportStatus } from '../../hooks/useDefectData';
 import { useScanEventPhotos, useSignedUrl } from '../../hooks/usePhotos';
+import { useAcceptDefect } from '../../hooks/useAcceptDefect';
 import { useUserPermissions } from '../../contexts/UserPermissionsContext';
 import { DefectStatusBadge } from './DefectStatusBadge';
 import { CreateMaintenanceModal } from './CreateMaintenanceModal';
+import { MaintenanceDetailModal } from './MaintenanceDetailModal';
 
 interface DefectReportDetailModalProps {
   visible: boolean;
@@ -38,6 +41,7 @@ export function DefectReportDetailModal({
   const { canMarkMaintenance } = useUserPermissions();
   const { data: defect, isLoading } = useDefectReport(defectId);
   const updateStatusMutation = useUpdateDefectReportStatus();
+  const acceptDefectMutation = useAcceptDefect();
 
   // Defect photo data
   const { data: scanEventPhotos } = useScanEventPhotos(defect?.scanEventId ?? null);
@@ -50,6 +54,9 @@ export function DefectReportDetailModal({
 
   // Accept flow: show CreateMaintenanceModal pre-filled
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // View linked maintenance task
+  const [showMaintenanceDetail, setShowMaintenanceDetail] = useState(false);
 
   // Dismiss flow
   const [showDismissConfirm, setShowDismissConfirm] = useState(false);
@@ -66,29 +73,17 @@ export function DefectReportDetailModal({
     setShowCreateModal(true);
   }, []);
 
-  const handleMaintenanceCreated = useCallback(async (maintenanceId: string) => {
+  /** Atomic accept: CreateMaintenanceModal collects form data, we handle both
+   *  operations in a single server-side transaction via useAcceptDefect. */
+  const handleAcceptSubmit = useCallback(async (maintenanceInput: CreateMaintenanceInput) => {
     if (!defectId) return;
 
-    setShowCreateModal(false);
+    await acceptDefectMutation.mutateAsync({
+      defectReportId: defectId,
+      maintenanceInput,
+    });
+  }, [defectId, acceptDefectMutation]);
 
-    try {
-      // Link the already-created maintenance record to this defect
-      await updateStatusMutation.mutateAsync({
-        id: defectId,
-        status: 'accepted',
-        extras: { maintenanceRecordId: maintenanceId },
-      });
-    } catch (err) {
-      setAlertSheet({
-        visible: true,
-        title: 'Error',
-        message: err instanceof Error ? err.message : 'Failed to accept defect',
-      });
-    }
-  }, [defectId, updateStatusMutation]);
-
-  // Better approach: when CreateMaintenanceModal closes after creating,
-  // we link the defect via direct status update
   const handleMaintenanceModalClose = useCallback(() => {
     setShowCreateModal(false);
   }, []);
@@ -127,13 +122,8 @@ export function DefectReportDetailModal({
   }, [defect, router, onClose]);
 
   const handleViewLinkedTask = useCallback(() => {
-    // Close this modal; the maintenance tab will handle showing it
-    // For now, navigate to asset which shows both
-    if (defect?.assetId) {
-      onClose();
-      router.push(`/assets/${defect.assetId}`);
-    }
-  }, [defect, router, onClose]);
+    setShowMaintenanceDetail(true);
+  }, []);
 
   const renderStatusActions = () => {
     if (!defect || !canMarkMaintenance) return null;
@@ -147,7 +137,7 @@ export function DefectReportDetailModal({
             <TouchableOpacity
               style={[styles.actionButton, styles.primaryButton]}
               onPress={handleAccept}
-              disabled={updateStatusMutation.isPending}
+              disabled={updateStatusMutation.isPending || acceptDefectMutation.isPending}
             >
               <Ionicons name="checkmark-circle" size={18} color={colors.textInverse} />
               <Text style={styles.primaryButtonText}>Accept</Text>
@@ -162,25 +152,15 @@ export function DefectReportDetailModal({
           </>
         )}
 
-        {status === 'accepted' && defect.maintenanceRecordId && (
-          <TouchableOpacity
-            style={[styles.actionButton, styles.primaryButton]}
-            onPress={handleViewLinkedTask}
-          >
-            <Ionicons name="construct" size={18} color={colors.textInverse} />
-            <Text style={styles.primaryButtonText}>View Task</Text>
-          </TouchableOpacity>
-        )}
-
-        {(status === 'resolved' || status === 'dismissed') && (
+        {(status === 'accepted' || status === 'resolved' || status === 'dismissed') && (
           <View style={styles.closedStatus}>
             <Ionicons
-              name={status === 'resolved' ? 'checkmark-circle' : 'close-circle'}
+              name={status === 'accepted' ? 'construct' : status === 'resolved' ? 'checkmark-circle' : 'close-circle'}
               size={20}
-              color={status === 'resolved' ? colors.success : colors.textSecondary}
+              color={status === 'accepted' ? colors.info : status === 'resolved' ? colors.success : colors.textSecondary}
             />
             <Text style={styles.closedStatusText}>
-              {status === 'resolved' ? 'Resolved' : 'Dismissed'}
+              {status === 'accepted' ? 'Accepted' : status === 'resolved' ? 'Resolved' : 'Dismissed'}
             </Text>
           </View>
         )}
@@ -216,7 +196,7 @@ export function DefectReportDetailModal({
               {/* Header */}
               <View style={styles.header}>
                 <View style={styles.headerButton} />
-                <Text style={styles.title} numberOfLines={2}>{defect.title}</Text>
+                <Text style={styles.title} numberOfLines={1}>Defect Report</Text>
                 <TouchableOpacity
                   onPress={onClose}
                   style={styles.headerButton}
@@ -253,9 +233,7 @@ export function DefectReportDetailModal({
                 {defect.description && (
                   <View style={styles.sectionGroup}>
                     <Text style={styles.sectionTitle}>Description</Text>
-                    <View style={styles.sectionCard}>
-                      <Text style={styles.detailValue}>{defect.description}</Text>
-                    </View>
+                    <Text style={styles.detailValue}>{defect.description}</Text>
                   </View>
                 )}
 
@@ -263,33 +241,31 @@ export function DefectReportDetailModal({
                 {variant === 'full' && defectPhoto && (
                   <View style={styles.sectionGroup}>
                     <Text style={styles.sectionTitle}>Defect Photo</Text>
-                    <View style={styles.sectionCard}>
-                      {isPhotoLoading ? (
-                        <View style={styles.defectPhotoPlaceholder}>
-                          <LoadingDots color={colors.textSecondary} size={8} />
-                        </View>
-                      ) : photoError || !defectPhotoUrl ? (
-                        <View style={styles.defectPhotoPlaceholder}>
-                          <Ionicons name="image-outline" size={28} color={colors.textSecondary} />
-                          <Text style={styles.defectPhotoErrorText}>Photo unavailable</Text>
-                        </View>
-                      ) : (
-                        <View
-                          style={styles.defectPhotoContainer}
-                          accessible
-                          accessibilityRole="image"
-                          accessibilityLabel="Defect photo"
-                        >
-                          <Image
-                            source={{ uri: defectPhotoUrl }}
-                            style={styles.defectPhoto}
-                            contentFit="cover"
-                            transition={200}
-                            cachePolicy="memory-disk"
-                          />
-                        </View>
-                      )}
-                    </View>
+                    {isPhotoLoading ? (
+                      <View style={styles.defectPhotoPlaceholder}>
+                        <LoadingDots color={colors.textSecondary} size={8} />
+                      </View>
+                    ) : photoError || !defectPhotoUrl ? (
+                      <View style={styles.defectPhotoPlaceholder}>
+                        <Ionicons name="image-outline" size={28} color={colors.textSecondary} />
+                        <Text style={styles.defectPhotoErrorText}>Photo unavailable</Text>
+                      </View>
+                    ) : (
+                      <View
+                        style={styles.defectPhotoContainer}
+                        accessible
+                        accessibilityRole="image"
+                        accessibilityLabel="Defect photo"
+                      >
+                        <Image
+                          source={{ uri: defectPhotoUrl }}
+                          style={styles.defectPhoto}
+                          contentFit="cover"
+                          transition={200}
+                          cachePolicy="memory-disk"
+                        />
+                      </View>
+                    )}
                   </View>
                 )}
 
@@ -313,48 +289,46 @@ export function DefectReportDetailModal({
                 {variant === 'full' && (
                   <View style={styles.sectionGroup}>
                     <Text style={styles.sectionTitle}>Timeline</Text>
-                    <View style={styles.sectionCard}>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Reported</Text>
+                      <Text style={styles.detailValue}>
+                        {formatRelativeTime(defect.createdAt)}
+                      </Text>
+                    </View>
+
+                    {defect.reporterName && (
                       <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Reported</Text>
+                        <Text style={styles.detailLabel}>Reported By</Text>
+                        <Text style={styles.detailValue}>{defect.reporterName}</Text>
+                      </View>
+                    )}
+
+                    {defect.acceptedAt && (
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Accepted</Text>
                         <Text style={styles.detailValue}>
-                          {formatRelativeTime(defect.createdAt)}
+                          {formatRelativeTime(defect.acceptedAt)}
                         </Text>
                       </View>
+                    )}
 
-                      {defect.reporterName && (
-                        <View style={styles.detailRow}>
-                          <Text style={styles.detailLabel}>Reported By</Text>
-                          <Text style={styles.detailValue}>{defect.reporterName}</Text>
-                        </View>
-                      )}
+                    {defect.resolvedAt && (
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Resolved</Text>
+                        <Text style={styles.detailValue}>
+                          {formatRelativeTime(defect.resolvedAt)}
+                        </Text>
+                      </View>
+                    )}
 
-                      {defect.acceptedAt && (
-                        <View style={styles.detailRow}>
-                          <Text style={styles.detailLabel}>Accepted</Text>
-                          <Text style={styles.detailValue}>
-                            {formatRelativeTime(defect.acceptedAt)}
-                          </Text>
-                        </View>
-                      )}
-
-                      {defect.resolvedAt && (
-                        <View style={styles.detailRow}>
-                          <Text style={styles.detailLabel}>Resolved</Text>
-                          <Text style={styles.detailValue}>
-                            {formatRelativeTime(defect.resolvedAt)}
-                          </Text>
-                        </View>
-                      )}
-
-                      {defect.dismissedAt && (
-                        <View style={styles.detailRow}>
-                          <Text style={styles.detailLabel}>Dismissed</Text>
-                          <Text style={styles.detailValue}>
-                            {formatRelativeTime(defect.dismissedAt)}
-                          </Text>
-                        </View>
-                      )}
-                    </View>
+                    {defect.dismissedAt && (
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Dismissed</Text>
+                        <Text style={styles.detailValue}>
+                          {formatRelativeTime(defect.dismissedAt)}
+                        </Text>
+                      </View>
+                    )}
                   </View>
                 )}
 
@@ -362,9 +336,7 @@ export function DefectReportDetailModal({
                 {variant === 'full' && defect.dismissedReason && (
                   <View style={styles.sectionGroup}>
                     <Text style={styles.sectionTitle}>Dismiss Reason</Text>
-                    <View style={styles.sectionCard}>
-                      <Text style={styles.detailValue}>{defect.dismissedReason}</Text>
-                    </View>
+                    <Text style={styles.detailValue}>{defect.dismissedReason}</Text>
                   </View>
                 )}
 
@@ -372,9 +344,7 @@ export function DefectReportDetailModal({
                 {variant === 'full' && defect.notes && (
                   <View style={styles.sectionGroup}>
                     <Text style={styles.sectionTitle}>Notes</Text>
-                    <View style={styles.sectionCard}>
-                      <Text style={styles.detailValue}>{defect.notes}</Text>
-                    </View>
+                    <Text style={styles.detailValue}>{defect.notes}</Text>
                   </View>
                 )}
 
@@ -396,9 +366,16 @@ export function DefectReportDetailModal({
           defaultTitle={defect.title}
           {...(defect.description ? { defaultDescription: defect.description } : {})}
           defaultPriority="high"
-          onCreated={handleMaintenanceCreated}
+          onExternalSubmit={handleAcceptSubmit}
         />
       )}
+
+      {/* Linked Maintenance Task Detail */}
+      <MaintenanceDetailModal
+        visible={showMaintenanceDetail}
+        maintenanceId={defect?.maintenanceRecordId ?? null}
+        onClose={() => setShowMaintenanceDetail(false)}
+      />
 
       {/* Dismiss with Reason */}
       <InputSheet
@@ -511,17 +488,8 @@ const styles = StyleSheet.create({
   },
   sectionGroup: {
   },
-  sectionCard: {
-    backgroundColor: colors.background,
-    borderRadius: borderRadius.md,
-    padding: spacing.base,
-    gap: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
   sectionTitle: {
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.textSecondary,
     textTransform: 'uppercase',

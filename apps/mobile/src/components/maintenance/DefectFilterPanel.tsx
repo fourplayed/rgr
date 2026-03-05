@@ -8,33 +8,35 @@ import {
   LayoutAnimation,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import type { MaintenanceStatus, MaintenancePriority } from '@rgr/shared';
-import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '@rgr/shared';
+import type { DefectStatus } from '@rgr/shared';
+import { DefectStatusLabels } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
 import { FilterChip } from '../common/FilterChip';
 import '../../utils/enableLayoutAnimation';
 
-interface MaintenanceFilterPanelProps {
-  statuses: MaintenanceStatus[];
-  priorities: MaintenancePriority[];
-  onStatusChange: (statuses: MaintenanceStatus[]) => void;
-  onPriorityChange: (priorities: MaintenancePriority[]) => void;
+interface DefectFilterPanelProps {
+  statuses: DefectStatus[];
+  onStatusChange: (statuses: DefectStatus[]) => void;
   isExpanded: boolean;
   onToggleExpanded: () => void;
 }
 
-const STATUS_ORDER: MaintenanceStatus[] = ['scheduled', 'completed', 'cancelled'];
-const PRIORITY_ORDER: MaintenancePriority[] = ['low', 'medium', 'high', 'critical'];
+const STATUS_ORDER: DefectStatus[] = ['reported', 'accepted', 'resolved', 'dismissed'];
 
-export const MaintenanceFilterPanel = memo(function MaintenanceFilterPanel({
+const DEFECT_STATUS_COLORS: Record<DefectStatus, string> = {
+  reported: colors.warning,
+  accepted: colors.info,
+  resolved: colors.success,
+  dismissed: colors.textSecondary,
+};
+
+export const DefectFilterPanel = memo(function DefectFilterPanel({
   statuses,
-  priorities,
   onStatusChange,
-  onPriorityChange,
   isExpanded,
   onToggleExpanded,
-}: MaintenanceFilterPanelProps) {
+}: DefectFilterPanelProps) {
   const rotateAnim = useRef(new Animated.Value(isExpanded ? 1 : 0)).current;
 
   useEffect(() => {
@@ -50,7 +52,7 @@ export const MaintenanceFilterPanel = memo(function MaintenanceFilterPanel({
     onToggleExpanded();
   }, [onToggleExpanded]);
 
-  const toggleStatus = useCallback((status: MaintenanceStatus) => {
+  const toggleStatus = useCallback((status: DefectStatus) => {
     if (statuses.includes(status)) {
       onStatusChange(statuses.filter((s) => s !== status));
     } else {
@@ -58,16 +60,7 @@ export const MaintenanceFilterPanel = memo(function MaintenanceFilterPanel({
     }
   }, [statuses, onStatusChange]);
 
-  const togglePriority = useCallback((priority: MaintenancePriority) => {
-    if (priorities.includes(priority)) {
-      onPriorityChange(priorities.filter((p) => p !== priority));
-    } else {
-      onPriorityChange([...priorities, priority]);
-    }
-  }, [priorities, onPriorityChange]);
-
-  // Count active filters
-  const activeFilterCount = statuses.length + priorities.length;
+  const activeFilterCount = statuses.length;
 
   const chevronRotate = rotateAnim.interpolate({
     inputRange: [0, 1],
@@ -92,7 +85,7 @@ export const MaintenanceFilterPanel = memo(function MaintenanceFilterPanel({
           activeOpacity={0.7}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           accessibilityRole="button"
-          accessibilityLabel={`${isExpanded ? 'Collapse' : 'Expand'} maintenance filters`}
+          accessibilityLabel={`${isExpanded ? 'Collapse' : 'Expand'} defect filters`}
           accessibilityState={{ expanded: isExpanded }}
         >
           <Animated.View style={{ transform: [{ rotate: chevronRotate }] }}>
@@ -104,33 +97,16 @@ export const MaintenanceFilterPanel = memo(function MaintenanceFilterPanel({
       {/* Expandable Content */}
       {isExpanded && (
         <View style={styles.container}>
-          {/* Status Section */}
           <View style={styles.filterSection}>
             <Text style={styles.sectionLabel}>Status</Text>
             <View style={styles.chipsContainer}>
               {STATUS_ORDER.map((status) => (
                 <FilterChip
                   key={status}
-                  label={MaintenanceStatusLabels[status]}
+                  label={DefectStatusLabels[status]}
                   isSelected={statuses.includes(status)}
                   onPress={() => toggleStatus(status)}
-                  selectedColor={colors.maintenanceStatus[status] ?? colors.electricBlue}
-                />
-              ))}
-            </View>
-          </View>
-
-          {/* Priority Section */}
-          <View style={styles.filterSectionLast}>
-            <Text style={styles.sectionLabel}>Priority</Text>
-            <View style={styles.chipsContainer}>
-              {PRIORITY_ORDER.map((priority) => (
-                <FilterChip
-                  key={priority}
-                  label={MaintenancePriorityLabels[priority]}
-                  isSelected={priorities.includes(priority)}
-                  onPress={() => togglePriority(priority)}
-                  selectedColor={colors.maintenancePriority[priority as keyof typeof colors.maintenancePriority] ?? colors.electricBlue}
+                  selectedColor={DEFECT_STATUS_COLORS[status] ?? colors.electricBlue}
                 />
               ))}
             </View>
@@ -190,9 +166,6 @@ const styles = StyleSheet.create({
     color: colors.textInverse,
   },
   filterSection: {
-    marginBottom: spacing.md,
-  },
-  filterSectionLast: {
     marginBottom: 0,
   },
   sectionLabel: {

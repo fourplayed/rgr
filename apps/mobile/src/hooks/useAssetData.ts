@@ -202,7 +202,8 @@ export function useAsset(id: string | undefined) {
 }
 
 /**
- * Fetch asset scan history
+ * Fetch recent asset scan history (page 1, up to 20 items).
+ * This is a preview query for the asset detail screen — not a full paginated list.
  */
 export function useAssetScans(assetId: string | undefined) {
   return useQuery({
@@ -210,7 +211,7 @@ export function useAssetScans(assetId: string | undefined) {
     queryFn: async () => {
       if (!assetId) throw new Error('Asset ID is required');
 
-      const result = await getAssetScans(assetId);
+      const result = await getAssetScans(assetId, 1, 20);
 
       if (!result.success) {
         throw new Error(result.error);
@@ -224,7 +225,8 @@ export function useAssetScans(assetId: string | undefined) {
 }
 
 /**
- * Fetch asset maintenance records
+ * Fetch recent asset maintenance records (page 1, up to 20 items).
+ * This is a preview query for the asset detail screen — not a full paginated list.
  */
 export function useAssetMaintenance(assetId: string | undefined) {
   return useQuery({
@@ -233,7 +235,7 @@ export function useAssetMaintenance(assetId: string | undefined) {
     queryFn: async () => {
       if (!assetId) throw new Error('Asset ID is required');
 
-      const result = await getAssetMaintenance(assetId);
+      const result = await getAssetMaintenance(assetId, 1, 20);
 
       if (!result.success) {
         throw new Error(result.error);
@@ -345,9 +347,12 @@ export function useCreateScanEvent() {
       return result.data;
     },
     onSuccess: (data, variables) => {
-      // Invalidate related queries to refresh data.
-      // The detail query gets immediate refetch since the user is likely viewing this asset.
-      queryClient.invalidateQueries({ queryKey: assetKeys.detail(variables.assetId) });
+      // Mark detail stale but don't refetch yet — the subsequent useUpdateAsset.onSuccess
+      // will trigger the single refetch, avoiding a double network request.
+      queryClient.invalidateQueries({
+        queryKey: assetKeys.detail(variables.assetId),
+        refetchType: 'none',
+      });
       // Mark other queries stale without immediate refetch — they will refetch when the
       // user navigates to the relevant screen. This avoids unnecessary network requests.
       queryClient.invalidateQueries({

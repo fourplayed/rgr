@@ -16,13 +16,14 @@ import type {
   DefectReportListItem as DefectReportListItemType,
 } from '@rgr/shared';
 import { colors } from '../../src/theme/colors';
-import { spacing, fontSize, fontWeight, borderRadius } from '../../src/theme/spacing';
+import { spacing, fontSize, borderRadius } from '../../src/theme/spacing';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
 import { ScreenHeader } from '../../src/components/common/ScreenHeader';
 import { SegmentedTabs } from '../../src/components/common/SegmentedTabs';
 import {
   MaintenanceListItem,
   MaintenanceFilterPanel,
+  DefectFilterPanel,
   CreateMaintenanceModal,
   MaintenanceDetailModal,
   DefectReportListItem,
@@ -41,17 +42,9 @@ const TABS = [
   { key: 'defects' as const, label: 'Defects' },
 ] as const;
 
-// Default filters: show scheduled tasks
-const DEFAULT_STATUSES: MaintenanceStatus[] = ['scheduled'];
+// Default filters: show all (no pre-selection)
+const DEFAULT_STATUSES: MaintenanceStatus[] = [];
 const DEFAULT_PRIORITIES: MaintenancePriority[] = [];
-
-// Defect status filter chips
-const DEFECT_STATUS_OPTIONS: { key: DefectStatus; label: string }[] = [
-  { key: 'reported', label: 'Reported' },
-  { key: 'accepted', label: 'Accepted' },
-  { key: 'resolved', label: 'Resolved' },
-  { key: 'dismissed', label: 'Dismissed' },
-];
 
 export default function MaintenanceScreen() {
   const { canMarkMaintenance } = useUserPermissions();
@@ -65,7 +58,8 @@ export default function MaintenanceScreen() {
   const [filtersExpanded, setFiltersExpanded] = useState(false);
 
   // Defect filter state
-  const [defectStatuses, setDefectStatuses] = useState<DefectStatus[]>(['reported', 'accepted']);
+  const [defectStatuses, setDefectStatuses] = useState<DefectStatus[]>([]);
+  const [defectFiltersExpanded, setDefectFiltersExpanded] = useState(false);
 
   // Modal state
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
@@ -118,6 +112,10 @@ export default function MaintenanceScreen() {
     setFiltersExpanded(prev => !prev);
   }, []);
 
+  const handleToggleDefectFilters = useCallback(() => {
+    setDefectFiltersExpanded(prev => !prev);
+  }, []);
+
   const handleMaintenancePress = useCallback((item: MaintenanceListItemType) => {
     setSelectedMaintenanceId(item.id);
   }, []);
@@ -140,14 +138,6 @@ export default function MaintenanceScreen() {
 
   const handleCloseCreate = useCallback(() => {
     setIsCreateModalVisible(false);
-  }, []);
-
-  const toggleDefectStatus = useCallback((status: DefectStatus) => {
-    setDefectStatuses(prev =>
-      prev.includes(status)
-        ? prev.filter(s => s !== status)
-        : [...prev, status]
-    );
   }, []);
 
   // Maintenance list renderers
@@ -216,17 +206,18 @@ export default function MaintenanceScreen() {
         {/* Header */}
         <ScreenHeader
           title="Maintenance"
-          subtitle="Track service and repairs"
           rightAction={canMarkMaintenance ? (
             <TouchableOpacity
-              style={styles.addButton}
+              style={styles.addLink}
               onPress={handleOpenCreate}
-              activeOpacity={0.7}
+              activeOpacity={0.6}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
               accessibilityLabel="Create maintenance record"
               accessibilityHint="Double tap to schedule new maintenance"
             >
-              <Ionicons name="add" size={24} color={colors.textInverse} />
+              <Ionicons name="add-circle-outline" size={16} color={colors.electricBlue} />
+              <Text style={styles.addLinkText}>New Task</Text>
             </TouchableOpacity>
           ) : undefined}
         />
@@ -251,25 +242,12 @@ export default function MaintenanceScreen() {
             onToggleExpanded={handleToggleFilters}
           />
         ) : (
-          <View style={styles.defectFilterRow}>
-            {DEFECT_STATUS_OPTIONS.map((opt) => {
-              const active = defectStatuses.includes(opt.key);
-              return (
-                <TouchableOpacity
-                  key={opt.key}
-                  style={[styles.filterChip, active && styles.filterChipActive]}
-                  onPress={() => toggleDefectStatus(opt.key)}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: active }}
-                  accessibilityLabel={`Filter by ${opt.label}`}
-                >
-                  <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>
-                    {opt.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+          <DefectFilterPanel
+            statuses={defectStatuses}
+            onStatusChange={setDefectStatuses}
+            isExpanded={defectFiltersExpanded}
+            onToggleExpanded={handleToggleDefectFilters}
+          />
         )}
 
         {/* Content */}
@@ -363,23 +341,20 @@ const styles = StyleSheet.create({
   containerInner: {
     flex: 1,
   },
-  addButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.electricBlue,
-    justifyContent: 'center',
+  addLink: {
+    flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
+    gap: spacing.xs,
+  },
+  addLinkText: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_700Bold',
+    color: colors.electricBlue,
   },
   tabContainer: {
     paddingHorizontal: spacing.base,
     paddingTop: spacing.sm,
-    paddingBottom: spacing.xs,
+    paddingBottom: spacing.md,
   },
   loadingContainer: {
     flex: 1,
@@ -387,6 +362,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   listContent: {
+    paddingTop: spacing.md,
     paddingHorizontal: spacing.base,
     paddingBottom: spacing['2xl'],
   },
@@ -410,7 +386,6 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: fontSize.xl,
-    fontWeight: fontWeight.semibold,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     marginBottom: spacing.sm,
@@ -441,33 +416,5 @@ const styles = StyleSheet.create({
     fontFamily: 'Lato_700Bold',
     color: colors.textInverse,
     textTransform: 'uppercase',
-  },
-  defectFilterRow: {
-    flexDirection: 'row',
-    paddingHorizontal: spacing.base,
-    paddingVertical: spacing.sm,
-    gap: spacing.xs,
-    flexWrap: 'wrap',
-  },
-  filterChip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.full,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  filterChipActive: {
-    backgroundColor: colors.electricBlue,
-    borderColor: colors.electricBlue,
-  },
-  filterChipText: {
-    fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
-    color: colors.textSecondary,
-    textTransform: 'uppercase',
-  },
-  filterChipTextActive: {
-    color: colors.textInverse,
   },
 });

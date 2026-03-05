@@ -20,7 +20,7 @@ import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
 interface DepotFormSheetProps {
   visible: boolean;
   depot?: Depot | null; // null/undefined = create mode
-  onSubmit: (input: CreateDepotInput | UpdateDepotInput) => void;
+  onSubmit: (input: CreateDepotInput | UpdateDepotInput) => Promise<void>;
   onClose: () => void;
   isLoading?: boolean;
 }

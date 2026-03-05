@@ -15,8 +15,8 @@ interface CameraOverlayProps {
   hasLocationPermission: boolean;
   onRequestLocationPermission: () => void;
   scanStatus?: string | null;
-  /** Resolved depot name — null hides the badge entirely */
-  depotName: string | null;
+  /** Resolved depot badge config — null hides the badge entirely */
+  depotBadge: { label: string; bgColor: string; textColor: string } | null;
   /** User role badge config — null hides the badge */
   roleBadge: { label: string; color: string } | null;
   /** Optional scan result card rendered between top bar and scan frame */
@@ -31,7 +31,7 @@ function CameraOverlayComponent({
   hasLocationPermission,
   onRequestLocationPermission,
   scanStatus,
-  depotName,
+  depotBadge,
   roleBadge,
   scanCard,
   scanActionBar,
@@ -61,6 +61,31 @@ function CameraOverlayComponent({
       {/* ── Undo Toast ── */}
       {scanToast}
 
+      {/* ── Depot & role context badges (above scan frame) ── */}
+      {(depotBadge || roleBadge) && (
+        <View style={styles.contextBadgeRow}>
+          {depotBadge && (
+            <PillBadge
+              icon="location"
+              label={depotBadge.label}
+              color={depotBadge.bgColor}
+              textColor={depotBadge.textColor}
+              accessibilityRole="text"
+              accessibilityLabel={`Depot: ${depotBadge.label}`}
+            />
+          )}
+          {roleBadge && (
+            <PillBadge
+              icon="person"
+              label={roleBadge.label}
+              color={roleBadge.color}
+              accessibilityRole="text"
+              accessibilityLabel={`Role: ${roleBadge.label}`}
+            />
+          )}
+        </View>
+      )}
+
       {/* ── Scan Frame ───────────────────────────── */}
       <View style={styles.scanFrame}>
         <View style={styles.scanReticle}>
@@ -77,30 +102,6 @@ function CameraOverlayComponent({
             <Text style={styles.scanStatusText}>{scanStatus}</Text>
           </View>
         ) : null}
-
-        {/* Depot & role context badges */}
-        {(depotName || roleBadge) && (
-          <View style={styles.contextBadgeRow}>
-            {depotName && (
-              <PillBadge
-                icon="location"
-                label={depotName}
-                color="rgba(0, 0, 0, 0.6)"
-                accessibilityRole="text"
-                accessibilityLabel={`Depot: ${depotName}`}
-              />
-            )}
-            {roleBadge && (
-              <PillBadge
-                icon="person"
-                label={roleBadge.label}
-                color={roleBadge.color}
-                accessibilityRole="text"
-                accessibilityLabel={`Role: ${roleBadge.label}`}
-              />
-            )}
-          </View>
-        )}
       </View>
 
       {/* ── Footer: Action bar or location prompt ── */}

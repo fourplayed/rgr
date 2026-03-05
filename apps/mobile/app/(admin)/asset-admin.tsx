@@ -16,6 +16,7 @@ import {
   AssetStatusColors,
   AssetStatus,
   getDepotBadgeColors,
+  formatAssetNumber,
 } from '@rgr/shared';
 import type { AssetWithRelations } from '@rgr/shared';
 import { useAssetList } from '../../src/hooks/useAssetData';
@@ -28,7 +29,7 @@ import {
 import { ConfirmSheet } from '../../src/components/common/ConfirmSheet';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
 import { colors } from '../../src/theme/colors';
-import { spacing, fontSize, fontWeight, borderRadius } from '../../src/theme/spacing';
+import { spacing, fontSize, borderRadius } from '../../src/theme/spacing';
 
 const STATUS_VALUES: string[] = [AssetStatus.SERVICED, AssetStatus.MAINTENANCE, AssetStatus.OUT_OF_SERVICE];
 
@@ -145,14 +146,14 @@ export default function AssetAdminScreen() {
           activeOpacity={0.7}
           accessibilityRole="checkbox"
           accessibilityState={{ checked: isSelected }}
-          accessibilityLabel={`${item.assetNumber}, ${AssetStatusLabels[item.status as keyof typeof AssetStatusLabels] || item.status}`}
+          accessibilityLabel={`${formatAssetNumber(item.assetNumber)}, ${AssetStatusLabels[item.status as keyof typeof AssetStatusLabels] || item.status}`}
         >
           {item.photoCount > 0 && (
             <TouchableOpacity
               style={styles.cameraButton}
               onPress={() => handleOpenPhotos(item)}
               accessibilityRole="button"
-              accessibilityLabel={`View photos for ${item.assetNumber}`}
+              accessibilityLabel={`View photos for ${formatAssetNumber(item.assetNumber)}`}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <Ionicons name="camera-outline" size={20} color={colors.textSecondary} />
@@ -165,7 +166,7 @@ export default function AssetAdminScreen() {
           </View>
           <View style={styles.assetInfo}>
             <View style={styles.assetHeaderRow}>
-              <Text style={styles.assetNumber}>{item.assetNumber}</Text>
+              <Text style={styles.assetNumber}>{formatAssetNumber(item.assetNumber)}</Text>
               <View style={styles.badgeRow}>
                 {item.depotName && depotBadgeColors && (
                   <View style={[styles.depotBadge, { backgroundColor: depotBadgeColors.bg }]}>
@@ -347,7 +348,7 @@ export default function AssetAdminScreen() {
           title="Delete Asset"
           message={
             deleteTarget
-              ? `Soft-delete "${deleteTarget.assetNumber}"? This sets status to Out of Service.${
+              ? `Soft-delete "${formatAssetNumber(deleteTarget.assetNumber)}"? This sets status to Out of Service.${
                   relatedCounts
                     ? `\n\nRelated records: ${relatedCounts.scanEvents} scans, ${relatedCounts.maintenanceRecords} maintenance records (preserved).`
                     : ''
@@ -428,7 +429,6 @@ const styles = StyleSheet.create({
   backButton: { padding: spacing.sm },
   headerTitle: {
     fontSize: fontSize.lg,
-    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     textTransform: 'uppercase',

@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { formatAssetNumber } from '@rgr/shared';
 import type { PhotoListItem } from '@rgr/shared';
 import { useAssetPhotos, usePrefetchImages, useBulkDeletePhotos } from '../../src/hooks/usePhotos';
 import { PhotoThumbnail } from '../../src/components/photos/PhotoThumbnail';
@@ -19,7 +20,7 @@ import { ConfirmSheet } from '../../src/components/common/ConfirmSheet';
 import { AlertSheet } from '../../src/components/common/AlertSheet';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
 import { colors } from '../../src/theme/colors';
-import { spacing, fontSize, fontWeight, borderRadius } from '../../src/theme/spacing';
+import { spacing, fontSize, borderRadius } from '../../src/theme/spacing';
 
 const NUM_COLUMNS = 3;
 const THUMBNAIL_GAP = spacing.sm;
@@ -220,7 +221,7 @@ export default function AssetPhotosScreen() {
             <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle} numberOfLines={1}>
-            {assetNumber ? `${assetNumber} Photos` : 'Photos'}
+            {assetNumber ? `${formatAssetNumber(assetNumber)} Photos` : 'Photos'}
           </Text>
           {selectionMode ? (
             <TouchableOpacity
@@ -377,7 +378,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     flex: 1,
     fontSize: fontSize.lg,
-    fontWeight: fontWeight.bold,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     textTransform: 'uppercase',

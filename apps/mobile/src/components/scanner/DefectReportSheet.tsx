@@ -11,6 +11,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { formatAssetNumber } from '@rgr/shared';
 import { LoadingDots } from '../common/LoadingDots';
 import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
@@ -89,7 +90,7 @@ function DefectReportSheetComponent({
                 </View>
                 <Text style={styles.title}>Report Defect</Text>
                 <Text style={styles.subtitle}>
-                  Asset <Text style={styles.assetNumber}>{assetNumber}</Text>
+                  Asset <Text style={styles.assetNumber}>{assetNumber ? formatAssetNumber(assetNumber) : assetNumber}</Text>
                 </Text>
               </View>
 

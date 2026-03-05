@@ -188,7 +188,7 @@ export const ScanActionBar = React.memo(ScanActionBarComponent);
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: spacing.lg,
+    marginHorizontal: spacing.base,
     marginBottom: spacing['2xl'],
   },
   bar: {

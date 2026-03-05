@@ -13,7 +13,9 @@ import {
   HEADER_GRADIENT_HEIGHT,
 } from '../../theme/layout';
 
-const HEADER_GRADIENT_COLORS = ['#0000DD', '#000099'] as const;
+import { colors } from '../../theme/colors';
+
+const HEADER_GRADIENT_COLORS = colors.brandGradientHeader;
 
 export function UserProfileHeader() {
   const router = useRouter();
@@ -25,10 +27,10 @@ export function UserProfileHeader() {
   const segmentArray = segments as string[];
   const isDetailPage = segmentArray.length > 2 && segmentArray[1] === 'assets' && segmentArray[2] !== 'index';
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     // Navigate to assets list explicitly to handle cross-tab navigation
     router.navigate('/(tabs)/assets');
-  };
+  }, [router]);
 
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
@@ -69,7 +71,7 @@ export function UserProfileHeader() {
                 accessibilityRole="button"
                 accessibilityLabel="Go back"
               >
-                <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+                <Ionicons name="arrow-back" size={24} color={colors.textInverse} />
               </TouchableOpacity>
             )}
             <TouchableOpacity
@@ -79,7 +81,7 @@ export function UserProfileHeader() {
               accessibilityLabel="Settings"
               accessibilityHint="Open settings screen"
             >
-              <Ionicons name="settings-outline" size={24} color="#FFFFFF" />
+              <Ionicons name="settings-outline" size={24} color={colors.textInverse} />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleLogoutPress}
@@ -88,7 +90,7 @@ export function UserProfileHeader() {
               accessibilityLabel="Logout"
               accessibilityHint="Sign out of your account"
             >
-              <Ionicons name="log-out-outline" size={24} color="#FFFFFF" />
+              <Ionicons name="log-out-outline" size={24} color={colors.textInverse} />
             </TouchableOpacity>
           </View>
         </View>
@@ -118,7 +120,7 @@ const styles = StyleSheet.create({
   accentLine: {
     width: '100%',
     height: HEADER_ACCENT_LINE_HEIGHT,
-    backgroundColor: '#00A4E4',
+    backgroundColor: colors.electricBlue,
     marginBottom: HEADER_ACCENT_LINE_GAP,
     zIndex: 1,
   },

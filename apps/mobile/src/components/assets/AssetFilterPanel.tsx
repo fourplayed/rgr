@@ -232,7 +232,6 @@ export const AssetFilterPanel = memo(function AssetFilterPanel({
                         styles.chipText,
                         {
                           color: isSelected ? getDepotTextColor(depot) : colors.text,
-                          fontFamily: isSelected ? 'Lato_700Bold' : 'Lato_400Regular',
                         },
                       ]}
                     >
@@ -271,13 +270,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   container: {
-    backgroundColor: colors.background,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    overflow: 'hidden',
-    padding: spacing.base,
-    marginTop: spacing.sm,
+    paddingTop: spacing.sm,
   },
   header: {
     flexDirection: 'row',
@@ -285,7 +278,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   chevronButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.background,
     borderRadius: 14,
     width: 28,
     height: 28,
@@ -336,17 +329,18 @@ const styles = StyleSheet.create({
   chipsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   // Depot chips use inline rendering with custom text colors per-depot
   chip: {
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
     borderWidth: 1,
   },
   chipText: {
-    fontSize: fontSize.sm,
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_700Bold',
     textTransform: 'uppercase',
   },
 });

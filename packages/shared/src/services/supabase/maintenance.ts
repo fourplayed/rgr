@@ -46,6 +46,7 @@ export interface MaintenanceListItem {
   id: string;
   assetId: string;
   title: string;
+  description: string | null;
   priority: MaintenancePriority;
   status: MaintenanceStatus;
   maintenanceType: string | null;
@@ -86,7 +87,7 @@ export async function listMaintenance(
   let query = supabase
     .from('maintenance_records')
     .select(`
-      id, asset_id, title, priority, status, maintenance_type,
+      id, asset_id, title, description, priority, status, maintenance_type,
       scheduled_date, due_date, created_at,
       reporter:reported_by(full_name),
       asset:asset_id(asset_number, category)
@@ -138,6 +139,7 @@ export async function listMaintenance(
     id: string;
     asset_id: string;
     title: string;
+    description: string | null;
     priority: MaintenancePriority;
     status: MaintenanceStatus;
     maintenance_type: string | null;
@@ -156,6 +158,7 @@ export async function listMaintenance(
     id: row.id,
     assetId: row.asset_id,
     title: row.title,
+    description: row.description,
     priority: row.priority,
     status: row.status,
     maintenanceType: row.maintenance_type,

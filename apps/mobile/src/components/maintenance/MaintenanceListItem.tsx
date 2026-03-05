@@ -1,58 +1,68 @@
 import React, { memo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import type { MaintenanceListItem as MaintenanceListItemType, MaintenancePriority } from '@rgr/shared';
-import { formatRelativeTime } from '@rgr/shared';
+import { Ionicons } from '@expo/vector-icons';
+import type { MaintenanceListItem as MaintenanceListItemType, MaintenanceStatus } from '@rgr/shared';
+import { formatRelativeTime, formatAssetNumber } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 import { MaintenanceStatusBadge } from './MaintenanceStatusBadge';
-import { MaintenancePriorityBadge } from './MaintenancePriorityBadge';
+
+export const MAINTENANCE_STATUS_CONFIG: Record<MaintenanceStatus, { icon: keyof typeof Ionicons.glyphMap; color: string }> = {
+  scheduled: { icon: 'construct-outline',     color: colors.maintenanceStatus.scheduled },
+  completed: { icon: 'checkmark-circle',     color: colors.maintenanceStatus.completed },
+  cancelled: { icon: 'close-circle-outline', color: colors.maintenanceStatus.cancelled },
+};
+
+/** Derived visual state for overdue tasks (scheduled + past due date) */
+export const MAINTENANCE_OVERDUE_CONFIG = { icon: 'alert-circle' as keyof typeof Ionicons.glyphMap, color: colors.warning };
+
+/** Returns the icon/color config, upgrading scheduled → overdue when past due date */
+export function getMaintenanceVisualConfig(status: MaintenanceStatus, dueDate: string | null) {
+  if (status === 'scheduled' && dueDate && new Date(dueDate).getTime() < Date.now()) {
+    return MAINTENANCE_OVERDUE_CONFIG;
+  }
+  return MAINTENANCE_STATUS_CONFIG[status] ?? MAINTENANCE_STATUS_CONFIG.scheduled;
+}
 
 // Fixed height for FlatList getItemLayout optimization
-export const MAINTENANCE_ITEM_HEIGHT = 88; // 72px content + 16px margin
+export const MAINTENANCE_ITEM_HEIGHT = 72;
 
 interface MaintenanceListItemProps {
   maintenance: MaintenanceListItemType;
   onPress: (maintenance: MaintenanceListItemType) => void;
 }
 
-const getPriorityBorderColor = (priority: MaintenancePriority): string => {
-  return (priority in colors.maintenancePriority
-    ? colors.maintenancePriority[priority as keyof typeof colors.maintenancePriority]
-    : undefined) ?? colors.border;
-};
-
 function MaintenanceListItemComponent({ maintenance, onPress }: MaintenanceListItemProps) {
-  const borderColor = getPriorityBorderColor(maintenance.priority);
-  const dueDateText = maintenance.dueDate
-    ? `Due ${formatRelativeTime(maintenance.dueDate)}`
-    : 'No due date';
+  const { icon, color } = getMaintenanceVisualConfig(maintenance.status, maintenance.dueDate);
 
   return (
     <TouchableOpacity
-      style={[styles.container, { borderLeftColor: borderColor }]}
+      style={[styles.container, { borderLeftColor: color }]}
       onPress={() => onPress(maintenance)}
       activeOpacity={0.7}
       accessibilityRole="button"
-      accessibilityLabel={`Maintenance ${maintenance.title}, status ${maintenance.status}, priority ${maintenance.priority}`}
+      accessibilityLabel={`Maintenance ${maintenance.title}, status ${maintenance.status}`}
     >
-      <View style={styles.cardContent}>
-        <View style={styles.details}>
-          <View style={styles.headerRow}>
-            <View style={styles.titleRow}>
-              <Text style={styles.title} numberOfLines={1}>
-                {maintenance.title}
-              </Text>
-            </View>
-            <View style={styles.badgeRow}>
+      <View style={styles.cardRow}>
+        <View style={styles.cardIconContainer}>
+          <Ionicons name={icon} size={31} color={color} />
+        </View>
+        <View style={styles.cardBody}>
+          <View style={styles.cardContentRow}>
+            <Text style={styles.cardTitle} numberOfLines={1}>
+              {maintenance.assetNumber ? formatAssetNumber(maintenance.assetNumber) : 'Unknown Asset'}
+            </Text>
+            <View style={styles.cardBadges}>
               <MaintenanceStatusBadge status={maintenance.status} />
-              <MaintenancePriorityBadge priority={maintenance.priority} />
             </View>
           </View>
-          <View style={styles.footerRow}>
-            <Text style={styles.assetLabel}>
-              {maintenance.assetNumber || 'Unknown Asset'}
+          <View style={styles.cardFooter}>
+            <Text style={styles.cardSecondaryText} numberOfLines={1}>
+              {maintenance.description || maintenance.title}
             </Text>
-            <Text style={styles.dueText}>{dueDateText}</Text>
+            <Text style={styles.cardTime}>
+              {formatRelativeTime(maintenance.createdAt)}
+            </Text>
           </View>
         </View>
       </View>
@@ -66,70 +76,67 @@ export const MaintenanceListItem = memo(
   (prev, next) =>
     prev.maintenance.id === next.maintenance.id &&
     prev.maintenance.title === next.maintenance.title &&
+    prev.maintenance.description === next.maintenance.description &&
     prev.maintenance.status === next.maintenance.status &&
-    prev.maintenance.priority === next.maintenance.priority &&
     prev.maintenance.dueDate === next.maintenance.dueDate &&
     prev.maintenance.assetNumber === next.maintenance.assetNumber &&
+    prev.maintenance.createdAt === next.maintenance.createdAt &&
     prev.onPress === next.onPress
 );
 
 const styles = StyleSheet.create({
   container: {
     backgroundColor: colors.background,
-    padding: spacing.base,
+    padding: spacing.md,
     borderRadius: borderRadius.md,
     borderWidth: 1,
     borderColor: colors.border,
     borderLeftWidth: 4,
     marginBottom: spacing.sm,
-    height: MAINTENANCE_ITEM_HEIGHT - spacing.sm, // Account for marginBottom
   },
-  cardContent: {
+  cardRow: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  cardIconContainer: {
+    width: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  cardBody: {
     flex: 1,
   },
-  details: {
-    flex: 1,
-    justifyContent: 'space-between',
-    height: '100%',
-  },
-  headerRow: {
+  cardContentRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     gap: spacing.sm,
+    marginBottom: spacing.xs,
   },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  title: {
-    fontSize: fontSize.base,
+  cardTitle: {
+    fontSize: fontSize.sm,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     flex: 1,
   },
-  badgeRow: {
+  cardBadges: {
     flexDirection: 'row',
-    alignItems: 'center',
     gap: spacing.xs,
   },
-  footerRow: {
+  cardFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: spacing.xs,
   },
-  assetLabel: {
+  cardSecondaryText: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
-    color: colors.electricBlue,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    fontFamily: 'Lato_400Regular',
+    color: colors.textSecondary,
+    flex: 1,
+    marginRight: spacing.sm,
   },
-  dueText: {
+  cardTime: {
     fontSize: fontSize.xs,
     fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,

@@ -21,7 +21,7 @@ import { useDebounce } from '../../../src/hooks/useDebounce';
 import { AssetListItem } from '../../../src/components/assets/AssetListItem';
 import { AssetFilterPanel } from '../../../src/components/assets/AssetFilterPanel';
 import { colors } from '../../../src/theme/colors';
-import { spacing, fontSize, fontWeight, borderRadius } from '../../../src/theme/spacing';
+import { spacing, fontSize, borderRadius } from '../../../src/theme/spacing';
 
 /**
  * Fixed height for FlatList optimization (getItemLayout)
@@ -219,7 +219,11 @@ export default function AssetListScreen() {
           ListHeaderComponent={<RefreshLoadingDots isRefetching={!!isRefetching} />}
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>No assets found</Text>
+              <View style={styles.emptyIconContainer}>
+                <Ionicons name="cube-outline" size={64} color={colors.textSecondary} />
+              </View>
+              <Text style={styles.emptyTitle}>No assets found</Text>
+              <Text style={styles.emptySubtext}>Try adjusting your search or filters</Text>
             </View>
           }
           getItemLayout={(data, index) => ({
@@ -295,17 +299,37 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     fontSize: fontSize.base,
-    fontWeight: fontWeight.semibold,
     fontFamily: 'Lato_700Bold',
     color: colors.textInverse,
   },
   emptyState: {
-    padding: spacing['2xl'],
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: spacing['3xl'],
+    paddingVertical: spacing['2xl'],
   },
-  emptyText: {
-    fontSize: fontSize.base,
+  emptyIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
+  emptyTitle: {
+    fontSize: fontSize.xl,
+    fontFamily: 'Lato_700Bold',
+    color: colors.text,
+    marginBottom: spacing.sm,
+    textAlign: 'center',
+  },
+  emptySubtext: {
+    fontSize: fontSize.sm,
     fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });

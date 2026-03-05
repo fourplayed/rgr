@@ -28,7 +28,7 @@ import {
   DefectReportDetailModal,
 } from '../../../src/components/maintenance';
 import { useAuthStore } from '../../../src/store/authStore';
-import { formatRelativeTime, hasRoleLevel, UserRole } from '@rgr/shared';
+import { formatRelativeTime, hasRoleLevel, UserRole, formatAssetNumber } from '@rgr/shared';
 import { colors } from '../../../src/theme/colors';
 import { spacing, fontSize, borderRadius } from '../../../src/theme/spacing';
 import { CONTENT_TOP_OFFSET } from '../../../src/theme/layout';
@@ -54,7 +54,7 @@ const ASSET_DETAIL_TABS = [
 type AssetDetailTab = typeof ASSET_DETAIL_TABS[number]['key'];
 
 const MAINTENANCE_STATUS_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
-  scheduled: 'time-outline',
+  scheduled: 'construct-outline',
   completed: 'checkmark-circle',
   cancelled: 'close-circle-outline',
 };
@@ -240,7 +240,13 @@ export default function AssetDetailScreen() {
             {scansLoading ? (
               <LoadingDots color={colors.electricBlue} size={6} />
             ) : recentActivity.length === 0 ? (
-              <Text style={styles.emptyText}>No activity recorded</Text>
+              <View style={styles.emptyState}>
+                <View style={styles.emptyIconContainer}>
+                  <Ionicons name="time-outline" size={64} color={colors.textSecondary} />
+                </View>
+                <Text style={styles.emptyTitle}>No activity recorded</Text>
+                <Text style={styles.emptySubtext}>Scans and maintenance will appear here</Text>
+              </View>
             ) : (
               <View style={styles.activityList}>
               {recentActivity.map((item) => {
@@ -304,7 +310,7 @@ export default function AssetDetailScreen() {
                               </View>
                             )}
                             {item.type === 'defect' && (
-                              <DefectStatusBadge status={item.data.status} />
+                              <DefectStatusBadge status="reported" />
                             )}
                             {item.type === 'maintenance' && (
                               <>
@@ -383,7 +389,13 @@ export default function AssetDetailScreen() {
         {activeTab === 'maintenance' && (
           <ScrollView contentContainerStyle={styles.tabScrollContent}>
             {maintenance.length === 0 ? (
-              <Text style={styles.emptyText}>No maintenance records</Text>
+              <View style={styles.emptyState}>
+                <View style={styles.emptyIconContainer}>
+                  <Ionicons name="construct-outline" size={64} color={colors.textSecondary} />
+                </View>
+                <Text style={styles.emptyTitle}>No maintenance records</Text>
+                <Text style={styles.emptySubtext}>Scheduled tasks will appear here</Text>
+              </View>
             ) : (
               <View style={styles.maintenanceList}>
                 {maintenance.slice(0, 10).map((item) => {
@@ -459,7 +471,7 @@ export default function AssetDetailScreen() {
                 <Ionicons name="close" size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
-            <Text style={styles.modalAssetNumber}>{asset.assetNumber}</Text>
+            <Text style={styles.modalAssetNumber}>{formatAssetNumber(asset.assetNumber)}</Text>
             <View style={styles.qrContainer}>
               {asset.qrCodeData && (
                 <QRCode
@@ -549,12 +561,33 @@ const styles = StyleSheet.create({
     color: colors.textInverse,
     textTransform: 'uppercase',
   },
-  emptyText: {
-    fontSize: fontSize.xs,
+  emptyState: {
+    alignItems: 'center',
+    paddingHorizontal: spacing['3xl'],
+    paddingVertical: spacing['2xl'],
+  },
+  emptyIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
+  emptyTitle: {
+    fontSize: fontSize.xl,
+    fontFamily: 'Lato_700Bold',
+    color: colors.text,
+    marginBottom: spacing.sm,
+    textAlign: 'center',
+  },
+  emptySubtext: {
+    fontSize: fontSize.sm,
     fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
-    fontStyle: 'italic',
-    textTransform: 'uppercase',
+    textAlign: 'center',
+    lineHeight: 20,
   },
   activityList: {
     gap: spacing.sm,
