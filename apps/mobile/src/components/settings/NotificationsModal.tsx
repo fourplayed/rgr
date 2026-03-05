@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -7,14 +7,12 @@ import {
   Switch,
   StyleSheet,
   Animated,
-  useWindowDimensions,
 } from 'react-native';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 import { Button } from '../common/Button';
 import { useSettingsStore } from '../../store/settingsStore';
-
-const ANIMATION_DURATION = 300;
+import { useAnimatedSheet } from '../../hooks/useAnimatedSheet';
 
 interface NotificationsModalProps {
   visible: boolean;
@@ -49,49 +47,9 @@ function ToggleRow({ title, subtitle, value, onValueChange, disabled }: ToggleRo
 
 export function NotificationsModal({ visible, onClose }: NotificationsModalProps) {
   const { notifications, setNotificationSetting } = useSettingsStore();
-  const { height: screenHeight } = useWindowDimensions();
-  const [modalVisible, setModalVisible] = useState(false);
-
-  const backdropOpacity = useRef(new Animated.Value(0)).current;
-  const sheetTranslateY = useRef(new Animated.Value(screenHeight)).current;
-  const animGenRef = useRef(0);
+  const { modalVisible, backdropStyle, sheetStyle } = useAnimatedSheet(visible);
 
   const isPushDisabled = !notifications.pushEnabled;
-
-  // Handle open/close animations
-  useEffect(() => {
-    const gen = ++animGenRef.current;
-    if (visible) {
-      setModalVisible(true);
-      Animated.parallel([
-        Animated.timing(backdropOpacity, {
-          toValue: 1,
-          duration: ANIMATION_DURATION,
-          useNativeDriver: true,
-        }),
-        Animated.timing(sheetTranslateY, {
-          toValue: 0,
-          duration: ANIMATION_DURATION,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    } else {
-      Animated.parallel([
-        Animated.timing(backdropOpacity, {
-          toValue: 0,
-          duration: ANIMATION_DURATION,
-          useNativeDriver: true,
-        }),
-        Animated.timing(sheetTranslateY, {
-          toValue: screenHeight,
-          duration: ANIMATION_DURATION,
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        if (animGenRef.current === gen) setModalVisible(false);
-      });
-    }
-  }, [visible, backdropOpacity, sheetTranslateY, screenHeight]);
 
   return (
     <Modal
@@ -101,7 +59,7 @@ export function NotificationsModal({ visible, onClose }: NotificationsModalProps
       onRequestClose={onClose}
     >
       <View style={styles.container}>
-        <Animated.View style={[styles.backdrop, { opacity: backdropOpacity }]}>
+        <Animated.View style={[styles.backdrop, backdropStyle]}>
           <TouchableOpacity
             style={styles.backdropTouchable}
             activeOpacity={1}
@@ -109,7 +67,7 @@ export function NotificationsModal({ visible, onClose }: NotificationsModalProps
           />
         </Animated.View>
 
-        <Animated.View style={[styles.sheet, { transform: [{ translateY: sheetTranslateY }] }]}>
+        <Animated.View style={[styles.sheet, sheetStyle]}>
           <View style={styles.handle} />
 
           <View style={styles.content}>

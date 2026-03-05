@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -64,6 +64,13 @@ export function DefectReportDetailModal({
     error: photoError,
   } = useSignedUrl(defectPhoto?.thumbnailPath ?? defectPhoto?.storagePath ?? undefined);
 
+  // Unmount guard for async operations
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
+
   // Dismiss flow
   const [showDismissConfirm, setShowDismissConfirm] = useState(false);
 
@@ -110,11 +117,13 @@ export function DefectReportDetailModal({
       }
       await updateDefectStatus(args);
     } catch (err) {
-      setAlertSheet({
-        visible: true,
-        title: 'Error',
-        message: err instanceof Error ? err.message : 'Failed to dismiss defect',
-      });
+      if (isMountedRef.current) {
+        setAlertSheet({
+          visible: true,
+          title: 'Error',
+          message: err instanceof Error ? err.message : 'Failed to dismiss defect',
+        });
+      }
     }
   }, [defectId, updateDefectStatus]);
 

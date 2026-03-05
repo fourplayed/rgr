@@ -63,9 +63,10 @@ function AuditLogItemInner({ item }: AuditLogItemProps) {
 
   const toggleExpand = useCallback(() => setExpanded((prev) => !prev), []);
 
-  const actionKey = item.action.toUpperCase() as keyof typeof ACTION_ICONS;
-  const icon = ACTION_ICONS[actionKey] ?? 'document-outline';
-  const iconColor = ACTION_COLORS[actionKey] ?? colors.textSecondary;
+  const uppercased = item.action.toUpperCase();
+  const actionKey = uppercased in ACTION_ICONS ? uppercased as keyof typeof ACTION_ICONS : null;
+  const icon = (actionKey ? ACTION_ICONS[actionKey] : undefined) ?? 'document-outline';
+  const iconColor = (actionKey ? ACTION_COLORS[actionKey] : undefined) ?? colors.textSecondary;
 
   const description = item.tableName
     ? `${item.action} on ${item.tableName}`

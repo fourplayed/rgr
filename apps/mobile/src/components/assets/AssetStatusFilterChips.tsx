@@ -70,7 +70,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    marginRight: spacing.sm,
   },
   label: {
     fontSize: fontSize.sm,

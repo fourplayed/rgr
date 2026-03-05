@@ -132,7 +132,7 @@ export const MaintenanceFilterPanel = memo(function MaintenanceFilterPanel({
                   label={MaintenancePriorityLabels[priority]}
                   isSelected={priorities.includes(priority)}
                   onPress={() => togglePriority(priority)}
-                  selectedColor={colors.maintenancePriority[priority as keyof typeof colors.maintenancePriority] ?? colors.electricBlue}
+                  selectedColor={colors.maintenancePriority[priority] ?? colors.electricBlue}
                 />
               ))}
             </View>

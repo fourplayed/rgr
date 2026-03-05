@@ -212,7 +212,7 @@ export function buildAssetAssessment({
   const flowsIntoB = isIssue && asset.status !== 'out_of_service';
 
   let sentenceA: string;
-  switch (asset.status) {
+  switch (asset.status as string) {
     case 'serviced':
       sentenceA = flowsIntoB
         ? `This ${type}'s in service, but`
@@ -227,6 +227,9 @@ export function buildAssetAssessment({
       sentenceA = isIssue
         ? `This ${type}'s out of service.`
         : `This ${type} is out of service.`;
+      break;
+    default:
+      sentenceA = `This ${type} has status "${asset.status}".`;
       break;
   }
 

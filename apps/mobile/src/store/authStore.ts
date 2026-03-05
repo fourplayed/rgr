@@ -276,7 +276,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return true;
     } catch (error) {
       // If auto-login fails, clear session tokens and set error
-      await clearSession();
+      try {
+        await clearSession();
+      } catch (e) {
+        logger.warn('clearSession failed during error recovery', e);
+      }
       set({ authError: 'Session expired. Please log in again.' });
       return false;
     }

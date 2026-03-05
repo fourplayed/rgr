@@ -1,15 +1,14 @@
-import React, { useCallback, useRef } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   SafeAreaView,
   TouchableOpacity,
-  type LayoutChangeEvent,
 } from 'react-native';
 import { LoadingDots } from '../common/LoadingDots';
 import { PillBadge } from '../common/PillBadge';
 import { colors } from '../../theme/colors';
-import { styles, TOP_BAR_HEIGHT } from './scan.styles';
+import { styles } from './scan.styles';
 
 interface CameraOverlayProps {
   hasLocationPermission: boolean;
@@ -31,16 +30,10 @@ function CameraOverlayComponent({
   roleBadge,
   onDebugScan,
 }: CameraOverlayProps) {
-  const topBarHeight = useRef(TOP_BAR_HEIGHT);
-
-  const handleTopBarLayout = useCallback((e: LayoutChangeEvent) => {
-    topBarHeight.current = e.nativeEvent.layout.height;
-  }, []);
-
   return (
     <SafeAreaView style={styles.overlay}>
       {/* ── Top Bar ──────────────────────────────── */}
-      <View style={styles.topBar} onLayout={handleTopBarLayout}>
+      <View style={styles.topBar}>
         <View style={styles.topBarTitleCenter}>
           <Text style={styles.topBarTitleText}>Scan QR Code</Text>
           <Text style={styles.topBarSubtitleText}>

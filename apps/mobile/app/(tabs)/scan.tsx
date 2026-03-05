@@ -13,7 +13,7 @@ import { useScanActionFlow } from '../../src/hooks/scan/useScanActionFlow';
 import { PermissionScreen, CameraOverlay, ScanConfirmation } from '../../src/components/scanner';
 import { DefectReportSheet } from '../../src/components/scanner/DefectReportSheet';
 import { CameraCapture } from '../../src/components/photos';
-import { CreateMaintenanceModal } from '../../src/components/maintenance';
+import { CreateMaintenanceModal, DefectReportDetailModal, MaintenanceDetailModal } from '../../src/components/maintenance';
 import { TutorialSheet, AlertSheet, ErrorBoundary } from '../../src/components/common';
 import { styles } from '../../src/components/scanner/scan.styles';
 
@@ -27,6 +27,10 @@ export default function ScanScreen() {
   const hasHydrated = useTutorialStore(s => s._hasHydrated);
   const markSeen = useTutorialStore(s => s.markSeen);
   const [showScanTutorial, setShowScanTutorial] = useState(false);
+
+  // ── Context detail modal state ──
+  const [contextDefectId, setContextDefectId] = useState<string | null>(null);
+  const [contextMaintenanceId, setContextMaintenanceId] = useState<string | null>(null);
 
   // ── Unified scan flow hook ──
 
@@ -122,13 +126,37 @@ export default function ScanScreen() {
     markSeen('scan');
   }, [markSeen]);
 
+  // ── Context item handlers (mechanic taps individual defect/task) ──
+
+  const handleDefectItemPress = useCallback((defectId: string) => {
+    setContextDefectId(defectId);
+  }, []);
+
+  const handleTaskItemPress = useCallback((maintenanceId: string) => {
+    setContextMaintenanceId(maintenanceId);
+  }, []);
+
+  // ── Wrap done/undo to also clear context detail modals ──
+
+  const handleDonePressWithReset = useCallback(() => {
+    setContextDefectId(null);
+    setContextMaintenanceId(null);
+    handleDonePress();
+  }, [handleDonePress]);
+
+  const handleUndoPressWithReset = useCallback(() => {
+    setContextDefectId(null);
+    setContextMaintenanceId(null);
+    handleUndoPress();
+  }, [handleUndoPress]);
+
   // ── Context press (mechanic taps summary row → navigate to asset detail) ──
 
   const handleContextPress = useCallback(() => {
     if (!scannedAsset) return;
     router.push(`/assets/${scannedAsset.id}`);
-    handleDonePress();
-  }, [scannedAsset, handleDonePress]);
+    handleDonePressWithReset();
+  }, [scannedAsset, handleDonePressWithReset]);
 
   // ── Render ──
 
@@ -160,9 +188,11 @@ export default function ScanScreen() {
             onPhotoPress={handlePhotoPress}
             onDefectPress={handleDefectPress}
             onTaskPress={handleTaskPress}
-            onDonePress={handleDonePress}
-            onUndoPress={handleUndoPress}
+            onDonePress={handleDonePressWithReset}
+            onUndoPress={handleUndoPressWithReset}
             onContextPress={handleContextPress}
+            onDefectItemPress={handleDefectItemPress}
+            onTaskItemPress={handleTaskItemPress}
             photoCompleted={photoCompleted}
             defectCompleted={defectCompleted}
             disabled={buttonsDisabled}
@@ -174,8 +204,8 @@ export default function ScanScreen() {
             matchedDepot={matchedDepot}
             isCreating={isCreatingScan}
             onPhotoPress={handlePhotoPress}
-            onDonePress={handleDonePress}
-            onUndoPress={handleUndoPress}
+            onDonePress={handleDonePressWithReset}
+            onUndoPress={handleUndoPressWithReset}
             photoCompleted={photoCompleted}
             disabled={buttonsDisabled}
           />
@@ -248,6 +278,20 @@ export default function ScanScreen() {
         title={alertSheet.title}
         message={alertSheet.message}
         onDismiss={() => setAlertSheet(prev => ({ ...prev, visible: false }))}
+      />
+
+      {/* Context detail modals (inline previews during scan flow) */}
+      <DefectReportDetailModal
+        visible={contextDefectId !== null}
+        defectId={contextDefectId}
+        onClose={() => setContextDefectId(null)}
+        variant="compact"
+      />
+      <MaintenanceDetailModal
+        visible={contextMaintenanceId !== null}
+        maintenanceId={contextMaintenanceId}
+        onClose={() => setContextMaintenanceId(null)}
+        variant="compact"
       />
 
       <TutorialSheet

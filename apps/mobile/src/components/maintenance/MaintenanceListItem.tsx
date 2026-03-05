@@ -18,8 +18,10 @@ export const MAINTENANCE_OVERDUE_CONFIG = { icon: 'alert-circle' as keyof typeof
 
 /** Returns the icon/color config, upgrading scheduled → overdue when past due date */
 export function getMaintenanceVisualConfig(status: MaintenanceStatus, dueDate: string | null) {
-  if (status === 'scheduled' && dueDate && new Date(dueDate).getTime() < Date.now()) {
-    return MAINTENANCE_OVERDUE_CONFIG;
+  if (status === 'scheduled' && dueDate) {
+    const end = new Date(dueDate);
+    end.setHours(23, 59, 59, 999);
+    if (end.getTime() < Date.now()) return MAINTENANCE_OVERDUE_CONFIG;
   }
   return MAINTENANCE_STATUS_CONFIG[status] ?? MAINTENANCE_STATUS_CONFIG.scheduled;
 }

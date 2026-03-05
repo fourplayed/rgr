@@ -40,9 +40,9 @@ function DefectReportSheetComponent({
   const [notes, setNotes] = useState('');
   const [wantsPhoto, setWantsPhoto] = useState(false);
 
-  // Reset state when modal closes (visible changes to false)
+  // Reset state when modal opens (clean slate for new report)
   useEffect(() => {
-    if (!visible) {
+    if (visible) {
       setNotes('');
       setWantsPhoto(false);
     }

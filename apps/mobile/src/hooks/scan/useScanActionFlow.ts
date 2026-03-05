@@ -386,11 +386,12 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
 
     addDebugLog('Undo pressed — deleting scan event');
     const scanEventId = state.lastScanEventId;
+    const assetId = state.scannedAsset.id;
     dispatch({ type: 'RESET' });
     resetScanner();
 
     try {
-      await doDeleteScan(scanEventId);
+      await doDeleteScan({ scanEventId, assetId });
       addDebugLog('Scan event deleted');
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     } catch (error) {

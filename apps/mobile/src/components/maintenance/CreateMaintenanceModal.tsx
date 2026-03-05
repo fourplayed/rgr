@@ -18,6 +18,7 @@ import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
 import { useAuthStore } from '../../store/authStore';
 import { useCreateMaintenance } from '../../hooks/useMaintenanceData';
+import { useSubmitGuard } from '../../hooks/useSubmitGuard';
 
 interface CreateMaintenanceModalProps {
   visible: boolean;
@@ -51,6 +52,7 @@ export function CreateMaintenanceModal({
 }: CreateMaintenanceModalProps) {
   const { user } = useAuthStore();
   const { mutateAsync: createMaintenanceAsync, isPending } = useCreateMaintenance();
+  const guard = useSubmitGuard();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -71,7 +73,7 @@ export function CreateMaintenanceModal({
     }
   }, [visible, defaultTitle, defaultDescription, defaultPriority]);
 
-  const handleSubmit = useCallback(async () => {
+  const handleSubmit = useCallback(() => guard(async () => {
     if (!title.trim()) {
       setError('Title is required');
       return;
@@ -110,7 +112,7 @@ export function CreateMaintenanceModal({
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create maintenance record');
     }
-  }, [title, description, priority, dueDate, notes, assetId, user, createMaintenanceAsync, onClose, onCreated, onExternalSubmit]);
+  }), [guard, title, description, priority, dueDate, notes, assetId, user, createMaintenanceAsync, onClose, onCreated, onExternalSubmit]);
 
   const isLoading = isPending;
 
@@ -193,7 +195,7 @@ export function CreateMaintenanceModal({
               <View style={styles.chipContainer}>
                 {PRIORITY_ORDER.map((p) => {
                   const isSelected = priority === p;
-                  const selectedColor = colors.maintenancePriority[p as keyof typeof colors.maintenancePriority];
+                  const selectedColor = colors.maintenancePriority[p];
                   return (
                     <TouchableOpacity
                       key={p}
@@ -234,9 +236,12 @@ export function CreateMaintenanceModal({
                   { label: 'Next Week', days: 7 },
                   { label: 'Clear', days: -1 },
                 ] as const).map(({ label, days }) => {
-                  const presetDate: string = days >= 0
-                    ? new Date(Date.now() + days * 86400000).toISOString().split('T')[0]!
-                    : '';
+                  let presetDate = '';
+                  if (days >= 0) {
+                    const d = new Date();
+                    d.setDate(d.getDate() + days);
+                    presetDate = d.toISOString().slice(0, 10);
+                  }
                   const isSelected = days >= 0 && dueDate === presetDate;
                   return (
                     <TouchableOpacity

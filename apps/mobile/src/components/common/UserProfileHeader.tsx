@@ -16,6 +16,7 @@ import {
 import { colors } from '../../theme/colors';
 
 const HEADER_GRADIENT_COLORS = colors.brandGradientHeader;
+const LOGO_WIDTH = 221;
 
 export function UserProfileHeader() {
   const router = useRouter();
@@ -62,7 +63,7 @@ export function UserProfileHeader() {
         style={styles.gradient}
       >
         <View style={styles.container}>
-          <View style={{ width: 221 }} />
+          <View style={{ width: LOGO_WIDTH }} />
           <View style={styles.actions}>
             {isDetailPage && (
               <TouchableOpacity
@@ -145,7 +146,7 @@ const styles = StyleSheet.create({
   logo: {
     position: 'absolute',
     height: 88,
-    width: 221,
+    width: LOGO_WIDTH,
     left: -5,
     top: -8,
     zIndex: 999,

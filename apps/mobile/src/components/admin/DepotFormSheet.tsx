@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import { LoadingDots } from '../common/LoadingDots';
 import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
+import { useSubmitGuard } from '../../hooks/useSubmitGuard';
 
 interface DepotFormSheetProps {
   visible: boolean;
@@ -50,7 +51,7 @@ export function DepotFormSheet({
       if (isEdit) {
         setName(depotName ?? '');
         setCode(depotCode ?? '');
-        setAddress(depotAddress || '');
+        setAddress(depotAddress ?? '');
         setIsActive(depotIsActive ?? true);
       } else {
         setName('');
@@ -63,8 +64,9 @@ export function DepotFormSheet({
   }, [visible, isEdit, depotName, depotCode, depotAddress, depotIsActive]);
 
   const isValid = name.trim() && code.trim();
+  const guard = useSubmitGuard();
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(() => guard(async () => {
     if (!isValid) return;
     setError(null);
     try {
@@ -88,7 +90,7 @@ export function DepotFormSheet({
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
     }
-  };
+  }), [guard, isValid, isEdit, name, code, address, isActive, onSubmit]);
 
   if (!visible) return null;
 

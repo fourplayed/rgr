@@ -41,8 +41,8 @@ export const TutorialSheet = React.memo(function TutorialSheet({
 
         {bullets && bullets.length > 0 && (
           <View style={styles.bulletContainer}>
-            {bullets.map((item, index) => (
-              <View key={index} style={styles.bulletRow}>
+            {bullets.map((item) => (
+              <View key={item} style={styles.bulletRow}>
                 <Text style={styles.bulletDot}>{'\u2022'}</Text>
                 <Text style={styles.bulletText}>{item}</Text>
               </View>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,15 +9,14 @@ import {
   KeyboardAvoidingView,
   Platform,
   Animated,
-  useWindowDimensions,
 } from 'react-native';
 import { LoadingDots } from '../common/LoadingDots';
 import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
 import { useAuthStore } from '../../store/authStore';
-
-const ANIMATION_DURATION = 300;
+import { useSubmitGuard } from '../../hooks/useSubmitGuard';
+import { useAnimatedSheet } from '../../hooks/useAnimatedSheet';
 
 interface EditProfileModalProps {
   visible: boolean;
@@ -26,51 +25,11 @@ interface EditProfileModalProps {
 
 export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
   const { user, updateUserProfile } = useAuthStore();
-  const { height: screenHeight } = useWindowDimensions();
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [modalVisible, setModalVisible] = useState(false);
-
-  const backdropOpacity = useRef(new Animated.Value(0)).current;
-  const sheetTranslateY = useRef(new Animated.Value(screenHeight)).current;
-  const animGenRef = useRef(0);
-
-  // Handle open/close animations
-  useEffect(() => {
-    const gen = ++animGenRef.current;
-    if (visible) {
-      setModalVisible(true);
-      Animated.parallel([
-        Animated.timing(backdropOpacity, {
-          toValue: 1,
-          duration: ANIMATION_DURATION,
-          useNativeDriver: true,
-        }),
-        Animated.timing(sheetTranslateY, {
-          toValue: 0,
-          duration: ANIMATION_DURATION,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    } else {
-      Animated.parallel([
-        Animated.timing(backdropOpacity, {
-          toValue: 0,
-          duration: ANIMATION_DURATION,
-          useNativeDriver: true,
-        }),
-        Animated.timing(sheetTranslateY, {
-          toValue: screenHeight,
-          duration: ANIMATION_DURATION,
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        if (animGenRef.current === gen) setModalVisible(false);
-      });
-    }
-  }, [visible, backdropOpacity, sheetTranslateY, screenHeight]);
+  const { modalVisible, backdropStyle, sheetStyle } = useAnimatedSheet(visible);
 
   useEffect(() => {
     if (visible && user) {
@@ -80,7 +39,9 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
     }
   }, [visible, user]);
 
-  const handleSave = async () => {
+  const guard = useSubmitGuard();
+
+  const handleSave = useCallback(() => guard(async () => {
     if (!fullName.trim()) {
       setError('Full name is required');
       return;
@@ -101,7 +62,7 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
     } else {
       setError(result.error || 'Failed to update profile');
     }
-  };
+  }), [guard, fullName, phone, updateUserProfile, onClose]);
 
   return (
     <Modal
@@ -114,7 +75,7 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
       >
-        <Animated.View style={[styles.backdrop, { opacity: backdropOpacity }]}>
+        <Animated.View style={[styles.backdrop, backdropStyle]}>
           <TouchableOpacity
             style={styles.backdropTouchable}
             activeOpacity={1}
@@ -122,7 +83,7 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
           />
         </Animated.View>
 
-        <Animated.View style={[styles.sheet, { transform: [{ translateY: sheetTranslateY }] }]}>
+        <Animated.View style={[styles.sheet, sheetStyle]}>
           <View style={styles.handle} />
 
           <View style={styles.content}>

@@ -101,10 +101,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
   },
-  divider: {
-    height: 1,
-    backgroundColor: colors.border,
-  },
   assessmentText: {
     fontSize: fontSize.xs,
     fontFamily: 'Lato_400Regular',

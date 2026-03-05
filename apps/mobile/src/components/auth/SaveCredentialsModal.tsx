@@ -32,6 +32,8 @@ export function SaveCredentialsModal({
           style={styles.backdropTouchable}
           activeOpacity={1}
           onPress={onSkip}
+          accessibilityRole="button"
+          accessibilityLabel="Dismiss save login prompt"
         />
 
         <View style={styles.sheet}>
@@ -48,6 +50,8 @@ export function SaveCredentialsModal({
               <TouchableOpacity
                 style={[styles.button, styles.skipButton]}
                 onPress={onSkip}
+                accessibilityRole="button"
+                accessibilityLabel="Skip saving login credentials"
               >
                 <Text style={styles.skipButtonText}>Not Now</Text>
               </TouchableOpacity>
@@ -55,6 +59,8 @@ export function SaveCredentialsModal({
               <TouchableOpacity
                 style={[styles.button, styles.saveButton]}
                 onPress={onSave}
+                accessibilityRole="button"
+                accessibilityLabel="Save login credentials"
               >
                 <Text style={styles.saveButtonText}>Save</Text>
               </TouchableOpacity>

@@ -1,6 +1,7 @@
 /**
  * RGR Fleet Color Palette
  */
+import type { MaintenancePriority } from '@rgr/shared';
 
 export const colors = {
   // Primary brand colors
@@ -35,7 +36,7 @@ export const colors = {
     medium: '#F59E0B',
     high: '#EF4444',
     critical: '#DC2626',
-  },
+  } satisfies Record<MaintenancePriority, string>,
 
   // Hazard severity
   hazardSeverity: {
@@ -57,7 +58,6 @@ export const colors = {
     driver: '#00A8FF',     // Light blue
     mechanic: '#F59E0B',   // Orange
     manager: '#8B5CF6',    // Violet
-    yardie: '#EAB308',     // Yellow
     superuser: '#A855F7',  // Purple
   },
 

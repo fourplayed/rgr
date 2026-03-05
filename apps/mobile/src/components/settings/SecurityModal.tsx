@@ -11,7 +11,6 @@ import {
   Platform,
   ScrollView,
   Animated,
-  useWindowDimensions,
 } from 'react-native';
 import { LoadingDots } from '../common/LoadingDots';
 import { Button } from '../common/Button';
@@ -21,8 +20,7 @@ import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
 import { isAutoLoginEnabled, setAutoLoginEnabled } from '../../utils/secureStorage';
 import { updatePassword, verifyCurrentPassword } from '@rgr/shared';
 import { useAuthStore } from '../../store/authStore';
-
-const ANIMATION_DURATION = 300;
+import { useAnimatedSheet } from '../../hooks/useAnimatedSheet';
 
 interface SecurityModalProps {
   visible: boolean;
@@ -71,10 +69,9 @@ function ValidationRow({ label, isValid }: ValidationRowProps) {
 
 export function SecurityModal({ visible, onClose }: SecurityModalProps) {
   const { user } = useAuthStore();
-  const { height: screenHeight } = useWindowDimensions();
   const [autoLogin, setAutoLogin] = useState(false);
   const [autoLoginLoading, setAutoLoginLoading] = useState(true);
-  const [modalVisible, setModalVisible] = useState(false);
+  const { modalVisible, backdropStyle, sheetStyle } = useAnimatedSheet(visible);
 
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
@@ -88,48 +85,10 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const backdropOpacity = useRef(new Animated.Value(0)).current;
-  const sheetTranslateY = useRef(new Animated.Value(screenHeight)).current;
-  const animGenRef = useRef(0);
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const validation = validatePassword(newPassword);
   const passwordsMatch = newPassword === confirmPassword && confirmPassword.length > 0;
-
-  // Handle open/close animations
-  useEffect(() => {
-    const gen = ++animGenRef.current;
-    if (visible) {
-      setModalVisible(true);
-      Animated.parallel([
-        Animated.timing(backdropOpacity, {
-          toValue: 1,
-          duration: ANIMATION_DURATION,
-          useNativeDriver: true,
-        }),
-        Animated.timing(sheetTranslateY, {
-          toValue: 0,
-          duration: ANIMATION_DURATION,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    } else {
-      Animated.parallel([
-        Animated.timing(backdropOpacity, {
-          toValue: 0,
-          duration: ANIMATION_DURATION,
-          useNativeDriver: true,
-        }),
-        Animated.timing(sheetTranslateY, {
-          toValue: screenHeight,
-          duration: ANIMATION_DURATION,
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        if (animGenRef.current === gen) setModalVisible(false);
-      });
-    }
-  }, [visible, backdropOpacity, sheetTranslateY, screenHeight]);
 
   const loadAutoLoginState = useCallback(async () => {
     setAutoLoginLoading(true);
@@ -234,7 +193,7 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
       >
-        <Animated.View style={[styles.backdrop, { opacity: backdropOpacity }]}>
+        <Animated.View style={[styles.backdrop, backdropStyle]}>
           <TouchableOpacity
             style={styles.backdropTouchable}
             activeOpacity={1}
@@ -242,7 +201,7 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
           />
         </Animated.View>
 
-        <Animated.View style={[styles.sheet, { transform: [{ translateY: sheetTranslateY }] }]}>
+        <Animated.View style={[styles.sheet, sheetStyle]}>
           <View style={styles.handle} />
 
           <ScrollView style={styles.scrollContent} bounces={false}>

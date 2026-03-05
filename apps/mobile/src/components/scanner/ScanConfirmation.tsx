@@ -5,10 +5,14 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Asset, AssetScanContext } from '@rgr/shared';
-import { AssetStatusColors, getDepotBadgeColors, formatAssetNumber } from '@rgr/shared';
+import { AssetStatusColors, getDepotBadgeColors, formatAssetNumber, formatRelativeTime } from '@rgr/shared';
+import { DefectStatusBadge } from '../maintenance/DefectStatusBadge';
+import { MaintenanceStatusBadge } from '../maintenance/MaintenanceStatusBadge';
+import { MaintenancePriorityBadge } from '../maintenance/MaintenancePriorityBadge';
 import { StatusBadge } from '../common/StatusBadge';
 import { LoadingDots } from '../common/LoadingDots';
 import { colors } from '../../theme/colors';
@@ -44,6 +48,8 @@ type ScanConfirmationProps =
       onDonePress: () => void;
       onUndoPress: () => void;
       onContextPress: () => void;
+      onDefectItemPress?: (defectId: string) => void;
+      onTaskItemPress?: (maintenanceId: string) => void;
       photoCompleted: boolean;
       defectCompleted: boolean;
       disabled: boolean;
@@ -62,9 +68,25 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
     ? getDepotBadgeColors(matchedDepot.depot, colors.chrome, colors.text)
     : null;
 
+  const hasContextItems =
+    props.variant === 'mechanic' &&
+    !isCreating &&
+    props.scanContext != null &&
+    (props.scanContext.openDefectCount > 0 || props.scanContext.activeTaskCount > 0);
+
+  const ContentWrapper = hasContextItems ? ScrollView : View;
+  const contentWrapperProps = hasContextItems
+    ? {
+        style: [styles.content, styles.contentWithItems],
+        contentContainerStyle: styles.scrollContent,
+        bounces: true,
+        showsVerticalScrollIndicator: false,
+      }
+    : { style: styles.content };
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
+      <ContentWrapper {...contentWrapperProps}>
         {/* ── Status header ── */}
         <View style={styles.statusHeader}>
           {isCreating ? (
@@ -109,6 +131,8 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
             error={props.contextError}
             onRetry={props.onRetryContext}
             onPress={props.onContextPress}
+            onDefectItemPress={props.onDefectItemPress}
+            onTaskItemPress={props.onTaskItemPress}
           />
         )}
 
@@ -176,7 +200,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
             Undo scan
           </Text>
         </TouchableOpacity>
-      </View>
+      </ContentWrapper>
     </SafeAreaView>
   );
 }
@@ -189,12 +213,16 @@ function ContextRow({
   error,
   onRetry,
   onPress,
+  onDefectItemPress,
+  onTaskItemPress,
 }: {
   scanContext: AssetScanContext | null;
   isLoading: boolean;
   error: Error | null;
   onRetry: () => void;
   onPress: () => void;
+  onDefectItemPress?: ((defectId: string) => void) | undefined;
+  onTaskItemPress?: ((maintenanceId: string) => void) | undefined;
 }) {
   if (isLoading) {
     return (
@@ -226,6 +254,7 @@ function ContextRow({
     );
   }
 
+  // Build summary header
   const parts: string[] = [];
   if (scanContext.openDefectCount > 0) {
     parts.push(`${scanContext.openDefectCount} defect${scanContext.openDefectCount !== 1 ? 's' : ''}`);
@@ -234,17 +263,74 @@ function ContextRow({
     parts.push(`${scanContext.activeTaskCount} task${scanContext.activeTaskCount !== 1 ? 's' : ''}`);
   }
 
+  const totalCount = scanContext.openDefectCount + scanContext.activeTaskCount;
+  const shownCount = scanContext.openDefects.length + scanContext.activeTasks.length;
+  const hasMore = totalCount > shownCount;
+
   return (
-    <TouchableOpacity
-      style={styles.contextCard}
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`${parts.join(' and ')}. Tap to view asset details.`}
-    >
-      <Ionicons name="warning" size={16} color={colors.warning} />
-      <Text style={styles.contextItemsText}>{parts.join(' · ')}</Text>
-      <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
-    </TouchableOpacity>
+    <View style={styles.contextSection}>
+      {/* Summary header */}
+      <View style={styles.contextSummaryHeader}>
+        <Ionicons name="warning" size={16} color={colors.warning} />
+        <Text style={styles.contextItemsText}>{parts.join(' · ')}</Text>
+      </View>
+
+      {/* Individual defect rows */}
+      {scanContext.openDefects.map((defect) => (
+        <TouchableOpacity
+          key={defect.id}
+          style={styles.contextItemRow}
+          onPress={() => onDefectItemPress?.(defect.id)}
+          accessibilityRole="button"
+          accessibilityLabel={`Defect: ${defect.title}`}
+        >
+          <Ionicons name="warning" size={18} color={colors.warning} style={styles.contextItemIcon} />
+          <View style={styles.contextItemCenter}>
+            <Text style={styles.contextItemTitle} numberOfLines={1}>{defect.title}</Text>
+            <View style={styles.contextItemMeta}>
+              <DefectStatusBadge status={defect.status} />
+              <Text style={styles.contextItemTime}>{formatRelativeTime(defect.createdAt)}</Text>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+        </TouchableOpacity>
+      ))}
+
+      {/* Individual task rows */}
+      {scanContext.activeTasks.map((task) => (
+        <TouchableOpacity
+          key={task.id}
+          style={styles.contextItemRow}
+          onPress={() => onTaskItemPress?.(task.id)}
+          accessibilityRole="button"
+          accessibilityLabel={`Task: ${task.title}`}
+        >
+          <Ionicons name="construct" size={18} color={colors.electricBlue} style={styles.contextItemIcon} />
+          <View style={styles.contextItemCenter}>
+            <Text style={styles.contextItemTitle} numberOfLines={1}>{task.title}</Text>
+            <View style={styles.contextItemMeta}>
+              <MaintenanceStatusBadge status={task.status} />
+              <MaintenancePriorityBadge priority={task.priority} />
+              <Text style={styles.contextItemTime}>{formatRelativeTime(task.createdAt)}</Text>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+        </TouchableOpacity>
+      ))}
+
+      {/* "View all" link when more items exist than shown */}
+      {hasMore && (
+        <TouchableOpacity
+          style={styles.viewAllLink}
+          onPress={onPress}
+          accessibilityRole="link"
+          accessibilityLabel="View all on asset page"
+        >
+          <Text style={styles.viewAllText}>View all on asset page</Text>
+          <Ionicons name="arrow-forward" size={14} color={colors.electricBlue} />
+        </TouchableOpacity>
+      )}
+    </View>
   );
 }
 
@@ -304,6 +390,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: spacing.lg,
+  },
+  contentWithItems: {
+    justifyContent: 'flex-start',
+  },
+  scrollContent: {
+    paddingTop: spacing['2xl'],
+    paddingBottom: spacing.lg,
   },
 
   // Status header
@@ -407,6 +500,67 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
+  },
+  contextSection: {
+    marginTop: spacing.base,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    overflow: 'hidden',
+  },
+  contextSummaryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.base,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.chrome,
+  },
+  contextItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.base,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.chrome,
+  },
+  contextItemIcon: {
+    marginRight: spacing.sm,
+  },
+  contextItemCenter: {
+    flex: 1,
+    marginRight: spacing.sm,
+  },
+  contextItemTitle: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_700Bold',
+    color: colors.text,
+    marginBottom: 2,
+  },
+  contextItemMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    flexWrap: 'wrap',
+  },
+  contextItemTime: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_400Regular',
+    color: colors.textSecondary,
+  },
+  viewAllLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.sm,
+  },
+  viewAllText: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_700Bold',
+    color: colors.electricBlue,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 
   // Action buttons

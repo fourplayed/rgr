@@ -469,17 +469,21 @@ export function useDeleteScanEvent() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (scanEventId: string) => {
+    mutationFn: async ({ scanEventId }: { scanEventId: string; assetId: string }) => {
       const result = await deleteScanEvent(scanEventId);
       if (!result.success) {
         throw new Error(result.error);
       }
       return result.data;
     },
-    onSuccess: (_data, _scanEventId) => {
+    onSuccess: (_data, variables) => {
       // Mark all scan-related queries stale
       queryClient.invalidateQueries({ queryKey: assetKeys.lists(), refetchType: 'none' });
       queryClient.invalidateQueries({ queryKey: ['scans'], refetchType: 'none' });
+      // Invalidate asset-specific caches so detail screen auto-updates
+      queryClient.invalidateQueries({ queryKey: assetKeys.detail(variables.assetId), refetchType: 'none' });
+      queryClient.invalidateQueries({ queryKey: assetKeys.scans(variables.assetId), refetchType: 'none' });
+      queryClient.invalidateQueries({ queryKey: assetKeys.scanContext(variables.assetId), refetchType: 'none' });
     },
   });
 }

@@ -20,7 +20,11 @@ export function OfflineBanner() {
   }
 
   return (
-    <View style={styles.banner}>
+    <View
+      style={styles.banner}
+      accessibilityRole="alert"
+      accessibilityLabel="You are offline. Recent data is shown. Scanning is unavailable."
+    >
       <Text style={styles.text}>Offline — recent data shown, scanning unavailable</Text>
     </View>
   );

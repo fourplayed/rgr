@@ -68,11 +68,11 @@ export const useLocationStore = create<LocationState>((set, get) => ({
       }
 
       // Get GPS position (depot list is now provided by caller from React Query cache)
-      const locationPromise: Promise<Location.LocationObject> = useSimulatedGPS
+      const locationPromise: Promise<Location.LocationObject> = useSimulatedGPS && debugLocation
         ? Promise.resolve({
             coords: {
-              latitude: debugLocation!.latitude,
-              longitude: debugLocation!.longitude,
+              latitude: debugLocation.latitude,
+              longitude: debugLocation.longitude,
               accuracy: 5,
               altitude: null,
               altitudeAccuracy: null,
