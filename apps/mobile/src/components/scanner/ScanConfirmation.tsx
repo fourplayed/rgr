@@ -79,8 +79,8 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
   const ContentWrapper = hasContextItems ? ScrollView : View;
   const contentWrapperProps = hasContextItems
     ? {
-        style: [styles.content, styles.contentWithItems],
-        contentContainerStyle: styles.scrollContent,
+        style: styles.scrollViewOuter,
+        contentContainerStyle: [styles.scrollContent, styles.contentWithItems],
         bounces: true,
         showsVerticalScrollIndicator: false,
       }
@@ -388,6 +388,10 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     justifyContent: 'center',
+    paddingHorizontal: spacing.lg,
+  },
+  scrollViewOuter: {
+    flex: 1,
     paddingHorizontal: spacing.lg,
   },
   contentWithItems: {
