@@ -14,7 +14,7 @@ import { logger } from '../utils/logger';
  * Handles taking photos, preview state, and upload.
  */
 export function usePhotoCapture() {
-  const { user } = useAuthStore();
+  const user = useAuthStore(s => s.user);
   const {
     capturedUri,
     assetId,

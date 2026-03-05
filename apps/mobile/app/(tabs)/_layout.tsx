@@ -1,5 +1,5 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { View, TouchableOpacity, Animated } from 'react-native';
+import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
+import { View, TouchableOpacity, Animated, StyleSheet } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -55,66 +55,78 @@ function AnimatedTabBar({ state, navigation }: BottomTabBarProps) {
     }
   }, [activeVisualIndex, tabWidth, translateX]);
 
+  const handleLayout = useCallback(
+    (e: { nativeEvent: { layout: { width: number } } }) => setBarWidth(e.nativeEvent.layout.width),
+    [],
+  );
+
+  // Pre-compute animated indicator style (dynamic: depends on tabWidth & translateX)
+  const indicatorStyle = useMemo(
+    () => [tabStyles.indicator, { width: tabWidth, transform: [{ translateX }] }],
+    [tabWidth, translateX],
+  );
+
+  // Stable tab press handler keyed by route
+  const handleTabPress = useCallback(
+    (route: (typeof visibleRoutes)[number], isFocused: boolean) => {
+      const event = navigation.emit({
+        type: 'tabPress',
+        target: route.key,
+        canPreventDefault: true,
+      });
+      if (!isFocused && !event.defaultPrevented) {
+        navigation.navigate(route.name, route.params);
+      }
+    },
+    [navigation],
+  );
+
+  const handleTabLongPress = useCallback(
+    (routeKey: string) => {
+      navigation.emit({ type: 'tabLongPress', target: routeKey });
+    },
+    [navigation],
+  );
+
   return (
-    <View
-      style={{
-        height: 70,
-        paddingBottom: 20,
-        backgroundColor: TAB_BAR_BACKGROUND,
-        overflow: 'hidden',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.5,
-        shadowRadius: 4,
-        elevation: 16,
-      }}
-      onLayout={(e) => setBarWidth(e.nativeEvent.layout.width)}
-    >
+    <View style={tabStyles.bar} onLayout={handleLayout}>
       {/* Full-bar gradient background */}
       <LinearGradient
         colors={[...colors.brandGradient]}
         locations={[0, 0.5, 1]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
-        style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
+        style={tabStyles.absoluteFill}
       />
 
       {/* Sliding active indicator (spring-animated, like SegmentedTabs) */}
       {tabWidth > 0 && (
-        <Animated.View
-          style={{
-            position: 'absolute',
-            top: 0,
-            bottom: 0,
-            width: tabWidth,
-            transform: [{ translateX }],
-          }}
-        >
+        <Animated.View style={indicatorStyle}>
           <LinearGradient
             colors={[TAB_ACTIVE_BACKGROUND, colors.navy]}
             start={{ x: 0, y: 0 }}
             end={{ x: 0, y: 1 }}
-            style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
+            style={tabStyles.absoluteFill}
           />
           {/* Left edge highlight */}
           <LinearGradient
             colors={['rgba(255, 255, 255, 0.25)', 'transparent']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
-            style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 6 }}
+            style={tabStyles.edgeLeft}
           />
           {/* Right edge highlight */}
           <LinearGradient
             colors={['transparent', 'rgba(255, 255, 255, 0.25)']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
-            style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 6 }}
+            style={tabStyles.edgeRight}
           />
         </Animated.View>
       )}
 
       {/* Tab buttons */}
-      <View style={{ flex: 1, flexDirection: 'row', paddingTop: 4 }}>
+      <View style={tabStyles.buttonRow}>
         {visibleRoutes.map((route, index) => {
           const isFocused = activeVisualIndex === index;
           const icon = TAB_ICONS[route.name] ?? 'help-outline';
@@ -125,43 +137,19 @@ function AnimatedTabBar({ state, navigation }: BottomTabBarProps) {
               accessibilityRole="tab"
               accessibilityState={isFocused ? { selected: true } : {}}
               accessibilityLabel={route.name}
-              onPress={() => {
-                const event = navigation.emit({
-                  type: 'tabPress',
-                  target: route.key,
-                  canPreventDefault: true,
-                });
-                if (!isFocused && !event.defaultPrevented) {
-                  navigation.navigate(route.name, route.params);
-                }
-              }}
-              onLongPress={() => {
-                navigation.emit({ type: 'tabLongPress', target: route.key });
-              }}
-              style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+              onPress={() => handleTabPress(route, isFocused)}
+              onLongPress={() => handleTabLongPress(route.key)}
+              style={tabStyles.button}
             >
               <Ionicons
                 name={icon}
                 size={28}
                 color={TAB_ICON_COLOR}
-                style={{
-                  textShadowColor: 'rgba(0, 0, 0, 0.3)',
-                  textShadowOffset: { width: 0, height: 1 },
-                  textShadowRadius: 2,
-                }}
+                style={tabStyles.iconShadow}
               />
               {/* Subtle separator between tabs */}
               {index < tabCount - 1 && (
-                <View
-                  style={{
-                    position: 'absolute',
-                    right: 0,
-                    top: '20%',
-                    bottom: '20%',
-                    width: 1,
-                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                  }}
-                />
+                <View style={tabStyles.separator} />
               )}
             </TouchableOpacity>
           );
@@ -173,7 +161,7 @@ function AnimatedTabBar({ state, navigation }: BottomTabBarProps) {
 
 export default function TabsLayout() {
   return (
-    <View style={{ flex: 1, backgroundColor: colors.chrome }}>
+    <View style={tabStyles.layoutRoot}>
       <Tabs
         screenOptions={{ headerShown: false }}
         tabBar={(props) => <AnimatedTabBar {...props} />}
@@ -187,9 +175,83 @@ export default function TabsLayout() {
         <Tabs.Screen name="assets" options={{ title: 'Assets' }} />
         <Tabs.Screen name="maintenance" options={{ title: 'Maintenance' }} />
       </Tabs>
-      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 999 }}>
+      <View style={tabStyles.profileOverlay}>
         <UserProfileHeader />
       </View>
     </View>
   );
 }
+
+const tabStyles = StyleSheet.create({
+  layoutRoot: {
+    flex: 1,
+    backgroundColor: colors.chrome,
+  },
+  profileOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 999,
+  },
+  bar: {
+    height: 70,
+    paddingBottom: 20,
+    backgroundColor: TAB_BAR_BACKGROUND,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+    elevation: 16,
+  },
+  absoluteFill: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+  },
+  indicator: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+  },
+  edgeLeft: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 6,
+  },
+  edgeRight: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: 6,
+  },
+  buttonRow: {
+    flex: 1,
+    flexDirection: 'row',
+    paddingTop: 4,
+  },
+  button: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconShadow: {
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  separator: {
+    position: 'absolute',
+    right: 0,
+    top: '20%',
+    bottom: '20%',
+    width: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+  },
+});

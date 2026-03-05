@@ -50,7 +50,7 @@ export function CreateMaintenanceModal({
   onCreated,
   onExternalSubmit,
 }: CreateMaintenanceModalProps) {
-  const { user } = useAuthStore();
+  const user = useAuthStore(s => s.user);
   const { mutateAsync: createMaintenanceAsync, isPending } = useCreateMaintenance();
   const guard = useSubmitGuard();
 

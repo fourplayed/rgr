@@ -152,10 +152,11 @@ export function useCreateDefectReport() {
       return result.data;
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: defectKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: defectKeys.stats() });
+      queryClient.invalidateQueries({ queryKey: defectKeys.lists(), refetchType: 'none' });
+      queryClient.invalidateQueries({ queryKey: defectKeys.stats(), refetchType: 'none' });
       queryClient.invalidateQueries({
         queryKey: assetKeys.scanContext(variables.assetId),
+        refetchType: 'none',
       });
     },
   });
@@ -186,9 +187,10 @@ export function useUpdateDefectReportStatus() {
       return result.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: defectKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: defectKeys.lists(), refetchType: 'none' });
+      // Detail: immediate refetch — user is viewing this record
       queryClient.invalidateQueries({ queryKey: defectKeys.detail(data.id) });
-      queryClient.invalidateQueries({ queryKey: defectKeys.stats() });
+      queryClient.invalidateQueries({ queryKey: defectKeys.stats(), refetchType: 'none' });
     },
   });
 }
@@ -210,7 +212,8 @@ export function useUpdateDefectReport() {
       return result.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: defectKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: defectKeys.lists(), refetchType: 'none' });
+      // Detail: immediate refetch — user is viewing this record
       queryClient.invalidateQueries({ queryKey: defectKeys.detail(data.id) });
     },
   });

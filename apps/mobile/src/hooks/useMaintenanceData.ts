@@ -133,11 +133,11 @@ export function useCreateMaintenance() {
       return result.data;
     },
     onSuccess: (data) => {
-      // Invalidate all list queries to refresh filtered views
-      queryClient.invalidateQueries({ queryKey: maintenanceKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: maintenanceKeys.stats() });
+      // Invalidate all list queries to refresh filtered views (lazy — refetch on next mount)
+      queryClient.invalidateQueries({ queryKey: maintenanceKeys.lists(), refetchType: 'none' });
+      queryClient.invalidateQueries({ queryKey: maintenanceKeys.stats(), refetchType: 'none' });
       // Cross-cache: refresh asset detail's maintenance data so assessment updates
-      queryClient.invalidateQueries({ queryKey: assetKeys.maintenance(data.assetId) });
+      queryClient.invalidateQueries({ queryKey: assetKeys.maintenance(data.assetId), refetchType: 'none' });
     },
   });
 }
@@ -165,15 +165,16 @@ export function useUpdateMaintenanceStatus() {
       return result.data;
     },
     onSuccess: (data) => {
-      // Invalidate lists and the specific detail
-      queryClient.invalidateQueries({ queryKey: maintenanceKeys.lists() });
+      // Invalidate lists (lazy — refetch on next mount)
+      queryClient.invalidateQueries({ queryKey: maintenanceKeys.lists(), refetchType: 'none' });
+      // Detail: immediate refetch — user is viewing this record
       queryClient.invalidateQueries({ queryKey: maintenanceKeys.detail(data.id) });
-      queryClient.invalidateQueries({ queryKey: maintenanceKeys.stats() });
+      queryClient.invalidateQueries({ queryKey: maintenanceKeys.stats(), refetchType: 'none' });
       // Cross-cache: auto-resolved defects need to refresh
-      queryClient.invalidateQueries({ queryKey: defectKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: defectKeys.stats() });
+      queryClient.invalidateQueries({ queryKey: defectKeys.lists(), refetchType: 'none' });
+      queryClient.invalidateQueries({ queryKey: defectKeys.stats(), refetchType: 'none' });
       // Cross-cache: refresh asset detail's maintenance data so assessment updates
-      queryClient.invalidateQueries({ queryKey: assetKeys.maintenance(data.assetId) });
+      queryClient.invalidateQueries({ queryKey: assetKeys.maintenance(data.assetId), refetchType: 'none' });
     },
   });
 }
@@ -195,11 +196,12 @@ export function useUpdateMaintenance() {
       return result.data;
     },
     onSuccess: (data) => {
-      // Invalidate lists and the specific detail
-      queryClient.invalidateQueries({ queryKey: maintenanceKeys.lists() });
+      // Invalidate lists (lazy — refetch on next mount)
+      queryClient.invalidateQueries({ queryKey: maintenanceKeys.lists(), refetchType: 'none' });
+      // Detail: immediate refetch — user is viewing this record
       queryClient.invalidateQueries({ queryKey: maintenanceKeys.detail(data.id) });
       // Cross-cache: refresh asset detail's maintenance data so assessment updates
-      queryClient.invalidateQueries({ queryKey: assetKeys.maintenance(data.assetId) });
+      queryClient.invalidateQueries({ queryKey: assetKeys.maintenance(data.assetId), refetchType: 'none' });
     },
   });
 }

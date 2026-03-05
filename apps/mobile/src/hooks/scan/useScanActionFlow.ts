@@ -1,4 +1,4 @@
-import { useReducer, useCallback, useRef, useState } from 'react';
+import { useReducer, useCallback, useRef, useState, useMemo } from 'react';
 import { useAssetScanContext } from '../useAssetData';
 import { useLocation } from '../useLocation';
 import { useQRScanner } from '../useQRScanner';
@@ -207,8 +207,8 @@ interface UseScanActionFlowOptions {
 
 export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptions) {
   const [state, dispatch] = useReducer(reducer, { phase: 'idle' });
-  const { user } = useAuthStore();
-  const { resolvedDepot: cachedDepot } = useLocationStore();
+  const user = useAuthStore(s => s.user);
+  const cachedDepot = useLocationStore(s => s.resolvedDepot);
   const {
     hasPermission: hasLocationPermission,
     requestPermission: requestLocationPermission,
@@ -302,43 +302,61 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
 
   const scanContextQuery = useAssetScanContext(scanContextAssetId);
 
-  // ── Derived convenience getters ──
-  const scannedAsset =
-    state.phase === 'confirming' || state.phase === 'active'
-      ? state.scannedAsset
-      : null;
+  // ── Derived convenience getters (memoized to avoid recomputation) ──
+  const scannedAsset = useMemo(
+    () => (state.phase === 'confirming' || state.phase === 'active') ? state.scannedAsset : null,
+    [state],
+  );
 
-  const matchedDepot =
-    state.phase === 'confirming' || state.phase === 'active'
-      ? state.matchedDepot
-      : null;
+  const matchedDepot = useMemo(
+    () => (state.phase === 'confirming' || state.phase === 'active') ? state.matchedDepot : null,
+    [state],
+  );
 
-  const effectiveLocation =
-    state.phase === 'confirming' || state.phase === 'active'
-      ? state.effectiveLocation
-      : null;
+  const effectiveLocation = useMemo(
+    () => (state.phase === 'confirming' || state.phase === 'active') ? state.effectiveLocation : null,
+    [state],
+  );
 
-  const lastScanEventId =
-    state.phase === 'active' ? state.lastScanEventId : null;
+  const lastScanEventId = useMemo(
+    () => state.phase === 'active' ? state.lastScanEventId : null,
+    [state],
+  );
 
-  const activeSheet =
-    state.phase === 'active' ? state.activeSheet : null;
+  const activeSheet = useMemo(
+    () => state.phase === 'active' ? state.activeSheet : null,
+    [state],
+  );
 
-  const isCreatingScan = state.phase === 'confirming';
+  const isCreatingScan = useMemo(
+    () => state.phase === 'confirming',
+    [state.phase],
+  );
 
-  const scanStatus =
-    state.phase === 'scanning' ? state.scanStatus : null;
+  const scanStatus = useMemo(
+    () => state.phase === 'scanning' ? state.scanStatus : null,
+    [state],
+  );
 
-  const showCard =
-    state.phase === 'confirming' || state.phase === 'active';
+  const showCard = useMemo(
+    () => state.phase === 'confirming' || state.phase === 'active',
+    [state.phase],
+  );
 
-  const buttonsDisabled = state.phase !== 'active';
+  const buttonsDisabled = useMemo(
+    () => state.phase !== 'active',
+    [state.phase],
+  );
 
-  const photoCompleted =
-    state.phase === 'active' ? state.photoCompleted : false;
+  const photoCompleted = useMemo(
+    () => state.phase === 'active' ? state.photoCompleted : false,
+    [state],
+  );
 
-  const defectCompleted =
-    state.phase === 'active' ? state.defectCompleted : false;
+  const defectCompleted = useMemo(
+    () => state.phase === 'active' ? state.defectCompleted : false,
+    [state],
+  );
 
   return {
     // State

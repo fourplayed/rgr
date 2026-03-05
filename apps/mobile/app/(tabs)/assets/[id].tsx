@@ -66,7 +66,7 @@ type AssetDetailTab = typeof ASSET_DETAIL_TABS[number]['key'];
 export default function AssetDetailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ id: string }>();
-  const { user } = useAuthStore();
+  const user = useAuthStore(s => s.user);
 
   // Validate route params - handle array case from Expo Router
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -136,28 +136,33 @@ export default function AssetDetailScreen() {
     setModal({ type: 'maintenanceDetail', maintenanceId: item.id });
   }, []);
 
+  // Always fetch (needed for header)
   const {
     data: asset,
     isLoading: assetLoading,
     error: assetError,
   } = useAsset(id);
 
+  // Gate tab-specific queries: activity + maintenance tabs share scans/maintenance/defects
+  const activityOrMaint = activeTab === 'activity' || activeTab === 'maintenance';
+
   const {
     data: scans = [],
     isLoading: scansLoading,
-  } = useAssetScans(id);
+  } = useAssetScans(activityOrMaint ? id : undefined);
 
   const {
     data: maintenance = [],
-  } = useAssetMaintenance(id);
-
-  const {
-    data: photos = [],
-  } = useAssetPhotos(id);
+  } = useAssetMaintenance(activityOrMaint ? id : undefined);
 
   const {
     data: defectReports = [],
-  } = useAssetDefectReports(id);
+  } = useAssetDefectReports(activityOrMaint ? id : undefined);
+
+  // Photos tab only
+  const {
+    data: photos = [],
+  } = useAssetPhotos(activeTab === 'photos' ? id : undefined);
 
   // Maintenance IDs that are linked to defect reports (used by activity + maintenance tabs)
   const defectLinkedMaintenanceIds = useMemo(

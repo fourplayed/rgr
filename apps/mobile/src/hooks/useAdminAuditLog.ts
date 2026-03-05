@@ -17,6 +17,7 @@ export const auditLogKeys = {
 export function useAuditLogs(filters?: Omit<ListAuditLogsParams, 'cursor' | 'cursorId'>) {
   return useInfiniteQuery({
     queryKey: auditLogKeys.list(filters),
+    staleTime: 60_000,
     queryFn: async ({ pageParam }) => {
       const params: ListAuditLogsParams = { ...filters };
       if (pageParam) {

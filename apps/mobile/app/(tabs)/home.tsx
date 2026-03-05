@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useRef, useState, useEffect, useCallback, useMemo, memo } from 'react';
 import {
   View,
   Text,
@@ -18,7 +18,7 @@ import { useRecentDefectReports } from '../../src/hooks/useDefectData';
 import { useAuthStore } from '../../src/store/authStore';
 import { useLocationStore } from '../../src/store/locationStore';
 import { formatRelativeTime, UserRoleLabels, formatAssetNumber } from '@rgr/shared';
-import type { ScanEventWithScanner, MaintenanceListItem as MaintenanceListItemData, DefectReportListItem as DefectReportListItemData, CreateMaintenanceInput } from '@rgr/shared';
+import type { ScanEventWithScanner, MaintenanceListItem as MaintenanceListItemData, DefectReportListItem as DefectReportListItemData, CreateMaintenanceInput, Depot } from '@rgr/shared';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, borderRadius } from '../../src/theme/spacing';
 import { CONTENT_TOP_OFFSET } from '../../src/theme/layout';
@@ -53,11 +53,139 @@ type DashboardActivityItem =
   | { type: 'maintenance'; data: MaintenanceListItemData; timestamp: string }
   | { type: 'defect'; data: DefectReportListItemData; timestamp: string };
 
+const ActivityCard = memo(function ActivityCard({
+  item,
+  onPress,
+  depots,
+}: {
+  item: DashboardActivityItem;
+  onPress: (item: DashboardActivityItem) => void;
+  depots: Depot[];
+}) {
+  const handlePress = useCallback(() => onPress(item), [item, onPress]);
+
+  if (item.type === 'scan') {
+    const activityColor = getScanTypeColor(item.data.scanType);
+    const matchedDepot = item.data.locationDescription ? findDepotByLocationString(item.data.locationDescription, depots) : null;
+    const badgeColors = matchedDepot ? getDepotBadgeColors(matchedDepot, colors.chrome, colors.text) : null;
+
+    return (
+      <TouchableOpacity
+        style={[styles.scanCard, { borderLeftColor: activityColor }]}
+        onPress={handlePress}
+        activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityLabel={`${formatScanTypeLabel(item.data.scanType)} scan for asset ${item.data.assetNumber ? formatAssetNumber(item.data.assetNumber) : 'Unknown'}`}
+        accessibilityHint="Double tap to view asset details"
+      >
+        <View style={styles.cardRow}>
+          <View style={styles.cardIconContainer}>
+            <Ionicons name={getScanTypeIcon(item.data.scanType)} size={31} color={activityColor} />
+          </View>
+          <View style={styles.cardBody}>
+            <View style={styles.cardContentRow}>
+              <Text style={styles.cardTitle} numberOfLines={1}>
+                {item.data.assetNumber ? formatAssetNumber(item.data.assetNumber) : 'Unknown Asset'}
+              </Text>
+              <View style={styles.cardBadges}>
+                {matchedDepot && badgeColors && (
+                  <View style={[styles.depotLocationBadge, { backgroundColor: badgeColors.bg }]}>
+                    <Text style={[styles.depotLocationText, { color: badgeColors.text }]}>{matchedDepot.name}</Text>
+                  </View>
+                )}
+              </View>
+            </View>
+            <View style={styles.scanFooter}>
+              <Text style={styles.cardSecondaryText}>
+                {formatScanTypeLabel(item.data.scanType)}
+              </Text>
+              <Text style={styles.scanTime}>
+                {formatRelativeTime(item.data.createdAt)}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  }
+
+  if (item.type === 'defect') {
+    const defectConfig = DEFECT_STATUS_CONFIG[item.data.status] ?? DEFECT_STATUS_CONFIG.reported;
+    return (
+      <TouchableOpacity
+        style={[styles.scanCard, { borderLeftColor: defectConfig.color }]}
+        onPress={handlePress}
+        activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityLabel={`Defect report: ${item.data.title}`}
+      >
+        <View style={styles.cardRow}>
+          <View style={styles.cardIconContainer}>
+            <Ionicons name={defectConfig.icon} size={31} color={defectConfig.color} />
+          </View>
+          <View style={styles.cardBody}>
+            <View style={styles.cardContentRow}>
+              <Text style={styles.cardTitle} numberOfLines={1}>
+                {item.data.assetNumber ? formatAssetNumber(item.data.assetNumber) : 'Unknown Asset'}
+              </Text>
+              <View style={styles.cardBadges}>
+                <DefectStatusBadge status={item.data.status} />
+              </View>
+            </View>
+            <View style={styles.scanFooter}>
+              <Text style={styles.cardSecondaryText}>Defect Report</Text>
+              <Text style={styles.scanTime}>
+                {formatRelativeTime(item.data.createdAt)}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  }
+
+  // Maintenance item
+  const maintConfig = getMaintenanceVisualConfig(item.data.status, item.data.dueDate);
+
+  return (
+    <TouchableOpacity
+      style={[styles.scanCard, { borderLeftColor: maintConfig.color }]}
+      onPress={handlePress}
+      activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={`Maintenance ${item.data.title}, status ${item.data.status}`}
+    >
+      <View style={styles.cardRow}>
+        <View style={styles.cardIconContainer}>
+          <Ionicons name={maintConfig.icon} size={31} color={maintConfig.color} />
+        </View>
+        <View style={styles.cardBody}>
+          <View style={styles.cardContentRow}>
+            <Text style={styles.cardTitle} numberOfLines={1}>
+              {item.data.assetNumber ? formatAssetNumber(item.data.assetNumber) : 'Unknown Asset'}
+            </Text>
+            <View style={styles.cardBadges}>
+              <MaintenanceStatusBadge status={item.data.status} />
+            </View>
+          </View>
+          <View style={styles.scanFooter}>
+            <Text style={styles.cardSecondaryText}>{item.data.title}</Text>
+            <Text style={styles.scanTime}>
+              {formatRelativeTime(item.data.createdAt)}
+            </Text>
+          </View>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+});
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { user } = useAuthStore();
-  const { resolvedDepot, isResolvingDepot, resolveDepot } = useLocationStore();
+  const user = useAuthStore(s => s.user);
+  const resolvedDepot = useLocationStore(s => s.resolvedDepot);
+  const isResolvingDepot = useLocationStore(s => s.isResolvingDepot);
+  const resolveDepot = useLocationStore(s => s.resolveDepot);
   const isFocused = useIsFocused();
   const { depots } = useDepotLookup();
 
@@ -233,132 +361,90 @@ export default function HomeScreen() {
       .slice(0, 5);
   }, [scans, maintenanceData, defectData]);
 
-  // Memoized render function for FlatList items
-  // Note: Must be before any early returns to maintain hook order
-  const renderActivityItem = useCallback(({ item }: { item: DashboardActivityItem }) => {
+  // Stable press handler dispatches to router/modal based on item type
+  const handleActivityPress = useCallback((item: DashboardActivityItem) => {
     if (item.type === 'scan') {
-      const activityColor = getScanTypeColor(item.data.scanType);
-      const matchedDepot = item.data.locationDescription ? findDepotByLocationString(item.data.locationDescription, depots) : null;
-      const badgeColors = matchedDepot ? getDepotBadgeColors(matchedDepot, colors.chrome, colors.text) : null;
-
-      return (
-        <TouchableOpacity
-          style={[styles.scanCard, { borderLeftColor: activityColor }]}
-          onPress={() => router.navigate(`/(tabs)/assets/${item.data.assetId}`)}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel={`${formatScanTypeLabel(item.data.scanType)} scan for asset ${item.data.assetNumber ? formatAssetNumber(item.data.assetNumber) : 'Unknown'}`}
-          accessibilityHint="Double tap to view asset details"
-        >
-          <View style={styles.cardRow}>
-            <View style={styles.cardIconContainer}>
-              <Ionicons name={getScanTypeIcon(item.data.scanType)} size={31} color={activityColor} />
-            </View>
-            <View style={styles.cardBody}>
-              <View style={styles.cardContentRow}>
-                <Text style={styles.cardTitle} numberOfLines={1}>
-                  {item.data.assetNumber ? formatAssetNumber(item.data.assetNumber) : 'Unknown Asset'}
-                </Text>
-                <View style={styles.cardBadges}>
-                  {matchedDepot && badgeColors && (
-                    <View style={[styles.depotLocationBadge, { backgroundColor: badgeColors.bg }]}>
-                      <Text style={[styles.depotLocationText, { color: badgeColors.text }]}>{matchedDepot.name}</Text>
-                    </View>
-                  )}
-                </View>
-              </View>
-              <View style={styles.scanFooter}>
-                <Text style={styles.cardSecondaryText}>
-                  {formatScanTypeLabel(item.data.scanType)}
-                </Text>
-                <Text style={styles.scanTime}>
-                  {formatRelativeTime(item.data.createdAt)}
-                </Text>
-              </View>
-            </View>
-          </View>
-        </TouchableOpacity>
-      );
+      router.navigate(`/(tabs)/assets/${item.data.assetId}`);
+    } else if (item.type === 'defect') {
+      setModal({ type: 'defectDetail', defectId: item.data.id });
+    } else {
+      setModal({ type: 'maintenanceDetail', maintenanceId: item.data.id });
     }
+  }, [router]);
 
-    if (item.type === 'defect') {
-      // Defect report item
-      const defectConfig = DEFECT_STATUS_CONFIG[item.data.status] ?? DEFECT_STATUS_CONFIG.reported;
-      return (
-        <TouchableOpacity
-          style={[styles.scanCard, { borderLeftColor: defectConfig.color }]}
-          onPress={() => setModal({ type: 'defectDetail', defectId: item.data.id })}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel={`Defect report: ${item.data.title}`}
-        >
-          <View style={styles.cardRow}>
-            <View style={styles.cardIconContainer}>
-              <Ionicons name={defectConfig.icon} size={31} color={defectConfig.color} />
-            </View>
-            <View style={styles.cardBody}>
-              <View style={styles.cardContentRow}>
-                <Text style={styles.cardTitle} numberOfLines={1}>
-                  {item.data.assetNumber ? formatAssetNumber(item.data.assetNumber) : 'Unknown Asset'}
-                </Text>
-                <View style={styles.cardBadges}>
-                  <DefectStatusBadge status={item.data.status} />
-                </View>
-              </View>
-              <View style={styles.scanFooter}>
-                <Text style={styles.cardSecondaryText}>Defect Report</Text>
-                <Text style={styles.scanTime}>
-                  {formatRelativeTime(item.data.createdAt)}
-                </Text>
-              </View>
-            </View>
+  // Thin wrapper delegates to memoized ActivityCard
+  const renderActivityItem = useCallback(({ item }: { item: DashboardActivityItem }) => (
+    <ActivityCard item={item} onPress={handleActivityPress} depots={depots} />
+  ), [handleActivityPress, depots]);
+
+  const roleLabel = user ? (UserRoleLabels[user.role] || user.role) : '';
+
+  // Memoize list header to prevent FlatList header remount on data refetch
+  const listHeader = useMemo(() => (
+    <>
+      <RefreshLoadingDots isRefetching={!!isRefetching} />
+      {/* User Profile Section */}
+      <View style={styles.profileSection}>
+        <View style={styles.profileHeader}>
+          <View>
+            <Animated.Text style={[styles.greeting, { opacity: greetingOpacity }]}>{greeting},</Animated.Text>
+            <Animated.Text style={[styles.userName, { opacity: usernameOpacity }]}>{user?.fullName}</Animated.Text>
           </View>
-        </TouchableOpacity>
-      );
-    }
-
-    // Maintenance item
-    const maintConfig = getMaintenanceVisualConfig(item.data.status, item.data.dueDate);
-
-    return (
-      <TouchableOpacity
-        style={[styles.scanCard, { borderLeftColor: maintConfig.color }]}
-        onPress={() => setModal({ type: 'maintenanceDetail', maintenanceId: item.data.id })}
-        activeOpacity={0.7}
-        accessibilityRole="button"
-        accessibilityLabel={`Maintenance ${item.data.title}, status ${item.data.status}`}
-      >
-        <View style={styles.cardRow}>
-          <View style={styles.cardIconContainer}>
-            <Ionicons name={maintConfig.icon} size={31} color={maintConfig.color} />
-          </View>
-          <View style={styles.cardBody}>
-            <View style={styles.cardContentRow}>
-              <Text style={styles.cardTitle} numberOfLines={1}>
-                {item.data.assetNumber ? formatAssetNumber(item.data.assetNumber) : 'Unknown Asset'}
-              </Text>
-              <View style={styles.cardBadges}>
-                <MaintenanceStatusBadge status={item.data.status} />
-              </View>
-            </View>
-            <View style={styles.scanFooter}>
-              <Text style={styles.cardSecondaryText}>{item.data.title}</Text>
-              <Text style={styles.scanTime}>
-                {formatRelativeTime(item.data.createdAt)}
-              </Text>
-            </View>
+          <View style={[styles.badgeBase, { backgroundColor: colors.userRole[user?.role as keyof typeof colors.userRole] || colors.electricBlue, position: 'absolute', top: 0, right: 0 }]}>
+            <Text style={[styles.badgeText, { color: colors.textInverse }]}>{roleLabel}</Text>
           </View>
         </View>
-      </TouchableOpacity>
-    );
-  }, [router, depots]);
+        <Animated.View style={{ opacity: geofenceOpacity, alignItems: 'flex-end', marginRight: 16 }}>
+          {isResolvingDepot ? (
+            <LoadingDots color={colors.textSecondary} size={6} />
+          ) : resolvedDepot ? (
+            <Text style={styles.geofenceText}>
+              Your location is within the <Text style={styles.geofenceLocation}>{resolvedDepot.depot.name}</Text> geofence
+            </Text>
+          ) : (
+            <View style={styles.geofenceRow}>
+              <Text style={styles.geofenceText}>You are not within any depot geofence</Text>
+              <TouchableOpacity
+                onPress={() => resolveDepot(depots)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                accessibilityLabel="Retry geofence detection"
+                accessibilityRole="button"
+              >
+                <Ionicons name="refresh-outline" size={14} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+          )}
+        </Animated.View>
+      </View>
+
+      {/* Stats Cards Grid */}
+      <View style={styles.statsSection}>
+        <Text style={styles.sectionTitle}>Asset Overview</Text>
+        <View style={styles.statsGrid}>
+          {statsCards.map((stat) => (
+            <View key={stat.label} style={[styles.statCard, { backgroundColor: stat.color }]}>
+              <View style={styles.statRow}>
+                <Ionicons name={stat.icon} size={32} color="#FFFFFF" style={styles.statIcon} />
+                <Text style={styles.statValue}>{stat.value}</Text>
+              </View>
+              <Text style={styles.statLabel}>{stat.label}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      {/* Recent Activity Header */}
+      <View style={styles.activityHeader}>
+        <Text style={styles.sectionTitle}>Recent Activity</Text>
+      </View>
+    </>
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ), [isRefetching, greeting, user, roleLabel, isResolvingDepot, resolvedDepot, depots, resolveDepot, statsCards]);
 
   // Early return must be after all hooks to maintain hook order
   if (!user) {
     return null;
   }
-
-  const roleLabel = UserRoleLabels[user.role] || user.role;
 
   if (isLoading) {
     return (
@@ -379,65 +465,7 @@ export default function HomeScreen() {
         <FlatList<DashboardActivityItem>
           data={recentActivity}
           keyExtractor={(item) => `${item.type}-${item.data.id}`}
-          ListHeaderComponent={
-            <>
-              <RefreshLoadingDots isRefetching={!!isRefetching} />
-              {/* User Profile Section */}
-              <View style={styles.profileSection}>
-                <View style={styles.profileHeader}>
-                  <View>
-                    <Animated.Text style={[styles.greeting, { opacity: greetingOpacity }]}>{greeting},</Animated.Text>
-                    <Animated.Text style={[styles.userName, { opacity: usernameOpacity }]}>{user.fullName}</Animated.Text>
-                  </View>
-                  <View style={[styles.badgeBase, { backgroundColor: colors.userRole[user.role as keyof typeof colors.userRole] || colors.electricBlue, position: 'absolute', top: 0, right: 0 }]}>
-                    <Text style={[styles.badgeText, { color: colors.textInverse }]}>{roleLabel}</Text>
-                  </View>
-                </View>
-                <Animated.View style={{ opacity: geofenceOpacity, alignItems: 'flex-end', marginRight: 16 }}>
-                  {isResolvingDepot ? (
-                    <LoadingDots color={colors.textSecondary} size={6} />
-                  ) : resolvedDepot ? (
-                    <Text style={styles.geofenceText}>
-                      Your location is within the <Text style={styles.geofenceLocation}>{resolvedDepot.depot.name}</Text> geofence
-                    </Text>
-                  ) : (
-                    <View style={styles.geofenceRow}>
-                      <Text style={styles.geofenceText}>You are not within any depot geofence</Text>
-                      <TouchableOpacity
-                        onPress={() => resolveDepot(depots)}
-                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                        accessibilityLabel="Retry geofence detection"
-                        accessibilityRole="button"
-                      >
-                        <Ionicons name="refresh-outline" size={14} color={colors.textSecondary} />
-                      </TouchableOpacity>
-                    </View>
-                  )}
-                </Animated.View>
-              </View>
-
-              {/* Stats Cards Grid */}
-              <View style={styles.statsSection}>
-                <Text style={styles.sectionTitle}>Asset Overview</Text>
-                <View style={styles.statsGrid}>
-                  {statsCards.map((stat) => (
-                    <View key={stat.label} style={[styles.statCard, { backgroundColor: stat.color }]}>
-                      <View style={styles.statRow}>
-                        <Ionicons name={stat.icon} size={32} color="#FFFFFF" style={styles.statIcon} />
-                        <Text style={styles.statValue}>{stat.value}</Text>
-                      </View>
-                      <Text style={styles.statLabel}>{stat.label}</Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-
-              {/* Recent Activity Header */}
-              <View style={styles.activityHeader}>
-                <Text style={styles.sectionTitle}>Recent Activity</Text>
-              </View>
-            </>
-          }
+          ListHeaderComponent={listHeader}
           renderItem={renderActivityItem}
           contentContainerStyle={styles.listContent}
           refreshControl={

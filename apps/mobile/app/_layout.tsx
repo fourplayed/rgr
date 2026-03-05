@@ -93,8 +93,12 @@ export default function RootLayout() {
 
   const router = useRouter();
   const segments = useSegments();
-  const { user, isAuthenticated, isLoading, checkAuth, attemptAutoLogin } = useAuthStore();
-  const { resolveDepot } = useLocationStore();
+  const user = useAuthStore(s => s.user);
+  const isAuthenticated = useAuthStore(s => s.isAuthenticated);
+  const isLoading = useAuthStore(s => s.isLoading);
+  const checkAuth = useAuthStore(s => s.checkAuth);
+  const attemptAutoLogin = useAuthStore(s => s.attemptAutoLogin);
+  const resolveDepot = useLocationStore(s => s.resolveDepot);
 
   // Check auth on mount - try auto-login first, then fall back to session check
   useEffect(() => {
