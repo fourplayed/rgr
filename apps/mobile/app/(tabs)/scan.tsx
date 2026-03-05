@@ -14,7 +14,7 @@ import { useUserPermissions } from '../../src/contexts/UserPermissionsContext';
 import { UserRoleLabels, getDepotBadgeColors } from '@rgr/shared';
 import { colors } from '../../src/theme/colors';
 import { useScanActionFlow } from '../../src/hooks/scan/useScanActionFlow';
-import { PermissionScreen, CameraOverlay, ScanConfirmation } from '../../src/components/scanner';
+import { PermissionScreen, CameraOverlay, ScanConfirmation, ScanSuccessFlash } from '../../src/components/scanner';
 import { DefectReportSheet } from '../../src/components/scanner/DefectReportSheet';
 import { CameraCapture } from '../../src/components/photos';
 import { CreateMaintenanceModal, DefectReportDetailModal, MaintenanceDetailModal } from '../../src/components/maintenance';
@@ -43,6 +43,13 @@ export default function ScanScreen() {
   if (scannedAsset) {
     lastAssetRef.current = scannedAsset;
   }
+
+  // ── Success flash state ──
+  const [successFlash, setSuccessFlash] = useState<{
+    assetNumber: string;
+    photoCompleted: boolean;
+    defectCompleted: boolean;
+  } | null>(null);
 
   // ── Context detail modal state ──
   const [contextDefectId, setContextDefectId] = useState<string | null>(null);
@@ -192,10 +199,18 @@ export default function ScanScreen() {
   // ── Wrap done/undo to also clear context detail modals ──
 
   const handleDonePressWithReset = useCallback(() => {
+    // Capture completed actions before reset clears them
+    if (scannedAsset) {
+      setSuccessFlash({
+        assetNumber: scannedAsset.assetNumber,
+        photoCompleted,
+        defectCompleted,
+      });
+    }
     setContextDefectId(null);
     setContextMaintenanceId(null);
     handleDonePress();
-  }, [handleDonePress]);
+  }, [handleDonePress, scannedAsset, photoCompleted, defectCompleted]);
 
   const handleUndoPressWithReset = useCallback(() => {
     setContextDefectId(null);
@@ -311,6 +326,15 @@ export default function ScanScreen() {
           </Animated.View>
         </>
       )}
+
+      {/* Success flash overlay (after confirm) */}
+      <ScanSuccessFlash
+        visible={successFlash !== null}
+        assetNumber={successFlash?.assetNumber ?? ''}
+        photoCompleted={successFlash?.photoCompleted ?? false}
+        defectCompleted={successFlash?.defectCompleted ?? false}
+        onDismiss={() => setSuccessFlash(null)}
+      />
 
       {/* ── Sheet modals (controlled by activeSheet enum) ── */}
 
