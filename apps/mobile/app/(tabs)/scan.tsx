@@ -3,9 +3,11 @@ import {
   View,
   Animated,
   InteractionManager,
+  StyleSheet,
   useWindowDimensions,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { BlurView } from 'expo-blur';
 import { router } from 'expo-router';
 import { useTutorialStore } from '../../src/store/tutorialStore';
 import { useUserPermissions } from '../../src/contexts/UserPermissionsContext';
@@ -30,9 +32,10 @@ export default function ScanScreen() {
   const markSeen = useTutorialStore(s => s.markSeen);
   const [showScanTutorial, setShowScanTutorial] = useState(false);
 
-  // ── Slide-in panel animation state ──
-  const { width: SCREEN_WIDTH } = useWindowDimensions();
-  const slideAnim = useRef(new Animated.Value(0)).current;
+  // ── Bottom sheet animation state ──
+  const { height: SCREEN_HEIGHT } = useWindowDimensions();
+  const backdropOpacity = useRef(new Animated.Value(0)).current;
+  const sheetTranslateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const [isPanelMounted, setIsPanelMounted] = useState(false);
   const lastAssetRef = useRef(scannedAsset);
 
@@ -139,33 +142,42 @@ export default function ScanScreen() {
     markSeen('scan');
   }, [markSeen]);
 
-  // ── Slide-in / slide-out animation ──
+  // ── Blur backdrop + sheet slide animation ──
   useEffect(() => {
     if (showCard) {
       setIsPanelMounted(true);
-      Animated.spring(slideAnim, {
-        toValue: 1,
-        friction: 8,
-        tension: 65,
-        useNativeDriver: true,
-      }).start();
+      Animated.parallel([
+        Animated.timing(backdropOpacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(sheetTranslateY, {
+          toValue: 0,
+          friction: 8,
+          tension: 65,
+          useNativeDriver: true,
+        }),
+      ]).start();
     } else {
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 250,
-        useNativeDriver: true,
-      }).start(({ finished }) => {
+      Animated.parallel([
+        Animated.timing(backdropOpacity, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(sheetTranslateY, {
+          toValue: SCREEN_HEIGHT,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+      ]).start(({ finished }) => {
         if (finished) {
           setIsPanelMounted(false);
         }
       });
     }
-  }, [showCard, slideAnim]);
-
-  const panelTranslateX = slideAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [SCREEN_WIDTH, 0],
-  });
+  }, [showCard, backdropOpacity, sheetTranslateY, SCREEN_HEIGHT]);
 
   // ── Context item handlers (mechanic taps individual defect/task) ──
 
@@ -228,7 +240,7 @@ export default function ScanScreen() {
       <CameraView
         style={styles.camera}
         facing="back"
-        onBarcodeScanned={handleBarCodeScanned}
+        onBarcodeScanned={showCard ? undefined : handleBarCodeScanned}
         barcodeScannerSettings={{
           barcodeTypes: ['qr'],
         }}
@@ -245,50 +257,59 @@ export default function ScanScreen() {
         )}
       </CameraView>
 
-      {/* Slide-in confirmation panel */}
+      {/* Blur backdrop + confirmation bottom sheet */}
       {isPanelMounted && displayAsset && (
-        <Animated.View
-          style={[
-            styles.slidePanel,
-            { transform: [{ translateX: panelTranslateX }] },
-          ]}
-        >
-          {variant === 'mechanic' ? (
-            <ScanConfirmation
-              variant="mechanic"
-              asset={displayAsset}
-              matchedDepot={matchedDepot}
-              isCreating={isCreatingScan}
-              scanContext={scanContext}
-              isContextLoading={isContextLoading}
-              contextError={contextError}
-              onRetryContext={refetchContext}
-              onPhotoPress={handlePhotoPress}
-              onDefectPress={handleDefectPress}
-              onTaskPress={handleTaskPress}
-              onDonePress={handleDonePressWithReset}
-              onUndoPress={handleUndoPressWithReset}
-              onContextPress={handleContextPress}
-              onDefectItemPress={handleDefectItemPress}
-              onTaskItemPress={handleTaskItemPress}
-              photoCompleted={photoCompleted}
-              defectCompleted={defectCompleted}
-              disabled={buttonsDisabled}
+        <>
+          <Animated.View style={[StyleSheet.absoluteFillObject, { opacity: backdropOpacity }]}>
+            <BlurView
+              intensity={50}
+              tint="dark"
+              style={{ flex: 1, backgroundColor: 'rgba(0,0,30,0.3)' }}
             />
-          ) : (
-            <ScanConfirmation
-              variant="driver"
-              asset={displayAsset}
-              matchedDepot={matchedDepot}
-              isCreating={isCreatingScan}
-              onPhotoPress={handlePhotoPress}
-              onDonePress={handleDonePressWithReset}
-              onUndoPress={handleUndoPressWithReset}
-              photoCompleted={photoCompleted}
-              disabled={buttonsDisabled}
-            />
-          )}
-        </Animated.View>
+          </Animated.View>
+          <Animated.View
+            style={[
+              styles.confirmSheet,
+              { transform: [{ translateY: sheetTranslateY }] },
+            ]}
+          >
+            {variant === 'mechanic' ? (
+              <ScanConfirmation
+                variant="mechanic"
+                asset={displayAsset}
+                matchedDepot={matchedDepot}
+                isCreating={isCreatingScan}
+                scanContext={scanContext}
+                isContextLoading={isContextLoading}
+                contextError={contextError}
+                onRetryContext={refetchContext}
+                onPhotoPress={handlePhotoPress}
+                onDefectPress={handleDefectPress}
+                onTaskPress={handleTaskPress}
+                onDonePress={handleDonePressWithReset}
+                onUndoPress={handleUndoPressWithReset}
+                onContextPress={handleContextPress}
+                onDefectItemPress={handleDefectItemPress}
+                onTaskItemPress={handleTaskItemPress}
+                photoCompleted={photoCompleted}
+                defectCompleted={defectCompleted}
+                disabled={buttonsDisabled}
+              />
+            ) : (
+              <ScanConfirmation
+                variant="driver"
+                asset={displayAsset}
+                matchedDepot={matchedDepot}
+                isCreating={isCreatingScan}
+                onPhotoPress={handlePhotoPress}
+                onDonePress={handleDonePressWithReset}
+                onUndoPress={handleUndoPressWithReset}
+                photoCompleted={photoCompleted}
+                disabled={buttonsDisabled}
+              />
+            )}
+          </Animated.View>
+        </>
       )}
 
       {/* ── Sheet modals (controlled by activeSheet enum) ── */}

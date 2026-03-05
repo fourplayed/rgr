@@ -4,21 +4,22 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import type { Asset, AssetScanContext } from '@rgr/shared';
-import { AssetStatusColors, getDepotBadgeColors, formatAssetNumber, formatRelativeTime } from '@rgr/shared';
+import { getDepotBadgeColors, formatAssetNumber, formatRelativeTime } from '@rgr/shared';
 import { DefectStatusBadge } from '../maintenance/DefectStatusBadge';
 import { MaintenanceStatusBadge } from '../maintenance/MaintenanceStatusBadge';
 import { MaintenancePriorityBadge } from '../maintenance/MaintenancePriorityBadge';
+import { CollapsibleSection } from '../common/CollapsibleSection';
 import { StatusBadge } from '../common/StatusBadge';
 import { LoadingDots } from '../common/LoadingDots';
 import { Button } from '../common/Button';
 import { DepotBadge } from '../common/DepotBadge';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 import type { MatchedDepot } from '../../hooks/scan/useScanActionFlow';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -61,87 +62,81 @@ type ScanConfirmationProps =
 
 function ScanConfirmationComponent(props: ScanConfirmationProps) {
   const { asset, matchedDepot, isCreating, disabled } = props;
+  const insets = useSafeAreaInsets();
 
   const subtypeDisplay = asset.subtype
     ? asset.subtype
     : asset.category === 'dolly' ? 'Dolly' : 'Trailer';
-  const statusColor = AssetStatusColors[asset.status] ?? colors.electricBlue;
   const depotBadgeColors = matchedDepot
     ? getDepotBadgeColors(matchedDepot.depot, colors.chrome, colors.text)
     : null;
 
-  const hasContextItems =
-    props.variant === 'mechanic' &&
-    !isCreating &&
-    props.scanContext != null &&
-    (props.scanContext.openDefectCount > 0 || props.scanContext.activeTaskCount > 0);
-
-  const ContentWrapper = hasContextItems ? ScrollView : View;
-  const contentWrapperProps = hasContextItems
-    ? {
-        style: styles.scrollViewOuter,
-        contentContainerStyle: [styles.scrollContent, styles.contentWithItems],
-        bounces: true,
-        showsVerticalScrollIndicator: false,
-      }
-    : { style: styles.content };
-
   return (
-    <SafeAreaView style={styles.container}>
-      {/* ── Panel header: back chevron + centered title ── */}
-      <View style={styles.panelHeader}>
-        <TouchableOpacity
-          style={styles.panelBackButton}
-          onPress={props.onDonePress}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={28} color={colors.text} />
-        </TouchableOpacity>
-        <View style={styles.panelTitleContainer}>
-          {isCreating ? (
-            <View style={styles.panelTitleRow}>
-              <LoadingDots color={colors.electricBlue} size={6} />
-              <Text style={styles.panelTitleText}>Confirming...</Text>
-            </View>
-          ) : (
-            <View style={styles.panelTitleRow}>
-              <Ionicons name="checkmark-circle" size={20} color={colors.success} />
-              <Text style={styles.panelTitleText}>Scan Confirmed</Text>
-            </View>
-          )}
-        </View>
-        {/* Spacer to balance back button */}
-        <View style={styles.panelBackButton} />
+    <View style={styles.container}>
+      {/* ── Handle bar ── */}
+      <View style={styles.handleRow}>
+        <View style={styles.handle} />
       </View>
 
-      <ContentWrapper {...contentWrapperProps}>
+      {/* ── Back / close button ── */}
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={props.onDonePress}
+        activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityLabel="Close"
+      >
+        <Ionicons name="chevron-back" size={28} color={colors.text} />
+      </TouchableOpacity>
 
-        {/* ── Asset card ── */}
-        <View style={[styles.assetCard, { borderLeftColor: statusColor }]}>
-          <View style={styles.assetHeader}>
-            <Text style={styles.assetNumber}>
-              {asset.assetNumber ? formatAssetNumber(asset.assetNumber) : 'Unknown'}
-            </Text>
+      {/* ── Scrollable content ── */}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        bounces={true}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ── Hero section ── */}
+        <View style={styles.heroSection}>
+          {isCreating ? (
+            <View style={styles.heroStatusRow}>
+              <LoadingDots color={colors.electricBlue} size={6} />
+              <Text style={styles.heroStatusText}>Confirming...</Text>
+            </View>
+          ) : (
+            <View style={styles.heroStatusRow}>
+              <Ionicons name="checkmark-circle" size={28} color={colors.success} />
+              <Text style={styles.heroStatusText}>Scan Confirmed</Text>
+            </View>
+          )}
+
+          <Text style={styles.heroAssetNumber}>
+            {asset.assetNumber ? formatAssetNumber(asset.assetNumber) : 'Unknown'}
+          </Text>
+
+          <View style={styles.heroMetaRow}>
+            <Text style={styles.heroSubtype}>{subtypeDisplay}</Text>
             {asset.status && <StatusBadge status={asset.status} size="small" />}
           </View>
-          <View style={styles.subtypeRow}>
-            <Text style={styles.subtype}>{subtypeDisplay}</Text>
-            {matchedDepot && depotBadgeColors ? (
+
+          {matchedDepot && depotBadgeColors ? (
+            <View style={styles.heroDepotRow}>
               <DepotBadge
                 label={matchedDepot.depot.name}
                 bgColor={depotBadgeColors.bg}
                 textColor={depotBadgeColors.text}
                 showIcon
               />
-            ) : null}
-          </View>
+            </View>
+          ) : null}
         </View>
 
-        {/* ── Context row (mechanic only) ── */}
+        {/* ── Hairline separator ── */}
+        <View style={styles.separator} />
+
+        {/* ── Context section (mechanic only) ── */}
         {props.variant === 'mechanic' && !isCreating && (
-          <ContextRow
+          <ContextSection
             scanContext={props.scanContext}
             isLoading={props.isContextLoading}
             error={props.contextError}
@@ -151,8 +146,11 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
             onTaskItemPress={props.onTaskItemPress}
           />
         )}
+      </ScrollView>
 
-        {/* ── Action buttons ── */}
+      {/* ── Pinned footer (outside ScrollView) ── */}
+      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.lg) }]}>
+        {/* Action buttons row */}
         <View style={styles.actionRow}>
           {props.variant === 'mechanic' ? (
             <>
@@ -189,7 +187,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
           )}
         </View>
 
-        {/* ── Done button ── */}
+        {/* Done button */}
         <Button
           onPress={props.onDonePress}
           disabled={disabled}
@@ -199,7 +197,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
           DONE
         </Button>
 
-        {/* ── Undo link ── */}
+        {/* Undo link */}
         <TouchableOpacity
           style={styles.undoLink}
           onPress={props.onUndoPress}
@@ -213,14 +211,14 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
             Undo scan
           </Text>
         </TouchableOpacity>
-      </ContentWrapper>
-    </SafeAreaView>
+      </View>
+    </View>
   );
 }
 
-// ── Context row sub-component ────────────────────────────────────────────────
+// ── Context section sub-component ─────────────────────────────────────────────
 
-function ContextRow({
+function ContextSection({
   scanContext,
   isLoading,
   error,
@@ -267,83 +265,74 @@ function ContextRow({
     );
   }
 
-  // Build summary header
-  const parts: string[] = [];
-  if (scanContext.openDefectCount > 0) {
-    parts.push(`${scanContext.openDefectCount} defect${scanContext.openDefectCount !== 1 ? 's' : ''}`);
-  }
-  if (scanContext.activeTaskCount > 0) {
-    parts.push(`${scanContext.activeTaskCount} task${scanContext.activeTaskCount !== 1 ? 's' : ''}`);
-  }
-
   const totalCount = scanContext.openDefectCount + scanContext.activeTaskCount;
   const shownCount = scanContext.openDefects.length + scanContext.activeTasks.length;
   const hasMore = totalCount > shownCount;
 
   return (
-    <View style={styles.contextSection}>
-      {/* Summary header */}
-      <View style={styles.contextSummaryHeader}>
-        <Ionicons name="warning" size={16} color={colors.warning} />
-        <Text style={styles.contextItemsText}>{parts.join(' · ')}</Text>
+    <CollapsibleSection
+      title={`Open Items (${totalCount})`}
+      variant="flat"
+      defaultExpanded
+    >
+      <View style={styles.contextItemsList}>
+        {/* Individual defect rows */}
+        {scanContext.openDefects.map((defect) => (
+          <TouchableOpacity
+            key={defect.id}
+            style={styles.contextItemRow}
+            onPress={() => onDefectItemPress?.(defect.id)}
+            accessibilityRole="button"
+            accessibilityLabel={`Defect: ${defect.title}`}
+          >
+            <Ionicons name="warning" size={18} color={colors.warning} style={styles.contextItemIcon} />
+            <View style={styles.contextItemCenter}>
+              <Text style={styles.contextItemTitle} numberOfLines={1}>{defect.title}</Text>
+              <View style={styles.contextItemMeta}>
+                <DefectStatusBadge status={defect.status} />
+                <Text style={styles.contextItemTime}>{formatRelativeTime(defect.createdAt)}</Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+          </TouchableOpacity>
+        ))}
+
+        {/* Individual task rows */}
+        {scanContext.activeTasks.map((task) => (
+          <TouchableOpacity
+            key={task.id}
+            style={styles.contextItemRow}
+            onPress={() => onTaskItemPress?.(task.id)}
+            accessibilityRole="button"
+            accessibilityLabel={`Task: ${task.title}`}
+          >
+            <Ionicons name="construct" size={18} color={colors.electricBlue} style={styles.contextItemIcon} />
+            <View style={styles.contextItemCenter}>
+              <Text style={styles.contextItemTitle} numberOfLines={1}>{task.title}</Text>
+              <View style={styles.contextItemMeta}>
+                <MaintenanceStatusBadge status={task.status} />
+                <MaintenancePriorityBadge priority={task.priority} />
+                <Text style={styles.contextItemTime}>{formatRelativeTime(task.createdAt)}</Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+          </TouchableOpacity>
+        ))}
+
+        {/* "View all" link when more items exist than shown */}
+        {hasMore && (
+          <TouchableOpacity
+            style={styles.viewAllLink}
+            onPress={onPress}
+            accessibilityRole="link"
+            accessibilityLabel="View all on asset page"
+          >
+            <Text style={styles.viewAllText}>View all on asset page</Text>
+            <Ionicons name="arrow-forward" size={14} color={colors.electricBlue} />
+          </TouchableOpacity>
+        )}
       </View>
-
-      {/* Individual defect rows */}
-      {scanContext.openDefects.map((defect) => (
-        <TouchableOpacity
-          key={defect.id}
-          style={styles.contextItemRow}
-          onPress={() => onDefectItemPress?.(defect.id)}
-          accessibilityRole="button"
-          accessibilityLabel={`Defect: ${defect.title}`}
-        >
-          <Ionicons name="warning" size={18} color={colors.warning} style={styles.contextItemIcon} />
-          <View style={styles.contextItemCenter}>
-            <Text style={styles.contextItemTitle} numberOfLines={1}>{defect.title}</Text>
-            <View style={styles.contextItemMeta}>
-              <DefectStatusBadge status={defect.status} />
-              <Text style={styles.contextItemTime}>{formatRelativeTime(defect.createdAt)}</Text>
-            </View>
-          </View>
-          <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
-        </TouchableOpacity>
-      ))}
-
-      {/* Individual task rows */}
-      {scanContext.activeTasks.map((task) => (
-        <TouchableOpacity
-          key={task.id}
-          style={styles.contextItemRow}
-          onPress={() => onTaskItemPress?.(task.id)}
-          accessibilityRole="button"
-          accessibilityLabel={`Task: ${task.title}`}
-        >
-          <Ionicons name="construct" size={18} color={colors.electricBlue} style={styles.contextItemIcon} />
-          <View style={styles.contextItemCenter}>
-            <Text style={styles.contextItemTitle} numberOfLines={1}>{task.title}</Text>
-            <View style={styles.contextItemMeta}>
-              <MaintenanceStatusBadge status={task.status} />
-              <MaintenancePriorityBadge priority={task.priority} />
-              <Text style={styles.contextItemTime}>{formatRelativeTime(task.createdAt)}</Text>
-            </View>
-          </View>
-          <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
-        </TouchableOpacity>
-      ))}
-
-      {/* "View all" link when more items exist than shown */}
-      {hasMore && (
-        <TouchableOpacity
-          style={styles.viewAllLink}
-          onPress={onPress}
-          accessibilityRole="link"
-          accessibilityLabel="View all on asset page"
-        >
-          <Text style={styles.viewAllText}>View all on asset page</Text>
-          <Ionicons name="arrow-forward" size={14} color={colors.electricBlue} />
-        </TouchableOpacity>
-      )}
-    </View>
+    </CollapsibleSection>
   );
 }
 
@@ -366,13 +355,13 @@ function ActionButton({
     ? colors.textSecondary
     : completed
       ? colors.success
-      : colors.textInverse;
+      : colors.text;
 
   const labelColor = disabled
     ? colors.textSecondary
     : completed
       ? colors.success
-      : colors.textInverse;
+      : colors.text;
 
   return (
     <TouchableOpacity
@@ -398,89 +387,97 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
+    overflow: 'hidden',
   },
 
-  // Panel header
-  panelHeader: {
-    flexDirection: 'row',
+  // Handle bar
+  handleRow: {
     alignItems: 'center',
-    paddingHorizontal: spacing.xs,
-    paddingVertical: spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xs,
   },
-  panelBackButton: {
+  handle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.chrome,
+  },
+
+  // Back button
+  backButton: {
+    position: 'absolute',
+    top: spacing.sm,
+    left: spacing.xs,
     width: 44,
     height: 44,
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 1,
   },
-  panelTitleContainer: {
+
+  // Scrollable content
+  scrollView: {
     flex: 1,
-    alignItems: 'center',
   },
-  panelTitleRow: {
+  scrollContent: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.base,
+  },
+
+  // Hero section
+  heroSection: {
+    alignItems: 'center',
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.lg,
+  },
+  heroStatusRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: spacing.sm,
+    marginBottom: spacing.base,
   },
-  panelTitleText: {
+  heroStatusText: {
     fontSize: fontSize.base,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: spacing.lg,
-  },
-  scrollViewOuter: {
-    flex: 1,
-    paddingHorizontal: spacing.lg,
-  },
-  contentWithItems: {
-    justifyContent: 'flex-start',
-  },
-  scrollContent: {
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.lg,
-  },
-
-  // Asset card
-  assetCard: {
-    backgroundColor: colors.background,
-    borderRadius: borderRadius.lg,
-    padding: spacing.base,
-    borderLeftWidth: 4,
-    ...shadows.lg,
-  },
-  assetHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.xs,
-  },
-  assetNumber: {
-    fontSize: fontSize.xl,
+  heroAssetNumber: {
+    fontSize: fontSize['2xl'],
     fontFamily: 'Lato_700Bold',
     color: colors.text,
+    textAlign: 'center',
+    marginBottom: spacing.sm,
   },
-  subtypeRow: {
+  heroMetaRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
+    marginBottom: spacing.sm,
   },
-  subtype: {
-    fontSize: fontSize.xs,
+  heroSubtype: {
+    fontSize: fontSize.sm,
     fontFamily: 'Lato_700Bold',
     color: colors.electricBlue,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  // Context row
+  heroDepotRow: {
+    marginTop: spacing.xs,
+  },
+
+  // Separator
+  separator: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.border,
+    marginBottom: spacing.base,
+  },
+
+  // Context section
   contextCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -489,7 +486,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     padding: spacing.base,
     borderRadius: borderRadius.lg,
-    marginTop: spacing.base,
   },
   contextLoadingText: {
     fontSize: fontSize.xs,
@@ -509,26 +505,10 @@ const styles = StyleSheet.create({
     color: colors.success,
     textTransform: 'uppercase',
   },
-  contextItemsText: {
-    flex: 1,
-    fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-  },
-  contextSection: {
-    marginTop: spacing.base,
+  contextItemsList: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
     overflow: 'hidden',
-  },
-  contextSummaryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.base,
-    paddingVertical: spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.chrome,
   },
   contextItemRow: {
     flexDirection: 'row',
@@ -577,12 +557,20 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 
+  // Pinned footer
+  footer: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+    backgroundColor: colors.background,
+  },
+
   // Action buttons
   actionRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     gap: spacing.sm,
-    marginTop: spacing['2xl'],
   },
   actionButton: {
     flex: 1,
@@ -590,7 +578,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: spacing.md,
     borderRadius: borderRadius.md,
-    backgroundColor: colors.overlayCard,
+    backgroundColor: colors.surface,
     gap: spacing.xs,
   },
   actionButtonDisabled: {
@@ -605,13 +593,13 @@ const styles = StyleSheet.create({
 
   // Done button
   doneButton: {
-    marginTop: spacing.lg,
+    marginTop: spacing.sm,
   },
 
   // Undo link
   undoLink: {
     alignItems: 'center',
-    paddingVertical: spacing.base,
+    paddingVertical: spacing.sm,
   },
   undoLinkText: {
     fontSize: fontSize.sm,

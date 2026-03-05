@@ -229,9 +229,15 @@ export const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
 
-  // ── Slide-in panel overlay ──────────────────────────────
-  slidePanel: {
-    ...StyleSheet.absoluteFillObject,
+  // ── Confirmation bottom sheet (overlays blurred camera) ─
+  confirmSheet: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    maxHeight: '92%',
     backgroundColor: colors.background,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
   },
 });
