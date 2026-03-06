@@ -4,9 +4,7 @@ import type { Profile } from '@rgr/shared';
 import { UserRoleLabels } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
-
-const getUserRoleColor = (role: string): string | undefined =>
-  role in colors.userRole ? colors.userRole[role as keyof typeof colors.userRole] : undefined;
+import { getUserRoleColor } from '../../utils/getUserRoleColor';
 
 export const USER_ITEM_HEIGHT = 88;
 

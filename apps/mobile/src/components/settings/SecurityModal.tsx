@@ -19,6 +19,7 @@ import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 import { isAutoLoginEnabled, setAutoLoginEnabled } from '../../utils/secureStorage';
 import { updatePassword, verifyCurrentPassword } from '@rgr/shared';
 import { useAuthStore } from '../../store/authStore';
+import { useSubmitGuard } from '../../hooks/useSubmitGuard';
 
 interface SecurityModalProps {
   visible: boolean;
@@ -130,7 +131,9 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
     await setAutoLoginEnabled(enabled);
   };
 
-  const handleChangePassword = async () => {
+  const guard = useSubmitGuard();
+
+  const handleChangePassword = () => guard(async () => {
     setError(null);
 
     if (!currentPassword) {
@@ -176,7 +179,7 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
     } else {
       setError(result.error || 'Failed to update password');
     }
-  };
+  });
 
   return (
     <SheetModal visible={visible} onClose={onClose} keyboardAvoiding>

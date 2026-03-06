@@ -38,6 +38,14 @@ function redactSensitiveFields(obj: Record<string, unknown>): Record<string, unk
   return result;
 }
 
+function safeStringify(val: unknown): string {
+  try {
+    return JSON.stringify(isPlainObject(val) ? redactSensitiveFields(val) : val, null, 2);
+  } catch {
+    return '[Unable to display]';
+  }
+}
+
 const ACTION_ICONS: Partial<Record<AuditAction, keyof typeof Ionicons.glyphMap>> = {
   INSERT: 'add-circle-outline',
   UPDATE: 'create-outline',
@@ -116,7 +124,7 @@ function AuditLogItemInner({ item }: AuditLogItemProps) {
               <Text style={styles.detailLabel}>Old Values</Text>
               <View style={styles.jsonBox}>
                 <Text style={styles.jsonText}>
-                  {JSON.stringify(isPlainObject(item.oldValues) ? redactSensitiveFields(item.oldValues) : item.oldValues, null, 2)}
+                  {safeStringify(item.oldValues)}
                 </Text>
               </View>
             </View>
@@ -126,7 +134,7 @@ function AuditLogItemInner({ item }: AuditLogItemProps) {
               <Text style={styles.detailLabel}>New Values</Text>
               <View style={styles.jsonBox}>
                 <Text style={styles.jsonText}>
-                  {JSON.stringify(isPlainObject(item.newValues) ? redactSensitiveFields(item.newValues) : item.newValues, null, 2)}
+                  {safeStringify(item.newValues)}
                 </Text>
               </View>
             </View>

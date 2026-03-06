@@ -39,8 +39,6 @@ export function BottomSheet({
   maxHeight,
   style,
 }: BottomSheetProps) {
-  if (!visible) return null;
-
   return (
     <Modal
       visible={visible}
@@ -49,23 +47,29 @@ export function BottomSheet({
       statusBarTranslucent
       onRequestClose={onDismiss}
     >
-      <BlurView
-        intensity={50}
-        tint="dark"
-        style={[StyleSheet.absoluteFillObject, styles.blur]}
-      />
-      <View style={styles.backdrop}>
-        <TouchableOpacity
-          style={styles.backdropTouchable}
-          activeOpacity={1}
-          onPress={onDismiss}
-        />
+      {visible && (
+        <>
+          <BlurView
+            intensity={50}
+            tint="dark"
+            style={[StyleSheet.absoluteFillObject, styles.blur]}
+          />
+          <View style={styles.backdrop}>
+            <TouchableOpacity
+              style={styles.backdropTouchable}
+              activeOpacity={1}
+              onPress={onDismiss}
+              accessibilityRole="button"
+              accessibilityLabel="Close"
+            />
 
-        <View style={[styles.sheet, maxHeight != null && { maxHeight }, style]}>
-          <View style={styles.handle} />
-          {children}
-        </View>
-      </View>
+            <View style={[styles.sheet, maxHeight != null && { maxHeight }, style]}>
+              <View style={styles.handle} />
+              {children}
+            </View>
+          </View>
+        </>
+      )}
     </Modal>
   );
 }

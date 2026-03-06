@@ -360,11 +360,14 @@ export function DefectReportDetailModal({
               </ScrollView>
 
               {/* Status Actions pinned in footer */}
-              {renderStatusActions() && (
-                <SheetFooter>
-                  {renderStatusActions()}
-                </SheetFooter>
-              )}
+              {(() => {
+                const statusActions = renderStatusActions();
+                return statusActions && (
+                  <SheetFooter>
+                    {statusActions}
+                  </SheetFooter>
+                );
+              })()}
             </>
           )}
         </View>

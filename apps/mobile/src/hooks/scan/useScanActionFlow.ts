@@ -1,4 +1,5 @@
-import { useReducer, useCallback, useRef, useState, useMemo } from 'react';
+import { useReducer, useCallback, useRef, useState } from 'react';
+import type { AssetScanContext } from '@rgr/shared';
 import { useAssetScanContext } from '../useAssetData';
 import { useLocation } from '../useLocation';
 import { useQRScanner } from '../useQRScanner';
@@ -218,7 +219,7 @@ interface UseScanActionFlowReturn {
   handleDefectSubmit: (notes: string, wantsPhoto: boolean) => void;
   handleDefectCancel: () => void;
   isSubmittingDefect: boolean;
-  scanContext: unknown;
+  scanContext: AssetScanContext | null;
   isContextLoading: boolean;
   contextError: Error | null;
   refetchContext: () => void;
@@ -352,66 +353,21 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
 
   const scanContextQuery = useAssetScanContext(scanContextAssetId);
 
-  // ── Derived convenience getters (memoized to avoid recomputation) ──
-  const scannedAsset = useMemo(
-    () => (state.phase === 'confirming' || state.phase === 'active') ? state.scannedAsset : null,
-    [state],
-  );
-
-  const matchedDepot = useMemo(
-    () => (state.phase === 'confirming' || state.phase === 'active') ? state.matchedDepot : null,
-    [state],
-  );
-
-  const effectiveLocation = useMemo(
-    () => (state.phase === 'confirming' || state.phase === 'active') ? state.effectiveLocation : null,
-    [state],
-  );
-
-  const lastScanEventId = useMemo(
-    () => state.phase === 'active' ? state.lastScanEventId : null,
-    [state],
-  );
-
-  const activeSheet = useMemo(
-    () => state.phase === 'active' ? state.activeSheet : null,
-    [state],
-  );
-
-  const isCreatingScan = useMemo(
-    () => state.phase === 'confirming',
-    [state.phase],
-  );
-
-  const scanStatus = useMemo(
-    () => state.phase === 'scanning' ? state.scanStatus : null,
-    [state],
-  );
-
-  const showCard = useMemo(
-    () => state.phase === 'confirming' || state.phase === 'active',
-    [state.phase],
-  );
-
-  const buttonsDisabled = useMemo(
-    () => state.phase !== 'active',
-    [state.phase],
-  );
-
-  const photoCompleted = useMemo(
-    () => state.phase === 'active' ? state.photoCompleted : false,
-    [state],
-  );
-
-  const defectCompleted = useMemo(
-    () => state.phase === 'active' ? state.defectCompleted : false,
-    [state],
-  );
-
-  const maintenanceCompleted = useMemo(
-    () => state.phase === 'active' ? state.maintenanceCompleted : false,
-    [state],
-  );
+  // ── Derived convenience getters ──
+  // Plain property accesses — cheaper than useMemo overhead since state is
+  // a new object on every dispatch (memo with [state] never caches).
+  const scannedAsset = (state.phase === 'confirming' || state.phase === 'active') ? state.scannedAsset : null;
+  const matchedDepot = (state.phase === 'confirming' || state.phase === 'active') ? state.matchedDepot : null;
+  const effectiveLocation = (state.phase === 'confirming' || state.phase === 'active') ? state.effectiveLocation : null;
+  const lastScanEventId = state.phase === 'active' ? state.lastScanEventId : null;
+  const activeSheet = state.phase === 'active' ? state.activeSheet : null;
+  const isCreatingScan = state.phase === 'confirming';
+  const scanStatus = state.phase === 'scanning' ? state.scanStatus : null;
+  const showCard = state.phase === 'confirming' || state.phase === 'active';
+  const buttonsDisabled = state.phase !== 'active';
+  const photoCompleted = state.phase === 'active' ? state.photoCompleted : false;
+  const defectCompleted = state.phase === 'active' ? state.defectCompleted : false;
+  const maintenanceCompleted = state.phase === 'active' ? state.maintenanceCompleted : false;
 
   return {
     // State

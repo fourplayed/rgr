@@ -10,9 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { UserRole, UserRoleLabels, UserRoleDescriptions } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
-
-const getUserRoleColor = (role: string): string | undefined =>
-  role in colors.userRole ? colors.userRole[role as keyof typeof colors.userRole] : undefined;
+import { getUserRoleColor } from '../../utils/getUserRoleColor';
 
 const ROLES: UserRole[] = ['driver', 'mechanic', 'manager', 'superuser'];
 
@@ -43,6 +41,8 @@ export function UserRolePicker({
           style={styles.backdropTouchable}
           activeOpacity={1}
           onPress={onCancel}
+          accessibilityRole="button"
+          accessibilityLabel="Close"
         />
 
         <View style={styles.sheet}>

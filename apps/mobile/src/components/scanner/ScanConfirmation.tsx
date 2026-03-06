@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -52,14 +52,14 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
   const { asset, matchedDepot, disabled, isCreating } = props;
 
   // Build AssetWithRelations for AssetInfoCard
-  const assetWithRelations: AssetWithRelations = {
+  const assetWithRelations = useMemo<AssetWithRelations>(() => ({
     ...asset,
     depotName: matchedDepot?.depot.name ?? null,
     depotCode: matchedDepot?.depot.code ?? null,
     driverName: null,
     lastScannerName: null,
     photoCount: 0,
-  };
+  }), [asset, matchedDepot]);
 
   // Single-select action state (radio behavior)
   const [selectedAction, setSelectedAction] = useState<ConfirmAction>(null);

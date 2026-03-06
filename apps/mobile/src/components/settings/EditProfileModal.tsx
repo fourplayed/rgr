@@ -26,13 +26,15 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
   const [phone, setPhone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const userName = user?.fullName;
+  const userPhone = user?.phone;
   useEffect(() => {
-    if (visible && user) {
-      setFullName(user.fullName || '');
-      setPhone(user.phone || '');
+    if (visible) {
+      setFullName(userName || '');
+      setPhone(userPhone || '');
       setError(null);
     }
-  }, [visible, user]);
+  }, [visible, userName, userPhone]);
 
   const guard = useSubmitGuard();
 

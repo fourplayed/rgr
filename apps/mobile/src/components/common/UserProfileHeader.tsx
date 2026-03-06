@@ -15,7 +15,7 @@ import {
 
 import { colors } from '../../theme/colors';
 
-const HEADER_GRADIENT_COLORS = colors.brandGradientHeader;
+const HEADER_GRADIENT_COLORS = colors.brandGradientHeader as readonly [string, string, ...string[]];
 const LOGO_WIDTH = 221;
 
 export function UserProfileHeader() {
@@ -57,7 +57,7 @@ export function UserProfileHeader() {
     <View style={[styles.wrapper, { marginTop: insets.top + HEADER_STATUS_BAR_GAP }]}>
       <View style={styles.accentLine} />
       <LinearGradient
-        colors={[...HEADER_GRADIENT_COLORS]}
+        colors={HEADER_GRADIENT_COLORS}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
         style={styles.gradient}

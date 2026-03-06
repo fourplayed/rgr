@@ -151,7 +151,7 @@ export function MaintenanceDetailModal({
 
     const status = maintenance.status;
 
-    if (canMarkMaintenance && (status === 'scheduled' || status === 'in_progress')) {
+    if (canMarkMaintenance && status === 'scheduled') {
       return (
         <View style={styles.actionsContainer}>
           <Button
@@ -428,11 +428,14 @@ export function MaintenanceDetailModal({
               </ScrollView>
 
               {/* Status Actions pinned in footer */}
-              {renderStatusActions() && (
-                <SheetFooter>
-                  {renderStatusActions()}
-                </SheetFooter>
-              )}
+              {(() => {
+                const statusActions = renderStatusActions();
+                return statusActions && (
+                  <SheetFooter>
+                    {statusActions}
+                  </SheetFooter>
+                );
+              })()}
             </>
           )}
         </View>

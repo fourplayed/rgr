@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -34,8 +34,6 @@ interface CreateMaintenanceModalProps {
   /** When provided, the modal collects form data but delegates creation to this callback.
    *  Used by the atomic accept-defect flow to wrap both operations in a transaction. */
   onExternalSubmit?: (input: CreateMaintenanceInput) => Promise<void>;
-  /** Show "Begin Immediately" toggle to create task as in_progress */
-  showBeginOption?: boolean;
 }
 
 const PRIORITY_ORDER: MaintenancePriority[] = ['low', 'medium', 'high', 'critical'];
@@ -51,7 +49,6 @@ export function CreateMaintenanceModal({
   defaultPriority,
   onCreated,
   onExternalSubmit,
-  showBeginOption,
 }: CreateMaintenanceModalProps) {
   const user = useAuthStore(s => s.user);
   const { mutateAsync: createMaintenanceAsync, isPending } = useCreateMaintenance();
@@ -61,8 +58,22 @@ export function CreateMaintenanceModal({
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<MaintenancePriority>('medium');
   const [dueDate, setDueDate] = useState('');
+
+  // Compute date presets once at mount — dates only matter at open time
+  const datePresets = useMemo(() => {
+    const addDays = (days: number) => {
+      const d = new Date();
+      d.setDate(d.getDate() + days);
+      return d.toISOString().slice(0, 10);
+    };
+    return [
+      { label: 'Today', date: addDays(0) },
+      { label: 'Tomorrow', date: addDays(1) },
+      { label: 'Next Week', date: addDays(7) },
+      { label: 'Clear', date: '' },
+    ];
+  }, []);
   const [notes, setNotes] = useState('');
-  const [beginImmediately, setBeginImmediately] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Reset form when modal opens, pre-filling from defect context if provided
@@ -73,7 +84,6 @@ export function CreateMaintenanceModal({
       setPriority(defaultPriority ?? 'medium');
       setDueDate('');
       setNotes('');
-      setBeginImmediately(false);
       setError(null);
     }
   }, [visible, defaultTitle, defaultDescription, defaultPriority]);
@@ -96,7 +106,7 @@ export function CreateMaintenanceModal({
       title: title.trim(),
       description: description.trim() || null,
       priority,
-      status: beginImmediately ? 'in_progress' : 'scheduled',
+      status: 'scheduled',
       reportedBy: user?.id || null,
       dueDate: dueDate.trim() || null,
       notes: notes.trim() || null,
@@ -117,7 +127,7 @@ export function CreateMaintenanceModal({
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to create maintenance record');
     }
-  }), [guard, title, description, priority, dueDate, notes, beginImmediately, assetId, user, createMaintenanceAsync, onClose, onCreated, onExternalSubmit]);
+  }), [guard, title, description, priority, dueDate, notes, assetId, user, createMaintenanceAsync, onClose, onCreated, onExternalSubmit]);
 
   const isLoading = isPending;
 
@@ -208,24 +218,13 @@ export function CreateMaintenanceModal({
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Due Date (optional)</Text>
               <View style={styles.datePresets}>
-                {([
-                  { label: 'Today', days: 0 },
-                  { label: 'Tomorrow', days: 1 },
-                  { label: 'Next Week', days: 7 },
-                  { label: 'Clear', days: -1 },
-                ] as const).map(({ label, days }) => {
-                  let presetDate = '';
-                  if (days >= 0) {
-                    const d = new Date();
-                    d.setDate(d.getDate() + days);
-                    presetDate = d.toISOString().slice(0, 10);
-                  }
-                  const isSelected = days >= 0 && dueDate === presetDate;
+                {datePresets.map(({ label, date }) => {
+                  const isSelected = date !== '' && dueDate === date;
                   return (
                     <TouchableOpacity
                       key={label}
                       style={[styles.datePresetChip, isSelected && styles.datePresetChipActive]}
-                      onPress={() => setDueDate(presetDate)}
+                      onPress={() => setDueDate(date)}
                       accessibilityRole="button"
                       accessibilityLabel={`Set due date to ${label}`}
                       accessibilityState={{ selected: isSelected }}
@@ -277,30 +276,6 @@ export function CreateMaintenanceModal({
                 accessibilityLabel="Maintenance notes"
               />
             </View>
-
-            {/* Begin Immediately toggle */}
-            {showBeginOption && (
-              <TouchableOpacity
-                style={styles.beginToggle}
-                onPress={() => setBeginImmediately(prev => !prev)}
-                activeOpacity={0.7}
-                accessibilityRole="switch"
-                accessibilityLabel="Begin task immediately"
-                accessibilityState={{ checked: beginImmediately }}
-              >
-                <Ionicons
-                  name={beginImmediately ? 'play-circle' : 'play-circle-outline'}
-                  size={22}
-                  color={beginImmediately ? colors.info : colors.textSecondary}
-                />
-                <Text style={[
-                  styles.beginToggleText,
-                  beginImmediately && styles.beginToggleTextActive,
-                ]}>
-                  Begin Immediately
-                </Text>
-              </TouchableOpacity>
-            )}
 
             {error && <Text style={styles.errorText}>{error}</Text>}
           </ScrollView>
@@ -448,22 +423,5 @@ const styles = StyleSheet.create({
     fontFamily: 'Lato_400Regular',
     color: colors.text,
     marginTop: spacing.sm,
-  },
-  beginToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  beginToggleText: {
-    fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
-    color: colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  beginToggleTextActive: {
-    color: colors.info,
   },
 });

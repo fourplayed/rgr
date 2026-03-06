@@ -32,7 +32,7 @@ export function AvatarPicker({ visible, onClose }: AvatarPickerProps) {
       animationType="fade"
       onRequestClose={onClose}
     >
-      <Pressable style={styles.overlay} onPress={onClose}>
+      <Pressable style={styles.overlay} onPress={onClose} accessibilityRole="button" accessibilityLabel="Close">
         {/* Semi-transparent backdrop matching app's overlay */}
         <View style={styles.backdropTint} />
 

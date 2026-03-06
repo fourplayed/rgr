@@ -35,8 +35,6 @@ export function SheetModal({
   keyboardAvoiding = false,
   onDismiss,
 }: SheetModalProps) {
-  if (!visible) return null;
-
   const Wrapper = keyboardAvoiding ? KeyboardAvoidingView : View;
   const wrapperProps = keyboardAvoiding
     ? { behavior: Platform.OS === 'ios' ? ('padding' as const) : ('height' as const) }
@@ -51,19 +49,25 @@ export function SheetModal({
       onRequestClose={onClose}
       onDismiss={onDismiss}
     >
-      <BlurView
-        intensity={50}
-        tint="dark"
-        style={[StyleSheet.absoluteFillObject, styles.blur]}
-      />
-      <Wrapper style={styles.container} {...wrapperProps}>
-        <TouchableOpacity
-          style={styles.backdropTouchable}
-          activeOpacity={1}
-          onPress={onClose}
-        />
-        {children}
-      </Wrapper>
+      {visible && (
+        <>
+          <BlurView
+            intensity={50}
+            tint="dark"
+            style={[StyleSheet.absoluteFillObject, styles.blur]}
+          />
+          <Wrapper style={styles.container} {...wrapperProps}>
+            <TouchableOpacity
+              style={styles.backdropTouchable}
+              activeOpacity={1}
+              onPress={onClose}
+              accessibilityRole="button"
+              accessibilityLabel="Close"
+            />
+            {children}
+          </Wrapper>
+        </>
+      )}
     </Modal>
   );
 }

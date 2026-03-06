@@ -282,6 +282,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
       set({ authError: 'Session expired. Please log in again.' });
       return false;
+    } finally {
+      // Guarantee isLoading is cleared on every exit path
+      set({ isLoading: false });
     }
   },
 

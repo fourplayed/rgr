@@ -26,7 +26,7 @@ export function SegmentedTabs<T extends string>({
   const translateX = useRef(new Animated.Value(0)).current;
   const [trayWidth, setTrayWidth] = useState(0);
 
-  const pillWidth = trayWidth > 0 ? (trayWidth - 2 * PADDING) / tabs.length : 0;
+  const pillWidth = trayWidth > 0 && tabs.length > 0 ? (trayWidth - 2 * PADDING) / tabs.length : 0;
   const activeIndex = tabs.findIndex((t) => t.key === activeTab);
 
   useEffect(() => {
