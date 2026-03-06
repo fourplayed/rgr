@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
+  Modal,
   Animated,
   InteractionManager,
   StyleSheet,
@@ -8,13 +9,12 @@ import {
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { BlurView } from 'expo-blur';
-import { router } from 'expo-router';
 import { useTutorialStore } from '../../src/store/tutorialStore';
 import { useUserPermissions } from '../../src/contexts/UserPermissionsContext';
-import { UserRoleLabels, getDepotBadgeColors } from '@rgr/shared';
-import { colors } from '../../src/theme/colors';
 import { useScanActionFlow } from '../../src/hooks/scan/useScanActionFlow';
+import { useAssetAssessment } from '../../src/hooks/useAssetAssessment';
 import { PermissionScreen, CameraOverlay, ScanConfirmation, ScanSuccessFlash } from '../../src/components/scanner';
+import type { ConfirmActions } from '../../src/components/scanner/ScanConfirmation';
 import { DefectReportSheet } from '../../src/components/scanner/DefectReportSheet';
 import { CameraCapture } from '../../src/components/photos';
 import { CreateMaintenanceModal, DefectReportDetailModal, MaintenanceDetailModal } from '../../src/components/maintenance';
@@ -65,9 +65,6 @@ export default function ScanScreen() {
     scannedAsset,
     matchedDepot,
     isCreatingScan,
-    scanContext,
-    isContextLoading,
-    contextError,
     refetchContext,
     handleDonePress,
     handlePhotoPress,
@@ -81,7 +78,6 @@ export default function ScanScreen() {
     hasLocationPermission,
     requestLocationPermission,
     scanStatus,
-    resolvedDepot: flowResolvedDepot,
     handleUndoPress,
     activeSheet,
     lastScanEventId,
@@ -98,22 +94,8 @@ export default function ScanScreen() {
     triggerDebugScan,
   } = flow;
 
-  // ── Badge data for CameraOverlay (memoized for React.memo) ──
-
-  const depotBadge = useMemo(() => {
-    if (!flowResolvedDepot) return null;
-    const { bg, text } = getDepotBadgeColors(flowResolvedDepot.depot);
-    return { label: flowResolvedDepot.depot.name, bgColor: bg, textColor: text };
-  }, [flowResolvedDepot]);
-
-  const roleBadge = useMemo(() => {
-    const r = permissions.role;
-    if (!r) return null;
-    return {
-      label: UserRoleLabels[r] ?? r,
-      color: colors.userRole[r] ?? colors.textSecondary,
-    };
-  }, [permissions.role]);
+  // ── Asset assessment (lazy-loaded when asset is scanned) ──
+  const assessment = useAssetAssessment(scannedAsset, matchedDepot);
 
   // ── Permission Requests ──
 
@@ -152,30 +134,38 @@ export default function ScanScreen() {
   // ── Blur backdrop + sheet slide animation ──
   useEffect(() => {
     if (showCard) {
+      // Reset to off-screen before mounting so first frame is correct
+      backdropOpacity.setValue(0);
+      sheetTranslateY.setValue(SCREEN_HEIGHT);
       setIsPanelMounted(true);
-      Animated.parallel([
-        Animated.timing(backdropOpacity, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.spring(sheetTranslateY, {
-          toValue: 0,
-          friction: 8,
-          tension: 65,
-          useNativeDriver: true,
-        }),
-      ]).start();
+
+      // Delay animation to next frame so Modal is rendered first
+      requestAnimationFrame(() => {
+        Animated.parallel([
+          Animated.timing(backdropOpacity, {
+            toValue: 1,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+          Animated.spring(sheetTranslateY, {
+            toValue: 0,
+            friction: 8,
+            tension: 65,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      });
     } else {
       Animated.parallel([
         Animated.timing(backdropOpacity, {
           toValue: 0,
-          duration: 200,
+          duration: 250,
           useNativeDriver: true,
         }),
-        Animated.timing(sheetTranslateY, {
+        Animated.spring(sheetTranslateY, {
           toValue: SCREEN_HEIGHT,
-          duration: 250,
+          friction: 9,
+          tension: 50,
           useNativeDriver: true,
         }),
       ]).start(({ finished }) => {
@@ -186,20 +176,13 @@ export default function ScanScreen() {
     }
   }, [showCard, backdropOpacity, sheetTranslateY, SCREEN_HEIGHT]);
 
-  // ── Context item handlers (mechanic taps individual defect/task) ──
+  // ── Action queue (confirm triggers checked actions sequentially) ──
 
-  const handleDefectItemPress = useCallback((defectId: string) => {
-    setContextDefectId(defectId);
-  }, []);
+  const pendingActionsRef = useRef<Array<'photo' | 'defect' | 'maintenance'>>([]);
+  const prevActiveSheetRef = useRef(activeSheet);
 
-  const handleTaskItemPress = useCallback((maintenanceId: string) => {
-    setContextMaintenanceId(maintenanceId);
-  }, []);
-
-  // ── Wrap done/undo to also clear context detail modals ──
-
-  const handleDonePressWithReset = useCallback(() => {
-    // Capture completed actions before reset clears them
+  const finishConfirmFlow = useCallback(() => {
+    // Capture completed actions for success flash, then reset
     if (scannedAsset) {
       setSuccessFlash({
         assetNumber: scannedAsset.assetNumber,
@@ -212,6 +195,46 @@ export default function ScanScreen() {
     handleDonePress();
   }, [handleDonePress, scannedAsset, photoCompleted, defectCompleted]);
 
+  const processNextAction = useCallback(() => {
+    if (pendingActionsRef.current.length === 0) {
+      finishConfirmFlow();
+      return;
+    }
+    const next = pendingActionsRef.current.shift()!;
+    if (next === 'photo') handlePhotoPress();
+    else if (next === 'defect') handleDefectPress();
+    else if (next === 'maintenance') handleTaskPress();
+  }, [finishConfirmFlow, handlePhotoPress, handleDefectPress, handleTaskPress]);
+
+  // Advance queue when a sheet closes
+  useEffect(() => {
+    const wasOpen = prevActiveSheetRef.current !== null;
+    const nowClosed = activeSheet === null;
+    prevActiveSheetRef.current = activeSheet;
+    if (wasOpen && nowClosed && pendingActionsRef.current.length > 0) {
+      processNextAction();
+    }
+  }, [activeSheet, processNextAction]);
+
+  const handleConfirmWithActions = useCallback((actions: ConfirmActions) => {
+    const queue: Array<'photo' | 'defect' | 'maintenance'> = [];
+    if (actions.photo) queue.push('photo');
+    if (actions.defect) queue.push('defect');
+    if (actions.maintenance) queue.push('maintenance');
+
+    if (queue.length === 0) {
+      finishConfirmFlow();
+      return;
+    }
+
+    // Store remaining actions, trigger the first one
+    pendingActionsRef.current = queue.slice(1);
+    const first = queue[0];
+    if (first === 'photo') handlePhotoPress();
+    else if (first === 'defect') handleDefectPress();
+    else if (first === 'maintenance') handleTaskPress();
+  }, [finishConfirmFlow, handlePhotoPress, handleDefectPress, handleTaskPress]);
+
   const handleUndoPressWithReset = useCallback(() => {
     setContextDefectId(null);
     setContextMaintenanceId(null);
@@ -223,14 +246,6 @@ export default function ScanScreen() {
   const handleTaskCreated = useCallback(() => {
     refetchContext();
   }, [refetchContext]);
-
-  // ── Context press (mechanic taps summary row → navigate to asset detail) ──
-
-  const handleContextPress = useCallback(() => {
-    if (!scannedAsset) return;
-    router.push(`/assets/${scannedAsset.id}`);
-    handleDonePressWithReset();
-  }, [scannedAsset, handleDonePressWithReset]);
 
   // ── Render ──
 
@@ -265,23 +280,21 @@ export default function ScanScreen() {
             hasLocationPermission={hasLocationPermission}
             onRequestLocationPermission={requestLocationPermission}
             scanStatus={scanStatus}
-            depotBadge={depotBadge}
-            roleBadge={roleBadge}
             onDebugScan={__DEV__ ? triggerDebugScan : undefined}
           />
         )}
       </CameraView>
 
-      {/* Blur backdrop + confirmation bottom sheet */}
-      {isPanelMounted && displayAsset && (
-        <>
-          <Animated.View style={[StyleSheet.absoluteFillObject, { opacity: backdropOpacity }]}>
-            <BlurView
-              intensity={50}
-              tint="dark"
-              style={{ flex: 1, backgroundColor: 'rgba(0,0,30,0.3)' }}
-            />
-          </Animated.View>
+      {/* Blur backdrop + confirmation bottom sheet (Modal for z-index above tab header) */}
+      <Modal visible={isPanelMounted} transparent animationType="none" statusBarTranslucent>
+        <Animated.View style={[StyleSheet.absoluteFillObject, { opacity: backdropOpacity }]}>
+          <BlurView
+            intensity={50}
+            tint="dark"
+            style={{ flex: 1, backgroundColor: 'rgba(0,0,30,0.3)' }}
+          />
+        </Animated.View>
+        {displayAsset && (
           <Animated.View
             style={[
               styles.confirmSheet,
@@ -294,21 +307,12 @@ export default function ScanScreen() {
                 asset={displayAsset}
                 matchedDepot={matchedDepot}
                 isCreating={isCreatingScan}
-                scanContext={scanContext}
-                isContextLoading={isContextLoading}
-                contextError={contextError}
-                onRetryContext={refetchContext}
-                onPhotoPress={handlePhotoPress}
-                onDefectPress={handleDefectPress}
-                onTaskPress={handleTaskPress}
-                onDonePress={handleDonePressWithReset}
+                onConfirm={handleConfirmWithActions}
                 onUndoPress={handleUndoPressWithReset}
-                onContextPress={handleContextPress}
-                onDefectItemPress={handleDefectItemPress}
-                onTaskItemPress={handleTaskItemPress}
                 photoCompleted={photoCompleted}
                 defectCompleted={defectCompleted}
                 disabled={buttonsDisabled}
+                assessment={assessment}
               />
             ) : (
               <ScanConfirmation
@@ -316,16 +320,16 @@ export default function ScanScreen() {
                 asset={displayAsset}
                 matchedDepot={matchedDepot}
                 isCreating={isCreatingScan}
-                onPhotoPress={handlePhotoPress}
-                onDonePress={handleDonePressWithReset}
+                onConfirm={handleConfirmWithActions}
                 onUndoPress={handleUndoPressWithReset}
                 photoCompleted={photoCompleted}
                 disabled={buttonsDisabled}
+                assessment={assessment}
               />
             )}
           </Animated.View>
-        </>
-      )}
+        )}
+      </Modal>
 
       {/* Success flash overlay (after confirm) */}
       <ScanSuccessFlash

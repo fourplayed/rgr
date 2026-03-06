@@ -52,7 +52,7 @@ type ScanConfirmationProps =
 // ── Component ────────────────────────────────────────────────────────────────
 
 function ScanConfirmationComponent(props: ScanConfirmationProps) {
-  const { asset, matchedDepot, isCreating, disabled } = props;
+  const { asset, matchedDepot, disabled } = props;
 
   // Build AssetWithRelations for AssetInfoCard
   const assetWithRelations: AssetWithRelations = {

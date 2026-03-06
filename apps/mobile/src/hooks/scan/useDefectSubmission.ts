@@ -1,7 +1,6 @@
 import { useCallback } from 'react';
 import * as Haptics from 'expo-haptics';
 import { useCreateDefectReport } from '../useDefectData';
-import { logger } from '../../utils/logger';
 import type { ScanFlowAction, AlertSheetState } from './useScanActionFlow';
 import type { Profile } from '@rgr/shared';
 
