@@ -1,5 +1,17 @@
 # Debug Investigator Memory
 
+## ScrollView justifyContent Crash Pattern (2026-03-05)
+
+**Pattern**: Dynamic `View`/`ScrollView` switching via `const Wrapper = condition ? ScrollView : View` can silently pass layout props (`justifyContent`, `alignItems`) into ScrollView's `style` prop. RN throws: "ScrollView child layout must be applied through contentContainerStyle prop."
+
+**Key insight**: The crash happens on re-render (`updateClassComponent`), not mount -- because the condition that switches View->ScrollView changes after initial render.
+
+**File**: `apps/mobile/src/components/scanner/ScanConfirmation.tsx` -- `ContentWrapper` pattern.
+
+**Fix approach**: Create a separate style (without child layout props) for ScrollView's `style`, and merge layout props into `contentContainerStyle`.
+
+---
+
 ## Expo Router Monorepo Issue (2026-02-23)
 
 **Error**: `Invalid call at line 2: process.env.EXPO_ROUTER_APP_ROOT`

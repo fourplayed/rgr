@@ -2,8 +2,6 @@ import React from 'react';
 import {
   View,
   Text,
-  Modal,
-  TouchableOpacity,
   Switch,
   ScrollView,
   StyleSheet,
@@ -13,6 +11,7 @@ import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
 import { SheetFooter } from '../common/SheetFooter';
+import { SheetModal } from '../common/SheetModal';
 import { useSettingsStore } from '../../store/settingsStore';
 
 interface NotificationsModalProps {
@@ -52,21 +51,7 @@ export function NotificationsModal({ visible, onClose }: NotificationsModalProps
   const isPushDisabled = !notifications.pushEnabled;
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-    >
-      <View style={styles.container}>
-        <View style={styles.backdrop}>
-          <TouchableOpacity
-            style={styles.backdropTouchable}
-            activeOpacity={1}
-            onPress={onClose}
-          />
-        </View>
-
+    <SheetModal visible={visible} onClose={onClose}>
         <View style={styles.sheet}>
           <SheetHeader icon="notifications" title="Notifications" onClose={onClose} />
 
@@ -125,23 +110,11 @@ export function NotificationsModal({ visible, onClose }: NotificationsModalProps
             </Button>
           </SheetFooter>
         </View>
-      </View>
-    </Modal>
+    </SheetModal>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  backdrop: {
-    flex: 1,
-    backgroundColor: colors.overlay,
-  },
-  backdropTouchable: {
-    flex: 1,
-  },
   sheet: {
     backgroundColor: colors.chrome,
     borderTopLeftRadius: borderRadius.xl,
@@ -150,7 +123,8 @@ const styles = StyleSheet.create({
     maxHeight: '85%',
   },
   scrollView: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
   },
   scrollContent: {
     paddingHorizontal: spacing.lg,

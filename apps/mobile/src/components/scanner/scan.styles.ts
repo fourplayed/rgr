@@ -114,14 +114,6 @@ export const styles = StyleSheet.create({
     color: colors.textInverse,
   },
 
-  // ── Context badge row (above scan frame) ─
-  contextBadgeRow: {
-    flexDirection: 'row',
-    alignSelf: 'center',
-    gap: spacing.sm,
-    marginBottom: spacing.md,
-  },
-
   // ── Footer tray (replaces footer) ─────────────────────
   footerTray: {
     backgroundColor: colors.overlayCard,
@@ -236,6 +228,7 @@ export const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     maxHeight: '92%',
+    zIndex: 1000,
     backgroundColor: colors.background,
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,

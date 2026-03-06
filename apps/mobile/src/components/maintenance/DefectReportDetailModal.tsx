@@ -2,7 +2,6 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View,
   Text,
-  Modal,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
@@ -11,11 +10,12 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { formatRelativeTime, formatAssetNumber } from '@rgr/shared';
-import { LoadingDots, AlertSheet, InputSheet } from '../common';
+import { LoadingDots, AlertSheet, InputSheet, SheetModal } from '../common';
 import { SheetHeader } from '../common/SheetHeader';
 import { SheetFooter } from '../common/SheetFooter';
+import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 import { useDefectReport, useUpdateDefectReportStatus } from '../../hooks/useDefectData';
 import { useAsset } from '../../hooks/useAssetData';
 import { useMaintenance } from '../../hooks/useMaintenanceData';
@@ -143,20 +143,22 @@ export function DefectReportDetailModal({
     if (status === 'reported') {
       return (
         <View style={styles.actionsContainer}>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.primaryButton]}
+          <Button
             onPress={handleAccept}
             disabled={!onAcceptPress || updateStatusMutation.isPending}
+            flex
           >
-            <Text style={styles.primaryButtonText}>Accept</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.dangerButton]}
+            Accept
+          </Button>
+          <Button
+            variant="secondary"
             onPress={handleDismiss}
             disabled={updateStatusMutation.isPending}
+            style={{ borderColor: colors.error }}
+            flex
           >
-            <Text style={styles.dangerButtonText}>Dismiss</Text>
-          </TouchableOpacity>
+            Dismiss
+          </Button>
         </View>
       );
     }
@@ -184,19 +186,7 @@ export function DefectReportDetailModal({
   if (!visible) return null;
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-    >
-      <View style={styles.backdrop}>
-        <TouchableOpacity
-          style={styles.backdropTouchable}
-          activeOpacity={1}
-          onPress={onClose}
-        />
-
+    <SheetModal visible={visible} onClose={onClose}>
         <View style={styles.sheet}>
           {isLoading || !defect ? (
             <>
@@ -204,7 +194,7 @@ export function DefectReportDetailModal({
                 icon="warning"
                 title="Defect Report"
                 onClose={onClose}
-                backgroundColor={colors.warning}
+                backgroundColor="#FACC15"
                 disabled
               />
               <View style={styles.loadingContainer}>
@@ -217,7 +207,7 @@ export function DefectReportDetailModal({
                 icon="warning"
                 title="Defect Report"
                 onClose={onClose}
-                backgroundColor={colors.warning}
+                backgroundColor="#FACC15"
               />
 
               <ScrollView
@@ -378,7 +368,6 @@ export function DefectReportDetailModal({
             </>
           )}
         </View>
-      </View>
 
       {/* Dismiss with Reason */}
       <InputSheet
@@ -401,19 +390,11 @@ export function DefectReportDetailModal({
         message={alertSheet.message}
         onDismiss={() => setAlertSheet(prev => ({ ...prev, visible: false }))}
       />
-    </Modal>
+    </SheetModal>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: colors.overlay,
-    justifyContent: 'flex-end',
-  },
-  backdropTouchable: {
-    flex: 1,
-  },
   sheet: {
     backgroundColor: colors.chrome,
     borderTopLeftRadius: borderRadius.xl,
@@ -426,7 +407,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   scrollView: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
   },
   scrollContent: {
     paddingHorizontal: spacing.lg,
@@ -511,36 +493,6 @@ const styles = StyleSheet.create({
   actionsContainer: {
     flexDirection: 'row',
     gap: spacing.md,
-  },
-  actionButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    height: 48,
-    borderRadius: borderRadius.md,
-  },
-  primaryButton: {
-    backgroundColor: colors.electricBlue,
-    ...shadows.md,
-  },
-  dangerButton: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.error,
-  },
-  primaryButtonText: {
-    fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
-    color: colors.textInverse,
-    textTransform: 'uppercase',
-  },
-  dangerButtonText: {
-    fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
-    color: colors.error,
-    textTransform: 'uppercase',
   },
   closedStatus: {
     flexDirection: 'row',

@@ -2,12 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
-  Modal,
   ScrollView,
   TextInput,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
   Switch,
   StyleSheet,
 } from 'react-native';
@@ -15,6 +11,7 @@ import type { Depot, CreateDepotInput, UpdateDepotInput } from '@rgr/shared';
 import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
 import { SheetFooter } from '../common/SheetFooter';
+import { SheetModal } from '../common/SheetModal';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 import { useSubmitGuard } from '../../hooks/useSubmitGuard';
@@ -96,22 +93,7 @@ export function DepotFormSheet({
   if (!visible) return null;
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-    >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.backdrop}
-      >
-        <TouchableOpacity
-          style={styles.backdropTouchable}
-          activeOpacity={1}
-          onPress={onClose}
-        />
-
+    <SheetModal visible={visible} onClose={onClose} keyboardAvoiding>
         <View style={styles.sheet}>
           <SheetHeader
             icon="business"
@@ -197,20 +179,11 @@ export function DepotFormSheet({
             </View>
           </SheetFooter>
         </View>
-      </KeyboardAvoidingView>
-    </Modal>
+    </SheetModal>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: colors.overlay,
-    justifyContent: 'flex-end',
-  },
-  backdropTouchable: {
-    flex: 1,
-  },
   sheet: {
     backgroundColor: colors.chrome,
     borderTopLeftRadius: borderRadius.xl,
@@ -219,7 +192,8 @@ const styles = StyleSheet.create({
     maxHeight: '85%',
   },
   scrollView: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
   },
   scrollContent: {
     paddingHorizontal: spacing.lg,

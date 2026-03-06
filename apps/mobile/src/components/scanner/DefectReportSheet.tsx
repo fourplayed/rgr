@@ -2,12 +2,9 @@ import React, { useState, useEffect, memo } from 'react';
 import {
   View,
   Text,
-  Modal,
   TouchableOpacity,
   TextInput,
   StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,6 +12,7 @@ import { formatAssetNumber } from '@rgr/shared';
 import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
 import { SheetFooter } from '../common/SheetFooter';
+import { SheetModal } from '../common/SheetModal';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 
@@ -62,23 +60,7 @@ function DefectReportSheetComponent({
   const canSubmit = notes.trim().length > 0;
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={handleCancel}
-      onDismiss={onDismiss}
-    >
-      <KeyboardAvoidingView
-        style={styles.backdrop}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <TouchableOpacity
-          style={styles.backdropTouchable}
-          activeOpacity={1}
-          onPress={handleCancel}
-        />
-
+    <SheetModal visible={visible} onClose={handleCancel} onDismiss={onDismiss} keyboardAvoiding>
         <View style={styles.sheet}>
           <SheetHeader
             icon="warning"
@@ -167,22 +149,13 @@ function DefectReportSheetComponent({
             </View>
           </SheetFooter>
         </View>
-      </KeyboardAvoidingView>
-    </Modal>
+    </SheetModal>
   );
 }
 
 export const DefectReportSheet = memo(DefectReportSheetComponent);
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: colors.overlay,
-    justifyContent: 'flex-end',
-  },
-  backdropTouchable: {
-    flex: 1,
-  },
   sheet: {
     backgroundColor: colors.chrome,
     borderTopLeftRadius: borderRadius.xl,
@@ -191,7 +164,8 @@ const styles = StyleSheet.create({
     maxHeight: '85%',
   },
   scrollView: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
   },
   scrollContent: {
     paddingHorizontal: spacing.lg,

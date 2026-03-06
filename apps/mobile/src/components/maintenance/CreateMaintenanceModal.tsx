@@ -2,12 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
-  Modal,
   TouchableOpacity,
   TextInput,
   StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,6 +13,7 @@ import { MaintenancePriorityLabels } from '@rgr/shared';
 import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
 import { SheetFooter } from '../common/SheetFooter';
+import { SheetModal } from '../common/SheetModal';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 import { useAuthStore } from '../../store/authStore';
@@ -124,24 +122,9 @@ export function CreateMaintenanceModal({
   const isLoading = isPending;
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-    >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.backdrop}
-      >
-        <TouchableOpacity
-          style={styles.backdropTouchable}
-          activeOpacity={1}
-          onPress={onClose}
-        />
-
+    <SheetModal visible={visible} onClose={onClose} keyboardAvoiding>
         <View style={styles.sheet}>
-          <SheetHeader icon="construct" title="Schedule Maintenance" onClose={onClose} />
+          <SheetHeader icon="construct" title="Schedule Maintenance" onClose={onClose} backgroundColor={colors.warning} />
 
           <ScrollView
             style={styles.scrollView}
@@ -329,20 +312,11 @@ export function CreateMaintenanceModal({
             </View>
           </SheetFooter>
         </View>
-      </KeyboardAvoidingView>
-    </Modal>
+    </SheetModal>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: colors.overlay,
-    justifyContent: 'flex-end',
-  },
-  backdropTouchable: {
-    flex: 1,
-  },
   sheet: {
     backgroundColor: colors.chrome,
     borderTopLeftRadius: borderRadius.xl,
@@ -351,7 +325,8 @@ const styles = StyleSheet.create({
     maxHeight: '90%',
   },
   scrollView: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
   },
   scrollContent: {
     paddingHorizontal: spacing.lg,

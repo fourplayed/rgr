@@ -2,7 +2,6 @@ import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
-  Modal,
   TouchableOpacity,
   TextInput,
   StyleSheet,
@@ -12,11 +11,12 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { formatRelativeTime, formatAssetNumber } from '@rgr/shared';
-import { LoadingDots, AlertSheet, ConfirmSheet } from '../common';
+import { LoadingDots, AlertSheet, ConfirmSheet, SheetModal } from '../common';
 import { SheetHeader } from '../common/SheetHeader';
 import { SheetFooter } from '../common/SheetFooter';
+import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 import { useMaintenance, useUpdateMaintenanceStatus, useUpdateMaintenance } from '../../hooks/useMaintenanceData';
 import { useAsset } from '../../hooks/useAssetData';
 import { useScanEventPhotos, useSignedUrl } from '../../hooks/usePhotos';
@@ -154,21 +154,24 @@ export function MaintenanceDetailModal({
     if (canMarkMaintenance && (status === 'scheduled' || status === 'in_progress')) {
       return (
         <View style={styles.actionsContainer}>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.successButton]}
+          <Button
+            color={colors.success}
+            icon="checkmark"
             onPress={handleComplete}
             disabled={updateStatusMutation.isPending}
+            flex
           >
-            <Ionicons name="checkmark" size={18} color={colors.textInverse} />
-            <Text style={styles.primaryButtonText}>Mark Complete</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.dangerButton]}
+            Mark Complete
+          </Button>
+          <Button
+            variant="secondary"
             onPress={handleCancelMaintenance}
             disabled={updateStatusMutation.isPending}
+            style={{ borderColor: colors.error }}
+            flex
           >
-            <Text style={styles.dangerButtonText}>Cancel</Text>
-          </TouchableOpacity>
+            Cancel
+          </Button>
         </View>
       );
     }
@@ -196,19 +199,7 @@ export function MaintenanceDetailModal({
   if (!visible) return null;
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-    >
-      <View style={styles.backdrop}>
-        <TouchableOpacity
-          style={styles.backdropTouchable}
-          activeOpacity={1}
-          onPress={onClose}
-        />
-
+    <SheetModal visible={visible} onClose={onClose}>
         <View style={styles.sheet}>
           {isLoading || !maintenance ? (
             <>
@@ -216,6 +207,7 @@ export function MaintenanceDetailModal({
                 icon="construct"
                 title="Maintenance"
                 onClose={onClose}
+                backgroundColor={colors.warning}
                 disabled
               />
               <View style={styles.loadingContainer}>
@@ -228,6 +220,7 @@ export function MaintenanceDetailModal({
                 icon="construct"
                 title={maintenance.title}
                 onClose={onClose}
+                backgroundColor={colors.warning}
                 titleNumberOfLines={2}
               />
 
@@ -443,7 +436,6 @@ export function MaintenanceDetailModal({
             </>
           )}
         </View>
-      </View>
 
       {/* Cancel Confirmation Sheet */}
       <ConfirmSheet
@@ -466,19 +458,11 @@ export function MaintenanceDetailModal({
         message={alertSheet.message}
         onDismiss={() => setAlertSheet(prev => ({ ...prev, visible: false }))}
       />
-    </Modal>
+    </SheetModal>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: colors.overlay,
-    justifyContent: 'flex-end',
-  },
-  backdropTouchable: {
-    flex: 1,
-  },
   sheet: {
     backgroundColor: colors.chrome,
     borderTopLeftRadius: borderRadius.xl,
@@ -491,7 +475,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   scrollView: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
   },
   scrollContent: {
     paddingHorizontal: spacing.lg,
@@ -623,36 +608,6 @@ const styles = StyleSheet.create({
   actionsContainer: {
     flexDirection: 'row',
     gap: spacing.md,
-  },
-  actionButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    height: 48,
-    borderRadius: borderRadius.md,
-  },
-  successButton: {
-    backgroundColor: colors.success,
-    ...shadows.md,
-  },
-  dangerButton: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.error,
-  },
-  primaryButtonText: {
-    fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
-    color: colors.textInverse,
-    textTransform: 'uppercase',
-  },
-  dangerButtonText: {
-    fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
-    color: colors.error,
-    textTransform: 'uppercase',
   },
   closedStatus: {
     flexDirection: 'row',

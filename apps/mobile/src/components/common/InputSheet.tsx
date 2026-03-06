@@ -11,6 +11,7 @@ import {
   Keyboard,
 } from 'react-native';
 import type { KeyboardTypeOptions } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 import { Button } from './Button';
@@ -74,8 +75,14 @@ export function InputSheet({
       visible={visible}
       transparent
       animationType="slide"
+      statusBarTranslucent
       onRequestClose={handleCancel}
     >
+      <BlurView
+        intensity={50}
+        tint="dark"
+        style={[StyleSheet.absoluteFillObject, styles.blur]}
+      />
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -139,9 +146,11 @@ const styles = StyleSheet.create({
   keyboardView: {
     flex: 1,
   },
+  blur: {
+    backgroundColor: 'rgba(0,0,30,0.3)',
+  },
   backdrop: {
     flex: 1,
-    backgroundColor: colors.overlay,
     justifyContent: 'flex-end',
   },
   backdropTouchable: {

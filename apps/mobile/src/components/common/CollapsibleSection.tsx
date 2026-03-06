@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   titleFlat: {
-    fontSize: fontSize.sm,
+    fontSize: fontSize.xs,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     textTransform: 'uppercase',

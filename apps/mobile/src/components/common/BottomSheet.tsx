@@ -7,6 +7,7 @@ import {
   type ViewStyle,
   type StyleProp,
 } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { colors } from '../../theme/colors';
 import { spacing, borderRadius } from '../../theme/spacing';
 
@@ -45,8 +46,14 @@ export function BottomSheet({
       visible={visible}
       transparent
       animationType="slide"
+      statusBarTranslucent
       onRequestClose={onDismiss}
     >
+      <BlurView
+        intensity={50}
+        tint="dark"
+        style={[StyleSheet.absoluteFillObject, styles.blur]}
+      />
       <View style={styles.backdrop}>
         <TouchableOpacity
           style={styles.backdropTouchable}
@@ -64,9 +71,11 @@ export function BottomSheet({
 }
 
 const styles = StyleSheet.create({
+  blur: {
+    backgroundColor: 'rgba(0,0,30,0.3)',
+  },
   backdrop: {
     flex: 1,
-    backgroundColor: colors.overlay,
     justifyContent: 'flex-end',
   },
   backdropTouchable: {
