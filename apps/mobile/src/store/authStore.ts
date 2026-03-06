@@ -114,26 +114,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: async () => {
-    set({ isLoading: true });
+    // Reset state BEFORE signOut() to prevent the onAuthStateChange listener
+    // from firing handleSessionExpired() and showing "Session Expired" modal
+    set({
+      user: null,
+      isAuthenticated: false,
+      isLoading: false,
+      error: null,
+      authError: null,
+      autoLoginAttempted: false,
+    });
+
+    await clearSession();
+    eventBus.emit(AppEvents.USER_LOGOUT);
 
     try {
-      // Clear session tokens on logout
-      await clearSession();
-
-      // Emit logout event for other stores to react (e.g., locationStore clears depot)
-      eventBus.emit(AppEvents.USER_LOGOUT);
-
       await signOut();
-      set({
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-        error: null,
-        autoLoginAttempted: false,
-      });
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Logout failed';
-      set({ error: message, isLoading: false });
+      // Best-effort: local auth state is already cleared
+      logger.warn('signOut failed during logout', error);
     }
   },
 
