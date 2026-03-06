@@ -8,11 +8,12 @@ import {
   ScrollView,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { formatRelativeTime, formatAssetNumber } from '@rgr/shared';
 import { LoadingDots, AlertSheet, InputSheet } from '../common';
+import { SheetHeader } from '../common/SheetHeader';
+import { SheetFooter } from '../common/SheetFooter';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
 import { useDefectReport, useUpdateDefectReportStatus } from '../../hooks/useDefectData';
@@ -139,28 +140,30 @@ export function DefectReportDetailModal({
 
     const status = defect.status;
 
-    return (
-      <View style={styles.actionsContainer}>
-        {status === 'reported' && (
-          <>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.primaryButton]}
-              onPress={handleAccept}
-              disabled={!onAcceptPress || updateStatusMutation.isPending}
-            >
-              <Text style={styles.primaryButtonText}>Accept</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.dangerButton]}
-              onPress={handleDismiss}
-              disabled={updateStatusMutation.isPending}
-            >
-              <Text style={styles.dangerButtonText}>Dismiss</Text>
-            </TouchableOpacity>
-          </>
-        )}
+    if (status === 'reported') {
+      return (
+        <View style={styles.actionsContainer}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.primaryButton]}
+            onPress={handleAccept}
+            disabled={!onAcceptPress || updateStatusMutation.isPending}
+          >
+            <Text style={styles.primaryButtonText}>Accept</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.dangerButton]}
+            onPress={handleDismiss}
+            disabled={updateStatusMutation.isPending}
+          >
+            <Text style={styles.dangerButtonText}>Dismiss</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
 
-        {(status === 'accepted' || status === 'resolved' || status === 'dismissed') && (
+    if (status === 'accepted' || status === 'resolved' || status === 'dismissed') {
+      return (
+        <View style={styles.actionsContainer}>
           <View style={styles.closedStatus}>
             <Ionicons
               name={status === 'accepted' ? 'construct' : status === 'resolved' ? 'checkmark-circle' : 'close-circle'}
@@ -171,9 +174,11 @@ export function DefectReportDetailModal({
               {status === 'accepted' ? 'Accepted' : status === 'resolved' ? 'Resolved' : 'Dismissed'}
             </Text>
           </View>
-        )}
-      </View>
-    );
+        </View>
+      );
+    }
+
+    return null;
   };
 
   if (!visible) return null;
@@ -195,40 +200,31 @@ export function DefectReportDetailModal({
         <View style={styles.sheet}>
           {isLoading || !defect ? (
             <>
-              <View style={styles.handle} />
+              <SheetHeader
+                icon="warning"
+                title="Defect Report"
+                onClose={onClose}
+                backgroundColor={colors.warning}
+                disabled
+              />
               <View style={styles.loadingContainer}>
                 <LoadingDots color={colors.textSecondary} size={10} />
               </View>
             </>
           ) : (
             <>
-              {/* Header with gradient extending to top of modal */}
-              <LinearGradient
-                colors={[...colors.warningGradient]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-                style={styles.headerGradient}
-              >
-                <View style={styles.handleLight} />
-                <View style={styles.header}>
-                  <View style={styles.headerTitleRow}>
-                    <Ionicons name="warning" size={32} color={colors.textInverse} />
-                    <Text style={styles.title} numberOfLines={2}>Defect Report</Text>
-                  </View>
-                  <TouchableOpacity
-                    onPress={onClose}
-                    style={styles.headerButton}
-                    accessibilityRole="button"
-                    accessibilityLabel="Close defect report details"
-                  >
-                    <Ionicons name="close" size={28} color={colors.textInverse} />
-                  </TouchableOpacity>
-                </View>
-              </LinearGradient>
+              <SheetHeader
+                icon="warning"
+                title="Defect Report"
+                onClose={onClose}
+                backgroundColor={colors.warning}
+              />
 
               <ScrollView
                 style={styles.scrollView}
-                contentContainerStyle={styles.content}
+                contentContainerStyle={styles.scrollContent}
+                bounces={true}
+                showsVerticalScrollIndicator={false}
               >
                 {/* Asset ID + Asset Link */}
                 <View style={styles.badgeRow}>
@@ -371,10 +367,14 @@ export function DefectReportDetailModal({
                     </View>
                   </View>
                 )}
-
-                {/* Status Actions */}
-                {renderStatusActions()}
               </ScrollView>
+
+              {/* Status Actions pinned in footer */}
+              {renderStatusActions() && (
+                <SheetFooter>
+                  {renderStatusActions()}
+                </SheetFooter>
+              )}
             </>
           )}
         </View>
@@ -415,71 +415,24 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sheet: {
-    backgroundColor: colors.background,
+    backgroundColor: colors.chrome,
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
+    overflow: 'hidden',
     maxHeight: '90%',
-  },
-  handle: {
-    width: 40,
-    height: 4,
-    backgroundColor: colors.border,
-    borderRadius: borderRadius.full,
-    alignSelf: 'center',
-    marginTop: spacing.md,
-  },
-  headerGradient: {
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
-  },
-  handleLight: {
-    width: 40,
-    height: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: borderRadius.full,
-    alignSelf: 'center',
-    marginTop: spacing.md,
   },
   loadingContainer: {
     padding: spacing['3xl'],
     alignItems: 'center',
   },
   scrollView: {
-    flexGrow: 0,
-  },
-  content: {
-    paddingHorizontal: spacing.base,
-    paddingTop: spacing.base,
-    paddingBottom: spacing['2xl'],
-    backgroundColor: colors.chrome,
-    gap: spacing.md,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingLeft: spacing.base,
-    paddingRight: spacing.sm,
-    paddingVertical: spacing.md,
-  },
-  headerTitleRow: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
   },
-  title: {
-    fontSize: fontSize.xl,
-    fontFamily: 'Lato_700Bold',
-    color: colors.textInverse,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  headerButton: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
+  scrollContent: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.base,
+    paddingBottom: spacing.base,
+    gap: spacing.md,
   },
   badgeRow: {
     flexDirection: 'row',
@@ -558,7 +511,6 @@ const styles = StyleSheet.create({
   actionsContainer: {
     flexDirection: 'row',
     gap: spacing.md,
-    marginTop: spacing.md,
   },
   actionButton: {
     flex: 1,

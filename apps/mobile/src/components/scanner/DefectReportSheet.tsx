@@ -13,6 +13,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { formatAssetNumber } from '@rgr/shared';
 import { Button } from '../common/Button';
+import { SheetHeader } from '../common/SheetHeader';
+import { SheetFooter } from '../common/SheetFooter';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 
@@ -78,88 +80,92 @@ function DefectReportSheetComponent({
         />
 
         <View style={styles.sheet}>
-          <View style={styles.handle} />
+          <SheetHeader
+            icon="warning"
+            title="Report Defect"
+            onClose={handleCancel}
+            backgroundColor="#FACC15"
+          />
 
-          <ScrollView style={styles.scrollContent} keyboardShouldPersistTaps="handled">
-            <View style={styles.content}>
-              {/* Header */}
-              <View style={styles.header}>
-                <View style={styles.iconContainer}>
-                  <Ionicons name="warning" size={32} color={colors.warning} />
-                </View>
-                <Text style={styles.title}>Report Defect</Text>
-                <Text style={styles.subtitle}>
-                  Asset <Text style={styles.assetNumber}>{assetNumber ? formatAssetNumber(assetNumber) : assetNumber}</Text>
-                </Text>
-              </View>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            bounces={true}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* Asset info */}
+            <Text style={styles.assetInfo}>
+              Asset <Text style={styles.assetNumber}>{assetNumber ? formatAssetNumber(assetNumber) : assetNumber}</Text>
+            </Text>
 
-              {/* Notes Input */}
-              <View style={styles.inputSection}>
-                <Text style={styles.inputLabel}>Describe the defect</Text>
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="Enter details about the defect, damage, or issue..."
-                  placeholderTextColor={colors.textSecondary}
-                  value={notes}
-                  onChangeText={setNotes}
-                  multiline
-                  numberOfLines={4}
-                  maxLength={2000}
-                  textAlignVertical="top"
-                  autoFocus
-                />
-                <Text style={styles.charCount}>
-                  {notes.length > 0 ? `${notes.length}/2000` : 'Required'}
-                </Text>
-              </View>
-
-              {/* Photo Option (hidden when showPhotoOption is false) */}
-              {showPhotoOption && (
-                <TouchableOpacity
-                  style={[styles.photoOption, wantsPhoto && styles.photoOptionSelected]}
-                  onPress={() => setWantsPhoto(!wantsPhoto)}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.photoOptionIcon}>
-                    <Ionicons
-                      name={wantsPhoto ? "camera" : "camera-outline"}
-                      size={24}
-                      color={wantsPhoto ? colors.electricBlue : colors.textSecondary}
-                    />
-                  </View>
-                  <View style={styles.photoOptionText}>
-                    <Text style={[styles.photoOptionLabel, wantsPhoto && styles.photoOptionLabelSelected]}>
-                      Add Photo of Defect
-                    </Text>
-                    <Text style={styles.photoOptionDescription}>
-                      Capture an image to help identify the issue
-                    </Text>
-                  </View>
-                  <View style={[styles.checkbox, wantsPhoto && styles.checkboxChecked]}>
-                    {wantsPhoto && (
-                      <Ionicons name="checkmark" size={14} color={colors.textInverse} />
-                    )}
-                  </View>
-                </TouchableOpacity>
-              )}
-
-              {/* Buttons */}
-              <View style={styles.buttonRow}>
-                <Button
-                  variant="secondary"
-                  onPress={handleCancel}
-                  disabled={isSubmitting}
-                  flex
-                >
-                  Cancel
-                </Button>
-
-                <Button isLoading={isSubmitting} icon="send" onPress={handleSubmit} disabled={!canSubmit} flex>
-                  Submit Report
-                </Button>
-              </View>
+            {/* Notes Input */}
+            <View style={styles.inputSection}>
+              <Text style={styles.inputLabel}>Describe the defect</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="Enter details about the defect, damage, or issue..."
+                placeholderTextColor={colors.textSecondary}
+                value={notes}
+                onChangeText={setNotes}
+                multiline
+                numberOfLines={4}
+                maxLength={2000}
+                textAlignVertical="top"
+                autoFocus
+              />
+              <Text style={styles.charCount}>
+                {notes.length > 0 ? `${notes.length}/2000` : 'Required'}
+              </Text>
             </View>
+
+            {/* Photo Option (hidden when showPhotoOption is false) */}
+            {showPhotoOption && (
+              <TouchableOpacity
+                style={[styles.photoOption, wantsPhoto && styles.photoOptionSelected]}
+                onPress={() => setWantsPhoto(!wantsPhoto)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.photoOptionIcon}>
+                  <Ionicons
+                    name={wantsPhoto ? "camera" : "camera-outline"}
+                    size={24}
+                    color={wantsPhoto ? colors.electricBlue : colors.textSecondary}
+                  />
+                </View>
+                <View style={styles.photoOptionText}>
+                  <Text style={[styles.photoOptionLabel, wantsPhoto && styles.photoOptionLabelSelected]}>
+                    Add Photo of Defect
+                  </Text>
+                  <Text style={styles.photoOptionDescription}>
+                    Capture an image to help identify the issue
+                  </Text>
+                </View>
+                <View style={[styles.checkbox, wantsPhoto && styles.checkboxChecked]}>
+                  {wantsPhoto && (
+                    <Ionicons name="checkmark" size={14} color={colors.textInverse} />
+                  )}
+                </View>
+              </TouchableOpacity>
+            )}
           </ScrollView>
+
+          <SheetFooter>
+            <View style={styles.buttonRow}>
+              <Button
+                variant="secondary"
+                onPress={handleCancel}
+                disabled={isSubmitting}
+                flex
+              >
+                Cancel
+              </Button>
+
+              <Button isLoading={isSubmitting} icon="send" onPress={handleSubmit} disabled={!canSubmit} flex>
+                Submit Report
+              </Button>
+            </View>
+          </SheetFooter>
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -178,53 +184,27 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sheet: {
-    backgroundColor: colors.background,
+    backgroundColor: colors.chrome,
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
+    overflow: 'hidden',
     maxHeight: '85%',
   },
-  handle: {
-    width: 40,
-    height: 4,
-    backgroundColor: colors.border,
-    borderRadius: borderRadius.full,
-    alignSelf: 'center',
-    marginTop: spacing.md,
+  scrollView: {
+    flex: 1,
   },
   scrollContent: {
-    flexGrow: 0,
-  },
-  content: {
     paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.base,
     paddingTop: spacing.lg,
-    paddingBottom: spacing['2xl'],
   },
 
-  // Header
-  header: {
-    alignItems: 'center',
-    marginBottom: spacing.xl,
-  },
-  iconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: colors.warning + '20',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.md,
-  },
-  title: {
-    fontSize: fontSize['2xl'],
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    marginBottom: spacing.xs,
-    textTransform: 'uppercase',
-  },
-  subtitle: {
+  // Asset info
+  assetInfo: {
     fontSize: fontSize.base,
     fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
+    marginBottom: spacing.lg,
   },
   assetNumber: {
     fontFamily: 'Lato_700Bold',
@@ -271,7 +251,6 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     borderWidth: 1,
     borderColor: colors.border,
-    marginBottom: spacing.xl,
     gap: spacing.md,
   },
   photoOptionSelected: {

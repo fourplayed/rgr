@@ -5,11 +5,14 @@ import {
   Modal,
   TouchableOpacity,
   Switch,
+  ScrollView,
   StyleSheet,
 } from 'react-native';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 import { Button } from '../common/Button';
+import { SheetHeader } from '../common/SheetHeader';
+import { SheetFooter } from '../common/SheetFooter';
 import { useSettingsStore } from '../../store/settingsStore';
 
 interface NotificationsModalProps {
@@ -65,10 +68,14 @@ export function NotificationsModal({ visible, onClose }: NotificationsModalProps
         </View>
 
         <View style={styles.sheet}>
-          <View style={styles.handle} />
+          <SheetHeader icon="notifications" title="Notifications" onClose={onClose} />
 
-          <View style={styles.content}>
-            <Text style={styles.title}>Notifications</Text>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            bounces={true}
+            showsVerticalScrollIndicator={false}
+          >
             <Text style={styles.description}>
               Manage how you receive updates and alerts.
             </Text>
@@ -110,11 +117,13 @@ export function NotificationsModal({ visible, onClose }: NotificationsModalProps
                 disabled={isPushDisabled}
               />
             </View>
+          </ScrollView>
 
+          <SheetFooter>
             <Button onPress={onClose}>
               Done
             </Button>
-          </View>
+          </SheetFooter>
         </View>
       </View>
     </Modal>
@@ -134,44 +143,30 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sheet: {
-    backgroundColor: colors.background,
+    backgroundColor: colors.chrome,
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
-    paddingBottom: spacing['2xl'],
+    overflow: 'hidden',
+    maxHeight: '85%',
   },
-  handle: {
-    width: 40,
-    height: 4,
-    backgroundColor: colors.border,
-    borderRadius: borderRadius.full,
-    alignSelf: 'center',
-    marginTop: spacing.md,
-    marginBottom: spacing.lg,
+  scrollView: {
+    flex: 1,
   },
-  content: {
+  scrollContent: {
     paddingHorizontal: spacing.lg,
-  },
-  title: {
-    fontSize: fontSize['2xl'],
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    textTransform: 'uppercase',
-    textAlign: 'center',
-    letterSpacing: 1,
-    marginBottom: spacing.sm,
+    paddingBottom: spacing.base,
   },
   description: {
     fontSize: fontSize.base,
     fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
-    marginBottom: spacing.lg,
+    marginVertical: spacing.lg,
   },
   toggleList: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
     borderColor: colors.border,
-    marginBottom: spacing.lg,
   },
   toggleRow: {
     flexDirection: 'row',

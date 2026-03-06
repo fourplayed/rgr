@@ -13,6 +13,8 @@ import {
 } from 'react-native';
 import { LoadingDots } from '../common/LoadingDots';
 import { Button } from '../common/Button';
+import { SheetHeader } from '../common/SheetHeader';
+import { SheetFooter } from '../common/SheetFooter';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
@@ -198,185 +200,188 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
         </View>
 
         <View style={styles.sheet}>
-          <View style={styles.handle} />
+          <SheetHeader icon="shield-checkmark" title="Security" onClose={onClose} />
 
-          <ScrollView style={styles.scrollContent} bounces={false}>
-            <View style={styles.content}>
-              <Text style={styles.title}>Security</Text>
-
-              {/* Auto-login Toggle */}
-              <View style={styles.section}>
-                <View style={styles.toggleRow}>
-                  <View style={styles.toggleContent}>
-                    <Text style={styles.toggleTitle}>Stay Signed In</Text>
-                    <Text style={styles.toggleSubtitle}>
-                      Automatically log in when you open the app
-                    </Text>
-                  </View>
-                  {autoLoginLoading ? (
-                    <LoadingDots size={8} />
-                  ) : (
-                    <Switch
-                      value={autoLogin}
-                      onValueChange={handleAutoLoginToggle}
-                      trackColor={{ false: colors.border, true: colors.primary }}
-                      thumbColor={colors.background}
-                    />
-                  )}
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            bounces={true}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Auto-login Toggle */}
+            <View style={styles.section}>
+              <View style={styles.toggleRow}>
+                <View style={styles.toggleContent}>
+                  <Text style={styles.toggleTitle}>Stay Signed In</Text>
+                  <Text style={styles.toggleSubtitle}>
+                    Automatically log in when you open the app
+                  </Text>
                 </View>
-              </View>
-
-              {/* Change Password */}
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Password</Text>
-
-                {!showPasswordForm ? (
-                  <TouchableOpacity
-                    style={styles.changePasswordButton}
-                    onPress={() => setShowPasswordForm(true)}
-                  >
-                    <Ionicons name="key-outline" size={20} color={colors.electricBlue} />
-                    <Text style={styles.changePasswordText}>Change Password</Text>
-                  </TouchableOpacity>
+                {autoLoginLoading ? (
+                  <LoadingDots size={8} />
                 ) : (
-                  <View style={styles.passwordForm}>
-                    {success ? (
-                      <View style={styles.successMessage}>
-                        <Ionicons name="checkmark-circle" size={48} color={colors.success} />
-                        <Text style={styles.successText}>Password updated successfully!</Text>
-                      </View>
-                    ) : (
-                      <>
-                        <View style={styles.inputGroup}>
-                          <Text style={styles.label}>Current Password</Text>
-                          <View style={styles.passwordInputWrapper}>
-                            <TextInput
-                              style={styles.passwordInput}
-                              value={currentPassword}
-                              onChangeText={setCurrentPassword}
-                              placeholder="Enter current password"
-                              placeholderTextColor={colors.textSecondary}
-                              secureTextEntry={!showCurrentPassword}
-                              autoCapitalize="none"
-                              autoCorrect={false}
-                              accessibilityLabel="Current password"
-                            />
-                            <TouchableOpacity
-                              style={styles.eyeButton}
-                              onPress={() => setShowCurrentPassword(!showCurrentPassword)}
-                            >
-                              <Ionicons
-                                name={showCurrentPassword ? 'eye-off-outline' : 'eye-outline'}
-                                size={20}
-                                color={colors.textSecondary}
-                              />
-                            </TouchableOpacity>
-                          </View>
-                        </View>
-
-                        <View style={styles.inputGroup}>
-                          <Text style={styles.label}>New Password</Text>
-                          <View style={styles.passwordInputWrapper}>
-                            <TextInput
-                              style={styles.passwordInput}
-                              value={newPassword}
-                              onChangeText={setNewPassword}
-                              placeholder="Enter new password"
-                              placeholderTextColor={colors.textSecondary}
-                              secureTextEntry={!showNewPassword}
-                              autoCapitalize="none"
-                              autoCorrect={false}
-                              accessibilityLabel="New password"
-                            />
-                            <TouchableOpacity
-                              style={styles.eyeButton}
-                              onPress={() => setShowNewPassword(!showNewPassword)}
-                            >
-                              <Ionicons
-                                name={showNewPassword ? 'eye-off-outline' : 'eye-outline'}
-                                size={20}
-                                color={colors.textSecondary}
-                              />
-                            </TouchableOpacity>
-                          </View>
-
-                          <View style={styles.validationList}>
-                            <ValidationRow label="At least 8 characters" isValid={validation.minLength} />
-                            <ValidationRow label="One uppercase letter" isValid={validation.hasUppercase} />
-                            <ValidationRow label="One lowercase letter" isValid={validation.hasLowercase} />
-                            <ValidationRow label="One number" isValid={validation.hasNumber} />
-                          </View>
-                        </View>
-
-                        <View style={styles.inputGroup}>
-                          <Text style={styles.label}>Confirm New Password</Text>
-                          <View style={styles.passwordInputWrapper}>
-                            <TextInput
-                              style={styles.passwordInput}
-                              value={confirmPassword}
-                              onChangeText={setConfirmPassword}
-                              placeholder="Confirm new password"
-                              placeholderTextColor={colors.textSecondary}
-                              secureTextEntry={!showConfirmPassword}
-                              autoCapitalize="none"
-                              autoCorrect={false}
-                              accessibilityLabel="Confirm new password"
-                            />
-                            <TouchableOpacity
-                              style={styles.eyeButton}
-                              onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                            >
-                              <Ionicons
-                                name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
-                                size={20}
-                                color={colors.textSecondary}
-                              />
-                            </TouchableOpacity>
-                          </View>
-                          {confirmPassword.length > 0 && (
-                            <View style={styles.matchIndicator}>
-                              <Ionicons
-                                name={passwordsMatch ? 'checkmark-circle' : 'close-circle'}
-                                size={16}
-                                color={passwordsMatch ? colors.success : colors.error}
-                              />
-                              <Text
-                                style={[
-                                  styles.matchText,
-                                  passwordsMatch ? styles.matchTextValid : styles.matchTextInvalid,
-                                ]}
-                              >
-                                {passwordsMatch ? 'Passwords match' : 'Passwords do not match'}
-                              </Text>
-                            </View>
-                          )}
-                        </View>
-
-                        {error && <Text style={styles.errorText}>{error}</Text>}
-
-                        <View style={styles.passwordButtonRow}>
-                          <Button
-                            variant="secondary"
-                            onPress={resetPasswordForm}
-                            disabled={isLoading}
-                            flex
-                          >
-                            Cancel
-                          </Button>
-
-                          <Button isLoading={isLoading} onPress={handleChangePassword} flex>Update Password</Button>
-                        </View>
-                      </>
-                    )}
-                  </View>
+                  <Switch
+                    value={autoLogin}
+                    onValueChange={handleAutoLoginToggle}
+                    trackColor={{ false: colors.border, true: colors.primary }}
+                    thumbColor={colors.background}
+                  />
                 )}
               </View>
+            </View>
 
-              <Button onPress={onClose}>
-                Done
-              </Button>
+            {/* Change Password */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Password</Text>
+
+              {!showPasswordForm ? (
+                <TouchableOpacity
+                  style={styles.changePasswordButton}
+                  onPress={() => setShowPasswordForm(true)}
+                >
+                  <Ionicons name="key-outline" size={20} color={colors.electricBlue} />
+                  <Text style={styles.changePasswordText}>Change Password</Text>
+                </TouchableOpacity>
+              ) : (
+                <View style={styles.passwordForm}>
+                  {success ? (
+                    <View style={styles.successMessage}>
+                      <Ionicons name="checkmark-circle" size={48} color={colors.success} />
+                      <Text style={styles.successText}>Password updated successfully!</Text>
+                    </View>
+                  ) : (
+                    <>
+                      <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Current Password</Text>
+                        <View style={styles.passwordInputWrapper}>
+                          <TextInput
+                            style={styles.passwordInput}
+                            value={currentPassword}
+                            onChangeText={setCurrentPassword}
+                            placeholder="Enter current password"
+                            placeholderTextColor={colors.textSecondary}
+                            secureTextEntry={!showCurrentPassword}
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                            accessibilityLabel="Current password"
+                          />
+                          <TouchableOpacity
+                            style={styles.eyeButton}
+                            onPress={() => setShowCurrentPassword(!showCurrentPassword)}
+                          >
+                            <Ionicons
+                              name={showCurrentPassword ? 'eye-off-outline' : 'eye-outline'}
+                              size={20}
+                              color={colors.textSecondary}
+                            />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+
+                      <View style={styles.inputGroup}>
+                        <Text style={styles.label}>New Password</Text>
+                        <View style={styles.passwordInputWrapper}>
+                          <TextInput
+                            style={styles.passwordInput}
+                            value={newPassword}
+                            onChangeText={setNewPassword}
+                            placeholder="Enter new password"
+                            placeholderTextColor={colors.textSecondary}
+                            secureTextEntry={!showNewPassword}
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                            accessibilityLabel="New password"
+                          />
+                          <TouchableOpacity
+                            style={styles.eyeButton}
+                            onPress={() => setShowNewPassword(!showNewPassword)}
+                          >
+                            <Ionicons
+                              name={showNewPassword ? 'eye-off-outline' : 'eye-outline'}
+                              size={20}
+                              color={colors.textSecondary}
+                            />
+                          </TouchableOpacity>
+                        </View>
+
+                        <View style={styles.validationList}>
+                          <ValidationRow label="At least 8 characters" isValid={validation.minLength} />
+                          <ValidationRow label="One uppercase letter" isValid={validation.hasUppercase} />
+                          <ValidationRow label="One lowercase letter" isValid={validation.hasLowercase} />
+                          <ValidationRow label="One number" isValid={validation.hasNumber} />
+                        </View>
+                      </View>
+
+                      <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Confirm New Password</Text>
+                        <View style={styles.passwordInputWrapper}>
+                          <TextInput
+                            style={styles.passwordInput}
+                            value={confirmPassword}
+                            onChangeText={setConfirmPassword}
+                            placeholder="Confirm new password"
+                            placeholderTextColor={colors.textSecondary}
+                            secureTextEntry={!showConfirmPassword}
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                            accessibilityLabel="Confirm new password"
+                          />
+                          <TouchableOpacity
+                            style={styles.eyeButton}
+                            onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                          >
+                            <Ionicons
+                              name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
+                              size={20}
+                              color={colors.textSecondary}
+                            />
+                          </TouchableOpacity>
+                        </View>
+                        {confirmPassword.length > 0 && (
+                          <View style={styles.matchIndicator}>
+                            <Ionicons
+                              name={passwordsMatch ? 'checkmark-circle' : 'close-circle'}
+                              size={16}
+                              color={passwordsMatch ? colors.success : colors.error}
+                            />
+                            <Text
+                              style={[
+                                styles.matchText,
+                                passwordsMatch ? styles.matchTextValid : styles.matchTextInvalid,
+                              ]}
+                            >
+                              {passwordsMatch ? 'Passwords match' : 'Passwords do not match'}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+
+                      {error && <Text style={styles.errorText}>{error}</Text>}
+
+                      <View style={styles.passwordButtonRow}>
+                        <Button
+                          variant="secondary"
+                          onPress={resetPasswordForm}
+                          disabled={isLoading}
+                          flex
+                        >
+                          Cancel
+                        </Button>
+
+                        <Button isLoading={isLoading} onPress={handleChangePassword} flex>Update Password</Button>
+                      </View>
+                    </>
+                  )}
+                </View>
+              )}
             </View>
           </ScrollView>
+
+          <SheetFooter>
+            <Button onPress={onClose}>
+              Done
+            </Button>
+          </SheetFooter>
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -396,35 +401,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sheet: {
-    backgroundColor: colors.background,
+    backgroundColor: colors.chrome,
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
+    overflow: 'hidden',
     maxHeight: '85%',
   },
-  handle: {
-    width: 40,
-    height: 4,
-    backgroundColor: colors.border,
-    borderRadius: borderRadius.full,
-    alignSelf: 'center',
-    marginTop: spacing.md,
-    marginBottom: spacing.lg,
+  scrollView: {
+    flex: 1,
   },
   scrollContent: {
-    flexGrow: 0,
-  },
-  content: {
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing['2xl'],
-  },
-  title: {
-    fontSize: fontSize['2xl'],
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    textTransform: 'uppercase',
-    textAlign: 'center',
-    letterSpacing: 1,
-    marginBottom: spacing.lg,
+    paddingBottom: spacing.base,
   },
   section: {
     marginBottom: spacing.lg,

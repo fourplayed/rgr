@@ -14,6 +14,8 @@ import { Ionicons } from '@expo/vector-icons';
 import type { MaintenancePriority, CreateMaintenanceInput } from '@rgr/shared';
 import { MaintenancePriorityLabels } from '@rgr/shared';
 import { Button } from '../common/Button';
+import { SheetHeader } from '../common/SheetHeader';
+import { SheetFooter } from '../common/SheetFooter';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 import { useAuthStore } from '../../store/authStore';
@@ -139,25 +141,13 @@ export function CreateMaintenanceModal({
         />
 
         <View style={styles.sheet}>
-          <View style={styles.handle} />
-
-          {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.headerButton} />
-            <Text style={styles.headerTitle} numberOfLines={1}>Schedule Maintenance</Text>
-            <TouchableOpacity
-              onPress={onClose}
-              style={styles.headerButton}
-              accessibilityRole="button"
-              accessibilityLabel="Close create maintenance"
-            >
-              <Ionicons name="close" size={28} color={colors.text} />
-            </TouchableOpacity>
-          </View>
+          <SheetHeader icon="construct" title="Schedule Maintenance" onClose={onClose} />
 
           <ScrollView
             style={styles.scrollView}
-            contentContainerStyle={styles.content}
+            contentContainerStyle={styles.scrollContent}
+            bounces={true}
+            showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
 
@@ -330,12 +320,14 @@ export function CreateMaintenanceModal({
             )}
 
             {error && <Text style={styles.errorText}>{error}</Text>}
+          </ScrollView>
 
+          <SheetFooter>
             <View style={styles.buttonRow}>
               <Button variant="secondary" onPress={onClose} disabled={isLoading} flex>Cancel</Button>
               <Button isLoading={isLoading} onPress={handleSubmit} flex>Create</Button>
             </View>
-          </ScrollView>
+          </SheetFooter>
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -352,51 +344,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sheet: {
-    backgroundColor: colors.background,
+    backgroundColor: colors.chrome,
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
+    overflow: 'hidden',
     maxHeight: '90%',
   },
-  handle: {
-    width: 40,
-    height: 4,
-    backgroundColor: colors.border,
-    borderRadius: borderRadius.full,
-    alignSelf: 'center',
-    marginTop: spacing.md,
-  },
   scrollView: {
-    flexGrow: 0,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.base,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    backgroundColor: colors.background,
-  },
-  headerTitle: {
     flex: 1,
-    fontSize: fontSize['2xl'],
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    textAlign: 'center',
   },
-  headerButton: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  content: {
-    paddingHorizontal: spacing.base,
+  scrollContent: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.base,
     paddingTop: spacing.base,
-    paddingBottom: spacing['2xl'],
   },
   inputGroup: {
     marginBottom: spacing.md,
@@ -462,7 +422,6 @@ const styles = StyleSheet.create({
   buttonRow: {
     flexDirection: 'row',
     gap: spacing.md,
-    marginTop: spacing.md,
   },
   defectBanner: {
     flexDirection: 'row',

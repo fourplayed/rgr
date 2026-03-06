@@ -9,11 +9,12 @@ import {
   ScrollView,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { formatRelativeTime, formatAssetNumber } from '@rgr/shared';
 import { LoadingDots, AlertSheet, ConfirmSheet } from '../common';
+import { SheetHeader } from '../common/SheetHeader';
+import { SheetFooter } from '../common/SheetFooter';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
 import { useMaintenance, useUpdateMaintenanceStatus, useUpdateMaintenance } from '../../hooks/useMaintenanceData';
@@ -150,29 +151,31 @@ export function MaintenanceDetailModal({
 
     const status = maintenance.status;
 
-    return (
-      <View style={styles.actionsContainer}>
-        {canMarkMaintenance && (status === 'scheduled' || status === 'in_progress') && (
-          <>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.successButton]}
-              onPress={handleComplete}
-              disabled={updateStatusMutation.isPending}
-            >
-              <Ionicons name="checkmark" size={18} color={colors.textInverse} />
-              <Text style={styles.primaryButtonText}>Mark Complete</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.dangerButton]}
-              onPress={handleCancelMaintenance}
-              disabled={updateStatusMutation.isPending}
-            >
-              <Text style={styles.dangerButtonText}>Cancel</Text>
-            </TouchableOpacity>
-          </>
-        )}
+    if (canMarkMaintenance && (status === 'scheduled' || status === 'in_progress')) {
+      return (
+        <View style={styles.actionsContainer}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.successButton]}
+            onPress={handleComplete}
+            disabled={updateStatusMutation.isPending}
+          >
+            <Ionicons name="checkmark" size={18} color={colors.textInverse} />
+            <Text style={styles.primaryButtonText}>Mark Complete</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.dangerButton]}
+            onPress={handleCancelMaintenance}
+            disabled={updateStatusMutation.isPending}
+          >
+            <Text style={styles.dangerButtonText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
 
-        {(status === 'completed' || status === 'cancelled') && (
+    if (status === 'completed' || status === 'cancelled') {
+      return (
+        <View style={styles.actionsContainer}>
           <View style={styles.closedStatus}>
             <Ionicons
               name={MAINTENANCE_STATUS_CONFIG[status]?.icon ?? 'construct-outline'}
@@ -183,9 +186,11 @@ export function MaintenanceDetailModal({
               {status === 'completed' ? 'Completed' : 'Cancelled'}
             </Text>
           </View>
-        )}
-      </View>
-    );
+        </View>
+      );
+    }
+
+    return null;
   };
 
   if (!visible) return null;
@@ -207,40 +212,30 @@ export function MaintenanceDetailModal({
         <View style={styles.sheet}>
           {isLoading || !maintenance ? (
             <>
-              <View style={styles.handle} />
+              <SheetHeader
+                icon="construct"
+                title="Maintenance"
+                onClose={onClose}
+                disabled
+              />
               <View style={styles.loadingContainer}>
                 <LoadingDots color={colors.textSecondary} size={10} />
               </View>
             </>
           ) : (
             <>
-              {/* Header with gradient */}
-              <LinearGradient
-                colors={[...colors.brandGradientHeader]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-                style={styles.headerGradient}
-              >
-                <View style={styles.handleLight} />
-                <View style={styles.header}>
-                  <View style={styles.headerTitleRow}>
-                    <Ionicons name="construct-outline" size={32} color={colors.textInverse} />
-                    <Text style={styles.title} numberOfLines={2}>{maintenance.title}</Text>
-                  </View>
-                  <TouchableOpacity
-                    onPress={onClose}
-                    style={styles.headerButton}
-                    accessibilityRole="button"
-                    accessibilityLabel="Close maintenance details"
-                  >
-                    <Ionicons name="close" size={28} color={colors.textInverse} />
-                  </TouchableOpacity>
-                </View>
-              </LinearGradient>
+              <SheetHeader
+                icon="construct"
+                title={maintenance.title}
+                onClose={onClose}
+                titleNumberOfLines={2}
+              />
 
               <ScrollView
                 style={styles.scrollView}
-                contentContainerStyle={styles.content}
+                contentContainerStyle={styles.scrollContent}
+                bounces={true}
+                showsVerticalScrollIndicator={false}
               >
                 {/* Info Row: Asset Number + View Asset */}
                 <View style={styles.infoRow}>
@@ -437,10 +432,14 @@ export function MaintenanceDetailModal({
                     </View>
                   </View>
                 )}
-
-                {/* Status Actions */}
-                {renderStatusActions()}
               </ScrollView>
+
+              {/* Status Actions pinned in footer */}
+              {renderStatusActions() && (
+                <SheetFooter>
+                  {renderStatusActions()}
+                </SheetFooter>
+              )}
             </>
           )}
         </View>
@@ -481,72 +480,24 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sheet: {
-    backgroundColor: colors.background,
+    backgroundColor: colors.chrome,
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
+    overflow: 'hidden',
     maxHeight: '90%',
-  },
-  handle: {
-    width: 40,
-    height: 4,
-    backgroundColor: colors.border,
-    borderRadius: borderRadius.full,
-    alignSelf: 'center',
-    marginTop: spacing.md,
-  },
-  headerGradient: {
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
-  },
-  handleLight: {
-    width: 40,
-    height: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: borderRadius.full,
-    alignSelf: 'center',
-    marginTop: spacing.md,
   },
   loadingContainer: {
     padding: spacing['3xl'],
     alignItems: 'center',
   },
   scrollView: {
-    flexGrow: 0,
+    flex: 1,
   },
-  content: {
-    paddingHorizontal: spacing.base,
+  scrollContent: {
+    paddingHorizontal: spacing.lg,
     paddingTop: spacing.base,
-    paddingBottom: spacing['2xl'],
-    backgroundColor: colors.chrome,
+    paddingBottom: spacing.base,
     gap: spacing.md,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingLeft: spacing.base,
-    paddingRight: spacing.sm,
-    paddingVertical: spacing.md,
-  },
-  headerTitleRow: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  title: {
-    flex: 1,
-    fontSize: fontSize.xl,
-    fontFamily: 'Lato_700Bold',
-    color: colors.textInverse,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  headerButton: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   infoRow: {
     flexDirection: 'row',
@@ -672,7 +623,6 @@ const styles = StyleSheet.create({
   actionsContainer: {
     flexDirection: 'row',
     gap: spacing.md,
-    marginTop: spacing.md,
   },
   actionButton: {
     flex: 1,
@@ -682,10 +632,6 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     height: 48,
     borderRadius: borderRadius.md,
-  },
-  primaryButton: {
-    backgroundColor: colors.primary,
-    ...shadows.md,
   },
   successButton: {
     backgroundColor: colors.success,

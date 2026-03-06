@@ -13,6 +13,8 @@ import {
 } from 'react-native';
 import type { Depot, CreateDepotInput, UpdateDepotInput } from '@rgr/shared';
 import { Button } from '../common/Button';
+import { SheetHeader } from '../common/SheetHeader';
+import { SheetFooter } from '../common/SheetFooter';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 import { useSubmitGuard } from '../../hooks/useSubmitGuard';
@@ -111,17 +113,19 @@ export function DepotFormSheet({
         />
 
         <View style={styles.sheet}>
-          <View style={styles.handle} />
+          <SheetHeader
+            icon="business"
+            title={isEdit ? 'Edit Depot' : 'Create Depot'}
+            onClose={onClose}
+          />
 
           <ScrollView
             style={styles.scrollView}
-            contentContainerStyle={styles.content}
+            contentContainerStyle={styles.scrollContent}
+            bounces={true}
+            showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            <Text style={styles.title}>
-              {isEdit ? 'Edit Depot' : 'Create Depot'}
-            </Text>
-
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Name *</Text>
               <TextInput
@@ -174,7 +178,9 @@ export function DepotFormSheet({
             </View>
 
             {error && <Text style={styles.errorText}>{error}</Text>}
+          </ScrollView>
 
+          <SheetFooter>
             <View style={styles.buttonRow}>
               <Button
                 variant="secondary"
@@ -189,7 +195,7 @@ export function DepotFormSheet({
                 {isEdit ? 'Save' : 'Create'}
               </Button>
             </View>
-          </ScrollView>
+          </SheetFooter>
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -206,33 +212,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sheet: {
-    backgroundColor: colors.background,
+    backgroundColor: colors.chrome,
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
+    overflow: 'hidden',
     maxHeight: '85%',
   },
-  handle: {
-    width: 40,
-    height: 4,
-    backgroundColor: colors.border,
-    borderRadius: borderRadius.full,
-    alignSelf: 'center',
-    marginTop: spacing.md,
-  },
   scrollView: {
-    flexGrow: 0,
+    flex: 1,
   },
-  content: {
-    padding: spacing.lg,
-    paddingBottom: spacing['2xl'],
-  },
-  title: {
-    fontSize: fontSize['2xl'],
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    textTransform: 'uppercase',
-    textAlign: 'center',
-    marginBottom: spacing.lg,
+  scrollContent: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.base,
+    paddingTop: spacing.lg,
   },
   inputGroup: {
     marginBottom: spacing.base,
@@ -271,6 +263,5 @@ const styles = StyleSheet.create({
   buttonRow: {
     flexDirection: 'row',
     gap: spacing.md,
-    marginTop: spacing.sm,
   },
 });

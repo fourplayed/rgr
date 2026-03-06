@@ -5,11 +5,14 @@ import {
   Modal,
   TouchableOpacity,
   TextInput,
+  ScrollView,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { Button } from '../common/Button';
+import { SheetHeader } from '../common/SheetHeader';
+import { SheetFooter } from '../common/SheetFooter';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 import { useAuthStore } from '../../store/authStore';
@@ -79,11 +82,15 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
         </View>
 
         <View style={styles.sheet}>
-          <View style={styles.handle} />
+          <SheetHeader icon="person" title="Edit Profile" onClose={onClose} />
 
-          <View style={styles.content}>
-            <Text style={styles.title}>Edit Profile</Text>
-
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            bounces={true}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Full Name</Text>
               <TextInput
@@ -113,7 +120,9 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
             </View>
 
             {error && <Text style={styles.errorText}>{error}</Text>}
+          </ScrollView>
 
+          <SheetFooter>
             <View style={styles.buttonRow}>
               <Button
                 variant="secondary"
@@ -126,7 +135,7 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
 
               <Button isLoading={isLoading} onPress={handleSave} flex>Save</Button>
             </View>
-          </View>
+          </SheetFooter>
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -146,31 +155,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sheet: {
-    backgroundColor: colors.background,
+    backgroundColor: colors.chrome,
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
-    paddingBottom: spacing['2xl'],
+    overflow: 'hidden',
+    maxHeight: '85%',
   },
-  handle: {
-    width: 40,
-    height: 4,
-    backgroundColor: colors.border,
-    borderRadius: borderRadius.full,
-    alignSelf: 'center',
-    marginTop: spacing.md,
-    marginBottom: spacing.lg,
+  scrollView: {
+    flex: 1,
   },
-  content: {
+  scrollContent: {
     paddingHorizontal: spacing.lg,
-  },
-  title: {
-    fontSize: fontSize['2xl'],
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    textTransform: 'uppercase',
-    textAlign: 'center',
-    letterSpacing: 1,
-    marginBottom: spacing.lg,
+    paddingBottom: spacing.base,
+    paddingTop: spacing.lg,
   },
   inputGroup: {
     marginBottom: spacing.md,
@@ -203,6 +200,5 @@ const styles = StyleSheet.create({
   buttonRow: {
     flexDirection: 'row',
     gap: spacing.md,
-    marginTop: spacing.md,
   },
 });

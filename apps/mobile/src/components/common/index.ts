@@ -18,3 +18,5 @@ export { SteppedProgressOverlay } from './SteppedProgressOverlay';
 export { SegmentedTabs } from './SegmentedTabs';
 export { TutorialSheet } from './TutorialSheet';
 export type { TutorialSheetProps } from './TutorialSheet';
+export { SheetHeader } from './SheetHeader';
+export { SheetFooter } from './SheetFooter';
