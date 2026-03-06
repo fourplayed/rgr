@@ -1,14 +1,22 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
+import React, { useEffect, useRef, useMemo } from 'react';
+import {
+  Text,
+  StyleSheet,
+  Animated,
+  TouchableWithoutFeedback,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { fontSize, spacing, borderRadius } from '../../theme/spacing';
+import { fontSize, spacing } from '../../theme/spacing';
 
-const DISPLAY_DURATION = 1200;
 const FADE_DURATION = 200;
+const STAGGER_DELAY = 400;
+const HINT_DELAY = 500;
+const MAX_ITEMS = 5;
 
 interface ScanSuccessFlashProps {
   visible: boolean;
   assetNumber: string;
+  depotName: string | null;
   photoCompleted: boolean;
   defectCompleted: boolean;
   maintenanceCompleted: boolean;
@@ -18,74 +26,224 @@ interface ScanSuccessFlashProps {
 export function ScanSuccessFlash({
   visible,
   assetNumber,
+  depotName,
   photoCompleted,
   defectCompleted,
   maintenanceCompleted,
   onDismiss,
 }: ScanSuccessFlashProps) {
-  const opacity = useRef(new Animated.Value(0)).current;
+  const overlayOpacity = useRef(new Animated.Value(0)).current;
+  const hintOpacity = useRef(new Animated.Value(0)).current;
   const onDismissRef = useRef(onDismiss);
-  useEffect(() => { onDismissRef.current = onDismiss; }, [onDismiss]);
+  const dismissingRef = useRef(false);
+
+  useEffect(() => {
+    onDismissRef.current = onDismiss;
+  }, [onDismiss]);
+
+  // Header animated values (checkmark icon + asset number)
+  const headerOpacity = useRef(new Animated.Value(0)).current;
+  const headerTranslateY = useRef(new Animated.Value(8)).current;
+
+  // Pre-allocate animated value sets for max possible items
+  const rowAnims = useRef(
+    Array.from({ length: MAX_ITEMS }, () => ({
+      opacity: new Animated.Value(0),
+      translateY: new Animated.Value(8),
+      translateX: new Animated.Value(0),
+      checkScale: new Animated.Value(0),
+    })),
+  ).current;
+
+  const checklistItems = useMemo(() => {
+    const items: string[] = ['Scan recorded'];
+    if (depotName) items.push(`Location updated to ${depotName}`);
+    if (photoCompleted) items.push('Photo captured');
+    if (defectCompleted) items.push('Defect report submitted');
+    if (maintenanceCompleted) items.push('Maintenance task created');
+    return items;
+  }, [depotName, photoCompleted, defectCompleted, maintenanceCompleted]);
 
   useEffect(() => {
     if (!visible) {
-      opacity.setValue(0);
+      // Reset all values
+      overlayOpacity.setValue(0);
+      hintOpacity.setValue(0);
+      headerOpacity.setValue(0);
+      headerTranslateY.setValue(8);
+      dismissingRef.current = false;
+      rowAnims.forEach(({ opacity, translateY, translateX, checkScale }) => {
+        opacity.setValue(0);
+        translateY.setValue(8);
+        translateX.setValue(0);
+        checkScale.setValue(0);
+      });
       return;
     }
 
-    // Fade in
-    Animated.timing(opacity, {
+    // 1. Fade in overlay
+    Animated.timing(overlayOpacity, {
       toValue: 1,
       duration: FADE_DURATION,
       useNativeDriver: true,
-    }).start();
+    }).start(() => {
+      // 2. Fade in header (checkmark + asset number)
+      Animated.parallel([
+        Animated.timing(headerOpacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(headerTranslateY, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        // 3. Stagger each checklist row
+        const rowAnimations = checklistItems.map((_, i) => {
+          const { opacity, translateY, checkScale } = rowAnims[i]!;
+          return Animated.parallel([
+            Animated.timing(opacity, {
+              toValue: 1,
+              duration: 400,
+              useNativeDriver: true,
+            }),
+            Animated.timing(translateY, {
+              toValue: 0,
+              duration: 400,
+              useNativeDriver: true,
+            }),
+            // Checkmark spring starts 50ms after row begins
+            Animated.sequence([
+              Animated.delay(50),
+              Animated.spring(checkScale, {
+                toValue: 1,
+                friction: 5,
+                tension: 100,
+                useNativeDriver: true,
+              }),
+            ]),
+          ]);
+        });
 
-    // Auto-dismiss: hold, then fade out
-    const timer = setTimeout(() => {
-      Animated.timing(opacity, {
+        Animated.stagger(STAGGER_DELAY, rowAnimations).start(() => {
+          // 4. Show "Tap to continue" hint after last item
+          Animated.timing(hintOpacity, {
+            toValue: 1,
+            duration: FADE_DURATION,
+            delay: HINT_DELAY,
+            useNativeDriver: true,
+          }).start();
+        });
+      });
+    });
+  }, [visible, overlayOpacity, hintOpacity, headerOpacity, headerTranslateY, rowAnims, checklistItems]);
+
+  const handleTap = () => {
+    if (dismissingRef.current) return;
+    dismissingRef.current = true;
+
+    // Phase 1 — Scatter rows out (alternating left/right, staggered 80ms)
+    const scatterRows = Animated.stagger(
+      80,
+      checklistItems.map((_, i) => {
+        const { opacity, translateX } = rowAnims[i]!;
+        const direction = i % 2 === 0 ? -200 : 200; // even=left, odd=right
+        return Animated.parallel([
+          Animated.timing(opacity, {
+            toValue: 0,
+            duration: 250,
+            useNativeDriver: true,
+          }),
+          Animated.timing(translateX, {
+            toValue: direction,
+            duration: 250,
+            useNativeDriver: true,
+          }),
+        ]);
+      }),
+    );
+
+    // Phase 2 — Slide header up + fade (starts ~100ms after rows begin)
+    const slideHeader = Animated.sequence([
+      Animated.delay(100),
+      Animated.parallel([
+        Animated.timing(headerOpacity, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(headerTranslateY, {
+          toValue: -20,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]),
+    ]);
+
+    // Phase 3 — Fade hint immediately (parallel with phase 1)
+    const fadeHint = Animated.timing(hintOpacity, {
+      toValue: 0,
+      duration: 150,
+      useNativeDriver: true,
+    });
+
+    // Run phases 1, 2, 3 in parallel, then phase 4 — fade green background
+    Animated.parallel([scatterRows, slideHeader, fadeHint]).start(() => {
+      Animated.timing(overlayOpacity, {
         toValue: 0,
-        duration: FADE_DURATION,
+        duration: 200,
         useNativeDriver: true,
       }).start(({ finished }) => {
         if (finished) onDismissRef.current();
       });
-    }, DISPLAY_DURATION);
-
-    return () => clearTimeout(timer);
-  }, [visible, opacity]);
+    });
+  };
 
   if (!visible) return null;
 
-  const hasChips = photoCompleted || defectCompleted || maintenanceCompleted;
-
   return (
-    <Animated.View style={[styles.overlay, { opacity }]} pointerEvents="none">
-      <Ionicons name="checkmark-circle" size={64} color="#fff" />
-      <Text style={styles.assetNumber}>{assetNumber}</Text>
-      <Text style={styles.subtitle}>Scanned</Text>
-      {hasChips && (
-        <View style={styles.chipRow}>
-          {photoCompleted && (
-            <View style={styles.chip}>
-              <Ionicons name="checkmark" size={14} color="#fff" />
-              <Text style={styles.chipText}>Photo</Text>
-            </View>
-          )}
-          {defectCompleted && (
-            <View style={styles.chip}>
-              <Ionicons name="checkmark" size={14} color="#fff" />
-              <Text style={styles.chipText}>Defect</Text>
-            </View>
-          )}
-          {maintenanceCompleted && (
-            <View style={styles.chip}>
-              <Ionicons name="checkmark" size={14} color="#fff" />
-              <Text style={styles.chipText}>Maintenance</Text>
-            </View>
-          )}
-        </View>
-      )}
-    </Animated.View>
+    <TouchableWithoutFeedback onPress={handleTap}>
+      <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]}>
+        <Animated.View
+          style={[
+            styles.header,
+            {
+              opacity: headerOpacity,
+              transform: [{ translateY: headerTranslateY }],
+            },
+          ]}
+        >
+          <Ionicons name="checkmark-circle" size={64} color="#fff" />
+          <Text style={styles.assetNumber}>{assetNumber}</Text>
+        </Animated.View>
+
+        <Animated.View style={styles.checklist}>
+          {checklistItems.map((label, i) => {
+            const { opacity, translateY, translateX, checkScale } = rowAnims[i]!;
+            return (
+              <Animated.View
+                key={label}
+                style={[
+                  styles.checkRow,
+                  { opacity, transform: [{ translateY }, { translateX }] },
+                ]}
+              >
+                <Animated.View style={{ transform: [{ scale: checkScale }] }}>
+                  <Ionicons name="checkmark-circle" size={22} color="#fff" />
+                </Animated.View>
+                <Text style={styles.checkText}>{label}</Text>
+              </Animated.View>
+            );
+          })}
+        </Animated.View>
+
+        <Animated.Text style={[styles.hint, { opacity: hintOpacity }]}>
+          Tap to continue
+        </Animated.Text>
+      </Animated.View>
+    </TouchableWithoutFeedback>
   );
 }
 
@@ -97,35 +255,36 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 999,
   },
+  header: {
+    alignItems: 'center',
+  },
   assetNumber: {
     fontSize: fontSize['2xl'],
     fontFamily: 'Lato_700Bold',
     color: '#fff',
     marginTop: spacing.lg,
+    marginBottom: spacing.xl,
   },
-  subtitle: {
-    fontSize: fontSize.lg,
-    fontFamily: 'Lato_400Regular',
-    color: 'rgba(255, 255, 255, 0.85)',
-    marginTop: spacing.xs,
+  checklist: {
+    gap: 12,
+    paddingHorizontal: spacing['2xl'],
   },
-  chipRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.xl,
-  },
-  chip: {
+  checkRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.full,
+    gap: 8,
   },
-  chipText: {
-    fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+  checkText: {
+    fontSize: fontSize.base,
+    fontFamily: 'Lato_400Regular',
     color: '#fff',
+    flexShrink: 1,
+  },
+  hint: {
+    position: 'absolute',
+    bottom: 60,
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_400Regular',
+    color: 'rgba(255, 255, 255, 0.7)',
   },
 });
