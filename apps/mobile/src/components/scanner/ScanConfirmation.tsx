@@ -18,11 +18,7 @@ import type { MatchedDepot } from '../../hooks/scan/useScanActionFlow';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-export type ConfirmActions = {
-  photo: boolean;
-  defect: boolean;
-  maintenance: boolean;
-};
+export type ConfirmAction = 'photo' | 'defect' | 'maintenance' | null;
 
 type ScanConfirmationProps =
   | {
@@ -30,7 +26,7 @@ type ScanConfirmationProps =
       asset: Asset;
       matchedDepot: MatchedDepot | null;
       isCreating: boolean;
-      onConfirm: (actions: ConfirmActions) => void;
+      onConfirm: (action: ConfirmAction) => void;
       onUndoPress: () => void;
       photoCompleted: boolean;
       disabled: boolean;
@@ -41,10 +37,11 @@ type ScanConfirmationProps =
       asset: Asset;
       matchedDepot: MatchedDepot | null;
       isCreating: boolean;
-      onConfirm: (actions: ConfirmActions) => void;
+      onConfirm: (action: ConfirmAction) => void;
       onUndoPress: () => void;
       photoCompleted: boolean;
       defectCompleted: boolean;
+      maintenanceCompleted: boolean;
       disabled: boolean;
       assessment?: string | null;
     };
@@ -52,7 +49,7 @@ type ScanConfirmationProps =
 // ── Component ────────────────────────────────────────────────────────────────
 
 function ScanConfirmationComponent(props: ScanConfirmationProps) {
-  const { asset, matchedDepot, disabled } = props;
+  const { asset, matchedDepot, disabled, isCreating } = props;
 
   // Build AssetWithRelations for AssetInfoCard
   const assetWithRelations: AssetWithRelations = {
@@ -64,15 +61,38 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
     photoCount: 0,
   };
 
-  // Checkbox state for queued actions
-  const [selectedPhoto, setSelectedPhoto] = useState(false);
-  const [selectedDefect, setSelectedDefect] = useState(false);
-  const [selectedMaintenance, setSelectedMaintenance] = useState(false);
+  // Single-select action state (radio behavior)
+  const [selectedAction, setSelectedAction] = useState<ConfirmAction>(null);
+
+  const toggleAction = (action: ConfirmAction) => {
+    setSelectedAction(prev => (prev === action ? null : action));
+  };
+
+  // Derive completed states
+  const defectCompleted = props.variant === 'mechanic' ? props.defectCompleted : false;
+  const maintenanceCompleted = props.variant === 'mechanic' ? props.maintenanceCompleted : false;
+
+  // Button color matches selected action
+  const buttonColor = selectedAction === 'maintenance'
+    ? colors.warning
+    : selectedAction === 'defect'
+      ? '#FACC15'
+      : selectedAction === 'photo'
+        ? colors.violet
+        : colors.success;
+
+  // Loading state during scan creation
+  const isLoading = isCreating && disabled;
+  const buttonLabel = isLoading
+    ? 'Creating scan...'
+    : selectedAction
+      ? 'CONFIRM'
+      : 'DONE';
 
   return (
     <View style={styles.container}>
       {/* ── Header bar ── */}
-      <SheetHeader icon="cube" title="Asset Found" onClose={props.onUndoPress} disabled={disabled} />
+      <SheetHeader icon="cube" title="Asset Found" onClose={props.onUndoPress} />
 
       {/* ── Scrollable content ── */}
       <ScrollView
@@ -103,16 +123,16 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
 
       {/* ── Pinned footer (outside ScrollView) ── */}
       <SheetFooter>
-        {/* Action checkboxes */}
+        {/* Action options (single-select radio) */}
         <Text style={styles.checkboxSectionTitle}>Role Specific Options</Text>
         <View style={styles.checkboxList}>
           <CheckboxOption
             icon="camera"
             label="Photo"
             description="Capture a photo of the asset for visual records and condition tracking"
-            checked={props.photoCompleted || selectedPhoto}
+            checked={props.photoCompleted || selectedAction === 'photo'}
             completed={props.photoCompleted}
-            onToggle={() => setSelectedPhoto(v => !v)}
+            onToggle={() => toggleAction('photo')}
             disabled={disabled || props.photoCompleted}
             accentColor={colors.violet}
           />
@@ -122,20 +142,20 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
                 icon="warning"
                 label="Defect"
                 description="Log a defect report including severity, description, and optional photo evidence"
-                checked={props.defectCompleted || selectedDefect}
-                completed={props.defectCompleted}
-                onToggle={() => setSelectedDefect(v => !v)}
-                disabled={disabled || props.defectCompleted}
+                checked={defectCompleted || selectedAction === 'defect'}
+                completed={defectCompleted}
+                onToggle={() => toggleAction('defect')}
+                disabled={disabled || defectCompleted}
                 accentColor={'#FACC15'}
               />
               <CheckboxOption
                 icon="construct"
                 label="Maintenance"
                 description="Schedule a maintenance task with priority, assignee, and work details"
-                checked={selectedMaintenance}
-                completed={false}
-                onToggle={() => setSelectedMaintenance(v => !v)}
-                disabled={disabled}
+                checked={maintenanceCompleted || selectedAction === 'maintenance'}
+                completed={maintenanceCompleted}
+                onToggle={() => toggleAction('maintenance')}
+                disabled={disabled || maintenanceCompleted}
                 accentColor={colors.warning}
               />
             </>
@@ -143,36 +163,16 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
         </View>
 
         {/* Done / Confirm button */}
-        {(() => {
-          const hasNewPhoto = selectedPhoto && !props.photoCompleted;
-          const hasNewDefect = props.variant === 'mechanic' ? selectedDefect && !props.defectCompleted : false;
-          const hasNewMaintenance = props.variant === 'mechanic' ? selectedMaintenance : false;
-          const hasSelection = hasNewPhoto || hasNewDefect || hasNewMaintenance;
-          const buttonColor = hasNewMaintenance
-            ? colors.warning
-            : hasNewDefect
-              ? '#FACC15'
-              : hasNewPhoto
-                ? colors.violet
-                : colors.success;
-          return (
-            <Button
-              onPress={() => {
-                props.onConfirm({
-                  photo: hasNewPhoto,
-                  defect: hasNewDefect,
-                  maintenance: hasNewMaintenance,
-                });
-              }}
-              disabled={disabled}
-              style={styles.confirmButton}
-              color={buttonColor}
-              accessibilityLabel={hasSelection ? 'Confirm' : 'Done'}
-            >
-              {hasSelection ? 'CONFIRM' : 'DONE'}
-            </Button>
-          );
-        })()}
+        <Button
+          onPress={() => props.onConfirm(selectedAction)}
+          disabled={disabled}
+          isLoading={isLoading}
+          style={styles.confirmButton}
+          color={buttonColor}
+          accessibilityLabel={selectedAction ? 'Confirm' : 'Done'}
+        >
+          {buttonLabel}
+        </Button>
 
       </SheetFooter>
     </View>
@@ -205,8 +205,8 @@ function CheckboxOption({
   const checkboxIcon = completed
     ? 'checkmark-circle'
     : checked
-      ? 'checkbox'
-      : 'square-outline';
+      ? 'radio-button-on'
+      : 'radio-button-off';
 
   return (
     <TouchableOpacity
@@ -218,7 +218,7 @@ function CheckboxOption({
       onPress={onToggle}
       disabled={disabled}
       activeOpacity={0.7}
-      accessibilityRole="checkbox"
+      accessibilityRole="radio"
       accessibilityLabel={label}
       accessibilityState={{ checked, disabled }}
     >

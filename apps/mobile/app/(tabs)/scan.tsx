@@ -14,7 +14,7 @@ import { useUserPermissions } from '../../src/contexts/UserPermissionsContext';
 import { useScanActionFlow } from '../../src/hooks/scan/useScanActionFlow';
 import { useAssetAssessment } from '../../src/hooks/useAssetAssessment';
 import { PermissionScreen, CameraOverlay, ScanConfirmation, ScanSuccessFlash } from '../../src/components/scanner';
-import type { ConfirmActions } from '../../src/components/scanner/ScanConfirmation';
+import type { ConfirmAction } from '../../src/components/scanner/ScanConfirmation';
 import { DefectReportSheet } from '../../src/components/scanner/DefectReportSheet';
 import { CameraCapture } from '../../src/components/photos';
 import { CreateMaintenanceModal, DefectReportDetailModal, MaintenanceDetailModal } from '../../src/components/maintenance';
@@ -31,29 +31,6 @@ export default function ScanScreen() {
   const hasHydrated = useTutorialStore(s => s._hasHydrated);
   const markSeen = useTutorialStore(s => s.markSeen);
   const [showScanTutorial, setShowScanTutorial] = useState(false);
-
-  // ── Bottom sheet animation state ──
-  const { height: SCREEN_HEIGHT } = useWindowDimensions();
-  const backdropOpacity = useRef(new Animated.Value(0)).current;
-  const sheetTranslateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
-  const [isPanelMounted, setIsPanelMounted] = useState(false);
-  const lastAssetRef = useRef(scannedAsset);
-
-  // Preserve asset content during exit animation
-  if (scannedAsset) {
-    lastAssetRef.current = scannedAsset;
-  }
-
-  // ── Success flash state ──
-  const [successFlash, setSuccessFlash] = useState<{
-    assetNumber: string;
-    photoCompleted: boolean;
-    defectCompleted: boolean;
-  } | null>(null);
-
-  // ── Context detail modal state ──
-  const [contextDefectId, setContextDefectId] = useState<string | null>(null);
-  const [contextMaintenanceId, setContextMaintenanceId] = useState<string | null>(null);
 
   // ── Unified scan flow hook ──
 
@@ -72,6 +49,7 @@ export default function ScanScreen() {
     handleTaskPress,
     photoCompleted,
     defectCompleted,
+    maintenanceCompleted,
     buttonsDisabled,
     showCard,
     handleBarCodeScanned,
@@ -93,6 +71,30 @@ export default function ScanScreen() {
     setAlertSheet,
     triggerDebugScan,
   } = flow;
+
+  // ── Bottom sheet animation state ──
+  const { height: SCREEN_HEIGHT } = useWindowDimensions();
+  const backdropOpacity = useRef(new Animated.Value(0)).current;
+  const sheetTranslateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+  const [isPanelMounted, setIsPanelMounted] = useState(false);
+  const lastAssetRef = useRef(scannedAsset);
+
+  // Preserve asset content during exit animation
+  if (scannedAsset) {
+    lastAssetRef.current = scannedAsset;
+  }
+
+  // ── Success flash state ──
+  const [successFlash, setSuccessFlash] = useState<{
+    assetNumber: string;
+    photoCompleted: boolean;
+    defectCompleted: boolean;
+    maintenanceCompleted: boolean;
+  } | null>(null);
+
+  // ── Context detail modal state ──
+  const [contextDefectId, setContextDefectId] = useState<string | null>(null);
+  const [contextMaintenanceId, setContextMaintenanceId] = useState<string | null>(null);
 
   // ── Asset assessment (lazy-loaded when asset is scanned) ──
   const assessment = useAssetAssessment(scannedAsset, matchedDepot);
@@ -176,76 +178,61 @@ export default function ScanScreen() {
     }
   }, [showCard, backdropOpacity, sheetTranslateY, SCREEN_HEIGHT]);
 
-  // ── Action queue (confirm triggers checked actions sequentially) ──
+  // ── Single-action confirm flow ──
 
-  const pendingActionsRef = useRef<Array<'photo' | 'defect' | 'maintenance'>>([]);
+  const confirmedActionRef = useRef<ConfirmAction>(null);
   const prevActiveSheetRef = useRef(activeSheet);
 
   const finishConfirmFlow = useCallback(() => {
-    // Capture completed actions for success flash, then reset
     if (scannedAsset) {
       setSuccessFlash({
         assetNumber: scannedAsset.assetNumber,
         photoCompleted,
         defectCompleted,
+        maintenanceCompleted,
       });
     }
     setContextDefectId(null);
     setContextMaintenanceId(null);
+    confirmedActionRef.current = null;
     handleDonePress();
-  }, [handleDonePress, scannedAsset, photoCompleted, defectCompleted]);
+  }, [handleDonePress, scannedAsset, photoCompleted, defectCompleted, maintenanceCompleted]);
 
-  const processNextAction = useCallback(() => {
-    if (pendingActionsRef.current.length === 0) {
-      finishConfirmFlow();
-      return;
-    }
-    const next = pendingActionsRef.current.shift()!;
-    if (next === 'photo') handlePhotoPress();
-    else if (next === 'defect') handleDefectPress();
-    else if (next === 'maintenance') handleTaskPress();
-  }, [finishConfirmFlow, handlePhotoPress, handleDefectPress, handleTaskPress]);
-
-  // Advance queue when a sheet closes
+  // When a sheet closes after a confirmed action, go to success flash
   useEffect(() => {
     const wasOpen = prevActiveSheetRef.current !== null;
     const nowClosed = activeSheet === null;
     prevActiveSheetRef.current = activeSheet;
-    if (wasOpen && nowClosed && pendingActionsRef.current.length > 0) {
-      processNextAction();
+    if (wasOpen && nowClosed && confirmedActionRef.current !== null) {
+      finishConfirmFlow();
     }
-  }, [activeSheet, processNextAction]);
+  }, [activeSheet, finishConfirmFlow]);
 
-  const handleConfirmWithActions = useCallback((actions: ConfirmActions) => {
-    const queue: Array<'photo' | 'defect' | 'maintenance'> = [];
-    if (actions.photo) queue.push('photo');
-    if (actions.defect) queue.push('defect');
-    if (actions.maintenance) queue.push('maintenance');
-
-    if (queue.length === 0) {
+  const handleConfirm = useCallback((action: ConfirmAction) => {
+    if (action === null) {
       finishConfirmFlow();
       return;
     }
-
-    // Store remaining actions, trigger the first one
-    pendingActionsRef.current = queue.slice(1);
-    const first = queue[0];
-    if (first === 'photo') handlePhotoPress();
-    else if (first === 'defect') handleDefectPress();
-    else if (first === 'maintenance') handleTaskPress();
+    confirmedActionRef.current = action;
+    if (action === 'photo') handlePhotoPress();
+    else if (action === 'defect') handleDefectPress();
+    else if (action === 'maintenance') handleTaskPress();
   }, [finishConfirmFlow, handlePhotoPress, handleDefectPress, handleTaskPress]);
 
   const handleUndoPressWithReset = useCallback(() => {
     setContextDefectId(null);
     setContextMaintenanceId(null);
+    confirmedActionRef.current = null;
     handleUndoPress();
   }, [handleUndoPress]);
 
-  // ── Task created callback (refresh scan context) ──
+  // ── Task created callback (refresh scan context + mark completed) ──
+  const { markMaintenanceCompleted } = flow;
 
   const handleTaskCreated = useCallback(() => {
     refetchContext();
-  }, [refetchContext]);
+    markMaintenanceCompleted();
+  }, [refetchContext, markMaintenanceCompleted]);
 
   // ── Render ──
 
@@ -254,6 +241,7 @@ export default function ScanScreen() {
       <PermissionScreen
         isLoading={!permission}
         onRequestPermission={requestPermission}
+        canAskAgain={permission?.canAskAgain}
       />
     );
   }
@@ -307,10 +295,11 @@ export default function ScanScreen() {
                 asset={displayAsset}
                 matchedDepot={matchedDepot}
                 isCreating={isCreatingScan}
-                onConfirm={handleConfirmWithActions}
+                onConfirm={handleConfirm}
                 onUndoPress={handleUndoPressWithReset}
                 photoCompleted={photoCompleted}
                 defectCompleted={defectCompleted}
+                maintenanceCompleted={maintenanceCompleted}
                 disabled={buttonsDisabled}
                 assessment={assessment}
               />
@@ -320,7 +309,7 @@ export default function ScanScreen() {
                 asset={displayAsset}
                 matchedDepot={matchedDepot}
                 isCreating={isCreatingScan}
-                onConfirm={handleConfirmWithActions}
+                onConfirm={handleConfirm}
                 onUndoPress={handleUndoPressWithReset}
                 photoCompleted={photoCompleted}
                 disabled={buttonsDisabled}
@@ -337,6 +326,7 @@ export default function ScanScreen() {
         assetNumber={successFlash?.assetNumber ?? ''}
         photoCompleted={successFlash?.photoCompleted ?? false}
         defectCompleted={successFlash?.defectCompleted ?? false}
+        maintenanceCompleted={successFlash?.maintenanceCompleted ?? false}
         onDismiss={() => setSuccessFlash(null)}
       />
 
@@ -390,6 +380,8 @@ export default function ScanScreen() {
         title={alertSheet.title}
         message={alertSheet.message}
         onDismiss={() => setAlertSheet(prev => ({ ...prev, visible: false }))}
+        actionLabel={alertSheet.actionLabel}
+        onAction={alertSheet.onAction}
       />
 
       {/* Context detail modals (inline previews during scan flow) */}

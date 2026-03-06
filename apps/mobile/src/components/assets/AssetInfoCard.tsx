@@ -53,10 +53,11 @@ export function AssetInfoCard({ asset, nextServiceDate, assessment, onPress }: A
         </View>
       </View>
 
+      {assessment ? (
+        <Text style={styles.assessmentText}>{assessment}</Text>
+      ) : null}
+
       <CollapsibleSection title="Details" variant="flat" defaultExpanded={false}>
-        {assessment ? (
-          <Text style={[styles.assessmentText, { marginBottom: spacing.sm }]}>{assessment}</Text>
-        ) : null}
         <View style={styles.infoGrid}>
           <InfoRow label="Registration" value={asset.registrationNumber || 'Unknown'} />
           <InfoRow label="Registration Expiry" value={asset.registrationExpiry ? formatDate(asset.registrationExpiry) : 'Unknown'} />
@@ -119,7 +120,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   assetNumber: {
-    fontSize: fontSize['2xl'],
+    fontSize: fontSize.lg,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     textTransform: 'uppercase',
@@ -136,19 +137,19 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   infoLabel: {
-    fontSize: fontSize.xs,
+    fontSize: 10,
     fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
     textTransform: 'uppercase',
   },
   infoValue: {
-    fontSize: fontSize.xs,
+    fontSize: 10,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     textTransform: 'uppercase',
   },
   categoryText: {
-    fontSize: fontSize.sm,
+    fontSize: fontSize.xs,
     fontFamily: 'Lato_700Bold',
     color: colors.textSecondary,
     textTransform: 'uppercase',

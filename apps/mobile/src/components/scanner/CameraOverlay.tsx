@@ -1,12 +1,12 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
   SafeAreaView,
   TouchableOpacity,
+  Animated,
 } from 'react-native';
 import { LoadingDots } from '../common/LoadingDots';
-import { PillBadge } from '../common/PillBadge';
 import { colors } from '../../theme/colors';
 import { styles } from './scan.styles';
 
@@ -14,10 +14,6 @@ interface CameraOverlayProps {
   hasLocationPermission: boolean;
   onRequestLocationPermission: () => void;
   scanStatus?: string | null;
-  /** Resolved depot badge config — null hides the badge entirely */
-  depotBadge: { label: string; bgColor: string; textColor: string } | null;
-  /** User role badge config — null hides the badge */
-  roleBadge: { label: string; color: string } | null;
   /** __DEV__-only: triggers a scan using the first asset from the database */
   onDebugScan?: () => void;
 }
@@ -26,10 +22,36 @@ function CameraOverlayComponent({
   hasLocationPermission,
   onRequestLocationPermission,
   scanStatus,
-  depotBadge,
-  roleBadge,
   onDebugScan,
 }: CameraOverlayProps) {
+  const cornerOpacity = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (scanStatus) {
+      // QR detected — solid corners during processing
+      cornerOpacity.setValue(1);
+      return;
+    }
+
+    // Pulse corners to indicate active scanning
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(cornerOpacity, {
+          toValue: 0.4,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(cornerOpacity, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [scanStatus, cornerOpacity]);
+
   return (
     <SafeAreaView style={styles.overlay}>
       {/* ── Top Bar ──────────────────────────────── */}
@@ -42,38 +64,13 @@ function CameraOverlayComponent({
         </View>
       </View>
 
-      {/* ── Depot & role context badges (above scan frame) ── */}
-      {(depotBadge || roleBadge) && (
-        <View style={styles.contextBadgeRow}>
-          {depotBadge && (
-            <PillBadge
-              icon="location"
-              label={depotBadge.label}
-              color={depotBadge.bgColor}
-              textColor={depotBadge.textColor}
-              accessibilityRole="text"
-              accessibilityLabel={`Depot: ${depotBadge.label}`}
-            />
-          )}
-          {roleBadge && (
-            <PillBadge
-              icon="person"
-              label={roleBadge.label}
-              color={roleBadge.color}
-              accessibilityRole="text"
-              accessibilityLabel={`Role: ${roleBadge.label}`}
-            />
-          )}
-        </View>
-      )}
-
       {/* ── Scan Frame ───────────────────────────── */}
       <View style={styles.scanFrame}>
         <View style={styles.scanReticle}>
-          <View style={[styles.corner, styles.cornerTopLeft]} />
-          <View style={[styles.corner, styles.cornerTopRight]} />
-          <View style={[styles.corner, styles.cornerBottomLeft]} />
-          <View style={[styles.corner, styles.cornerBottomRight]} />
+          <Animated.View style={[styles.corner, styles.cornerTopLeft, { opacity: cornerOpacity }]} />
+          <Animated.View style={[styles.corner, styles.cornerTopRight, { opacity: cornerOpacity }]} />
+          <Animated.View style={[styles.corner, styles.cornerBottomLeft, { opacity: cornerOpacity }]} />
+          <Animated.View style={[styles.corner, styles.cornerBottomRight, { opacity: cornerOpacity }]} />
         </View>
 
         {/* Scan status pill (below reticle) */}

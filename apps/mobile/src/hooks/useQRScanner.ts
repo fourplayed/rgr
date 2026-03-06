@@ -27,7 +27,8 @@ interface UseQRScannerResult {
  */
 export function useQRScanner(
   onScan?: (data: string) => void | Promise<void>,
-  debounceMs: number = 2000
+  debounceMs: number = 2000,
+  onInvalidQR?: () => void,
 ): UseQRScannerResult {
   const [scannedData, setScannedData] = useState<QRScanResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -46,6 +47,11 @@ export function useQRScanner(
   useEffect(() => {
     onScanRef.current = onScan;
   }, [onScan]);
+
+  const onInvalidQRRef = useRef(onInvalidQR);
+  useEffect(() => {
+    onInvalidQRRef.current = onInvalidQR;
+  }, [onInvalidQR]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -80,6 +86,8 @@ export function useQRScanner(
     // Validate QR code format
     if (!isValidQRCode(data)) {
       logger.warn('Invalid QR code format', data);
+      onInvalidQRRef.current?.();
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     }
 

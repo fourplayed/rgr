@@ -11,6 +11,7 @@ interface ScanSuccessFlashProps {
   assetNumber: string;
   photoCompleted: boolean;
   defectCompleted: boolean;
+  maintenanceCompleted: boolean;
   onDismiss: () => void;
 }
 
@@ -19,6 +20,7 @@ export function ScanSuccessFlash({
   assetNumber,
   photoCompleted,
   defectCompleted,
+  maintenanceCompleted,
   onDismiss,
 }: ScanSuccessFlashProps) {
   const opacity = useRef(new Animated.Value(0)).current;
@@ -54,7 +56,7 @@ export function ScanSuccessFlash({
 
   if (!visible) return null;
 
-  const hasChips = photoCompleted || defectCompleted;
+  const hasChips = photoCompleted || defectCompleted || maintenanceCompleted;
 
   return (
     <Animated.View style={[styles.overlay, { opacity }]} pointerEvents="none">
@@ -73,6 +75,12 @@ export function ScanSuccessFlash({
             <View style={styles.chip}>
               <Ionicons name="checkmark" size={14} color="#fff" />
               <Text style={styles.chipText}>Defect</Text>
+            </View>
+          )}
+          {maintenanceCompleted && (
+            <View style={styles.chip}>
+              <Ionicons name="checkmark" size={14} color="#fff" />
+              <Text style={styles.chipText}>Maintenance</Text>
             </View>
           )}
         </View>

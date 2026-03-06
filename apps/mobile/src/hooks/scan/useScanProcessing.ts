@@ -67,6 +67,11 @@ export function useScanProcessing(
             title: 'Location Not Available',
             message:
               'Please return to the home screen and ensure your location is resolved before scanning.',
+            actionLabel: 'Retry',
+            onAction: () => {
+              setAlertSheet({ visible: false, type: 'error', title: '', message: '' });
+              resetScannerRef.current();
+            },
           });
           resetScannerRef.current();
           return;
@@ -185,10 +190,15 @@ export function useScanProcessing(
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       } catch (error: unknown) {
         logger.warn('Failed to delete scan event during undo:', error);
-        // Non-fatal: scan was already removed from UI, just log the failure
+        setAlertSheet({
+          visible: true,
+          type: 'warning',
+          title: 'Undo Failed',
+          message: 'The scan could not be removed. It may still appear in your history.',
+        });
       }
     },
-    [addDebugLog, doDeleteScan, dispatch],
+    [addDebugLog, doDeleteScan, dispatch, setAlertSheet],
   );
 
   return { processScan, triggerDebugScan, handleUndoPress, isDeletingScan };

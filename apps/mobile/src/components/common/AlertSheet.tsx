@@ -16,6 +16,8 @@ interface AlertSheetProps {
   message: string;
   onDismiss: () => void;
   buttonLabel?: string;
+  actionLabel?: string;
+  onAction?: () => void;
 }
 
 const alertConfig: Record<AlertType, { icon: keyof typeof Ionicons.glyphMap; color: string }> = {
@@ -32,6 +34,8 @@ export function AlertSheet({
   message,
   onDismiss,
   buttonLabel = 'OK',
+  actionLabel,
+  onAction,
 }: AlertSheetProps) {
   const config = alertConfig[type];
 
@@ -52,6 +56,16 @@ export function AlertSheet({
         >
           {buttonLabel}
         </Button>
+        {actionLabel && onAction && (
+          <Button
+            onPress={onAction}
+            variant="secondary"
+            style={styles.actionButton}
+            accessibilityLabel={actionLabel}
+          >
+            {actionLabel}
+          </Button>
+        )}
       </View>
     </BottomSheet>
   );
@@ -83,5 +97,9 @@ const styles = StyleSheet.create({
   },
   fullWidth: {
     alignSelf: 'stretch',
+  },
+  actionButton: {
+    alignSelf: 'stretch',
+    marginTop: spacing.sm,
   },
 });

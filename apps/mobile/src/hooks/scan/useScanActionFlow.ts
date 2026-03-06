@@ -30,6 +30,7 @@ export type ScanFlowState =
       matchedDepot: MatchedDepot | null;
       effectiveLocation: CachedLocationData;
       isCreatingScan: boolean;
+      pendingUndo?: boolean;
     }
   | {
       phase: 'active';
@@ -39,6 +40,7 @@ export type ScanFlowState =
       lastScanEventId: string;
       photoCompleted: boolean;
       defectCompleted: boolean;
+      maintenanceCompleted: boolean;
       activeSheet: SheetId;
       pendingSheet: SheetId;
       selectedItemId: string | null;
@@ -49,6 +51,8 @@ export interface AlertSheetState {
   type: 'error' | 'warning' | 'info';
   title: string;
   message: string;
+  actionLabel?: string;
+  onAction?: () => void;
 }
 
 // ── Reducer ──────────────────────────────────────────────────────────────────
@@ -71,13 +75,24 @@ export type ScanFlowAction =
   | { type: 'RESOLVE_PENDING' }
   | { type: 'MARK_PHOTO_COMPLETED' }
   | { type: 'MARK_DEFECT_COMPLETED' }
+  | { type: 'MARK_MAINTENANCE_COMPLETED' }
+  | { type: 'INVALID_QR' }
+  | { type: 'CLEAR_INVALID_STATUS' }
+  | { type: 'REQUEST_UNDO' }
   | { type: 'RESET' };
 
 function reducer(state: ScanFlowState, action: ScanFlowAction): ScanFlowState {
   switch (action.type) {
     case 'QR_DETECTED':
-      if (state.phase !== 'idle') return state;
+      if (state.phase !== 'idle' && state.phase !== 'scanning') return state;
       return { phase: 'scanning', scanStatus: action.scanStatus };
+
+    case 'INVALID_QR':
+      return { phase: 'scanning', scanStatus: 'Not a valid asset code' };
+
+    case 'CLEAR_INVALID_STATUS':
+      if (state.phase !== 'scanning') return state;
+      return { phase: 'idle' };
 
     case 'UPDATE_SCAN_STATUS':
       if (state.phase !== 'scanning') return state;
@@ -95,6 +110,10 @@ function reducer(state: ScanFlowState, action: ScanFlowAction): ScanFlowState {
 
     case 'SCAN_CREATED':
       if (state.phase !== 'confirming') return state;
+      // If undo was queued during confirming, go straight to idle
+      if (state.pendingUndo) {
+        return { phase: 'idle' };
+      }
       return {
         phase: 'active',
         scannedAsset: state.scannedAsset,
@@ -103,10 +122,17 @@ function reducer(state: ScanFlowState, action: ScanFlowAction): ScanFlowState {
         lastScanEventId: action.lastScanEventId,
         photoCompleted: false,
         defectCompleted: false,
+        maintenanceCompleted: false,
         activeSheet: null,
         pendingSheet: null,
         selectedItemId: null,
       };
+
+    case 'REQUEST_UNDO':
+      if (state.phase === 'confirming') {
+        return { ...state, pendingUndo: true };
+      }
+      return state;
 
     case 'OPEN_SHEET': {
       if (state.phase !== 'active') return state;
@@ -149,6 +175,10 @@ function reducer(state: ScanFlowState, action: ScanFlowAction): ScanFlowState {
       if (state.phase !== 'active') return state;
       return { ...state, defectCompleted: true };
 
+    case 'MARK_MAINTENANCE_COMPLETED':
+      if (state.phase !== 'active') return state;
+      return { ...state, maintenanceCompleted: true };
+
     case 'RESET':
       return { phase: 'idle' };
 
@@ -172,10 +202,12 @@ interface UseScanActionFlowReturn {
   buttonsDisabled: boolean;
   photoCompleted: boolean;
   defectCompleted: boolean;
+  maintenanceCompleted: boolean;
   handleBarCodeScanned: (result: BarcodeScanningResult) => void;
   handlePhotoPress: () => void;
   handleDefectPress: () => void;
   handleTaskPress: () => void;
+  markMaintenanceCompleted: () => void;
   handleDonePress: () => void;
   handleUndoPress: () => void;
   isDeletingScan: boolean;
@@ -250,8 +282,18 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
 
   const sheetLifecycle = useSheetLifecycle(dispatch);
 
+  // ── Invalid QR callback ──
+  const handleInvalidQR = useCallback(() => {
+    dispatch({ type: 'INVALID_QR' });
+    setTimeout(() => dispatch({ type: 'CLEAR_INVALID_STATUS' }), 2000);
+  }, [dispatch]);
+
   // ── QR Scanner ──
-  const { handleBarCodeScanned, resetScanner } = useQRScanner(scanProcessing.processScan);
+  const { handleBarCodeScanned, resetScanner } = useQRScanner(
+    scanProcessing.processScan,
+    2000,
+    handleInvalidQR,
+  );
   resetScannerRef.current = resetScanner;
 
   // ── Action handlers (depend on resetScanner) ──
@@ -259,20 +301,28 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
     dispatch({ type: 'OPEN_SHEET', sheet: 'createTask' });
   }, []);
 
+  const markMaintenanceCompleted = useCallback(() => {
+    dispatch({ type: 'MARK_MAINTENANCE_COMPLETED' });
+  }, [dispatch]);
+
   const handleDonePress = useCallback(() => {
     dispatch({ type: 'RESET' });
     resetScanner();
   }, [resetScanner]);
 
-  // Wrap undo to extract narrow state slices
+  // Wrap undo to extract narrow state slices — supports queued undo during confirming
   const handleUndoPress = useCallback(() => {
+    if (state.phase === 'confirming') {
+      dispatch({ type: 'REQUEST_UNDO' });
+      return;
+    }
     if (state.phase !== 'active') return;
     scanProcessing.handleUndoPress(
       state.lastScanEventId,
       state.scannedAsset.id,
       resetScanner,
     );
-  }, [state, scanProcessing, resetScanner]);
+  }, [state, scanProcessing, resetScanner, dispatch]);
 
   // Wrap triggerDebugScan to pass resetScanner
   const triggerDebugScan = useCallback(() => {
@@ -358,6 +408,11 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
     [state],
   );
 
+  const maintenanceCompleted = useMemo(
+    () => state.phase === 'active' ? state.maintenanceCompleted : false,
+    [state],
+  );
+
   return {
     // State
     state,
@@ -372,6 +427,7 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
     buttonsDisabled,
     photoCompleted,
     defectCompleted,
+    maintenanceCompleted,
 
     // QR scanner
     handleBarCodeScanned,
@@ -380,6 +436,7 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
     handlePhotoPress: sheetLifecycle.handlePhotoPress,
     handleDefectPress: defectSubmission.handleDefectPress,
     handleTaskPress,
+    markMaintenanceCompleted,
     handleDonePress,
 
     // Undo
