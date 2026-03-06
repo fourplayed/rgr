@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import {
   View,
   Modal,
@@ -35,6 +35,15 @@ export function SheetModal({
   keyboardAvoiding = false,
   onDismiss,
 }: SheetModalProps) {
+  const prevVisibleRef = useRef(visible);
+
+  useEffect(() => {
+    if (prevVisibleRef.current && !visible) {
+      onDismiss?.();
+    }
+    prevVisibleRef.current = visible;
+  }, [visible, onDismiss]);
+
   const Wrapper = keyboardAvoiding ? KeyboardAvoidingView : View;
   const wrapperProps = keyboardAvoiding
     ? { behavior: Platform.OS === 'ios' ? ('padding' as const) : ('height' as const) }

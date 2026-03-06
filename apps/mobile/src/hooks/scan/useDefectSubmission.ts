@@ -3,16 +3,18 @@ import * as Haptics from 'expo-haptics';
 import { useCreateDefectReport } from '../useDefectData';
 import type { ScanFlowAction, AlertSheetState } from './useScanActionFlow';
 import type { Profile } from '@rgr/shared';
+import type { ConfirmAction } from '../../components/scanner/ScanConfirmation';
 
 export function useDefectSubmission(
   dispatch: React.Dispatch<ScanFlowAction>,
   helpers: {
     user: Profile | null;
+    confirmedActionRef: React.MutableRefObject<ConfirmAction>;
     setAlertSheet: (state: AlertSheetState) => void;
     addDebugLog: (msg: string) => void;
   },
 ) {
-  const { user, setAlertSheet, addDebugLog } = helpers;
+  const { user, confirmedActionRef, setAlertSheet, addDebugLog } = helpers;
 
   const { mutateAsync: createDefectReport, isPending: isSubmittingDefect } =
     useCreateDefectReport();
@@ -52,6 +54,7 @@ export function useDefectSubmission(
 
         dispatch({ type: 'MARK_DEFECT_COMPLETED' });
         if (wantsPhoto) {
+          dispatch({ type: 'MARK_PHOTO_COMPLETED' });
           dispatch({ type: 'CLOSE_SHEET', pendingSheet: 'camera' });
         } else {
           dispatch({ type: 'CLOSE_SHEET' });
@@ -72,8 +75,9 @@ export function useDefectSubmission(
   );
 
   const handleDefectCancel = useCallback(() => {
+    confirmedActionRef.current = null;
     dispatch({ type: 'CLOSE_SHEET' });
-  }, [dispatch]);
+  }, [dispatch, confirmedActionRef]);
 
   return { handleDefectPress, handleDefectSubmit, handleDefectCancel, isSubmittingDefect };
 }

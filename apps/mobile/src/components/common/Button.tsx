@@ -41,15 +41,17 @@ export function Button({
   const bgOverride = color ? { backgroundColor: color } : undefined;
   const isDisabled = disabled || isLoading;
 
+  const disabledTextOverride = isDisabled && !isLoading ? { color: '#94A3B8' } : undefined;
+
   const content = isLoading ? (
     <LoadingDots color={textStyle.color} size={8} />
   ) : icon ? (
     <View style={styles.iconRow}>
-      <Ionicons name={icon} size={18} color={textStyle.color} />
-      <Text style={textStyle}>{children}</Text>
+      <Ionicons name={icon} size={18} color={isDisabled ? '#94A3B8' : textStyle.color} />
+      <Text style={[textStyle, disabledTextOverride]}>{children}</Text>
     </View>
   ) : (
-    <Text style={textStyle}>{children}</Text>
+    <Text style={[textStyle, disabledTextOverride]}>{children}</Text>
   );
 
   return (
@@ -85,7 +87,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   disabled: {
-    opacity: 0.5,
+    backgroundColor: colors.border,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   iconRow: {
     flexDirection: 'row',

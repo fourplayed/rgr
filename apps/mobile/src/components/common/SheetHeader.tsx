@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, type TextStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
@@ -11,6 +11,7 @@ interface SheetHeaderProps {
   backgroundColor?: string;
   disabled?: boolean;
   titleNumberOfLines?: number;
+  titleStyle?: TextStyle;
 }
 
 export function SheetHeader({
@@ -20,11 +21,12 @@ export function SheetHeader({
   backgroundColor = colors.electricBlue,
   disabled = false,
   titleNumberOfLines = 1,
+  titleStyle,
 }: SheetHeaderProps) {
   return (
     <View style={[styles.header, { backgroundColor }]}>
       <Ionicons name={icon} size={30} color={colors.textInverse} />
-      <Text style={styles.title} numberOfLines={titleNumberOfLines}>
+      <Text style={[styles.title, titleStyle]} numberOfLines={titleNumberOfLines}>
         {title}
       </Text>
       <TouchableOpacity

@@ -236,9 +236,10 @@ interface UseScanActionFlowReturn {
 
 interface UseScanActionFlowOptions {
   canMarkMaintenance: boolean;
+  confirmedActionRef: React.MutableRefObject<import('../../components/scanner/ScanConfirmation').ConfirmAction>;
 }
 
-export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptions) {
+export function useScanActionFlow({ canMarkMaintenance, confirmedActionRef }: UseScanActionFlowOptions) {
   const [state, dispatch] = useReducer(reducer, { phase: 'idle' });
   const user = useAuthStore(s => s.user);
   const cachedDepot = useLocationStore(s => s.resolvedDepot);
@@ -277,6 +278,7 @@ export function useScanActionFlow({ canMarkMaintenance }: UseScanActionFlowOptio
 
   const defectSubmission = useDefectSubmission(dispatch, {
     user,
+    confirmedActionRef,
     setAlertSheet,
     addDebugLog,
   });

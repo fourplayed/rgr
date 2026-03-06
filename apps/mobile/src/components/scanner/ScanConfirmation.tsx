@@ -119,10 +119,6 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
           </View>
         )}
 
-      </ScrollView>
-
-      {/* ── Pinned footer (outside ScrollView) ── */}
-      <SheetFooter>
         {/* Action options (single-select radio) */}
         <Text style={styles.checkboxSectionTitle}>Role Specific Options</Text>
         <View style={styles.checkboxList}>
@@ -162,6 +158,10 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
           )}
         </View>
 
+      </ScrollView>
+
+      {/* ── Pinned footer (outside ScrollView) ── */}
+      <SheetFooter>
         {/* Done / Confirm button */}
         <Button
           onPress={() => props.onConfirm(selectedAction)}
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.base,
+    paddingBottom: spacing.xl,
   },
 
   // Asset detail card
@@ -288,6 +288,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    marginTop: spacing.base,
     marginBottom: spacing.sm,
   },
   checkboxList: {
@@ -298,7 +299,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.md,
     borderRadius: borderRadius.sm,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.base,
   },

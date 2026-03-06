@@ -8,7 +8,6 @@ import {
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { formatAssetNumber } from '@rgr/shared';
 import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
 import { SheetFooter } from '../common/SheetFooter';
@@ -18,7 +17,6 @@ import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 
 interface DefectReportSheetProps {
   visible: boolean;
-  assetNumber: string;
   isSubmitting: boolean;
   onSubmit: (notes: string, wantsPhoto: boolean) => void;
   onCancel: () => void;
@@ -29,7 +27,6 @@ interface DefectReportSheetProps {
 
 function DefectReportSheetComponent({
   visible,
-  assetNumber,
   isSubmitting,
   onSubmit,
   onCancel,
@@ -67,6 +64,11 @@ function DefectReportSheetComponent({
             title="Report Defect"
             onClose={handleCancel}
             backgroundColor="#FACC15"
+            titleStyle={{
+              textShadowColor: 'rgba(0, 0, 0, 0.3)',
+              textShadowOffset: { width: 0, height: 1 },
+              textShadowRadius: 2,
+            }}
           />
 
           <ScrollView
@@ -76,11 +78,6 @@ function DefectReportSheetComponent({
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            {/* Asset info */}
-            <Text style={styles.assetInfo}>
-              Asset <Text style={styles.assetNumber}>{assetNumber ? formatAssetNumber(assetNumber) : assetNumber}</Text>
-            </Text>
-
             {/* Notes Input */}
             <View style={styles.inputSection}>
               <Text style={styles.inputLabel}>Describe the defect</Text>
@@ -104,49 +101,38 @@ function DefectReportSheetComponent({
             {/* Photo Option (hidden when showPhotoOption is false) */}
             {showPhotoOption && (
               <TouchableOpacity
-                style={[styles.photoOption, wantsPhoto && styles.photoOptionSelected]}
+                style={styles.photoOption}
                 onPress={() => setWantsPhoto(!wantsPhoto)}
                 activeOpacity={0.7}
+                accessibilityRole="radio"
+                accessibilityLabel="Photo"
+                accessibilityState={{ checked: wantsPhoto }}
               >
-                <View style={styles.photoOptionIcon}>
-                  <Ionicons
-                    name={wantsPhoto ? "camera" : "camera-outline"}
-                    size={24}
-                    color={wantsPhoto ? colors.electricBlue : colors.textSecondary}
-                  />
-                </View>
+                <Ionicons name="camera" size={32} color={colors.violet} />
                 <View style={styles.photoOptionText}>
-                  <Text style={[styles.photoOptionLabel, wantsPhoto && styles.photoOptionLabelSelected]}>
-                    Add Photo of Defect
-                  </Text>
+                  <Text style={styles.photoOptionLabel}>Photo</Text>
                   <Text style={styles.photoOptionDescription}>
-                    Capture an image to help identify the issue
+                    Capture a photo of the defect to document the issue
                   </Text>
                 </View>
-                <View style={[styles.checkbox, wantsPhoto && styles.checkboxChecked]}>
-                  {wantsPhoto && (
-                    <Ionicons name="checkmark" size={14} color={colors.textInverse} />
-                  )}
-                </View>
+                <Ionicons
+                  name={wantsPhoto ? 'radio-button-on' : 'radio-button-off'}
+                  size={26}
+                  color={colors.violet}
+                />
               </TouchableOpacity>
             )}
           </ScrollView>
 
           <SheetFooter>
-            <View style={styles.buttonRow}>
-              <Button
-                variant="secondary"
-                onPress={handleCancel}
-                disabled={isSubmitting}
-                flex
-              >
-                Cancel
-              </Button>
-
-              <Button isLoading={isSubmitting} icon="send" onPress={handleSubmit} disabled={!canSubmit} flex>
-                Submit Report
-              </Button>
-            </View>
+            <Button
+              isLoading={isSubmitting}
+              onPress={handleSubmit}
+              disabled={!canSubmit}
+              color={wantsPhoto ? colors.violet : colors.success}
+            >
+              {wantsPhoto ? 'Capture & Submit' : 'Submit'}
+            </Button>
           </SheetFooter>
         </View>
     </SheetModal>
@@ -173,18 +159,6 @@ const styles = StyleSheet.create({
     paddingTop: spacing.lg,
   },
 
-  // Asset info
-  assetInfo: {
-    fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
-    color: colors.textSecondary,
-    marginBottom: spacing.lg,
-  },
-  assetNumber: {
-    fontFamily: 'Lato_700Bold',
-    color: colors.electricBlue,
-  },
-
   // Input Section
   inputSection: {
     marginBottom: spacing.lg,
@@ -198,8 +172,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   textInput: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.sm,
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing.base,
@@ -220,61 +194,31 @@ const styles = StyleSheet.create({
   photoOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    padding: spacing.base,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: spacing.md,
-  },
-  photoOptionSelected: {
-    borderColor: colors.electricBlue,
-    backgroundColor: colors.electricBlue + '10',
-  },
-  photoOptionIcon: {
-    width: 40,
-    height: 40,
+    borderColor: colors.violet,
+    backgroundColor: colors.violet + '18',
     borderRadius: borderRadius.sm,
-    backgroundColor: colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderWidth: 1,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.base,
+    gap: spacing.md,
   },
   photoOptionText: {
     flex: 1,
   },
   photoOptionLabel: {
-    fontSize: fontSize.base,
+    fontSize: fontSize.sm,
     fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    marginBottom: 2,
+    color: colors.violet,
     textTransform: 'uppercase',
-  },
-  photoOptionLabelSelected: {
-    color: colors.electricBlue,
+    letterSpacing: 0.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   photoOptionDescription: {
     fontSize: fontSize.xs,
     fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
-  },
-  checkbox: {
-    width: 22,
-    height: 22,
-    borderRadius: borderRadius.sm,
-    borderWidth: 2,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.background,
-  },
-  checkboxChecked: {
-    backgroundColor: colors.electricBlue,
-    borderColor: colors.electricBlue,
-  },
-
-  // Buttons
-  buttonRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
+    marginTop: 2,
   },
 });

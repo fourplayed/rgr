@@ -32,9 +32,12 @@ export default function ScanScreen() {
   const markSeen = useTutorialStore(s => s.markSeen);
   const [showScanTutorial, setShowScanTutorial] = useState(false);
 
+  // ── Single-action confirm flow ref (passed into flow hook so cancel clears it) ──
+  const confirmedActionRef = useRef<ConfirmAction>(null);
+
   // ── Unified scan flow hook ──
 
-  const flow = useScanActionFlow({ canMarkMaintenance });
+  const flow = useScanActionFlow({ canMarkMaintenance, confirmedActionRef });
 
   // ── Destructure stable handlers from flow (avoids object reference instability) ──
 
@@ -87,6 +90,7 @@ export default function ScanScreen() {
   // ── Success flash state ──
   const [successFlash, setSuccessFlash] = useState<{
     assetNumber: string;
+    depotName: string | null;
     photoCompleted: boolean;
     defectCompleted: boolean;
     maintenanceCompleted: boolean;
@@ -180,13 +184,13 @@ export default function ScanScreen() {
 
   // ── Single-action confirm flow ──
 
-  const confirmedActionRef = useRef<ConfirmAction>(null);
   const prevActiveSheetRef = useRef(activeSheet);
 
   const finishConfirmFlow = useCallback(() => {
     if (scannedAsset) {
       setSuccessFlash({
         assetNumber: scannedAsset.assetNumber,
+        depotName: matchedDepot?.depot.name ?? null,
         photoCompleted,
         defectCompleted,
         maintenanceCompleted,
@@ -196,7 +200,7 @@ export default function ScanScreen() {
     setContextMaintenanceId(null);
     confirmedActionRef.current = null;
     handleDonePress();
-  }, [handleDonePress, scannedAsset, photoCompleted, defectCompleted, maintenanceCompleted]);
+  }, [handleDonePress, scannedAsset, matchedDepot, photoCompleted, defectCompleted, maintenanceCompleted]);
 
   // When a sheet closes after a confirmed action, go to success flash
   useEffect(() => {
@@ -324,6 +328,7 @@ export default function ScanScreen() {
       <ScanSuccessFlash
         visible={successFlash !== null}
         assetNumber={successFlash?.assetNumber ?? ''}
+        depotName={successFlash?.depotName ?? null}
         photoCompleted={successFlash?.photoCompleted ?? false}
         defectCompleted={successFlash?.defectCompleted ?? false}
         maintenanceCompleted={successFlash?.maintenanceCompleted ?? false}
@@ -353,7 +358,6 @@ export default function ScanScreen() {
       {/* Defect Report (no photo option in new flow) */}
       <DefectReportSheet
         visible={activeSheet === 'defect'}
-        assetNumber={scannedAsset?.assetNumber ?? ''}
         isSubmitting={isSubmittingDefect}
         onSubmit={flowDefectSubmit}
         onCancel={handleDefectCancel}
