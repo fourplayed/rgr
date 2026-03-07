@@ -15,6 +15,8 @@ import { SheetModal } from '../common/SheetModal';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
+import { sheetLayout } from '../../theme/sheetLayout';
+import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 import { isAutoLoginEnabled, setAutoLoginEnabled } from '../../utils/secureStorage';
 import { updatePassword, verifyCurrentPassword } from '@rgr/shared';
 import { useAuthStore } from '../../store/authStore';
@@ -64,6 +66,7 @@ function ValidationRow({ label, isValid }: ValidationRowProps) {
 }
 
 export function SecurityModal({ visible, onClose }: SecurityModalProps) {
+  const sheetBottomPadding = useSheetBottomPadding();
   const { user } = useAuthStore();
   const [autoLogin, setAutoLogin] = useState(false);
   const [autoLoginLoading, setAutoLoginLoading] = useState(true);
@@ -190,13 +193,13 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
     });
 
   return (
-    <SheetModal visible={visible} onClose={onClose} keyboardAvoiding>
-      <View style={styles.sheet}>
+    <SheetModal visible={visible} onClose={onClose} keyboardAware>
+      <View style={sheetLayout.container}>
         <SheetHeader icon="shield-checkmark" title="Security" onClose={onClose} />
 
         <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          style={sheetLayout.scroll}
+          contentContainerStyle={[sheetLayout.scrollContent, { paddingBottom: sheetBottomPadding }]}
           bounces={true}
           showsVerticalScrollIndicator={false}
         >
@@ -385,20 +388,6 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
 }
 
 const styles = StyleSheet.create({
-  sheet: {
-    backgroundColor: colors.chrome,
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
-    maxHeight: '85%',
-  },
-  scrollView: {
-    flexGrow: 1,
-    flexShrink: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.base,
-  },
   section: {
     marginBottom: spacing.lg,
   },

@@ -6,10 +6,11 @@ import { useRouter } from 'expo-router';
 import { formatRelativeTime, formatAssetNumber } from '@rgr/shared';
 import { LoadingDots, AlertSheet, ConfirmSheet, SheetModal } from '../common';
 import { SheetHeader } from '../common/SheetHeader';
-import { SheetFooter } from '../common/SheetFooter';
 import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
+import { sheetLayout } from '../../theme/sheetLayout';
+import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 import {
   useMaintenance,
   useUpdateMaintenanceStatus,
@@ -32,6 +33,10 @@ interface MaintenanceDetailModalProps {
   variant?: 'full' | 'compact';
   /** Render inline (no native Modal) — use when already inside a Modal. */
   inline?: boolean;
+  /** When false, skip backdrop (ModalShell provides it). */
+  backdrop?: boolean;
+  /** Fires after exit animation completes. */
+  onExitComplete?: () => void;
 }
 
 export function MaintenanceDetailModal({
@@ -40,9 +45,12 @@ export function MaintenanceDetailModal({
   onClose,
   variant = 'full',
   inline,
+  backdrop,
+  onExitComplete,
 }: MaintenanceDetailModalProps) {
   const router = useRouter();
   const { canMarkMaintenance } = useUserPermissions();
+  const sheetBottomPadding = useSheetBottomPadding();
   const user = useAuthStore((s) => s.user);
   const { data: maintenance, isLoading } = useMaintenance(maintenanceId);
   const { data: asset } = useAsset(maintenance?.assetId);
@@ -197,11 +205,9 @@ export function MaintenanceDetailModal({
     return null;
   };
 
-  if (!visible) return null;
-
   return (
-    <SheetModal visible={visible} onClose={onClose} inline={!!inline}>
-      <View style={styles.sheet}>
+    <SheetModal visible={visible} onClose={onClose} inline={!!inline} backdrop={backdrop} onExitComplete={onExitComplete}>
+      <View style={sheetLayout.containerTall}>
         {isLoading || !maintenance ? (
           <>
             <SheetHeader
@@ -226,8 +232,8 @@ export function MaintenanceDetailModal({
             />
 
             <ScrollView
-              style={styles.scrollView}
-              contentContainerStyle={styles.scrollContent}
+              style={sheetLayout.scroll}
+              contentContainerStyle={[sheetLayout.scrollContent, { paddingTop: spacing.base, paddingBottom: sheetBottomPadding, gap: spacing.md }]}
               bounces={true}
               showsVerticalScrollIndicator={false}
             >
@@ -418,13 +424,9 @@ export function MaintenanceDetailModal({
                   </View>
                 </View>
               )}
+              {/* Status Actions */}
+              {renderStatusActions()}
             </ScrollView>
-
-            {/* Status Actions pinned in footer */}
-            {(() => {
-              const statusActions = renderStatusActions();
-              return statusActions && <SheetFooter>{statusActions}</SheetFooter>;
-            })()}
           </>
         )}
       </View>
@@ -455,25 +457,9 @@ export function MaintenanceDetailModal({
 }
 
 const styles = StyleSheet.create({
-  sheet: {
-    backgroundColor: colors.chrome,
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
-    maxHeight: '90%',
-  },
   loadingContainer: {
     padding: spacing['3xl'],
     alignItems: 'center',
-  },
-  scrollView: {
-    flexGrow: 1,
-    flexShrink: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.base,
-    paddingBottom: spacing.base,
-    gap: spacing.md,
   },
   infoRow: {
     flexDirection: 'row',

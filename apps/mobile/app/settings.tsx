@@ -20,10 +20,10 @@ import {
   ConfirmSheet,
   Button,
   SheetHeader,
-  SheetFooter,
   CollapsibleSection,
   PillBadge,
 } from '../src/components/common';
+import { useSheetBottomPadding } from '../src/hooks/useSheetBottomPadding';
 import { EditProfileModal } from '../src/components/settings/EditProfileModal';
 import { NotificationsModal } from '../src/components/settings/NotificationsModal';
 import { SecurityModal } from '../src/components/settings/SecurityModal';
@@ -61,6 +61,7 @@ function SettingsItem({ icon, title, subtitle, onPress, showChevron = true }: Se
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const sheetBottomPadding = useSheetBottomPadding();
   const { user, logout } = useAuthStore();
   const { canAccessAdmin, canViewAuditLog } = useUserPermissions();
   const resetTutorials = useTutorialStore(s => s.resetAll);
@@ -202,7 +203,7 @@ export default function SettingsScreen() {
           )}
         </ScrollView>
 
-        <SheetFooter>
+        <View style={{ paddingHorizontal: spacing.lg, paddingTop: spacing.base, paddingBottom: sheetBottomPadding }}>
           <Button
             onPress={() => setShowLogoutConfirm(true)}
             variant="secondary"
@@ -210,7 +211,7 @@ export default function SettingsScreen() {
           >
             Sign Out
           </Button>
-        </SheetFooter>
+        </View>
 
         <EditProfileModal
           visible={showEditProfile}

@@ -1,55 +1,91 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 /**
- * Manages modal state transitions where one modal must fully unmount
- * before another opens. Replaces the fragile double-rAF pattern.
+ * Manages modal state transitions with callback-driven sequencing.
  *
- * Usage:
- *   const { modal, closeModal, transitionTo } = useModalTransition<MyModalState>({ type: 'none' });
+ * - `transitionTo(B)`: closes current modal, waits for exit animation, then opens B
+ * - `handleExitComplete`: wire to the active SheetModal's `onExitComplete`
+ * - `isTransitioning`: true while waiting for the old modal to exit
+ *
+ * Safety: 500ms timeout prevents permanent stuck state if onExitComplete never fires.
  */
 export function useModalTransition<T extends { type: string }>(initial: T) {
   const [modal, setModal] = useState<T>(initial);
-  const pendingTransition = useRef<T | null>(null);
-  const rafRef = useRef<{ outer: number | null; inner: number | null }>({
-    outer: null,
-    inner: null,
-  });
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const pendingRef = useRef<T | null>(null);
+  const generationRef = useRef(0);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Cleanup
   useEffect(() => {
-    const raf = rafRef;
-    const pending = pendingTransition;
     return () => {
-      if (raf.current.outer != null) cancelAnimationFrame(raf.current.outer);
-      if (raf.current.inner != null) cancelAnimationFrame(raf.current.inner);
-      pending.current = null;
+      if (timeoutRef.current != null) clearTimeout(timeoutRef.current);
+      pendingRef.current = null;
     };
   }, []);
 
-  const closeModal = useCallback(() => setModal(initial), [initial]);
+  const clearSafetyTimeout = useCallback(() => {
+    if (timeoutRef.current != null) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  }, []);
+
+  const mountPending = useCallback(() => {
+    clearSafetyTimeout();
+    const next = pendingRef.current;
+    pendingRef.current = null;
+    setIsTransitioning(false);
+    if (next) {
+      setModal(next);
+    }
+  }, [clearSafetyTimeout]);
+
+  const closeModal = useCallback(() => {
+    clearSafetyTimeout();
+    pendingRef.current = null;
+    setIsTransitioning(false);
+    setModal(initial);
+  }, [initial, clearSafetyTimeout]);
 
   const transitionTo = useCallback(
     (next: T) => {
-      // Cancel any in-flight transition
-      if (rafRef.current.outer != null) cancelAnimationFrame(rafRef.current.outer);
-      if (rafRef.current.inner != null) cancelAnimationFrame(rafRef.current.inner);
+      clearSafetyTimeout();
+      generationRef.current += 1;
 
-      pendingTransition.current = next;
+      if (modal.type === initial.type) {
+        // Nothing currently open — mount directly
+        setModal(next);
+        return;
+      }
+
+      // Something is open — close it and wait for exit callback
+      pendingRef.current = next;
+      setIsTransitioning(true);
       setModal(initial);
-      // Double rAF ensures the current modal fully unmounts (native layer)
-      // before the next one mounts, preventing visual glitches
-      rafRef.current.outer = requestAnimationFrame(() => {
-        rafRef.current.outer = null;
-        rafRef.current.inner = requestAnimationFrame(() => {
-          rafRef.current.inner = null;
-          if (pendingTransition.current) {
-            setModal(pendingTransition.current);
-            pendingTransition.current = null;
-          }
-        });
-      });
+
+      // Safety timeout: force-mount if onExitComplete doesn't fire
+      const gen = generationRef.current;
+      timeoutRef.current = setTimeout(() => {
+        timeoutRef.current = null;
+        if (generationRef.current === gen) {
+          mountPending();
+        }
+      }, 500);
     },
-    [initial]
+    [initial, modal.type, clearSafetyTimeout, mountPending]
   );
 
-  return { modal, closeModal, transitionTo } as const;
+  const handleExitComplete = useCallback(() => {
+    if (!pendingRef.current) return;
+    mountPending();
+  }, [mountPending]);
+
+  return {
+    modal,
+    closeModal,
+    transitionTo,
+    isTransitioning,
+    handleExitComplete,
+  } as const;
 }

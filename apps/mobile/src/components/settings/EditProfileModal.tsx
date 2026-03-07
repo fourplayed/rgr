@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TextInput, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, TextInput, ScrollView } from 'react-native';
 import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
-import { SheetFooter } from '../common/SheetFooter';
 import { SheetModal } from '../common/SheetModal';
 import { colors } from '../../theme/colors';
-import { spacing, borderRadius } from '../../theme/spacing';
+import { spacing } from '../../theme/spacing';
 import { formStyles } from '../../theme/formStyles';
+import { sheetLayout } from '../../theme/sheetLayout';
+import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 import { useAuthStore } from '../../store/authStore';
 import { useSubmitGuard } from '../../hooks/useSubmitGuard';
 
@@ -16,6 +17,7 @@ interface EditProfileModalProps {
 }
 
 export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
+  const sheetBottomPadding = useSheetBottomPadding();
   const { user, updateUserProfile } = useAuthStore();
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
@@ -61,13 +63,13 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
   );
 
   return (
-    <SheetModal visible={visible} onClose={onClose} keyboardAvoiding>
-      <View style={styles.sheet}>
+    <SheetModal visible={visible} onClose={onClose} keyboardAware>
+      <View style={sheetLayout.container}>
         <SheetHeader icon="person" title="Edit Profile" onClose={onClose} />
 
         <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          style={sheetLayout.scroll}
+          contentContainerStyle={[sheetLayout.scrollContent, { paddingTop: spacing.lg, paddingBottom: sheetBottomPadding }]}
           bounces={true}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
@@ -101,9 +103,7 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
           </View>
 
           {error && <Text style={formStyles.errorText}>{error}</Text>}
-        </ScrollView>
 
-        <SheetFooter>
           <View style={formStyles.buttonRow}>
             <Button variant="secondary" onPress={onClose} disabled={isLoading} flex>
               Cancel
@@ -113,26 +113,10 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
               Save
             </Button>
           </View>
-        </SheetFooter>
+        </ScrollView>
       </View>
     </SheetModal>
   );
 }
 
-const styles = StyleSheet.create({
-  sheet: {
-    backgroundColor: colors.chrome,
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
-    maxHeight: '85%',
-  },
-  scrollView: {
-    flexGrow: 1,
-    flexShrink: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.base,
-    paddingTop: spacing.lg,
-  },
-});
+// All layout styles now via sheetLayout + useSheetBottomPadding

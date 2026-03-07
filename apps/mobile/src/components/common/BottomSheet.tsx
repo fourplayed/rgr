@@ -11,10 +11,11 @@ import {
   type ViewStyle,
   type StyleProp,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { colors } from '../../theme/colors';
 import { spacing, borderRadius } from '../../theme/spacing';
+import { SHEET_SPRING, SHEET_EXIT, BACKDROP_IN, BACKDROP_OUT } from '../../theme/animation';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
@@ -59,17 +60,8 @@ export function BottomSheet({
       translateY.setValue(SCREEN_HEIGHT);
       backdropOpacity.setValue(0);
       const anim = Animated.parallel([
-        Animated.spring(translateY, {
-          toValue: 0,
-          friction: 9,
-          tension: 65,
-          useNativeDriver: true,
-        }),
-        Animated.timing(backdropOpacity, {
-          toValue: 1,
-          duration: 250,
-          useNativeDriver: true,
-        }),
+        Animated.spring(translateY, { toValue: 0, ...SHEET_SPRING }),
+        Animated.timing(backdropOpacity, { toValue: 1, ...BACKDROP_IN }),
       ]);
       entranceAnimRef.current = anim;
       anim.start(() => {
@@ -87,16 +79,8 @@ export function BottomSheet({
     entranceAnimRef.current?.stop();
     entranceAnimRef.current = null;
     Animated.parallel([
-      Animated.timing(translateY, {
-        toValue: SCREEN_HEIGHT,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-      Animated.timing(backdropOpacity, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }),
+      Animated.timing(translateY, { toValue: SCREEN_HEIGHT, ...SHEET_EXIT }),
+      Animated.timing(backdropOpacity, { toValue: 0, ...BACKDROP_OUT }),
     ]).start(() => {
       onDismiss();
     });
@@ -136,7 +120,7 @@ export function BottomSheet({
       onRequestClose={handleDismiss}
     >
       {visible && (
-        <>
+        <SafeAreaProvider>
           <Animated.View
             style={[StyleSheet.absoluteFillObject, styles.blur, { opacity: backdropOpacity }]}
           >
@@ -152,7 +136,7 @@ export function BottomSheet({
           ) : (
             content
           )}
-        </>
+        </SafeAreaProvider>
       )}
     </Modal>
   );

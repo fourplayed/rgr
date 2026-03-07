@@ -17,7 +17,7 @@ import { spacing, fontSize, borderRadius, fontFamily } from './spacing';
  *                   perfect row height is required (e.g. admin forms next to a Switch).
  * - `textArea`    — extends `input`; apply alongside `input` for multiline fields.
  * - `errorText`   — inline validation error below the last field.
- * - `buttonRow`   — horizontal Cancel / Confirm button pair inside SheetFooter.
+ * - `buttonRow`   — horizontal Cancel / Confirm button pair inside scroll content.
  */
 export const formStyles = StyleSheet.create({
   inputGroup: {

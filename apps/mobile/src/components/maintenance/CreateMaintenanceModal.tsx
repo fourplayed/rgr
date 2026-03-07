@@ -5,11 +5,12 @@ import type { MaintenancePriority, CreateMaintenanceInput } from '@rgr/shared';
 import { MaintenancePriorityLabels } from '@rgr/shared';
 import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
-import { SheetFooter } from '../common/SheetFooter';
 import { SheetModal } from '../common/SheetModal';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 import { formStyles } from '../../theme/formStyles';
+import { sheetLayout } from '../../theme/sheetLayout';
+import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 import { useAuthStore } from '../../store/authStore';
 import { useCreateMaintenance } from '../../hooks/useMaintenanceData';
 import { useSubmitGuard } from '../../hooks/useSubmitGuard';
@@ -30,6 +31,10 @@ interface CreateMaintenanceModalProps {
   onExternalSubmit?: (input: CreateMaintenanceInput) => Promise<void>;
   /** Render inline (no native Modal) — use when already inside a Modal. */
   inline?: boolean;
+  /** When false, skip backdrop (ModalShell provides it). */
+  backdrop?: boolean;
+  /** Fires after exit animation completes. */
+  onExitComplete?: () => void;
 }
 
 const PRIORITY_ORDER: MaintenancePriority[] = ['low', 'medium', 'high', 'critical'];
@@ -46,7 +51,10 @@ export function CreateMaintenanceModal({
   onCreated,
   onExternalSubmit,
   inline,
+  backdrop,
+  onExitComplete,
 }: CreateMaintenanceModalProps) {
+  const sheetBottomPadding = useSheetBottomPadding();
   const user = useAuthStore((s) => s.user);
   const { mutateAsync: createMaintenanceAsync, isPending } = useCreateMaintenance();
   const guard = useSubmitGuard();
@@ -146,8 +154,8 @@ export function CreateMaintenanceModal({
   const isLoading = isPending;
 
   return (
-    <SheetModal visible={visible} onClose={onClose} keyboardAvoiding inline={!!inline}>
-      <View style={styles.sheet}>
+    <SheetModal visible={visible} onClose={onClose} keyboardAware inline={!!inline} backdrop={backdrop} onExitComplete={onExitComplete}>
+      <View style={sheetLayout.containerTall}>
         <SheetHeader
           icon="construct"
           title="Schedule Maintenance"
@@ -156,8 +164,8 @@ export function CreateMaintenanceModal({
         />
 
         <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          style={sheetLayout.scroll}
+          contentContainerStyle={[sheetLayout.scrollContent, { paddingTop: spacing.base, paddingBottom: sheetBottomPadding }]}
           bounces={true}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
@@ -301,9 +309,7 @@ export function CreateMaintenanceModal({
           </View>
 
           {error && <Text style={formStyles.errorText}>{error}</Text>}
-        </ScrollView>
 
-        <SheetFooter>
           <View style={formStyles.buttonRow}>
             <Button variant="secondary" onPress={onClose} disabled={isLoading} flex>
               Cancel
@@ -312,28 +318,13 @@ export function CreateMaintenanceModal({
               Schedule Maintenance
             </Button>
           </View>
-        </SheetFooter>
+        </ScrollView>
       </View>
     </SheetModal>
   );
 }
 
 const styles = StyleSheet.create({
-  sheet: {
-    backgroundColor: colors.chrome,
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
-    maxHeight: '90%',
-  },
-  scrollView: {
-    flexGrow: 1,
-    flexShrink: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.base,
-    paddingTop: spacing.base,
-  },
   readOnlyField: {
     backgroundColor: colors.chrome,
     borderWidth: 1,

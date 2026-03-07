@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { BlurView } from 'expo-blur';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useTutorialStore } from '../../src/store/tutorialStore';
 import { useUserPermissions } from '../../src/contexts/UserPermissionsContext';
@@ -308,6 +309,7 @@ export default function ScanScreen() {
 
       {/* Blur backdrop + confirmation bottom sheet (Modal for z-index above tab header) */}
       <Modal visible={isPanelMounted} transparent animationType="none" statusBarTranslucent>
+        <SafeAreaProvider>
         <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFillObject} />
         {displayAsset && (
           <Animated.View
@@ -391,6 +393,7 @@ export default function ScanScreen() {
           maintenanceCompleted={successFlash?.maintenanceCompleted ?? false}
           onDismiss={() => setSuccessFlash(null)}
         />
+        </SafeAreaProvider>
       </Modal>
 
       {/* ── Sheet modals (controlled by activeSheet enum) ── */}

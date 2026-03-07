@@ -2,9 +2,10 @@ import React from 'react';
 import { View, Text, Switch, ScrollView, StyleSheet } from 'react-native';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
+import { sheetLayout } from '../../theme/sheetLayout';
+import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
-import { SheetFooter } from '../common/SheetFooter';
 import { SheetModal } from '../common/SheetModal';
 import { useSettingsStore } from '../../store/settingsStore';
 
@@ -40,18 +41,19 @@ function ToggleRow({ title, subtitle, value, onValueChange, disabled }: ToggleRo
 }
 
 export function NotificationsModal({ visible, onClose }: NotificationsModalProps) {
+  const sheetBottomPadding = useSheetBottomPadding();
   const { notifications, setNotificationSetting } = useSettingsStore();
 
   const isPushDisabled = !notifications.pushEnabled;
 
   return (
     <SheetModal visible={visible} onClose={onClose}>
-      <View style={styles.sheet}>
+      <View style={sheetLayout.container}>
         <SheetHeader icon="notifications" title="Notifications" onClose={onClose} />
 
         <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          style={sheetLayout.scroll}
+          contentContainerStyle={[sheetLayout.scrollContent, { paddingBottom: sheetBottomPadding }]}
           bounces={true}
           showsVerticalScrollIndicator={false}
         >
@@ -101,31 +103,14 @@ export function NotificationsModal({ visible, onClose }: NotificationsModalProps
               disabled={isPushDisabled}
             />
           </View>
-        </ScrollView>
-
-        <SheetFooter>
           <Button onPress={onClose}>Done</Button>
-        </SheetFooter>
+        </ScrollView>
       </View>
     </SheetModal>
   );
 }
 
 const styles = StyleSheet.create({
-  sheet: {
-    backgroundColor: colors.chrome,
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
-    maxHeight: '85%',
-  },
-  scrollView: {
-    flexGrow: 1,
-    flexShrink: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.base,
-  },
   description: {
     fontSize: fontSize.base,
     fontFamily: fonts.regular,

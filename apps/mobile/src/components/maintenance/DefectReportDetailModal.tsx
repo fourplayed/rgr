@@ -6,10 +6,11 @@ import { useRouter } from 'expo-router';
 import { formatRelativeTime, formatAssetNumber } from '@rgr/shared';
 import { LoadingDots, AlertSheet, ConfirmSheet, SheetModal } from '../common';
 import { SheetHeader } from '../common/SheetHeader';
-import { SheetFooter } from '../common/SheetFooter';
 import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
+import { sheetLayout } from '../../theme/sheetLayout';
+import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 import { useDefectReport, useDeleteDefectReport } from '../../hooks/useDefectData';
 import { useAsset } from '../../hooks/useAssetData';
 import { useMaintenance } from '../../hooks/useMaintenanceData';
@@ -36,6 +37,10 @@ interface DefectReportDetailModalProps {
   onDismiss?: () => void;
   /** Render inline (no native Modal) — use when already inside a Modal. */
   inline?: boolean;
+  /** When false, skip backdrop (ModalShell provides it). */
+  backdrop?: boolean;
+  /** Fires after exit animation completes. */
+  onExitComplete?: () => void;
 }
 
 export function DefectReportDetailModal({
@@ -47,9 +52,12 @@ export function DefectReportDetailModal({
   onViewTaskPress,
   onDismiss,
   inline,
+  backdrop,
+  onExitComplete,
 }: DefectReportDetailModalProps) {
   const router = useRouter();
   const { canMarkMaintenance } = useUserPermissions();
+  const sheetBottomPadding = useSheetBottomPadding();
   const { data: defect, isLoading } = useDefectReport(defectId);
   const { data: asset } = useAsset(defect?.assetId);
   const { data: linkedMaintenance } = useMaintenance(defect?.maintenanceRecordId ?? null);
@@ -84,14 +92,12 @@ export function DefectReportDetailModal({
       title: defect.title,
       description: defect.description,
     });
-    onClose();
-  }, [defect, asset, onAcceptPress, onClose]);
+  }, [defect, asset, onAcceptPress]);
 
   const handleViewLinkedTask = useCallback(() => {
     if (!defect?.maintenanceRecordId || !onViewTaskPress) return;
     onViewTaskPress(defect.maintenanceRecordId);
-    onClose();
-  }, [defect, onViewTaskPress, onClose]);
+  }, [defect, onViewTaskPress]);
 
   const handleDismiss = useCallback(() => {
     setShowDismissConfirm(true);
@@ -161,11 +167,9 @@ export function DefectReportDetailModal({
     return null;
   };
 
-  if (!visible) return null;
-
   return (
-    <SheetModal visible={visible} onClose={onClose} onDismiss={onDismiss} inline={!!inline}>
-      <View style={styles.sheet}>
+    <SheetModal visible={visible} onClose={onClose} onDismiss={onDismiss} inline={!!inline} backdrop={backdrop} onExitComplete={onExitComplete}>
+      <View style={sheetLayout.containerTall}>
         {isLoading || !defect ? (
           <>
             <SheetHeader
@@ -216,8 +220,8 @@ export function DefectReportDetailModal({
             )}
 
             <ScrollView
-              style={styles.scrollView}
-              contentContainerStyle={styles.scrollContent}
+              style={sheetLayout.scroll}
+              contentContainerStyle={[sheetLayout.scrollContent, { paddingTop: spacing.base, paddingBottom: sheetBottomPadding, gap: spacing.md }]}
               bounces={true}
               showsVerticalScrollIndicator={false}
             >
@@ -330,13 +334,10 @@ export function DefectReportDetailModal({
                   </View>
                 </View>
               )}
-            </ScrollView>
 
-            {/* Status Actions pinned in footer */}
-            {(() => {
-              const statusActions = renderStatusActions();
-              return statusActions && <SheetFooter>{statusActions}</SheetFooter>;
-            })()}
+              {/* Status Actions */}
+              {renderStatusActions()}
+            </ScrollView>
           </>
         )}
       </View>
@@ -367,25 +368,9 @@ export function DefectReportDetailModal({
 }
 
 const styles = StyleSheet.create({
-  sheet: {
-    backgroundColor: colors.chrome,
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
-    maxHeight: '90%',
-  },
   loadingContainer: {
     padding: spacing['3xl'],
     alignItems: 'center',
-  },
-  scrollView: {
-    flexGrow: 1,
-    flexShrink: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.base,
-    paddingBottom: spacing.base,
-    gap: spacing.md,
   },
   badgeRow: {
     flexDirection: 'row',

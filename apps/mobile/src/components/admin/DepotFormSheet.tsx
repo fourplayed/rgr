@@ -3,11 +3,12 @@ import { View, Text, ScrollView, TextInput, Switch, StyleSheet } from 'react-nat
 import type { Depot, CreateDepotInput, UpdateDepotInput } from '@rgr/shared';
 import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
-import { SheetFooter } from '../common/SheetFooter';
 import { SheetModal } from '../common/SheetModal';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 import { formStyles } from '../../theme/formStyles';
+import { sheetLayout } from '../../theme/sheetLayout';
+import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 import { useSubmitGuard } from '../../hooks/useSubmitGuard';
 
 interface DepotFormSheetProps {
@@ -25,6 +26,7 @@ export function DepotFormSheet({
   onClose,
   isLoading = false,
 }: DepotFormSheetProps) {
+  const sheetBottomPadding = useSheetBottomPadding();
   const isEdit = !!depot;
 
   const [name, setName] = useState('');
@@ -91,8 +93,8 @@ export function DepotFormSheet({
   if (!visible) return null;
 
   return (
-    <SheetModal visible={visible} onClose={onClose} keyboardAvoiding>
-      <View style={styles.sheet}>
+    <SheetModal visible={visible} onClose={onClose} keyboardAware>
+      <View style={sheetLayout.container}>
         <SheetHeader
           icon="business"
           title={isEdit ? 'Edit Depot' : 'Create Depot'}
@@ -100,8 +102,8 @@ export function DepotFormSheet({
         />
 
         <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          style={sheetLayout.scroll}
+          contentContainerStyle={[sheetLayout.scrollContent, { paddingTop: spacing.lg, paddingBottom: sheetBottomPadding }]}
           bounces={true}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
@@ -158,9 +160,7 @@ export function DepotFormSheet({
           </View>
 
           {error && <Text style={styles.errorText}>{error}</Text>}
-        </ScrollView>
 
-        <SheetFooter>
           <View style={formStyles.buttonRow}>
             <Button variant="secondary" onPress={onClose} disabled={isLoading} flex>
               Cancel
@@ -170,28 +170,13 @@ export function DepotFormSheet({
               {isEdit ? 'Save' : 'Create'}
             </Button>
           </View>
-        </SheetFooter>
+        </ScrollView>
       </View>
     </SheetModal>
   );
 }
 
 const styles = StyleSheet.create({
-  sheet: {
-    backgroundColor: colors.chrome,
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
-    maxHeight: '85%',
-  },
-  scrollView: {
-    flexGrow: 1,
-    flexShrink: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.base,
-    paddingTop: spacing.lg,
-  },
   // Looser rhythm than the shared default (spacing.base vs spacing.md)
   inputGroup: {
     marginBottom: spacing.base,

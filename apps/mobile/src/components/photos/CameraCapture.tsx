@@ -17,7 +17,6 @@ import type { PhotoType } from '@rgr/shared';
 import { usePhotoCapture } from '../../hooks/usePhotoCapture';
 import { LoadingDots } from '../common/LoadingDots';
 import { SheetHeader } from '../common/SheetHeader';
-import { SheetFooter } from '../common/SheetFooter';
 import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, shadows, fontFamily as fonts } from '../../theme/spacing';
@@ -264,30 +263,28 @@ function CameraCaptureComponent({
                 </View>
               )}
 
-              <SheetFooter>
-                <View style={styles.buttonRow}>
-                  <Animated.View style={[styles.flexOne, { opacity: retakeOpacity }]}>
-                    <Button
-                      variant="secondary"
-                      onPress={handleRetake}
-                      disabled={isUploading}
-                      flex
-                      icon="camera-reverse-outline"
-                    >
-                      Retake
-                    </Button>
-                  </Animated.View>
+              <View style={styles.buttonRow}>
+                <Animated.View style={[styles.flexOne, { opacity: retakeOpacity }]}>
                   <Button
-                    onPress={handleConfirm}
-                    isLoading={isUploading}
+                    variant="secondary"
+                    onPress={handleRetake}
+                    disabled={isUploading}
                     flex
-                    icon="checkmark"
-                    color={colors.violet}
+                    icon="camera-reverse-outline"
                   >
-                    Use Photo
+                    Retake
                   </Button>
-                </View>
-              </SheetFooter>
+                </Animated.View>
+                <Button
+                  onPress={handleConfirm}
+                  isLoading={isUploading}
+                  flex
+                  icon="checkmark"
+                  color={colors.violet}
+                >
+                  Use Photo
+                </Button>
+              </View>
             </View>
           </SafeAreaView>
         ) : (
@@ -619,6 +616,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
     alignSelf: 'stretch',
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.base,
   },
   flexOne: {
     flex: 1,

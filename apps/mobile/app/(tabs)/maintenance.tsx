@@ -38,6 +38,7 @@ import { useMaintenanceList } from '../../src/hooks/useMaintenanceData';
 import { useDefectReportList } from '../../src/hooks/useDefectData';
 import { useAcceptDefect } from '../../src/hooks/useAcceptDefect';
 import { useModalTransition } from '../../src/hooks/useModalTransition';
+import { ModalShell } from '../../src/components/common/ModalShell';
 import { useUserPermissions } from '../../src/contexts/UserPermissionsContext';
 
 type ModalState =
@@ -74,7 +75,7 @@ export default function MaintenanceScreen() {
   const [defectFiltersExpanded, setDefectFiltersExpanded] = useState(false);
 
   // Modal state machine — only one modal visible at a time
-  const { modal, closeModal: close, transitionTo } = useModalTransition<ModalState>({ type: 'none' });
+  const { modal, closeModal: close, transitionTo, isTransitioning, handleExitComplete } = useModalTransition<ModalState>({ type: 'none' });
 
   // Accept defect hook (moved up from DefectReportDetailModal)
   const { mutateAsync: acceptDefect } = useAcceptDefect();
@@ -339,34 +340,39 @@ export default function MaintenanceScreen() {
           />
         )}
 
-        {/* Modals — flat siblings, never nested */}
-        <DefectReportDetailModal
-          visible={modal.type === 'defectDetail'}
-          defectId={modal.type === 'defectDetail' ? modal.defectId : null}
-          onClose={close}
-          onAcceptPress={handleAcceptPress}
-          onViewTaskPress={handleViewTaskPress}
-        />
+        {/* Shared backdrop shell — persistent blur across modal transitions */}
+        <ModalShell visible={modal.type !== 'none'} onClose={close} keepMounted={isTransitioning}>
+          <DefectReportDetailModal
+            visible={modal.type === 'defectDetail'}
+            defectId={modal.type === 'defectDetail' ? modal.defectId : null}
+            onClose={close}
+            onAcceptPress={handleAcceptPress}
+            onViewTaskPress={handleViewTaskPress}
+            inline backdrop={false} onExitComplete={handleExitComplete}
+          />
 
-        <CreateMaintenanceModal
-          visible={modal.type === 'acceptDefect' || modal.type === 'createMaintenance'}
-          onClose={close}
-          {...(modal.type === 'acceptDefect' ? {
-            assetId: modal.assetId,
-            assetNumber: modal.assetNumber,
-            defectReportId: modal.defectId,
-            defaultTitle: modal.title,
-            defaultDescription: modal.description ?? undefined,
-            defaultPriority: 'high' as const,
-            onExternalSubmit: handleAcceptSubmit,
-          } : {})}
-        />
+          <CreateMaintenanceModal
+            visible={modal.type === 'acceptDefect' || modal.type === 'createMaintenance'}
+            onClose={close}
+            inline backdrop={false} onExitComplete={handleExitComplete}
+            {...(modal.type === 'acceptDefect' ? {
+              assetId: modal.assetId,
+              assetNumber: modal.assetNumber,
+              defectReportId: modal.defectId,
+              defaultTitle: modal.title,
+              defaultDescription: modal.description ?? undefined,
+              defaultPriority: 'high' as const,
+              onExternalSubmit: handleAcceptSubmit,
+            } : {})}
+          />
 
-        <MaintenanceDetailModal
-          visible={modal.type === 'maintenanceDetail'}
-          maintenanceId={modal.type === 'maintenanceDetail' ? modal.maintenanceId : null}
-          onClose={close}
-        />
+          <MaintenanceDetailModal
+            visible={modal.type === 'maintenanceDetail'}
+            maintenanceId={modal.type === 'maintenanceDetail' ? modal.maintenanceId : null}
+            onClose={close}
+            inline backdrop={false} onExitComplete={handleExitComplete}
+          />
+        </ModalShell>
       </SafeAreaView>
     </View>
   );

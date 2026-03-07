@@ -11,10 +11,11 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
-import { SheetFooter } from '../common/SheetFooter';
 import { SheetModal } from '../common/SheetModal';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
+import { sheetLayout } from '../../theme/sheetLayout';
+import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 
 interface DefectReportSheetProps {
   visible: boolean;
@@ -34,6 +35,7 @@ function DefectReportSheetComponent({
   onDismiss,
   showPhotoOption = true,
 }: DefectReportSheetProps) {
+  const sheetBottomPadding = useSheetBottomPadding();
   const [notes, setNotes] = useState('');
   const [wantsPhoto, setWantsPhoto] = useState(false);
 
@@ -68,8 +70,8 @@ function DefectReportSheetComponent({
   }, [canSubmit, submitOpacity]);
 
   return (
-    <SheetModal visible={visible} onClose={handleCancel} onDismiss={onDismiss} keyboardAvoiding>
-      <View style={styles.sheet}>
+    <SheetModal visible={visible} onClose={handleCancel} onDismiss={onDismiss} keyboardAware>
+      <View style={sheetLayout.container}>
         <SheetHeader
           icon="warning"
           title="Report Defect"
@@ -83,8 +85,8 @@ function DefectReportSheetComponent({
         />
 
         <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          style={sheetLayout.scroll}
+          contentContainerStyle={[sheetLayout.scrollContent, { paddingTop: spacing.lg, paddingBottom: sheetBottomPadding }]}
           bounces={true}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
@@ -133,9 +135,6 @@ function DefectReportSheetComponent({
               />
             </TouchableOpacity>
           )}
-        </ScrollView>
-
-        <SheetFooter>
           <Animated.View style={{ opacity: submitOpacity }}>
             <Button
               isLoading={isSubmitting}
@@ -146,7 +145,7 @@ function DefectReportSheetComponent({
               {wantsPhoto ? 'Capture & Submit' : 'Submit'}
             </Button>
           </Animated.View>
-        </SheetFooter>
+        </ScrollView>
       </View>
     </SheetModal>
   );
@@ -155,22 +154,6 @@ function DefectReportSheetComponent({
 export const DefectReportSheet = memo(DefectReportSheetComponent);
 
 const styles = StyleSheet.create({
-  sheet: {
-    backgroundColor: colors.chrome,
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
-    maxHeight: '85%',
-  },
-  scrollView: {
-    flexGrow: 1,
-    flexShrink: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.base,
-    paddingTop: spacing.lg,
-  },
-
   // Input Section
   inputSection: {
     marginBottom: spacing.lg,

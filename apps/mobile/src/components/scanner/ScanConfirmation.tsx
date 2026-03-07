@@ -18,10 +18,10 @@ import { DefectStatusBadge } from '../maintenance/DefectStatusBadge';
 import { cardStyles } from '../maintenance/maintenance.styles';
 import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
-import { SheetFooter } from '../common/SheetFooter';
 import { SegmentedTabs } from '../common/SegmentedTabs';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, shadows, fontFamily as fonts } from '../../theme/spacing';
+import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 import type { MatchedDepot } from '../../hooks/scan/useScanActionFlow';
 
 // Enable LayoutAnimation on Android
@@ -70,6 +70,7 @@ type ScanConfirmationProps =
 
 function ScanConfirmationComponent(props: ScanConfirmationProps) {
   const { asset, matchedDepot, disabled, isCreating } = props;
+  const sheetBottomPadding = useSheetBottomPadding();
 
   // Build AssetWithRelations for AssetInfoCard
   const assetWithRelations = useMemo<AssetWithRelations>(
@@ -142,7 +143,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
       {/* ── Scrollable content ── */}
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: sheetBottomPadding }]}
         showsVerticalScrollIndicator={false}
         bounces={false}
         keyboardShouldPersistTaps="handled"
@@ -258,10 +259,6 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
             </View>
           </>
         )}
-      </ScrollView>
-
-      {/* ── Pinned footer (outside ScrollView) ── */}
-      <SheetFooter>
         <Button
           onPress={() => props.onConfirm(selectedAction)}
           disabled={disabled}
@@ -272,7 +269,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
         >
           {buttonLabel}
         </Button>
-      </SheetFooter>
+      </ScrollView>
     </View>
   );
 }
