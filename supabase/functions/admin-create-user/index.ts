@@ -7,16 +7,125 @@ import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
  * Creates a new user with a specified role. Only superusers can call this.
  * Verifies caller role against the profiles table (not JWT claims).
  * Rolls back auth user creation if profile update fails.
+ *
+ * Includes IP-based rate limiting (10 creates/minute) via the rate_limits table.
  */
 
+// ---------------------------------------------------------------------------
+// CORS headers — restrict to known origins
+// ---------------------------------------------------------------------------
+
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
 const VALID_ROLES = ["driver", "mechanic", "manager", "superuser"];
+
+// ---------------------------------------------------------------------------
+// Rate-limit configuration (IP-based, 10 creates per minute)
+// ---------------------------------------------------------------------------
+
+const CREATE_USER_MAX = 10;
+const CREATE_USER_WINDOW_MS = 60 * 1000; // 1 minute
+const CREATE_USER_LOCKOUT_S = 60;
+
+// ---------------------------------------------------------------------------
+// Structured error response helper
+// ---------------------------------------------------------------------------
+
+function errorResponse(
+  code: string,
+  message: string,
+  status: number,
+  extra?: Record<string, unknown>,
+): Response {
+  return new Response(
+    JSON.stringify({ error: { code, message }, ...extra }),
+    {
+      status,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    },
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Rate-limit helpers (DB-backed via rate_limits table)
+// ---------------------------------------------------------------------------
+
+async function checkIpRateLimit(
+  serviceClient: ReturnType<typeof createClient>,
+  ip: string,
+): Promise<{ allowed: boolean; retryAfterSeconds: number }> {
+  const key = `admin-create:${ip}`;
+  const { data } = await serviceClient
+    .from("rate_limits")
+    .select("*")
+    .eq("key", key)
+    .maybeSingle();
+
+  if (!data) return { allowed: true, retryAfterSeconds: 0 };
+
+  const now = Date.now();
+  const firstFailureAt = new Date(data.first_failure_at).getTime();
+
+  // Window expired and no active lockout — reset
+  if (now - firstFailureAt > CREATE_USER_WINDOW_MS) {
+    const lockoutExpired = !data.lockout_until || now >= new Date(data.lockout_until).getTime();
+    if (lockoutExpired) {
+      await serviceClient.from("rate_limits").delete().eq("key", key);
+      return { allowed: true, retryAfterSeconds: 0 };
+    }
+  }
+
+  // Currently locked out
+  if (data.lockout_until) {
+    const lockoutUntil = new Date(data.lockout_until).getTime();
+    if (now < lockoutUntil) {
+      return { allowed: false, retryAfterSeconds: Math.ceil((lockoutUntil - now) / 1000) };
+    }
+  }
+
+  return { allowed: true, retryAfterSeconds: 0 };
+}
+
+async function recordCreateAttempt(
+  serviceClient: ReturnType<typeof createClient>,
+  ip: string,
+): Promise<void> {
+  const key = `admin-create:${ip}`;
+  const { data } = await serviceClient
+    .from("rate_limits")
+    .select("*")
+    .eq("key", key)
+    .maybeSingle();
+
+  if (!data) {
+    await serviceClient.from("rate_limits").upsert({
+      key,
+      failures: 1,
+      first_failure_at: new Date().toISOString(),
+      lockout_until: null,
+      lockout_seconds: CREATE_USER_LOCKOUT_S,
+    });
+    return;
+  }
+
+  const newCount = data.failures + 1;
+  const updates: Record<string, unknown> = { failures: newCount };
+
+  if (newCount >= CREATE_USER_MAX) {
+    updates.lockout_until = new Date(Date.now() + CREATE_USER_LOCKOUT_S * 1000).toISOString();
+  }
+
+  await serviceClient.from("rate_limits").update(updates).eq("key", key);
+}
+
+// ---------------------------------------------------------------------------
+// Main handler
+// ---------------------------------------------------------------------------
 
 serve(async (req: Request): Promise<Response> => {
   // Handle CORS preflight
@@ -25,13 +134,7 @@ serve(async (req: Request): Promise<Response> => {
   }
 
   if (req.method !== "POST") {
-    return new Response(
-      JSON.stringify({ error: "Method not allowed" }),
-      {
-        status: 405,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
-    );
+    return errorResponse("METHOD_NOT_ALLOWED", "Method not allowed", 405);
   }
 
   try {
@@ -42,13 +145,7 @@ serve(async (req: Request): Promise<Response> => {
     // Extract and verify JWT
     const authHeader = req.headers.get("authorization");
     if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(
-        JSON.stringify({ error: "Missing authorization token" }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
-      );
+      return errorResponse("UNAUTHORIZED", "Missing authorization token", 401);
     }
 
     const jwt = authHeader.replace("Bearer ", "");
@@ -63,13 +160,7 @@ serve(async (req: Request): Promise<Response> => {
       await anonClient.auth.getUser(jwt);
 
     if (authError || !callerAuth) {
-      return new Response(
-        JSON.stringify({ error: "Invalid or expired token" }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
-      );
+      return errorResponse("UNAUTHORIZED", "Invalid or expired token", 401);
     }
 
     // Verify caller role from profiles table (never trust JWT claims)
@@ -84,60 +175,57 @@ serve(async (req: Request): Promise<Response> => {
       .single();
 
     if (profileError || !callerProfile) {
-      return new Response(
-        JSON.stringify({ error: "Could not verify caller permissions" }),
-        {
-          status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
-      );
+      return errorResponse("UNAUTHORIZED", "Could not verify caller permissions", 403);
     }
 
     if (callerProfile.role !== "superuser") {
-      return new Response(
-        JSON.stringify({ error: "Only superusers can create users" }),
-        {
-          status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
+      return errorResponse("UNAUTHORIZED", "Only superusers can create users", 403);
+    }
+
+    // IP-based rate limiting for user creation
+    const clientIp =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req.headers.get("x-real-ip") ||
+      "unknown";
+
+    const rateCheck = await checkIpRateLimit(serviceClient, clientIp);
+    if (!rateCheck.allowed) {
+      return errorResponse(
+        "RATE_LIMITED",
+        `Too many user creation attempts. Please try again in ${rateCheck.retryAfterSeconds} seconds.`,
+        429,
+        { retryAfterSeconds: rateCheck.retryAfterSeconds },
       );
     }
+
+    // Record this attempt against the rate limit
+    await recordCreateAttempt(serviceClient, clientIp);
 
     // Parse and validate input
     const { email, password, fullName, role, phone, employeeId, depot } =
       await req.json();
 
     if (!email || !password || !fullName || !role) {
-      return new Response(
-        JSON.stringify({
-          error: "Email, password, full name, and role are required",
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
+      return errorResponse(
+        "VALIDATION_ERROR",
+        "Email, password, full name, and role are required",
+        400,
       );
     }
 
     if (typeof password !== "string" || password.length < 8) {
-      return new Response(
-        JSON.stringify({ error: "Password must be at least 8 characters" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
+      return errorResponse(
+        "VALIDATION_ERROR",
+        "Password must be at least 8 characters",
+        400,
       );
     }
 
     if (!VALID_ROLES.includes(role)) {
-      return new Response(
-        JSON.stringify({
-          error: `Invalid role. Must be one of: ${VALID_ROLES.join(", ")}`,
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
+      return errorResponse(
+        "VALIDATION_ERROR",
+        `Invalid role. Must be one of: ${VALID_ROLES.join(", ")}`,
+        400,
       );
     }
 
@@ -152,13 +240,7 @@ serve(async (req: Request): Promise<Response> => {
 
     if (createError || !newUser?.user) {
       const msg = createError?.message || "Failed to create auth user";
-      return new Response(
-        JSON.stringify({ error: msg }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
-      );
+      return errorResponse("VALIDATION_ERROR", msg, 400);
     }
 
     const newUserId = newUser.user.id;
@@ -193,14 +275,10 @@ serve(async (req: Request): Promise<Response> => {
       );
       await serviceClient.auth.admin.deleteUser(newUserId);
 
-      return new Response(
-        JSON.stringify({
-          error: `Failed to set up user profile: ${updateMsg}`,
-        }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
+      return errorResponse(
+        "INTERNAL_ERROR",
+        `Failed to set up user profile: ${updateMsg}`,
+        500,
       );
     }
 
@@ -220,12 +298,6 @@ serve(async (req: Request): Promise<Response> => {
     );
   } catch (err) {
     console.error("admin-create-user error:", err);
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
-    );
+    return errorResponse("INTERNAL_ERROR", "Internal server error", 500);
   }
 });

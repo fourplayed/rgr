@@ -1,5 +1,24 @@
-import type { Session, User as AuthUser } from '@supabase/supabase-js';
+import type { Session, AuthError, User as AuthUser } from '@supabase/supabase-js';
 import { getSupabaseClient, getSupabaseConfig } from './client';
+
+// Singleton promise for deduplicating concurrent token refreshes
+let refreshPromise: Promise<{ data: { session: Session | null }; error: AuthError | null }> | null = null;
+
+/**
+ * Safely refresh the current session, deduplicating concurrent calls.
+ *
+ * Multiple components or listeners may trigger a refresh simultaneously
+ * (e.g., AppState resume + auth state change). This ensures only one
+ * network request is made; subsequent callers share the in-flight promise.
+ */
+export async function refreshSessionSafe() {
+  const supabase = getSupabaseClient();
+  if (!refreshPromise) {
+    refreshPromise = supabase.auth.refreshSession()
+      .finally(() => { refreshPromise = null; });
+  }
+  return refreshPromise;
+}
 import type {
   Profile,
   ProfileRow,
@@ -63,9 +82,9 @@ export async function signInWithEmail(
  * returns a session which is then set on the local Supabase client so
  * subsequent requests are authenticated.
  *
- * Falls back to direct `signInWithEmail` if the Edge Function is
- * unreachable (e.g. network error, function not deployed yet) so that
- * the app remains usable during rollout.
+ * If the Edge Function is unreachable or not deployed, returns an error
+ * instead of falling back to direct auth (fail-closed for security).
+ * Includes a 15s timeout via AbortController.
  */
 export async function signInWithEmailSecure(
   credentials: SignInCredentials
@@ -83,6 +102,9 @@ export async function signInWithEmailSecure(
   const config = getSupabaseConfig();
   const functionUrl = `${config.url}/functions/v1/secure-auth`;
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+
   try {
     const response = await fetch(functionUrl, {
       method: 'POST',
@@ -95,23 +117,24 @@ export async function signInWithEmailSecure(
         email: credentials.email,
         password: credentials.password,
       }),
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
 
     const body = await response.json();
 
-    // If the Edge Function is not deployed (404), fall back to direct auth
-    // so the app remains usable during rollout. A 5xx means the function
-    // errored — do NOT fall back, as that would bypass server-side rate limiting.
+    // Edge Function not deployed — fail safely, don't bypass
     if (response.status === 404) {
-      console.warn(
-        '[auth] secure-auth Edge Function returned 404, falling back to direct sign-in'
-      );
-      return signInWithEmail(credentials);
+      return {
+        success: false,
+        data: null,
+        error: 'Authentication service unavailable. Please try again later.',
+      };
     }
 
     if (!response.ok) {
       recordFailure(credentials.email);
-      const errorMessage = body.error || 'Authentication failed';
+      const errorMessage = body.error?.message || body.error || 'Authentication failed';
       return { success: false, data: null, error: errorMessage };
     }
 
@@ -145,13 +168,15 @@ export async function signInWithEmailSecure(
       error: null,
     };
   } catch (networkError) {
-    // Edge Function unreachable -- fall back to direct auth so the app
-    // is not bricked if the function is not deployed or Deno is down.
-    console.warn(
-      '[auth] secure-auth Edge Function unreachable, falling back to direct sign-in:',
-      networkError instanceof Error ? networkError.message : networkError
-    );
-    return signInWithEmail(credentials);
+    clearTimeout(timeout);
+    const isTimeout = networkError instanceof Error && networkError.name === 'AbortError';
+    return {
+      success: false,
+      data: null,
+      error: isTimeout
+        ? 'Login timed out. Please check your connection and try again.'
+        : 'Authentication service unavailable. Please try again later.',
+    };
   }
 }
 

@@ -3,7 +3,8 @@ import { AppState, View, StyleSheet, Text } from 'react-native';
 import { LoadingDots } from '../src/components/common/LoadingDots';
 import { StatusBar } from 'expo-status-bar';
 import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-router';
-import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, QueryCache, MutationCache, onlineManager } from '@tanstack/react-query';
+import NetInfo from '@react-native-community/netinfo';
 import { isAuthError } from '../src/utils/authErrors';
 import {
   useFonts,
@@ -18,7 +19,7 @@ import {
   Lato_900Black,
   Lato_900Black_Italic,
 } from '@expo-google-fonts/lato';
-import { onAuthStateChange, getSupabaseClient, listDepots } from '@rgr/shared';
+import { onAuthStateChange, getSupabaseClient, refreshSessionSafe, listDepots } from '@rgr/shared';
 import { initializeMobileSupabase } from '../src/config/supabase';
 import { useAuthStore } from '../src/store/authStore';
 import { useLocationStore } from '../src/store/locationStore';
@@ -82,8 +83,9 @@ export default function RootLayout() {
             gcTime: 1000 * 60 * 10,
             retry: (failureCount, error) => {
               if (isAuthError(error)) return false;
-              return failureCount < 1;
+              return failureCount < 3;
             },
+            retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
             refetchOnWindowFocus: false,
             refetchOnReconnect: false,
           },
@@ -144,6 +146,16 @@ export default function RootLayout() {
     return unsubscribe;
   }, []);
 
+  // Connect React Query's onlineManager to NetInfo so mutations
+  // automatically pause when offline and resume on reconnect.
+  useEffect(() => {
+    return onlineManager.setEventListener((setOnline) => {
+      return NetInfo.addEventListener((state) => {
+        setOnline(!!state.isConnected);
+      });
+    });
+  }, []);
+
   // Proactively refresh auth session when app returns to foreground.
   // iOS suspends the JS thread when backgrounded, which stops Supabase JS's
   // autoRefreshToken timer. This ensures the token is refreshed before any
@@ -153,7 +165,7 @@ export default function RootLayout() {
       if (nextAppState === 'active') {
         const { isAuthenticated } = useAuthStore.getState();
         if (isAuthenticated) {
-          getSupabaseClient().auth.getSession();
+          refreshSessionSafe();
         }
       }
     });

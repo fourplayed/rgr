@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { AppState } from 'react-native';
 import type { BarcodeScanningResult } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { isValidQRCode } from '@rgr/shared';
@@ -53,10 +54,19 @@ export function useQRScanner(
     onInvalidQRRef.current = onInvalidQR;
   }, [onInvalidQR]);
 
+  // Pause scanning when app goes to background to prevent phantom callbacks
+  const isPausedRef = useRef(false);
+
   useEffect(() => {
     isMountedRef.current = true;
+
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      isPausedRef.current = nextState !== 'active';
+    });
+
     return () => {
       isMountedRef.current = false;
+      subscription.remove();
       // Clear any pending timeout on unmount
       if (lockTimeoutRef.current) {
         clearTimeout(lockTimeoutRef.current);
@@ -66,7 +76,8 @@ export function useQRScanner(
   }, []);
 
   const handleBarCodeScanned = useCallback(async (result: BarcodeScanningResult) => {
-    // Prevent processing if already processing (use ref for immediate check)
+    // Prevent processing if app is backgrounded or already processing
+    if (isPausedRef.current) return;
     if (isProcessingRef.current) {
       return;
     }

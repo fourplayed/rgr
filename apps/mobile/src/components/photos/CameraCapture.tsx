@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Modal,
+  Linking,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Image } from 'expo-image';
@@ -135,6 +136,7 @@ function CameraCaptureComponent({
 
   // Permission denied state
   if (!permission.granted) {
+    const permanentlyDenied = permission.canAskAgain === false;
     return (
       <Modal visible={visible} animationType="slide" onRequestClose={handleClose} onDismiss={onDismiss}>
         <View style={styles.container}>
@@ -143,7 +145,9 @@ function CameraCaptureComponent({
               <Ionicons name="ban-outline" size={48} color={colors.error} style={styles.permissionIcon} />
               <Text style={styles.permissionTitle}>Camera Access Required</Text>
               <Text style={styles.permissionBody}>
-                Camera permission is needed to capture photos. Enable it in your device Settings.
+                {permanentlyDenied
+                  ? 'Camera permission was denied. Please enable it in your device Settings to capture photos.'
+                  : 'Camera permission is needed to capture photos. Enable it in your device Settings.'}
               </Text>
               <View style={styles.permissionButtonRow}>
                 <TouchableOpacity
@@ -156,11 +160,13 @@ function CameraCaptureComponent({
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.permissionGrantButton}
-                  onPress={requestPermission}
+                  onPress={permanentlyDenied ? () => Linking.openSettings() : requestPermission}
                   accessibilityRole="button"
-                  accessibilityLabel="Grant camera permission"
+                  accessibilityLabel={permanentlyDenied ? 'Open device settings' : 'Grant camera permission'}
                 >
-                  <Text style={styles.permissionGrantButtonText}>Grant</Text>
+                  <Text style={styles.permissionGrantButtonText}>
+                    {permanentlyDenied ? 'Open Settings' : 'Grant'}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>

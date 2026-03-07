@@ -1,5 +1,6 @@
 import { getSupabaseClient } from './client';
 import type { ServiceResult } from '../../types';
+import { withRetry } from '../../utils/withRetry';
 import type {
   Photo,
   PhotoRow,
@@ -112,14 +113,21 @@ export async function uploadPhoto(
     // Convert to Uint8Array for Supabase upload
     const uint8Array = new Uint8Array(arrayBuffer);
 
-    // Upload to Supabase storage
-    const { error: uploadError } = await supabase.storage
-      .from(STORAGE_BUCKETS.photos)
-      .upload(storagePath, uint8Array, {
-        contentType: mimeType,
-        cacheControl: '3600',
-        upsert: false,
-      });
+    // Upload to Supabase storage with retry for transient network failures
+    const { error: uploadError } = await withRetry(
+      () => supabase.storage
+        .from(STORAGE_BUCKETS.photos)
+        .upload(storagePath, uint8Array, {
+          contentType: mimeType,
+          cacheControl: '3600',
+          upsert: false,
+        })
+        .then((result) => {
+          if (result.error) throw result.error;
+          return result;
+        }),
+      { maxAttempts: 3, baseDelayMs: 1000 },
+    ).then(() => ({ error: null })).catch((err) => ({ error: err as Error }));
 
     if (uploadError) {
       return { success: false, data: null, error: `Failed to upload photo: ${uploadError.message}` };
@@ -180,7 +188,11 @@ export async function uploadPhoto(
       // Cleanup uploaded files on validation failure
       const pathsToRemove = [storagePath];
       if (thumbnailPath) pathsToRemove.push(thumbnailPath);
-      await supabase.storage.from(STORAGE_BUCKETS.photos).remove(pathsToRemove);
+      try {
+        await supabase.storage.from(STORAGE_BUCKETS.photos).remove(pathsToRemove);
+      } catch (cleanupError) {
+        console.error('[photos] Failed to clean up orphaned storage files:', pathsToRemove, cleanupError);
+      }
       return { success: false, data: null, error: parsed.error.errors[0]?.message ?? 'Invalid input' };
     }
 
@@ -196,7 +208,11 @@ export async function uploadPhoto(
       // Cleanup uploaded files on database failure
       const pathsToRemove = [storagePath];
       if (thumbnailPath) pathsToRemove.push(thumbnailPath);
-      await supabase.storage.from(STORAGE_BUCKETS.photos).remove(pathsToRemove);
+      try {
+        await supabase.storage.from(STORAGE_BUCKETS.photos).remove(pathsToRemove);
+      } catch (cleanupError) {
+        console.error('[photos] Failed to clean up orphaned storage files:', pathsToRemove, cleanupError);
+      }
       return { success: false, data: null, error: `Failed to create photo record: ${dbError.message}` };
     }
 

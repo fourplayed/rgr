@@ -69,6 +69,12 @@ export function initSupabase(config: SupabaseConfig): SupabaseClient {
       headers: {
         'X-Client-Info': '@rgr/shared',
       },
+      fetch: (url: RequestInfo | URL, options?: RequestInit) => {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 30000);
+        return fetch(url, { ...options, signal: controller.signal })
+          .finally(() => clearTimeout(timeout));
+      },
     },
     // Connection pooling settings for better performance
     db: {

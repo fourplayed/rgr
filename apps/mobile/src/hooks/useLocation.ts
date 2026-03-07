@@ -13,9 +13,12 @@ export interface LocationData {
   speed: number | null;
 }
 
+export type LocationErrorType = 'permission' | 'timeout' | 'unavailable';
+
 interface UseLocationResult {
   location: LocationData | null;
   error: string | null;
+  errorType: LocationErrorType | null;
   isLoading: boolean;
   requestLocation: () => Promise<LocationData | null>;
   hasPermission: boolean;
@@ -28,6 +31,7 @@ interface UseLocationResult {
 export function useLocation(): UseLocationResult {
   const [location, setLocation] = useState<LocationData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [errorType, setErrorType] = useState<LocationErrorType | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [hasPermission, setHasPermission] = useState(false);
   // Track if component is mounted to prevent state updates after unmount
@@ -77,6 +81,7 @@ export function useLocation(): UseLocationResult {
     if (isMountedRef.current) {
       setIsLoading(true);
       setError(null);
+      setErrorType(null);
     }
 
     try {
@@ -104,7 +109,12 @@ export function useLocation(): UseLocationResult {
       if (!hasPermission) {
         const granted = await requestPermission();
         if (!granted) {
-          throw new Error('Location permission not granted');
+          if (isMountedRef.current) {
+            setError('Location permission not granted');
+            setErrorType('permission');
+            setIsLoading(false);
+          }
+          return null;
         }
       }
 
@@ -137,8 +147,10 @@ export function useLocation(): UseLocationResult {
       return locationData;
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to get location';
+      const isTimeout = message === 'Location request timed out';
       if (isMountedRef.current) {
         setError(message);
+        setErrorType(isTimeout ? 'timeout' : 'unavailable');
         setIsLoading(false);
       }
       return null;
@@ -148,6 +160,7 @@ export function useLocation(): UseLocationResult {
   return {
     location,
     error,
+    errorType,
     isLoading,
     requestLocation,
     hasPermission,

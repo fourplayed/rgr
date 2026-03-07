@@ -13,6 +13,8 @@ export { STORAGE_BUCKETS } from './constants';
 export { queryFromService } from './queryFromService';
 export { safeParseEnum } from './safeParseEnum';
 export { formatAssetNumber } from './formatAssetNumber';
+export { withRetry } from './withRetry';
+export type { RetryOptions } from './withRetry';
 
 /**
  * Validate email format
