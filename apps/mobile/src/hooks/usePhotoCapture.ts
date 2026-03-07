@@ -43,6 +43,8 @@ export function usePhotoCapture() {
   const [isCapturing, setIsCapturing] = useState(false);
   // Guard against double-upload (same pattern as isCapturingRef)
   const isUploadingRef = useRef(false);
+  // Track thumbnail URI so we can clean up the file on retake/cancel
+  const thumbnailUriRef = useRef<string | null>(null);
 
   /**
    * Take a photo using the provided camera ref.
@@ -85,7 +87,12 @@ export function usePhotoCapture() {
   /**
    * Clear the captured photo and return to camera view.
    */
-  const retakePhoto = useCallback(() => {
+  const retakePhoto = useCallback(async () => {
+    // Clean up orphaned thumbnail file from previous capture
+    if (thumbnailUriRef.current) {
+      FileSystem.deleteAsync(thumbnailUriRef.current, { idempotent: true }).catch(() => {});
+      thumbnailUriRef.current = null;
+    }
     setCapturedUri(null);
     setUploadError(null);
   }, [setCapturedUri, setUploadError]);
@@ -127,6 +134,7 @@ export function usePhotoCapture() {
         try {
           const thumbnail = await generateThumbnail(capturedUri);
           thumbnailFileUri = thumbnail.uri;
+          thumbnailUriRef.current = thumbnail.uri;
         } catch (thumbError: unknown) {
           logger.warn('Failed to generate thumbnail', thumbError);
           // Continue without thumbnail
@@ -165,6 +173,11 @@ export function usePhotoCapture() {
    * Cancel the capture workflow.
    */
   const cancelCapture = useCallback(() => {
+    // Clean up orphaned thumbnail file
+    if (thumbnailUriRef.current) {
+      FileSystem.deleteAsync(thumbnailUriRef.current, { idempotent: true }).catch(() => {});
+      thumbnailUriRef.current = null;
+    }
     reset();
   }, [reset]);
 

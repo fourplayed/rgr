@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import {
   View,
   Modal,
@@ -6,12 +6,16 @@ import {
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
+  Animated,
+  Dimensions,
   type ViewStyle,
   type StyleProp,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { colors } from '../../theme/colors';
 import { spacing, borderRadius } from '../../theme/spacing';
+
+const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 interface BottomSheetProps {
   visible: boolean;
@@ -26,7 +30,7 @@ interface BottomSheetProps {
 }
 
 /**
- * Standard bottom sheet wrapper with backdrop dismiss.
+ * Standard bottom sheet wrapper with backdrop dismiss and spring entrance.
  *
  * Modal tiers:
  * - **Simple sheets** (Alert, Confirm, Input, Tutorial, SaveCredentials):
@@ -44,20 +48,79 @@ export function BottomSheet({
   style,
   keyboardAware = false,
 }: BottomSheetProps) {
+  const translateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+  const backdropOpacity = useRef(new Animated.Value(0)).current;
+  const entranceAnimRef = useRef<Animated.CompositeAnimation | null>(null);
+
+  useEffect(() => {
+    if (visible) {
+      translateY.setValue(SCREEN_HEIGHT);
+      backdropOpacity.setValue(0);
+      const anim = Animated.parallel([
+        Animated.spring(translateY, {
+          toValue: 0,
+          friction: 9,
+          tension: 65,
+          useNativeDriver: true,
+        }),
+        Animated.timing(backdropOpacity, {
+          toValue: 1,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+      ]);
+      entranceAnimRef.current = anim;
+      anim.start(() => {
+        entranceAnimRef.current = null;
+      });
+    }
+
+    return () => {
+      entranceAnimRef.current?.stop();
+      entranceAnimRef.current = null;
+    };
+  }, [visible, translateY, backdropOpacity]);
+
+  const handleDismiss = () => {
+    entranceAnimRef.current?.stop();
+    entranceAnimRef.current = null;
+    Animated.parallel([
+      Animated.timing(translateY, {
+        toValue: SCREEN_HEIGHT,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(backdropOpacity, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      onDismiss();
+    });
+  };
+
   const content = (
     <View style={styles.backdrop}>
       <TouchableOpacity
         style={styles.backdropTouchable}
         activeOpacity={1}
-        onPress={onDismiss}
+        onPress={handleDismiss}
         accessibilityRole="button"
         accessibilityLabel="Close"
       />
 
-      <View style={[styles.sheet, maxHeight != null && { maxHeight }, style]}>
+      <Animated.View
+        style={[
+          styles.sheet,
+          maxHeight != null && { maxHeight },
+          style,
+          { transform: [{ translateY }] },
+        ]}
+      >
         <View style={styles.handle} />
         {children}
-      </View>
+      </Animated.View>
     </View>
   );
 
@@ -65,17 +128,19 @@ export function BottomSheet({
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="none"
       statusBarTranslucent
-      onRequestClose={onDismiss}
+      onRequestClose={handleDismiss}
     >
       {visible && (
         <>
-          <BlurView
-            intensity={50}
-            tint="dark"
-            style={[StyleSheet.absoluteFillObject, styles.blur]}
-          />
+          <Animated.View style={[StyleSheet.absoluteFillObject, styles.blur, { opacity: backdropOpacity }]}>
+            <BlurView
+              intensity={50}
+              tint="dark"
+              style={StyleSheet.absoluteFillObject}
+            />
+          </Animated.View>
           {keyboardAware ? (
             <KeyboardAvoidingView
               style={styles.keyboardView}

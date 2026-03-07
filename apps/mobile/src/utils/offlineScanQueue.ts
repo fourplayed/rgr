@@ -5,6 +5,8 @@ import { createScanEvent } from '@rgr/shared';
 import { logger } from './logger';
 
 const QUEUE_KEY = 'rgr:offline-scan-queue';
+const MAX_QUEUE_SIZE = 500;
+const TTL_MS = 48 * 60 * 60 * 1000; // 48 hours
 
 export interface QueuedScan {
   id: string;
@@ -45,8 +47,12 @@ export async function enqueueScan(input: CreateScanEventInput): Promise<QueuedSc
     input,
     queuedAt: new Date().toISOString(),
   };
-  const queue = await getQueue();
+  let queue = await getQueue();
   queue.push(entry);
+  // Drop oldest entries if queue exceeds size cap
+  if (queue.length > MAX_QUEUE_SIZE) {
+    queue = queue.slice(queue.length - MAX_QUEUE_SIZE);
+  }
   await saveQueue(queue);
   logger.info(`Scan queued for offline replay (${queue.length} in queue)`);
   return entry;
@@ -65,8 +71,19 @@ export async function getQueueLength(): Promise<number> {
  * Failed scans remain in the queue for the next attempt.
  */
 export async function replayQueue(): Promise<{ replayed: number; failed: number }> {
-  const queue = await getQueue();
-  if (queue.length === 0) return { replayed: 0, failed: 0 };
+  const rawQueue = await getQueue();
+  // Filter out stale entries older than TTL
+  const now = Date.now();
+  const queue = rawQueue.filter(
+    (entry) => now - new Date(entry.queuedAt).getTime() < TTL_MS
+  );
+  if (queue.length < rawQueue.length) {
+    logger.info(`Dropped ${rawQueue.length - queue.length} stale queued scan(s) (>48h old)`);
+  }
+  if (queue.length === 0) {
+    await saveQueue([]);
+    return { replayed: 0, failed: 0 };
+  }
 
   logger.info(`Replaying ${queue.length} queued scan(s)...`);
 

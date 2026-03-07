@@ -36,6 +36,7 @@ export function useLocation(): UseLocationResult {
   const [hasPermission, setHasPermission] = useState(false);
   // Track if component is mounted to prevent state updates after unmount
   const isMountedRef = useRef(true);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -57,6 +58,10 @@ export function useLocation(): UseLocationResult {
 
     return () => {
       isMountedRef.current = false;
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
     };
   }, []);
 
@@ -124,10 +129,18 @@ export function useLocation(): UseLocationResult {
         Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.High,
         }),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Location request timed out')), 15000)
-        ),
+        new Promise<never>((_, reject) => {
+          timeoutRef.current = setTimeout(() => {
+            timeoutRef.current = null;
+            reject(new Error('Location request timed out'));
+          }, 15000);
+        }),
       ]);
+      // Clear timeout after successful resolution
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
 
       // Sanitize GPS values: expo-location returns -1 for heading/speed when unavailable
       // Convert negative values to null to avoid Zod validation failures (min: 0)

@@ -77,6 +77,7 @@ export function useMaintenanceList(filters: MaintenanceFilters = {}) {
       if (!lastItem) return undefined;
       return { createdAt: lastItem.createdAt, id: lastItem.id };
     },
+    maxPages: 10,
   });
 }
 

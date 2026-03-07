@@ -61,6 +61,8 @@ export function useRealtimeInvalidation() {
       .subscribe();
 
     return () => {
+      scanChannel.unsubscribe();
+      assetChannel.unsubscribe();
       supabase.removeChannel(scanChannel);
       supabase.removeChannel(assetChannel);
     };

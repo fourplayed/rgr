@@ -74,6 +74,7 @@ export function useDefectReportList(filters: DefectFilters = {}) {
       if (!lastItem) return undefined;
       return { createdAt: lastItem.createdAt, id: lastItem.id };
     },
+    maxPages: 10,
   });
 }
 

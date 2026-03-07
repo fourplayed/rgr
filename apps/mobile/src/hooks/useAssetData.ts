@@ -115,6 +115,7 @@ export function useInfiniteAssetList(filters?: {
       if (!lastItem) return undefined;
       return { sortValue: lastItem.assetNumber, id: lastItem.id };
     },
+    maxPages: 10,
     staleTime: 30_000,
   });
 }
