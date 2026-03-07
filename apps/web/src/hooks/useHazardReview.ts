@@ -9,54 +9,18 @@
  * - Calculate review statistics
  */
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { getSupabaseClient } from '@rgr/shared';
+import {
+  getSupabaseClient,
+  getHazardAlertsForReview,
+  getHazardReviewStats,
+} from '@rgr/shared';
+import type { HazardAlertForReview, HazardReviewStats } from '@rgr/shared';
 import type { HazardSeverity, ReviewAction, HazardData, HazardFilters } from '../components/dashboard/hazards';
 import type { HazardReviewStatsData } from '../components/dashboard/hazards/HazardReviewStats';
 
 // ============================================================================
 // Types
 // ============================================================================
-
-interface HazardAlert {
-  id: string;
-  freight_analysis_id: string;
-  hazard_rule_id: string | null;
-  photo_id: string;
-  asset_id: string | null;
-  scan_event_id: string | null;
-  hazard_type: string;
-  severity: HazardSeverity;
-  confidence_score: number;
-  description: string;
-  evidence_points: string[];
-  recommended_actions: string[];
-  location_in_image: string | null;
-  bounding_box: Record<string, number> | null;
-  status: string;
-  acknowledged_by: string | null;
-  acknowledged_at: string | null;
-  acknowledgment_type: string | null;
-  manager_review_by: string | null;
-  manager_review_at: string | null;
-  review_outcome: string | null;
-  created_at: string;
-  updated_at: string;
-  // Joined data
-  freight_analysis?: {
-    id: string;
-    photo_id: string;
-    created_at: string;
-  };
-  photos?: {
-    id: string;
-    storage_path: string;
-    thumbnail_path: string;
-  };
-  assets?: {
-    id: string;
-    asset_number: string;
-  };
-}
 
 interface HazardReviewState {
   hazards: HazardData[];
@@ -144,29 +108,28 @@ function getDateRangeStart(range: string): Date {
   }
 }
 
-function mapAlertToHazardData(alert: HazardAlert): HazardData {
-  // photos and assets are joined directly on hazard_alerts
-  const photo = alert.photos;
-  const asset = alert.assets;
+function mapAlertToHazardData(alert: HazardAlertForReview): HazardData {
+  const photo = alert.photo;
+  const asset = alert.asset;
 
   // Construct photo URL from storage path (photos stored in 'photos-compressed' bucket)
   const supabase = getSupabaseClient();
-  const photoUrl = photo?.storage_path
-    ? supabase.storage.from('photos-compressed').getPublicUrl(photo.storage_path).data.publicUrl
+  const photoUrl = photo?.storagePath
+    ? supabase.storage.from('photos-compressed').getPublicUrl(photo.storagePath).data.publicUrl
     : '/api/placeholder/120/90';
 
   const data: HazardData = {
     id: alert.id,
     photoUrl,
-    assetNumber: asset?.asset_number || 'Unknown',
-    severity: alert.severity,
-    hazardType: formatHazardType(alert.hazard_type),
+    assetNumber: asset?.assetNumber || 'Unknown',
+    severity: alert.severity as HazardSeverity,
+    hazardType: formatHazardType(alert.hazardType),
     description: alert.description,
-    confidence: Math.round(alert.confidence_score * 100),
-    detectedAt: alert.created_at,
-    recommendedActions: alert.recommended_actions || [],
+    confidence: Math.round(alert.confidenceScore * 100),
+    detectedAt: alert.createdAt,
+    recommendedActions: alert.recommendedActions || [],
   };
-  if (alert.location_in_image) data.location = alert.location_in_image;
+  if (alert.locationInImage) data.location = alert.locationInImage;
   return data;
 }
 
@@ -190,63 +153,30 @@ export function useHazardReview(): UseHazardReviewResult {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
 
-  // Fetch hazard alerts from database
+  // Fetch hazard alerts via shared service
   const fetchHazards = useCallback(async (pageNum: number = 0, append: boolean = false) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const supabase = getSupabaseClient();
-
-      // Build query
-      // Note: asset_id and photo_id are on hazard_alerts, not freight_analysis
-      let query = supabase
-        .from('hazard_alerts')
-        .select(`
-          *,
-          freight_analysis:freight_analysis_id (
-            id,
-            photo_id,
-            created_at
-          ),
-          photos:photo_id (
-            id,
-            storage_path,
-            thumbnail_path
-          ),
-          assets:asset_id (
-            id,
-            asset_number
-          )
-        `)
-        .order('created_at', { ascending: false })
-        .range(pageNum * PAGE_SIZE, (pageNum + 1) * PAGE_SIZE - 1);
-
-      // Apply status filter
-      if (filters.status === 'pending') {
-        query = query.eq('status', 'active');
-      } else if (filters.status === 'reviewed') {
-        query = query.in('status', ['acknowledged', 'resolved', 'dismissed']);
-      }
-      // 'all' doesn't need additional filter
-
-      // Apply severity filter
-      if (filters.severities.length > 0) {
-        query = query.in('severity', filters.severities);
-      }
-
-      // Apply date range filter
       const dateStart = getDateRangeStart(filters.dateRange);
-      query = query.gte('created_at', dateStart.toISOString());
 
-      const { data, error: queryError } = await query;
+      const result = await getHazardAlertsForReview({
+        page: pageNum,
+        pageSize: PAGE_SIZE,
+        status: filters.status === 'pending' ? 'pending'
+          : filters.status === 'reviewed' ? 'reviewed'
+          : 'all',
+        severities: filters.severities.length > 0 ? filters.severities : undefined,
+        dateStart: dateStart.toISOString(),
+      });
 
-      if (queryError) {
-        throw new Error(queryError.message);
+      if (!result.success) {
+        throw new Error(result.error);
       }
 
       // Map to HazardData format
-      const mappedHazards = (data as HazardAlert[] || []).map(mapAlertToHazardData);
+      const mappedHazards = result.data.map(mapAlertToHazardData);
 
       // Apply search filter client-side (for asset number)
       const filteredHazards = filters.searchQuery
@@ -270,36 +200,12 @@ export function useHazardReview(): UseHazardReviewResult {
     }
   }, [filters]);
 
-  // Fetch statistics via single RPC call
+  // Fetch statistics via shared service
   const fetchStats = useCallback(async () => {
-    try {
-      const supabase = getSupabaseClient();
-
-      const { data, error } = await supabase.rpc('get_hazard_review_stats');
-
-      if (error) throw error;
-
-      const rpc = data as {
-        total_photos_analyzed: number;
-        pending_reviews: number;
-        ai_accuracy: number;
-        false_positive_rate: number;
-        severity_breakdown: {
-          critical: number;
-          high: number;
-          medium: number;
-          low: number;
-        };
-      };
-
-      setStats({
-        pendingReviews: rpc.pending_reviews,
-        aiAccuracy: rpc.ai_accuracy,
-        falsePositiveRate: rpc.false_positive_rate,
-        totalPhotosAnalyzed: rpc.total_photos_analyzed,
-        severityBreakdown: rpc.severity_breakdown,
-      });
-    } catch {
+    const result = await getHazardReviewStats();
+    if (result.success) {
+      setStats(result.data as HazardReviewStatsData);
+    } else {
       // Keep default stats on error
       setStats(DEFAULT_STATS);
     }

@@ -579,6 +579,35 @@ export async function bulkDeletePhotos(
 }
 
 /**
+ * Create a photo database record without uploading.
+ * Useful when the file is uploaded separately (e.g., web direct upload).
+ * Validates input with Zod and maps to database row format.
+ */
+export async function createPhotoRecord(
+  input: CreatePhotoInput
+): Promise<ServiceResult<Photo>> {
+  const parsed = CreatePhotoInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, data: null, error: parsed.error.errors[0]?.message ?? 'Invalid input' };
+  }
+
+  const supabase = getSupabaseClient();
+  const dbData = mapPhotoToInsert(parsed.data as CreatePhotoInput);
+
+  const { data, error } = await supabase
+    .from('photos')
+    .insert(dbData)
+    .select()
+    .single();
+
+  if (error) {
+    return { success: false, data: null, error: `Failed to create photo record: ${error.message}` };
+  }
+
+  return { success: true, data: mapRowToPhoto(data as PhotoRow), error: null };
+}
+
+/**
  * Generate a signed URL for downloading a photo.
  * URLs are valid for 1 hour by default.
  */

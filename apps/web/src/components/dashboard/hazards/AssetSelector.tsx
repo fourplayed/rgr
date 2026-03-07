@@ -10,20 +10,9 @@
  */
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { ChevronDown, Search, Truck, X, Loader2, AlertCircle } from 'lucide-react';
-import { getSupabaseClient } from '@rgr/shared';
+import { listServicedAssets } from '@rgr/shared';
+import type { ServicedAssetOption } from '@rgr/shared';
 import { RGR_COLORS } from '@/styles/color-palette';
-
-// ============================================================================
-// Types
-// ============================================================================
-
-interface Asset {
-  id: string;
-  asset_number: string;
-  category: 'trailer' | 'dolly';
-  subtype: string | null;
-  status: 'serviced' | 'maintenance' | 'out_of_service';
-}
 
 export interface AssetSelectorProps {
   value: string | null;
@@ -48,7 +37,7 @@ export const AssetSelector = React.memo<AssetSelectorProps>(({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [assets, setAssets] = useState<Asset[]>([]);
+  const [assets, setAssets] = useState<ServicedAssetOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -67,35 +56,24 @@ export const AssetSelector = React.memo<AssetSelectorProps>(({
       setIsLoading(true);
       setError(null);
 
-      try {
-        const supabase = getSupabaseClient();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data, error: fetchError } = await (supabase as any)
-          .from('assets')
-          .select('id, asset_number, category, subtype, status')
-          .eq('status', 'serviced')
-          .order('asset_number', { ascending: true })
-          .limit(100);
+      const result = await listServicedAssets(100);
 
-        if (fetchError) {
-          throw fetchError;
-        }
-
-        setAssets(data || []);
-      } catch (err) {
-        console.error('Failed to fetch assets:', err);
+      if (result.success) {
+        setAssets(result.data);
+      } else {
+        console.error('Failed to fetch assets:', result.error);
         setError('Failed to load assets');
-        // Use mock data with real UUIDs from production database for development/testing
+        // Use mock data for development/testing fallback
         setAssets([
-          { id: '910472f2-2185-483a-ad70-87e55f46e2fe', asset_number: 'TL001', category: 'trailer', subtype: 'flattop', status: 'serviced' },
-          { id: '937e0b87-8c68-43d3-8244-abcd0ad68be9', asset_number: 'TL002', category: 'trailer', subtype: 'dropdeck', status: 'serviced' },
-          { id: '94cf231d-9804-4f1b-a01d-82d02f17b645', asset_number: 'TL004', category: 'trailer', subtype: 'skel_trailer', status: 'serviced' },
-          { id: 'e3e92532-032c-4a8e-825d-bc8af25102b0', asset_number: 'TL005', category: 'trailer', subtype: 'extendable_flattop', status: 'serviced' },
-          { id: 'e6858fe1-edab-4ada-abe7-65f853bc5a2d', asset_number: 'DL001', category: 'dolly', subtype: null, status: 'serviced' },
+          { id: '910472f2-2185-483a-ad70-87e55f46e2fe', assetNumber: 'TL001', category: 'trailer', subtype: 'flattop', status: 'serviced' },
+          { id: '937e0b87-8c68-43d3-8244-abcd0ad68be9', assetNumber: 'TL002', category: 'trailer', subtype: 'dropdeck', status: 'serviced' },
+          { id: '94cf231d-9804-4f1b-a01d-82d02f17b645', assetNumber: 'TL004', category: 'trailer', subtype: 'skel_trailer', status: 'serviced' },
+          { id: 'e3e92532-032c-4a8e-825d-bc8af25102b0', assetNumber: 'TL005', category: 'trailer', subtype: 'extendable_flattop', status: 'serviced' },
+          { id: 'e6858fe1-edab-4ada-abe7-65f853bc5a2d', assetNumber: 'DL001', category: 'dolly', subtype: null, status: 'serviced' },
         ]);
-      } finally {
-        setIsLoading(false);
       }
+
+      setIsLoading(false);
     };
 
     fetchAssets();
@@ -107,7 +85,7 @@ export const AssetSelector = React.memo<AssetSelectorProps>(({
     const query = searchQuery.toLowerCase();
     return assets.filter(
       (asset) =>
-        asset.asset_number.toLowerCase().includes(query) ||
+        asset.assetNumber.toLowerCase().includes(query) ||
         asset.category.toLowerCase().includes(query) ||
         (asset.subtype && asset.subtype.toLowerCase().includes(query))
     );
@@ -180,7 +158,7 @@ export const AssetSelector = React.memo<AssetSelectorProps>(({
             {isLoading
               ? 'Loading assets...'
               : selectedAsset
-                ? `${selectedAsset.asset_number} - ${formatCategory(selectedAsset.category, selectedAsset.subtype)}`
+                ? `${selectedAsset.assetNumber} - ${formatCategory(selectedAsset.category, selectedAsset.subtype)}`
                 : placeholder}
           </span>
         </div>
@@ -281,7 +259,7 @@ export const AssetSelector = React.memo<AssetSelectorProps>(({
               >
                 <Truck className="w-4 h-4 flex-shrink-0" style={{ color: textMuted }} />
                 <div className="min-w-0 flex-1">
-                  <div className="font-medium truncate">{asset.asset_number}</div>
+                  <div className="font-medium truncate">{asset.assetNumber}</div>
                   <div className="text-xs truncate" style={{ color: textMuted }}>
                     {formatCategory(asset.category, asset.subtype)}
                   </div>

@@ -27,7 +27,8 @@ import {
   RefreshCw,
   TrendingUp,
 } from 'lucide-react';
-import { getSupabaseClient } from '@rgr/shared';
+import { getAnalysisHistory } from '@rgr/shared';
+import type { AnalysisHistoryItem } from '@rgr/shared';
 import { useAuthStore } from '@/stores/authStore';
 import { VisionCard } from '../vision/VisionCard';
 import { RGR_COLORS } from '@/styles/color-palette';
@@ -37,20 +38,8 @@ import { ImageLightbox } from './ImageLightbox';
 // Types
 // ============================================================================
 
-interface AnalysisHistoryItem {
-  id: string;
-  photoId: string;
+interface DisplayHistoryItem extends AnalysisHistoryItem {
   photoUrl: string;
-  storagePath: string;
-  freightCategory: string;
-  freightDescription: string;
-  confidence: number;
-  hazardCount: number;
-  status: string;
-  wasReviewed: boolean;
-  wasAccurate: boolean | null;
-  analyzedAt: string;
-  assetNumber?: string;
 }
 
 interface HistoryFilters {
@@ -94,7 +83,7 @@ export const AnalysisHistoryPanel = React.memo<AnalysisHistoryPanelProps>(({
   maxItems = 50,
 }) => {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const [items, setItems] = useState<AnalysisHistoryItem[]>([]);
+  const [items, setItems] = useState<DisplayHistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -127,102 +116,28 @@ export const AnalysisHistoryPanel = React.memo<AnalysisHistoryPanelProps>(({
       if (!isAuthenticated) {
         throw new Error('Please sign in to view analysis history');
       }
-      const supabase = getSupabaseClient();
 
-      // Build query with filters
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let query = (supabase as any)
-        .from('freight_analysis')
-        .select(`
-          id,
-          photo_id,
-          primary_category,
-          description,
-          confidence,
-          created_at,
-          photos!inner (
-            id,
-            storage_path,
-            asset_id,
-            assets (
-              asset_number
-            )
-          ),
-          hazard_alerts (
-            id,
-            review_outcome,
-            manager_review_at
-          )
-        `)
-        .order('created_at', { ascending: false })
-        .limit(maxItems);
-
-      // Apply freight category filter
-      if (filters.freightCategory) {
-        query = query.eq('primary_category', filters.freightCategory);
-      }
-
-      // Apply date filter
-      if (filters.dateRange !== 'all') {
-        const now = new Date();
-        let startDate: Date;
-
-        switch (filters.dateRange) {
-          case 'today':
-            startDate = new Date(now.setHours(0, 0, 0, 0));
-            break;
-          case 'week':
-            startDate = new Date(now.setDate(now.getDate() - 7));
-            break;
-          case 'month':
-            startDate = new Date(now.setMonth(now.getMonth() - 1));
-            break;
-          default:
-            startDate = new Date(0);
-        }
-
-        query = query.gte('created_at', startDate.toISOString());
-      }
-
-      const { data, error: fetchError } = await query;
-
-      if (fetchError) {
-        throw fetchError;
-      }
-
-      // Get public URLs for photos and transform data
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const transformedItems: AnalysisHistoryItem[] = (data || []).map((item: any) => {
-        const photo = item.photos;
-        const hazards = item.hazard_alerts || [];
-        const hasReview = hazards.some((h: { manager_review_at: string | null }) => h.manager_review_at !== null);
-        const reviewedHazards = hazards.filter((h: { review_outcome: string | null }) => h.review_outcome !== null);
-        const accurateCount = reviewedHazards.filter((h: { review_outcome: string }) => h.review_outcome === 'confirmed').length;
-
-        return {
-          id: item.id,
-          photoId: photo?.id || '',
-          photoUrl: photo?.storage_path
-            ? `${supabaseUrl}/storage/v1/object/public/photos-compressed/${photo.storage_path}`
-            : '',
-          storagePath: photo?.storage_path || '',
-          freightCategory: formatCategory(item.primary_category),
-          freightDescription: item.description || '',
-          confidence: Math.round((item.confidence || 0) * 100),
-          hazardCount: hazards.length,
-          status: 'completed', // Default status since column doesn't exist in DB
-          wasReviewed: hasReview,
-          wasAccurate: reviewedHazards.length > 0
-            ? accurateCount === reviewedHazards.length
-            : null,
-          analyzedAt: item.created_at,
-          assetNumber: photo?.assets?.asset_number,
-        };
+      const result = await getAnalysisHistory({
+        limit: maxItems,
+        freightCategory: filters.freightCategory || undefined,
+        dateRange: filters.dateRange,
       });
 
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+
+      // Add photoUrl from storagePath
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const displayItems: DisplayHistoryItem[] = result.data.map((item) => ({
+        ...item,
+        photoUrl: item.storagePath
+          ? `${supabaseUrl}/storage/v1/object/public/photos-compressed/${item.storagePath}`
+          : '',
+      }));
+
       // Apply client-side filters
-      let filtered = transformedItems;
+      let filtered = displayItems;
 
       // Search filter
       if (filters.search) {
@@ -606,14 +521,5 @@ export const AnalysisHistoryPanel = React.memo<AnalysisHistoryPanelProps>(({
 });
 
 AnalysisHistoryPanel.displayName = 'AnalysisHistoryPanel';
-
-// Helper function
-function formatCategory(category: string | null): string {
-  if (!category) return 'Unknown';
-  return category
-    .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
 
 export default AnalysisHistoryPanel;

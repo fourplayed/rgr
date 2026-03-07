@@ -11,70 +11,23 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import { getSupabaseClient } from '@rgr/shared';
+import {
+  getSupabaseClient,
+  getFleetStatistics,
+  getRecentDashboardScans,
+  getOutstandingAssets,
+  getAssetLocations,
+  queryFromService,
+} from '@rgr/shared';
 import type { AnalyticsTimeRange } from '@/services/analyticsService';
 
-/**
- * Fleet statistics data
- */
-export interface FleetStatistics {
-  totalAssets: number;
-  activeAssets: number;
-  inMaintenance: number;
-  outOfService: number;
-  trailerCount: number;
-  dollyCount: number;
-}
-
-/**
- * Recent scan event data
- */
-export interface RecentScan {
-  id: string;
-  assetId: string;
-  assetNumber: string;
-  assetCategory: string;
-  scanType: string;
-  scannedAt: string;
-  scannedBy: string | null;
-  scannerName: string | null;
-  latitude: number | null;
-  longitude: number | null;
-  locationDescription?: string;
-}
-
-/**
- * Outstanding asset data (not scanned in 30+ days)
- */
-export interface OutstandingAsset {
-  id: string;
-  assetNumber: string;
-  category: string;
-  status: string;
-  lastScanDate: string | null;
-  daysSinceLastScan: number | null;
-  lastLocation?: {
-    latitude: number;
-    longitude: number;
-  } | null;
-}
-
-/**
- * Asset location for map
- */
-export interface AssetLocation {
-  id: string;
-  assetNumber: string;
-  category: string;
-  subtype: string | null;
-  status: string;
-  latitude: number;
-  longitude: number;
-  accuracy: number | null;
-  lastUpdated: string;
-  recentScanCount?: number;
-  depot?: string | null;
-}
+// Re-export interfaces from shared for backward compatibility
+export type {
+  FleetStatistics,
+  RecentScan,
+  OutstandingAsset,
+  AssetLocation,
+} from '@rgr/shared';
 
 /**
  * Query keys for React Query cache management
@@ -87,214 +40,12 @@ export const FLEET_QUERY_KEYS = {
 } as const;
 
 /**
- * Fetch fleet statistics
- */
-async function fetchFleetStatistics(): Promise<FleetStatistics> {
-  const supabase = getSupabaseClient();
-
-  // Try server-side RPC first
-  const { data, error } = await supabase.rpc('get_fleet_statistics');
-
-  if (!error && data) {
-    // RPC succeeded, map the result
-    const stats = data as {
-      total_assets: number;
-      serviced: number;
-      maintenance: number;
-      out_of_service: number;
-      trailer_count: number;
-      dolly_count: number;
-    };
-
-    return {
-      totalAssets: stats.total_assets,
-      activeAssets: stats.serviced,
-      inMaintenance: stats.maintenance,
-      outOfService: stats.out_of_service,
-      trailerCount: stats.trailer_count,
-      dollyCount: stats.dolly_count,
-    };
-  }
-
-  // Fallback: client-side aggregation
-  // This runs if the RPC function doesn't exist (migration not applied yet)
-  const { data: assets, error: fallbackError } = await supabase
-    .from('assets')
-    .select('status, category')
-    .is('deleted_at', null);
-
-  if (fallbackError) {
-    throw new Error(`Failed to fetch fleet statistics: ${fallbackError.message}`);
-  }
-
-  return {
-    totalAssets: assets.length,
-    activeAssets: assets.filter((a) => a.status === 'serviced').length,
-    inMaintenance: assets.filter((a) => a.status === 'maintenance').length,
-    outOfService: assets.filter((a) => a.status === 'out_of_service').length,
-    trailerCount: assets.filter((a) => a.category === 'trailer').length,
-    dollyCount: assets.filter((a) => a.category === 'dolly').length,
-  };
-}
-
-/**
- * Fetch recent scans
- */
-async function fetchRecentScans(limit: number): Promise<RecentScan[]> {
-  const supabase = getSupabaseClient();
-
-  const { data, error } = await supabase
-    .from('scan_events')
-    .select(`
-      id,
-      asset_id,
-      scan_type,
-      created_at,
-      scanned_by,
-      latitude,
-      longitude,
-      assets!inner(asset_number, category),
-      profiles(full_name)
-    `)
-    .order('created_at', { ascending: false })
-    .limit(limit);
-
-  if (error) {
-    throw new Error(`Failed to fetch recent scans: ${error.message}`);
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase embedded join returns untyped nested objects
-  return (data || []).map((scan: any) => ({
-    id: scan.id,
-    assetId: scan.asset_id,
-    assetNumber: scan.assets?.asset_number || 'Unknown',
-    assetCategory: scan.assets?.category || 'unknown',
-    scanType: scan.scan_type,
-    scannedAt: scan.created_at,
-    scannedBy: scan.scanned_by,
-    scannerName: scan.profiles?.full_name || null,
-    latitude: scan.latitude,
-    longitude: scan.longitude,
-  }));
-}
-
-/**
- * Fetch outstanding assets (not scanned in X days)
- */
-async function fetchOutstandingAssets(days: number): Promise<OutstandingAsset[]> {
-  const supabase = getSupabaseClient();
-  const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-
-  // Get assets that haven't been scanned since the cutoff date (or never scanned)
-  // Uses the last_location_updated_at column maintained by a DB trigger from scan_events
-  const { data: assets, error: assetsError } = await supabase
-    .from('assets')
-    .select(`
-      id,
-      asset_number,
-      category,
-      status,
-      last_latitude,
-      last_longitude,
-      last_location_updated_at
-    `)
-    .is('deleted_at', null)
-    .in('status', ['serviced', 'maintenance'])
-    .or(`last_location_updated_at.lt.${cutoffDate.toISOString()},last_location_updated_at.is.null`);
-
-  if (assetsError) {
-    throw new Error(`Failed to fetch outstanding assets: ${assetsError.message}`);
-  }
-
-  // Map results directly — last_location_updated_at serves as last scan date
-  const outstanding: OutstandingAsset[] = (assets || []).map((asset) => {
-    const lastScanDate = asset.last_location_updated_at || null;
-    const lastScanTime = lastScanDate ? new Date(lastScanDate).getTime() : 0;
-    const daysSince = lastScanDate
-      ? Math.floor((Date.now() - lastScanTime) / (1000 * 60 * 60 * 24))
-      : null;
-
-    return {
-      id: asset.id,
-      assetNumber: asset.asset_number,
-      category: asset.category,
-      status: asset.status,
-      lastScanDate,
-      daysSinceLastScan: daysSince,
-      lastLocation: asset.last_latitude && asset.last_longitude
-        ? {
-            latitude: asset.last_latitude,
-            longitude: asset.last_longitude,
-          }
-        : null,
-    };
-  });
-
-  // Sort by days since last scan (descending)
-  return outstanding.sort((a, b) => {
-    if (a.daysSinceLastScan === null) return -1;
-    if (b.daysSinceLastScan === null) return 1;
-    return b.daysSinceLastScan - a.daysSinceLastScan;
-  });
-}
-
-/**
- * Fetch asset locations for map
- */
-async function fetchAssetLocations(): Promise<AssetLocation[]> {
-  const supabase = getSupabaseClient();
-
-  const { data, error } = await supabase
-    .from('assets')
-    .select(`
-      id,
-      asset_number,
-      category,
-      subtype,
-      status,
-      last_latitude,
-      last_longitude,
-      last_location_accuracy,
-      last_location_updated_at
-    `)
-    .is('deleted_at', null)
-    .not('last_latitude', 'is', null)
-    .not('last_longitude', 'is', null);
-
-  if (error) {
-    throw new Error(`Failed to fetch asset locations: ${error.message}`);
-  }
-
-  return (data || []).map((asset: {
-    id: string;
-    asset_number: string;
-    category: string;
-    subtype: string | null;
-    status: string;
-    last_latitude: number | null;
-    last_longitude: number | null;
-    last_location_accuracy: number | null;
-    last_location_updated_at: string | null;
-  }) => ({
-    id: asset.id,
-    assetNumber: asset.asset_number,
-    category: asset.category,
-    subtype: asset.subtype,
-    status: asset.status,
-    latitude: asset.last_latitude!,
-    longitude: asset.last_longitude!,
-    accuracy: asset.last_location_accuracy,
-    lastUpdated: asset.last_location_updated_at || '',
-  }));
-}
-
-/**
  * Hook to fetch fleet statistics
  */
 export function useFleetStatistics(enabled: boolean = true) {
   return useQuery({
     queryKey: FLEET_QUERY_KEYS.statistics(),
-    queryFn: fetchFleetStatistics,
+    queryFn: queryFromService(getFleetStatistics),
     staleTime: 2 * 60 * 1000, // 2 minutes
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
     enabled,
@@ -307,7 +58,7 @@ export function useFleetStatistics(enabled: boolean = true) {
 export function useRecentScans(limit: number = 20, enabled: boolean = true) {
   return useQuery({
     queryKey: FLEET_QUERY_KEYS.recentScans(limit),
-    queryFn: () => fetchRecentScans(limit),
+    queryFn: queryFromService(() => getRecentDashboardScans(limit)),
     staleTime: 30 * 1000, // 30 seconds
     refetchInterval: 60 * 1000, // Refetch every minute
     enabled,
@@ -320,7 +71,7 @@ export function useRecentScans(limit: number = 20, enabled: boolean = true) {
 export function useOutstandingAssets(days: number = 30, enabled: boolean = true) {
   return useQuery({
     queryKey: FLEET_QUERY_KEYS.outstandingAssets(days),
-    queryFn: () => fetchOutstandingAssets(days),
+    queryFn: queryFromService(() => getOutstandingAssets(days)),
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: 10 * 60 * 1000, // Refetch every 10 minutes
     enabled,
@@ -333,7 +84,7 @@ export function useOutstandingAssets(days: number = 30, enabled: boolean = true)
 export function useAssetLocations(enabled: boolean = true) {
   return useQuery({
     queryKey: FLEET_QUERY_KEYS.assetLocations(),
-    queryFn: fetchAssetLocations,
+    queryFn: queryFromService(getAssetLocations),
     staleTime: 2 * 60 * 1000, // 2 minutes
     refetchInterval: 3 * 60 * 1000, // Refetch every 3 minutes
     enabled,

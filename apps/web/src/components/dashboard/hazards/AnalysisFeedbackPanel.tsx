@@ -24,7 +24,7 @@ import {
   Target,
   TrendingUp,
 } from 'lucide-react';
-import { getSupabaseClient } from '@rgr/shared';
+import { submitAnalysisFeedback } from '@rgr/shared';
 import { useAuthStore } from '@/stores/authStore';
 import type { AnalysisResult } from '@/hooks/usePhotoAnalysis';
 
@@ -154,60 +154,30 @@ export const AnalysisFeedbackPanel = React.memo<AnalysisFeedbackPanelProps>(({
       if (!user) {
         throw new Error('Please sign in to submit feedback');
       }
-      const supabase = getSupabaseClient();
 
-      // Update freight_analysis with freight classification feedback
-      if (freightAccurate !== null) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabase as any)
-          .from('freight_analysis')
-          .update({
-            learning_weight: freightAccurate ? 1.2 : 0.5, // Boost or reduce learning weight
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', result.analysisId);
-      }
+      // Submit hazard alert feedback via shared service
+      const hazardFeedbackItems = result.hazards
+        .filter((hazard) => {
+          const fb = hazardFeedback[hazard.id];
+          return fb !== null && fb !== undefined;
+        })
+        .map((hazard) => ({
+          hazardType: hazard.hazardType,
+          wasAccurate: hazardFeedback[hazard.id]!,
+        }));
 
-      // Update hazard_alerts with individual feedback
-      for (const hazard of result.hazards) {
-        const feedback = hazardFeedback[hazard.id];
-        if (feedback !== null && feedback !== undefined) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await (supabase as any)
-            .from('hazard_alerts')
-            .update({
-              review_outcome: feedback ? 'confirmed' : 'false_positive',
-              manager_review_at: new Date().toISOString(),
-              manager_review_by: user.id,
-              review_notes: generalNotes || null,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('freight_analysis_id', result.analysisId)
-            .eq('hazard_type', hazard.hazardType.toLowerCase().replace(/ /g, '_'));
+      if (hazardFeedbackItems.length > 0) {
+        const feedbackResult = await submitAnalysisFeedback({
+          analysisId: result.analysisId,
+          reviewerId: user.id,
+          hazardFeedback: hazardFeedbackItems,
+          reviewNotes: generalNotes || null,
+        });
+
+        if (!feedbackResult.success) {
+          throw new Error(feedbackResult.error);
         }
       }
-
-      // TODO: Create safla_freight_patterns table in a migration.
-      // Log missed hazards for training once the table exists.
-      // if (missedHazards.length > 0) {
-      //   await supabase
-      //     .from('safla_freight_patterns')
-      //     .upsert({
-      //       pattern_type: 'missed_hazard',
-      //       pattern_key: `missed_${result.photoId}_${Date.now()}`,
-      //       pattern_features: {
-      //         photoId: result.photoId,
-      //         analysisId: result.analysisId,
-      //         missedHazards: missedHazards,
-      //         freightCategory: result.freight.primaryCategory,
-      //         reportedBy: user.id,
-      //         reportedAt: new Date().toISOString(),
-      //       },
-      //       pattern_confidence: 1.0,
-      //       source_photo_ids: [result.photoId],
-      //       source_analysis_ids: [result.analysisId],
-      //     }, { onConflict: 'pattern_type,pattern_key' });
-      // }
 
       // Build feedback data for callback
       const feedbackData: AnalysisFeedbackData = {

@@ -844,6 +844,48 @@ export async function deleteScanEvent(
   return { success: true, data: undefined, error: null };
 }
 
+// ── Serviced Assets (for selectors) ──
+
+export interface ServicedAssetOption {
+  id: string;
+  assetNumber: string;
+  category: string;
+  subtype: string | null;
+  status: string;
+}
+
+/**
+ * List active (serviced) assets for dropdown selectors.
+ * Returns a lightweight projection without joins.
+ */
+export async function listServicedAssets(
+  limit: number = 100
+): Promise<ServiceResult<ServicedAssetOption[]>> {
+  const supabase = getSupabaseClient();
+
+  const { data, error } = await supabase
+    .from('assets')
+    .select('id, asset_number, category, subtype, status')
+    .eq('status', 'serviced')
+    .is('deleted_at', null)
+    .order('asset_number', { ascending: true })
+    .limit(limit);
+
+  if (error) {
+    return { success: false, data: null, error: `Failed to fetch serviced assets: ${error.message}` };
+  }
+
+  const assets = (data || []).map((row) => ({
+    id: row.id,
+    assetNumber: row.asset_number,
+    category: row.category,
+    subtype: row.subtype,
+    status: row.status,
+  }));
+
+  return { success: true, data: assets, error: null };
+}
+
 // ── Helpers ──
 
 /**

@@ -10,7 +10,7 @@
  * - Error handling with retry capability
  */
 import { useState, useCallback, useMemo } from 'react';
-import { getSupabaseClient } from '@rgr/shared';
+import { getSupabaseClient, createPhotoRecord } from '@rgr/shared';
 import { useAuthStore } from '@/stores/authStore';
 import type { HazardSeverity } from '../components/dashboard/hazards';
 
@@ -306,30 +306,23 @@ export function usePhotoAnalysis(): UsePhotoAnalysisResult {
 
       setProgress(60);
 
-      // Create photo record in database
-      // The photos table requires at least one parent reference (asset_id, scan_event_id, etc.)
-      // For standalone photo analysis, we create a temporary scan event or use asset_id if provided
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: photoRecord, error: photoError } = await (supabase as any)
-        .from('photos')
-        .insert({
-          asset_id: assetId || null,
-          uploaded_by: user.id,
-          photo_type: 'freight',
-          storage_path: storagePath,
-          thumbnail_path: storagePath,
-          filename: file.name,
-          file_size: compressedBlob.size,
-        })
-        .select('id')
-        .single();
+      // Create photo record in database via shared service
+      const photoResult = await createPhotoRecord({
+        assetId: assetId || null,
+        uploadedBy: user.id,
+        photoType: 'freight',
+        storagePath,
+        thumbnailPath: storagePath,
+        filename: file.name,
+        fileSize: compressedBlob.size,
+      });
 
-      if (photoError || !photoRecord) {
-        console.error('Photo record error:', photoError);
-        // If photo insert fails due to constraint, try direct analysis via edge function
-        // This happens when analyzing photos without an associated asset
+      if (!photoResult.success) {
+        console.error('Photo record error:', photoResult.error);
         throw new Error('Failed to save photo record. Please select an asset first or contact support.');
       }
+
+      const photoRecord = photoResult.data;
 
       setProgress(70);
       setStatus('analyzing');
