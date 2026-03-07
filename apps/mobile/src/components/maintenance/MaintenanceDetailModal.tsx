@@ -467,8 +467,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   scrollView: {
-    flexGrow: 1,
-    flexShrink: 1,
+    flex: 1,
   },
   scrollContent: {
     paddingHorizontal: spacing.lg,
