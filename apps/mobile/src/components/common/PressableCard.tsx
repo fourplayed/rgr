@@ -1,5 +1,5 @@
 import React, { useRef, useCallback } from 'react';
-import { Animated, Pressable, StyleSheet, type ViewStyle, type StyleProp } from 'react-native';
+import { Animated, Pressable, type ViewStyle, type StyleProp } from 'react-native';
 
 interface PressableCardProps {
   onPress: () => void;

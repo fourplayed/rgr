@@ -99,7 +99,7 @@ export function MaintenanceDetailModal({
         message: err instanceof Error ? err.message : 'Failed to complete',
       });
     }
-  }, [maintenanceId, updateMaintenanceStatus]);
+  }, [maintenanceId, updateMaintenanceStatus, user?.id]);
 
   const handleCancelMaintenance = useCallback(() => {
     if (!maintenanceId) return;

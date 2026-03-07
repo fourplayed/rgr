@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -153,6 +153,7 @@ export default function MaintenanceScreen() {
       refetchMaintenance();
       refetchDefects();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally refetch only on focus change, not on fn identity
   }, [isFocused]);
 
   const handleToggleFilters = useCallback(() => {

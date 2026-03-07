@@ -13,10 +13,12 @@ export function useModalTransition<T extends { type: string }>(initial: T) {
   const rafRef = useRef<{ outer: number | null; inner: number | null }>({ outer: null, inner: null });
 
   useEffect(() => {
+    const raf = rafRef;
+    const pending = pendingTransition;
     return () => {
-      if (rafRef.current.outer != null) cancelAnimationFrame(rafRef.current.outer);
-      if (rafRef.current.inner != null) cancelAnimationFrame(rafRef.current.inner);
-      pendingTransition.current = null;
+      if (raf.current.outer != null) cancelAnimationFrame(raf.current.outer);
+      if (raf.current.inner != null) cancelAnimationFrame(raf.current.inner);
+      pending.current = null;
     };
   }, []);
 

@@ -19,7 +19,7 @@ jest.mock('@rgr/shared', () => ({
   createScanEvent: jest.fn().mockResolvedValue({ success: true, data: { id: 'test-id' } }),
 }));
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const mockAsyncStorage = require('@react-native-async-storage/async-storage').default;
 import { enqueueScan, getQueueLength, clearQueue } from '../offlineScanQueue';
 

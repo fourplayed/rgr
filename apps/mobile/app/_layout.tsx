@@ -19,7 +19,7 @@ import {
   Lato_900Black,
   Lato_900Black_Italic,
 } from '@expo-google-fonts/lato';
-import { onAuthStateChange, getSupabaseClient, refreshSessionSafe, listDepots } from '@rgr/shared';
+import { onAuthStateChange, refreshSessionSafe, listDepots } from '@rgr/shared';
 import { initializeMobileSupabase } from '../src/config/supabase';
 import { useAuthStore } from '../src/store/authStore';
 import { useLocationStore } from '../src/store/locationStore';

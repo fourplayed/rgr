@@ -12,7 +12,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import type { Asset, AssetWithRelations, AssetScanContext } from '@rgr/shared';
-import { MaintenanceStatusLabels, formatRelativeTime } from '@rgr/shared';
+import { formatRelativeTime } from '@rgr/shared';
 import { AssetInfoCard } from '../assets/AssetInfoCard';
 import { DefectStatusBadge } from '../maintenance/DefectStatusBadge';
 import { cardStyles } from '../maintenance/maintenance.styles';
@@ -33,10 +33,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 type ScanTab = 'actions' | 'openItems';
 
-const SCAN_TABS = [
-  { key: 'actions' as const, label: 'Actions' },
-  { key: 'openItems' as const, label: 'Open Items' },
-] as const;
+
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
