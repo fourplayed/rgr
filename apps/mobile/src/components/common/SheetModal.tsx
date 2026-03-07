@@ -188,10 +188,11 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   backdropTouchable: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
   },
   sheetWrapper: {
-    // Allows the sheet children to define their own background/border-radius
+    flex: 1,
+    justifyContent: 'flex-end',
   },
   inlineRoot: {
     zIndex: 9999,
