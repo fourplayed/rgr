@@ -419,7 +419,7 @@ function mapAuthError(message: string): string {
     'User not found': 'No account found with this email',
     'Email already registered': 'An account with this email already exists',
     'Password should be at least 6 characters':
-      'Password must be at least 8 characters',
+      'Password must be at least 6 characters',
     'Signup requires a valid password': 'Please provide a valid password',
   };
 

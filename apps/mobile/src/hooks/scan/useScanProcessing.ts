@@ -126,7 +126,7 @@ export function useScanProcessing(
         addDebugLog('Scan created: ' + scanEvent.id.substring(0, 8));
         logger.scan('Scan event created successfully');
 
-        // 6. Update depot assignment if matched (fire-and-forget)
+        // 6. Update depot assignment if matched (non-blocking but error-aware)
         if (nearestDepot) {
           logger.scan(`Updating asset depot to ${nearestDepot.depot.name}...`);
           updateAssetMutation({
@@ -134,9 +134,15 @@ export function useScanProcessing(
             input: { assignedDepotId: nearestDepot.depot.id },
           })
             .then(() => logger.scan('Asset depot updated'))
-            .catch((depotError: unknown) =>
-              logger.warn('Depot update failed after successful scan:', depotError),
-            );
+            .catch((depotError: unknown) => {
+              logger.warn('Depot update failed after successful scan:', depotError);
+              setAlertSheet({
+                visible: true,
+                type: 'warning',
+                title: 'Depot Update Failed',
+                message: `Scan was recorded but the depot assignment to "${nearestDepot.depot.name}" could not be saved. It will be updated on the next scan.`,
+              });
+            });
         }
 
         // 7. Success!

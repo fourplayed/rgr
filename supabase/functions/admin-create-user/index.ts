@@ -1,5 +1,4 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
 
 /**
  * Admin Create User Edge Function
@@ -127,7 +126,7 @@ async function recordCreateAttempt(
 // Main handler
 // ---------------------------------------------------------------------------
 
-serve(async (req: Request): Promise<Response> => {
+Deno.serve(async (req: Request): Promise<Response> => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });

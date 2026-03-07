@@ -1,3 +1,4 @@
+export { AppText } from './AppText';
 export { LoadingDots } from './LoadingDots';
 export { RefreshLoadingDots } from './RefreshLoadingDots';
 export { StatusBadge, Badge } from './StatusBadge';

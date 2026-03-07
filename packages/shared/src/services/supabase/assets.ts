@@ -492,11 +492,24 @@ export async function getAssetByQRCode(
 }
 
 /**
- * Get total count of all scan events (server-side COUNT).
+ * Get total count of all scan events using a fast estimate.
+ *
+ * Uses the `get_scan_count_estimate()` RPC which reads from pg_stat_user_tables
+ * instead of doing a full COUNT(*). This is O(1) vs O(N) and accurate within
+ * a few percent (updated by autovacuum). Falls back to exact COUNT(*) if the
+ * RPC is not available.
  */
 export async function getTotalScanCount(): Promise<ServiceResult<number>> {
   const supabase = getSupabaseClient();
 
+  // Try fast estimate first
+  const { data: estimate, error: rpcError } = await supabase.rpc('get_scan_count_estimate');
+
+  if (!rpcError && estimate !== null && estimate !== undefined) {
+    return { success: true, data: Number(estimate), error: null };
+  }
+
+  // Fallback: exact COUNT(*) if RPC not deployed yet
   const { count, error } = await supabase
     .from('scan_events')
     .select('id', { count: 'exact', head: true });

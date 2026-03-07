@@ -1034,6 +1034,7 @@ export type Database = {
       get_defect_report_stats: { Args: never; Returns: Json }
       get_fleet_statistics: { Args: never; Returns: Json }
       get_hazard_review_stats: { Args: never; Returns: Json }
+      get_scan_count_estimate: { Args: Record<string, never>; Returns: number }
       get_maintenance_stats: { Args: never; Returns: Json }
       is_manager_or_above: { Args: never; Returns: boolean }
       is_mechanic_or_above: { Args: never; Returns: boolean }

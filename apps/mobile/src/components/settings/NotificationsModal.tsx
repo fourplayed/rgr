@@ -65,6 +65,12 @@ export function NotificationsModal({ visible, onClose }: NotificationsModalProps
               Manage how you receive updates and alerts.
             </Text>
 
+            <View style={styles.comingSoonBanner}>
+              <Text style={styles.comingSoonText}>
+                Push notifications are not yet connected to a delivery service. These preferences are saved locally and will take effect once notifications are enabled.
+              </Text>
+            </View>
+
             <View style={styles.toggleList}>
               <ToggleRow
                 title="Push Notifications"
@@ -175,5 +181,18 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: colors.border,
+  },
+  comingSoonBanner: {
+    backgroundColor: colors.warningSurface,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.warningBorder,
+  },
+  comingSoonText: {
+    fontSize: fontSize.sm,
+    fontFamily: fonts.regular,
+    color: colors.textSecondary,
   },
 });

@@ -27,6 +27,9 @@ import { depotKeys } from '../src/hooks/useDepots';
 import { UserPermissionsProvider } from '../src/contexts/UserPermissionsContext';
 import { ErrorBoundary } from '../src/components/common/ErrorBoundary';
 import { OfflineBanner } from '../src/components/common/OfflineBanner';
+import { useRealtimeInvalidation } from '../src/hooks/useRealtimeInvalidation';
+import { replayQueue, clearQueue } from '../src/utils/offlineScanQueue';
+import { setUser as setErrorReportingUser } from '../src/utils/errorReporting';
 import { colors } from '../src/theme/colors';
 
 // Set default text style globally
@@ -87,7 +90,14 @@ export default function RootLayout() {
             },
             retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
             refetchOnWindowFocus: false,
-            refetchOnReconnect: false,
+            refetchOnReconnect: 'always',
+          },
+          mutations: {
+            retry: (failureCount, error) => {
+              if (isAuthError(error)) return false;
+              return failureCount < 2;
+            },
+            retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
           },
         },
       })
@@ -148,10 +158,17 @@ export default function RootLayout() {
 
   // Connect React Query's onlineManager to NetInfo so mutations
   // automatically pause when offline and resume on reconnect.
+  // Also replays any queued offline scans when coming back online.
   useEffect(() => {
     return onlineManager.setEventListener((setOnline) => {
       return NetInfo.addEventListener((state) => {
+        const wasOffline = !onlineManager.isOnline();
         setOnline(!!state.isConnected);
+        if (wasOffline && state.isConnected) {
+          replayQueue().catch(() => {
+            // Non-fatal: queue stays for next reconnect
+          });
+        }
       });
     });
   }, []);
@@ -172,11 +189,24 @@ export default function RootLayout() {
     return () => subscription.remove();
   }, []);
 
-  // Clear React Query cache when user logs out to prevent stale data on next login
+  // Subscribe to Supabase Realtime for live dashboard updates from other users
+  useRealtimeInvalidation();
+
+  // Set error reporting user context when authenticated
+  useEffect(() => {
+    if (user) {
+      setErrorReportingUser({ id: user.id, email: user.email, role: user.role });
+    } else {
+      setErrorReportingUser(null);
+    }
+  }, [user]);
+
+  // Clear React Query cache and offline queue when user logs out
   const wasAuthenticated = useRef(false);
   useEffect(() => {
     if (wasAuthenticated.current && !isAuthenticated) {
       queryClient.clear();
+      clearQueue().catch(() => {});
     }
     wasAuthenticated.current = isAuthenticated;
   }, [isAuthenticated, queryClient]);
