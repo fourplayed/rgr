@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useIsFocused } from '@react-navigation/native';
 import type {
   MaintenanceStatus,
   MaintenancePriority,
@@ -21,6 +22,7 @@ import { spacing, fontSize, borderRadius } from '../../src/theme/spacing';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
 import { ScreenHeader } from '../../src/components/common/ScreenHeader';
 import { SegmentedTabs } from '../../src/components/common/SegmentedTabs';
+import { EmptyState } from '../../src/components/common/EmptyState';
 import {
   MaintenanceListItem,
   MaintenanceFilterPanel,
@@ -35,6 +37,7 @@ import {
 import { useMaintenanceList } from '../../src/hooks/useMaintenanceData';
 import { useDefectReportList } from '../../src/hooks/useDefectData';
 import { useAcceptDefect } from '../../src/hooks/useAcceptDefect';
+import { useModalTransition } from '../../src/hooks/useModalTransition';
 import { useUserPermissions } from '../../src/contexts/UserPermissionsContext';
 
 type ModalState =
@@ -71,24 +74,7 @@ export default function MaintenanceScreen() {
   const [defectFiltersExpanded, setDefectFiltersExpanded] = useState(false);
 
   // Modal state machine — only one modal visible at a time
-  const [modal, setModal] = useState<ModalState>({ type: 'none' });
-  const pendingTransition = useRef<ModalState | null>(null);
-
-  const close = useCallback(() => setModal({ type: 'none' }), []);
-
-  /** Close current modal, wait one frame for native unmount, then open next. */
-  const transitionTo = useCallback((next: ModalState) => {
-    pendingTransition.current = next;
-    setModal({ type: 'none' });
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        if (pendingTransition.current) {
-          setModal(pendingTransition.current);
-          pendingTransition.current = null;
-        }
-      });
-    });
-  }, []);
+  const { modal, closeModal: close, transitionTo } = useModalTransition<ModalState>({ type: 'none' });
 
   // Accept defect hook (moved up from DefectReportDetailModal)
   const { mutateAsync: acceptDefect } = useAcceptDefect();
@@ -158,6 +144,17 @@ export default function MaintenanceScreen() {
     [defectsData]
   );
 
+  // Safety net: refetch when tab gains focus to catch invalidations that fired
+  // before this tab's query observers were mounted (e.g., first visit after
+  // an accept happened on the scan tab).
+  const isFocused = useIsFocused();
+  useEffect(() => {
+    if (isFocused) {
+      refetchMaintenance();
+      refetchDefects();
+    }
+  }, [isFocused]);
+
   const handleToggleFilters = useCallback(() => {
     setFiltersExpanded(prev => !prev);
   }, []);
@@ -167,16 +164,16 @@ export default function MaintenanceScreen() {
   }, []);
 
   const handleMaintenancePress = useCallback((item: MaintenanceListItemType) => {
-    setModal({ type: 'maintenanceDetail', maintenanceId: item.id });
-  }, []);
+    transitionTo({ type: 'maintenanceDetail', maintenanceId: item.id });
+  }, [transitionTo]);
 
   const handleDefectPress = useCallback((item: DefectReportListItemType) => {
-    setModal({ type: 'defectDetail', defectId: item.id });
-  }, []);
+    transitionTo({ type: 'defectDetail', defectId: item.id });
+  }, [transitionTo]);
 
   const handleOpenCreate = useCallback(() => {
-    setModal({ type: 'createMaintenance' });
-  }, []);
+    transitionTo({ type: 'createMaintenance' });
+  }, [transitionTo]);
 
   // Maintenance list renderers
   const renderMaintenanceItem = useCallback(({ item }: { item: MaintenanceListItemType }) => (
@@ -211,27 +208,19 @@ export default function MaintenanceScreen() {
   }), []);
 
   const renderMaintenanceEmpty = () => (
-    <View style={styles.centerContent}>
-      <View style={styles.iconContainer}>
-        <Ionicons name="construct-outline" size={64} color={colors.textSecondary} />
-      </View>
-      <Text style={styles.emptyText}>No maintenance records</Text>
-      <Text style={styles.emptySubtext}>
-        {canMarkMaintenance ? 'Tap + to schedule maintenance' : 'No scheduled maintenance tasks'}
-      </Text>
-    </View>
+    <EmptyState
+      icon="construct-outline"
+      title="No maintenance records"
+      subtitle={canMarkMaintenance ? 'Tap + to schedule maintenance' : 'No scheduled maintenance tasks'}
+    />
   );
 
   const renderDefectsEmpty = () => (
-    <View style={styles.centerContent}>
-      <View style={styles.iconContainer}>
-        <Ionicons name="shield-checkmark-outline" size={64} color={colors.textSecondary} />
-      </View>
-      <Text style={styles.emptyText}>No defect reports</Text>
-      <Text style={styles.emptySubtext}>
-        Defects are reported during scanning when issues are found
-      </Text>
-    </View>
+    <EmptyState
+      icon="shield-checkmark-outline"
+      title="No defect reports"
+      subtitle="Defects are reported during scanning when issues are found"
+    />
   );
 
   const isLoading = activeTab === 'tasks' ? isMaintenanceLoading : isDefectsLoading;
@@ -428,7 +417,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    backgroundColor: colors.surfaceSubtle,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.lg,

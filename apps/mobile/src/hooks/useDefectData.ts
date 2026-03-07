@@ -157,7 +157,6 @@ export function useCreateDefectReport() {
       queryClient.invalidateQueries({ queryKey: defectKeys.stats(), refetchType: 'none' });
       queryClient.invalidateQueries({
         queryKey: assetKeys.scanContext(variables.assetId),
-        refetchType: 'none',
       });
       // Cross-cache: defect creation triggers asset status change to 'maintenance'
       queryClient.invalidateQueries({ queryKey: assetKeys.detail(variables.assetId), refetchType: 'none' });
