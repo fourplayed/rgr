@@ -331,6 +331,19 @@ export async function updateMaintenance(
   return { success: true, data: mapRowToMaintenanceRecord(data as MaintenanceRecordRow), error: null };
 }
 
+// ── Cancel (Delete) Maintenance Task ──
+
+/**
+ * Atomically delete a maintenance task and any linked defect reports.
+ * Uses an RPC to ensure both deletions happen in a single transaction.
+ */
+export async function cancelMaintenanceTask(id: string): Promise<ServiceResult<void>> {
+  const supabase = getSupabaseClient();
+  const { error } = await supabase.rpc('cancel_maintenance_task', { p_maintenance_id: id });
+  if (error) return { success: false, data: null, error: `Failed to cancel maintenance task: ${error.message}` };
+  return { success: true, data: undefined, error: null };
+}
+
 // ── Dashboard Statistics ──
 
 /**

@@ -354,6 +354,15 @@ export async function acceptDefectReport(
   };
 }
 
+// ── Delete Defect Report ──
+
+export async function deleteDefectReport(id: string): Promise<ServiceResult<void>> {
+  const supabase = getSupabaseClient();
+  const { error } = await supabase.from('defect_reports').delete().eq('id', id);
+  if (error) return { success: false, data: null, error: `Failed to delete defect report: ${error.message}` };
+  return { success: true, data: undefined, error: null };
+}
+
 // ── Dashboard Statistics ──
 
 export async function getDefectReportStats(): Promise<ServiceResult<DefectReportStats>> {

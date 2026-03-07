@@ -10,13 +10,13 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { formatRelativeTime, formatAssetNumber } from '@rgr/shared';
-import { LoadingDots, AlertSheet, InputSheet, SheetModal } from '../common';
+import { LoadingDots, AlertSheet, ConfirmSheet, SheetModal } from '../common';
 import { SheetHeader } from '../common/SheetHeader';
 import { SheetFooter } from '../common/SheetFooter';
 import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
-import { useDefectReport, useUpdateDefectReportStatus } from '../../hooks/useDefectData';
+import { useDefectReport, useDeleteDefectReport } from '../../hooks/useDefectData';
 import { useAsset } from '../../hooks/useAssetData';
 import { useMaintenance } from '../../hooks/useMaintenanceData';
 import { useScanEventPhotos, useSignedUrl } from '../../hooks/usePhotos';
@@ -53,8 +53,8 @@ export function DefectReportDetailModal({
   const { data: defect, isLoading } = useDefectReport(defectId);
   const { data: asset } = useAsset(defect?.assetId);
   const { data: linkedMaintenance } = useMaintenance(defect?.maintenanceRecordId ?? null);
-  const updateStatusMutation = useUpdateDefectReportStatus();
-  const { mutateAsync: updateDefectStatus } = updateStatusMutation;
+  const deleteMutation = useDeleteDefectReport();
+  const { mutateAsync: deleteDefect } = deleteMutation;
 
   // Defect photo data
   const { data: scanEventPhotos } = useScanEventPhotos(defect?.scanEventId ?? null);
@@ -104,19 +104,13 @@ export function DefectReportDetailModal({
     setShowDismissConfirm(true);
   }, []);
 
-  const handleConfirmDismiss = useCallback(async (reason: string) => {
+  const handleConfirmDismiss = useCallback(async () => {
     if (!defectId) return;
 
     setShowDismissConfirm(false);
     try {
-      const args: { id: string; status: 'dismissed'; extras?: { dismissedReason: string } } = {
-        id: defectId,
-        status: 'dismissed',
-      };
-      if (reason.trim()) {
-        args.extras = { dismissedReason: reason.trim() };
-      }
-      await updateDefectStatus(args);
+      await deleteDefect(defectId);
+      onClose();
     } catch (err: unknown) {
       if (isMountedRef.current) {
         setAlertSheet({
@@ -126,7 +120,7 @@ export function DefectReportDetailModal({
         });
       }
     }
-  }, [defectId, updateDefectStatus]);
+  }, [defectId, deleteDefect, onClose]);
 
   const handleNavigateToAsset = useCallback(() => {
     if (defect?.assetId) {
@@ -145,7 +139,7 @@ export function DefectReportDetailModal({
         <View style={styles.actionsContainer}>
           <Button
             onPress={handleAccept}
-            disabled={!onAcceptPress || updateStatusMutation.isPending}
+            disabled={!onAcceptPress || deleteMutation.isPending}
             flex
           >
             Accept
@@ -153,7 +147,7 @@ export function DefectReportDetailModal({
           <Button
             variant="secondary"
             onPress={handleDismiss}
-            disabled={updateStatusMutation.isPending}
+            disabled={deleteMutation.isPending}
             style={{ borderColor: colors.error }}
             flex
           >
@@ -163,17 +157,17 @@ export function DefectReportDetailModal({
       );
     }
 
-    if (status === 'accepted' || status === 'resolved' || status === 'dismissed') {
+    if (status === 'accepted' || status === 'resolved') {
       return (
         <View style={styles.actionsContainer}>
           <View style={styles.closedStatus}>
             <Ionicons
-              name={status === 'accepted' ? 'construct' : status === 'resolved' ? 'checkmark-circle' : 'close-circle'}
+              name={status === 'accepted' ? 'construct' : 'checkmark-circle'}
               size={20}
-              color={status === 'accepted' ? colors.info : status === 'resolved' ? colors.success : colors.textSecondary}
+              color={status === 'accepted' ? colors.info : colors.success}
             />
             <Text style={styles.closedStatusText}>
-              {status === 'accepted' ? 'Accepted' : status === 'resolved' ? 'Resolved' : 'Dismissed'}
+              {status === 'accepted' ? 'Accepted' : 'Resolved'}
             </Text>
           </View>
         </View>
@@ -327,24 +321,6 @@ export function DefectReportDetailModal({
                       </View>
                     )}
 
-                    {defect.dismissedAt && (
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Dismissed</Text>
-                        <Text style={styles.detailValue}>
-                          {formatRelativeTime(defect.dismissedAt)}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                )}
-
-                {/* Dismissed Reason (hidden in compact mode) */}
-                {variant === 'full' && defect.dismissedReason && (
-                  <View style={styles.sectionGroup}>
-                    <Text style={styles.sectionTitle}>Dismiss Reason</Text>
-                    <View style={styles.sectionCard}>
-                      <Text style={styles.detailValue}>{defect.dismissedReason}</Text>
-                    </View>
                   </View>
                 )}
 
@@ -372,17 +348,17 @@ export function DefectReportDetailModal({
           )}
         </View>
 
-      {/* Dismiss with Reason */}
-      <InputSheet
+      {/* Dismiss Confirmation */}
+      <ConfirmSheet
         visible={showDismissConfirm}
+        type="danger"
         title="Dismiss Defect Report"
-        message="Please provide a reason for dismissing this defect report."
-        placeholder="Reason for dismissal..."
-        submitLabel="Dismiss"
+        message="Are you sure you want to dismiss this defect report? This will permanently delete it."
+        confirmLabel="Dismiss"
         cancelLabel="Cancel"
-        onSubmit={handleConfirmDismiss}
+        onConfirm={handleConfirmDismiss}
         onCancel={() => setShowDismissConfirm(false)}
-        isLoading={updateStatusMutation.isPending}
+        isLoading={deleteMutation.isPending}
       />
 
       {/* Alert Sheet */}

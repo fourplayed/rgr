@@ -17,7 +17,7 @@ import { SheetFooter } from '../common/SheetFooter';
 import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
-import { useMaintenance, useUpdateMaintenanceStatus, useUpdateMaintenance } from '../../hooks/useMaintenanceData';
+import { useMaintenance, useUpdateMaintenanceStatus, useUpdateMaintenance, useCancelMaintenanceTask } from '../../hooks/useMaintenanceData';
 import { useAsset } from '../../hooks/useAssetData';
 import { useScanEventPhotos, useSignedUrl } from '../../hooks/usePhotos';
 import { useUserPermissions } from '../../contexts/UserPermissionsContext';
@@ -48,6 +48,8 @@ export function MaintenanceDetailModal({
   const { mutateAsync: updateMaintenanceStatus } = updateStatusMutation;
   const updateMutation = useUpdateMaintenance();
   const { mutateAsync: updateMaintenance } = updateMutation;
+  const cancelMutation = useCancelMaintenanceTask();
+  const { mutateAsync: cancelTask } = cancelMutation;
 
   // Defect photo data
   const { data: scanEventPhotos } = useScanEventPhotos(maintenance?.scanEventId ?? null);
@@ -103,10 +105,8 @@ export function MaintenanceDetailModal({
 
     setShowCancelConfirm(false);
     try {
-      await updateMaintenanceStatus({
-        id: maintenanceId,
-        status: 'cancelled',
-      });
+      await cancelTask(maintenanceId);
+      onClose();
     } catch (err: unknown) {
       setAlertSheet({
         visible: true,
@@ -114,7 +114,7 @@ export function MaintenanceDetailModal({
         message: err instanceof Error ? err.message : 'Failed to cancel',
       });
     }
-  }, [maintenanceId, updateMaintenanceStatus]);
+  }, [maintenanceId, cancelTask, onClose]);
 
   const handleSaveNotes = useCallback(async () => {
     if (!maintenanceId) return;
@@ -158,7 +158,7 @@ export function MaintenanceDetailModal({
             color={colors.success}
             icon="checkmark"
             onPress={handleComplete}
-            disabled={updateStatusMutation.isPending}
+            disabled={updateStatusMutation.isPending || cancelMutation.isPending}
             flex
           >
             Mark Complete
@@ -166,7 +166,7 @@ export function MaintenanceDetailModal({
           <Button
             variant="secondary"
             onPress={handleCancelMaintenance}
-            disabled={updateStatusMutation.isPending}
+            disabled={updateStatusMutation.isPending || cancelMutation.isPending}
             style={{ borderColor: colors.error }}
             flex
           >
@@ -176,7 +176,7 @@ export function MaintenanceDetailModal({
       );
     }
 
-    if (status === 'completed' || status === 'cancelled') {
+    if (status === 'completed') {
       return (
         <View style={styles.actionsContainer}>
           <View style={styles.closedStatus}>
@@ -185,9 +185,7 @@ export function MaintenanceDetailModal({
               size={20}
               color={MAINTENANCE_STATUS_CONFIG[status]?.color ?? colors.textSecondary}
             />
-            <Text style={styles.closedStatusText}>
-              {status === 'completed' ? 'Completed' : 'Cancelled'}
-            </Text>
+            <Text style={styles.closedStatusText}>Completed</Text>
           </View>
         </View>
       );
@@ -445,12 +443,12 @@ export function MaintenanceDetailModal({
         visible={showCancelConfirm}
         type="danger"
         title="Cancel Maintenance"
-        message="Are you sure you want to cancel this maintenance record?"
+        message="Are you sure you want to cancel this maintenance task? This will permanently delete it and any linked defect reports."
         confirmLabel="Yes, Cancel"
         cancelLabel="No"
         onConfirm={handleConfirmCancel}
         onCancel={() => setShowCancelConfirm(false)}
-        isLoading={updateStatusMutation.isPending}
+        isLoading={cancelMutation.isPending}
       />
 
       {/* Alert Sheet for errors */}

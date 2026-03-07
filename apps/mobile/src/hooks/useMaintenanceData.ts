@@ -5,6 +5,7 @@ import {
   createMaintenance,
   updateMaintenanceStatus,
   updateMaintenance,
+  cancelMaintenanceTask,
   getMaintenanceStats,
 } from '@rgr/shared';
 import type {
@@ -175,6 +176,33 @@ export function useUpdateMaintenanceStatus() {
       queryClient.invalidateQueries({ queryKey: defectKeys.stats(), refetchType: 'none' });
       // Cross-cache: refresh asset detail's maintenance data so assessment updates
       queryClient.invalidateQueries({ queryKey: assetKeys.maintenance(data.assetId), refetchType: 'none' });
+      // Cross-cache: completing/cancelling maintenance may revert asset status to 'serviced'
+      queryClient.invalidateQueries({ queryKey: assetKeys.detail(data.assetId), refetchType: 'none' });
+      queryClient.invalidateQueries({ queryKey: assetKeys.lists(), refetchType: 'none' });
+      queryClient.invalidateQueries({ queryKey: assetKeys.countsByStatus(), refetchType: 'none' });
+      queryClient.invalidateQueries({ queryKey: assetKeys.scanContext(data.assetId), refetchType: 'none' });
+    },
+  });
+}
+
+/**
+ * Cancel (delete) maintenance task mutation — also deletes linked defects
+ */
+export function useCancelMaintenanceTask() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const result = await cancelMaintenanceTask(id);
+      if (!result.success) throw new Error(result.error);
+    },
+    onSuccess: () => {
+      // Broad invalidation — deletes both maintenance and linked defects
+      queryClient.invalidateQueries({ queryKey: maintenanceKeys.lists(), refetchType: 'none' });
+      queryClient.invalidateQueries({ queryKey: maintenanceKeys.stats(), refetchType: 'none' });
+      queryClient.invalidateQueries({ queryKey: defectKeys.lists(), refetchType: 'none' });
+      queryClient.invalidateQueries({ queryKey: defectKeys.stats(), refetchType: 'none' });
+      queryClient.invalidateQueries({ queryKey: assetKeys.all, refetchType: 'none' });
     },
   });
 }
