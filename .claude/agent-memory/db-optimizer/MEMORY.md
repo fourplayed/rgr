@@ -4,60 +4,55 @@
 - **Engine**: PostgreSQL 15+ (Supabase hosted)
 - **Project Ref**: eryhwfkqbbuftepjvgwq
 - **Region**: South Asia (Mumbai) -- IPv6 only for direct DB connection
-- **Schema applied**: 2026-02-15 via `supabase db push`
-- **Migration file**: `rgr/supabase/migrations/20260215000000_initial_schema.sql`
+- **Migration count**: 54 SQL files in `rgr/supabase/migrations/`
+- **Initial schema**: `20260215000000_initial_schema.sql`
 
 ## Connection Notes
-- Direct DB connection (db.xxx.supabase.co) is IPv6-only; use `supabase db push --linked` instead
-- Supabase CLI is linked and authenticated; use `supabase inspect db ...` for diagnostics
+- Direct DB connection is IPv6-only; use `supabase db push --linked` instead
 - REST API (eryhwfkqbbuftepjvgwq.supabase.co) works fine over HTTPS
 
-## Tables (9 total)
-See [schema-details.md](schema-details.md) for full column definitions.
+## Tables (13+ total, evolved from initial 9)
+1. **depots** (~6 rows, WA depots with color column)
+2. **profiles** (auth.users FK; depot is free-text, depot_id was dropped)
+3. **assets** (soft deletes via deleted_at; denormalized last location from scans)
+4. **scan_events** (append-only; removed from realtime pub in 20260302)
+5. **photos** (GPS columns added later; photos-compressed bucket made private)
+6. **freight_analysis** (1:1 with photos, enforced by unique index on photo_id)
+7. **hazard_alerts** (review workflow)
+8. **maintenance_records** (3-status enum: scheduled/completed/cancelled)
+9. **audit_log** (append-only)
+10. **defect_reports** (extracted from maintenance in 20260304; 4-status lifecycle)
+11. **asset_count_sessions** + **asset_count_items** (depot inventory)
+12. **asset_count_combination_metadata** + **combination_photos**
+13. **rate_limits** (service_role only, edge function rate limiting)
 
-1. **depots** - Depot/yard reference (~8 rows seeded for WA)
-2. **profiles** - User profiles linked to auth.users (FK: id -> auth.users.id)
-3. **assets** - Fleet assets (trailers TL###, dollies DL###), denormalized last location
-4. **scan_events** - QR scan events with geolocation (append-only, high volume)
-5. **photos** - Photo uploads for freight analysis
-6. **freight_analysis** - AI classification results (1:1 with photos)
-7. **hazard_alerts** - Detected hazards with review workflow
-8. **maintenance_records** - Asset maintenance tracking
-9. **audit_log** - System-wide audit trail (append-only)
+## RPC Functions
+- `get_fleet_statistics()` / `get_hazard_review_stats()` / `get_asset_counts_by_status()`
+- `get_maintenance_stats()` / `get_defect_report_stats()`
+- `get_asset_scan_context(UUID)` - mechanic context card
+- `lookup_asset_by_qr(TEXT)` - multi-strategy QR lookup
+- `accept_defect_report(UUID, JSONB)` - atomic defect->maintenance
+- `submit_asset_count_items(UUID, JSONB)` - bulk insert with GUC skip
+- `cancel_maintenance_task(UUID)` - SECURITY DEFINER (needs ownership check)
 
-## Key Design Decisions
-- `gen_random_uuid()` for UUIDs (built-in PG 13+, not uuid-ossp extension)
-- Denormalized `last_latitude/longitude` on assets table to avoid JOIN for map queries
-- Trigger `on_scan_event_update_asset_location` keeps denormalized location in sync
-- Trigger `on_auth_user_created` auto-creates profile row on signup
-- Soft deletes via `deleted_at` on assets; partial indexes exclude deleted rows
-- All timestamps use TIMESTAMPTZ
-- Custom enum types for roles, statuses, etc.
+## Key Patterns
+- GUC caching for auth_user_role() and is_user_active() per-transaction
+- Trigger alphabetical ordering matters (trg_resolve before trg_revert)
+- Enum evolution: create new type, swap column, drop old, rename
+- Keyset/cursor pagination in mobile; offset fallback in web
+- PostGIS not used; plain DOUBLE PRECISION lat/lng (correct for current patterns)
 
-## Indexing Strategy (32 custom indexes)
-- Partial indexes on `deleted_at IS NULL` for all asset queries
-- Composite indexes aligned with exact query patterns from useFleetData.ts
-- `idx_hazard_alerts_pending` uses WHERE status='active' for review queue
-- Descending indexes on created_at for time-ordered feeds
-
-## RLS
-- All 9 tables have RLS enabled
-- Helper functions: `auth_user_role()`, `is_manager_or_above()`
-- Drivers/mechanics: read-all, insert scan_events and photos
-- Managers+: full CRUD on assets, maintenance, hazard review
-- Superusers: additional deletion and role-change privileges
-- Service role: bypass for triggers and edge functions
-
-## ORM / Query Patterns
-- Supabase JS client via `@rgr/shared` package
-- Column naming: snake_case in DB, camelCase in TypeScript (mapRowToProfile)
-- useFleetData.ts queries: statistics, recentScans, outstandingAssets, assetLocations
-- useHazardReview.ts: hazard_alerts with freight_analysis, photos, assets JOINs
-- usePhotoAnalysis.ts: photos insert, edge function invoke
-- Real-time subscriptions on: scan_events, assets, hazard_alerts
+## Known Issues (2026-03-06 audit)
+See [audit-findings.md](audit-findings.md) for details.
+- cancel_maintenance_task: SECURITY DEFINER, insufficient ownership check
+- defect_reports/maintenance INSERT: no reported_by = auth.uid() enforcement
+- accept_defect_report: no JSONB status field validation
+- Missing cursor pagination indexes on defect_reports and maintenance_records
+- getTotalScanCount: full table COUNT(*) will degrade at scale
+- Web subscribes to scan_events realtime but table removed from publication
 
 ## Monorepo Structure
 - `rgr/packages/shared/` - types, services, Supabase client
 - `rgr/apps/web/` - React web app with Vite
-- `rgr/apps/mobile/` - placeholder (empty)
-- `rgr/supabase/` - migrations, edge functions (generate-qr, maintenance-reminder, scan-webhook)
+- `rgr/apps/mobile/` - React Native mobile app
+- `rgr/supabase/` - migrations, edge functions, seed data

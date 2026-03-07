@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# code-review.sh — Launch 4 specialist agents to review a package's source code in parallel
+# code-review.sh — Launch 5 specialist agents to review a package's source code in parallel
 #
 # Usage:
 #   ./scripts/code-review.sh <package>
@@ -90,6 +90,7 @@ declare -a AGENT_NAMES=(
   "typescript-specialist"
   "db-optimizer"
   "react-specialist"
+  "integration-specialist"
 )
 
 declare -a AGENT_PROMPTS=(
@@ -140,11 +141,24 @@ This is a review of ACTUAL SOURCE CODE, not a plan. Analyze the real database in
 - Loading/error states: Identify missing loading spinners, error boundaries, or empty state handling
 
 This is a review of ACTUAL SOURCE CODE, not a plan. Analyze the real components and hooks."
+
+  # 5. integration-specialist
+  "You are an INTEGRATION SPECIALIST reviewing all source files in the '${PACKAGE}' package for service integration, API communication, and resilience issues. Focus on:
+- Auth flows: Token refresh races, missing token expiry checks, credential storage safety, session handling gaps
+- API client patterns: Missing timeouts, absent retry logic, no error classification (transient vs permanent), raw error exposure to UI
+- Supabase integration: RPC error handling, realtime subscription cleanup, auth state listener lifecycle, missing .single()/.maybeSingle() on queries
+- Offline/connectivity: Missing offline detection, no queued-for-later patterns, stale data after reconnect, cache invalidation gaps
+- Webhook/event handling: Missing idempotency, no signature verification, unhandled event types, missing dead-letter patterns
+- Rate limiting: No backpressure handling, missing rate limit header parsing, thundering herd on retry, no request deduplication
+- Data sync: Race conditions between local and remote state, missing conflict resolution, optimistic updates without rollback
+- Error boundaries: Unhandled promise rejections, missing error classification, generic error messages hiding root cause, no structured error logging
+
+This is a review of ACTUAL SOURCE CODE, not a plan. Analyze the real integration patterns and service communication."
 )
 
 # ── Launch agents in parallel ──
 
-echo "Launching 4 specialist agents..."
+echo "Launching 5 specialist agents..."
 echo ""
 
 for i in "${!AGENT_NAMES[@]}"; do
