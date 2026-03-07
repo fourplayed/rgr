@@ -11,6 +11,7 @@ import {
   type ViewStyle,
   type StyleProp,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { colors } from '../../theme/colors';
 import { spacing, borderRadius } from '../../theme/spacing';
@@ -48,6 +49,7 @@ export function BottomSheet({
   style,
   keyboardAware = false,
 }: BottomSheetProps) {
+  const insets = useSafeAreaInsets();
   const translateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const entranceAnimRef = useRef<Animated.CompositeAnimation | null>(null);
@@ -113,6 +115,7 @@ export function BottomSheet({
       <Animated.View
         style={[
           styles.sheet,
+          { paddingBottom: Math.max(insets.bottom, spacing['2xl']) },
           maxHeight != null && { maxHeight },
           style,
           { transform: [{ translateY }] },
@@ -173,7 +176,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
-    paddingBottom: spacing['2xl'],
   },
   handle: {
     width: 40,
