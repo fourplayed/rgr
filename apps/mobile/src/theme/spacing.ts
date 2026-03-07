@@ -41,6 +41,10 @@ export const fontSize = {
   '2xl': 24,
   '3xl': 30,
   '4xl': 36,
+  /** Dashboard username / display heading */
+  display: 28,
+  /** Large stat values / hero numbers */
+  hero: 35,
 } as const;
 
 /**
@@ -60,25 +64,25 @@ export const lineHeight = {
  */
 export const shadows = {
   sm: {
-    shadowColor: '#000000',
+    shadowColor: '#000030',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-    elevation: 3,
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 2,
   },
   md: {
-    shadowColor: '#000000',
+    shadowColor: '#000030',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.6,
+    shadowOpacity: 0.08,
     shadowRadius: 6,
-    elevation: 6,
+    elevation: 4,
   },
   lg: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowColor: '#000030',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.10,
+    shadowRadius: 10,
+    elevation: 6,
   },
 } as const;
 

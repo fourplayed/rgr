@@ -14,7 +14,7 @@ import { useTutorialStore } from '../src/store/tutorialStore';
 import { useUserPermissions } from '../src/contexts/UserPermissionsContext';
 import { UserRoleLabels } from '@rgr/shared';
 import { colors } from '../src/theme/colors';
-import { spacing, fontSize, borderRadius } from '../src/theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../src/theme/spacing';
 import {
   AlertSheet,
   ConfirmSheet,
@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -294,12 +294,12 @@ const styles = StyleSheet.create({
   },
   profileName: {
     fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
   },
   profileEmail: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     marginTop: spacing.xs,
   },
@@ -322,14 +322,14 @@ const styles = StyleSheet.create({
   },
   settingsItemTitle: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   settingsItemSubtitle: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     marginTop: spacing.xs,
   },

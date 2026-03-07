@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Platform,
   UIManager,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import type { Asset, AssetWithRelations, AssetScanContext } from '@rgr/shared';
 import { MaintenanceStatusLabels, formatRelativeTime } from '@rgr/shared';
@@ -100,9 +101,10 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
     { key: 'openItems' as const, label: `Open Items (${openItemCount})` },
   ], [openItemCount]);
 
-  const toggleAction = (action: ConfirmAction) => {
+  const toggleAction = useCallback((action: ConfirmAction) => {
+    Haptics.selectionAsync();
     setSelectedAction(prev => (prev === action ? null : action));
-  };
+  }, []);
 
   // Derive completed states
   const defectCompleted = props.variant === 'mechanic' ? props.defectCompleted : false;
@@ -343,7 +345,7 @@ function OpenItemsSection({
               >
                 <View style={cardStyles.cardRow}>
                   <View style={cardStyles.cardIconContainer}>
-                    <Ionicons name="warning" size={31} color={colors.defectYellow} />
+                    <Ionicons name="warning" size={32} color={colors.defectYellow} />
                   </View>
                   <View style={cardStyles.cardBody}>
                     <View style={cardStyles.cardContentRow}>
@@ -376,7 +378,7 @@ function OpenItemsSection({
             >
               <View style={cardStyles.cardRow}>
                 <View style={cardStyles.cardIconContainer}>
-                  <Ionicons name="construct" size={31} color={colors.warning} />
+                  <Ionicons name="construct" size={32} color={colors.warning} />
                 </View>
                 <View style={cardStyles.cardBody}>
                   <View style={cardStyles.cardContentRow}>

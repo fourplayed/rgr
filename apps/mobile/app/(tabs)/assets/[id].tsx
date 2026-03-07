@@ -33,7 +33,7 @@ import {
 import { useAuthStore } from '../../../src/store/authStore';
 import { formatRelativeTime, hasRoleLevel, UserRole, formatAssetNumber } from '@rgr/shared';
 import { colors } from '../../../src/theme/colors';
-import { spacing, fontSize, borderRadius } from '../../../src/theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../../src/theme/spacing';
 import { CONTENT_TOP_OFFSET } from '../../../src/theme/layout';
 import {
   getScanTypeIcon,
@@ -220,7 +220,7 @@ const activityCardStyles = StyleSheet.create({
   },
   locationText: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     textTransform: 'uppercase',
   },
 });
@@ -659,7 +659,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.error,
     marginBottom: spacing.md,
     textTransform: 'uppercase',
@@ -672,7 +672,7 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
   },
@@ -692,14 +692,14 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: fontSize.xl,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     marginBottom: spacing.sm,
     textAlign: 'center',
   },
   emptySubtext: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
@@ -731,7 +731,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
   },
@@ -740,7 +740,7 @@ const styles = StyleSheet.create({
   },
   modalAssetNumber: {
     fontSize: fontSize.xl,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.electricBlue,
     marginBottom: spacing.lg,
     textTransform: 'uppercase',
@@ -755,7 +755,7 @@ const styles = StyleSheet.create({
   },
   qrDataText: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     textAlign: 'center',
     textTransform: 'uppercase',

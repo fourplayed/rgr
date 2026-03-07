@@ -29,7 +29,7 @@ import {
 import { ConfirmSheet } from '../../src/components/common/ConfirmSheet';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
 import { colors } from '../../src/theme/colors';
-import { spacing, fontSize, borderRadius } from '../../src/theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
 
 const STATUS_VALUES: string[] = [AssetStatus.SERVICED, AssetStatus.MAINTENANCE, AssetStatus.OUT_OF_SERVICE];
 
@@ -429,7 +429,7 @@ const styles = StyleSheet.create({
   backButton: { padding: spacing.sm },
   headerTitle: {
     fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -466,7 +466,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.text,
   },
   toolbar: {
@@ -491,7 +491,7 @@ const styles = StyleSheet.create({
   },
   toolbarButtonText: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     textTransform: 'uppercase',
   },
   resultBanner: {
@@ -503,7 +503,7 @@ const styles = StyleSheet.create({
   },
   resultText: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.success,
     textAlign: 'center',
   },
@@ -550,7 +550,7 @@ const styles = StyleSheet.create({
   },
   assetNumber: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
   },
   badgeRow: {
@@ -565,7 +565,7 @@ const styles = StyleSheet.create({
   },
   statusBadgeText: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
   },
@@ -576,7 +576,7 @@ const styles = StyleSheet.create({
   },
   depotBadgeText: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     textTransform: 'uppercase',
   },
   assetFooterRow: {
@@ -587,7 +587,7 @@ const styles = StyleSheet.create({
   assetSubtext: {
     flex: 1,
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
   },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
@@ -608,20 +608,20 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textAlign: 'center',
   },
   emptySubtext: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     textAlign: 'center',
     marginTop: spacing.xs,
   },
   errorText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.error,
     textAlign: 'center',
     marginBottom: spacing.base,
@@ -636,7 +636,7 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
   },
@@ -665,7 +665,7 @@ const styles = StyleSheet.create({
   },
   statusPickerTitle: {
     fontSize: fontSize['2xl'],
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
     textAlign: 'center',
@@ -685,7 +685,7 @@ const styles = StyleSheet.create({
   },
   statusOptionText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
   },
@@ -702,7 +702,7 @@ const styles = StyleSheet.create({
   },
   statusCancelText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
   },

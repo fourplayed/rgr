@@ -20,7 +20,7 @@ import { useLocationStore } from '../../src/store/locationStore';
 import { formatRelativeTime, UserRoleLabels, formatAssetNumber } from '@rgr/shared';
 import type { ScanEventWithScanner, MaintenanceListItem as MaintenanceListItemData, DefectReportListItem as DefectReportListItemData, CreateMaintenanceInput, Depot } from '@rgr/shared';
 import { colors } from '../../src/theme/colors';
-import { spacing, fontSize, borderRadius } from '../../src/theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
 import { CONTENT_TOP_OFFSET } from '../../src/theme/layout';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
 import { RefreshLoadingDots } from '../../src/components/common/RefreshLoadingDots';
@@ -44,11 +44,13 @@ import { findDepotByLocationString, getDepotBadgeColors } from '@rgr/shared';
 import { useDepotLookup } from '../../src/hooks/useDepots';
 import { useAcceptDefect } from '../../src/hooks/useAcceptDefect';
 import { useModalTransition } from '../../src/hooks/useModalTransition';
+import { useCountUp } from '../../src/hooks/useCountUp';
+import { useStaggeredEntrance } from '../../src/hooks/useStaggeredEntrance';
 
-// Dashboard-specific font sizes (not part of global token system)
-const FONT_SIZE_USERNAME = 28;
-const FONT_SIZE_STAT_VALUE = 35;
-const FONT_SIZE_STAT_LABEL = 14;
+// Dashboard font sizes — now use global tokens (display: 28, hero: 35)
+const FONT_SIZE_USERNAME = fontSize.display;
+const FONT_SIZE_STAT_VALUE = fontSize.hero;
+const FONT_SIZE_STAT_LABEL = fontSize.sm;
 
 type HomeModalState =
   | { type: 'none' }
@@ -61,16 +63,25 @@ type DashboardActivityItem =
   | { type: 'maintenance'; data: MaintenanceListItemData; timestamp: string }
   | { type: 'defect'; data: DefectReportListItemData; timestamp: string };
 
+/** Renders a count-up animated number for stat cards */
+function CountUpValue({ value, style }: { value: number; style: object }) {
+  const display = useCountUp(value);
+  return <Text style={style}>{display}</Text>;
+}
+
 const ActivityCard = memo(function ActivityCard({
   item,
   onPress,
   depots,
+  index,
 }: {
   item: DashboardActivityItem;
   onPress: (item: DashboardActivityItem) => void;
   depots: Depot[];
+  index: number;
 }) {
   const handlePress = useCallback(() => onPress(item), [item, onPress]);
+  const entranceOpacity = useStaggeredEntrance(index);
 
   if (item.type === 'scan') {
     const activityColor = getScanTypeColor(item.data.scanType);
@@ -78,77 +89,81 @@ const ActivityCard = memo(function ActivityCard({
     const badgeColors = matchedDepot ? getDepotBadgeColors(matchedDepot, colors.chrome, colors.text) : null;
 
     return (
-      <TouchableOpacity
-        style={[styles.scanCard, { borderLeftColor: activityColor }]}
-        onPress={handlePress}
-        activeOpacity={0.7}
-        accessibilityRole="button"
-        accessibilityLabel={`${formatScanTypeLabel(item.data.scanType)} scan for asset ${item.data.assetNumber ? formatAssetNumber(item.data.assetNumber) : 'Unknown'}`}
-        accessibilityHint="Double tap to view asset details"
-      >
-        <View style={styles.cardRow}>
-          <View style={styles.cardIconContainer}>
-            <Ionicons name={getScanTypeIcon(item.data.scanType)} size={31} color={activityColor} />
-          </View>
-          <View style={styles.cardBody}>
-            <View style={styles.cardContentRow}>
-              <Text style={styles.cardTitle} numberOfLines={1}>
-                {item.data.assetNumber ? formatAssetNumber(item.data.assetNumber) : 'Unknown Asset'}
-              </Text>
-              <View style={styles.cardBadges}>
-                {matchedDepot && badgeColors && (
-                  <View style={[styles.depotLocationBadge, { backgroundColor: badgeColors.bg }]}>
-                    <Text style={[styles.depotLocationText, { color: badgeColors.text }]}>{matchedDepot.name}</Text>
-                  </View>
-                )}
+      <Animated.View style={{ opacity: entranceOpacity }}>
+        <TouchableOpacity
+          style={[styles.scanCard, { borderLeftColor: activityColor }]}
+          onPress={handlePress}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={`${formatScanTypeLabel(item.data.scanType)} scan for asset ${item.data.assetNumber ? formatAssetNumber(item.data.assetNumber) : 'Unknown'}`}
+          accessibilityHint="Double tap to view asset details"
+        >
+          <View style={styles.cardRow}>
+            <View style={styles.cardIconContainer}>
+              <Ionicons name={getScanTypeIcon(item.data.scanType)} size={32} color={activityColor} />
+            </View>
+            <View style={styles.cardBody}>
+              <View style={styles.cardContentRow}>
+                <Text style={styles.cardTitle} numberOfLines={1}>
+                  {item.data.assetNumber ? formatAssetNumber(item.data.assetNumber) : 'Unknown Asset'}
+                </Text>
+                <View style={styles.cardBadges}>
+                  {matchedDepot && badgeColors && (
+                    <View style={[styles.depotLocationBadge, { backgroundColor: badgeColors.bg }]}>
+                      <Text style={[styles.depotLocationText, { color: badgeColors.text }]}>{matchedDepot.name}</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+              <View style={styles.scanFooter}>
+                <Text style={styles.cardSecondaryText}>
+                  {formatScanTypeLabel(item.data.scanType)}
+                </Text>
+                <Text style={styles.scanTime}>
+                  {formatRelativeTime(item.data.createdAt)}
+                </Text>
               </View>
             </View>
-            <View style={styles.scanFooter}>
-              <Text style={styles.cardSecondaryText}>
-                {formatScanTypeLabel(item.data.scanType)}
-              </Text>
-              <Text style={styles.scanTime}>
-                {formatRelativeTime(item.data.createdAt)}
-              </Text>
-            </View>
           </View>
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+      </Animated.View>
     );
   }
 
   if (item.type === 'defect') {
     const defectConfig = DEFECT_STATUS_CONFIG[item.data.status] ?? DEFECT_STATUS_CONFIG.reported;
     return (
-      <TouchableOpacity
-        style={[styles.scanCard, { borderLeftColor: defectConfig.color }]}
-        onPress={handlePress}
-        activeOpacity={0.7}
-        accessibilityRole="button"
-        accessibilityLabel={`Defect report: ${item.data.title}`}
-      >
-        <View style={styles.cardRow}>
-          <View style={styles.cardIconContainer}>
-            <Ionicons name={defectConfig.icon} size={31} color={defectConfig.color} />
-          </View>
-          <View style={styles.cardBody}>
-            <View style={styles.cardContentRow}>
-              <Text style={styles.cardTitle} numberOfLines={1}>
-                {item.data.assetNumber ? formatAssetNumber(item.data.assetNumber) : 'Unknown Asset'}
-              </Text>
-              <View style={styles.cardBadges}>
-                <DefectStatusBadge status={item.data.status} />
+      <Animated.View style={{ opacity: entranceOpacity }}>
+        <TouchableOpacity
+          style={[styles.scanCard, { borderLeftColor: defectConfig.color }]}
+          onPress={handlePress}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={`Defect report: ${item.data.title}`}
+        >
+          <View style={styles.cardRow}>
+            <View style={styles.cardIconContainer}>
+              <Ionicons name={defectConfig.icon} size={32} color={defectConfig.color} />
+            </View>
+            <View style={styles.cardBody}>
+              <View style={styles.cardContentRow}>
+                <Text style={styles.cardTitle} numberOfLines={1}>
+                  {item.data.assetNumber ? formatAssetNumber(item.data.assetNumber) : 'Unknown Asset'}
+                </Text>
+                <View style={styles.cardBadges}>
+                  <DefectStatusBadge status={item.data.status} />
+                </View>
+              </View>
+              <View style={styles.scanFooter}>
+                <Text style={styles.cardSecondaryText}>Defect Report</Text>
+                <Text style={styles.scanTime}>
+                  {formatRelativeTime(item.data.createdAt)}
+                </Text>
               </View>
             </View>
-            <View style={styles.scanFooter}>
-              <Text style={styles.cardSecondaryText}>Defect Report</Text>
-              <Text style={styles.scanTime}>
-                {formatRelativeTime(item.data.createdAt)}
-              </Text>
-            </View>
           </View>
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+      </Animated.View>
     );
   }
 
@@ -156,35 +171,37 @@ const ActivityCard = memo(function ActivityCard({
   const maintConfig = getMaintenanceVisualConfig(item.data.status, item.data.dueDate);
 
   return (
-    <TouchableOpacity
-      style={[styles.scanCard, { borderLeftColor: maintConfig.color }]}
-      onPress={handlePress}
-      activeOpacity={0.7}
-      accessibilityRole="button"
-      accessibilityLabel={`Maintenance ${item.data.title}, status ${item.data.status}`}
-    >
-      <View style={styles.cardRow}>
-        <View style={styles.cardIconContainer}>
-          <Ionicons name={maintConfig.icon} size={31} color={maintConfig.color} />
-        </View>
-        <View style={styles.cardBody}>
-          <View style={styles.cardContentRow}>
-            <Text style={styles.cardTitle} numberOfLines={1}>
-              {item.data.assetNumber ? formatAssetNumber(item.data.assetNumber) : 'Unknown Asset'}
-            </Text>
-            <View style={styles.cardBadges}>
-              <MaintenanceStatusBadge status={item.data.status} />
+    <Animated.View style={{ opacity: entranceOpacity }}>
+      <TouchableOpacity
+        style={[styles.scanCard, { borderLeftColor: maintConfig.color }]}
+        onPress={handlePress}
+        activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityLabel={`Maintenance ${item.data.title}, status ${item.data.status}`}
+      >
+        <View style={styles.cardRow}>
+          <View style={styles.cardIconContainer}>
+            <Ionicons name={maintConfig.icon} size={32} color={maintConfig.color} />
+          </View>
+          <View style={styles.cardBody}>
+            <View style={styles.cardContentRow}>
+              <Text style={styles.cardTitle} numberOfLines={1}>
+                {item.data.assetNumber ? formatAssetNumber(item.data.assetNumber) : 'Unknown Asset'}
+              </Text>
+              <View style={styles.cardBadges}>
+                <MaintenanceStatusBadge status={item.data.status} />
+              </View>
+            </View>
+            <View style={styles.scanFooter}>
+              <Text style={styles.cardSecondaryText}>{item.data.title}</Text>
+              <Text style={styles.scanTime}>
+                {formatRelativeTime(item.data.createdAt)}
+              </Text>
             </View>
           </View>
-          <View style={styles.scanFooter}>
-            <Text style={styles.cardSecondaryText}>{item.data.title}</Text>
-            <Text style={styles.scanTime}>
-              {formatRelativeTime(item.data.createdAt)}
-            </Text>
-          </View>
         </View>
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </Animated.View>
   );
 });
 
@@ -311,17 +328,17 @@ export default function HomeScreen() {
     const anim = Animated.sequence([
       Animated.timing(greetingOpacity, {
         toValue: 1,
-        duration: 1200,
+        duration: 300,
         useNativeDriver: true,
       }),
       Animated.timing(usernameOpacity, {
         toValue: 1,
-        duration: 1200,
+        duration: 300,
         useNativeDriver: true,
       }),
       Animated.timing(geofenceOpacity, {
         toValue: 1,
-        duration: 1200,
+        duration: 300,
         useNativeDriver: true,
       }),
     ]);
@@ -372,9 +389,9 @@ export default function HomeScreen() {
     }
   }, [router, transitionTo]);
 
-  // Thin wrapper delegates to memoized ActivityCard
-  const renderActivityItem = useCallback(({ item }: { item: DashboardActivityItem }) => (
-    <ActivityCard item={item} onPress={handleActivityPress} depots={depots} />
+  // Thin wrapper delegates to memoized ActivityCard (passes index for stagger)
+  const renderActivityItem = useCallback(({ item, index }: { item: DashboardActivityItem; index: number }) => (
+    <ActivityCard item={item} onPress={handleActivityPress} depots={depots} index={index} />
   ), [handleActivityPress, depots]);
 
   const roleLabel = user ? (UserRoleLabels[user.role] || user.role) : '';
@@ -436,7 +453,7 @@ export default function HomeScreen() {
             >
               <View style={styles.statRow}>
                 <Ionicons name={stat.icon} size={32} color="#FFFFFF" style={styles.statIcon} />
-                <Text style={styles.statValue}>{stat.value}</Text>
+                <CountUpValue value={stat.value} style={styles.statValue} />
               </View>
               <Text style={styles.statLabel}>{stat.label}</Text>
             </TouchableOpacity>
@@ -567,13 +584,13 @@ const styles = StyleSheet.create({
   },
   greeting: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     marginTop: -5,
   },
   userName: {
     fontSize: FONT_SIZE_USERNAME,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     marginBottom: spacing.xs,
     marginLeft: 16,
@@ -585,12 +602,12 @@ const styles = StyleSheet.create({
   },
   geofenceText: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     fontStyle: 'italic',
   },
   geofenceLocation: {
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     fontStyle: 'normal',
   },
   
@@ -601,11 +618,9 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     marginBottom: spacing.md,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
   },
   statsGrid: {
     flexDirection: 'row',
@@ -630,13 +645,13 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: FONT_SIZE_STAT_VALUE,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     marginBottom: spacing.xs,
     color: colors.textInverse,
   },
   statLabel: {
     fontSize: FONT_SIZE_STAT_LABEL,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textInverse,
     textAlign: 'center',
   },
@@ -681,7 +696,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     flex: 1,
   },
@@ -691,7 +706,7 @@ const styles = StyleSheet.create({
   },
   cardSecondaryText: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
   },
   depotLocationBadge: {
@@ -701,7 +716,7 @@ const styles = StyleSheet.create({
   },
   depotLocationText: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     textTransform: 'uppercase',
   },
   scanFooter: {
@@ -711,37 +726,7 @@ const styles = StyleSheet.create({
   },
   scanTime: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
-  },
-
-  // Empty State
-  emptyState: {
-    alignItems: 'center',
-    paddingHorizontal: spacing['3xl'],
-    paddingVertical: spacing['2xl'],
-  },
-  emptyIconContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: colors.surfaceSubtle,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-  },
-  emptyTitle: {
-    fontSize: fontSize.xl,
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    marginBottom: spacing.sm,
-    textAlign: 'center',
-  },
-  emptySubtext: {
-    fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 20,
   },
 });

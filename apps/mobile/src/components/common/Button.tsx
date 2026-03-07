@@ -1,6 +1,7 @@
-import React from 'react';
-import { View, TouchableOpacity, Text, StyleSheet, type ViewStyle, type StyleProp } from 'react-native';
+import React, { useRef, useCallback } from 'react';
+import { View, Pressable, Animated, Text, StyleSheet, type ViewStyle, type StyleProp } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { LoadingDots } from './LoadingDots';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, shadows, fontFamily as fonts } from '../../theme/spacing';
@@ -36,12 +37,36 @@ export function Button({
   style,
   accessibilityLabel,
 }: ButtonProps) {
+  const scale = useRef(new Animated.Value(1)).current;
   const variantStyle = variantStyles[variant];
   const textStyle = textStyles[variant];
   const bgOverride = color ? { backgroundColor: color } : undefined;
   const isDisabled = disabled || isLoading;
 
   const disabledTextOverride = isDisabled && !isLoading ? { color: colors.textDisabled } : undefined;
+
+  const handlePressIn = useCallback(() => {
+    Animated.spring(scale, {
+      toValue: 0.97,
+      friction: 8,
+      tension: 100,
+      useNativeDriver: true,
+    }).start();
+  }, [scale]);
+
+  const handlePressOut = useCallback(() => {
+    Animated.spring(scale, {
+      toValue: 1,
+      friction: 8,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+  }, [scale]);
+
+  const handlePress = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onPress();
+  }, [onPress]);
 
   const content = isLoading ? (
     <LoadingDots color={textStyle.color} size={8} />
@@ -55,23 +80,28 @@ export function Button({
   );
 
   return (
-    <TouchableOpacity
-      style={[
-        styles.base,
-        variantStyle,
-        bgOverride,
-        flex && styles.flex,
-        isDisabled && styles.disabled,
-        style,
-      ]}
-      onPress={onPress}
+    <Pressable
+      onPress={handlePress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       disabled={isDisabled}
-      activeOpacity={0.8}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? children}
     >
-      {content}
-    </TouchableOpacity>
+      <Animated.View
+        style={[
+          styles.base,
+          variantStyle,
+          bgOverride,
+          flex && styles.flex,
+          isDisabled && styles.disabled,
+          style,
+          { transform: [{ scale }] },
+        ]}
+      >
+        {content}
+      </Animated.View>
+    </Pressable>
   );
 }
 

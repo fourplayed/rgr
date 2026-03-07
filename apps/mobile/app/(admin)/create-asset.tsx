@@ -23,7 +23,7 @@ import { useDepots } from '../../src/hooks/useDepots';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
 import { CreateAssetOverlay } from '../../src/components/admin/CreateAssetOverlay';
 import { colors } from '../../src/theme/colors';
-import { spacing, fontSize, borderRadius } from '../../src/theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
 
 const CATEGORIES: AssetCategoryType[] = ['trailer', 'dolly'];
 const ASSET_NUMBER_REGEX = /^[A-Z]{2}\d{3,}$/;
@@ -184,7 +184,7 @@ export default function CreateAssetScreen() {
                             styles.categoryChipText,
                             {
                               color: isSelected ? colors.textInverse : colors.text,
-                              fontFamily: isSelected ? 'Lato_700Bold' : 'Lato_400Regular',
+                              fontFamily: isSelected ? fonts.bold : fonts.regular,
                             },
                           ]}
                         >
@@ -479,7 +479,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -506,7 +506,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -520,7 +520,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     height: 48,
     fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.text,
   },
   textArea: {
@@ -529,7 +529,7 @@ const styles = StyleSheet.create({
   },
   hintText: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.warning,
     marginTop: spacing.xs,
   },
@@ -566,17 +566,17 @@ const styles = StyleSheet.create({
   },
   scrollChipText: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.text,
     textTransform: 'uppercase',
   },
   scrollChipTextSelected: {
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
   },
   errorText: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.error,
     marginBottom: spacing.base,
   },
@@ -599,7 +599,7 @@ const styles = StyleSheet.create({
   },
   cancelButtonText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
   },
@@ -613,7 +613,7 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
   },

@@ -18,7 +18,7 @@ import type {
   CreateMaintenanceInput,
 } from '@rgr/shared';
 import { colors } from '../../src/theme/colors';
-import { spacing, fontSize, borderRadius } from '../../src/theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
 import { ScreenHeader } from '../../src/components/common/ScreenHeader';
 import { SegmentedTabs } from '../../src/components/common/SegmentedTabs';
@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
   },
   addLinkText: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.electricBlue,
   },
   tabContainer: {
@@ -424,21 +424,21 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: fontSize.xl,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     marginBottom: spacing.sm,
     textAlign: 'center',
   },
   emptySubtext: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
   },
   errorText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.error,
     marginBottom: spacing.md,
     textTransform: 'uppercase',
@@ -451,7 +451,7 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
   },

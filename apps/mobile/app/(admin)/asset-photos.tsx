@@ -20,7 +20,7 @@ import { ConfirmSheet } from '../../src/components/common/ConfirmSheet';
 import { AlertSheet } from '../../src/components/common/AlertSheet';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
 import { colors } from '../../src/theme/colors';
-import { spacing, fontSize, borderRadius } from '../../src/theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
 
 const NUM_COLUMNS = 3;
 const THUMBNAIL_GAP = spacing.sm;
@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     flex: 1,
     fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
   },
   headerActionText: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.electricBlue,
     textTransform: 'uppercase',
   },
@@ -411,13 +411,13 @@ const styles = StyleSheet.create({
   },
   selectAllText: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.electricBlue,
     textTransform: 'uppercase',
   },
   selectedCountText: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
   },
   listContent: {
@@ -470,7 +470,7 @@ const styles = StyleSheet.create({
   },
   deleteButtonText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
   },
@@ -481,7 +481,7 @@ const styles = StyleSheet.create({
   },
   clearButtonText: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textSecondary,
     textTransform: 'uppercase',
   },
@@ -503,20 +503,20 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textAlign: 'center',
   },
   emptySubtext: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     textAlign: 'center',
     marginTop: spacing.xs,
   },
   errorText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.error,
     textAlign: 'center',
     marginBottom: spacing.base,
@@ -531,7 +531,7 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
   },

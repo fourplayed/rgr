@@ -9,10 +9,10 @@ export const colors = {
   electricBlue: '#00A8FF',
   neonViolet: '#9D00FF',
   violet: '#8B5CF6',
-  chrome: '#E8E8E8',
+  chrome: '#F0F2F5',
   // Primary action color (buttons, links)
-  primary: '#0000FF',
-  primaryDark: '#0000CC',
+  primary: '#3B3BFF',
+  primaryDark: '#2929CC',
 
   // Status colors (matching shared enums)
   status: {
@@ -63,8 +63,9 @@ export const colors = {
 
   // UI elements
   background: '#FFFFFF',
-  backgroundDark: '#0000CC',
+  backgroundDark: '#2929CC',
   surface: '#F8FAFC',
+  surfaceElevated: '#FFFFFF',
   surfaceDark: '#1E3A8A',
   surfaceSubtle: 'rgba(0, 0, 0, 0.05)',
   border: '#E2E8F0',
@@ -95,20 +96,20 @@ export const colors = {
   scanCorner: '#00A8FF',
   scanSuccess: '#22C55E',
 
-  // Background gradients (chrome gradient)
-  gradientColors: ['#C0C0C0', '#E8E8E8', '#F5F5F5'] as const,
+  // Background gradients (chrome gradient — warmed to match #F0F2F5 chrome)
+  gradientColors: ['#D0D4DA', '#E4E7EC', '#F0F2F5'] as const,
   gradientLocations: [0, 0.5, 1] as const,
   gradientStart: { x: 0, y: 0 } as const,
   gradientEnd: { x: 0, y: 1 } as const,
   // Legacy arrays for backwards compatibility
-  gradientLight: ['#C0C0C0', '#E8E8E8', '#F5F5F5'] as const,
-  gradientDark: ['#C0C0C0', '#E8E8E8', '#F5F5F5'] as const,
+  gradientLight: ['#D0D4DA', '#E4E7EC', '#F0F2F5'] as const,
+  gradientDark: ['#D0D4DA', '#E4E7EC', '#F0F2F5'] as const,
 
-  // Brand gradient (tab bar, header)
-  brandGradient: ['#000099', '#0000CC', '#000099'] as const,
-  brandGradientHeader: ['#0000DD', '#000099'] as const,
-  brandTabBar: '#0000CC',
-  brandTabActive: '#000099',
+  // Brand gradient (tab bar, header — softened to match desaturated primary)
+  brandGradient: ['#1A1A99', '#2929CC', '#1A1A99'] as const,
+  brandGradientHeader: ['#3333DD', '#1A1A99'] as const,
+  brandTabBar: '#2929CC',
+  brandTabActive: '#1A1A99',
 
   // Opacity variants
   overlay: 'rgba(0, 0, 0, 0.5)',

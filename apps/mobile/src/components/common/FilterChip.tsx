@@ -1,5 +1,6 @@
-import React, { memo } from 'react';
+import React, { memo, useCallback } from 'react';
 import { Text, TouchableOpacity, StyleSheet } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 
@@ -15,6 +16,11 @@ export const FilterChip = memo(function FilterChip({ label, isSelected, onPress,
   const textColor = isSelected ? colors.textInverse : colors.text;
   const borderColor = isSelected ? 'transparent' : colors.border;
 
+  const handlePress = useCallback(() => {
+    Haptics.selectionAsync();
+    onPress();
+  }, [onPress]);
+
   return (
     <TouchableOpacity
       style={[
@@ -24,7 +30,7 @@ export const FilterChip = memo(function FilterChip({ label, isSelected, onPress,
           borderColor: borderColor,
         },
       ]}
-      onPress={onPress}
+      onPress={handlePress}
       activeOpacity={0.7}
       accessibilityRole="button"
       accessibilityLabel={`Filter by ${label}`}

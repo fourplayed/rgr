@@ -20,7 +20,7 @@ import {
 import { LoadingDots } from '../src/components/common/LoadingDots';
 import { useUserPermissions } from '../src/contexts/UserPermissionsContext';
 import { colors } from '../src/theme/colors';
-import { spacing, fontSize, borderRadius } from '../src/theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../src/theme/spacing';
 
 export default function AuditLogScreen() {
   const router = useRouter();
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
   backButton: { padding: spacing.sm },
   headerTitle: {
     fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -212,20 +212,20 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textAlign: 'center',
   },
   emptySubtext: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     textAlign: 'center',
     marginTop: spacing.xs,
   },
   errorText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.error,
     textAlign: 'center',
     marginBottom: spacing.base,
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
   },

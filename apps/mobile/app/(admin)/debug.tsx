@@ -22,7 +22,7 @@ import { useNetworkStatus } from '../../src/hooks/useNetworkStatus';
 import { useLocationStore } from '../../src/store/locationStore';
 import { useDebugLocationStore } from '../../src/store/debugLocationStore';
 import { colors } from '../../src/theme/colors';
-import { spacing, fontSize, borderRadius } from '../../src/theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
 import { getSession as getStoredSession } from '../../src/utils/secureStorage';
 import type { Profile } from '@rgr/shared';
 
@@ -700,7 +700,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -725,7 +725,7 @@ const styles = StyleSheet.create({
   },
   healthBannerText: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -736,7 +736,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -759,7 +759,7 @@ const styles = StyleSheet.create({
   },
   debugLabel: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -767,7 +767,7 @@ const styles = StyleSheet.create({
   },
   debugValue: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     textTransform: 'capitalize',
     flexShrink: 1,
@@ -794,7 +794,7 @@ const styles = StyleSheet.create({
   },
   debugSubtitle: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -807,13 +807,13 @@ const styles = StyleSheet.create({
   },
   debugDataText: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     marginBottom: 2,
   },
   debugDataTextBold: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     marginBottom: spacing.xs,
   },
@@ -835,7 +835,7 @@ const styles = StyleSheet.create({
   },
   syncButtonText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
   },
@@ -852,13 +852,13 @@ const styles = StyleSheet.create({
   },
   copyButtonText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
   },
   simInput: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.text,
     textAlign: 'right',
     minWidth: 120,

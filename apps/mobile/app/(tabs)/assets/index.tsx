@@ -22,7 +22,7 @@ import { useDebounce } from '../../../src/hooks/useDebounce';
 import { AssetListItem } from '../../../src/components/assets/AssetListItem';
 import { AssetFilterPanel } from '../../../src/components/assets/AssetFilterPanel';
 import { colors } from '../../../src/theme/colors';
-import { spacing, fontSize, borderRadius } from '../../../src/theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../../src/theme/spacing';
 
 /**
  * Fixed height for FlatList optimization (getItemLayout)
@@ -273,11 +273,11 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: spacing.md,
     fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.text,
   },
   searchInputPlaceholder: {
-    fontFamily: 'Lato_400Regular_Italic',
+    fontFamily: fonts.italic,
   },
   listContent: {
     padding: spacing.base,
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.error,
     marginBottom: spacing.md,
   },
@@ -301,37 +301,7 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: spacing['3xl'],
-    paddingVertical: spacing['2xl'],
-  },
-  emptyIconContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: colors.surfaceSubtle,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-  },
-  emptyTitle: {
-    fontSize: fontSize.xl,
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    marginBottom: spacing.sm,
-    textAlign: 'center',
-  },
-  emptySubtext: {
-    fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 20,
   },
 });

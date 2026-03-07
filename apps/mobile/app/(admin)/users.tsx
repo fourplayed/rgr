@@ -17,7 +17,7 @@ import { useUserList } from '../../src/hooks/useAdminUsers';
 import { UserListItem, USER_ITEM_HEIGHT } from '../../src/components/admin/UserListItem';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
 import { colors } from '../../src/theme/colors';
-import { spacing, fontSize, borderRadius } from '../../src/theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
 
 const ROLES: UserRole[] = ['driver', 'mechanic', 'manager', 'superuser'];
 
@@ -169,7 +169,7 @@ export default function UsersScreen() {
                     styles.chipText,
                     {
                       color: isSelected ? colors.textInverse : colors.text,
-                      fontFamily: isSelected ? 'Lato_700Bold' : 'Lato_400Regular',
+                      fontFamily: isSelected ? fonts.bold : fonts.regular,
                     },
                   ]}
                 >
@@ -205,8 +205,8 @@ export default function UsersScreen() {
                       : colors.text,
                   fontFamily:
                     showInactive === false
-                      ? 'Lato_700Bold'
-                      : 'Lato_400Regular',
+                      ? fonts.bold
+                      : fonts.regular,
                 },
               ]}
             >
@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.text,
   },
   chipRow: {
@@ -344,20 +344,20 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textAlign: 'center',
   },
   emptySubtext: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     textAlign: 'center',
     marginTop: spacing.xs,
   },
   errorText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.error,
     textAlign: 'center',
     marginBottom: spacing.base,
@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
   },

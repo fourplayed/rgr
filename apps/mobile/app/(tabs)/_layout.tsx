@@ -210,9 +210,9 @@ const tabStyles = StyleSheet.create({
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
+    shadowOpacity: 0.15,
     shadowRadius: 4,
-    elevation: 16,
+    elevation: 8,
   },
   absoluteFill: {
     position: 'absolute',
@@ -256,7 +256,7 @@ const tabStyles = StyleSheet.create({
     textShadowRadius: 2,
   },
   tabLabel: {
-    fontSize: 9,
+    fontSize: 11,
     fontFamily: 'Lato_700Bold',
     color: TAB_ICON_COLOR,
     letterSpacing: 0.5,

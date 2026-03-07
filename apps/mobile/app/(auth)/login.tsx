@@ -22,7 +22,7 @@ import { depotKeys } from '../../src/hooks/useDepots';
 import { SaveCredentialsModal } from '../../src/components/auth/SaveCredentialsModal';
 import { isAutoLoginEnabled } from '../../src/utils/secureStorage';
 import { colors } from '../../src/theme/colors';
-import { spacing, fontSize, fontWeight, borderRadius } from '../../src/theme/spacing';
+import { spacing, fontSize, fontWeight, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
 import { LoadingDots, AlertSheet } from '../../src/components/common';
 import { logger } from '../../src/utils/logger';
 
@@ -422,7 +422,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -452,7 +452,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
   },
@@ -461,7 +461,7 @@ const styles = StyleSheet.create({
     bottom: spacing.xl,
     alignSelf: 'center',
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
   },
 });

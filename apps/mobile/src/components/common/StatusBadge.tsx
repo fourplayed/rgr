@@ -6,20 +6,27 @@ import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 
 type BadgeSize = 'small' | 'medium';
+type BadgeVariant = 'solid' | 'tinted';
 
 /** Generic badge — accepts any label + color. Used as the base for all domain-specific badges. */
 interface BadgeProps {
   label: string;
   color: string;
   size?: BadgeSize;
+  /** 'solid' = full-color background + white text (default). 'tinted' = 15% opacity bg + colored text. */
+  variant?: BadgeVariant;
 }
 
-export function Badge({ label, color, size = 'small' }: BadgeProps) {
+export function Badge({ label, color, size = 'small', variant = 'solid' }: BadgeProps) {
+  const isTinted = variant === 'tinted';
+  const bgColor = isTinted ? `${color}26` : color;
+  const textColor = isTinted ? color : colors.textInverse;
+
   return (
     <View
       style={[
         styles.badge,
-        { backgroundColor: color },
+        { backgroundColor: bgColor },
         size === 'small' && styles.badgeSmall,
       ]}
       accessible={true}
@@ -29,6 +36,7 @@ export function Badge({ label, color, size = 'small' }: BadgeProps) {
       <Text
         style={[
           styles.label,
+          { color: textColor },
           size === 'small' && styles.labelSmall,
         ]}
       >
@@ -42,14 +50,16 @@ export function Badge({ label, color, size = 'small' }: BadgeProps) {
 interface StatusBadgeProps {
   status: AssetStatus;
   size?: BadgeSize;
+  variant?: BadgeVariant;
 }
 
-export function StatusBadge({ status, size = 'medium' }: StatusBadgeProps) {
+export function StatusBadge({ status, size = 'medium', variant = 'solid' }: StatusBadgeProps) {
   return (
     <Badge
       label={AssetStatusLabels[status]}
       color={AssetStatusColors[status]}
       size={size}
+      variant={variant}
     />
   );
 }
@@ -67,7 +77,6 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.sm,
   },
   label: {
-    color: colors.textInverse,
     fontSize: fontSize.sm,
     fontFamily: fonts.bold,
     textTransform: 'uppercase',

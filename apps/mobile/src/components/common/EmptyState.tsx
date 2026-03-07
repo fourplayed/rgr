@@ -1,16 +1,24 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Button } from './Button';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, fontFamily as fonts } from '../../theme/spacing';
+
+interface EmptyStateAction {
+  label: string;
+  onPress: () => void;
+}
 
 interface EmptyStateProps {
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
   subtitle: string;
+  /** Optional CTA button below the subtitle */
+  action?: EmptyStateAction;
 }
 
-export function EmptyState({ icon, title, subtitle }: EmptyStateProps) {
+export function EmptyState({ icon, title, subtitle, action }: EmptyStateProps) {
   return (
     <View style={styles.container}>
       <View style={styles.iconContainer}>
@@ -18,6 +26,13 @@ export function EmptyState({ icon, title, subtitle }: EmptyStateProps) {
       </View>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.subtitle}>{subtitle}</Text>
+      {action && (
+        <View style={styles.actionContainer}>
+          <Button onPress={action.onPress} variant="secondary">
+            {action.label}
+          </Button>
+        </View>
+      )}
     </View>
   );
 }
@@ -50,5 +65,8 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
+  },
+  actionContainer: {
+    marginTop: spacing.base,
   },
 });

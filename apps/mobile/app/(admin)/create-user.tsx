@@ -20,7 +20,7 @@ import { useDepots } from '../../src/hooks/useDepots';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
 import { CreateUserOverlay } from '../../src/components/admin/CreateUserOverlay';
 import { colors } from '../../src/theme/colors';
-import { spacing, fontSize, borderRadius } from '../../src/theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
 
 const ROLES: UserRole[] = ['driver', 'mechanic', 'manager', 'superuser'];
 
@@ -183,7 +183,7 @@ export default function CreateUserScreen() {
                             styles.roleChipText,
                             {
                               color: isSelected ? colors.textInverse : colors.text,
-                              fontFamily: isSelected ? 'Lato_700Bold' : 'Lato_400Regular',
+                              fontFamily: isSelected ? fonts.bold : fonts.regular,
                             },
                           ]}
                         >
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -355,7 +355,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     height: 48,
     fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.text,
   },
   chipContainer: {
@@ -405,17 +405,17 @@ const styles = StyleSheet.create({
   },
   depotChipText: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.text,
     textTransform: 'uppercase',
   },
   depotChipTextSelected: {
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
   },
   errorText: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.error,
     marginBottom: spacing.base,
   },
@@ -438,7 +438,7 @@ const styles = StyleSheet.create({
   },
   cancelButtonText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
   },
@@ -452,7 +452,7 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
   },
