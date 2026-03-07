@@ -14,7 +14,13 @@ import type {
   Depot,
   DepotRow,
 } from '../../types/entities';
-import type { AssetStatus, AssetCategory, DefectStatus, MaintenanceStatus, MaintenancePriority } from '../../types/enums';
+import type {
+  AssetStatus,
+  AssetCategory,
+  DefectStatus,
+  MaintenanceStatus,
+  MaintenancePriority,
+} from '../../types/enums';
 import type { ScanEventRow } from '../../types/entities/scanEvent';
 import type { MaintenanceRecordRow } from '../../types/entities/maintenanceRecord';
 import type { HazardAlertRow } from '../../types/entities/hazardAlert';
@@ -27,7 +33,10 @@ import {
 } from '../../types/entities/asset';
 import { AssetCategorySchema, AssetStatusSchema } from '../../types/enums/AssetEnums';
 import { DefectStatusSchema } from '../../types/enums/DefectEnums';
-import { MaintenanceStatusSchema, MaintenancePrioritySchema } from '../../types/enums/MaintenanceEnums';
+import {
+  MaintenanceStatusSchema,
+  MaintenancePrioritySchema,
+} from '../../types/enums/MaintenanceEnums';
 import { safeParseEnum } from '../../utils/safeParseEnum';
 import { isValidUUID, isValidISOTimestamp } from '../../utils/constants';
 import {
@@ -166,14 +175,23 @@ export async function listAssets(
   if (useCursorPagination && cursorId) {
     // Validate cursor values to prevent PostgREST injection
     if (!isValidUUID(cursorId)) {
-      return { success: true, data: { data: [], total: 0, page: 1, pageSize, totalPages: 0, hasMore: false }, error: null };
+      return {
+        success: true,
+        data: { data: [], total: 0, page: 1, pageSize, totalPages: 0, hasMore: false },
+        error: null,
+      };
     }
     // Validate cursor value based on sort field type
-    const isCursorSafe = resolvedSortField === 'asset_number'
-      ? /^[a-zA-Z0-9_-]+$/.test(cursor!)
-      : isValidISOTimestamp(cursor!);
+    const isCursorSafe =
+      resolvedSortField === 'asset_number'
+        ? /^[a-zA-Z0-9_-]+$/.test(cursor!)
+        : isValidISOTimestamp(cursor!);
     if (!isCursorSafe) {
-      return { success: true, data: { data: [], total: 0, page: 1, pageSize, totalPages: 0, hasMore: false }, error: null };
+      return {
+        success: true,
+        data: { data: [], total: 0, page: 1, pageSize, totalPages: 0, hasMore: false },
+        error: null,
+      };
     }
     // Composite cursor on (sortField, id) to handle ties
     const op = ascending ? 'gt' : 'lt';
@@ -181,11 +199,16 @@ export async function listAssets(
       `${resolvedSortField}.${op}.${cursor},and(${resolvedSortField}.eq.${cursor},id.${op}.${cursorId})`
     );
   } else if (useCursorPagination && cursor) {
-    const isCursorSafe = resolvedSortField === 'asset_number'
-      ? /^[a-zA-Z0-9_-]+$/.test(cursor)
-      : isValidISOTimestamp(cursor);
+    const isCursorSafe =
+      resolvedSortField === 'asset_number'
+        ? /^[a-zA-Z0-9_-]+$/.test(cursor)
+        : isValidISOTimestamp(cursor);
     if (!isCursorSafe) {
-      return { success: true, data: { data: [], total: 0, page: 1, pageSize, totalPages: 0, hasMore: false }, error: null };
+      return {
+        success: true,
+        data: { data: [], total: 0, page: 1, pageSize, totalPages: 0, hasMore: false },
+        error: null,
+      };
     }
     const op = ascending ? 'gt' : 'lt';
     query = query.filter(resolvedSortField, op, cursor);
@@ -246,20 +269,20 @@ export async function listAssets(
 /**
  * Get a single asset by ID with joined relations.
  */
-export async function getAsset(
-  id: string
-): Promise<ServiceResult<AssetWithRelations>> {
+export async function getAsset(id: string): Promise<ServiceResult<AssetWithRelations>> {
   const supabase = getSupabaseClient();
 
   const { data, error } = await supabase
     .from('assets')
-    .select(`
+    .select(
+      `
       *,
       depot:assigned_depot_id(name, code),
       driver:assigned_driver_id(full_name),
       scanner:last_scanned_by(full_name),
       photos(count)
-    `)
+    `
+    )
     .eq('id', id)
     .maybeSingle();
 
@@ -271,7 +294,9 @@ export async function getAsset(
     return { success: false, data: null, error: 'Asset not found' };
   }
 
-  const { depot, driver, scanner, photos, ...assetRow } = data as unknown as AssetRowWithJoins & { photos: [{ count: number }] };
+  const { depot, driver, scanner, photos, ...assetRow } = data as unknown as AssetRowWithJoins & {
+    photos: [{ count: number }];
+  };
   const asset = mapRowToAsset(assetRow as AssetRow);
 
   return {
@@ -291,22 +316,20 @@ export async function getAsset(
 /**
  * Create a new asset. Validates input with Zod.
  */
-export async function createAsset(
-  input: CreateAssetInput
-): Promise<ServiceResult<Asset>> {
+export async function createAsset(input: CreateAssetInput): Promise<ServiceResult<Asset>> {
   const parsed = CreateAssetInputSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, data: null, error: parsed.error.errors[0]?.message ?? 'Invalid input' };
+    return {
+      success: false,
+      data: null,
+      error: parsed.error.errors[0]?.message ?? 'Invalid input',
+    };
   }
 
   const supabase = getSupabaseClient();
   const dbData = mapAssetToInsert(parsed.data as CreateAssetInput);
 
-  const { data, error } = await supabase
-    .from('assets')
-    .insert(dbData)
-    .select()
-    .single();
+  const { data, error } = await supabase.from('assets').insert(dbData).select().single();
 
   if (error) {
     if (error.message.includes('duplicate') || error.code === '23505') {
@@ -327,7 +350,11 @@ export async function updateAsset(
 ): Promise<ServiceResult<Asset>> {
   const parsed = UpdateAssetInputSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, data: null, error: parsed.error.errors[0]?.message ?? 'Invalid input' };
+    return {
+      success: false,
+      data: null,
+      error: parsed.error.errors[0]?.message ?? 'Invalid input',
+    };
   }
 
   const supabase = getSupabaseClient();
@@ -355,9 +382,7 @@ export async function updateAsset(
 /**
  * Soft-delete an asset by setting deleted_at.
  */
-export async function softDeleteAsset(
-  id: string
-): Promise<ServiceResult<void>> {
+export async function softDeleteAsset(id: string): Promise<ServiceResult<void>> {
   const supabase = getSupabaseClient();
 
   const { error } = await supabase
@@ -443,17 +468,17 @@ export async function createScanEvent(
 ): Promise<ServiceResult<ScanEvent>> {
   const parsed = CreateScanEventInputSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, data: null, error: parsed.error.errors[0]?.message ?? 'Invalid input' };
+    return {
+      success: false,
+      data: null,
+      error: parsed.error.errors[0]?.message ?? 'Invalid input',
+    };
   }
 
   const supabase = getSupabaseClient();
   const dbData = mapScanEventToInsert(parsed.data as CreateScanEventInput);
 
-  const { data, error } = await supabase
-    .from('scan_events')
-    .insert(dbData)
-    .select()
-    .single();
+  const { data, error } = await supabase.from('scan_events').insert(dbData).select().single();
 
   if (error) {
     return { success: false, data: null, error: `Failed to create scan event: ${error.message}` };
@@ -465,9 +490,7 @@ export async function createScanEvent(
 /**
  * Lookup an asset by QR code data or asset number.
  */
-export async function getAssetByQRCode(
-  qrData: string
-): Promise<ServiceResult<Asset>> {
+export async function getAssetByQRCode(qrData: string): Promise<ServiceResult<Asset>> {
   const supabase = getSupabaseClient();
 
   const { data, error } = await supabase
@@ -525,11 +548,13 @@ export async function getRecentScans(
 
   const { data, error } = await supabase
     .from('scan_events')
-    .select(`
+    .select(
+      `
       *,
       profiles(full_name),
       assets!inner(asset_number, category)
-    `)
+    `
+    )
     .order('created_at', { ascending: false })
     .limit(safeLimit);
 
@@ -563,11 +588,13 @@ export async function getMyRecentScans(
 
   const { data, error } = await supabase
     .from('scan_events')
-    .select(`
+    .select(
+      `
       *,
       profiles(full_name),
       assets!inner(asset_number, category)
-    `)
+    `
+    )
     .eq('scanned_by', userId)
     .order('created_at', { ascending: false })
     .limit(safeLimit);
@@ -799,8 +826,20 @@ export async function getAssetScanContext(
   const raw = data as {
     open_defect_count: number;
     active_task_count: number;
-    open_defects: Array<{ id: string; title: string; description: string | null; status: string; created_at: string }>;
-    active_tasks: Array<{ id: string; title: string; status: string; priority: string; created_at: string }>;
+    open_defects: Array<{
+      id: string;
+      title: string;
+      description: string | null;
+      status: string;
+      created_at: string;
+    }>;
+    active_tasks: Array<{
+      id: string;
+      title: string;
+      status: string;
+      priority: string;
+      created_at: string;
+    }>;
   };
 
   return {
@@ -833,15 +872,10 @@ export async function getAssetScanContext(
  * Delete a scan event by ID. Used by the mobile undo flow.
  * RLS restricts this to the scanner's own recent scans (< 30s).
  */
-export async function deleteScanEvent(
-  id: string
-): Promise<ServiceResult<void>> {
+export async function deleteScanEvent(id: string): Promise<ServiceResult<void>> {
   const supabase = getSupabaseClient();
 
-  const { error } = await supabase
-    .from('scan_events')
-    .delete()
-    .eq('id', id);
+  const { error } = await supabase.from('scan_events').delete().eq('id', id);
 
   if (error) {
     return { success: false, data: null, error: `Failed to delete scan event: ${error.message}` };
@@ -878,7 +912,11 @@ export async function listServicedAssets(
     .limit(limit);
 
   if (error) {
-    return { success: false, data: null, error: `Failed to fetch serviced assets: ${error.message}` };
+    return {
+      success: false,
+      data: null,
+      error: `Failed to fetch serviced assets: ${error.message}`,
+    };
   }
 
   const assets = (data || []).map((row) => ({

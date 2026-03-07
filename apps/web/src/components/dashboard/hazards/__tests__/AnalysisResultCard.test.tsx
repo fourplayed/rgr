@@ -367,9 +367,7 @@ describe('AnalysisResultCard', () => {
       });
 
       expect(screen.getByText('Departure Blocked')).toBeInTheDocument();
-      expect(
-        screen.getByText(/critical hazards detected.*must be resolved/i)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/critical hazards detected.*must be resolved/i)).toBeInTheDocument();
     });
 
     it('should not display departure blocked warning when not blocked', () => {
@@ -402,9 +400,7 @@ describe('AnalysisResultCard', () => {
         result: createMockResult({ hazards: [] }),
       });
 
-      expect(
-        screen.getByText(/AI analysis found no safety concerns/i)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/AI analysis found no safety concerns/i)).toBeInTheDocument();
     });
 
     it('should not show Add to Queue button when no hazards', () => {
@@ -529,7 +525,9 @@ describe('AnalysisResultCard', () => {
     it('should not render buttons when callbacks are not provided', () => {
       render(<AnalysisResultCard result={createMockResult()} />);
 
-      expect(screen.queryByRole('button', { name: /add to review queue/i })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /add to review queue/i })
+      ).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /new analysis/i })).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /dismiss/i })).not.toBeInTheDocument();
     });

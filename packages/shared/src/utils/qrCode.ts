@@ -14,8 +14,7 @@ const QR_CODE_PREFIX = 'rgr://asset/';
 import { ASSET_NUMBER_REGEX } from './constants';
 
 /** Regex for a standard UUID (v4 or similar) */
-const UUID_REGEX =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * Result returned by parseQRCode

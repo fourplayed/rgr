@@ -11,7 +11,11 @@ export interface SupabaseConfig {
   url: string;
   anonKey: string;
   /** Custom session storage (pass AsyncStorage for React Native) */
-  storage?: { getItem: (key: string) => string | null | Promise<string | null>; setItem: (key: string, value: string) => void | Promise<void>; removeItem: (key: string) => void | Promise<void> };
+  storage?: {
+    getItem: (key: string) => string | null | Promise<string | null>;
+    setItem: (key: string, value: string) => void | Promise<void>;
+    removeItem: (key: string) => void | Promise<void>;
+  };
   /** Set to false for React Native (default: true for web) */
   detectSessionInUrl?: boolean;
 }
@@ -73,8 +77,9 @@ export function initSupabase(config: SupabaseConfig): SupabaseClient<Database> {
       fetch: (url: RequestInfo | URL, options?: RequestInit) => {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 30000);
-        return fetch(url, { ...options, signal: controller.signal })
-          .finally(() => clearTimeout(timeout));
+        return fetch(url, { ...options, signal: controller.signal }).finally(() =>
+          clearTimeout(timeout)
+        );
       },
     },
     // Connection pooling settings for better performance
@@ -94,9 +99,7 @@ export function initSupabase(config: SupabaseConfig): SupabaseClient<Database> {
  */
 export function getSupabaseClient(): SupabaseClient<Database> {
   if (!supabaseClient) {
-    throw new Error(
-      'Supabase client not initialized. Call initSupabase() first.'
-    );
+    throw new Error('Supabase client not initialized. Call initSupabase() first.');
   }
   return supabaseClient;
 }
@@ -130,5 +133,9 @@ export function resetSupabaseClient(): void {
 }
 
 // Re-export types from supabase-js
-export type { SupabaseClient, RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+export type {
+  SupabaseClient,
+  RealtimeChannel,
+  RealtimePostgresChangesPayload,
+} from '@supabase/supabase-js';
 export type { Database } from '../../types/database.types';

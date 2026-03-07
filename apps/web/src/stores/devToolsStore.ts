@@ -45,7 +45,6 @@ interface DevToolsState {
   resetGradient: (theme: 'light' | 'dark') => void;
   defaultLightGradient: GradientColors;
   defaultDarkGradient: GradientColors;
-
 }
 
 export const useDevToolsStore = create<DevToolsState>((set) => ({
@@ -59,17 +58,14 @@ export const useDevToolsStore = create<DevToolsState>((set) => ({
   // Gradient
   lightGradient: { ...DEFAULT_LIGHT_GRADIENT },
   darkGradient: { ...DEFAULT_DARK_GRADIENT },
-  setLightGradient: (colors) =>
-    set((s) => ({ lightGradient: { ...s.lightGradient, ...colors } })),
-  setDarkGradient: (colors) =>
-    set((s) => ({ darkGradient: { ...s.darkGradient, ...colors } })),
+  setLightGradient: (colors) => set((s) => ({ lightGradient: { ...s.lightGradient, ...colors } })),
+  setDarkGradient: (colors) => set((s) => ({ darkGradient: { ...s.darkGradient, ...colors } })),
   resetGradient: (theme) =>
     set(
       theme === 'light'
         ? { lightGradient: { ...DEFAULT_LIGHT_GRADIENT } }
-        : { darkGradient: { ...DEFAULT_DARK_GRADIENT } },
+        : { darkGradient: { ...DEFAULT_DARK_GRADIENT } }
     ),
   defaultLightGradient: DEFAULT_LIGHT_GRADIENT,
   defaultDarkGradient: DEFAULT_DARK_GRADIENT,
-
 }));

@@ -145,11 +145,12 @@ export function recordFailure(email: string): void {
   }
 
   const newFailures = entry.failures + 1;
-  const newLockoutSeconds = newFailures >= MAX_ATTEMPTS
-    ? (entry.failures >= MAX_ATTEMPTS
+  const newLockoutSeconds =
+    newFailures >= MAX_ATTEMPTS
+      ? entry.failures >= MAX_ATTEMPTS
         ? Math.min(entry.lockoutSeconds * 2, MAX_LOCKOUT_SECONDS)
-        : INITIAL_LOCKOUT_SECONDS)
-    : entry.lockoutSeconds;
+        : INITIAL_LOCKOUT_SECONDS
+      : entry.lockoutSeconds;
 
   rateLimitMap.set(key, {
     failures: newFailures,

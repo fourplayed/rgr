@@ -12,15 +12,9 @@ export const DefectStatus = {
   DISMISSED: 'dismissed',
 } as const;
 
-export type DefectStatus =
-  (typeof DefectStatus)[keyof typeof DefectStatus];
+export type DefectStatus = (typeof DefectStatus)[keyof typeof DefectStatus];
 
-export const DefectStatusSchema = z.enum([
-  'reported',
-  'accepted',
-  'resolved',
-  'dismissed',
-]);
+export const DefectStatusSchema = z.enum(['reported', 'accepted', 'resolved', 'dismissed']);
 
 export const DefectStatusLabels: Record<DefectStatus, string> = {
   reported: 'Reported',

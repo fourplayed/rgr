@@ -75,14 +75,20 @@ export function ForgotPasswordCard({
 
     // Simulate API call delay for password reset
     // In production, this would be replaced with actual API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     setIsLoading(false);
     setSubmitted(true);
   };
 
   return (
-    <div style={{ ...(isDark ? CARD_STYLES.dark : CARD_STYLES.light), justifyContent: 'flex-start', paddingTop: '220px' }}>
+    <div
+      style={{
+        ...(isDark ? CARD_STYLES.dark : CARD_STYLES.light),
+        justifyContent: 'flex-start',
+        paddingTop: '220px',
+      }}
+    >
       <div style={{ marginTop: '15px' }}>
         <h1 className={`text-center text-2xl font-bold ${titleColor} mb-1`}>
           Forgot your password?
@@ -98,18 +104,20 @@ export function ForgotPasswordCard({
           <p className={`text-sm ${subtitleColor} text-center`}>
             If you don't see the email, check your spam folder.
           </p>
-          <ButtonComponent
-            type="button"
-            variant="secondary"
-            className="w-full"
-            onClick={onBack}
-          >
+          <ButtonComponent type="button" variant="secondary" className="w-full" onClick={onBack}>
             Back to login
           </ButtonComponent>
         </div>
       ) : (
         <>
-          <form id="forgot-password-form" onSubmit={handleSubmit} className="space-y-4" style={{ marginTop: '4px' }} noValidate aria-label="Password reset form">
+          <form
+            id="forgot-password-form"
+            onSubmit={handleSubmit}
+            className="space-y-4"
+            style={{ marginTop: '4px' }}
+            noValidate
+            aria-label="Password reset form"
+          >
             <ThemedInput
               id="reset-email"
               name="email"
@@ -133,7 +141,12 @@ export function ForgotPasswordCard({
                 aria-label="Return to login form"
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
                 </svg>
                 Back to login
               </button>
@@ -260,12 +273,7 @@ export function ForgotPasswordCard({
               `}
             >
               <span className="chrome-button-forgot-content flex items-center justify-center gap-2.5">
-                {!isLoading && (
-                  <AnimatedMailIcon
-                    isHovered={isButtonHovered}
-                    size={24}
-                  />
-                )}
+                {!isLoading && <AnimatedMailIcon isHovered={isButtonHovered} size={24} />}
                 {isLoading ? (
                   <span className="flex items-center justify-center gap-2.5">
                     <LoadingSpinner />

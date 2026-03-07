@@ -26,12 +26,7 @@ describe('VisionStatCard', () => {
   });
 
   it('should display change with correct color when positive', () => {
-    render(
-      <VisionStatCard
-        {...defaultProps}
-        change={{ value: 12, label: 'this month' }}
-      />
-    );
+    render(<VisionStatCard {...defaultProps} change={{ value: 12, label: 'this month' }} />);
 
     // Arrow and percentage are in separate spans
     expect(screen.getByText('▲')).toBeInTheDocument();
@@ -43,12 +38,7 @@ describe('VisionStatCard', () => {
   });
 
   it('should display change with correct color when negative', () => {
-    render(
-      <VisionStatCard
-        {...defaultProps}
-        change={{ value: -8, label: 'this week' }}
-      />
-    );
+    render(<VisionStatCard {...defaultProps} change={{ value: -8, label: 'this week' }} />);
 
     // Arrow and percentage are in separate spans
     expect(screen.getByText('▼')).toBeInTheDocument();
@@ -87,12 +77,7 @@ describe('VisionStatCard', () => {
   });
 
   it('should display metric when provided', () => {
-    render(
-      <VisionStatCard
-        {...defaultProps}
-        metric={{ text: '98.5%', label: 'uptime' }}
-      />
-    );
+    render(<VisionStatCard {...defaultProps} metric={{ text: '98.5%', label: 'uptime' }} />);
 
     expect(screen.getByText('98.5%')).toBeInTheDocument();
     expect(screen.getByText('uptime')).toBeInTheDocument();
@@ -114,9 +99,7 @@ describe('VisionStatCard', () => {
   });
 
   it('should apply custom className', () => {
-    const { container } = render(
-      <VisionStatCard {...defaultProps} className="custom-class" />
-    );
+    const { container } = render(<VisionStatCard {...defaultProps} className="custom-class" />);
 
     const cardWrapper = container.firstChild;
     expect(cardWrapper).toHaveClass('custom-class');
@@ -207,12 +190,7 @@ describe('VisionStatCard', () => {
   });
 
   it('should display zero change correctly', () => {
-    render(
-      <VisionStatCard
-        {...defaultProps}
-        change={{ value: 0, label: 'no change' }}
-      />
-    );
+    render(<VisionStatCard {...defaultProps} change={{ value: 0, label: 'no change' }} />);
 
     // Arrow and percentage are in separate spans
     expect(screen.getByText('▲')).toBeInTheDocument();
@@ -221,11 +199,10 @@ describe('VisionStatCard', () => {
   });
 
   it('should truncate long subtitles', () => {
-    const longSubtitle = 'This is a very long subtitle that should be truncated when it exceeds two lines of text';
+    const longSubtitle =
+      'This is a very long subtitle that should be truncated when it exceeds two lines of text';
 
-    render(
-      <VisionStatCard {...defaultProps} subtitle={longSubtitle} />
-    );
+    render(<VisionStatCard {...defaultProps} subtitle={longSubtitle} />);
 
     const subtitleElement = screen.getByText(longSubtitle);
     expect(subtitleElement).toHaveClass('line-clamp-1');

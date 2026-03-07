@@ -94,9 +94,7 @@ export function mapRowToDepot(row: DepotRow): Depot {
   };
 }
 
-export function mapDepotToInsert(
-  input: CreateDepotInput
-): DepotInsertRow {
+export function mapDepotToInsert(input: CreateDepotInput): DepotInsertRow {
   return {
     name: input.name,
     code: input.code,
@@ -108,9 +106,7 @@ export function mapDepotToInsert(
   };
 }
 
-export function mapDepotToUpdate(
-  input: UpdateDepotInput
-): DepotUpdateRow {
+export function mapDepotToUpdate(input: UpdateDepotInput): DepotUpdateRow {
   const updates: DepotUpdateRow = {};
 
   if (input.name !== undefined) updates['name'] = input.name;

@@ -42,14 +42,12 @@ describe('ForgotPasswordCard', () => {
   describe('Rendering', () => {
     it('should render forgot password form', () => {
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       expect(screen.getByText(/forgot your password/i)).toBeInTheDocument();
@@ -59,14 +57,12 @@ describe('ForgotPasswordCard', () => {
 
     it('should render with light theme styles', () => {
       const { container } = render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       const card = container.firstChild as HTMLElement;
@@ -76,14 +72,12 @@ describe('ForgotPasswordCard', () => {
 
     it('should render with dark theme styles', () => {
       const { container } = render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={true}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={true}
+          onError={mockOnError}
+        />
       );
 
       const card = container.firstChild as HTMLElement;
@@ -93,14 +87,12 @@ describe('ForgotPasswordCard', () => {
 
     it('should render title and subtitle', () => {
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       expect(screen.getByText(/forgot your password/i)).toBeInTheDocument();
@@ -109,14 +101,12 @@ describe('ForgotPasswordCard', () => {
 
     it('should render back to login button', () => {
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       // Button has aria-label "Return to login form" and text "Back to login"
@@ -128,14 +118,12 @@ describe('ForgotPasswordCard', () => {
   describe('Email Input', () => {
     it('should render email input field', () => {
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       const emailInput = screen.getByLabelText(/^email$/i);
@@ -149,14 +137,12 @@ describe('ForgotPasswordCard', () => {
       vi.useRealTimers(); // Use real timers for userEvent
       const user = userEvent.setup({ delay: null });
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       const emailInput = screen.getByLabelText(/^email$/i) as HTMLInputElement;
@@ -168,14 +154,12 @@ describe('ForgotPasswordCard', () => {
 
     it('should have placeholder text', () => {
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       const emailInput = screen.getByPlaceholderText(/enter your email/i);
@@ -184,14 +168,12 @@ describe('ForgotPasswordCard', () => {
 
     it('should have autocomplete attribute', () => {
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       const emailInput = screen.getByLabelText(/^email$/i);
@@ -204,14 +186,12 @@ describe('ForgotPasswordCard', () => {
       vi.useRealTimers();
       const user = userEvent.setup({ delay: null });
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       const submitButton = screen.getByRole('button', { name: /send email/i });
@@ -225,14 +205,12 @@ describe('ForgotPasswordCard', () => {
       vi.useRealTimers();
       const user = userEvent.setup({ delay: null });
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       const emailInput = screen.getByLabelText(/^email$/i);
@@ -249,14 +227,12 @@ describe('ForgotPasswordCard', () => {
       vi.useRealTimers();
       const user = userEvent.setup({ delay: null });
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       const emailInput = screen.getByLabelText(/^email$/i);
@@ -272,14 +248,12 @@ describe('ForgotPasswordCard', () => {
 
     it('should have noValidate attribute on form', () => {
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       expect(screen.getByRole('form')).toHaveAttribute('noValidate');
@@ -291,14 +265,12 @@ describe('ForgotPasswordCard', () => {
       vi.useRealTimers();
       const user = userEvent.setup({ delay: null });
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       const emailInput = screen.getByLabelText(/^email$/i);
@@ -317,14 +289,12 @@ describe('ForgotPasswordCard', () => {
       vi.useRealTimers();
       const user = userEvent.setup({ delay: null });
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       const emailInput = screen.getByLabelText(/^email$/i);
@@ -343,14 +313,12 @@ describe('ForgotPasswordCard', () => {
       vi.useRealTimers();
       const user = userEvent.setup({ delay: null });
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       const emailInput = screen.getByLabelText(/^email$/i);
@@ -372,14 +340,12 @@ describe('ForgotPasswordCard', () => {
       vi.useRealTimers();
       const user = userEvent.setup({ delay: null });
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       const emailInput = screen.getByLabelText(/^email$/i);
@@ -397,14 +363,12 @@ describe('ForgotPasswordCard', () => {
       vi.useRealTimers();
       const user = userEvent.setup({ delay: null });
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       const emailInput = screen.getByLabelText(/^email$/i);
@@ -423,14 +387,12 @@ describe('ForgotPasswordCard', () => {
       vi.useRealTimers();
       const user = userEvent.setup({ delay: null });
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       const emailInput = screen.getByLabelText(/^email$/i);
@@ -442,7 +404,9 @@ describe('ForgotPasswordCard', () => {
       // Wait for async state updates with increased timeout
       await waitFor(
         () => {
-          expect(screen.getByText(/check your email for a password reset link/i)).toBeInTheDocument();
+          expect(
+            screen.getByText(/check your email for a password reset link/i)
+          ).toBeInTheDocument();
         },
         { timeout: 3000 }
       );
@@ -452,14 +416,12 @@ describe('ForgotPasswordCard', () => {
       vi.useRealTimers();
       const user = userEvent.setup({ delay: null });
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       const emailInput = screen.getByLabelText(/^email$/i);
@@ -476,14 +438,12 @@ describe('ForgotPasswordCard', () => {
       vi.useRealTimers();
       const user = userEvent.setup({ delay: null });
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       const emailInput = screen.getByLabelText(/^email$/i);
@@ -503,14 +463,12 @@ describe('ForgotPasswordCard', () => {
       vi.useRealTimers();
       const user = userEvent.setup({ delay: null });
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       const emailInput = screen.getByLabelText(/^email$/i);
@@ -521,7 +479,9 @@ describe('ForgotPasswordCard', () => {
 
       await waitFor(
         () => {
-          expect(screen.getByText(/check your email for a password reset link/i)).toBeInTheDocument();
+          expect(
+            screen.getByText(/check your email for a password reset link/i)
+          ).toBeInTheDocument();
         },
         { timeout: 3000 }
       );
@@ -531,14 +491,12 @@ describe('ForgotPasswordCard', () => {
       vi.useRealTimers();
       const user = userEvent.setup({ delay: null });
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       const emailInput = screen.getByLabelText(/^email$/i);
@@ -559,14 +517,12 @@ describe('ForgotPasswordCard', () => {
       vi.useRealTimers();
       const user = userEvent.setup({ delay: null });
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       const emailInput = screen.getByLabelText(/^email$/i);
@@ -588,14 +544,12 @@ describe('ForgotPasswordCard', () => {
       vi.useRealTimers();
       const user = userEvent.setup({ delay: null });
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       const emailInput = screen.getByLabelText(/^email$/i);
@@ -621,14 +575,12 @@ describe('ForgotPasswordCard', () => {
   describe('Back Button', () => {
     it('should render back button with icon', () => {
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       const backButton = screen.getByRole('button', { name: /return to login form/i });
@@ -643,14 +595,12 @@ describe('ForgotPasswordCard', () => {
       vi.useRealTimers();
       const user = userEvent.setup({ delay: null });
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       const backButton = screen.getByRole('button', { name: /return to login form/i });
@@ -661,14 +611,12 @@ describe('ForgotPasswordCard', () => {
 
     it('should have proper button type', () => {
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       const backButton = screen.getByRole('button', { name: /return to login form/i });
@@ -677,14 +625,12 @@ describe('ForgotPasswordCard', () => {
 
     it('should have light theme styles', () => {
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       const backButton = screen.getByRole('button', { name: /return to login form/i });
@@ -693,14 +639,12 @@ describe('ForgotPasswordCard', () => {
 
     it('should have dark theme styles', () => {
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={true}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={true}
+          onError={mockOnError}
+        />
       );
 
       const backButton = screen.getByRole('button', { name: /return to login form/i });
@@ -711,14 +655,12 @@ describe('ForgotPasswordCard', () => {
   describe('Submit Button Styles', () => {
     it('should have chrome button styles', () => {
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       const submitButton = screen.getByRole('button', { name: /send email/i });
@@ -727,14 +669,12 @@ describe('ForgotPasswordCard', () => {
 
     it('should inject chrome button styles', () => {
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       const styles = document.querySelectorAll('style');
@@ -746,14 +686,12 @@ describe('ForgotPasswordCard', () => {
 
     it('should show animated mail icon when not loading', () => {
       const { container } = render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       // AnimatedMailIcon renders an SVG
@@ -765,14 +703,12 @@ describe('ForgotPasswordCard', () => {
   describe('Accessibility', () => {
     it('should have proper form ID', () => {
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       expect(screen.getByRole('form')).toHaveAttribute('id', 'forgot-password-form');
@@ -780,14 +716,12 @@ describe('ForgotPasswordCard', () => {
 
     it('should have accessible back button', () => {
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       const backButton = screen.getByRole('button', { name: /return to login form/i });
@@ -796,14 +730,12 @@ describe('ForgotPasswordCard', () => {
 
     it('should respect prefers-reduced-motion', () => {
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       const styles = document.querySelectorAll('style');
@@ -817,14 +749,12 @@ describe('ForgotPasswordCard', () => {
   describe('Theme Variations', () => {
     it('should apply light theme title color', () => {
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       const title = screen.getByText(/forgot your password/i);
@@ -833,14 +763,12 @@ describe('ForgotPasswordCard', () => {
 
     it('should apply dark theme title color', () => {
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={true}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={true}
+          onError={mockOnError}
+        />
       );
 
       const title = screen.getByText(/forgot your password/i);
@@ -849,14 +777,12 @@ describe('ForgotPasswordCard', () => {
 
     it('should apply light theme subtitle color', () => {
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={false}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={false}
+          onError={mockOnError}
+        />
       );
 
       const subtitle = screen.getByText(/no worries! we can reset it for you/i);
@@ -865,14 +791,12 @@ describe('ForgotPasswordCard', () => {
 
     it('should apply dark theme subtitle color', () => {
       render(
-        
-          <ForgotPasswordCard
-            ButtonComponent={MockButton}
-            onBack={mockOnBack}
-            isDark={true}
-            onError={mockOnError}
-          />
-        
+        <ForgotPasswordCard
+          ButtonComponent={MockButton}
+          onBack={mockOnBack}
+          isDark={true}
+          onError={mockOnError}
+        />
       );
 
       const subtitle = screen.getByText(/no worries! we can reset it for you/i);

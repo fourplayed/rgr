@@ -61,28 +61,31 @@ export default function QRScanner({
 }: QRScannerProps) {
   const scannerElementId = 'qr-scanner-container';
   const scannerContainerRef = useRef<HTMLDivElement>(null);
-  const animationTimersRef = useRef<{ interval?: NodeJS.Timeout | undefined; timeout?: NodeJS.Timeout | undefined }>({});
+  const animationTimersRef = useRef<{
+    interval?: NodeJS.Timeout | undefined;
+    timeout?: NodeJS.Timeout | undefined;
+  }>({});
   const [successState, setSuccessState] = useState<ScanSuccessState>({
     isVisible: false,
     scannedValue: null,
     pulseCount: 0,
   });
 
-  const scannerConfig = useMemo(() => ({
-    fps: CONSTANTS.SCANNER.DEFAULT_FPS,
-    qrbox: {
-      width: CONSTANTS.SCANNER.QRBOX_SIZE,
-      height: CONSTANTS.SCANNER.QRBOX_SIZE,
-    },
-  }), []);
+  const scannerConfig = useMemo(
+    () => ({
+      fps: CONSTANTS.SCANNER.DEFAULT_FPS,
+      qrbox: {
+        width: CONSTANTS.SCANNER.QRBOX_SIZE,
+        height: CONSTANTS.SCANNER.QRBOX_SIZE,
+      },
+    }),
+    []
+  );
 
-  const {
-    state,
-    startScanning,
-    stopScanning,
-    switchCamera,
-    resetScanner,
-  } = useQRScanner(handleScanWithAnimation, scannerConfig);
+  const { state, startScanning, stopScanning, switchCamera, resetScanner } = useQRScanner(
+    handleScanWithAnimation,
+    scannerConfig
+  );
 
   const { isScanning, isInitializing, error, hasPermission } = state;
 
@@ -199,16 +202,19 @@ export default function QRScanner({
   /**
    * Calculate pulse animation style
    */
-  const getPulseStyle = useCallback((index: number) => {
-    const isActive = successState.pulseCount > index;
-    const scale = isActive ? CONSTANTS.PULSE.SCALE_MAX : CONSTANTS.PULSE.SCALE_MIN;
-    const opacity = isActive ? CONSTANTS.PULSE.OPACITY_MIN : CONSTANTS.PULSE.OPACITY_MAX;
-    return {
-      transform: `scale(${scale})`,
-      opacity,
-      transition: `all ${CONSTANTS.ANIMATION.FADE_DURATION_MS}ms ease-out`,
-    };
-  }, [successState.pulseCount]);
+  const getPulseStyle = useCallback(
+    (index: number) => {
+      const isActive = successState.pulseCount > index;
+      const scale = isActive ? CONSTANTS.PULSE.SCALE_MAX : CONSTANTS.PULSE.SCALE_MIN;
+      const opacity = isActive ? CONSTANTS.PULSE.OPACITY_MIN : CONSTANTS.PULSE.OPACITY_MAX;
+      return {
+        transform: `scale(${scale})`,
+        opacity,
+        transition: `all ${CONSTANTS.ANIMATION.FADE_DURATION_MS}ms ease-out`,
+      };
+    },
+    [successState.pulseCount]
+  );
 
   return (
     <div className={`relative ${className}`}>
@@ -263,8 +269,8 @@ export default function QRScanner({
                     ...getPulseStyle(index),
                     width: `${CONSTANTS.DIMENSIONS.SCAN_FRAME_SIZE - CONSTANTS.DIMENSIONS.CORNER_SIZE * index}px`,
                     height: `${CONSTANTS.DIMENSIONS.SCAN_FRAME_SIZE - CONSTANTS.DIMENSIONS.CORNER_SIZE * index}px`,
-                    left: `${CONSTANTS.DIMENSIONS.CORNER_SIZE * index / 2}px`,
-                    top: `${CONSTANTS.DIMENSIONS.CORNER_SIZE * index / 2}px`,
+                    left: `${(CONSTANTS.DIMENSIONS.CORNER_SIZE * index) / 2}px`,
+                    top: `${(CONSTANTS.DIMENSIONS.CORNER_SIZE * index) / 2}px`,
                   }}
                 />
               ))}
@@ -276,14 +282,15 @@ export default function QRScanner({
 
               {/* Sparkles */}
               <Sparkles className="absolute -top-2 -right-2 w-6 h-6 text-yellow-400 animate-bounce" />
-              <Sparkles className="absolute -bottom-2 -left-2 w-5 h-5 text-yellow-300 animate-bounce" style={{ animationDelay: '100ms' }} />
+              <Sparkles
+                className="absolute -bottom-2 -left-2 w-5 h-5 text-yellow-300 animate-bounce"
+                style={{ animationDelay: '100ms' }}
+              />
             </div>
 
             {/* Success text */}
             <div className="absolute bottom-8 left-0 right-0 text-center">
-              <p className="text-white font-semibold text-lg drop-shadow-lg">
-                Scan Successful!
-              </p>
+              <p className="text-white font-semibold text-lg drop-shadow-lg">Scan Successful!</p>
               {successState.scannedValue && (
                 <p className="text-white/80 text-sm mt-1 truncate px-4 max-w-xs mx-auto">
                   {successState.scannedValue}
@@ -380,7 +387,11 @@ export default function QRScanner({
 /**
  * Scan frame corner indicator component
  */
-function ScanFrameCorner({ position }: { position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' }) {
+function ScanFrameCorner({
+  position,
+}: {
+  position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+}) {
   const positionClasses = {
     'top-left': 'top-0 left-0 border-t-4 border-l-4 rounded-tl-lg',
     'top-right': 'top-0 right-0 border-t-4 border-r-4 rounded-tr-lg',
@@ -388,9 +399,5 @@ function ScanFrameCorner({ position }: { position: 'top-left' | 'top-right' | 'b
     'bottom-right': 'bottom-0 right-0 border-b-4 border-r-4 rounded-br-lg',
   };
 
-  return (
-    <div
-      className={`absolute w-8 h-8 border-primary-400 ${positionClasses[position]}`}
-    />
-  );
+  return <div className={`absolute w-8 h-8 border-primary-400 ${positionClasses[position]}`} />;
 }

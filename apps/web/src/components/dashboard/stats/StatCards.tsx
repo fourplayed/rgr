@@ -88,12 +88,13 @@ function StatCardSkeleton({ bg }: { bg: string }) {
 export const StatCards = React.memo<StatCardsProps>(({ isDark: _isDark }) => {
   const { data, isLoading } = useFleetStatistics();
 
-  const cards = useMemo(() =>
-    STAT_CARD_DEFS.map((def) => ({
-      ...def,
-      count: def.statKey && data ? data[def.statKey] : 0,
-    })),
-    [data],
+  const cards = useMemo(
+    () =>
+      STAT_CARD_DEFS.map((def) => ({
+        ...def,
+        count: def.statKey && data ? data[def.statKey] : 0,
+      })),
+    [data]
   );
 
   if (isLoading) {

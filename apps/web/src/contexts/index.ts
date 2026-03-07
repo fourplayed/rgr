@@ -6,4 +6,9 @@
 
 // Theme System - Unified exports from ThemeContext.tsx
 export { ThemeContext, ThemeProvider } from './ThemeContext';
-export type { ThemeContextValue, ThemeMode, ResolvedTheme, ThemeProviderProps } from './ThemeContext';
+export type {
+  ThemeContextValue,
+  ThemeMode,
+  ResolvedTheme,
+  ThemeProviderProps,
+} from './ThemeContext';

@@ -53,39 +53,41 @@ const SIZE_CLASSES = {
   custom: '', // No preset sizing
 } as const;
 
-export const Logo = React.memo<LogoProps>(({
-  variant: _variant = 'dark',
-  size = 'md',
-  className = '',
-  alt = 'RGR Fleet Manager',
-  isDark = false,
-}) => {
-  // Use theme-specific logo
-  // splash_logo3.png dimensions: same as logo_v3.png (576x288, aspect ratio 2:1)
-  const logoSrc = isDark ? '/logo_dark.png' : '/logo_light.png';
-  const sizeClass = SIZE_CLASSES[size];
+export const Logo = React.memo<LogoProps>(
+  ({
+    variant: _variant = 'dark',
+    size = 'md',
+    className = '',
+    alt = 'RGR Fleet Manager',
+    isDark = false,
+  }) => {
+    // Use theme-specific logo
+    // splash_logo3.png dimensions: same as logo_v3.png (576x288, aspect ratio 2:1)
+    const logoSrc = isDark ? '/logo_dark.png' : '/logo_light.png';
+    const sizeClass = SIZE_CLASSES[size];
 
-  return (
-    <img
-      src={logoSrc}
-      alt={alt}
-      className={`
+    return (
+      <img
+        src={logoSrc}
+        alt={alt}
+        className={`
         object-contain
         ${sizeClass}
         ${className}
       `.trim()}
-      onError={(e) => {
-        // Log error but don't try to fallback to non-existent files
-        console.error(`Failed to load ${logoSrc}`);
-        // Keep the img element visible with alt text
-        const target = e.target as HTMLImageElement;
-        target.style.opacity = '0.5';
-      }}
-      loading="eager" // Logo should load immediately
-      decoding="async" // Allow async decoding for better performance
-    />
-  );
-});
+        onError={(e) => {
+          // Log error but don't try to fallback to non-existent files
+          console.error(`Failed to load ${logoSrc}`);
+          // Keep the img element visible with alt text
+          const target = e.target as HTMLImageElement;
+          target.style.opacity = '0.5';
+        }}
+        loading="eager" // Logo should load immediately
+        decoding="async" // Allow async decoding for better performance
+      />
+    );
+  }
+);
 
 Logo.displayName = 'Logo';
 

@@ -31,8 +31,20 @@ vi.mock('@rgr/shared', () => ({
           order: vi.fn(() => ({
             limit: vi.fn(() => ({
               data: [
-                { id: 'asset-1', asset_number: 'TL001', category: 'trailer', subtype: 'flattop', status: 'serviced' },
-                { id: 'asset-2', asset_number: 'TL002', category: 'trailer', subtype: 'dropdeck', status: 'serviced' },
+                {
+                  id: 'asset-1',
+                  asset_number: 'TL001',
+                  category: 'trailer',
+                  subtype: 'flattop',
+                  status: 'serviced',
+                },
+                {
+                  id: 'asset-2',
+                  asset_number: 'TL002',
+                  category: 'trailer',
+                  subtype: 'dropdeck',
+                  status: 'serviced',
+                },
               ],
               error: null,
             })),
@@ -295,9 +307,7 @@ describe('PhotoAnalysisSection', () => {
       setupMockHook({ status: 'completed', result });
       renderPhotoAnalysisSection();
 
-      expect(
-        screen.queryByText(/drag and drop or click to select/i)
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText(/drag and drop or click to select/i)).not.toBeInTheDocument();
     });
   });
 
@@ -441,9 +451,7 @@ describe('PhotoAnalysisSection', () => {
       setupMockHook({ status: 'uploading', progress: 20 });
       renderPhotoAnalysisSection();
 
-      expect(
-        screen.queryByText(/upload a photo of freight/i)
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText(/upload a photo of freight/i)).not.toBeInTheDocument();
     });
 
     it('should show asset selector when idle', () => {

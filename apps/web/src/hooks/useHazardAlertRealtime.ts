@@ -97,9 +97,9 @@ function playAlertSound(severity: HazardSeverity): void {
 
     // Different frequencies for different severities
     const frequencies: Record<HazardSeverity, number> = {
-      low: 440,      // A4
-      medium: 523,   // C5
-      high: 659,     // E5
+      low: 440, // A4
+      medium: 523, // C5
+      high: 659, // E5
       critical: 880, // A5
     };
 
@@ -263,7 +263,10 @@ export function useHazardAlertRealtime(
           onNewAlertRef.current?.(alert);
 
           // Play sound for new critical/high alerts
-          if (playSoundRef.current && (alert.severity === 'critical' || alert.severity === 'high')) {
+          if (
+            playSoundRef.current &&
+            (alert.severity === 'critical' || alert.severity === 'high')
+          ) {
             playAlertSound(alert.severity);
           }
 

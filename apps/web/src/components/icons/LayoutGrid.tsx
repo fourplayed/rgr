@@ -1,12 +1,12 @@
-import { useEffect } from "react";
-import { motion, useAnimation } from "motion/react";
-import type { Variants } from "motion/react";
+import { useEffect } from 'react';
+import { motion, useAnimation } from 'motion/react';
+import type { Variants } from 'motion/react';
 
 const boxVariants: Variants = {
   normal: () => ({
     x: 0,
     y: 0,
-    transition: { type: "spring", stiffness: 300, damping: 25 },
+    transition: { type: 'spring', stiffness: 300, damping: 25 },
   }),
   animate: (i: number) => {
     const positions = [
@@ -17,7 +17,7 @@ const boxVariants: Variants = {
     ];
     return {
       ...positions[i],
-      transition: { type: "spring", stiffness: 300, damping: 25 },
+      transition: { type: 'spring', stiffness: 300, damping: 25 },
     };
   },
 };
@@ -34,17 +34,17 @@ const LayoutGrid = ({
   width = 28,
   height = 28,
   strokeWidth = 2,
-  stroke = "#ffffff",
+  stroke = '#ffffff',
   isHovered,
 }: LayoutGridProps) => {
   const controls = useAnimation();
 
   useEffect(() => {
-    controls.start(isHovered ? "animate" : "normal");
+    controls.start(isHovered ? 'animate' : 'normal');
   }, [isHovered, controls]);
 
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width={width}
@@ -56,10 +56,50 @@ const LayoutGrid = ({
         strokeLinecap="round"
         strokeLinejoin="round"
       >
-        <motion.rect width="7" height="7" x="3" y="3" rx="1" variants={boxVariants} animate={controls} initial="normal" custom={0} />
-        <motion.rect width="7" height="7" x="14" y="3" rx="1" variants={boxVariants} animate={controls} initial="normal" custom={1} />
-        <motion.rect width="7" height="7" x="14" y="14" rx="1" variants={boxVariants} animate={controls} initial="normal" custom={2} />
-        <motion.rect width="7" height="7" x="3" y="14" rx="1" variants={boxVariants} animate={controls} initial="normal" custom={3} />
+        <motion.rect
+          width="7"
+          height="7"
+          x="3"
+          y="3"
+          rx="1"
+          variants={boxVariants}
+          animate={controls}
+          initial="normal"
+          custom={0}
+        />
+        <motion.rect
+          width="7"
+          height="7"
+          x="14"
+          y="3"
+          rx="1"
+          variants={boxVariants}
+          animate={controls}
+          initial="normal"
+          custom={1}
+        />
+        <motion.rect
+          width="7"
+          height="7"
+          x="14"
+          y="14"
+          rx="1"
+          variants={boxVariants}
+          animate={controls}
+          initial="normal"
+          custom={2}
+        />
+        <motion.rect
+          width="7"
+          height="7"
+          x="3"
+          y="14"
+          rx="1"
+          variants={boxVariants}
+          animate={controls}
+          initial="normal"
+          custom={3}
+        />
       </svg>
     </div>
   );

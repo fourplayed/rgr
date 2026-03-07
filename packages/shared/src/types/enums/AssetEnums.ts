@@ -11,11 +11,7 @@ export const AssetStatus = {
 
 export type AssetStatus = (typeof AssetStatus)[keyof typeof AssetStatus];
 
-export const AssetStatusSchema = z.enum([
-  'serviced',
-  'maintenance',
-  'out_of_service',
-]);
+export const AssetStatusSchema = z.enum(['serviced', 'maintenance', 'out_of_service']);
 
 export const AssetStatusLabels: Record<AssetStatus, string> = {
   serviced: 'Serviced',

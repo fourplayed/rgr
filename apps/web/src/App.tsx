@@ -18,8 +18,8 @@ function createQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: 2 * 60 * 1000,      // 2 minutes
-        gcTime: 10 * 60 * 1000,         // 10 minutes
+        staleTime: 2 * 60 * 1000, // 2 minutes
+        gcTime: 10 * 60 * 1000, // 10 minutes
         refetchOnWindowFocus: false,
         retry: 1,
       },
@@ -30,7 +30,13 @@ function createQueryClient() {
 /**
  * Protected Route wrapper - redirects to login if not authenticated
  */
-function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole?: UserRole }) {
+function ProtectedRoute({
+  children,
+  requiredRole,
+}: {
+  children: React.ReactNode;
+  requiredRole?: UserRole;
+}) {
   const { isAuthenticated, isLoading, user } = useAuthStore();
 
   if (isLoading) {
@@ -133,91 +139,98 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
-      <BrowserRouter>
-        {/* Persistent background — gradient + Stars, never unmounts */}
-        <PersistentBackground />
+      <ThemeProvider>
+        <BrowserRouter>
+          {/* Persistent background — gradient + Stars, never unmounts */}
+          <PersistentBackground />
 
-        {/* Global dev tool panels — fixed to viewport, persist across routes */}
-        {import.meta.env.DEV && <DebugToolbar />}
+          {/* Global dev tool panels — fixed to viewport, persist across routes */}
+          {import.meta.env.DEV && <DebugToolbar />}
 
-        <Suspense fallback={
-          <div className="relative z-10 flex items-center justify-center min-h-screen">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
-          </div>
-        }>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/assets"
-            element={
-              <ProtectedRoute>
-                <Assets />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/maintenance"
-            element={
-              <ProtectedRoute>
-                <StubPage title="Maintenance" />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/load-analyzer"
-            element={
-              <ProtectedRoute>
-                <StubPage title="Load Analyzer" />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/reports"
-            element={
-              <ProtectedRoute>
-                <StubPage title="Reports" />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute>
-                <StubPage title="Settings" />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute requiredRole="superuser">
-                <StubPage title="Admin" />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={
-            <div className="flex items-center justify-center min-h-screen">
-              <div className="text-center">
-                <h1 className="text-4xl font-bold mb-4">404</h1>
-                <p className="text-lg mb-4">Page not found</p>
-                <a href="/dashboard" className="text-blue-400 hover:underline">Go to Dashboard</a>
+          <Suspense
+            fallback={
+              <div className="relative z-10 flex items-center justify-center min-h-screen">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
               </div>
-            </div>
-          } />
-        </Routes>
-        </Suspense>
-      </BrowserRouter>
-    </ThemeProvider>
+            }
+          >
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/assets"
+                element={
+                  <ProtectedRoute>
+                    <Assets />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/maintenance"
+                element={
+                  <ProtectedRoute>
+                    <StubPage title="Maintenance" />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/load-analyzer"
+                element={
+                  <ProtectedRoute>
+                    <StubPage title="Load Analyzer" />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/reports"
+                element={
+                  <ProtectedRoute>
+                    <StubPage title="Reports" />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute>
+                    <StubPage title="Settings" />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute requiredRole="superuser">
+                    <StubPage title="Admin" />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route
+                path="*"
+                element={
+                  <div className="flex items-center justify-center min-h-screen">
+                    <div className="text-center">
+                      <h1 className="text-4xl font-bold mb-4">404</h1>
+                      <p className="text-lg mb-4">Page not found</p>
+                      <a href="/dashboard" className="text-blue-400 hover:underline">
+                        Go to Dashboard
+                      </a>
+                    </div>
+                  </div>
+                }
+              />
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

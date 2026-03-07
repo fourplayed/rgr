@@ -13,7 +13,12 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useHazardReview } from './useHazardReview';
 import { useHazardAlertRealtime } from './useHazardAlertRealtime';
-import type { HazardFilters, HazardSeverity, ReviewAction, HazardData } from '../components/dashboard/hazards';
+import type {
+  HazardFilters,
+  HazardSeverity,
+  ReviewAction,
+  HazardData,
+} from '../components/dashboard/hazards';
 import type { RealtimeHazardAlert } from './useHazardAlertRealtime';
 
 // ============================================================================
@@ -74,26 +79,27 @@ export function useHazardReviewWithRealtime(
   const { state, actions } = useHazardReview();
 
   // Real-time subscription
-  const {
-    isConnected,
-    newAlertCount,
-    clearNewAlertCount,
-    reconnect,
-  } = useHazardAlertRealtime({
+  const { isConnected, newAlertCount, clearNewAlertCount, reconnect } = useHazardAlertRealtime({
     statuses: ['active'], // Only listen for active (pending review) alerts
     playSound: enableSound,
     browserNotifications: enableBrowserNotifications,
-    onNewAlert: useCallback((_alert: RealtimeHazardAlert) => {
-      // Auto-refresh when new alert comes in
-      // This ensures the list stays current
-      actions.refresh();
-    }, [actions]),
-    onAlertUpdate: useCallback((updatedAlert: RealtimeHazardAlert) => {
-      // Refresh on status changes too
-      if (updatedAlert.status !== 'active') {
+    onNewAlert: useCallback(
+      (_alert: RealtimeHazardAlert) => {
+        // Auto-refresh when new alert comes in
+        // This ensures the list stays current
         actions.refresh();
-      }
-    }, [actions]),
+      },
+      [actions]
+    ),
+    onAlertUpdate: useCallback(
+      (updatedAlert: RealtimeHazardAlert) => {
+        // Refresh on status changes too
+        if (updatedAlert.status !== 'active') {
+          actions.refresh();
+        }
+      },
+      [actions]
+    ),
   });
 
   // Auto-refresh at interval
@@ -108,28 +114,31 @@ export function useHazardReviewWithRealtime(
   }, [autoRefreshInterval, actions]);
 
   // Memoize the combined result
-  return useMemo(() => ({
-    // State from useHazardReview
-    hazards: state.hazards,
-    stats: state.stats,
-    filters: state.filters,
-    isLoading: state.isLoading,
-    error: state.error,
-    page: state.page,
-    hasMore: state.hasMore,
+  return useMemo(
+    () => ({
+      // State from useHazardReview
+      hazards: state.hazards,
+      stats: state.stats,
+      filters: state.filters,
+      isLoading: state.isLoading,
+      error: state.error,
+      page: state.page,
+      hasMore: state.hasMore,
 
-    // Actions from useHazardReview
-    setFilters: actions.setFilters,
-    submitReview: actions.submitReview,
-    loadMore: actions.loadMore,
-    refresh: actions.refresh,
+      // Actions from useHazardReview
+      setFilters: actions.setFilters,
+      submitReview: actions.submitReview,
+      loadMore: actions.loadMore,
+      refresh: actions.refresh,
 
-    // Real-time state
-    isConnected,
-    newAlertCount,
-    clearNewAlertCount,
-    reconnect,
-  }), [state, actions, isConnected, newAlertCount, clearNewAlertCount, reconnect]);
+      // Real-time state
+      isConnected,
+      newAlertCount,
+      clearNewAlertCount,
+      reconnect,
+    }),
+    [state, actions, isConnected, newAlertCount, clearNewAlertCount, reconnect]
+  );
 }
 
 export default useHazardReviewWithRealtime;

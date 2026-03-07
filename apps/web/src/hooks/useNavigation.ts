@@ -37,13 +37,19 @@ export function useNavigation(): NavigationHandlers {
     navigate('/hazards');
   }, [navigate]);
 
-  const navigateToAssetDetail = useCallback((assetId: string) => {
-    navigate(`/assets/${assetId}`);
-  }, [navigate]);
+  const navigateToAssetDetail = useCallback(
+    (assetId: string) => {
+      navigate(`/assets/${assetId}`);
+    },
+    [navigate]
+  );
 
-  const navigateToScanDetail = useCallback((scanId: string) => {
-    navigate(`/scans/${scanId}`);
-  }, [navigate]);
+  const navigateToScanDetail = useCallback(
+    (scanId: string) => {
+      navigate(`/scans/${scanId}`);
+    },
+    [navigate]
+  );
 
   return {
     navigateToAssets,

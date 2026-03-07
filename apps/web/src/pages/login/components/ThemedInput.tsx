@@ -30,7 +30,9 @@ export function ThemedInput({
   // Use same simple border behavior for both themes
   const inputStyle = isDark ? INPUT_STYLES.dark : INPUT_STYLES.light;
 
-  const labelClasses = isDark ? 'text-slate-200 transition-colors duration-400' : 'text-white transition-colors duration-400';
+  const labelClasses = isDark
+    ? 'text-slate-200 transition-colors duration-400'
+    : 'text-white transition-colors duration-400';
   const labelShadow = isDark
     ? '0 2px 4px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3)'
     : '0 2px 4px rgba(0, 0, 0, 0.6), 0 1px 2px rgba(0, 0, 0, 0.4)';
@@ -75,13 +77,7 @@ export function ThemedInput({
           {label}
         </label>
       )}
-      <input
-        id={inputId}
-        name={name}
-        className={inputClasses}
-        style={inputStyle}
-        {...props}
-      />
+      <input id={inputId} name={name} className={inputClasses} style={inputStyle} {...props} />
     </div>
   );
 }

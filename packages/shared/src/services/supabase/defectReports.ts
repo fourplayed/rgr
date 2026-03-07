@@ -64,11 +64,13 @@ export async function listDefectReports(
   // Fetch limit + 1 to detect if more pages exist
   let query = supabase
     .from('defect_reports')
-    .select(`
+    .select(
+      `
       id, asset_id, title, description, status, maintenance_record_id, created_at,
       reporter:reported_by(full_name),
       asset:asset_id(asset_number, category)
-    `)
+    `
+    )
     .order('created_at', { ascending: false })
     .order('id', { ascending: false })
     .limit(limit + 1);
@@ -110,7 +112,7 @@ export async function listDefectReports(
     asset: { asset_number: string; category: string } | null;
   }
 
-  const rows = ((data || []) as unknown as DefectListRow[]);
+  const rows = (data || []) as unknown as DefectListRow[];
   const hasMore = rows.length > limit;
   const pageRows = hasMore ? rows.slice(0, limit) : rows;
 
@@ -139,10 +141,12 @@ export async function getDefectReportById(
 
   const { data, error } = await supabase
     .from('defect_reports')
-    .select(`
+    .select(
+      `
       *,
       reporter:reported_by(full_name)
-    `)
+    `
+    )
     .eq('id', id)
     .maybeSingle();
 
@@ -154,7 +158,9 @@ export async function getDefectReportById(
     return { success: false, data: null, error: 'Defect report not found' };
   }
 
-  const { reporter, ...defectRow } = data as DefectReportRow & { reporter: { full_name: string } | null };
+  const { reporter, ...defectRow } = data as DefectReportRow & {
+    reporter: { full_name: string } | null;
+  };
   const record = mapRowToDefectReport(defectRow as DefectReportRow);
 
   return {
@@ -174,23 +180,27 @@ export async function createDefectReport(
 ): Promise<ServiceResult<DefectReport>> {
   const parsed = CreateDefectReportInputSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, data: null, error: parsed.error.errors[0]?.message ?? 'Invalid input' };
+    return {
+      success: false,
+      data: null,
+      error: parsed.error.errors[0]?.message ?? 'Invalid input',
+    };
   }
 
   const supabase = getSupabaseClient();
   const dbData = mapDefectReportToInsert(parsed.data as CreateDefectReportInput);
 
-  const { data, error } = await supabase
-    .from('defect_reports')
-    .insert(dbData)
-    .select()
-    .single();
+  const { data, error } = await supabase.from('defect_reports').insert(dbData).select().single();
 
   if (error) {
     if (error.code === '23503') {
       return { success: false, data: null, error: 'Asset or user not found' };
     }
-    return { success: false, data: null, error: `Failed to create defect report: ${error.message}` };
+    return {
+      success: false,
+      data: null,
+      error: `Failed to create defect report: ${error.message}`,
+    };
   }
 
   return { success: true, data: mapRowToDefectReport(data as DefectReportRow), error: null };
@@ -255,9 +265,17 @@ export async function updateDefectReportStatus(
 
   if (error) {
     if (error.code === 'PGRST116') {
-      return { success: false, data: null, error: 'Status was changed by another request. Please refresh and try again.' };
+      return {
+        success: false,
+        data: null,
+        error: 'Status was changed by another request. Please refresh and try again.',
+      };
     }
-    return { success: false, data: null, error: `Failed to update defect status: ${error.message}` };
+    return {
+      success: false,
+      data: null,
+      error: `Failed to update defect status: ${error.message}`,
+    };
   }
 
   return { success: true, data: mapRowToDefectReport(data as DefectReportRow), error: null };
@@ -271,7 +289,11 @@ export async function updateDefectReport(
 ): Promise<ServiceResult<DefectReport>> {
   const parsed = UpdateDefectReportInputSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, data: null, error: parsed.error.errors[0]?.message ?? 'Invalid input' };
+    return {
+      success: false,
+      data: null,
+      error: parsed.error.errors[0]?.message ?? 'Invalid input',
+    };
   }
 
   const supabase = getSupabaseClient();
@@ -289,7 +311,11 @@ export async function updateDefectReport(
     .single();
 
   if (error) {
-    return { success: false, data: null, error: `Failed to update defect report: ${error.message}` };
+    return {
+      success: false,
+      data: null,
+      error: `Failed to update defect report: ${error.message}`,
+    };
   }
 
   return { success: true, data: mapRowToDefectReport(data as DefectReportRow), error: null };
@@ -365,7 +391,12 @@ export async function acceptDefectReport(
 export async function deleteDefectReport(id: string): Promise<ServiceResult<void>> {
   const supabase = getSupabaseClient();
   const { error } = await supabase.from('defect_reports').delete().eq('id', id);
-  if (error) return { success: false, data: null, error: `Failed to delete defect report: ${error.message}` };
+  if (error)
+    return {
+      success: false,
+      data: null,
+      error: `Failed to delete defect report: ${error.message}`,
+    };
   return { success: true, data: undefined, error: null };
 }
 

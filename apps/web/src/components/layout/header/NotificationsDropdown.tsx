@@ -13,7 +13,8 @@ const DROPDOWN_STYLES = {
   listContainer: 'max-h-96 overflow-y-auto',
   emptyState: 'px-4 py-8 text-center text-sm text-gray-500',
   footer: 'px-4 py-3 border-t border-gray-200',
-  viewAllButton: 'text-sm text-primary-600 hover:text-primary-700 font-medium focus:outline-none focus:underline',
+  viewAllButton:
+    'text-sm text-primary-600 hover:text-primary-700 font-medium focus:outline-none focus:underline',
 } as const;
 
 /**
@@ -28,27 +29,36 @@ export function NotificationsDropdown({
 }: NotificationsDropdownProps) {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const handleNotificationClick = useCallback((notification: typeof notifications[0]) => {
-    onNotificationClick?.(notification);
-    onClose();
-  }, [onNotificationClick, onClose]);
+  const handleNotificationClick = useCallback(
+    (notification: (typeof notifications)[0]) => {
+      onNotificationClick?.(notification);
+      onClose();
+    },
+    [onNotificationClick, onClose]
+  );
 
   const handleViewAll = useCallback(() => {
     onViewAll?.();
     onClose();
   }, [onViewAll, onClose]);
 
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape' && isOpen) {
-      onClose();
-    }
-  }, [isOpen, onClose]);
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    },
+    [isOpen, onClose]
+  );
 
-  const handleClickOutside = useCallback((e: MouseEvent) => {
-    if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-      onClose();
-    }
-  }, [onClose]);
+  const handleClickOutside = useCallback(
+    (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    },
+    [onClose]
+  );
 
   useEffect(() => {
     if (isOpen) {
@@ -75,7 +85,11 @@ export function NotificationsDropdown({
           Notifications
         </h3>
       </div>
-      <div className={DROPDOWN_STYLES.listContainer} role="list" aria-labelledby="notifications-heading">
+      <div
+        className={DROPDOWN_STYLES.listContainer}
+        role="list"
+        aria-labelledby="notifications-heading"
+      >
         {notifications.length > 0 ? (
           notifications.map((notification) => (
             <NotificationItem
@@ -85,9 +99,7 @@ export function NotificationsDropdown({
             />
           ))
         ) : (
-          <div className={DROPDOWN_STYLES.emptyState}>
-            No notifications
-          </div>
+          <div className={DROPDOWN_STYLES.emptyState}>No notifications</div>
         )}
       </div>
       {notifications.length > 0 && (

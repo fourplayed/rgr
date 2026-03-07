@@ -11,8 +11,14 @@ import { ExplodingStars } from './ExplodingStars';
  * Returns array of {x, y, size, withGlow} objects
  * Extended horizontal spread (260vw) for seamless continuous flow
  */
-function generateStarPositions(count: number, size: number, withGlow: boolean = false, yMinPercent: number = 0, yMaxPercent: number = 100): Array<{x: number, y: number, size: number, withGlow: boolean}> {
-  const positions: Array<{x: number, y: number, size: number, withGlow: boolean}> = [];
+function generateStarPositions(
+  count: number,
+  size: number,
+  withGlow: boolean = false,
+  yMinPercent: number = 0,
+  yMaxPercent: number = 100
+): Array<{ x: number; y: number; size: number; withGlow: boolean }> {
+  const positions: Array<{ x: number; y: number; size: number; withGlow: boolean }> = [];
   const travelDistance = 260; // Extended from 150 to 260 to match CSS animation range
   const viewportHeight = 1200;
 
@@ -33,7 +39,11 @@ function generateStarPositions(count: number, size: number, withGlow: boolean = 
 /**
  * Convert star positions to box-shadow string with color applied
  */
-function positionsToBoxShadow(positions: Array<{x: number, y: number, size: number, withGlow: boolean}>, color: string, glowColor?: string): string {
+function positionsToBoxShadow(
+  positions: Array<{ x: number; y: number; size: number; withGlow: boolean }>,
+  color: string,
+  glowColor?: string
+): string {
   const stars: string[] = [];
   for (const pos of positions) {
     if (pos.withGlow) {
@@ -41,7 +51,7 @@ function positionsToBoxShadow(positions: Array<{x: number, y: number, size: numb
       const gc = glowColor ?? color;
       stars.push(
         `${pos.x}px ${pos.y}px ${pos.size * 18}px ${pos.size * 4.5}px ${gc}, ` +
-        `${pos.x}px ${pos.y}px 0px ${pos.size}px ${color}`
+          `${pos.x}px ${pos.y}px 0px ${pos.size}px ${color}`
       );
     } else {
       stars.push(`${pos.x}px ${pos.y}px 0px ${pos.size}px ${color}`);
@@ -57,48 +67,54 @@ interface StarsProps {
 
 export const Stars = memo(function Stars({ isDark = true, settings: _settings }: StarsProps) {
   // Light theme star configurations
-  const lightStarConfigs = useMemo(() => ({
-    small: {
-      color: 'rgba(255, 255, 255, 1)',
-      glowColor: 'rgba(255, 255, 255, 0.2)',
-      size: 0.35,
-      glowRadius: 6,
-    },
-    medium: {
-      color: 'rgba(255, 255, 255, 1)',
-      glowColor: 'rgba(255, 255, 255, 0.4)',
-      size: 1.0,
-      glowRadius: 12,
-    },
-    large: {
-      color: 'rgba(255, 255, 255, 1)',
-      glowColor: 'rgba(255, 255, 255, 0.6)',
-      size: 1.6,
-      glowRadius: 30,
-    },
-  }), []);
+  const lightStarConfigs = useMemo(
+    () => ({
+      small: {
+        color: 'rgba(255, 255, 255, 1)',
+        glowColor: 'rgba(255, 255, 255, 0.2)',
+        size: 0.35,
+        glowRadius: 6,
+      },
+      medium: {
+        color: 'rgba(255, 255, 255, 1)',
+        glowColor: 'rgba(255, 255, 255, 0.4)',
+        size: 1.0,
+        glowRadius: 12,
+      },
+      large: {
+        color: 'rgba(255, 255, 255, 1)',
+        glowColor: 'rgba(255, 255, 255, 0.6)',
+        size: 1.6,
+        glowRadius: 30,
+      },
+    }),
+    []
+  );
 
   // Dark theme star configurations
-  const darkStarConfigs = useMemo(() => ({
-    small: {
-      color: 'rgba(255, 255, 255, 1)',
-      glowColor: 'rgba(255, 255, 255, 0.15)',
-      size: 0.35,
-      glowRadius: 6,
-    },
-    medium: {
-      color: 'rgba(255, 255, 255, 1)',
-      glowColor: 'rgba(255, 255, 255, 0.25)',
-      size: 1.0,
-      glowRadius: 12,
-    },
-    large: {
-      color: 'rgba(255, 255, 255, 1)',
-      glowColor: 'rgba(255, 255, 255, 0.4)',
-      size: 1.6,
-      glowRadius: 28,
-    },
-  }), []);
+  const darkStarConfigs = useMemo(
+    () => ({
+      small: {
+        color: 'rgba(255, 255, 255, 1)',
+        glowColor: 'rgba(255, 255, 255, 0.15)',
+        size: 0.35,
+        glowRadius: 6,
+      },
+      medium: {
+        color: 'rgba(255, 255, 255, 1)',
+        glowColor: 'rgba(255, 255, 255, 0.25)',
+        size: 1.0,
+        glowRadius: 12,
+      },
+      large: {
+        color: 'rgba(255, 255, 255, 1)',
+        glowColor: 'rgba(255, 255, 255, 0.4)',
+        size: 1.6,
+        glowRadius: 28,
+      },
+    }),
+    []
+  );
 
   // Generate star POSITIONS once (never regenerate - positions stay constant)
   // All stars: 0% to 100% vertical range (full screen)
@@ -125,7 +141,6 @@ export const Stars = memo(function Stars({ isDark = true, settings: _settings }:
     return positionsToBoxShadow(mediumStarPositions, color);
   }, [isDark, darkStarConfigs.medium.color, lightStarConfigs.medium.color, mediumStarPositions]);
 
-
   return (
     <>
       {/* Small stars — primary + trailing copy for seamless loop */}
@@ -136,7 +151,16 @@ export const Stars = memo(function Stars({ isDark = true, settings: _settings }:
           boxShadow: starsSmall,
         }}
       >
-        <div style={{ position: 'absolute', left: '260vw', top: 0, width: 1, height: 1, boxShadow: starsSmall }} />
+        <div
+          style={{
+            position: 'absolute',
+            left: '260vw',
+            top: 0,
+            width: 1,
+            height: 1,
+            boxShadow: starsSmall,
+          }}
+        />
       </div>
       {/* Medium stars — primary + trailing copy for seamless loop */}
       <div
@@ -146,7 +170,16 @@ export const Stars = memo(function Stars({ isDark = true, settings: _settings }:
           boxShadow: starsMedium,
         }}
       >
-        <div style={{ position: 'absolute', left: '260vw', top: 0, width: 1, height: 1, boxShadow: starsMedium }} />
+        <div
+          style={{
+            position: 'absolute',
+            left: '260vw',
+            top: 0,
+            width: 1,
+            height: 1,
+            boxShadow: starsMedium,
+          }}
+        />
       </div>
       {/* Large stars rendered as individual elements for explosion animations */}
       <ExplodingStars

@@ -51,7 +51,12 @@ export default function Dashboard() {
           left: '50%',
           transform: 'translateX(-50%)',
           padding: '20px 0',
-          ...(fromLogin ? { opacity: 0, animation: 'dashContentFadeUp 700ms cubic-bezier(0.16, 1, 0.3, 1) 500ms forwards' } : {}),
+          ...(fromLogin
+            ? {
+                opacity: 0,
+                animation: 'dashContentFadeUp 700ms cubic-bezier(0.16, 1, 0.3, 1) 500ms forwards',
+              }
+            : {}),
         }}
       >
         <StatCards isDark={state.isDark} />
@@ -83,7 +88,12 @@ export default function Dashboard() {
           transform: 'translateX(-50%)',
           overflow: 'hidden',
           borderRadius: '0 0 12px 12px',
-          ...(fromLogin ? { opacity: 0, animation: 'dashMapReveal 900ms cubic-bezier(0.16, 1, 0.3, 1) 700ms forwards' } : {}),
+          ...(fromLogin
+            ? {
+                opacity: 0,
+                animation: 'dashMapReveal 900ms cubic-bezier(0.16, 1, 0.3, 1) 700ms forwards',
+              }
+            : {}),
         }}
       >
         <FleetMapWithData

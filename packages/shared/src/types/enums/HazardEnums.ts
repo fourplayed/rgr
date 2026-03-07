@@ -40,12 +40,7 @@ export const HazardStatus = {
 
 export type HazardStatus = (typeof HazardStatus)[keyof typeof HazardStatus];
 
-export const HazardStatusSchema = z.enum([
-  'active',
-  'acknowledged',
-  'resolved',
-  'dismissed',
-]);
+export const HazardStatusSchema = z.enum(['active', 'acknowledged', 'resolved', 'dismissed']);
 
 export const HazardStatusLabels: Record<HazardStatus, string> = {
   active: 'Active',
@@ -65,11 +60,7 @@ export const ReviewOutcome = {
 
 export type ReviewOutcome = (typeof ReviewOutcome)[keyof typeof ReviewOutcome];
 
-export const ReviewOutcomeSchema = z.enum([
-  'confirmed',
-  'false_positive',
-  'needs_training',
-]);
+export const ReviewOutcomeSchema = z.enum(['confirmed', 'false_positive', 'needs_training']);
 
 export const ReviewOutcomeLabels: Record<ReviewOutcome, string> = {
   confirmed: 'Confirmed',

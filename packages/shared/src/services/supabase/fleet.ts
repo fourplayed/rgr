@@ -118,7 +118,11 @@ export async function getFleetStatistics(): Promise<ServiceResult<FleetStatistic
     .is('deleted_at', null);
 
   if (fallbackError) {
-    return { success: false, data: null, error: `Failed to fetch fleet statistics: ${fallbackError.message}` };
+    return {
+      success: false,
+      data: null,
+      error: `Failed to fetch fleet statistics: ${fallbackError.message}`,
+    };
   }
 
   return {
@@ -148,7 +152,8 @@ export async function getRecentDashboardScans(
 
   const { data, error } = await supabase
     .from('scan_events')
-    .select(`
+    .select(
+      `
       id,
       asset_id,
       scan_type,
@@ -158,7 +163,8 @@ export async function getRecentDashboardScans(
       longitude,
       assets!inner(asset_number, category),
       profiles(full_name)
-    `)
+    `
+    )
     .order('created_at', { ascending: false })
     .limit(limit);
 
@@ -196,7 +202,8 @@ export async function getOutstandingAssets(
 
   const { data: assets, error } = await supabase
     .from('assets')
-    .select(`
+    .select(
+      `
       id,
       asset_number,
       category,
@@ -204,13 +211,18 @@ export async function getOutstandingAssets(
       last_latitude,
       last_longitude,
       last_location_updated_at
-    `)
+    `
+    )
     .is('deleted_at', null)
     .in('status', ['serviced', 'maintenance'])
     .or(`last_location_updated_at.lt.${cutoffDate.toISOString()},last_location_updated_at.is.null`);
 
   if (error) {
-    return { success: false, data: null, error: `Failed to fetch outstanding assets: ${error.message}` };
+    return {
+      success: false,
+      data: null,
+      error: `Failed to fetch outstanding assets: ${error.message}`,
+    };
   }
 
   const outstanding: OutstandingAsset[] = (assets || []).map((asset) => {
@@ -227,9 +239,10 @@ export async function getOutstandingAssets(
       status: asset.status,
       lastScanDate,
       daysSinceLastScan: daysSince,
-      lastLocation: asset.last_latitude && asset.last_longitude
-        ? { latitude: asset.last_latitude, longitude: asset.last_longitude }
-        : null,
+      lastLocation:
+        asset.last_latitude && asset.last_longitude
+          ? { latitude: asset.last_latitude, longitude: asset.last_longitude }
+          : null,
     };
   });
 
@@ -255,7 +268,8 @@ export async function getAssetLocations(): Promise<ServiceResult<AssetLocation[]
 
   const { data, error } = await supabase
     .from('assets')
-    .select(`
+    .select(
+      `
       id,
       asset_number,
       category,
@@ -265,13 +279,18 @@ export async function getAssetLocations(): Promise<ServiceResult<AssetLocation[]
       last_longitude,
       last_location_accuracy,
       last_location_updated_at
-    `)
+    `
+    )
     .is('deleted_at', null)
     .not('last_latitude', 'is', null)
     .not('last_longitude', 'is', null);
 
   if (error) {
-    return { success: false, data: null, error: `Failed to fetch asset locations: ${error.message}` };
+    return {
+      success: false,
+      data: null,
+      error: `Failed to fetch asset locations: ${error.message}`,
+    };
   }
 
   const locations = (data || []).map((asset: AssetLocationRow) => ({

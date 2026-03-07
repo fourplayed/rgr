@@ -11,14 +11,7 @@
  */
 import React from 'react';
 import type { LucideIcon } from 'lucide-react';
-import {
-  LayoutDashboard,
-  Truck,
-  Wrench,
-  FileText,
-  Scan,
-  LogOut,
-} from 'lucide-react';
+import { LayoutDashboard, Truck, Wrench, FileText, Scan, LogOut } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuthStore } from '@/stores/authStore';
@@ -50,95 +43,98 @@ interface NavButtonProps {
   onNavigate: (path: string) => void;
 }
 
-const NavButton = React.memo<NavButtonProps>(({ item, active, isDark, showDivider, onNavigate }) => {
-  const [isHovered, setIsHovered] = React.useState(false);
-  const lastClickRef = React.useRef<number>(0);
-  const CLICK_COOLDOWN_MS = 500; // 500ms cooldown between navigation clicks
-  const Icon = item.icon;
+const NavButton = React.memo<NavButtonProps>(
+  ({ item, active, isDark, showDivider, onNavigate }) => {
+    const [isHovered, setIsHovered] = React.useState(false);
+    const lastClickRef = React.useRef<number>(0);
+    const CLICK_COOLDOWN_MS = 500; // 500ms cooldown between navigation clicks
+    const Icon = item.icon;
 
-  const getColor = () => {
-    // A-Eye uses animated iridescent colors via CSS animation
-    if (item.label === 'A-Eye') {
-      return 'transparent'; // Color handled by CSS animation
-    }
+    const getColor = () => {
+      // A-Eye uses animated iridescent colors via CSS animation
+      if (item.label === 'A-Eye') {
+        return 'transparent'; // Color handled by CSS animation
+      }
 
-    if (active) {
-      return isDark ? '#06b6d4' : '#1e40af'; // Cyan for dark, deep blue (blue-800) for light
-    }
-    if (isHovered) {
-      return isDark ? '#06b6d4' : '#1e40af'; // Cyan for dark, deep blue (blue-800) for light
-    }
-    return isDark ? RGR_COLORS.chrome.medium : '#1e293b'; // Slate-800 for light theme
-  };
+      if (active) {
+        return isDark ? '#06b6d4' : '#1e40af'; // Cyan for dark, deep blue (blue-800) for light
+      }
+      if (isHovered) {
+        return isDark ? '#06b6d4' : '#1e40af'; // Cyan for dark, deep blue (blue-800) for light
+      }
+      return isDark ? RGR_COLORS.chrome.medium : '#1e293b'; // Slate-800 for light theme
+    };
 
-  const handleClick = () => {
-    // Rate limiting: prevent rapid navigation spam
-    const now = Date.now();
-    if (now - lastClickRef.current < CLICK_COOLDOWN_MS) {
-      return; // Still in cooldown, ignore click
-    }
-    lastClickRef.current = now;
-    onNavigate(item.path);
-  };
+    const handleClick = () => {
+      // Rate limiting: prevent rapid navigation spam
+      const now = Date.now();
+      if (now - lastClickRef.current < CLICK_COOLDOWN_MS) {
+        return; // Still in cooldown, ignore click
+      }
+      lastClickRef.current = now;
+      onNavigate(item.path);
+    };
 
-  return (
-    <div className="flex items-center gap-8">
-      {showDivider && (
-        <div
-          className="h-5 w-px"
-          style={{
-            backgroundColor: isDark ? `${RGR_COLORS.chrome.light}33` : 'rgba(107, 114, 128, 0.5)',
-            transition: 'background-color 0.3s ease-out',
-          }}
-          aria-hidden="true"
-        />
-      )}
-      <button
-        type="button"
-        onClick={handleClick}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        className={`group relative flex items-center gap-2.5 py-2 px-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 transition-shadow ${item.label === 'A-Eye' ? 'a-eye-button-container' : ''}`}
-        style={{
-          ['--tw-ring-color' as string]: '#06b6d4', // Cyan (cyan-500) focus ring
-        }}
-        aria-label={item.label}
-        aria-current={active ? 'page' : undefined}
-        data-nav-button="true"
-      >
-        {/* Icon */}
-        {item.label === 'A-Eye' ? (
-          <Icon
-            className="w-[26px] h-[26px] animate-spin-icon a-eye-icon"
+    return (
+      <div className="flex items-center gap-8">
+        {showDivider && (
+          <div
+            className="h-5 w-px"
             style={{
-              color: '#8a2be2',
-              transition: 'none',
+              backgroundColor: isDark ? `${RGR_COLORS.chrome.light}33` : 'rgba(107, 114, 128, 0.5)',
+              transition: 'background-color 0.3s ease-out',
             }}
-          />
-        ) : (
-          <Icon
-            className="w-[26px] h-[26px] animate-spin-icon"
-            style={{
-              color: getColor(),
-              transition: 'color 0.15s ease-out',
-            }}
+            aria-hidden="true"
           />
         )}
-
-        {/* Text */}
-        <span
-          className={`text-lg font-medium group-hover:scale-110 ${item.label === 'A-Eye' ? 'a-eye-iridescent' : ''}`}
+        <button
+          type="button"
+          onClick={handleClick}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          className={`group relative flex items-center gap-2.5 py-2 px-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 transition-shadow ${item.label === 'A-Eye' ? 'a-eye-button-container' : ''}`}
           style={{
-            color: getColor(),
-            transition: item.label === 'A-Eye' ? 'transform 0.15s ease-out' : 'all 0.15s ease-out',
+            ['--tw-ring-color' as string]: '#06b6d4', // Cyan (cyan-500) focus ring
           }}
+          aria-label={item.label}
+          aria-current={active ? 'page' : undefined}
+          data-nav-button="true"
         >
-          {item.label}
-        </span>
-      </button>
-    </div>
-  );
-});
+          {/* Icon */}
+          {item.label === 'A-Eye' ? (
+            <Icon
+              className="w-[26px] h-[26px] animate-spin-icon a-eye-icon"
+              style={{
+                color: '#8a2be2',
+                transition: 'none',
+              }}
+            />
+          ) : (
+            <Icon
+              className="w-[26px] h-[26px] animate-spin-icon"
+              style={{
+                color: getColor(),
+                transition: 'color 0.15s ease-out',
+              }}
+            />
+          )}
+
+          {/* Text */}
+          <span
+            className={`text-lg font-medium group-hover:scale-110 ${item.label === 'A-Eye' ? 'a-eye-iridescent' : ''}`}
+            style={{
+              color: getColor(),
+              transition:
+                item.label === 'A-Eye' ? 'transform 0.15s ease-out' : 'all 0.15s ease-out',
+            }}
+          >
+            {item.label}
+          </span>
+        </button>
+      </div>
+    );
+  }
+);
 
 NavButton.displayName = 'NavButton';
 
@@ -169,7 +165,8 @@ export const VisionTopNav = React.memo<VisionTopNavProps>(({ className = '' }) =
     background: isDark
       ? 'linear-gradient(127.09deg, #060b28 19.41%, #0a0e23 76.65%)' // Original dark theme colors
       : '#e5e7eb', // Light grey
-    transition: 'background 0.6s cubic-bezier(0.4, 0, 0.2, 1), border-bottom 0.6s cubic-bezier(0.4, 0, 0.2, 1), backdrop-filter 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+    transition:
+      'background 0.6s cubic-bezier(0.4, 0, 0.2, 1), border-bottom 0.6s cubic-bezier(0.4, 0, 0.2, 1), backdrop-filter 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
   };
 
   return (
@@ -189,9 +186,11 @@ export const VisionTopNav = React.memo<VisionTopNavProps>(({ className = '' }) =
           border-b
           flex items-center gap-4
           transition-all duration-300
-          ${isDark
-            ? 'shadow-lg shadow-black/20 border-white/10'
-            : 'shadow-[0_15px_30px_-12px_rgba(0,0,0,0.7)]'}
+          ${
+            isDark
+              ? 'shadow-lg shadow-black/20 border-white/10'
+              : 'shadow-[0_15px_30px_-12px_rgba(0,0,0,0.7)]'
+          }
           ${className}
         `}
         style={{
@@ -200,81 +199,87 @@ export const VisionTopNav = React.memo<VisionTopNavProps>(({ className = '' }) =
           borderTop: 'none',
           borderLeft: 'none',
           borderRight: 'none',
-          backdropFilter: isDark ? 'blur(12px)' : 'blur(24px) saturate(250%) brightness(1.2) contrast(1.1)',
-          WebkitBackdropFilter: isDark ? 'blur(12px)' : 'blur(24px) saturate(250%) brightness(1.2) contrast(1.1)',
+          backdropFilter: isDark
+            ? 'blur(12px)'
+            : 'blur(24px) saturate(250%) brightness(1.2) contrast(1.1)',
+          WebkitBackdropFilter: isDark
+            ? 'blur(12px)'
+            : 'blur(24px) saturate(250%) brightness(1.2) contrast(1.1)',
         }}
       >
-      {/* Full-width content container */}
-      <div className="w-full relative h-full">
-        {/* Right side - Theme | UserInfo | Logout */}
-        <div className="absolute top-1/2 -translate-y-1/2 right-0 flex items-center gap-6 z-20">
-          {/* Theme Toggle Icon */}
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className="group relative py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 transition-shadow"
-            style={{
-              ['--tw-ring-color' as string]: '#06b6d4', // Cyan (cyan-500) for both themes
-            }}
-            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-          >
-            <ThemeToggleIcon isDark={isDark} />
-          </button>
-
-          {/* Vertical Divider */}
-          {user && (
-            <div
-              className="h-5 w-px"
+        {/* Full-width content container */}
+        <div className="w-full relative h-full">
+          {/* Right side - Theme | UserInfo | Logout */}
+          <div className="absolute top-1/2 -translate-y-1/2 right-0 flex items-center gap-6 z-20">
+            {/* Theme Toggle Icon */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="group relative py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 transition-shadow"
               style={{
-                backgroundColor: isDark ? `${RGR_COLORS.chrome.light}33` : 'rgba(107, 114, 128, 0.5)',
-                transition: 'background-color 0.3s ease-out',
+                ['--tw-ring-color' as string]: '#06b6d4', // Cyan (cyan-500) for both themes
               }}
-              aria-hidden="true"
-            />
-          )}
+              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              <ThemeToggleIcon isDark={isDark} />
+            </button>
 
-          {/* User Info Badge */}
-          {user && <UserInfoBadge user={user} isDark={isDark} />}
+            {/* Vertical Divider */}
+            {user && (
+              <div
+                className="h-5 w-px"
+                style={{
+                  backgroundColor: isDark
+                    ? `${RGR_COLORS.chrome.light}33`
+                    : 'rgba(107, 114, 128, 0.5)',
+                  transition: 'background-color 0.3s ease-out',
+                }}
+                aria-hidden="true"
+              />
+            )}
 
-          {/* Sign Out Icon */}
-          <button
-            type="button"
-            onClick={handleSignOut}
-            className="group relative py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 transition-all duration-500 ease-out"
-            style={{
-              ['--tw-ring-color' as string]: '#ef4444',
-              color: isDark ? RGR_COLORS.chrome.medium : '#1e293b', // Slate-800 for light theme
-              transition: 'color 0.2s ease-out',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = '#ef4444'; // Red
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = isDark ? RGR_COLORS.chrome.medium : '#1e293b'; // Slate-800 for light theme
-            }}
-            aria-label="Sign out"
-          >
-            <LogOut className="w-6 h-6 transition-all duration-500 ease-out group-hover:scale-125" />
-          </button>
+            {/* User Info Badge */}
+            {user && <UserInfoBadge user={user} isDark={isDark} />}
+
+            {/* Sign Out Icon */}
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="group relative py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 transition-all duration-500 ease-out"
+              style={{
+                ['--tw-ring-color' as string]: '#ef4444',
+                color: isDark ? RGR_COLORS.chrome.medium : '#1e293b', // Slate-800 for light theme
+                transition: 'color 0.2s ease-out',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = '#ef4444'; // Red
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = isDark ? RGR_COLORS.chrome.medium : '#1e293b'; // Slate-800 for light theme
+              }}
+              aria-label="Sign out"
+            >
+              <LogOut className="w-6 h-6 transition-all duration-500 ease-out group-hover:scale-125" />
+            </button>
+          </div>
+
+          {/* Navigation Links - left aligned */}
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 flex items-center gap-6 relative">
+            {/* Sliding Nav Indicator */}
+            <SlidingNavIndicator isDark={isDark} zIndex={5} />
+
+            {NAV_ITEMS.map((item, index) => (
+              <NavButton
+                key={item.path}
+                item={item}
+                active={isActive(item.path)}
+                isDark={isDark}
+                showDivider={index > 0}
+                onNavigate={navigate}
+              />
+            ))}
+          </div>
         </div>
-
-        {/* Navigation Links - left aligned */}
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 flex items-center gap-6 relative">
-          {/* Sliding Nav Indicator */}
-          <SlidingNavIndicator isDark={isDark} zIndex={5} />
-
-          {NAV_ITEMS.map((item, index) => (
-            <NavButton
-              key={item.path}
-              item={item}
-              active={isActive(item.path)}
-              isDark={isDark}
-              showDivider={index > 0}
-              onNavigate={navigate}
-            />
-          ))}
-        </div>
-      </div>
       </nav>
 
       {/* Liquid Iridescent Flow Animation for A-Eye */}

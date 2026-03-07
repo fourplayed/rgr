@@ -12,13 +12,19 @@ import ManualEntry, { CompactManualEntry } from '../ManualEntry';
 // Mock shared utilities
 vi.mock('@rgr/shared', () => ({
   parseQRCode: vi.fn((value: string) => {
-    if (value.startsWith('rgr://asset/') && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value.slice(12))) {
+    if (
+      value.startsWith('rgr://asset/') &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value.slice(12))
+    ) {
       return { assetId: value.slice(12).toLowerCase(), error: null };
     }
     return { assetId: null, error: 'Invalid format' };
   }),
   isValidQRCode: vi.fn((value: string) => {
-    return value.startsWith('rgr://asset/') && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value.slice(12));
+    return (
+      value.startsWith('rgr://asset/') &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value.slice(12))
+    );
   }),
   extractAssetInfo: vi.fn((value: string) => {
     // Full QR code
@@ -179,10 +185,7 @@ describe('ManualEntry', () => {
       await user.type(input, '550e8400-e29b-41d4-a716-446655440000');
       await user.click(screen.getByRole('button', { name: /look up/i }));
 
-      expect(onSubmit).toHaveBeenCalledWith(
-        '550e8400-e29b-41d4-a716-446655440000',
-        'uuid'
-      );
+      expect(onSubmit).toHaveBeenCalledWith('550e8400-e29b-41d4-a716-446655440000', 'uuid');
     });
 
     it('should show error for invalid submission', async () => {

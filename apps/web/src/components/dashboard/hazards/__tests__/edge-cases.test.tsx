@@ -28,8 +28,20 @@ const mockSupabase = {
         order: vi.fn(() => ({
           limit: vi.fn(() => ({
             data: [
-              { id: 'asset-1', asset_number: 'TL001', category: 'trailer', subtype: 'flattop', status: 'serviced' },
-              { id: 'asset-2', asset_number: 'TL002', category: 'trailer', subtype: 'dropdeck', status: 'serviced' },
+              {
+                id: 'asset-1',
+                asset_number: 'TL001',
+                category: 'trailer',
+                subtype: 'flattop',
+                status: 'serviced',
+              },
+              {
+                id: 'asset-2',
+                asset_number: 'TL002',
+                category: 'trailer',
+                subtype: 'dropdeck',
+                status: 'serviced',
+              },
             ],
             error: null,
           })),
@@ -121,13 +133,16 @@ function createMockFile(
 
   // Mock slice().arrayBuffer() for magic bytes validation
   // JPEG magic bytes: 0xFF, 0xD8, 0xFF
-  const jpegMagicBytes = new Uint8Array([0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, 0x01]);
-  const pngMagicBytes = new Uint8Array([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
-  const webpMagicBytes = new Uint8Array([0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50]);
+  const jpegMagicBytes = new Uint8Array([
+    0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01,
+  ]);
+  const pngMagicBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  const webpMagicBytes = new Uint8Array([
+    0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50,
+  ]);
 
-  const magicBytes = type === 'image/png' ? pngMagicBytes
-    : type === 'image/webp' ? webpMagicBytes
-    : jpegMagicBytes;
+  const magicBytes =
+    type === 'image/png' ? pngMagicBytes : type === 'image/webp' ? webpMagicBytes : jpegMagicBytes;
 
   const originalSlice = file.slice.bind(file);
   file.slice = (...args: Parameters<typeof file.slice>) => {
@@ -157,7 +172,13 @@ function setupSuccessfulMocks() {
         order: vi.fn(() => ({
           limit: vi.fn(() => ({
             data: [
-              { id: 'asset-1', asset_number: 'TL001', category: 'trailer', subtype: 'flattop', status: 'serviced' },
+              {
+                id: 'asset-1',
+                asset_number: 'TL001',
+                category: 'trailer',
+                subtype: 'flattop',
+                status: 'serviced',
+              },
             ],
             error: null,
           })),
@@ -191,9 +212,7 @@ describe('Edge Cases: Large Files', () => {
   describe('File Size Boundaries', () => {
     it('should accept file at exactly 10MB', async () => {
       const onFileSelect = vi.fn();
-      const { container } = render(
-        <PhotoUploadZone onFileSelect={onFileSelect} isDark={true} />
-      );
+      const { container } = render(<PhotoUploadZone onFileSelect={onFileSelect} isDark={true} />);
 
       const input = container.querySelector('input[type="file"]') as HTMLInputElement;
       const file = createMockFile('large.jpg', 'image/jpeg', 10 * 1024 * 1024);
@@ -205,9 +224,7 @@ describe('Edge Cases: Large Files', () => {
 
     it('should reject file at 10MB + 1 byte', async () => {
       const onFileSelect = vi.fn();
-      const { container } = render(
-        <PhotoUploadZone onFileSelect={onFileSelect} isDark={true} />
-      );
+      const { container } = render(<PhotoUploadZone onFileSelect={onFileSelect} isDark={true} />);
 
       const input = container.querySelector('input[type="file"]') as HTMLInputElement;
       const file = createMockFile('large.jpg', 'image/jpeg', 10 * 1024 * 1024 + 1);
@@ -222,9 +239,7 @@ describe('Edge Cases: Large Files', () => {
 
     it('should handle files near the limit gracefully', async () => {
       const onFileSelect = vi.fn();
-      const { container } = render(
-        <PhotoUploadZone onFileSelect={onFileSelect} isDark={true} />
-      );
+      const { container } = render(<PhotoUploadZone onFileSelect={onFileSelect} isDark={true} />);
 
       // Test multiple files near the limit
       const sizes = [
@@ -245,9 +260,7 @@ describe('Edge Cases: Large Files', () => {
 
     it('should handle very large files (100MB+) without hanging', async () => {
       const onFileSelect = vi.fn();
-      const { container } = render(
-        <PhotoUploadZone onFileSelect={onFileSelect} isDark={true} />
-      );
+      const { container } = render(<PhotoUploadZone onFileSelect={onFileSelect} isDark={true} />);
 
       const input = container.querySelector('input[type="file"]') as HTMLInputElement;
       // Create a reference to a large file without actually allocating that much memory
@@ -288,9 +301,7 @@ describe('Edge Cases: Unsupported File Types', () => {
   unsupportedTypes.forEach(({ type, ext, name }) => {
     it(`should reject ${name} (${ext})`, async () => {
       const onFileSelect = vi.fn();
-      const { container } = render(
-        <PhotoUploadZone onFileSelect={onFileSelect} isDark={true} />
-      );
+      const { container } = render(<PhotoUploadZone onFileSelect={onFileSelect} isDark={true} />);
 
       const input = container.querySelector('input[type="file"]') as HTMLInputElement;
       const file = createMockFile(`test.${ext}`, type, 1024);
@@ -306,9 +317,7 @@ describe('Edge Cases: Unsupported File Types', () => {
 
   it('should reject files with no extension', async () => {
     const onFileSelect = vi.fn();
-    const { container } = render(
-      <PhotoUploadZone onFileSelect={onFileSelect} isDark={true} />
-    );
+    const { container } = render(<PhotoUploadZone onFileSelect={onFileSelect} isDark={true} />);
 
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
     const file = createMockFile('noextension', 'application/octet-stream', 1024);
@@ -320,9 +329,7 @@ describe('Edge Cases: Unsupported File Types', () => {
 
   it('should reject files with mismatched extension and MIME type', async () => {
     const onFileSelect = vi.fn();
-    const { container } = render(
-      <PhotoUploadZone onFileSelect={onFileSelect} isDark={true} />
-    );
+    const { container } = render(<PhotoUploadZone onFileSelect={onFileSelect} isDark={true} />);
 
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
     // File claims to be JPEG but has PDF content type
@@ -341,11 +348,7 @@ describe('Edge Cases: Unsupported File Types', () => {
 describe('Edge Cases: Concurrent Operations', () => {
   it('should disable file selection during upload', () => {
     const { container } = render(
-      <PhotoUploadZone
-        onFileSelect={vi.fn()}
-        isDark={true}
-        isLoading={true}
-      />
+      <PhotoUploadZone onFileSelect={vi.fn()} isDark={true} isLoading={true} />
     );
 
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
@@ -355,11 +358,7 @@ describe('Edge Cases: Concurrent Operations', () => {
   it('should not trigger new upload while analyzing', () => {
     const onFileSelect = vi.fn();
     const { container } = render(
-      <PhotoUploadZone
-        onFileSelect={onFileSelect}
-        isDark={true}
-        isLoading={true}
-      />
+      <PhotoUploadZone onFileSelect={onFileSelect} isDark={true} isLoading={true} />
     );
 
     // When loading, button is not rendered - find the drop zone container instead
@@ -378,9 +377,7 @@ describe('Edge Cases: Concurrent Operations', () => {
 
   it('should handle rapid file selection changes', async () => {
     const onFileSelect = vi.fn();
-    const { container } = render(
-      <PhotoUploadZone onFileSelect={onFileSelect} isDark={true} />
-    );
+    const { container } = render(<PhotoUploadZone onFileSelect={onFileSelect} isDark={true} />);
 
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
 
@@ -409,9 +406,7 @@ describe('Edge Cases: Network Failures', () => {
         })
     );
 
-    const { container } = render(
-      <PhotoAnalysisSection isDark={true} onHazardDetected={vi.fn()} />
-    );
+    const { container } = render(<PhotoAnalysisSection isDark={true} onHazardDetected={vi.fn()} />);
 
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
     fireEvent.change(input, { target: { files: [createMockFile()] } });
@@ -430,9 +425,7 @@ describe('Edge Cases: Network Failures', () => {
       throw new Error('Connection refused');
     });
 
-    const { container } = render(
-      <PhotoAnalysisSection isDark={true} onHazardDetected={vi.fn()} />
-    );
+    const { container } = render(<PhotoAnalysisSection isDark={true} onHazardDetected={vi.fn()} />);
 
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
     fireEvent.change(input, { target: { files: [createMockFile()] } });
@@ -451,9 +444,7 @@ describe('Edge Cases: Network Failures', () => {
       getPublicUrl: vi.fn(),
     });
 
-    const { container } = render(
-      <PhotoAnalysisSection isDark={true} onHazardDetected={vi.fn()} />
-    );
+    const { container } = render(<PhotoAnalysisSection isDark={true} onHazardDetected={vi.fn()} />);
 
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
     fireEvent.change(input, { target: { files: [createMockFile()] } });
@@ -471,9 +462,7 @@ describe('Edge Cases: Network Failures', () => {
 describe('Edge Cases: Empty and Corrupted Images', () => {
   it('should handle zero-byte file', async () => {
     const onFileSelect = vi.fn();
-    const { container } = render(
-      <PhotoUploadZone onFileSelect={onFileSelect} isDark={true} />
-    );
+    const { container } = render(<PhotoUploadZone onFileSelect={onFileSelect} isDark={true} />);
 
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
     const emptyFile = new File([], 'empty.jpg', { type: 'image/jpeg' });
@@ -503,9 +492,7 @@ describe('Edge Cases: Empty and Corrupted Images', () => {
       })
     );
 
-    const { container } = render(
-      <PhotoAnalysisSection isDark={true} onHazardDetected={vi.fn()} />
-    );
+    const { container } = render(<PhotoAnalysisSection isDark={true} onHazardDetected={vi.fn()} />);
 
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
     fireEvent.change(input, { target: { files: [createMockFile()] } });
@@ -515,8 +502,7 @@ describe('Edge Cases: Empty and Corrupted Images', () => {
       () => {
         // Either success or error should appear
         const hasResult =
-          screen.queryByText('Analysis Results') ||
-          screen.queryByText(/error|failed/i);
+          screen.queryByText('Analysis Results') || screen.queryByText(/error|failed/i);
         expect(hasResult).toBeTruthy();
       },
       { timeout: 5000 }
@@ -539,9 +525,7 @@ describe('Edge Cases: Empty and Corrupted Images', () => {
       return originalCreateElement(tagName);
     });
 
-    const { container } = render(
-      <PhotoAnalysisSection isDark={true} onHazardDetected={vi.fn()} />
-    );
+    const { container } = render(<PhotoAnalysisSection isDark={true} onHazardDetected={vi.fn()} />);
 
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
     fireEvent.change(input, { target: { files: [createMockFile()] } });
@@ -550,8 +534,7 @@ describe('Edge Cases: Empty and Corrupted Images', () => {
     await waitFor(
       () => {
         const hasContent =
-          screen.queryByText('Analysis Results') ||
-          screen.queryByText(/error|failed/i);
+          screen.queryByText('Analysis Results') || screen.queryByText(/error|failed/i);
         expect(hasContent).toBeTruthy();
       },
       { timeout: 5000 }
@@ -582,9 +565,7 @@ describe('Edge Cases: Special Characters', () => {
   specialNameCases.forEach((filename) => {
     it(`should handle filename: ${filename}`, async () => {
       const onFileSelect = vi.fn();
-      const { container } = render(
-        <PhotoUploadZone onFileSelect={onFileSelect} isDark={true} />
-      );
+      const { container } = render(<PhotoUploadZone onFileSelect={onFileSelect} isDark={true} />);
 
       const input = container.querySelector('input[type="file"]') as HTMLInputElement;
       const file = createMockFile(filename, 'image/jpeg', 1024);
@@ -597,9 +578,7 @@ describe('Edge Cases: Special Characters', () => {
 
   it('should handle very long filenames', async () => {
     const onFileSelect = vi.fn();
-    const { container } = render(
-      <PhotoUploadZone onFileSelect={onFileSelect} isDark={true} />
-    );
+    const { container } = render(<PhotoUploadZone onFileSelect={onFileSelect} isDark={true} />);
 
     const longName = 'a'.repeat(200) + '.jpg';
     const file = createMockFile(longName, 'image/jpeg', 1024);
@@ -623,9 +602,7 @@ describe('Edge Cases: API Responses', () => {
       error: null,
     });
 
-    const { container } = render(
-      <PhotoAnalysisSection isDark={true} onHazardDetected={vi.fn()} />
-    );
+    const { container } = render(<PhotoAnalysisSection isDark={true} onHazardDetected={vi.fn()} />);
 
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
     fireEvent.change(input, { target: { files: [createMockFile()] } });
@@ -659,9 +636,7 @@ describe('Edge Cases: API Responses', () => {
       error: null,
     });
 
-    const { container } = render(
-      <PhotoAnalysisSection isDark={true} onHazardDetected={vi.fn()} />
-    );
+    const { container } = render(<PhotoAnalysisSection isDark={true} onHazardDetected={vi.fn()} />);
 
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
     fireEvent.change(input, { target: { files: [createMockFile()] } });

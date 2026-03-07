@@ -44,7 +44,7 @@ export const AssetFiltersPanel = React.memo<AssetFiltersPanelProps>(
           : [...current, status];
         onFiltersChange({ statuses: next });
       },
-      [filters.statuses, onFiltersChange],
+      [filters.statuses, onFiltersChange]
     );
 
     const toggleCategory = useCallback(
@@ -55,7 +55,7 @@ export const AssetFiltersPanel = React.memo<AssetFiltersPanelProps>(
           : [...current, category];
         onFiltersChange({ categories: next });
       },
-      [filters.categories, onFiltersChange],
+      [filters.categories, onFiltersChange]
     );
 
     const statuses = ALL_STATUSES;
@@ -94,9 +94,7 @@ export const AssetFiltersPanel = React.memo<AssetFiltersPanelProps>(
 
         {/* Category pills */}
         <div className="flex items-center gap-2">
-          <span className={`text-xs font-medium uppercase tracking-wider ${mutedColor}`}>
-            Type
-          </span>
+          <span className={`text-xs font-medium uppercase tracking-wider ${mutedColor}`}>Type</span>
           {categories.map((cat) => (
             <button
               key={cat}

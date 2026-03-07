@@ -83,7 +83,9 @@ export function getAnimationTransform(direction: ThemeSettings['starDirection'])
 /**
  * Get ::after positioning based on direction
  */
-export function getAfterPosition(direction: ThemeSettings['starDirection']): { [key: string]: string } {
+export function getAfterPosition(direction: ThemeSettings['starDirection']): {
+  [key: string]: string;
+} {
   switch (direction) {
     case 'left':
       return { left: '4000px' };

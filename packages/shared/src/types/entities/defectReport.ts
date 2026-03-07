@@ -143,14 +143,20 @@ export function mapRowToDefectReport(row: DefectReportRow): DefectReport {
 
 export type DefectReportInsertRow = Omit<
   DefectReportRow,
-  'id' | 'created_at' | 'updated_at' | 'status' | 'maintenance_record_id' | 'accepted_at' | 'resolved_at' | 'dismissed_at' | 'dismissed_reason'
+  | 'id'
+  | 'created_at'
+  | 'updated_at'
+  | 'status'
+  | 'maintenance_record_id'
+  | 'accepted_at'
+  | 'resolved_at'
+  | 'dismissed_at'
+  | 'dismissed_reason'
 >;
 
 export type DefectReportUpdateRow = Partial<Omit<DefectReportRow, 'id' | 'created_at'>>;
 
-export function mapDefectReportToInsert(
-  input: CreateDefectReportInput
-): DefectReportInsertRow {
+export function mapDefectReportToInsert(input: CreateDefectReportInput): DefectReportInsertRow {
   return {
     asset_id: input.assetId,
     reported_by: input.reportedBy ?? null,
@@ -161,14 +167,13 @@ export function mapDefectReportToInsert(
   };
 }
 
-export function mapDefectReportToUpdate(
-  input: UpdateDefectReportInput
-): DefectReportUpdateRow {
+export function mapDefectReportToUpdate(input: UpdateDefectReportInput): DefectReportUpdateRow {
   const updates: DefectReportUpdateRow = {};
 
   if (input.title !== undefined) updates['title'] = input.title;
   if (input.description !== undefined) updates['description'] = input.description;
-  if (input.maintenanceRecordId !== undefined) updates['maintenance_record_id'] = input.maintenanceRecordId;
+  if (input.maintenanceRecordId !== undefined)
+    updates['maintenance_record_id'] = input.maintenanceRecordId;
   if (input.acceptedAt !== undefined) updates['accepted_at'] = input.acceptedAt;
   if (input.resolvedAt !== undefined) updates['resolved_at'] = input.resolvedAt;
   if (input.dismissedAt !== undefined) updates['dismissed_at'] = input.dismissedAt;

@@ -65,7 +65,8 @@ export const CARD_STYLES = {
     position: 'relative' as const,
     transition: 'all 0.4s cubic-bezier(0.4, 0.0, 0.2, 1)',
     maskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)',
-    WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)',
+    WebkitMaskImage:
+      'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)',
   },
   // Card styling - Dark (glassmorphism with black)
   dark: {
@@ -85,7 +86,8 @@ export const CARD_STYLES = {
     position: 'relative' as const,
     transition: 'all 0.4s cubic-bezier(0.4, 0.0, 0.2, 1)',
     maskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)',
-    WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)',
+    WebkitMaskImage:
+      'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)',
   },
 } as const;
 
@@ -154,17 +156,17 @@ export const BUTTON_STYLES = {
  */
 export const TEXT_COLORS = {
   light: {
-    primary: '#0c4a6e',     // sky-900
-    secondary: '#075985',   // sky-800
-    muted: '#0284c7',       // sky-600
-    link: '#0284c7',        // sky-600
-    linkHover: '#0369a1',   // sky-700
+    primary: '#0c4a6e', // sky-900
+    secondary: '#075985', // sky-800
+    muted: '#0284c7', // sky-600
+    link: '#0284c7', // sky-600
+    linkHover: '#0369a1', // sky-700
   },
   dark: {
-    primary: '#f8fafc',     // slate-50
-    secondary: '#e2e8f0',   // slate-200
-    muted: '#94a3b8',       // slate-400
-    link: '#60a5fa',        // blue-400
-    linkHover: '#93c5fd',   // blue-300
+    primary: '#f8fafc', // slate-50
+    secondary: '#e2e8f0', // slate-200
+    muted: '#94a3b8', // slate-400
+    link: '#60a5fa', // blue-400
+    linkHover: '#93c5fd', // blue-300
   },
 } as const;

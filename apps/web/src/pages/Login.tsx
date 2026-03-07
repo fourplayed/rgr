@@ -28,7 +28,10 @@ export default function Login() {
   // Ref that stores a pending navigation target.  The presenter will call
   // `onNavigationReady` once the exit animation finishes, at which point
   // we execute the deferred navigate.
-  const pendingNavRef = useRef<{ path: string; options?: { replace?: boolean; state?: unknown } } | null>(null);
+  const pendingNavRef = useRef<{
+    path: string;
+    options?: { replace?: boolean; state?: unknown };
+  } | null>(null);
 
   // Deferred navigate: stash the path + options instead of navigating immediately
   const deferredNavigate = useCallback(
@@ -40,7 +43,7 @@ export default function Login() {
         realNavigate(to);
       }
     },
-    [realNavigate],
+    [realNavigate]
   );
 
   // Called by the presenter once the exit slide animation finishes.
@@ -61,7 +64,9 @@ export default function Login() {
     <LoginPresenter
       state={state}
       actions={actions}
-      ButtonComponent={Button as React.ComponentType<import('./login/components/LoginFormCard').ButtonProps>}
+      ButtonComponent={
+        Button as React.ComponentType<import('./login/components/LoginFormCard').ButtonProps>
+      }
       onNavigationReady={handleNavigationReady}
     />
   );

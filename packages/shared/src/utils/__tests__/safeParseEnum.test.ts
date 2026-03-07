@@ -27,9 +27,7 @@ describe('safeParseEnum', () => {
   it('logs a warning on fallback', () => {
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
     safeParseEnum(TestSchema, 'invalid', 'beta');
-    expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[safeParseEnum]')
-    );
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('[safeParseEnum]'));
     warnSpy.mockRestore();
   });
 

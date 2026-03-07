@@ -64,11 +64,7 @@ export const MAX_PHOTO_SIZE_BYTES = 10 * 1024 * 1024;
 /**
  * Supported image MIME types
  */
-export const SUPPORTED_IMAGE_TYPES = [
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-] as const;
+export const SUPPORTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
 
 /**
  * API timeout duration

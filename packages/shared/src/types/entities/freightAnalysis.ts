@@ -57,9 +57,7 @@ export interface FreightAnalysisRow {
 
 // ── Mapper ──
 
-export function mapRowToFreightAnalysis(
-  row: FreightAnalysisRow
-): FreightAnalysis {
+export function mapRowToFreightAnalysis(row: FreightAnalysisRow): FreightAnalysis {
   return {
     id: row.id,
     photoId: row.photo_id,
@@ -73,7 +71,8 @@ export function mapRowToFreightAnalysis(
     loadDistributionScore: row.load_distribution_score,
     restraintCount: row.restraint_count,
     hazardCount: row.hazard_count,
-    maxSeverity: row.max_severity == null ? null : safeParseEnum(HazardSeveritySchema, row.max_severity, null),
+    maxSeverity:
+      row.max_severity == null ? null : safeParseEnum(HazardSeveritySchema, row.max_severity, null),
     requiresAcknowledgment: row.requires_acknowledgment,
     blockedFromDeparture: row.blocked_from_departure,
     rawResponse: row.raw_response,

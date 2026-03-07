@@ -34,8 +34,20 @@ vi.mock('@rgr/shared', () => ({
           order: vi.fn(() => ({
             limit: vi.fn(() => ({
               data: [
-                { id: 'asset-1', asset_number: 'TL001', category: 'trailer', subtype: 'flattop', status: 'serviced' },
-                { id: 'asset-2', asset_number: 'TL002', category: 'trailer', subtype: 'dropdeck', status: 'serviced' },
+                {
+                  id: 'asset-1',
+                  asset_number: 'TL001',
+                  category: 'trailer',
+                  subtype: 'flattop',
+                  status: 'serviced',
+                },
+                {
+                  id: 'asset-2',
+                  asset_number: 'TL002',
+                  category: 'trailer',
+                  subtype: 'dropdeck',
+                  status: 'serviced',
+                },
               ],
               error: null,
             })),
@@ -133,9 +145,7 @@ describe('Accessibility: PhotoUploadZone', () => {
     });
 
     it('should activate on Enter key', async () => {
-      const { container } = render(
-        <PhotoUploadZone onFileSelect={vi.fn()} isDark={true} />
-      );
+      const { container } = render(<PhotoUploadZone onFileSelect={vi.fn()} isDark={true} />);
 
       const input = container.querySelector('input[type="file"]') as HTMLInputElement;
       const clickSpy = vi.spyOn(input, 'click');
@@ -151,9 +161,7 @@ describe('Accessibility: PhotoUploadZone', () => {
     });
 
     it('should activate on Space key', async () => {
-      const { container } = render(
-        <PhotoUploadZone onFileSelect={vi.fn()} isDark={true} />
-      );
+      const { container } = render(<PhotoUploadZone onFileSelect={vi.fn()} isDark={true} />);
 
       const input = container.querySelector('input[type="file"]') as HTMLInputElement;
       const clickSpy = vi.spyOn(input, 'click');
@@ -199,10 +207,7 @@ describe('Accessibility: PhotoUploadZone', () => {
       render(<PhotoUploadZone onFileSelect={vi.fn()} isDark={true} />);
 
       const uploadZone = screen.getByRole('button');
-      expect(uploadZone).toHaveAttribute(
-        'aria-label',
-        'Upload photo for hazard analysis'
-      );
+      expect(uploadZone).toHaveAttribute('aria-label', 'Upload photo for hazard analysis');
     });
 
     it('should have tabIndex 0 when enabled', () => {
@@ -223,7 +228,9 @@ describe('Accessibility: PhotoUploadZone', () => {
       render(<PhotoUploadZone onFileSelect={vi.fn()} isDark={true} isLoading={true} />);
 
       // Button should not be rendered when loading, so it should not be focusable
-      expect(screen.queryByRole('button', { name: /upload photo for hazard analysis/i })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /upload photo for hazard analysis/i })
+      ).not.toBeInTheDocument();
       // Loading message should be shown instead
       expect(screen.getByText('Analyzing photo for hazards...')).toBeInTheDocument();
     });
@@ -238,9 +245,7 @@ describe('Accessibility: PhotoUploadZone', () => {
     });
 
     it('should maintain focus after file selection error', async () => {
-      const { container } = render(
-        <PhotoUploadZone onFileSelect={vi.fn()} isDark={true} />
-      );
+      const { container } = render(<PhotoUploadZone onFileSelect={vi.fn()} isDark={true} />);
 
       const uploadZone = screen.getByRole('button');
       uploadZone.focus();
@@ -279,25 +284,19 @@ describe('Accessibility: PhotoUploadZone', () => {
     });
 
     it('should have accessible remove button when preview shown', async () => {
-      const { container } = render(
-        <PhotoUploadZone onFileSelect={vi.fn()} isDark={true} />
-      );
+      const { container } = render(<PhotoUploadZone onFileSelect={vi.fn()} isDark={true} />);
 
       const input = container.querySelector('input[type="file"]') as HTMLInputElement;
       const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
       fireEvent.change(input, { target: { files: [file] } });
 
       await waitFor(() => {
-        expect(
-          screen.getByRole('button', { name: /remove selected photo/i })
-        ).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /remove selected photo/i })).toBeInTheDocument();
       });
     });
 
     it('should have alt text for preview image', async () => {
-      const { container } = render(
-        <PhotoUploadZone onFileSelect={vi.fn()} isDark={true} />
-      );
+      const { container } = render(<PhotoUploadZone onFileSelect={vi.fn()} isDark={true} />);
 
       const input = container.querySelector('input[type="file"]') as HTMLInputElement;
       const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
@@ -320,9 +319,7 @@ describe('Accessibility: PhotoUploadZone', () => {
         />
       );
 
-      expect(
-        screen.getByRole('button', { name: /dismiss error/i })
-      ).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /dismiss error/i })).toBeInTheDocument();
     });
   });
 
@@ -343,9 +340,7 @@ describe('Accessibility: PhotoUploadZone', () => {
     };
 
     it('should have no accessibility violations in idle state', async () => {
-      const { container } = render(
-        <PhotoUploadZone onFileSelect={vi.fn()} isDark={true} />
-      );
+      const { container } = render(<PhotoUploadZone onFileSelect={vi.fn()} isDark={true} />);
 
       const results = await axe(container, axeOptions);
       expect(results).toHaveNoViolations();
@@ -400,12 +395,7 @@ describe('Accessibility: AnalysisResultCard', () => {
     });
 
     it('should have alt text for analyzed photo', () => {
-      render(
-        <AnalysisResultCard
-          result={createMockResult()}
-          isDark={true}
-        />
-      );
+      render(<AnalysisResultCard result={createMockResult()} isDark={true} />);
 
       expect(screen.getByAltText('Analyzed photo')).toBeInTheDocument();
     });
@@ -423,25 +413,14 @@ describe('Accessibility: AnalysisResultCard', () => {
         />
       );
 
-      expect(
-        screen.getByRole('button', { name: /add to review queue/i })
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole('button', { name: /new analysis/i })
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole('button', { name: /dismiss/i })
-      ).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /add to review queue/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /new analysis/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /dismiss/i })).toBeInTheDocument();
     });
 
     it('should have interactive expand/collapse for recommendations', async () => {
       const user = userEvent.setup();
-      render(
-        <AnalysisResultCard
-          result={createMockResult()}
-          isDark={true}
-        />
-      );
+      render(<AnalysisResultCard result={createMockResult()} isDark={true} />);
 
       // Find the expand button
       const expandButton = screen.getByText(/recommended actions/i);
@@ -454,12 +433,7 @@ describe('Accessibility: AnalysisResultCard', () => {
 
   describe('Color Independence', () => {
     it('should not rely solely on color for severity indication', () => {
-      render(
-        <AnalysisResultCard
-          result={createMockResult()}
-          isDark={true}
-        />
-      );
+      render(<AnalysisResultCard result={createMockResult()} isDark={true} />);
 
       // Severity should have text label, not just color
       expect(screen.getByText('High')).toBeInTheDocument();
@@ -471,12 +445,7 @@ describe('Accessibility: AnalysisResultCard', () => {
         hazards: [],
       };
 
-      render(
-        <AnalysisResultCard
-          result={resultWithNoHazards}
-          isDark={true}
-        />
-      );
+      render(<AnalysisResultCard result={resultWithNoHazards} isDark={true} />);
 
       // All clear status should have text
       expect(screen.getByText('No Hazards Detected')).toBeInTheDocument();
@@ -506,10 +475,7 @@ describe('Accessibility: AnalysisResultCard', () => {
       };
 
       const { container } = render(
-        <AnalysisResultCard
-          result={resultWithNoHazards}
-          isDark={true}
-        />
+        <AnalysisResultCard result={resultWithNoHazards} isDark={true} />
       );
 
       const results = await axe(container);
@@ -632,9 +598,7 @@ describe('Accessibility: Keyboard Navigation Flow', () => {
     const user = userEvent.setup();
     setupMockHook({ status: 'idle' });
 
-    const { container } = render(
-      <PhotoAnalysisSection isDark={true} onHazardDetected={vi.fn()} />
-    );
+    const { container } = render(<PhotoAnalysisSection isDark={true} onHazardDetected={vi.fn()} />);
 
     // Wait for asset selector to load
     await waitFor(() => {

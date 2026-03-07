@@ -197,15 +197,18 @@ export function ThemeProvider({
   const isDark = resolvedTheme === 'dark';
 
   // Handle theme changes
-  const setTheme = useCallback((newTheme: ThemeMode) => {
-    if (forcedTheme) {
-      console.warn('Cannot change theme when forcedTheme is set');
-      return;
-    }
+  const setTheme = useCallback(
+    (newTheme: ThemeMode) => {
+      if (forcedTheme) {
+        console.warn('Cannot change theme when forcedTheme is set');
+        return;
+      }
 
-    setThemeMode(newTheme);
-    storeTheme(newTheme);
-  }, [forcedTheme]);
+      setThemeMode(newTheme);
+      storeTheme(newTheme);
+    },
+    [forcedTheme]
+  );
 
   // Toggle between light and dark (ignores system)
   const toggleTheme = useCallback(() => {
@@ -266,9 +269,5 @@ export function ThemeProvider({
     isTransitioning,
   };
 
-  return (
-    <ThemeContext.Provider value={value}>
-      {children}
-    </ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }

@@ -194,9 +194,7 @@ export const AdminUpdateProfileInputSchema = UpdateProfileInputSchema.extend({
 /**
  * Map admin profile update to database columns
  */
-export function mapAdminProfileToUpdate(
-  input: AdminUpdateProfileInput
-): Partial<ProfileRow> {
+export function mapAdminProfileToUpdate(input: AdminUpdateProfileInput): Partial<ProfileRow> {
   const updates: Partial<ProfileRow> = {};
 
   if (input.fullName !== undefined) updates.full_name = input.fullName;
@@ -235,9 +233,7 @@ export function mapRowToProfile(row: ProfileRow): Profile {
  */
 export type ProfileUpdateRow = Partial<Omit<ProfileRow, 'id' | 'created_at'>>;
 
-export function mapProfileToUpdate(
-  profile: UpdateProfileInput
-): ProfileUpdateRow {
+export function mapProfileToUpdate(profile: UpdateProfileInput): ProfileUpdateRow {
   const updates: ProfileUpdateRow = {};
 
   if (profile.fullName !== undefined) updates['full_name'] = profile.fullName;

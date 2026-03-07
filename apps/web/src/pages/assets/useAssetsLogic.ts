@@ -18,10 +18,7 @@ import type {
   AssetsViewMode,
   AssetDetailTab,
 } from './types';
-import {
-  DEFAULT_ASSET_SORT,
-  DEFAULT_ASSET_PAGINATION,
-} from './types';
+import { DEFAULT_ASSET_SORT, DEFAULT_ASSET_PAGINATION } from './types';
 
 export interface AssetsState {
   user: Profile | null;
@@ -68,17 +65,12 @@ function parseSearchParams(params: URLSearchParams): {
   const depotIdParam = params.get('depotId');
   const depotIds = depotIdParam ? depotIdParam.split(',') : [];
 
-  const statuses = statusParam
-    ? (statusParam.split(',') as AssetStatus[])
-    : [];
-  const categories = categoryParam
-    ? (categoryParam.split(',') as AssetCategory[])
-    : [];
+  const statuses = statusParam ? (statusParam.split(',') as AssetStatus[]) : [];
+  const categories = categoryParam ? (categoryParam.split(',') as AssetCategory[]) : [];
 
   const rawSortField = params.get('sortField') ?? DEFAULT_ASSET_SORT.field;
-  const sortField: AssetSortField = rawSortField in SORT_FIELD_MAP
-    ? (rawSortField as AssetSortField)
-    : DEFAULT_ASSET_SORT.field;
+  const sortField: AssetSortField =
+    rawSortField in SORT_FIELD_MAP ? (rawSortField as AssetSortField) : DEFAULT_ASSET_SORT.field;
   const sortDir = params.get('sortDir');
   const sortDirection: 'asc' | 'desc' = sortDir === 'desc' ? 'desc' : 'asc';
 

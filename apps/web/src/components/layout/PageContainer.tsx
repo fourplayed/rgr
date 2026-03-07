@@ -15,9 +15,7 @@ export default function PageContainer({ children, showLayout = false }: PageCont
   // Legacy layout support (not used in current simplified routing)
   return (
     <div className="flex h-screen bg-gray-50">
-      <main className="flex-1 overflow-y-auto">
-        {children}
-      </main>
+      <main className="flex-1 overflow-y-auto">{children}</main>
     </div>
   );
 }

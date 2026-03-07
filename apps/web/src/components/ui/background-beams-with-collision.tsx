@@ -1,5 +1,5 @@
-"use client";
-import React, { useEffect, useRef, useState } from "react";
+'use client';
+import React, { useEffect, useRef, useState } from 'react';
 
 export const BackgroundBeamsWithCollision = ({
   children,
@@ -23,7 +23,7 @@ export const BackgroundBeamsWithCollision = ({
   return (
     <div
       ref={parentRef}
-      className={`relative flex h-full w-full items-center justify-center overflow-hidden ${className || ""}`}
+      className={`relative flex h-full w-full items-center justify-center overflow-hidden ${className || ''}`}
     >
       <style>{`
         @keyframes fall {
@@ -133,7 +133,7 @@ const CollisionMechanism = React.forwardRef<
   );
 });
 
-CollisionMechanism.displayName = "CollisionMechanism";
+CollisionMechanism.displayName = 'CollisionMechanism';
 
 const Explosion = ({ ...props }: React.HTMLProps<HTMLDivElement>) => {
   return (

@@ -13,10 +13,14 @@ describe('useGeolocation', () => {
       altitudeAccuracy: 5,
       heading: 90,
       speed: 15,
-      toJSON() { return this; },
+      toJSON() {
+        return this;
+      },
     },
     timestamp: Date.now(),
-    toJSON() { return this; },
+    toJSON() {
+      return this;
+    },
   };
 
   beforeEach(() => {

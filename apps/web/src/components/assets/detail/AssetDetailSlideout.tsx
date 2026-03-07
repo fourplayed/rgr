@@ -67,99 +67,101 @@ export const AssetDetailSlideout = React.memo<AssetDetailSlideoutProps>(
             borderRadius: 0,
           }}
         >
-        {/* Header */}
-        <div className={`flex items-center justify-between px-5 py-4 border-b`} style={{ borderColor }}>
-          <div>
-            {isLoading ? (
-              <div className={`h-6 w-24 rounded animate-pulse ${isDark ? 'bg-slate-700' : 'bg-white/20'}`} />
-            ) : (
-              <>
-                <h2 className={`text-lg font-bold font-mono ${textColor}`}>
-                  {asset?.assetNumber ?? 'Unknown'}
-                </h2>
-                <p className={`text-xs ${mutedColor}`}>
-                  {asset?.category ? (asset.category.charAt(0).toUpperCase() + asset.category.slice(1)) : ''}{asset?.depotName ? ` — ${asset.depotName}` : ''}
-                </p>
-              </>
-            )}
-          </div>
-          <div className="flex items-center gap-1">
-            {canEdit && (
+          {/* Header */}
+          <div
+            className={`flex items-center justify-between px-5 py-4 border-b`}
+            style={{ borderColor }}
+          >
+            <div>
+              {isLoading ? (
+                <div
+                  className={`h-6 w-24 rounded animate-pulse ${isDark ? 'bg-slate-700' : 'bg-white/20'}`}
+                />
+              ) : (
+                <>
+                  <h2 className={`text-lg font-bold font-mono ${textColor}`}>
+                    {asset?.assetNumber ?? 'Unknown'}
+                  </h2>
+                  <p className={`text-xs ${mutedColor}`}>
+                    {asset?.category
+                      ? asset.category.charAt(0).toUpperCase() + asset.category.slice(1)
+                      : ''}
+                    {asset?.depotName ? ` — ${asset.depotName}` : ''}
+                  </p>
+                </>
+              )}
+            </div>
+            <div className="flex items-center gap-1">
+              {canEdit && (
+                <button
+                  onClick={() => onTabChange('overview')}
+                  className={`p-1.5 rounded-lg ${mutedColor} hover:text-white hover:bg-white/10 transition-colors`}
+                  aria-label="Edit asset"
+                  data-edit-trigger
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+              )}
               <button
-                onClick={() => onTabChange('overview')}
+                onClick={onClose}
                 className={`p-1.5 rounded-lg ${mutedColor} hover:text-white hover:bg-white/10 transition-colors`}
-                aria-label="Edit asset"
-                data-edit-trigger
+                aria-label="Close asset details"
               >
-                <Pencil className="w-4 h-4" />
+                <X className="w-5 h-5" aria-hidden="true" />
               </button>
-            )}
-            <button
-              onClick={onClose}
-              className={`p-1.5 rounded-lg ${mutedColor} hover:text-white hover:bg-white/10 transition-colors`}
-              aria-label="Close asset details"
-            >
-              <X className="w-5 h-5" aria-hidden="true" />
-            </button>
+            </div>
           </div>
-        </div>
 
-        {/* Tab bar */}
-        <div className={`flex border-b`} style={{ borderColor }}>
-          {TABS.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => onTabChange(tab.key)}
-              className={`flex-1 px-3 py-2.5 text-xs font-medium transition-colors relative ${
-                activeTab === tab.key
-                  ? textColor
-                  : `${mutedColor} hover:text-white`
-              }`}
-            >
-              {tab.label}
-              {activeTab === tab.key && (
-                <motion.div
-                  layoutId="asset-detail-tab"
-                  className="absolute bottom-0 left-2 right-2 h-0.5 bg-blue-500 rounded-full"
-                />
-              )}
-            </button>
-          ))}
-        </div>
+          {/* Tab bar */}
+          <div className={`flex border-b`} style={{ borderColor }}>
+            {TABS.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => onTabChange(tab.key)}
+                className={`flex-1 px-3 py-2.5 text-xs font-medium transition-colors relative ${
+                  activeTab === tab.key ? textColor : `${mutedColor} hover:text-white`
+                }`}
+              >
+                {tab.label}
+                {activeTab === tab.key && (
+                  <motion.div
+                    layoutId="asset-detail-tab"
+                    className="absolute bottom-0 left-2 right-2 h-0.5 bg-blue-500 rounded-full"
+                  />
+                )}
+              </button>
+            ))}
+          </div>
 
-        {/* Tab content */}
-        <div className="flex-1 overflow-y-auto">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-16">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500" />
-            </div>
-          ) : isError ? (
-            <div className={`text-center py-16 text-sm ${mutedColor}`}>
-              Failed to load asset details
-            </div>
-          ) : asset ? (
-            <>
-              {activeTab === 'overview' && (
-                <AssetOverviewTab
-                  asset={asset}
-                  isDark={isDark}
-                  canEdit={canEdit}
-                  canDelete={canDelete}
-                />
-              )}
-              {activeTab === 'scans' && (
-                <AssetScanHistoryTab assetId={assetId} isDark={isDark} />
-              )}
-              {activeTab === 'maintenance' && (
-                <AssetMaintenanceTab assetId={assetId} isDark={isDark} />
-              )}
-              {activeTab === 'hazards' && (
-                <AssetHazardsTab assetId={assetId} isDark={isDark} />
-              )}
-            </>
-          ) : null}
-        </div>
-      </motion.div>
+          {/* Tab content */}
+          <div className="flex-1 overflow-y-auto">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500" />
+              </div>
+            ) : isError ? (
+              <div className={`text-center py-16 text-sm ${mutedColor}`}>
+                Failed to load asset details
+              </div>
+            ) : asset ? (
+              <>
+                {activeTab === 'overview' && (
+                  <AssetOverviewTab
+                    asset={asset}
+                    isDark={isDark}
+                    canEdit={canEdit}
+                    canDelete={canDelete}
+                  />
+                )}
+                {activeTab === 'scans' && <AssetScanHistoryTab assetId={assetId} isDark={isDark} />}
+                {activeTab === 'maintenance' && (
+                  <AssetMaintenanceTab assetId={assetId} isDark={isDark} />
+                )}
+                {activeTab === 'hazards' && <AssetHazardsTab assetId={assetId} isDark={isDark} />}
+              </>
+            ) : null}
+          </div>
+        </motion.div>
       </>
     );
   }

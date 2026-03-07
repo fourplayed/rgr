@@ -8,11 +8,7 @@
  * - Realtime subscription hook
  */
 
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo } from 'react';
 import {
   getSupabaseClient,
@@ -28,11 +24,7 @@ import {
   buildDepotLookups,
   queryFromService,
 } from '@rgr/shared';
-import type {
-  AssetWithRelations,
-  CreateAssetInput,
-  UpdateAssetInput,
-} from '@rgr/shared';
+import type { AssetWithRelations, CreateAssetInput, UpdateAssetInput } from '@rgr/shared';
 import type { AssetFilters, AssetSort, AssetPagination } from '@/pages/assets/types';
 import { FLEET_QUERY_KEYS } from './useFleetData';
 
@@ -100,11 +92,7 @@ export function useAsset(id: string | null, enabled: boolean = true) {
 /**
  * Scan events for an asset
  */
-export function useAssetScans(
-  assetId: string | null,
-  page: number = 1,
-  enabled: boolean = true
-) {
+export function useAssetScans(assetId: string | null, page: number = 1, enabled: boolean = true) {
   return useQuery({
     queryKey: ASSET_QUERY_KEYS.scans(assetId ?? '', page),
     queryFn: queryFromService(() => getAssetScans(assetId!, page)),
@@ -130,11 +118,7 @@ export function useAssetMaintenance(
 /**
  * Hazard alerts for an asset
  */
-export function useAssetHazards(
-  assetId: string | null,
-  page: number = 1,
-  enabled: boolean = true
-) {
+export function useAssetHazards(assetId: string | null, page: number = 1, enabled: boolean = true) {
   return useQuery({
     queryKey: ASSET_QUERY_KEYS.hazards(assetId ?? '', page),
     queryFn: queryFromService(() => getAssetHazards(assetId!, page)),
@@ -168,8 +152,7 @@ export function useDepotLookup() {
       byName,
       getColor: (code: string, fallback = '#9ca3af') =>
         byCode.get(code.toLowerCase())?.color ?? fallback,
-      getName: (code: string) =>
-        byCode.get(code.toLowerCase())?.name ?? code.toUpperCase(),
+      getName: (code: string) => byCode.get(code.toLowerCase())?.name ?? code.toUpperCase(),
     };
   }, [depots]);
 }
@@ -209,10 +192,13 @@ export function useUpdateAsset() {
     },
     onSuccess: (data, { id }) => {
       // Optimistic update the detail cache
-      queryClient.setQueryData(ASSET_QUERY_KEYS.detail(id), (old: AssetWithRelations | undefined) => {
-        if (!old) return old;
-        return { ...old, ...data };
-      });
+      queryClient.setQueryData(
+        ASSET_QUERY_KEYS.detail(id),
+        (old: AssetWithRelations | undefined) => {
+          if (!old) return old;
+          return { ...old, ...data };
+        }
+      );
       queryClient.invalidateQueries({ queryKey: ASSET_QUERY_KEYS.lists() });
       queryClient.invalidateQueries({ queryKey: FLEET_QUERY_KEYS.statistics() });
     },
@@ -253,40 +239,28 @@ export function useAssetsRealtime(enabled: boolean = true) {
 
     const assetSub = supabase
       .channel('assets-page-assets')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'assets' },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ASSET_QUERY_KEYS.all });
-          queryClient.invalidateQueries({ queryKey: FLEET_QUERY_KEYS.statistics() });
-        }
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'assets' }, () => {
+        queryClient.invalidateQueries({ queryKey: ASSET_QUERY_KEYS.all });
+        queryClient.invalidateQueries({ queryKey: FLEET_QUERY_KEYS.statistics() });
+      })
       .subscribe();
 
     const scanSub = supabase
       .channel('assets-page-scans')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'scan_events' },
-        () => {
-          queryClient.invalidateQueries({
-            queryKey: [...ASSET_QUERY_KEYS.all, 'scans'],
-          });
-        }
-      )
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'scan_events' }, () => {
+        queryClient.invalidateQueries({
+          queryKey: [...ASSET_QUERY_KEYS.all, 'scans'],
+        });
+      })
       .subscribe();
 
     const hazardSub = supabase
       .channel('assets-page-hazards')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'hazard_alerts' },
-        () => {
-          queryClient.invalidateQueries({
-            queryKey: [...ASSET_QUERY_KEYS.all, 'hazards'],
-          });
-        }
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'hazard_alerts' }, () => {
+        queryClient.invalidateQueries({
+          queryKey: [...ASSET_QUERY_KEYS.all, 'hazards'],
+        });
+      })
       .subscribe();
 
     return () => {

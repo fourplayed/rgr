@@ -23,13 +23,7 @@ export const AssetOverviewTab = React.memo<AssetOverviewTabProps>(
     const sectionBorder = isDark ? 'border-slate-700/30' : 'border-white/10';
 
     if (isEditing) {
-      return (
-        <EditAssetForm
-          asset={asset}
-          isDark={isDark}
-          onClose={() => setIsEditing(false)}
-        />
-      );
+      return <EditAssetForm asset={asset} isDark={isDark} onClose={() => setIsEditing(false)} />;
     }
 
     return (
@@ -37,7 +31,11 @@ export const AssetOverviewTab = React.memo<AssetOverviewTabProps>(
         {/* Info grid */}
         <div className="space-y-3">
           <InfoRow label="Asset #" value={asset.assetNumber} isDark={isDark} mono />
-          <InfoRow label="Make / Model" value={[asset.make, asset.model].filter(Boolean).join(' ') || null} isDark={isDark} />
+          <InfoRow
+            label="Make / Model"
+            value={[asset.make, asset.model].filter(Boolean).join(' ') || null}
+            isDark={isDark}
+          />
           {asset.yearManufactured && (
             <InfoRow label="Year" value={String(asset.yearManufactured)} isDark={isDark} />
           )}
@@ -51,7 +49,11 @@ export const AssetOverviewTab = React.memo<AssetOverviewTabProps>(
               isDark={isDark}
             />
           )}
-          <InfoRow label="Depot" value={asset.depotName ? `${asset.depotName} (${asset.depotCode})` : null} isDark={isDark} />
+          <InfoRow
+            label="Depot"
+            value={asset.depotName ? `${asset.depotName} (${asset.depotCode})` : null}
+            isDark={isDark}
+          />
           <InfoRow label="Driver" value={asset.driverName} isDark={isDark} />
         </div>
 
@@ -73,26 +75,31 @@ export const AssetOverviewTab = React.memo<AssetOverviewTabProps>(
               </p>
             )}
             {asset.lastScannerName && (
-              <p className={`text-xs ${mutedColor}`}>
-                By {asset.lastScannerName}
-              </p>
+              <p className={`text-xs ${mutedColor}`}>By {asset.lastScannerName}</p>
             )}
           </div>
         )}
 
         {/* QR code */}
-        {asset.qrCodeData && (() => {
-          const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(asset.qrCodeData)}&bgcolor=000000&color=ffffff`;
-          const printQR = () => {
-            const win = window.open('', '_blank', 'width=400,height=500');
-            if (!win) return;
-            const esc = (s: string) =>
-              s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-            const safeNumber = esc(asset.assetNumber);
-            const safeCategory = esc(asset.category.charAt(0).toUpperCase() + asset.category.slice(1));
-            const safeDepot = asset.depotName ? ' — ' + esc(asset.depotName) : '';
-            const safeId = esc(asset.id);
-            win.document.write(`
+        {asset.qrCodeData &&
+          (() => {
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(asset.qrCodeData)}&bgcolor=000000&color=ffffff`;
+            const printQR = () => {
+              const win = window.open('', '_blank', 'width=400,height=500');
+              if (!win) return;
+              const esc = (s: string) =>
+                s
+                  .replace(/&/g, '&amp;')
+                  .replace(/</g, '&lt;')
+                  .replace(/>/g, '&gt;')
+                  .replace(/"/g, '&quot;');
+              const safeNumber = esc(asset.assetNumber);
+              const safeCategory = esc(
+                asset.category.charAt(0).toUpperCase() + asset.category.slice(1)
+              );
+              const safeDepot = asset.depotName ? ' — ' + esc(asset.depotName) : '';
+              const safeId = esc(asset.id);
+              win.document.write(`
               <html><head><title>QR — ${safeNumber}</title>
               <style>body{margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:#fff;font-family:'Lato',sans-serif}
               img{width:250px;height:250px;image-rendering:pixelated}
@@ -106,51 +113,49 @@ export const AssetOverviewTab = React.memo<AssetOverviewTabProps>(
               <script>window.onload=()=>{window.print()}</script>
               </body></html>
             `);
-            win.document.close();
-          };
-          return (
-            <div className={`pt-4 border-t ${sectionBorder}`}>
-              <div className="flex items-center gap-2 mb-3">
-                <QrCode className={`w-4 h-4 ${mutedColor}`} />
-                <span className={`text-xs font-medium uppercase tracking-wider ${labelColor}`}>
-                  QR Code
-                </span>
-              </div>
-              <div className="space-y-3">
-                <p className={`text-xs font-mono break-all ${mutedColor}`}>
-                  {asset.qrCodeData}
-                </p>
-                {/* Asset UUID */}
-                <div>
-                  <span className={`text-xs ${labelColor}`}>UUID</span>
-                  <p className={`text-xs font-mono break-all ${mutedColor}`}>{asset.id}</p>
+              win.document.close();
+            };
+            return (
+              <div className={`pt-4 border-t ${sectionBorder}`}>
+                <div className="flex items-center gap-2 mb-3">
+                  <QrCode className={`w-4 h-4 ${mutedColor}`} />
+                  <span className={`text-xs font-medium uppercase tracking-wider ${labelColor}`}>
+                    QR Code
+                  </span>
                 </div>
-                <div className="flex gap-2">
-                  <a
-                    href={qrUrl}
-                    download={`QR-${asset.assetNumber}.png`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:bg-white/10 ${mutedColor}`}
-                    style={{ border: '1px solid rgba(255,255,255,0.15)' }}
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    Download
-                  </a>
-                  <button
-                    type="button"
-                    onClick={printQR}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:bg-white/10 ${mutedColor}`}
-                    style={{ border: '1px solid rgba(255,255,255,0.15)' }}
-                  >
-                    <Printer className="w-3.5 h-3.5" />
-                    Print
-                  </button>
+                <div className="space-y-3">
+                  <p className={`text-xs font-mono break-all ${mutedColor}`}>{asset.qrCodeData}</p>
+                  {/* Asset UUID */}
+                  <div>
+                    <span className={`text-xs ${labelColor}`}>UUID</span>
+                    <p className={`text-xs font-mono break-all ${mutedColor}`}>{asset.id}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <a
+                      href={qrUrl}
+                      download={`QR-${asset.assetNumber}.png`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:bg-white/10 ${mutedColor}`}
+                      style={{ border: '1px solid rgba(255,255,255,0.15)' }}
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      Download
+                    </a>
+                    <button
+                      type="button"
+                      onClick={printQR}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:bg-white/10 ${mutedColor}`}
+                      style={{ border: '1px solid rgba(255,255,255,0.15)' }}
+                    >
+                      <Printer className="w-3.5 h-3.5" />
+                      Print
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })()}
+            );
+          })()}
 
         {/* Notes */}
         {asset.notes && (
@@ -161,7 +166,6 @@ export const AssetOverviewTab = React.memo<AssetOverviewTabProps>(
             <p className={`text-sm mt-1 ${textColor}`}>{asset.notes}</p>
           </div>
         )}
-
       </div>
     );
   }

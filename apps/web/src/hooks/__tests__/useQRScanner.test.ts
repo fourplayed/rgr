@@ -12,13 +12,15 @@ class MockMediaStream {
 
   constructor() {
     // Create persistent tracks that will be returned every time
-    this.tracks = [{
-      stop: vi.fn(),
-      kind: 'video',
-      enabled: true,
-      readyState: 'live',
-      id: 'mock-video-track'
-    }];
+    this.tracks = [
+      {
+        stop: vi.fn(),
+        kind: 'video',
+        enabled: true,
+        readyState: 'live',
+        id: 'mock-video-track',
+      },
+    ];
   }
 
   getTracks() {
@@ -38,7 +40,9 @@ class MockMediaStream {
 
   addEventListener() {}
   removeEventListener() {}
-  dispatchEvent() { return true; }
+  dispatchEvent() {
+    return true;
+  }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -99,7 +103,8 @@ describe('useQRScanner', () => {
       navigator.mediaDevices.getUserMedia = vi.fn();
     }
 
-    getUserMediaSpy = vi.spyOn(navigator.mediaDevices, 'getUserMedia')
+    getUserMediaSpy = vi
+      .spyOn(navigator.mediaDevices, 'getUserMedia')
       .mockResolvedValue(mockMediaStream);
 
     // Mock document.querySelector for video element
@@ -147,9 +152,7 @@ describe('useQRScanner', () => {
   it('should handle camera permission denied', async () => {
     const { result } = renderHook(() => useQRScanner());
 
-    getUserMediaSpy.mockRejectedValue(
-      new Error('Permission denied')
-    );
+    getUserMediaSpy.mockRejectedValue(new Error('Permission denied'));
 
     await act(async () => {
       await result.current.startScanning('qr-reader');
@@ -319,7 +322,7 @@ describe('useQRScanner', () => {
     unmount();
 
     // Wait a tick for cleanup to run
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     // Verify track was stopped during cleanup
     expect(trackStopMock).toHaveBeenCalled();

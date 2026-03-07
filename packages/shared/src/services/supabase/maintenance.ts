@@ -7,7 +7,12 @@ import type {
   UpdateMaintenanceInput,
   MaintenanceRecordRow,
 } from '../../types/entities';
-import type { MaintenanceStatus, MaintenancePriority, MaintenanceType, AssetCategory } from '../../types/enums';
+import type {
+  MaintenanceStatus,
+  MaintenancePriority,
+  MaintenanceType,
+  AssetCategory,
+} from '../../types/enums';
 import {
   mapRowToMaintenanceRecord,
   mapMaintenanceToInsert,
@@ -15,7 +20,11 @@ import {
   CreateMaintenanceInputSchema,
   UpdateMaintenanceInputSchema,
 } from '../../types/entities/maintenanceRecord';
-import { MaintenanceTypeSchema, MaintenancePrioritySchema, MaintenanceStatusSchema } from '../../types/enums/MaintenanceEnums';
+import {
+  MaintenanceTypeSchema,
+  MaintenancePrioritySchema,
+  MaintenanceStatusSchema,
+} from '../../types/enums/MaintenanceEnums';
 import { AssetCategorySchema } from '../../types/enums/AssetEnums';
 import { safeParseEnum } from '../../utils/safeParseEnum';
 import { isValidUUID, isValidISOTimestamp } from '../../utils/constants';
@@ -90,12 +99,14 @@ export async function listMaintenance(
   // Fetch limit + 1 to detect if more pages exist
   let query = supabase
     .from('maintenance_records')
-    .select(`
+    .select(
+      `
       id, asset_id, title, description, priority, status, maintenance_type,
       scheduled_date, due_date, created_at,
       reporter:reported_by(full_name),
       asset:asset_id(asset_number, category)
-    `)
+    `
+    )
     .order('created_at', { ascending: false })
     .order('id', { ascending: false })
     .limit(limit + 1);
@@ -145,7 +156,7 @@ export async function listMaintenance(
     asset: { asset_number: string; category: string } | null;
   }
 
-  const rows = ((data || []) as unknown as MaintenanceListRow[]);
+  const rows = (data || []) as unknown as MaintenanceListRow[];
   const hasMore = rows.length > limit;
   const pageRows = hasMore ? rows.slice(0, limit) : rows;
 
@@ -180,24 +191,34 @@ export async function getMaintenanceById(
 
   const { data, error } = await supabase
     .from('maintenance_records')
-    .select(`
+    .select(
+      `
       *,
       reporter:reported_by(full_name),
       assignee:assigned_to(full_name),
       completer:completed_by(full_name)
-    `)
+    `
+    )
     .eq('id', id)
     .maybeSingle();
 
   if (error) {
-    return { success: false, data: null, error: `Failed to fetch maintenance record: ${error.message}` };
+    return {
+      success: false,
+      data: null,
+      error: `Failed to fetch maintenance record: ${error.message}`,
+    };
   }
 
   if (!data) {
     return { success: false, data: null, error: 'Maintenance record not found' };
   }
 
-  const { reporter, assignee, completer, ...maintenanceRow } = data as unknown as MaintenanceRowWithJoins & { assignee: { full_name: string } | null; completer: { full_name: string } | null };
+  const { reporter, assignee, completer, ...maintenanceRow } =
+    data as unknown as MaintenanceRowWithJoins & {
+      assignee: { full_name: string } | null;
+      completer: { full_name: string } | null;
+    };
   const record = mapRowToMaintenanceRecord(maintenanceRow as MaintenanceRecordRow);
 
   return {
@@ -222,7 +243,11 @@ export async function createMaintenance(
 ): Promise<ServiceResult<MaintenanceRecord>> {
   const parsed = CreateMaintenanceInputSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, data: null, error: parsed.error.errors[0]?.message ?? 'Invalid input' };
+    return {
+      success: false,
+      data: null,
+      error: parsed.error.errors[0]?.message ?? 'Invalid input',
+    };
   }
 
   const supabase = getSupabaseClient();
@@ -239,10 +264,18 @@ export async function createMaintenance(
     if (error.code === '23503') {
       return { success: false, data: null, error: 'Asset or user not found' };
     }
-    return { success: false, data: null, error: `Failed to create maintenance record: ${error.message}` };
+    return {
+      success: false,
+      data: null,
+      error: `Failed to create maintenance record: ${error.message}`,
+    };
   }
 
-  return { success: true, data: mapRowToMaintenanceRecord(data as MaintenanceRecordRow), error: null };
+  return {
+    success: true,
+    data: mapRowToMaintenanceRecord(data as MaintenanceRecordRow),
+    error: null,
+  };
 }
 
 // ── Update Maintenance Status ──
@@ -280,7 +313,9 @@ export async function updateMaintenanceStatus(
   }
 
   // Build update payload with auto-timestamps
-  const updates: { status: MaintenanceStatus; completed_at?: string; completed_by?: string } = { status: newStatus };
+  const updates: { status: MaintenanceStatus; completed_at?: string; completed_by?: string } = {
+    status: newStatus,
+  };
 
   if (newStatus === 'completed' && currentStatus === 'scheduled') {
     updates.completed_at = new Date().toISOString();
@@ -299,12 +334,20 @@ export async function updateMaintenanceStatus(
 
   if (error) {
     if (error.code === 'PGRST116') {
-      return { success: false, data: null, error: 'Status was changed by another request. Please refresh and try again.' };
+      return {
+        success: false,
+        data: null,
+        error: 'Status was changed by another request. Please refresh and try again.',
+      };
     }
     return { success: false, data: null, error: `Failed to update status: ${error.message}` };
   }
 
-  return { success: true, data: mapRowToMaintenanceRecord(data as MaintenanceRecordRow), error: null };
+  return {
+    success: true,
+    data: mapRowToMaintenanceRecord(data as MaintenanceRecordRow),
+    error: null,
+  };
 }
 
 // ── General Update ──
@@ -318,7 +361,11 @@ export async function updateMaintenance(
 ): Promise<ServiceResult<MaintenanceRecord>> {
   const parsed = UpdateMaintenanceInputSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, data: null, error: parsed.error.errors[0]?.message ?? 'Invalid input' };
+    return {
+      success: false,
+      data: null,
+      error: parsed.error.errors[0]?.message ?? 'Invalid input',
+    };
   }
 
   const supabase = getSupabaseClient();
@@ -336,10 +383,18 @@ export async function updateMaintenance(
     .single();
 
   if (error) {
-    return { success: false, data: null, error: `Failed to update maintenance record: ${error.message}` };
+    return {
+      success: false,
+      data: null,
+      error: `Failed to update maintenance record: ${error.message}`,
+    };
   }
 
-  return { success: true, data: mapRowToMaintenanceRecord(data as MaintenanceRecordRow), error: null };
+  return {
+    success: true,
+    data: mapRowToMaintenanceRecord(data as MaintenanceRecordRow),
+    error: null,
+  };
 }
 
 // ── Cancel (Delete) Maintenance Task ──
@@ -351,7 +406,12 @@ export async function updateMaintenance(
 export async function cancelMaintenanceTask(id: string): Promise<ServiceResult<void>> {
   const supabase = getSupabaseClient();
   const { error } = await supabase.rpc('cancel_maintenance_task', { p_maintenance_id: id });
-  if (error) return { success: false, data: null, error: `Failed to cancel maintenance task: ${error.message}` };
+  if (error)
+    return {
+      success: false,
+      data: null,
+      error: `Failed to cancel maintenance task: ${error.message}`,
+    };
   return { success: true, data: undefined, error: null };
 }
 
@@ -366,7 +426,11 @@ export async function getMaintenanceStats(): Promise<ServiceResult<MaintenanceSt
   const { data, error } = await supabase.rpc('get_maintenance_stats');
 
   if (error) {
-    return { success: false, data: null, error: `Failed to fetch maintenance stats: ${error.message}` };
+    return {
+      success: false,
+      data: null,
+      error: `Failed to fetch maintenance stats: ${error.message}`,
+    };
   }
 
   // RPC returns JSON with snake_case keys — use bracket access for index signature

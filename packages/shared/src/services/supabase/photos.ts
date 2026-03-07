@@ -21,7 +21,12 @@ import {
 } from '../../types/entities/photo';
 import { mapRowToFreightAnalysis } from '../../types/entities/freightAnalysis';
 import { mapRowToHazardAlert } from '../../types/entities/hazardAlert';
-import { MAX_PHOTO_SIZE_BYTES, STORAGE_BUCKETS, isValidUUID, isValidISOTimestamp } from '../../utils/constants';
+import {
+  MAX_PHOTO_SIZE_BYTES,
+  STORAGE_BUCKETS,
+  isValidUUID,
+  isValidISOTimestamp,
+} from '../../utils/constants';
 
 /**
  * Generate a unique ID for filenames.
@@ -77,12 +82,23 @@ export interface UploadPhotoOptions {
  * Upload a photo to Supabase storage and create a database record.
  * Storage path: photos/{assetId}/{timestamp}_{uuid}.jpg
  */
-export async function uploadPhoto(
-  options: UploadPhotoOptions
-): Promise<ServiceResult<Photo>> {
-  const { assetId, scanEventId, uploadedBy, photoType, fileUri, mimeType = 'image/jpeg', locationDescription, latitude, longitude, width, height, thumbnailFileUri } = options;
+export async function uploadPhoto(options: UploadPhotoOptions): Promise<ServiceResult<Photo>> {
+  const {
+    assetId,
+    scanEventId,
+    uploadedBy,
+    photoType,
+    fileUri,
+    mimeType = 'image/jpeg',
+    locationDescription,
+    latitude,
+    longitude,
+    width,
+    height,
+    thumbnailFileUri,
+  } = options;
 
-  if (!SUPPORTED_IMAGE_TYPES.includes(mimeType as typeof SUPPORTED_IMAGE_TYPES[number])) {
+  if (!SUPPORTED_IMAGE_TYPES.includes(mimeType as (typeof SUPPORTED_IMAGE_TYPES)[number])) {
     return { success: false, data: null, error: `Unsupported image type: ${mimeType}` };
   }
 
@@ -107,7 +123,11 @@ export async function uploadPhoto(
 
     // Validate file size before uploading
     if (arrayBuffer.byteLength > MAX_PHOTO_SIZE_BYTES) {
-      return { success: false, data: null, error: `Photo exceeds maximum size of ${MAX_PHOTO_SIZE_BYTES / (1024 * 1024)}MB` };
+      return {
+        success: false,
+        data: null,
+        error: `Photo exceeds maximum size of ${MAX_PHOTO_SIZE_BYTES / (1024 * 1024)}MB`,
+      };
     }
 
     // Convert to Uint8Array for Supabase upload
@@ -115,22 +135,29 @@ export async function uploadPhoto(
 
     // Upload to Supabase storage with retry for transient network failures
     const { error: uploadError } = await withRetry(
-      () => supabase.storage
-        .from(STORAGE_BUCKETS.photos)
-        .upload(storagePath, uint8Array, {
-          contentType: mimeType,
-          cacheControl: '3600',
-          upsert: false,
-        })
-        .then((result) => {
-          if (result.error) throw result.error;
-          return result;
-        }),
-      { maxAttempts: 3, baseDelayMs: 1000 },
-    ).then(() => ({ error: null })).catch((err) => ({ error: err as Error }));
+      () =>
+        supabase.storage
+          .from(STORAGE_BUCKETS.photos)
+          .upload(storagePath, uint8Array, {
+            contentType: mimeType,
+            cacheControl: '3600',
+            upsert: false,
+          })
+          .then((result) => {
+            if (result.error) throw result.error;
+            return result;
+          }),
+      { maxAttempts: 3, baseDelayMs: 1000 }
+    )
+      .then(() => ({ error: null }))
+      .catch((err) => ({ error: err as Error }));
 
     if (uploadError) {
-      return { success: false, data: null, error: `Failed to upload photo: ${uploadError.message}` };
+      return {
+        success: false,
+        data: null,
+        error: `Failed to upload photo: ${uploadError.message}`,
+      };
     }
 
     // Get file size from array buffer
@@ -191,18 +218,22 @@ export async function uploadPhoto(
       try {
         await supabase.storage.from(STORAGE_BUCKETS.photos).remove(pathsToRemove);
       } catch (cleanupError) {
-        console.error('[photos] Failed to clean up orphaned storage files:', pathsToRemove, cleanupError);
+        console.error(
+          '[photos] Failed to clean up orphaned storage files:',
+          pathsToRemove,
+          cleanupError
+        );
       }
-      return { success: false, data: null, error: parsed.error.errors[0]?.message ?? 'Invalid input' };
+      return {
+        success: false,
+        data: null,
+        error: parsed.error.errors[0]?.message ?? 'Invalid input',
+      };
     }
 
     const dbData = mapPhotoToInsert(parsed.data as CreatePhotoInput);
 
-    const { data, error: dbError } = await supabase
-      .from('photos')
-      .insert(dbData)
-      .select()
-      .single();
+    const { data, error: dbError } = await supabase.from('photos').insert(dbData).select().single();
 
     if (dbError) {
       // Cleanup uploaded files on database failure
@@ -211,9 +242,17 @@ export async function uploadPhoto(
       try {
         await supabase.storage.from(STORAGE_BUCKETS.photos).remove(pathsToRemove);
       } catch (cleanupError) {
-        console.error('[photos] Failed to clean up orphaned storage files:', pathsToRemove, cleanupError);
+        console.error(
+          '[photos] Failed to clean up orphaned storage files:',
+          pathsToRemove,
+          cleanupError
+        );
       }
-      return { success: false, data: null, error: `Failed to create photo record: ${dbError.message}` };
+      return {
+        success: false,
+        data: null,
+        error: `Failed to create photo record: ${dbError.message}`,
+      };
     }
 
     return { success: true, data: mapRowToPhoto(data as PhotoRow), error: null };
@@ -258,7 +297,8 @@ export async function getAssetPhotos(
   // Build query with specific columns (excluding raw_response)
   let query = supabase
     .from('photos')
-    .select(`
+    .select(
+      `
       id,
       storage_path,
       thumbnail_path,
@@ -272,7 +312,8 @@ export async function getAssetPhotos(
         requires_acknowledgment,
         blocked_from_departure
       )
-    `)
+    `
+    )
     .eq('asset_id', assetId)
     .order('created_at', { ascending: false })
     .order('id', { ascending: false })
@@ -330,7 +371,8 @@ export async function getPhotosByScanEventId(
 
   const { data, error } = await supabase
     .from('photos')
-    .select(`
+    .select(
+      `
       id,
       storage_path,
       thumbnail_path,
@@ -344,7 +386,8 @@ export async function getPhotosByScanEventId(
         requires_acknowledgment,
         blocked_from_departure
       )
-    `)
+    `
+    )
     .eq('scan_event_id', scanEventId)
     .order('created_at', { ascending: false });
 
@@ -378,16 +421,15 @@ export async function getPhotosByScanEventId(
 /**
  * Get a single photo by ID with full analysis data including hazard alerts.
  */
-export async function getPhotoById(
-  photoId: string
-): Promise<ServiceResult<PhotoWithAnalysis>> {
+export async function getPhotoById(photoId: string): Promise<ServiceResult<PhotoWithAnalysis>> {
   const supabase = getSupabaseClient();
 
   // Fetch photo with freight analysis and hazard alerts in parallel
   const [photoResult, alertsResult] = await Promise.all([
     supabase
       .from('photos')
-      .select(`
+      .select(
+        `
         *,
         freight_analysis!left(
           id,
@@ -410,7 +452,8 @@ export async function getPhotoById(
           created_at,
           updated_at
         )
-      `)
+      `
+      )
       .eq('id', photoId)
       .maybeSingle(),
     supabase
@@ -421,7 +464,11 @@ export async function getPhotoById(
   ]);
 
   if (photoResult.error) {
-    return { success: false, data: null, error: `Failed to fetch photo: ${photoResult.error.message}` };
+    return {
+      success: false,
+      data: null,
+      error: `Failed to fetch photo: ${photoResult.error.message}`,
+    };
   }
 
   if (!photoResult.data) {
@@ -429,7 +476,7 @@ export async function getPhotoById(
   }
 
   interface PhotoWithAnalysisRow extends PhotoRow {
-    freight_analysis: Omit<FreightAnalysisRow, 'raw_response'> & { raw_response?: never } | null;
+    freight_analysis: (Omit<FreightAnalysisRow, 'raw_response'> & { raw_response?: never }) | null;
   }
 
   const row = photoResult.data as unknown as PhotoWithAnalysisRow;
@@ -446,7 +493,9 @@ export async function getPhotoById(
     } as FreightAnalysisRow);
 
     if (!alertsResult.error && alertsResult.data) {
-      hazardAlerts = alertsResult.data.map((alertRow: HazardAlertRow) => mapRowToHazardAlert(alertRow));
+      hazardAlerts = alertsResult.data.map((alertRow: HazardAlertRow) =>
+        mapRowToHazardAlert(alertRow)
+      );
     }
   }
 
@@ -464,9 +513,7 @@ export async function getPhotoById(
 /**
  * Delete a photo from storage and database.
  */
-export async function deletePhoto(
-  photoId: string
-): Promise<ServiceResult<void>> {
+export async function deletePhoto(photoId: string): Promise<ServiceResult<void>> {
   const supabase = getSupabaseClient();
 
   // Delete from database and retrieve storage paths in a single query
@@ -543,10 +590,7 @@ export async function bulkDeletePhotos(
     // 2. Delete from database FIRST (cascades to freight_analysis and hazard_alerts via FK)
     // If this fails, we return early without touching storage — no orphaned references.
     const foundIds = photos.map((p) => p.id);
-    const { error: dbError } = await supabase
-      .from('photos')
-      .delete()
-      .in('id', foundIds);
+    const { error: dbError } = await supabase.from('photos').delete().in('id', foundIds);
 
     if (dbError) {
       return { success: false, data: null, error: `Failed to delete photos: ${dbError.message}` };
@@ -583,22 +627,20 @@ export async function bulkDeletePhotos(
  * Useful when the file is uploaded separately (e.g., web direct upload).
  * Validates input with Zod and maps to database row format.
  */
-export async function createPhotoRecord(
-  input: CreatePhotoInput
-): Promise<ServiceResult<Photo>> {
+export async function createPhotoRecord(input: CreatePhotoInput): Promise<ServiceResult<Photo>> {
   const parsed = CreatePhotoInputSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, data: null, error: parsed.error.errors[0]?.message ?? 'Invalid input' };
+    return {
+      success: false,
+      data: null,
+      error: parsed.error.errors[0]?.message ?? 'Invalid input',
+    };
   }
 
   const supabase = getSupabaseClient();
   const dbData = mapPhotoToInsert(parsed.data as CreatePhotoInput);
 
-  const { data, error } = await supabase
-    .from('photos')
-    .insert(dbData)
-    .select()
-    .single();
+  const { data, error } = await supabase.from('photos').insert(dbData).select().single();
 
   if (error) {
     return { success: false, data: null, error: `Failed to create photo record: ${error.message}` };
@@ -648,7 +690,11 @@ export async function getSignedUrls(
     .createSignedUrls(storagePaths, expiresIn);
 
   if (error) {
-    return { success: false, data: null, error: `Failed to generate signed URLs: ${error.message}` };
+    return {
+      success: false,
+      data: null,
+      error: `Failed to generate signed URLs: ${error.message}`,
+    };
   }
 
   const urlMap: Record<string, string> = {};

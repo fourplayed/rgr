@@ -2,9 +2,7 @@ import { NavLink } from 'react-router-dom';
 import { ScanLine, LogOut } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 
-const navigation = [
-  { name: 'Scan Assets', href: '/scan', icon: ScanLine },
-];
+const navigation = [{ name: 'Scan Assets', href: '/scan', icon: ScanLine }];
 
 export default function Sidebar() {
   const { user, logout } = useAuthStore();

@@ -51,14 +51,14 @@ export const CONTENT_PANEL_STYLES = {
  */
 export const NAV_LINK_COLORS = {
   dark: {
-    default: '#ffffff',                      // white
-    hover: '#ffffff',                        // white
-    active: '#ffffff',                       // white
+    default: '#ffffff', // white
+    hover: '#ffffff', // white
+    active: '#ffffff', // white
   },
   light: {
-    default: '#ffffff',                      // white
-    hover: '#ffffff',                        // white
-    active: '#ffffff',                       // white
+    default: '#ffffff', // white
+    hover: '#ffffff', // white
+    active: '#ffffff', // white
   },
 } as const;
 

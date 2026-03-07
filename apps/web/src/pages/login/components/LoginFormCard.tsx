@@ -47,8 +47,7 @@ export function LoginFormCard({
   const isLoading = status === 'loading';
   const [isButtonHovered, setIsButtonHovered] = useState(false);
 
-  const sleep = (ms: number): Promise<void> =>
-    new Promise((resolve) => setTimeout(resolve, ms));
+  const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
   const runWorkflow = useCallback(async () => {
     const steps: WorkflowStep[] = [];
@@ -175,35 +174,38 @@ export function LoginFormCard({
   // The workflow runs purely as a visual animation in the dev-tools panel.
   // handleSubmit is called but we let the workflow complete independently --
   // navigation or errors from handleSubmit must NOT clear the workflow steps.
-  const handleFormSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
+  const handleFormSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
 
-    // Only start workflow if credentials are provided
-    if (!formData.email || !formData.password) {
+      // Only start workflow if credentials are provided
+      if (!formData.email || !formData.password) {
+        handleSubmit(e);
+        return;
+      }
+
+      // Start workflow animation (runs independently, ~4 seconds)
+      runWorkflow();
+
+      // Kick off the actual login (may succeed/fail before workflow finishes)
       handleSubmit(e);
-      return;
-    }
-
-    // Start workflow animation (runs independently, ~4 seconds)
-    runWorkflow();
-
-    // Kick off the actual login (may succeed/fail before workflow finishes)
-    handleSubmit(e);
-  }, [handleSubmit, runWorkflow, formData.email, formData.password]);
+    },
+    [handleSubmit, runWorkflow, formData.email, formData.password]
+  );
 
   const textColor = isDark ? 'text-slate-200' : 'text-white';
   const linkColor = isDark ? 'text-white/90 hover:text-white' : 'text-white/90 hover:text-white';
 
   return (
     <div style={isDark ? CARD_STYLES.dark : CARD_STYLES.light}>
-        <form
-          id="login-form"
-          onSubmit={handleFormSubmit}
-          aria-label={LOGIN_CONSTANTS.UI.FORM_LABEL}
-          className="flex flex-col gap-4"
-          style={{ minHeight: '200px', marginTop: '15px' }}
-          noValidate
-        >
+      <form
+        id="login-form"
+        onSubmit={handleFormSubmit}
+        aria-label={LOGIN_CONSTANTS.UI.FORM_LABEL}
+        className="flex flex-col gap-4"
+        style={{ minHeight: '200px', marginTop: '15px' }}
+        noValidate
+      >
         {isLoading && (
           <div className="sr-only" aria-live="assertive" role="status">
             {LOGIN_CONSTANTS.UI.LOADING_TEXT}
@@ -249,7 +251,7 @@ export function LoginFormCard({
               onChange={(e) => setRememberMe(e.target.checked)}
               className="h-4 w-4 border-gray-300 rounded cursor-pointer"
               style={{
-                accentColor: isDark ? '#1e3a8a' : '#0000CC'
+                accentColor: isDark ? '#1e3a8a' : '#0000CC',
               }}
               aria-label={LOGIN_CONSTANTS.UI.REMEMBER_ME_LABEL}
             />
@@ -419,12 +421,7 @@ export function LoginFormCard({
           `}
         >
           <span className="chrome-button-content">
-            {!isLoading && (
-              <AnimatedSignInIcon
-                isHovered={isButtonHovered}
-                size={24}
-              />
-            )}
+            {!isLoading && <AnimatedSignInIcon isHovered={isButtonHovered} size={24} />}
             <span className="chrome-button-text">
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2.5">

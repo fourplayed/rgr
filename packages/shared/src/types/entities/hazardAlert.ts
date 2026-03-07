@@ -119,7 +119,10 @@ export function mapRowToHazardAlert(row: HazardAlertRow): HazardAlert {
     acknowledgmentType: row.acknowledgment_type,
     managerReviewBy: row.manager_review_by,
     managerReviewAt: row.manager_review_at,
-    reviewOutcome: row.review_outcome == null ? null : safeParseEnum(ReviewOutcomeSchema, row.review_outcome, null),
+    reviewOutcome:
+      row.review_outcome == null
+        ? null
+        : safeParseEnum(ReviewOutcomeSchema, row.review_outcome, null),
     reviewNotes: row.review_notes,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -128,15 +131,14 @@ export function mapRowToHazardAlert(row: HazardAlertRow): HazardAlert {
 
 export type HazardAlertUpdateRow = Partial<Omit<HazardAlertRow, 'id' | 'created_at'>>;
 
-export function mapHazardAlertToUpdate(
-  input: UpdateHazardAlertInput
-): HazardAlertUpdateRow {
+export function mapHazardAlertToUpdate(input: UpdateHazardAlertInput): HazardAlertUpdateRow {
   const updates: HazardAlertUpdateRow = {};
 
   if (input.status !== undefined) updates['status'] = input.status;
   if (input.acknowledgedBy !== undefined) updates['acknowledged_by'] = input.acknowledgedBy;
   if (input.acknowledgedAt !== undefined) updates['acknowledged_at'] = input.acknowledgedAt;
-  if (input.acknowledgmentType !== undefined) updates['acknowledgment_type'] = input.acknowledgmentType;
+  if (input.acknowledgmentType !== undefined)
+    updates['acknowledgment_type'] = input.acknowledgmentType;
   if (input.managerReviewBy !== undefined) updates['manager_review_by'] = input.managerReviewBy;
   if (input.managerReviewAt !== undefined) updates['manager_review_at'] = input.managerReviewAt;
   if (input.reviewOutcome !== undefined) updates['review_outcome'] = input.reviewOutcome;

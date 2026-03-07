@@ -31,8 +31,20 @@ const mockSupabase = {
         order: vi.fn(() => ({
           limit: vi.fn(() => ({
             data: [
-              { id: 'asset-1', asset_number: 'TL001', category: 'trailer', subtype: 'flattop', status: 'serviced' },
-              { id: 'asset-2', asset_number: 'TL002', category: 'trailer', subtype: 'dropdeck', status: 'serviced' },
+              {
+                id: 'asset-1',
+                asset_number: 'TL001',
+                category: 'trailer',
+                subtype: 'flattop',
+                status: 'serviced',
+              },
+              {
+                id: 'asset-2',
+                asset_number: 'TL002',
+                category: 'trailer',
+                subtype: 'dropdeck',
+                status: 'serviced',
+              },
             ],
             error: null,
           })),
@@ -130,13 +142,16 @@ function createMockFile(
 
   // Mock slice().arrayBuffer() for magic bytes validation
   // JPEG magic bytes: 0xFF, 0xD8, 0xFF
-  const jpegMagicBytes = new Uint8Array([0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, 0x01]);
-  const pngMagicBytes = new Uint8Array([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
-  const webpMagicBytes = new Uint8Array([0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50]);
+  const jpegMagicBytes = new Uint8Array([
+    0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01,
+  ]);
+  const pngMagicBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  const webpMagicBytes = new Uint8Array([
+    0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50,
+  ]);
 
-  const magicBytes = type === 'image/png' ? pngMagicBytes
-    : type === 'image/webp' ? webpMagicBytes
-    : jpegMagicBytes;
+  const magicBytes =
+    type === 'image/png' ? pngMagicBytes : type === 'image/webp' ? webpMagicBytes : jpegMagicBytes;
 
   const originalSlice = file.slice.bind(file);
   file.slice = (...args: Parameters<typeof file.slice>) => {
@@ -167,7 +182,13 @@ function setupSuccessfulUploadMocks(analysisResult: Partial<AnalysisResult> = {}
         order: vi.fn(() => ({
           limit: vi.fn(() => ({
             data: [
-              { id: 'asset-1', asset_number: 'TL001', category: 'trailer', subtype: 'flattop', status: 'serviced' },
+              {
+                id: 'asset-1',
+                asset_number: 'TL001',
+                category: 'trailer',
+                subtype: 'flattop',
+                status: 'serviced',
+              },
             ],
             error: null,
           })),
@@ -258,7 +279,13 @@ function setupAnalysisFailureMocks() {
         order: vi.fn(() => ({
           limit: vi.fn(() => ({
             data: [
-              { id: 'asset-1', asset_number: 'TL001', category: 'trailer', subtype: 'flattop', status: 'serviced' },
+              {
+                id: 'asset-1',
+                asset_number: 'TL001',
+                category: 'trailer',
+                subtype: 'flattop',
+                status: 'serviced',
+              },
             ],
             error: null,
           })),

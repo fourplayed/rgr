@@ -122,12 +122,7 @@ interface OverlayPanelProps {
  * Uses inline styles for dynamic positioning (Tailwind JIT requires static classes)
  */
 const OverlayPanel = memo(function OverlayPanel({ style }: OverlayPanelProps): ReactElement {
-  return (
-    <div
-      className="absolute bg-black/50"
-      style={style}
-    />
-  );
+  return <div className="absolute bg-black/50" style={style} />;
 });
 
 OverlayPanel.displayName = 'OverlayPanel';
@@ -226,7 +221,10 @@ interface StatusMessageProps {
 /**
  * Status message displayed at the bottom of the overlay
  */
-const StatusMessage = memo(function StatusMessage({ status, message }: StatusMessageProps): ReactElement {
+const StatusMessage = memo(function StatusMessage({
+  status,
+  message,
+}: StatusMessageProps): ReactElement {
   const messageStyle = MESSAGE_STYLES[status];
 
   return (
@@ -302,7 +300,11 @@ function calculatePanelDimensions(): PanelDimensions {
  * @param message - Optional status message to display
  * @param className - Additional CSS classes for the container
  */
-export default function ScanOverlay({ status, message, className = '' }: ScanOverlayProps): ReactElement {
+export default function ScanOverlay({
+  status,
+  message,
+  className = '',
+}: ScanOverlayProps): ReactElement {
   const panelDimensions = useMemo(calculatePanelDimensions, []);
 
   return (
@@ -336,7 +338,9 @@ interface SimpleScanFrameProps {
  * Displays just the scan frame with corner brackets and scanning animation,
  * without the full overlay system.
  */
-export const SimpleScanFrame = memo(function SimpleScanFrame({ className = '' }: SimpleScanFrameProps): ReactElement {
+export const SimpleScanFrame = memo(function SimpleScanFrame({
+  className = '',
+}: SimpleScanFrameProps): ReactElement {
   const frameStyle: CSSProperties = {
     width: CONFIG.SIMPLE_FRAME_SIZE,
     height: CONFIG.SIMPLE_FRAME_SIZE,

@@ -23,14 +23,16 @@ function ErrorFallback({ error, onRetry }: ErrorFallbackProps): ReactNode {
         <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
           <AlertTriangle className="w-8 h-8 text-red-600" aria-hidden="true" />
         </div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">
-          Something went wrong
-        </h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Something went wrong</h3>
         <p className="text-sm text-gray-500 mb-4">
           {error?.message || 'An unexpected error occurred while loading the camera permission UI.'}
         </p>
         {onRetry && (
-          <Button onClick={onRetry} variant="secondary" aria-label="Retry loading camera permission">
+          <Button
+            onClick={onRetry}
+            variant="secondary"
+            aria-label="Retry loading camera permission"
+          >
             Try Again
           </Button>
         )}
@@ -95,21 +97,24 @@ const STATUS_CONFIG: Record<PermissionState, StatusConfig> = {
     iconBgColor: 'bg-red-100',
     iconColor: 'text-red-600',
     title: 'Camera Access Denied',
-    description: 'Camera permission was denied. To enable scanning, please allow camera access in your browser settings.',
+    description:
+      'Camera permission was denied. To enable scanning, please allow camera access in your browser settings.',
   },
   unavailable: {
     icon: AlertTriangle,
     iconBgColor: 'bg-yellow-100',
     iconColor: 'text-yellow-600',
     title: 'Camera Not Available',
-    description: 'Your device doesn\'t support camera access, or the camera is being used by another application.',
+    description:
+      "Your device doesn't support camera access, or the camera is being used by another application.",
   },
   prompt: {
     icon: Camera,
     iconBgColor: 'bg-primary-100',
     iconColor: 'text-primary-600',
     title: 'Camera Access Required',
-    description: 'To scan QR codes on fleet assets, we need access to your device\'s camera. Your camera feed is processed locally and never uploaded.',
+    description:
+      "To scan QR codes on fleet assets, we need access to your device's camera. Your camera feed is processed locally and never uploaded.",
   },
 };
 
@@ -125,7 +130,11 @@ interface StatusIconProps {
 
 const StatusIcon = memo(function StatusIcon({ icon: Icon, bgColor, iconColor }: StatusIconProps) {
   return (
-    <div className={`mx-auto w-16 h-16 ${bgColor} rounded-full flex items-center justify-center mb-4`} role="img" aria-hidden="true">
+    <div
+      className={`mx-auto w-16 h-16 ${bgColor} rounded-full flex items-center justify-center mb-4`}
+      role="img"
+      aria-hidden="true"
+    >
       <Icon className={`w-8 h-8 ${iconColor}`} />
     </div>
   );
@@ -137,7 +146,11 @@ const StatusIcon = memo(function StatusIcon({ icon: Icon, bgColor, iconColor }: 
  */
 const BrowserInstructions = memo(function BrowserInstructions() {
   return (
-    <div className="bg-gray-50 rounded-lg p-4 text-left mb-4" role="region" aria-label="Browser instructions">
+    <div
+      className="bg-gray-50 rounded-lg p-4 text-left mb-4"
+      role="region"
+      aria-label="Browser instructions"
+    >
       <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
         <Settings className="w-4 h-4 mr-2" aria-hidden="true" />
         How to enable camera access:
@@ -162,7 +175,8 @@ const HttpsNotice = memo(function HttpsNotice() {
   return (
     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4" role="alert">
       <p className="text-sm text-yellow-800">
-        <strong>Note:</strong> Camera access requires HTTPS. Make sure you're accessing this page via a secure connection.
+        <strong>Note:</strong> Camera access requires HTTPS. Make sure you're accessing this page
+        via a secure connection.
       </p>
     </div>
   );
@@ -178,7 +192,12 @@ interface ActionButtonsProps {
   isLoading?: boolean;
 }
 
-const ActionButtons = memo(function ActionButtons({ status, onRequestPermission, onUseFallback, isLoading }: ActionButtonsProps) {
+const ActionButtons = memo(function ActionButtons({
+  status,
+  onRequestPermission,
+  onUseFallback,
+  isLoading,
+}: ActionButtonsProps) {
   const showTryAgain = status === 'denied';
   const showRequestPermission = status === 'prompt';
   const showManualEntry = status !== 'granted' && onUseFallback;
@@ -188,7 +207,11 @@ const ActionButtons = memo(function ActionButtons({ status, onRequestPermission,
   }
 
   return (
-    <div className="flex flex-col sm:flex-row gap-3 justify-center" role="group" aria-label="Camera actions">
+    <div
+      className="flex flex-col sm:flex-row gap-3 justify-center"
+      role="group"
+      aria-label="Camera actions"
+    >
       {showTryAgain && (
         <Button onClick={onRequestPermission} aria-label="Try camera access again">
           <Camera className="w-4 h-4 mr-2" aria-hidden="true" />
@@ -196,13 +219,21 @@ const ActionButtons = memo(function ActionButtons({ status, onRequestPermission,
         </Button>
       )}
       {showRequestPermission && (
-        <Button onClick={onRequestPermission} {...(isLoading !== undefined ? { isLoading } : {})} aria-label="Request camera access">
+        <Button
+          onClick={onRequestPermission}
+          {...(isLoading !== undefined ? { isLoading } : {})}
+          aria-label="Request camera access"
+        >
           <Camera className="w-4 h-4 mr-2" aria-hidden="true" />
           Allow Camera Access
         </Button>
       )}
       {showManualEntry && (
-        <Button variant="secondary" onClick={onUseFallback} aria-label="Enter code manually as alternative">
+        <Button
+          variant="secondary"
+          onClick={onUseFallback}
+          aria-label="Enter code manually as alternative"
+        >
           Enter Code Manually
         </Button>
       )}
@@ -244,7 +275,10 @@ export default function CameraPermission({
         </p>
 
         {errorDetails && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 text-left" role="alert">
+          <div
+            className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 text-left"
+            role="alert"
+          >
             <p className="text-sm text-red-700">
               <strong>Error:</strong> {errorDetails}
             </p>
@@ -313,7 +347,11 @@ const BADGE_CONFIG: Record<PermissionState, BadgeConfig> = {
  * Displays current camera permission state as a badge
  * Memoized to prevent unnecessary re-renders
  */
-export const PermissionBadge = memo(function PermissionBadge({ status }: { status: PermissionState }) {
+export const PermissionBadge = memo(function PermissionBadge({
+  status,
+}: {
+  status: PermissionState;
+}) {
   const config = BADGE_CONFIG[status] || BADGE_CONFIG.prompt;
   const Icon = config.icon;
 

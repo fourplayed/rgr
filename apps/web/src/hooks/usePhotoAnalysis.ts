@@ -82,10 +82,10 @@ const BUCKET_ORIGINAL = 'photos-original';
  */
 const IMAGE_MAGIC_BYTES: Record<string, number[][]> = {
   'image/jpeg': [
-    [0xFF, 0xD8, 0xFF], // JPEG/JFIF
+    [0xff, 0xd8, 0xff], // JPEG/JFIF
   ],
   'image/png': [
-    [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A], // PNG
+    [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], // PNG
   ],
   'image/gif': [
     [0x47, 0x49, 0x46, 0x38, 0x37, 0x61], // GIF87a
@@ -95,7 +95,7 @@ const IMAGE_MAGIC_BYTES: Record<string, number[][]> = {
     [0x52, 0x49, 0x46, 0x46], // RIFF (first 4 bytes, WEBP at offset 8-11)
   ],
   'image/bmp': [
-    [0x42, 0x4D], // BM
+    [0x42, 0x4d], // BM
   ],
 };
 
@@ -120,10 +120,15 @@ const ALLOWED_MIME_TYPES = new Set([
  * @param file - The file to validate
  * @returns validation result with valid flag, detected type, and error message
  */
-async function validateImageContent(file: File): Promise<{ valid: boolean; detectedType?: string; error?: string }> {
+async function validateImageContent(
+  file: File
+): Promise<{ valid: boolean; detectedType?: string; error?: string }> {
   // Check declared MIME type first
   if (!ALLOWED_MIME_TYPES.has(file.type)) {
-    return { valid: false, error: `File type '${file.type}' is not allowed. Please upload a JPEG, PNG, GIF, WebP, or BMP image.` };
+    return {
+      valid: false,
+      error: `File type '${file.type}' is not allowed. Please upload a JPEG, PNG, GIF, WebP, or BMP image.`,
+    };
   }
 
   // Read the first 12 bytes to check magic bytes
@@ -150,7 +155,8 @@ async function validateImageContent(file: File): Promise<{ valid: boolean; detec
   // If we reach here, the file content doesn't match any known image format
   return {
     valid: false,
-    error: 'File content does not match a valid image format. The file may be corrupted or not a genuine image.'
+    error:
+      'File content does not match a valid image format. The file may be corrupted or not a genuine image.',
   };
 }
 
@@ -223,190 +229,205 @@ export function usePhotoAnalysis(): UsePhotoAnalysisResult {
   const [result, setResult] = useState<AnalysisResult | null>(null);
 
   // Analyze photo
-  const analyzePhoto = useCallback(async (file: File, assetId?: string) => {
-    setStatus('uploading');
-    setProgress(5);
-    setError(null);
-    setResult(null);
+  const analyzePhoto = useCallback(
+    async (file: File, assetId?: string) => {
+      setStatus('uploading');
+      setProgress(5);
+      setError(null);
+      setResult(null);
 
-    const startTime = Date.now();
+      const startTime = Date.now();
 
-    try {
-      // Validate file content (magic bytes) before proceeding
-      const validation = await validateImageContent(file);
-      if (!validation.valid) {
-        throw new Error(validation.error || 'Invalid file type');
-      }
-
-      setProgress(10);
-
-      if (!user) {
-        throw new Error('Please sign in to analyze photos');
-      }
-      const supabase = getSupabaseClient();
-
-      setProgress(20);
-
-      // Compress image for upload
-      let compressedBlob: Blob;
       try {
-        compressedBlob = await compressImage(file);
-      } catch {
-        // If compression fails, use original file
-        compressedBlob = file;
-      }
+        // Validate file content (magic bytes) before proceeding
+        const validation = await validateImageContent(file);
+        if (!validation.valid) {
+          throw new Error(validation.error || 'Invalid file type');
+        }
 
-      setProgress(30);
+        setProgress(10);
 
-      // Generate storage path
-      const storagePath = generateFilePath(user.id, file.name);
+        if (!user) {
+          throw new Error('Please sign in to analyze photos');
+        }
+        const supabase = getSupabaseClient();
 
-      // Upload compressed and original images in parallel for better performance
-      // Only fail if compressed upload fails (original is optional for quality reference)
-      const uploadPromises = [
-        // Compressed upload - required
-        supabase.storage
-          .from(BUCKET_COMPRESSED)
-          .upload(storagePath, compressedBlob, {
+        setProgress(20);
+
+        // Compress image for upload
+        let compressedBlob: Blob;
+        try {
+          compressedBlob = await compressImage(file);
+        } catch {
+          // If compression fails, use original file
+          compressedBlob = file;
+        }
+
+        setProgress(30);
+
+        // Generate storage path
+        const storagePath = generateFilePath(user.id, file.name);
+
+        // Upload compressed and original images in parallel for better performance
+        // Only fail if compressed upload fails (original is optional for quality reference)
+        const uploadPromises = [
+          // Compressed upload - required
+          supabase.storage.from(BUCKET_COMPRESSED).upload(storagePath, compressedBlob, {
             contentType: 'image/jpeg',
             cacheControl: '3600',
           }),
-        // Original upload - optional (for quality reference)
-        supabase.storage
-          .from(BUCKET_ORIGINAL)
-          .upload(storagePath, file, {
+          // Original upload - optional (for quality reference)
+          supabase.storage.from(BUCKET_ORIGINAL).upload(storagePath, file, {
             contentType: file.type,
             cacheControl: '3600',
           }),
-      ];
+        ];
 
-      const results = await Promise.allSettled(uploadPromises);
-      const compressedResult = results[0];
-      const originalResult = results[1];
+        const results = await Promise.allSettled(uploadPromises);
+        const compressedResult = results[0];
+        const originalResult = results[1];
 
-      // Check compressed upload result - this is required
-      if (!compressedResult || compressedResult.status === 'rejected') {
-        console.error('Compressed upload error:', compressedResult?.reason);
-        throw new Error('Failed to upload photo. Please try again.');
-      }
+        // Check compressed upload result - this is required
+        if (!compressedResult || compressedResult.status === 'rejected') {
+          console.error('Compressed upload error:', compressedResult?.reason);
+          throw new Error('Failed to upload photo. Please try again.');
+        }
 
-      // Check if compressed upload had a Supabase error
-      const compressedData = compressedResult.value;
-      if (compressedData.error) {
-        console.error('Compressed upload error:', compressedData.error);
-        throw new Error('Failed to upload photo. Please try again.');
-      }
+        // Check if compressed upload had a Supabase error
+        const compressedData = compressedResult.value;
+        if (compressedData.error) {
+          console.error('Compressed upload error:', compressedData.error);
+          throw new Error('Failed to upload photo. Please try again.');
+        }
 
-      // Original upload is optional - log warning if it failed but don't throw
-      if (!originalResult || originalResult.status === 'rejected') {
-        console.warn('Original photo upload failed (non-critical):', originalResult?.reason);
-      } else if (originalResult.value.error) {
-        console.warn('Original photo upload failed (non-critical):', originalResult.value.error);
-      }
+        // Original upload is optional - log warning if it failed but don't throw
+        if (!originalResult || originalResult.status === 'rejected') {
+          console.warn('Original photo upload failed (non-critical):', originalResult?.reason);
+        } else if (originalResult.value.error) {
+          console.warn('Original photo upload failed (non-critical):', originalResult.value.error);
+        }
 
-      setProgress(60);
+        setProgress(60);
 
-      // Create photo record in database via shared service
-      const photoResult = await createPhotoRecord({
-        assetId: assetId || null,
-        uploadedBy: user.id,
-        photoType: 'freight',
-        storagePath,
-        thumbnailPath: storagePath,
-        filename: file.name,
-        fileSize: compressedBlob.size,
-      });
+        // Create photo record in database via shared service
+        const photoResult = await createPhotoRecord({
+          assetId: assetId || null,
+          uploadedBy: user.id,
+          photoType: 'freight',
+          storagePath,
+          thumbnailPath: storagePath,
+          filename: file.name,
+          fileSize: compressedBlob.size,
+        });
 
-      if (!photoResult.success) {
-        console.error('Photo record error:', photoResult.error);
-        throw new Error('Failed to save photo record. Please select an asset first or contact support.');
-      }
+        if (!photoResult.success) {
+          console.error('Photo record error:', photoResult.error);
+          throw new Error(
+            'Failed to save photo record. Please select an asset first or contact support.'
+          );
+        }
 
-      const photoRecord = photoResult.data;
+        const photoRecord = photoResult.data;
 
-      setProgress(70);
-      setStatus('analyzing');
+        setProgress(70);
+        setStatus('analyzing');
 
-      // Call analyze-freight edge function
-      const { data: analysisData, error: analysisError } = await supabase.functions.invoke(
-        'analyze-freight',
-        {
-          body: {
-            photoId: photoRecord.id,
-            forceReanalyze: false,
+        // Call analyze-freight edge function
+        const { data: analysisData, error: analysisError } = await supabase.functions.invoke(
+          'analyze-freight',
+          {
+            body: {
+              photoId: photoRecord.id,
+              forceReanalyze: false,
+            },
+          }
+        );
+
+        if (analysisError) {
+          console.error('Analysis error:', analysisError);
+          // Check for specific error types
+          const errorMessage = analysisError.message || analysisError.context?.body?.error || '';
+          if (errorMessage.toLowerCase().includes('unauthorized')) {
+            throw new Error('Session expired. Please sign in again to analyze photos.');
+          }
+          throw new Error('AI analysis failed. Please try again.');
+        }
+
+        setProgress(90);
+
+        // Get public URL for the photo
+        const { data: urlData } = supabase.storage
+          .from(BUCKET_COMPRESSED)
+          .getPublicUrl(storagePath);
+
+        const photoUrl = urlData?.publicUrl || '';
+
+        // Map response to our format
+        const analysisResult: AnalysisResult = {
+          analysisId: analysisData.analysisId,
+          photoId: photoRecord.id,
+          photoUrl,
+          freight: {
+            primaryCategory: formatCategoryName(analysisData.result?.primaryCategory || 'unknown'),
+            secondaryCategories: (analysisData.result?.secondaryCategories || []).map(
+              formatCategoryName
+            ),
+            description: analysisData.result?.description || 'No description available',
+            confidence: Math.round((analysisData.result?.confidence || 0) * 100),
+            ...(analysisData.result?.estimatedWeightKg != null
+              ? { estimatedWeightKg: analysisData.result.estimatedWeightKg }
+              : {}),
+            ...(analysisData.result?.loadDistributionScore != null
+              ? {
+                  loadDistributionScore: Math.round(
+                    analysisData.result.loadDistributionScore * 100
+                  ),
+                }
+              : {}),
+            ...(analysisData.result?.restraintCount != null
+              ? { restraintCount: analysisData.result.restraintCount }
+              : {}),
           },
-        }
-      );
+          hazards: (analysisData.hazardAlerts || []).map(
+            (
+              alert: {
+                alertId: string;
+                hazardType: string;
+                severity: string;
+                description: string;
+                recommendedActions: string[];
+              },
+              index: number
+            ) => ({
+              id: alert.alertId || `hazard-${index}`,
+              hazardType: formatHazardType(alert.hazardType),
+              severity: alert.severity as HazardSeverity,
+              confidence: analysisData.result?.detectedHazards?.[index]?.confidence
+                ? Math.round(analysisData.result.detectedHazards[index].confidence * 100)
+                : 75, // Default confidence if not available
+              description: alert.description,
+              locationInImage: analysisData.result?.detectedHazards?.[index]?.locationInImage,
+              evidencePoints: analysisData.result?.detectedHazards?.[index]?.evidencePoints || [],
+              recommendedActions: alert.recommendedActions || [],
+            })
+          ),
+          requiresAcknowledgment: analysisData.requiresAcknowledgment || false,
+          blockedFromDeparture: analysisData.blockedFromDeparture || false,
+          analyzedAt: new Date().toISOString(),
+          durationMs: Date.now() - startTime,
+        };
 
-      if (analysisError) {
-        console.error('Analysis error:', analysisError);
-        // Check for specific error types
-        const errorMessage = analysisError.message || analysisError.context?.body?.error || '';
-        if (errorMessage.toLowerCase().includes('unauthorized')) {
-          throw new Error('Session expired. Please sign in again to analyze photos.');
-        }
-        throw new Error('AI analysis failed. Please try again.');
+        setProgress(100);
+        setResult(analysisResult);
+        setStatus('completed');
+      } catch (err) {
+        console.error('Photo analysis error:', err);
+        setError(err instanceof Error ? err.message : 'An unexpected error occurred');
+        setStatus('error');
       }
-
-      setProgress(90);
-
-      // Get public URL for the photo
-      const { data: urlData } = supabase.storage
-        .from(BUCKET_COMPRESSED)
-        .getPublicUrl(storagePath);
-
-      const photoUrl = urlData?.publicUrl || '';
-
-      // Map response to our format
-      const analysisResult: AnalysisResult = {
-        analysisId: analysisData.analysisId,
-        photoId: photoRecord.id,
-        photoUrl,
-        freight: {
-          primaryCategory: formatCategoryName(analysisData.result?.primaryCategory || 'unknown'),
-          secondaryCategories: (analysisData.result?.secondaryCategories || []).map(formatCategoryName),
-          description: analysisData.result?.description || 'No description available',
-          confidence: Math.round((analysisData.result?.confidence || 0) * 100),
-          ...(analysisData.result?.estimatedWeightKg != null ? { estimatedWeightKg: analysisData.result.estimatedWeightKg } : {}),
-          ...(analysisData.result?.loadDistributionScore != null
-            ? { loadDistributionScore: Math.round(analysisData.result.loadDistributionScore * 100) }
-            : {}),
-          ...(analysisData.result?.restraintCount != null ? { restraintCount: analysisData.result.restraintCount } : {}),
-        },
-        hazards: (analysisData.hazardAlerts || []).map((alert: {
-          alertId: string;
-          hazardType: string;
-          severity: string;
-          description: string;
-          recommendedActions: string[];
-        }, index: number) => ({
-          id: alert.alertId || `hazard-${index}`,
-          hazardType: formatHazardType(alert.hazardType),
-          severity: alert.severity as HazardSeverity,
-          confidence: analysisData.result?.detectedHazards?.[index]?.confidence
-            ? Math.round(analysisData.result.detectedHazards[index].confidence * 100)
-            : 75, // Default confidence if not available
-          description: alert.description,
-          locationInImage: analysisData.result?.detectedHazards?.[index]?.locationInImage,
-          evidencePoints: analysisData.result?.detectedHazards?.[index]?.evidencePoints || [],
-          recommendedActions: alert.recommendedActions || [],
-        })),
-        requiresAcknowledgment: analysisData.requiresAcknowledgment || false,
-        blockedFromDeparture: analysisData.blockedFromDeparture || false,
-        analyzedAt: new Date().toISOString(),
-        durationMs: Date.now() - startTime,
-      };
-
-      setProgress(100);
-      setResult(analysisResult);
-      setStatus('completed');
-
-    } catch (err) {
-      console.error('Photo analysis error:', err);
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
-      setStatus('error');
-    }
-  }, [user]);
+    },
+    [user]
+  );
 
   // Reset state
   const reset = useCallback(() => {
@@ -425,19 +446,25 @@ export function usePhotoAnalysis(): UsePhotoAnalysisResult {
   }, [status]);
 
   // Memoize state
-  const state = useMemo<PhotoAnalysisState>(() => ({
-    status,
-    progress,
-    error,
-    result,
-  }), [status, progress, error, result]);
+  const state = useMemo<PhotoAnalysisState>(
+    () => ({
+      status,
+      progress,
+      error,
+      result,
+    }),
+    [status, progress, error, result]
+  );
 
   // Memoize actions
-  const actions = useMemo(() => ({
-    analyzePhoto,
-    reset,
-    clearError,
-  }), [analyzePhoto, reset, clearError]);
+  const actions = useMemo(
+    () => ({
+      analyzePhoto,
+      reset,
+      clearError,
+    }),
+    [analyzePhoto, reset, clearError]
+  );
 
   return { state, actions };
 }
@@ -449,14 +476,14 @@ export function usePhotoAnalysis(): UsePhotoAnalysisResult {
 function formatCategoryName(category: string): string {
   return category
     .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 }
 
 function formatHazardType(type: string): string {
   return type
     .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 }
 

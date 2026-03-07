@@ -74,8 +74,12 @@ export function WorkflowLogPanel() {
               onClick={clearWorkflow}
               className="px-3 py-1 rounded text-sm font-medium transition-colors"
               style={{ background: 'transparent', color: textColor }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+              }}
             >
               Clear
             </button>
@@ -83,8 +87,12 @@ export function WorkflowLogPanel() {
               onClick={() => setIsOpen(false)}
               className="px-3 py-1 rounded text-sm font-medium transition-colors"
               style={{ background: 'transparent', color: textColor }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+              }}
             >
               ✕
             </button>
@@ -123,8 +131,19 @@ export function WorkflowLogPanel() {
                   {/* Status Icon */}
                   <div className="flex-shrink-0 mt-1">
                     {step.status === 'success' && (
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="#10b981" aria-label="Completed">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="#10b981"
+                        aria-label="Completed"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
                       </svg>
                     )}
                     {step.status === 'active' && (
@@ -142,8 +161,19 @@ export function WorkflowLogPanel() {
                       />
                     )}
                     {step.status === 'error' && (
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="#ef4444" aria-label="Error">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="#ef4444"
+                        aria-label="Error"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
                       </svg>
                     )}
                   </div>
@@ -154,7 +184,10 @@ export function WorkflowLogPanel() {
                       {step.label}
                     </div>
                     {step.detail && (
-                      <div className="text-sm mt-0.5 font-mono" style={{ color: textColor, opacity: 0.6 }}>
+                      <div
+                        className="text-sm mt-0.5 font-mono"
+                        style={{ color: textColor, opacity: 0.6 }}
+                      >
                         {step.detail}
                       </div>
                     )}

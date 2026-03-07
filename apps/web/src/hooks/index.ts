@@ -17,13 +17,11 @@ export {
   useFleetDashboard,
   FLEET_QUERY_KEYS,
 } from './useFleetData';
+export type { FleetStatistics, RecentScan, OutstandingAsset, AssetLocation } from './useFleetData';
 export type {
-  FleetStatistics,
-  RecentScan,
-  OutstandingAsset,
-  AssetLocation,
-} from './useFleetData';
-export type { UseDeploymentStatusReturn, UseDeploymentStatusOptions } from '../components/dashboard/types/deployment';
+  UseDeploymentStatusReturn,
+  UseDeploymentStatusOptions,
+} from '../components/dashboard/types/deployment';
 
 export { useHazardReview } from './useHazardReview';
 

@@ -139,7 +139,7 @@ export const AssetsToolbar = React.memo<AssetsToolbarProps>(
           onSearchChange(value);
         }, 300);
       },
-      [onSearchChange],
+      [onSearchChange]
     );
 
     // ── Depot name→ID lookup (pills render immediately from hardcoded list) ─
@@ -188,12 +188,10 @@ export const AssetsToolbar = React.memo<AssetsToolbarProps>(
     const toggleCategory = useCallback(
       (cat: AssetCategory) => {
         const current = filters.categories;
-        const next = current.includes(cat)
-          ? current.filter((c) => c !== cat)
-          : [...current, cat];
+        const next = current.includes(cat) ? current.filter((c) => c !== cat) : [...current, cat];
         onFiltersChange({ categories: next });
       },
-      [filters.categories, onFiltersChange],
+      [filters.categories, onFiltersChange]
     );
 
     const toggleStatus = useCallback(
@@ -204,7 +202,7 @@ export const AssetsToolbar = React.memo<AssetsToolbarProps>(
           : [...current, status];
         onFiltersChange({ statuses: next });
       },
-      [filters.statuses, onFiltersChange],
+      [filters.statuses, onFiltersChange]
     );
 
     const toggleDepot = useCallback(
@@ -215,12 +213,10 @@ export const AssetsToolbar = React.memo<AssetsToolbarProps>(
         setSelectedDepotNames(nextNames);
 
         // Also set depot IDs in filters for the actual query (if depot data is loaded)
-        const ids = nextNames
-          .map((n) => depotIdByName.get(n))
-          .filter((id): id is string => !!id);
+        const ids = nextNames.map((n) => depotIdByName.get(n)).filter((id): id is string => !!id);
         onFiltersChange({ depotIds: ids });
       },
-      [selectedDepotNames, depotIdByName, onFiltersChange],
+      [selectedDepotNames, depotIdByName, onFiltersChange]
     );
 
     // ── Render ───────────────────────────────────────────────────────────────
@@ -406,7 +402,10 @@ export const AssetsToolbar = React.memo<AssetsToolbarProps>(
             {hasActiveFilters && (
               <button
                 type="button"
-                onClick={() => { onResetFilters(); setSelectedDepotNames([]); }}
+                onClick={() => {
+                  onResetFilters();
+                  setSelectedDepotNames([]);
+                }}
                 className={`map-header-btn ${isDark ? 'map-header-btn-dark' : 'map-header-btn-light'} relative overflow-hidden px-3 py-2 rounded-lg transition-all duration-300 ease-out hover:-translate-y-0.5 flex items-center gap-1.5`}
               >
                 <span className="relative z-[1] flex items-center gap-1.5">
@@ -445,7 +444,14 @@ export const AssetsToolbar = React.memo<AssetsToolbarProps>(
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
             {/* Type */}
             <FilterSection label="Type">
-              <div style={{ display: 'flex', gap: '5px', justifyContent: 'space-between', width: '100%' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '5px',
+                  justifyContent: 'space-between',
+                  width: '100%',
+                }}
+              >
                 {CATEGORY_PILLS.map((cat) => (
                   <FilterPill
                     key={cat.value}
@@ -460,13 +466,18 @@ export const AssetsToolbar = React.memo<AssetsToolbarProps>(
             </FilterSection>
 
             {/* Divider */}
-            <div className="w-px h-8 self-center" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }} />
+            <div
+              className="w-px h-8 self-center"
+              style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
+            />
 
             {/* Sub-Type */}
             <FilterSection label="Sub-Type">
               <select
                 value="all"
-                onChange={() => {/* subtype is not in AssetFilters yet, placeholder */}}
+                onChange={() => {
+                  /* subtype is not in AssetFilters yet, placeholder */
+                }}
                 className="filter-select"
                 style={{
                   padding: '6px 28px 6px 10px',
@@ -492,11 +503,23 @@ export const AssetsToolbar = React.memo<AssetsToolbarProps>(
             </FilterSection>
 
             {/* Divider */}
-            <div className="w-px h-8 self-center" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }} />
+            <div
+              className="w-px h-8 self-center"
+              style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
+            />
 
             {/* Location */}
             <FilterSection label="Location">
-              <div className="filter-grid-locations" style={{ display: 'flex', gap: '5px', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+              <div
+                className="filter-grid-locations"
+                style={{
+                  display: 'flex',
+                  gap: '5px',
+                  justifyContent: 'space-between',
+                  width: '100%',
+                  alignItems: 'center',
+                }}
+              >
                 {[...DEPOT_ROW1, ...DEPOT_ROW2].map((depot) => (
                   <FilterPill
                     key={depot.name}
@@ -511,11 +534,21 @@ export const AssetsToolbar = React.memo<AssetsToolbarProps>(
             </FilterSection>
 
             {/* Divider */}
-            <div className="w-px h-8 self-center" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }} />
+            <div
+              className="w-px h-8 self-center"
+              style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
+            />
 
             {/* Service Status */}
             <FilterSection label="Service Status">
-              <div style={{ display: 'flex', gap: '5px', justifyContent: 'space-between', width: '100%' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '5px',
+                  justifyContent: 'space-between',
+                  width: '100%',
+                }}
+              >
                 {STATUS_PILLS.map((s) => (
                   <FilterPill
                     key={s.value}
@@ -528,25 +561,18 @@ export const AssetsToolbar = React.memo<AssetsToolbarProps>(
                 ))}
               </div>
             </FilterSection>
-
           </div>
         </div>
       </>
     );
-  },
+  }
 );
 
 AssetsToolbar.displayName = 'AssetsToolbar';
 
 // ── FilterSection helper ─────────────────────────────────────────────────────
 
-function FilterSection({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
+function FilterSection({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
       <span

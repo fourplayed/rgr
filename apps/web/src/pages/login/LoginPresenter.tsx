@@ -69,18 +69,10 @@ export function LoginPresenter({
   const { isDark } = useTheme();
 
   // Flip animation for form switching
-  const {
-    showForgotPassword,
-    handleFlipToForgotPassword,
-    handleFlipToLogin,
-  } = useFlipAnimation();
+  const { showForgotPassword, handleFlipToForgotPassword, handleFlipToLogin } = useFlipAnimation();
 
   // Swipe animation for theme changes (integrated with unified theme context)
-  const {
-    swipePhase,
-    swipeDirection,
-    handleThemeToggle,
-  } = useSwipeAnimation();
+  const { swipePhase, swipeDirection, handleThemeToggle } = useSwipeAnimation();
 
   // Local state for forgot password errors
   const [forgotPasswordError, setForgotPasswordError] = useState<string | null>(null);
@@ -164,12 +156,19 @@ export function LoginPresenter({
                 }
                 return baseTransform;
               })(),
-              transition: swipePhase === 'position-in'
-                ? 'none'
-                : `transform ${THEME_SWIPE_DURATION_MS}ms cubic-bezier(0.25, 0.1, 0.25, 1)`,
+              transition:
+                swipePhase === 'position-in'
+                  ? 'none'
+                  : `transform ${THEME_SWIPE_DURATION_MS}ms cubic-bezier(0.25, 0.1, 0.25, 1)`,
             }}
           >
-            <Hover3D maxRotation={12} perspective={1000} scale={1.03} className="pointer-events-auto" style={{ display: 'inline-block' }}>
+            <Hover3D
+              maxRotation={12}
+              perspective={1000}
+              scale={1.03}
+              className="pointer-events-auto"
+              style={{ display: 'inline-block' }}
+            >
               <Logo
                 variant="auto"
                 size="custom"
@@ -201,12 +200,19 @@ export function LoginPresenter({
                 }
                 return baseTransform;
               })(),
-              transition: swipePhase === 'position-in'
-                ? 'none'
-                : `transform ${THEME_SWIPE_DURATION_MS}ms cubic-bezier(0.25, 0.1, 0.25, 1)`,
+              transition:
+                swipePhase === 'position-in'
+                  ? 'none'
+                  : `transform ${THEME_SWIPE_DURATION_MS}ms cubic-bezier(0.25, 0.1, 0.25, 1)`,
             }}
           >
-            <Hover3D maxRotation={12} perspective={1000} scale={1.03} className="pointer-events-auto" style={{ display: 'inline-block' }}>
+            <Hover3D
+              maxRotation={12}
+              perspective={1000}
+              scale={1.03}
+              className="pointer-events-auto"
+              style={{ display: 'inline-block' }}
+            >
               <Logo
                 variant="auto"
                 size="custom"

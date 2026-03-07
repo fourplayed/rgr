@@ -9,7 +9,15 @@
  * - Performance optimized for large datasets
  */
 
-import React, { useEffect, useRef, useState, useCallback, useMemo, useImperativeHandle, forwardRef } from 'react';
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  useMemo,
+  useImperativeHandle,
+  forwardRef,
+} from 'react';
 import { createRoot } from 'react-dom/client';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -33,7 +41,11 @@ if (MAPBOX_TOKEN) {
   mapboxgl.accessToken = MAPBOX_TOKEN;
 }
 // Disable Mapbox telemetry to prevent ERR_NAME_NOT_RESOLVED console spam
-try { (mapboxgl as unknown as { config: { EVENTS_URL: string } }).config.EVENTS_URL = ''; } catch { /* read-only in newer versions */ }
+try {
+  (mapboxgl as unknown as { config: { EVENTS_URL: string } }).config.EVENTS_URL = '';
+} catch {
+  /* read-only in newer versions */
+}
 
 /**
  * Asset filter options
@@ -66,7 +78,7 @@ export interface FleetMapWithDataProps {
  * Status colors for markers
  */
 const STATUS_COLORS: Record<string, string> = {
-  serviced: '#10b981',      // emerald-500
+  serviced: '#10b981', // emerald-500
   maintenance: '#f59e0b', // amber-500
   out_of_service: '#ef4444', // red-500
 };
@@ -75,7 +87,7 @@ const STATUS_COLORS: Record<string, string> = {
  * Light theme colors for better visibility
  */
 const LIGHT_THEME_COLORS: Record<string, string> = {
-  serviced: '#059669',      // emerald-600
+  serviced: '#059669', // emerald-600
   maintenance: '#d97706', // amber-600
   out_of_service: '#dc2626', // red-600
 };
@@ -85,8 +97,8 @@ const DEFAULT_DEPOT_COLOR = '#9ca3af';
 /** Convert Depot records to DepotLocation format for map rendering */
 function toDepotLocations(depots: Depot[]): DepotLocation[] {
   return depots
-    .filter(d => d.latitude != null && d.longitude != null)
-    .map(d => ({
+    .filter((d) => d.latitude != null && d.longitude != null)
+    .map((d) => ({
       name: d.name,
       lng: d.longitude!,
       lat: d.latitude!,
@@ -99,7 +111,10 @@ function toDepotLocations(depots: Depot[]): DepotLocation[] {
 /**
  * Simple clustering algorithm for nearby markers
  */
-function clusterAssets(assets: AssetLocation[], zoom: number): Array<{
+function clusterAssets(
+  assets: AssetLocation[],
+  zoom: number
+): Array<{
   id: string;
   lng: number;
   lat: number;
@@ -126,7 +141,7 @@ function clusterAssets(assets: AssetLocation[], zoom: number): Array<{
       if (used.has(other.id)) return false;
       const distance = Math.sqrt(
         Math.pow(asset.longitude - other.longitude, 2) +
-        Math.pow(asset.latitude - other.latitude, 2)
+          Math.pow(asset.latitude - other.latitude, 2)
       );
       return distance < threshold;
     });
@@ -162,196 +177,237 @@ function clusterAssets(assets: AssetLocation[], zoom: number): Array<{
 /**
  * FleetMapWithData component
  */
-const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(({
-  assets,
-  className = '',
-  onAssetClick,
-  onMapLoad,
-  isDark = true,
-  focusAssetId,
-  onFocusComplete,
-  enableFilters: _enableFilters = false,
-  filters: externalFilters,
-  showDepotLabels = true,
-}, ref) => {
-  const { data: dbDepots = [] } = useDepots();
-  const depotLocations = useMemo(() => toDepotLocations(dbDepots), [dbDepots]);
-
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const markers = useRef<mapboxgl.Marker[]>([]);
-  const depotMarkers = useRef<mapboxgl.Marker[]>([]);
-  const popupRoots = useRef<Array<{ root: ReturnType<typeof createRoot>; asset: AssetLocation }>>([]);
-  const depotPopupRoots = useRef<Array<{ root: ReturnType<typeof createRoot>; depot: DepotLocation }>>([]);
-  const currentStyleUrl = useRef<string | null>(null);
-  const initialIsDark = useRef(isDark);
-  const [mapLoaded, setMapLoaded] = useState(false);
-  const [mapError, setMapError] = useState<string | null>(null);
-  const [currentZoom, setCurrentZoom] = useState(4.5);
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- stable default object; externalFilters identity is controlled by parent
-  const filters = useMemo(() => externalFilters || { category: 'all' as const, subtype: 'all' as const, status: 'all' as const, lastScannedDays: 'all' as const }, [externalFilters]);
-
-  // Filter assets based on current filters
-  const filteredAssets = useMemo(() => {
-    return assets.filter((asset) => {
-      if (filters.category !== 'all' && Array.isArray(filters.category) && filters.category.length > 0) {
-        if (!filters.category.includes(asset.category as 'trailer' | 'dolly')) return false;
-      }
-      if (filters.subtype && filters.subtype !== 'all' && asset.subtype !== filters.subtype) return false;
-      if (filters.depot !== 'all' && Array.isArray(filters.depot) && filters.depot.length > 0) {
-        if (!asset.depot || !filters.depot.includes(asset.depot)) return false;
-      }
-      if (filters.status !== 'all' && Array.isArray(filters.status) && filters.status.length > 0) {
-        if (!filters.status.includes(asset.status as 'serviced' | 'maintenance' | 'out_of_service')) return false;
-      }
-      if (filters.lastScannedDays != null && filters.lastScannedDays !== 'all') {
-        const daysSince = asset.lastUpdated
-          ? Math.floor((Date.now() - new Date(asset.lastUpdated).getTime()) / (1000 * 60 * 60 * 24))
-          : Infinity;
-        if (daysSince > filters.lastScannedDays) return false;
-      }
-      return true;
-    });
-  }, [assets, filters]);
-
-  // Expose zoom/fit controls via ref
-  useImperativeHandle(ref, () => ({
-    zoomIn: () => map.current?.zoomIn(),
-    zoomOut: () => map.current?.zoomOut(),
-    fitBounds: () => {
-      if (!map.current) return;
-      const bounds = new mapboxgl.LngLatBounds();
-      depotLocations.forEach((depot) => bounds.extend([depot.lng, depot.lat]));
-      filteredAssets.forEach((asset) => bounds.extend([asset.longitude, asset.latitude]));
-      if (bounds.isEmpty()) return;
-      map.current.fitBounds(bounds, { padding: 50 });
+const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
+  (
+    {
+      assets,
+      className = '',
+      onAssetClick,
+      onMapLoad,
+      isDark = true,
+      focusAssetId,
+      onFocusComplete,
+      enableFilters: _enableFilters = false,
+      filters: externalFilters,
+      showDepotLabels = true,
     },
-  }), [filteredAssets, depotLocations]);
+    ref
+  ) => {
+    const { data: dbDepots = [] } = useDepots();
+    const depotLocations = useMemo(() => toDepotLocations(dbDepots), [dbDepots]);
 
-  // Cluster filtered assets
-  const clusters = useMemo(() => {
-    return clusterAssets(filteredAssets, currentZoom);
-  }, [filteredAssets, currentZoom]);
+    const mapContainer = useRef<HTMLDivElement>(null);
+    const map = useRef<mapboxgl.Map | null>(null);
+    const markers = useRef<mapboxgl.Marker[]>([]);
+    const depotMarkers = useRef<mapboxgl.Marker[]>([]);
+    const popupRoots = useRef<Array<{ root: ReturnType<typeof createRoot>; asset: AssetLocation }>>(
+      []
+    );
+    const depotPopupRoots = useRef<
+      Array<{ root: ReturnType<typeof createRoot>; depot: DepotLocation }>
+    >([]);
+    const currentStyleUrl = useRef<string | null>(null);
+    const initialIsDark = useRef(isDark);
+    const [mapLoaded, setMapLoaded] = useState(false);
+    const [mapError, setMapError] = useState<string | null>(null);
+    const [currentZoom, setCurrentZoom] = useState(4.5);
 
-  // Use ref to store latest callback
-  const onAssetClickRef = useRef(onAssetClick);
-  useEffect(() => {
-    onAssetClickRef.current = onAssetClick;
-  }, [onAssetClick]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- stable default object; externalFilters identity is controlled by parent
+    const filters = useMemo(
+      () =>
+        externalFilters || {
+          category: 'all' as const,
+          subtype: 'all' as const,
+          status: 'all' as const,
+          lastScannedDays: 'all' as const,
+        },
+      [externalFilters]
+    );
 
-  // Stable reference to asset click handler
-  const handleAssetClick = useCallback((assetId: string) => {
-    onAssetClickRef.current?.(assetId);
-  }, []);
-
-  // Initialize map
-  useEffect(() => {
-    if (!MAPBOX_TOKEN || !mapContainer.current || map.current) return;
-
-    let isMounted = true;
-
-    try {
-      const styleUrl = initialIsDark.current
-        ? import.meta.env['VITE_MAPBOX_STYLE_DARK'] || 'mapbox://styles/mapbox/dark-v11'
-        : import.meta.env['VITE_MAPBOX_STYLE_LIGHT'] || 'mapbox://styles/mapbox/light-v11';
-
-      currentStyleUrl.current = styleUrl;
-
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: styleUrl,
-        center: [122, -25], // Center of WA
-        zoom: 4.5,
-        attributionControl: false,
-      });
-
-      const mapInstance = map.current;
-
-      mapInstance.on('error', (e: mapboxgl.ErrorEvent) => {
-        if (isMounted) {
-          setMapError(e.error?.message || 'Failed to load map');
-          console.error('Mapbox error:', e.error);
+    // Filter assets based on current filters
+    const filteredAssets = useMemo(() => {
+      return assets.filter((asset) => {
+        if (
+          filters.category !== 'all' &&
+          Array.isArray(filters.category) &&
+          filters.category.length > 0
+        ) {
+          if (!filters.category.includes(asset.category as 'trailer' | 'dolly')) return false;
         }
-      });
-
-      mapInstance.on('load', () => {
-        if (!isMounted) return;
-        setMapLoaded(true);
-        onMapLoad?.();
-      });
-
-      // Track zoom level for clustering
-      mapInstance.on('zoom', () => {
-        if (isMounted) {
-          setCurrentZoom(mapInstance.getZoom());
+        if (filters.subtype && filters.subtype !== 'all' && asset.subtype !== filters.subtype)
+          return false;
+        if (filters.depot !== 'all' && Array.isArray(filters.depot) && filters.depot.length > 0) {
+          if (!asset.depot || !filters.depot.includes(asset.depot)) return false;
         }
+        if (
+          filters.status !== 'all' &&
+          Array.isArray(filters.status) &&
+          filters.status.length > 0
+        ) {
+          if (
+            !filters.status.includes(asset.status as 'serviced' | 'maintenance' | 'out_of_service')
+          )
+            return false;
+        }
+        if (filters.lastScannedDays != null && filters.lastScannedDays !== 'all') {
+          const daysSince = asset.lastUpdated
+            ? Math.floor(
+                (Date.now() - new Date(asset.lastUpdated).getTime()) / (1000 * 60 * 60 * 24)
+              )
+            : Infinity;
+          if (daysSince > filters.lastScannedDays) return false;
+        }
+        return true;
       });
-    } catch (error) {
-      if (isMounted) {
-        setMapError(error instanceof Error ? error.message : 'Failed to initialize map');
-        console.error('MapBox initialization error:', error);
+    }, [assets, filters]);
+
+    // Expose zoom/fit controls via ref
+    useImperativeHandle(
+      ref,
+      () => ({
+        zoomIn: () => map.current?.zoomIn(),
+        zoomOut: () => map.current?.zoomOut(),
+        fitBounds: () => {
+          if (!map.current) return;
+          const bounds = new mapboxgl.LngLatBounds();
+          depotLocations.forEach((depot) => bounds.extend([depot.lng, depot.lat]));
+          filteredAssets.forEach((asset) => bounds.extend([asset.longitude, asset.latitude]));
+          if (bounds.isEmpty()) return;
+          map.current.fitBounds(bounds, { padding: 50 });
+        },
+      }),
+      [filteredAssets, depotLocations]
+    );
+
+    // Cluster filtered assets
+    const clusters = useMemo(() => {
+      return clusterAssets(filteredAssets, currentZoom);
+    }, [filteredAssets, currentZoom]);
+
+    // Use ref to store latest callback
+    const onAssetClickRef = useRef(onAssetClick);
+    useEffect(() => {
+      onAssetClickRef.current = onAssetClick;
+    }, [onAssetClick]);
+
+    // Stable reference to asset click handler
+    const handleAssetClick = useCallback((assetId: string) => {
+      onAssetClickRef.current?.(assetId);
+    }, []);
+
+    // Initialize map
+    useEffect(() => {
+      if (!MAPBOX_TOKEN || !mapContainer.current || map.current) return;
+
+      let isMounted = true;
+
+      try {
+        const styleUrl = initialIsDark.current
+          ? import.meta.env['VITE_MAPBOX_STYLE_DARK'] || 'mapbox://styles/mapbox/dark-v11'
+          : import.meta.env['VITE_MAPBOX_STYLE_LIGHT'] || 'mapbox://styles/mapbox/light-v11';
+
+        currentStyleUrl.current = styleUrl;
+
+        map.current = new mapboxgl.Map({
+          container: mapContainer.current,
+          style: styleUrl,
+          center: [122, -25], // Center of WA
+          zoom: 4.5,
+          attributionControl: false,
+        });
+
+        const mapInstance = map.current;
+
+        mapInstance.on('error', (e: mapboxgl.ErrorEvent) => {
+          if (isMounted) {
+            setMapError(e.error?.message || 'Failed to load map');
+            console.error('Mapbox error:', e.error);
+          }
+        });
+
+        mapInstance.on('load', () => {
+          if (!isMounted) return;
+          setMapLoaded(true);
+          onMapLoad?.();
+        });
+
+        // Track zoom level for clustering
+        mapInstance.on('zoom', () => {
+          if (isMounted) {
+            setCurrentZoom(mapInstance.getZoom());
+          }
+        });
+      } catch (error) {
+        if (isMounted) {
+          setMapError(error instanceof Error ? error.message : 'Failed to initialize map');
+          console.error('MapBox initialization error:', error);
+        }
       }
-    }
 
-    return () => {
-      isMounted = false;
+      return () => {
+        isMounted = false;
+        depotPopupRoots.current.forEach(({ root }) => root.unmount());
+        depotPopupRoots.current = [];
+        depotMarkers.current.forEach((marker) => marker.remove());
+        depotMarkers.current = [];
+        if (map.current) {
+          map.current.remove();
+          map.current = null;
+        }
+      };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [onMapLoad]);
+
+    // Add depot markers when map is loaded and depot data is available
+    useEffect(() => {
+      if (!map.current || !mapLoaded || depotLocations.length === 0) return;
+
+      // Clear existing depot markers
       depotPopupRoots.current.forEach(({ root }) => root.unmount());
       depotPopupRoots.current = [];
       depotMarkers.current.forEach((marker) => marker.remove());
       depotMarkers.current = [];
-      if (map.current) {
-        map.current.remove();
-        map.current = null;
-      }
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onMapLoad]);
 
-  // Add depot markers when map is loaded and depot data is available
-  useEffect(() => {
-    if (!map.current || !mapLoaded || depotLocations.length === 0) return;
+      const mapInstance = map.current;
 
-    // Clear existing depot markers
-    depotPopupRoots.current.forEach(({ root }) => root.unmount());
-    depotPopupRoots.current = [];
-    depotMarkers.current.forEach((marker) => marker.remove());
-    depotMarkers.current = [];
+      // Per-depot layout: stem height, anchor side, z-index
+      const depotLayout: Record<
+        string,
+        { stem: number; anchor: 'west' | 'east' | 'center'; z: number }
+      > = {
+        Perth: { stem: 45, anchor: 'east', z: 16 },
+        Wubin: { stem: 85, anchor: 'east', z: 14 },
+        Newman: { stem: 45, anchor: 'east', z: 12 },
+        Hedland: { stem: 48, anchor: 'east', z: 16 },
+        Karratha: { stem: 88, anchor: 'east', z: 14 },
+        Carnarvon: { stem: 45, anchor: 'east', z: 12 },
+      };
 
-    const mapInstance = map.current;
+      depotLocations.forEach((depot: DepotLocation) => {
+        const depotColor = isValidHexColor(depot.color) ? depot.color : DEFAULT_DEPOT_COLOR;
+        const tipTextColor = depot.name === 'Newman' ? '#6366f1' : depotColor;
+        const safeName = escapeHtml(depot.name);
+        const safeTrailers = escapeHtml(String(depot.trailers));
+        const safeDollies = escapeHtml(String(depot.dollies));
+        const layout = depotLayout[depot.name] ?? { stem: 68, anchor: 'center', z: 10 };
 
-    // Per-depot layout: stem height, anchor side, z-index
-    const depotLayout: Record<string, { stem: number; anchor: 'west' | 'east' | 'center'; z: number }> = {
-      Perth:     { stem: 45, anchor: 'east',   z: 16 },
-      Wubin:     { stem: 85, anchor: 'east',   z: 14 },
-      Newman:    { stem: 45, anchor: 'east',   z: 12 },
-      Hedland:   { stem: 48, anchor: 'east',   z: 16 },
-      Karratha:  { stem: 88, anchor: 'east',   z: 14 },
-      Carnarvon: { stem: 45, anchor: 'east',   z: 12 },
-    };
+        const offsetX =
+          layout.anchor === 'west' ? '-100%' : layout.anchor === 'east' ? '0%' : '-50%';
 
-    depotLocations.forEach((depot: DepotLocation) => {
-      const depotColor = isValidHexColor(depot.color) ? depot.color : DEFAULT_DEPOT_COLOR;
-      const tipTextColor = depot.name === 'Newman' ? '#6366f1' : depotColor;
-      const safeName = escapeHtml(depot.name);
-      const safeTrailers = escapeHtml(String(depot.trailers));
-      const safeDollies = escapeHtml(String(depot.dollies));
-      const layout = depotLayout[depot.name] ?? { stem: 68, anchor: 'center', z: 10 };
+        const tipOnRight = layout.anchor === 'west';
+        const tipOrigin = tipOnRight
+          ? 'transform-origin: left center;'
+          : 'transform-origin: right center;';
+        const tipHidden = tipOnRight ? 'transform: rotateY(-90deg);' : 'transform: rotateY(90deg);';
+        const tipRadius = tipOnRight
+          ? 'border-radius: 0 8px 8px 0;'
+          : 'border-radius: 8px 0 0 8px;';
+        const tipPosition = tipOnRight ? 'left: 50%;' : 'right: calc(50% - 1px);';
 
-      const offsetX = layout.anchor === 'west' ? '-100%' : layout.anchor === 'east' ? '0%' : '-50%';
-
-      const tipOnRight = layout.anchor === 'west';
-      const tipOrigin = tipOnRight ? 'transform-origin: left center;' : 'transform-origin: right center;';
-      const tipHidden = tipOnRight ? 'transform: rotateY(-90deg);' : 'transform: rotateY(90deg);';
-      const tipRadius = tipOnRight ? 'border-radius: 0 8px 8px 0;' : 'border-radius: 8px 0 0 8px;';
-      const tipPosition = tipOnRight
-        ? 'left: 50%;'
-        : 'right: calc(50% - 1px);';
-
-      const el = document.createElement('div');
-      el.className = 'depot-marker';
-      el.style.cssText = `margin: 0; padding: 0; line-height: 0; z-index: ${layout.z};`;
-      el.innerHTML = `
+        const el = document.createElement('div');
+        el.className = 'depot-marker';
+        el.style.cssText = `margin: 0; padding: 0; line-height: 0; z-index: ${layout.z};`;
+        el.innerHTML = `
         <div style="display: flex; flex-direction: column; align-items: center; position: relative; margin: 0; padding: 0; perspective: 400px;">
           <div style="width: 2px; height: ${layout.stem}px; background: linear-gradient(to bottom, ${depotColor}cc, ${depotColor}44 70%, transparent); pointer-events: none;"></div>
           <div style="position: absolute; top: 0; width: 4px; height: ${layout.stem}px; background: linear-gradient(to bottom, ${depotColor}25, ${depotColor}0a 60%, transparent); filter: blur(2px); pointer-events: none; left: 50%; transform: translateX(-50%);"></div>
@@ -370,210 +426,217 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         </div>
       `;
 
-      const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
-        .setLngLat([depot.lng, depot.lat])
-        .addTo(mapInstance);
+        const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+          .setLngLat([depot.lng, depot.lat])
+          .addTo(mapInstance);
 
-      depotMarkers.current.push(marker);
-    });
-  }, [mapLoaded, depotLocations]);
+        depotMarkers.current.push(marker);
+      });
+    }, [mapLoaded, depotLocations]);
 
-  // Update markers when clusters change
-  useEffect(() => {
-    if (!map.current || !mapLoaded) return;
+    // Update markers when clusters change
+    useEffect(() => {
+      if (!map.current || !mapLoaded) return;
 
-    // Clear existing markers
-    markers.current.forEach((marker) => marker.remove());
-    markers.current = [];
+      // Clear existing markers
+      markers.current.forEach((marker) => marker.remove());
+      markers.current = [];
 
-    // Clear popup roots
-    popupRoots.current.forEach(({ root }) => root.unmount());
-    popupRoots.current = [];
+      // Clear popup roots
+      popupRoots.current.forEach(({ root }) => root.unmount());
+      popupRoots.current = [];
 
-    // Add new markers
-    clusters.forEach((cluster) => {
-      const isCluster = cluster.count > 1;
-      const representativeAsset = cluster.assets[0];
-      if (!representativeAsset) return;
-      const statusColor = isDark
-        ? (STATUS_COLORS[representativeAsset.status] || '#6b7280')
-        : (LIGHT_THEME_COLORS[representativeAsset.status] || '#4b5563');
+      // Add new markers
+      clusters.forEach((cluster) => {
+        const isCluster = cluster.count > 1;
+        const representativeAsset = cluster.assets[0];
+        if (!representativeAsset) return;
+        const statusColor = isDark
+          ? STATUS_COLORS[representativeAsset.status] || '#6b7280'
+          : LIGHT_THEME_COLORS[representativeAsset.status] || '#4b5563';
 
-      const el = document.createElement('div');
-      el.className = 'fleet-marker';
+        const el = document.createElement('div');
+        el.className = 'fleet-marker';
 
-      if (isCluster) {
-        // Cluster marker
-        el.innerHTML = `
+        if (isCluster) {
+          // Cluster marker
+          el.innerHTML = `
           <div class="flex items-center justify-center w-8 h-8 rounded-full cursor-pointer transition-transform hover:scale-125"
                style="background-color: ${statusColor}; box-shadow: 0 0 12px ${statusColor}80;">
             <span class="text-white text-xs font-bold">${cluster.count}</span>
           </div>
         `;
-      } else {
-        // Single asset marker
-        el.innerHTML = `
+        } else {
+          // Single asset marker
+          el.innerHTML = `
           <div class="w-3 h-3 rounded-full shadow-lg cursor-pointer transition-transform hover:scale-150"
                style="background-color: ${statusColor}; box-shadow: 0 0 8px ${statusColor}80;">
           </div>
         `;
-        el.addEventListener('click', () => handleAssetClick(representativeAsset.id));
+          el.addEventListener('click', () => handleAssetClick(representativeAsset.id));
+        }
+
+        // Create popup
+        const popupContainer = document.createElement('div');
+        const root = createRoot(popupContainer);
+
+        if (isCluster) {
+          // Cluster popup - show count and assets
+          root.render(
+            <div
+              className="p-3 rounded-lg backdrop-blur-sm border"
+              style={{
+                backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                borderColor: isDark
+                  ? `${RGR_COLORS.bright.vibrant}33`
+                  : `${RGR_COLORS.navy.light}33`,
+                color: isDark ? RGR_COLORS.chrome.light : RGR_COLORS.navy.base,
+              }}
+            >
+              <div className="text-sm font-semibold mb-2">{cluster.count} Assets</div>
+              <div className="text-xs space-y-1">
+                {cluster.assets.slice(0, 5).map((asset) => (
+                  <div key={asset.id}>
+                    {asset.assetNumber} - {asset.status}
+                  </div>
+                ))}
+                {cluster.count > 5 && <div>+ {cluster.count - 5} more</div>}
+              </div>
+            </div>
+          );
+        } else {
+          // Single asset popup
+          root.render(
+            <AssetHoverCard
+              asset={{ name: representativeAsset.assetNumber, status: representativeAsset.status }}
+              isDark={isDark}
+            />
+          );
+          popupRoots.current.push({ root, asset: representativeAsset });
+        }
+
+        const popup = new mapboxgl.Popup({
+          offset: [0, -20],
+          closeButton: false,
+          closeOnClick: false,
+          className: 'asset-hover-popup',
+          maxWidth: 'none',
+        }).setDOMContent(popupContainer);
+
+        const marker = new mapboxgl.Marker({ element: el })
+          .setLngLat([cluster.lng, cluster.lat])
+          .setPopup(popup)
+          .addTo(map.current!);
+
+        // Show popup on hover
+        el.addEventListener('mouseenter', () => map.current && popup.addTo(map.current));
+        el.addEventListener('mouseleave', () => popup.remove());
+
+        markers.current.push(marker);
+      });
+    }, [clusters, mapLoaded, isDark, handleAssetClick]);
+
+    // Update theme
+    useEffect(() => {
+      if (!map.current || !mapLoaded) return;
+
+      const styleUrl = isDark
+        ? import.meta.env['VITE_MAPBOX_STYLE_DARK'] || 'mapbox://styles/mapbox/dark-v11'
+        : import.meta.env['VITE_MAPBOX_STYLE_LIGHT'] || 'mapbox://styles/mapbox/light-v11';
+
+      // Only call setStyle when the URL actually changes (skip on initial load)
+      if (styleUrl !== currentStyleUrl.current) {
+        currentStyleUrl.current = styleUrl;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Mapbox GL typings lack `diff` option on setStyle
+        map.current.setStyle(styleUrl, { diff: false } as any);
       }
 
-      // Create popup
-      const popupContainer = document.createElement('div');
-      const root = createRoot(popupContainer);
-
-      if (isCluster) {
-        // Cluster popup - show count and assets
-        root.render(
-          <div
-            className="p-3 rounded-lg backdrop-blur-sm border"
-            style={{
-              backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-              borderColor: isDark ? `${RGR_COLORS.bright.vibrant}33` : `${RGR_COLORS.navy.light}33`,
-              color: isDark ? RGR_COLORS.chrome.light : RGR_COLORS.navy.base,
-            }}
-          >
-            <div className="text-sm font-semibold mb-2">{cluster.count} Assets</div>
-            <div className="text-xs space-y-1">
-              {cluster.assets.slice(0, 5).map((asset) => (
-                <div key={asset.id}>
-                  {asset.assetNumber} - {asset.status}
-                </div>
-              ))}
-              {cluster.count > 5 && <div>+ {cluster.count - 5} more</div>}
-            </div>
-          </div>
-        );
-      } else {
-        // Single asset popup
+      // Update popup themes
+      popupRoots.current.forEach(({ root, asset }) => {
         root.render(
           <AssetHoverCard
-            asset={{ name: representativeAsset.assetNumber, status: representativeAsset.status }}
+            asset={{ name: asset.assetNumber, status: asset.status }}
             isDark={isDark}
           />
         );
-        popupRoots.current.push({ root, asset: representativeAsset });
-      }
-
-      const popup = new mapboxgl.Popup({
-        offset: [0, -20],
-        closeButton: false,
-        closeOnClick: false,
-        className: 'asset-hover-popup',
-        maxWidth: 'none',
-      }).setDOMContent(popupContainer);
-
-      const marker = new mapboxgl.Marker({ element: el })
-        .setLngLat([cluster.lng, cluster.lat])
-        .setPopup(popup)
-        .addTo(map.current!);
-
-      // Show popup on hover
-      el.addEventListener('mouseenter', () => map.current && popup.addTo(map.current));
-      el.addEventListener('mouseleave', () => popup.remove());
-
-      markers.current.push(marker);
-    });
-  }, [clusters, mapLoaded, isDark, handleAssetClick]);
-
-  // Update theme
-  useEffect(() => {
-    if (!map.current || !mapLoaded) return;
-
-    const styleUrl = isDark
-      ? import.meta.env['VITE_MAPBOX_STYLE_DARK'] || 'mapbox://styles/mapbox/dark-v11'
-      : import.meta.env['VITE_MAPBOX_STYLE_LIGHT'] || 'mapbox://styles/mapbox/light-v11';
-
-    // Only call setStyle when the URL actually changes (skip on initial load)
-    if (styleUrl !== currentStyleUrl.current) {
-      currentStyleUrl.current = styleUrl;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Mapbox GL typings lack `diff` option on setStyle
-      map.current.setStyle(styleUrl, { diff: false } as any);
-    }
-
-    // Update popup themes
-    popupRoots.current.forEach(({ root, asset }) => {
-      root.render(
-        <AssetHoverCard
-          asset={{ name: asset.assetNumber, status: asset.status }}
-          isDark={isDark}
-        />
-      );
-    });
-
-    // Depot text labels don't need theme updates (white on both themes)
-  }, [isDark, mapLoaded]);
-
-  // Toggle depot marker visibility based on Flag button + location filters
-  useEffect(() => {
-    const selectedDepots = Array.isArray(filters.depot) ? filters.depot : [];
-    const hasDepotFilter = selectedDepots.length > 0;
-
-    depotMarkers.current.forEach((marker, i) => {
-      const el = marker.getElement();
-      const depotName = depotLocations[i]?.name ?? '';
-      const visible = showDepotLabels && (!hasDepotFilter || selectedDepots.includes(depotName));
-      el.style.display = visible ? '' : 'none';
-    });
-  }, [showDepotLabels, filters.depot, depotLocations]);
-
-  // Focus on asset
-  useEffect(() => {
-    if (!map.current || !mapLoaded || !focusAssetId) return;
-
-    const asset = assets.find((a) => a.id === focusAssetId || a.assetNumber.toLowerCase() === focusAssetId.toLowerCase());
-
-    if (asset) {
-      map.current.flyTo({
-        center: [asset.longitude, asset.latitude],
-        zoom: 10,
-        duration: 1500,
-        essential: true,
       });
-      onFocusComplete?.(true);
-    } else {
-      onFocusComplete?.(false);
-    }
-  }, [focusAssetId, mapLoaded, assets, onFocusComplete]);
 
-  return (
-    <div className={`relative w-full h-full ${className}`} role="application" aria-label="Fleet tracking map">
-      <div ref={mapContainer} className="absolute inset-0 w-full h-full" />
+      // Depot text labels don't need theme updates (white on both themes)
+    }, [isDark, mapLoaded]);
 
-      {/* Loading state */}
-      {!mapLoaded && !mapError && (
-        <div
-          className="absolute inset-0 flex items-center justify-center"
-          style={{ backgroundColor: `${RGR_COLORS.navy.darkest}CC` }}
-        >
-          <div className="text-center" style={{ color: RGR_COLORS.chrome.medium }}>
-            <div
-              className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto mb-3"
-              style={{ borderColor: RGR_COLORS.bright.vibrant, borderTopColor: 'transparent' }}
-            />
-            <p className="text-sm">Loading map...</p>
+    // Toggle depot marker visibility based on Flag button + location filters
+    useEffect(() => {
+      const selectedDepots = Array.isArray(filters.depot) ? filters.depot : [];
+      const hasDepotFilter = selectedDepots.length > 0;
+
+      depotMarkers.current.forEach((marker, i) => {
+        const el = marker.getElement();
+        const depotName = depotLocations[i]?.name ?? '';
+        const visible = showDepotLabels && (!hasDepotFilter || selectedDepots.includes(depotName));
+        el.style.display = visible ? '' : 'none';
+      });
+    }, [showDepotLabels, filters.depot, depotLocations]);
+
+    // Focus on asset
+    useEffect(() => {
+      if (!map.current || !mapLoaded || !focusAssetId) return;
+
+      const asset = assets.find(
+        (a) => a.id === focusAssetId || a.assetNumber.toLowerCase() === focusAssetId.toLowerCase()
+      );
+
+      if (asset) {
+        map.current.flyTo({
+          center: [asset.longitude, asset.latitude],
+          zoom: 10,
+          duration: 1500,
+          essential: true,
+        });
+        onFocusComplete?.(true);
+      } else {
+        onFocusComplete?.(false);
+      }
+    }, [focusAssetId, mapLoaded, assets, onFocusComplete]);
+
+    return (
+      <div
+        className={`relative w-full h-full ${className}`}
+        role="application"
+        aria-label="Fleet tracking map"
+      >
+        <div ref={mapContainer} className="absolute inset-0 w-full h-full" />
+
+        {/* Loading state */}
+        {!mapLoaded && !mapError && (
+          <div
+            className="absolute inset-0 flex items-center justify-center"
+            style={{ backgroundColor: `${RGR_COLORS.navy.darkest}CC` }}
+          >
+            <div className="text-center" style={{ color: RGR_COLORS.chrome.medium }}>
+              <div
+                className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto mb-3"
+                style={{ borderColor: RGR_COLORS.bright.vibrant, borderTopColor: 'transparent' }}
+              />
+              <p className="text-sm">Loading map...</p>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Error state */}
-      {mapError && (
-        <div
-          className="absolute inset-0 flex items-center justify-center"
-          style={{ backgroundColor: RGR_COLORS.navy.darkest }}
-        >
-          <div className="text-center max-w-md px-6">
-            <p className="text-sm" style={{ color: RGR_COLORS.semantic.error }}>
-              {mapError}
-            </p>
+        {/* Error state */}
+        {mapError && (
+          <div
+            className="absolute inset-0 flex items-center justify-center"
+            style={{ backgroundColor: RGR_COLORS.navy.darkest }}
+          >
+            <div className="text-center max-w-md px-6">
+              <p className="text-sm" style={{ color: RGR_COLORS.semantic.error }}>
+                {mapError}
+              </p>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-
-      <style>{`
+        <style>{`
         .mapboxgl-popup-content {
           background: transparent !important;
           padding: 0 !important;
@@ -610,9 +673,10 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
           z-index: 5;
         }
       `}</style>
-    </div>
-  );
-});
+      </div>
+    );
+  }
+);
 
 FleetMapWithDataInner.displayName = 'FleetMapWithData';
 

@@ -108,7 +108,12 @@ export function DashboardPresenter({ state, actions, children }: DashboardPresen
         className="relative z-10 flex-1 overflow-hidden"
         style={{
           paddingTop: `${DASHBOARD_CONSTANTS.NAV_HEIGHT}px`,
-          ...(fromLogin ? { opacity: 0, animation: 'dashContentFadeIn 600ms cubic-bezier(0.16, 1, 0.3, 1) 400ms forwards' } : {}),
+          ...(fromLogin
+            ? {
+                opacity: 0,
+                animation: 'dashContentFadeIn 600ms cubic-bezier(0.16, 1, 0.3, 1) 400ms forwards',
+              }
+            : {}),
         }}
       >
         {/* Glassmorphic content shader */}
@@ -116,9 +121,7 @@ export function DashboardPresenter({ state, actions, children }: DashboardPresen
           <div
             className="absolute inset-0 pointer-events-none"
             style={{
-              background: isDark
-                ? 'rgba(0, 0, 0, 0.15)'
-                : 'rgba(255, 255, 255, 0.1)',
+              background: isDark ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 255, 0.1)',
               backdropFilter: 'blur(20px)',
               WebkitBackdropFilter: 'blur(20px)',
               border: 'none',
@@ -126,13 +129,8 @@ export function DashboardPresenter({ state, actions, children }: DashboardPresen
             }}
             aria-hidden="true"
           />
-          <div
-            className="relative mx-auto h-full"
-            style={{ maxWidth: '1440px' }}
-          >
-            <ErrorBoundary>
-              {children}
-            </ErrorBoundary>
+          <div className="relative mx-auto h-full" style={{ maxWidth: '1440px' }}>
+            <ErrorBoundary>{children}</ErrorBoundary>
           </div>
         </div>
       </main>

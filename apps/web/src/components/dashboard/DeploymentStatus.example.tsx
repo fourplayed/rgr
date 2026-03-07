@@ -104,10 +104,7 @@ export function PublicRepoExample() {
  * Example 6: Multiple Repositories
  */
 export function MultiRepoExample() {
-  const repositories = [
-    'fourplayed/rgr-fleet-manager',
-    'fourplayed/another-project',
-  ];
+  const repositories = ['fourplayed/rgr-fleet-manager', 'fourplayed/another-project'];
 
   return (
     <div className="p-6 bg-gradient-to-br from-slate-950 to-slate-900 min-h-screen">

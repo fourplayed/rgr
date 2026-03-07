@@ -116,9 +116,7 @@ export function mapRowToPhoto(row: PhotoRow): Photo {
   };
 }
 
-export function mapPhotoToInsert(
-  input: CreatePhotoInput
-): PhotoInsertRow {
+export function mapPhotoToInsert(input: CreatePhotoInput): PhotoInsertRow {
   return {
     asset_id: input.assetId ?? null,
     scan_event_id: input.scanEventId ?? null,

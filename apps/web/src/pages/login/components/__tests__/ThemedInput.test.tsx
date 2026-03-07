@@ -57,9 +57,10 @@ describe('ThemedInput', () => {
       render(<ThemedInput name="test" isDark={false} />);
 
       const styles = document.querySelectorAll('style');
-      const hasFocusStyles = Array.from(styles).some((style) =>
-        style.textContent?.includes('.themed-input-light:focus') ||
-        style.textContent?.includes('.themed-input-dark:focus')
+      const hasFocusStyles = Array.from(styles).some(
+        (style) =>
+          style.textContent?.includes('.themed-input-light:focus') ||
+          style.textContent?.includes('.themed-input-dark:focus')
       );
       expect(hasFocusStyles).toBe(true);
     });
@@ -189,7 +190,9 @@ describe('ThemedInput', () => {
       const input = screen.getByRole('textbox') as HTMLInputElement;
       expect(input.value).toBe('');
 
-      rerender(<ThemedInput name="test" value="new value" onChange={handleChange} isDark={false} />);
+      rerender(
+        <ThemedInput name="test" value="new value" onChange={handleChange} isDark={false} />
+      );
       expect(input.value).toBe('new value');
     });
 
@@ -438,7 +441,8 @@ describe('ThemedInput', () => {
     });
 
     it('should handle very long label text', () => {
-      const longLabel = 'This is a very long label that might wrap to multiple lines and should still be properly associated with the input';
+      const longLabel =
+        'This is a very long label that might wrap to multiple lines and should still be properly associated with the input';
       render(<ThemedInput name="test" label={longLabel} isDark={false} />);
 
       expect(screen.getByLabelText(longLabel)).toBeInTheDocument();

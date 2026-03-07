@@ -116,7 +116,8 @@ export async function getHazardAlertsForReview(
 
   let query = supabase
     .from('hazard_alerts')
-    .select(`
+    .select(
+      `
       *,
       freight_analysis:freight_analysis_id (
         id,
@@ -132,7 +133,8 @@ export async function getHazardAlertsForReview(
         id,
         asset_number
       )
-    `)
+    `
+    )
     .order('created_at', { ascending: false })
     .range(page * pageSize, (page + 1) * pageSize - 1);
 
@@ -159,26 +161,32 @@ export async function getHazardAlertsForReview(
     return { success: false, data: null, error: `Failed to fetch hazard alerts: ${error.message}` };
   }
 
-  const alerts = (data as HazardAlertJoinRow[] || []).map((row) => {
+  const alerts = ((data as HazardAlertJoinRow[]) || []).map((row) => {
     const { freight_analysis, photos, assets, ...alertRow } = row;
     const alert = mapRowToHazardAlert(alertRow as HazardAlertRow);
 
     return {
       ...alert,
-      freightAnalysis: freight_analysis ? {
-        id: freight_analysis.id,
-        photoId: freight_analysis.photo_id,
-        createdAt: freight_analysis.created_at,
-      } : undefined,
-      photo: photos ? {
-        id: photos.id,
-        storagePath: photos.storage_path,
-        thumbnailPath: photos.thumbnail_path,
-      } : undefined,
-      asset: assets ? {
-        id: assets.id,
-        assetNumber: assets.asset_number,
-      } : undefined,
+      freightAnalysis: freight_analysis
+        ? {
+            id: freight_analysis.id,
+            photoId: freight_analysis.photo_id,
+            createdAt: freight_analysis.created_at,
+          }
+        : undefined,
+      photo: photos
+        ? {
+            id: photos.id,
+            storagePath: photos.storage_path,
+            thumbnailPath: photos.thumbnail_path,
+          }
+        : undefined,
+      asset: assets
+        ? {
+            id: assets.id,
+            assetNumber: assets.asset_number,
+          }
+        : undefined,
     } as HazardAlertForReview;
   });
 
@@ -238,7 +246,8 @@ export async function getAnalysisHistory(
 
   let query = supabase
     .from('freight_analysis')
-    .select(`
+    .select(
+      `
       id,
       photo_id,
       primary_category,
@@ -258,7 +267,8 @@ export async function getAnalysisHistory(
         review_outcome,
         manager_review_at
       )
-    `)
+    `
+    )
     .order('created_at', { ascending: false })
     .limit(limit);
 
@@ -289,10 +299,14 @@ export async function getAnalysisHistory(
   const { data, error } = await query;
 
   if (error) {
-    return { success: false, data: null, error: `Failed to fetch analysis history: ${error.message}` };
+    return {
+      success: false,
+      data: null,
+      error: `Failed to fetch analysis history: ${error.message}`,
+    };
   }
 
-  const items = (data as AnalysisHistoryRow[] || []).map((item) => {
+  const items = ((data as AnalysisHistoryRow[]) || []).map((item) => {
     const photo = item.photos;
     const hazards = item.hazard_alerts || [];
     const hasReview = hazards.some((h) => h.manager_review_at !== null);
@@ -308,9 +322,7 @@ export async function getAnalysisHistory(
       confidence: Math.round((item.confidence || 0) * 100),
       hazardCount: hazards.length,
       wasReviewed: hasReview,
-      wasAccurate: reviewedHazards.length > 0
-        ? accurateCount === reviewedHazards.length
-        : null,
+      wasAccurate: reviewedHazards.length > 0 ? accurateCount === reviewedHazards.length : null,
       analyzedAt: item.created_at,
       assetNumber: photo?.assets?.asset_number || null,
     };
@@ -348,7 +360,11 @@ export async function submitAnalysisFeedback(
       .eq('hazard_type', dbHazardType);
 
     if (error) {
-      return { success: false, data: null, error: `Failed to update hazard feedback: ${error.message}` };
+      return {
+        success: false,
+        data: null,
+        error: `Failed to update hazard feedback: ${error.message}`,
+      };
     }
   }
 
@@ -361,6 +377,6 @@ function formatCategory(category: string | null): string {
   if (!category) return 'Unknown';
   return category
     .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 }

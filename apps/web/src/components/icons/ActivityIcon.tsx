@@ -1,6 +1,6 @@
-import { useEffect } from "react";
-import { motion, useAnimation } from "motion/react";
-import type { Variants } from "motion/react";
+import { useEffect } from 'react';
+import { motion, useAnimation } from 'motion/react';
+import type { Variants } from 'motion/react';
 
 const pathVariants: Variants = {
   normal: {
@@ -14,7 +14,7 @@ const pathVariants: Variants = {
     opacity: [0.3, 1],
     transition: {
       duration: 1.5,
-      ease: "easeInOut",
+      ease: 'easeInOut',
       repeat: Infinity,
       repeatDelay: 0.5,
     },
@@ -33,17 +33,17 @@ const ActivityIcon = ({
   width = 28,
   height = 28,
   strokeWidth = 2,
-  stroke = "#ffffff",
+  stroke = '#ffffff',
   isHovered,
 }: ActivityIconProps) => {
   const controls = useAnimation();
 
   useEffect(() => {
-    controls.start(isHovered ? "animate" : "normal");
+    controls.start(isHovered ? 'animate' : 'normal');
   }, [isHovered, controls]);
 
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width={width}

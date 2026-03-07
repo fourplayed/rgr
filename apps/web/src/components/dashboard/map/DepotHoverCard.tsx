@@ -35,17 +35,14 @@ export interface DepotHoverCardProps {
  * - Flip-up animation with 3D perspective
  * - Bold text for improved readability
  */
-export const DepotHoverCard = React.memo<DepotHoverCardProps>(({
-  depot,
-  isDark = true,
-}) => {
+export const DepotHoverCard = React.memo<DepotHoverCardProps>(({ depot, isDark = true }) => {
   // Get depot abbreviation
   const getAbbreviation = (name: string): string => {
     const abbrevMap: Record<string, string> = {
-      'Perth': 'PER',
-      'Newman': 'NEW',
-      'Hedland': 'HED',
-      'Karratha': 'KTA',
+      Perth: 'PER',
+      Newman: 'NEW',
+      Hedland: 'HED',
+      Karratha: 'KTA',
     };
     return abbrevMap[name] || name.substring(0, 3).toUpperCase();
   };

@@ -1,5 +1,12 @@
 import { create } from 'zustand';
-import { signInWithEmail, signInWithEmailSecure, signOut, getSession, fetchProfile, updateLastLogin } from '@rgr/shared';
+import {
+  signInWithEmail,
+  signInWithEmailSecure,
+  signOut,
+  getSession,
+  fetchProfile,
+  updateLastLogin,
+} from '@rgr/shared';
 import type { Profile } from '@rgr/shared';
 
 interface AuthState {
@@ -24,8 +31,10 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ error: null });
 
       // Use secure auth (server-side rate limiting) by default; env var allows rollback
-      const loginFn = import.meta.env['VITE_USE_SECURE_AUTH'] !== 'false'
-        ? signInWithEmailSecure : signInWithEmail;
+      const loginFn =
+        import.meta.env['VITE_USE_SECURE_AUTH'] !== 'false'
+          ? signInWithEmailSecure
+          : signInWithEmail;
       const result = await loginFn({ email, password });
 
       if (!result.success) {
@@ -100,7 +109,7 @@ export const useAuthStore = create<AuthState>((set) => ({
           user: null,
           isAuthenticated: false,
           isLoading: false,
-          error: sessionResult.success ? null : (sessionResult.error || null),
+          error: sessionResult.success ? null : sessionResult.error || null,
         });
         return;
       }

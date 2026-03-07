@@ -231,10 +231,7 @@ describe('AnimatedSignInIcon', () => {
       const styles = document.querySelectorAll('style');
       const usesTransform = Array.from(styles).some((style) => {
         const content = style.textContent || '';
-        return (
-          content.includes('transform: translateX') ||
-          content.includes('transform: rotate')
-        );
+        return content.includes('transform: translateX') || content.includes('transform: rotate');
       });
       expect(usesTransform).toBe(true);
     });

@@ -46,7 +46,9 @@ export const AssetsTable = React.memo<AssetsTableProps>(
     const headerBg = isDark ? 'bg-[rgba(0,0,48,0.5)]' : 'bg-[rgba(0,0,120,0.3)]';
     const rowHoverBg = isDark ? 'hover:bg-[rgba(0,0,48,0.3)]' : 'hover:bg-[rgba(0,0,120,0.15)]';
     const selectedBg = isDark ? 'bg-[rgba(0,0,48,0.45)]' : 'bg-[rgba(0,0,120,0.25)]';
-    const borderColor = isDark ? 'border-[rgba(255,255,255,0.06)]' : 'border-[rgba(255,255,255,0.1)]';
+    const borderColor = isDark
+      ? 'border-[rgba(255,255,255,0.06)]'
+      : 'border-[rgba(255,255,255,0.1)]';
 
     if (isLoading) {
       return (
@@ -79,20 +81,22 @@ export const AssetsTable = React.memo<AssetsTableProps>(
                   <th
                     key={col.key}
                     className={`text-left text-xs font-medium uppercase tracking-wider px-4 py-3 ${mutedColor} ${
-                      col.sortable ? 'cursor-pointer select-none hover:text-blue-400 transition-colors' : ''
+                      col.sortable
+                        ? 'cursor-pointer select-none hover:text-blue-400 transition-colors'
+                        : ''
                     }`}
                     style={{ width: col.width }}
                     onClick={col.sortable ? () => onSort(col.key as AssetSortField) : undefined}
                   >
                     <div className="flex items-center gap-1">
                       {col.label}
-                      {col.sortable && sort.field === col.key && (
-                        sort.direction === 'asc' ? (
+                      {col.sortable &&
+                        sort.field === col.key &&
+                        (sort.direction === 'asc' ? (
                           <ChevronUp className="w-3 h-3" />
                         ) : (
                           <ChevronDown className="w-3 h-3" />
-                        )
-                      )}
+                        ))}
                     </div>
                   </th>
                 ))}

@@ -25,7 +25,10 @@ export function AssetsPresenter({ state, actions }: AssetsPresenterProps) {
 
   return (
     <ErrorBoundary>
-      <div className="flex flex-col gap-4 pt-4 pb-8 h-full overflow-y-auto scrollbar-hidden" style={{ width: 'calc(100% - 48px)', maxWidth: '1360px', margin: '0 auto' }}>
+      <div
+        className="flex flex-col gap-4 pt-4 pb-8 h-full overflow-y-auto scrollbar-hidden"
+        style={{ width: 'calc(100% - 48px)', maxWidth: '1360px', margin: '0 auto' }}
+      >
         {/* Toolbar with integrated search and filters */}
         <AssetsToolbar
           isDark={isDark}
@@ -39,10 +42,7 @@ export function AssetsPresenter({ state, actions }: AssetsPresenterProps) {
         />
 
         {/* Table view in glassmorphic card */}
-        <div
-          className="flex-1 min-w-0 min-h-0 overflow-hidden"
-          style={panelStyle}
-        >
+        <div className="flex-1 min-w-0 min-h-0 overflow-hidden" style={panelStyle}>
           <AssetsTable
             isDark={isDark}
             filters={filters}
@@ -73,10 +73,7 @@ export function AssetsPresenter({ state, actions }: AssetsPresenterProps) {
         {/* Create asset slideout */}
         <AnimatePresence>
           {showCreateModal && (
-            <CreateAssetModal
-              isDark={isDark}
-              onClose={() => setShowCreateModal(false)}
-            />
+            <CreateAssetModal isDark={isDark} onClose={() => setShowCreateModal(false)} />
           )}
         </AnimatePresence>
       </div>

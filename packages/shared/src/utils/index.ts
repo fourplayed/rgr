@@ -28,10 +28,7 @@ export function validateEmail(email: string): boolean {
 /**
  * Format date for display
  */
-export function formatDate(
-  date: string | Date,
-  options?: Intl.DateTimeFormatOptions
-): string {
+export function formatDate(date: string | Date, options?: Intl.DateTimeFormatOptions): string {
   const d = typeof date === 'string' ? new Date(date) : date;
   return d.toLocaleDateString('en-AU', {
     year: 'numeric',
@@ -44,10 +41,7 @@ export function formatDate(
 /**
  * Format datetime for display
  */
-export function formatDateTime(
-  date: string | Date,
-  options?: Intl.DateTimeFormatOptions
-): string {
+export function formatDateTime(date: string | Date, options?: Intl.DateTimeFormatOptions): string {
   const d = typeof date === 'string' ? new Date(date) : date;
   return d.toLocaleString('en-AU', {
     year: 'numeric',

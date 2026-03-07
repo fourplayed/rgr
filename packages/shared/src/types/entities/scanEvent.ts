@@ -110,9 +110,7 @@ export function mapRowToScanEvent(row: ScanEventRow): ScanEvent {
 
 export type ScanEventInsertRow = Omit<ScanEventRow, 'id' | 'created_at'>;
 
-export function mapScanEventToInsert(
-  input: CreateScanEventInput
-): ScanEventInsertRow {
+export function mapScanEventToInsert(input: CreateScanEventInput): ScanEventInsertRow {
   return {
     asset_id: input.assetId,
     scanned_by: input.scannedBy ?? null,

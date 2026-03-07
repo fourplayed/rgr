@@ -47,8 +47,7 @@ export default class ScannerErrorBoundary extends Component<
 
   override render(): ReactNode {
     if (this.state.hasError) {
-      const message =
-        this.props.fallbackMessage || 'Camera error - please refresh';
+      const message = this.props.fallbackMessage || 'Camera error - please refresh';
 
       return (
         <div className="flex flex-col items-center justify-center p-8 bg-gray-100 dark:bg-gray-800 rounded-lg min-h-[300px]">
@@ -56,9 +55,7 @@ export default class ScannerErrorBoundary extends Component<
           <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
             Scanner Error
           </h3>
-          <p className="text-gray-600 dark:text-gray-400 text-center mb-4 max-w-xs">
-            {message}
-          </p>
+          <p className="text-gray-600 dark:text-gray-400 text-center mb-4 max-w-xs">{message}</p>
           {this.state.error && (
             <p className="text-xs text-gray-500 dark:text-gray-500 text-center mb-4 max-w-xs font-mono">
               {this.state.error.message}

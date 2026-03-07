@@ -27,7 +27,8 @@ const mockHazards: HazardData[] = [
     assetNumber: 'TL042',
     severity: 'critical',
     hazardType: 'Unsecured Load',
-    description: 'Cargo not properly secured with load straps. High risk of shifting during transport.',
+    description:
+      'Cargo not properly secured with load straps. High risk of shifting during transport.',
     confidence: 92,
     location: 'Perth Depot',
     detectedAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(), // 15 mins ago
@@ -93,7 +94,10 @@ export const HazardReviewPanelExample: React.FC<{ isDark?: boolean }> = ({ isDar
     }
 
     // Search filter
-    if (filters.searchQuery && !hazard.assetNumber.toLowerCase().includes(filters.searchQuery.toLowerCase())) {
+    if (
+      filters.searchQuery &&
+      !hazard.assetNumber.toLowerCase().includes(filters.searchQuery.toLowerCase())
+    ) {
       return false;
     }
 
@@ -119,11 +123,7 @@ export const HazardReviewPanelExample: React.FC<{ isDark?: boolean }> = ({ isDar
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Filters Sidebar */}
         <div className="lg:col-span-1">
-          <HazardReviewFilters
-            filters={filters}
-            onFiltersChange={setFilters}
-            isDark={isDark}
-          />
+          <HazardReviewFilters filters={filters} onFiltersChange={setFilters} isDark={isDark} />
         </div>
 
         {/* Hazard Cards List */}

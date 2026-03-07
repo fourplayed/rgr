@@ -31,7 +31,8 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary: 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500',
-  secondary: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-primary-500',
+  secondary:
+    'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-primary-500',
   danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
   ghost: 'text-gray-700 hover:bg-gray-100 focus:ring-gray-500',
 };
@@ -43,7 +44,19 @@ const sizeStyles: Record<ButtonSize, string> = {
 };
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className = '', variant = 'primary', size = 'md', isLoading, loadingLabel, children, disabled, ...props }, ref) => {
+  (
+    {
+      className = '',
+      variant = 'primary',
+      size = 'md',
+      isLoading,
+      loadingLabel,
+      children,
+      disabled,
+      ...props
+    },
+    ref
+  ) => {
     const isDisabled = disabled || isLoading;
     const spinnerLabel = loadingLabel || LOADING_SPINNER_LABEL;
 

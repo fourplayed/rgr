@@ -324,9 +324,10 @@ describe('ThemeToggle', () => {
       render(<ThemeToggle isDark={false} onToggle={vi.fn()} />);
 
       const styles = document.querySelectorAll('style');
-      const hasHoverColor = Array.from(styles).some((style) =>
-        style.textContent?.includes('.group:hover .moon-light-gray') &&
-        style.textContent?.includes('color: #0a1433')
+      const hasHoverColor = Array.from(styles).some(
+        (style) =>
+          style.textContent?.includes('.group:hover .moon-light-gray') &&
+          style.textContent?.includes('color: #0a1433')
       );
       expect(hasHoverColor).toBe(true);
     });

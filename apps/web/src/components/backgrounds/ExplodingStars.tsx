@@ -55,9 +55,9 @@ const MAX_TRIGGER_MS = 22000;
 const FIRST_TRIGGER_MIN_MS = 3000;
 const FIRST_TRIGGER_MAX_MS = 8000;
 const PARTICLE_COUNT = 12;
-const TENDRIL_COUNT = 4;          // tendrils per star
-const TENDRIL_REFRESH_MS = 150;   // how often tendrils re-jag
-const SHOCK_BOLT_MS = 400;        // how long a shock bolt stays visible
+const TENDRIL_COUNT = 4; // tendrils per star
+const TENDRIL_REFRESH_MS = 150; // how often tendrils re-jag
+const SHOCK_BOLT_MS = 400; // how long a shock bolt stays visible
 
 function dist(a: StarPosition, b: StarPosition) {
   return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
@@ -67,10 +67,12 @@ function dist(a: StarPosition, b: StarPosition) {
 // Lightning path generation
 // ---------------------------------------------------------------------------
 function generateLightningPath(
-  x1: number, y1: number,
-  x2: number, y2: number,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
   segments: number = 10,
-  jitter: number = 0.15,
+  jitter: number = 0.15
 ): string {
   const dx = x2 - x1;
   const dy = y2 - y1;
@@ -95,10 +97,7 @@ function generateLightningPath(
   return points.join(' ');
 }
 
-function generateBranches(
-  x1: number, y1: number,
-  x2: number, y2: number,
-): string[] {
+function generateBranches(x1: number, y1: number, x2: number, y2: number): string[] {
   const branches: string[] = [];
   const count = 1 + Math.floor(Math.random() * 2);
   const dx = x2 - x1;
@@ -292,15 +291,13 @@ export const ExplodingStars = memo(function ExplodingStars({
   }, []);
 
   // Per-star phase ---------------------------------------------------------
-  const [phases, setPhases] = useState<StarPhase[]>(() =>
-    positions.map(() => 'normal'),
-  );
+  const [phases, setPhases] = useState<StarPhase[]>(() => positions.map(() => 'normal'));
   const phasesRef = useRef(phases);
   phasesRef.current = phases;
 
   // Ambient tendrils — regenerate rapidly for crackle effect ----------------
   const [tendrils, setTendrils] = useState<AmbientTendril[][]>(() =>
-    positions.map((pos) => generateTendrils(pos.x, pos.y, TENDRIL_COUNT)),
+    positions.map((pos) => generateTendrils(pos.x, pos.y, TENDRIL_COUNT))
   );
 
   // Shock bolts between nearby stars ---------------------------------------
@@ -356,31 +353,34 @@ export const ExplodingStars = memo(function ExplodingStars({
           const phase = phasesRef.current[i];
           if (phase === 'dead' || phase === 'exploding') return [];
           return generateTendrils(pos.x, pos.y, TENDRIL_COUNT);
-        }),
+        })
       );
     }, TENDRIL_REFRESH_MS);
     return () => clearInterval(interval);
   }, [positions]);
 
   // Spawn a shock bolt between two stars -----------------------------------
-  const spawnShock = useCallback((fromIdx: number, toIdx: number) => {
-    const from = positions[fromIdx];
-    const to = positions[toIdx];
-    if (!from || !to) return;
-    const id = ++shockIdRef.current;
+  const spawnShock = useCallback(
+    (fromIdx: number, toIdx: number) => {
+      const from = positions[fromIdx];
+      const to = positions[toIdx];
+      if (!from || !to) return;
+      const id = ++shockIdRef.current;
 
-    const bolt: ShockBolt = {
-      id,
-      path: generateLightningPath(from.x, from.y, to.x, to.y, 8, 0.2),
-      branches: generateBranches(from.x, from.y, to.x, to.y),
-    };
+      const bolt: ShockBolt = {
+        id,
+        path: generateLightningPath(from.x, from.y, to.x, to.y, 8, 0.2),
+        branches: generateBranches(from.x, from.y, to.x, to.y),
+      };
 
-    setShockBolts((prev) => [...prev, bolt]);
+      setShockBolts((prev) => [...prev, bolt]);
 
-    sched(() => {
-      setShockBolts((prev) => prev.filter((b) => b.id !== id));
-    }, SHOCK_BOLT_MS);
-  }, [positions, sched]);
+      sched(() => {
+        setShockBolts((prev) => prev.filter((b) => b.id !== id));
+      }, SHOCK_BOLT_MS);
+    },
+    [positions, sched]
+  );
 
   // Stable particle data (randomized once) ---------------------------------
   const particlesRef = useRef<Particle[][]>(
@@ -391,13 +391,11 @@ export const ExplodingStars = memo(function ExplodingStars({
         size: 0.4 + Math.random() * 1.2,
         brightness: Math.random(),
         duration: 400 + Math.random() * 400,
-      })),
-    ),
+      }))
+    )
   );
 
-  const pulseDurations = useRef<number[]>(
-    positions.map(() => 3750 + Math.random() * 3750),
-  );
+  const pulseDurations = useRef<number[]>(positions.map(() => 3750 + Math.random() * 3750));
 
   const attractVectors = useRef(
     positions.map((pos, i) => {
@@ -406,12 +404,15 @@ export const ExplodingStars = memo(function ExplodingStars({
       positions.forEach((other, j) => {
         if (j === i) return;
         const d = dist(pos, other);
-        if (d < nearestDist) { nearestDist = d; nearestIdx = j; }
+        if (d < nearestDist) {
+          nearestDist = d;
+          nearestIdx = j;
+        }
       });
       const nearest = nearestIdx === -1 ? undefined : positions[nearestIdx];
       if (!nearest) return { tx: 0, ty: 0 };
       return { tx: (nearest.x - pos.x) * 0.7, ty: (nearest.y - pos.y) * 0.7 };
-    }),
+    })
   );
 
   // Trigger full lifecycle for one star ------------------------------------
@@ -449,7 +450,7 @@ export const ExplodingStars = memo(function ExplodingStars({
         }, EXPLOSION_MS);
       }, WARNING_MS);
     },
-    [positions, setOne, sched, spawnShock],
+    [positions, setOne, sched, spawnShock]
   );
 
   // Proximity shock — stars within 150px zap each other periodically -------
@@ -466,7 +467,12 @@ export const ExplodingStars = memo(function ExplodingStars({
             spawnShock(i, j);
           }
           // If one is normal and other is normal, chance to trigger chain
-          if (pi === 'normal' && pj === 'normal' && !busyRef.current.has(i) && !busyRef.current.has(j)) {
+          if (
+            pi === 'normal' &&
+            pj === 'normal' &&
+            !busyRef.current.has(i) &&
+            !busyRef.current.has(j)
+          ) {
             if (Math.random() < 0.02) {
               spawnShock(i, j);
               sched(() => trigger(i), 200);
@@ -488,7 +494,10 @@ export const ExplodingStars = memo(function ExplodingStars({
       sched(() => {
         if (!alive) return;
         // Skip trigger when tab is hidden — just reschedule
-        if (!isVisibleRef.current) { loop(); return; }
+        if (!isVisibleRef.current) {
+          loop();
+          return;
+        }
         const candidates: number[] = [];
         phasesRef.current.forEach((p, i) => {
           if (p === 'normal' && !busyRef.current.has(i)) candidates.push(i);
@@ -505,7 +514,10 @@ export const ExplodingStars = memo(function ExplodingStars({
       FIRST_TRIGGER_MIN_MS + Math.random() * (FIRST_TRIGGER_MAX_MS - FIRST_TRIGGER_MIN_MS);
     sched(() => {
       if (!alive) return;
-      if (!isVisibleRef.current) { loop(); return; }
+      if (!isVisibleRef.current) {
+        loop();
+        return;
+      }
       const candidates: number[] = [];
       phasesRef.current.forEach((p, i) => {
         if (p === 'normal' && !busyRef.current.has(i)) candidates.push(i);
@@ -517,7 +529,9 @@ export const ExplodingStars = memo(function ExplodingStars({
       loop();
     }, firstDelay);
 
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [trigger, sched]);
 
   // Render -----------------------------------------------------------------
@@ -560,7 +574,7 @@ export const ExplodingStars = memo(function ExplodingStars({
                   strokeLinecap="round"
                 />
               </g>
-            )),
+            ))
           )}
 
           {/* Shock bolts between nearby stars */}
@@ -635,14 +649,16 @@ export const ExplodingStars = memo(function ExplodingStars({
                 width: 0,
                 height: 0,
                 ...(phase === 'warning'
-                  ? {
+                  ? ({
                       '--attract-tx': `${attractVectors.current[i]!.tx}px`,
                       '--attract-ty': `${attractVectors.current[i]!.ty}px`,
                       animation: `explSpeedBoost ${WARNING_MS}ms ease-in forwards`,
-                    } as React.CSSProperties
+                    } as React.CSSProperties)
                   : {}),
                 ...(phase === 'exploding'
-                  ? { transform: `translate(${attractVectors.current[i]!.tx}px, ${attractVectors.current[i]!.ty}px)` }
+                  ? {
+                      transform: `translate(${attractVectors.current[i]!.tx}px, ${attractVectors.current[i]!.ty}px)`,
+                    }
                   : {}),
               }}
             >
@@ -658,7 +674,9 @@ export const ExplodingStars = memo(function ExplodingStars({
                     boxShadow: `0 0 ${pos.size * 18}px ${pos.size * 4.5}px ${glowColor}`,
                     transform: 'translate(-50%, -50%)',
                     ...(phase === 'normal'
-                      ? { animation: `explGlowPulse ${pulseDurations.current[i]!}ms ease-in-out infinite` }
+                      ? {
+                          animation: `explGlowPulse ${pulseDurations.current[i]!}ms ease-in-out infinite`,
+                        }
                       : {}),
                     ...(phase === 'warning'
                       ? { animation: `explWarningGrow ${WARNING_MS}ms ease-in forwards` }
@@ -678,7 +696,8 @@ export const ExplodingStars = memo(function ExplodingStars({
                     width: d * 12,
                     height: d * 12,
                     borderRadius: '50%',
-                    background: 'radial-gradient(circle, rgba(180,0,255,1) 0%, rgba(100,0,180,0.5) 40%, transparent 70%)',
+                    background:
+                      'radial-gradient(circle, rgba(180,0,255,1) 0%, rgba(100,0,180,0.5) 40%, transparent 70%)',
                     transform: 'translate(-50%, -50%)',
                     animation: `explWarningBlink ${WARNING_MS}ms ease-in-out forwards`,
                     pointerEvents: 'none',
@@ -695,7 +714,8 @@ export const ExplodingStars = memo(function ExplodingStars({
                       width: d * 4,
                       height: d * 4,
                       borderRadius: '50%',
-                      background: 'radial-gradient(circle, rgba(160,0,255,0.9) 0%, rgba(75,0,130,0.7) 25%, rgba(20,0,30,0.4) 55%, transparent 100%)',
+                      background:
+                        'radial-gradient(circle, rgba(160,0,255,0.9) 0%, rgba(75,0,130,0.7) 25%, rgba(20,0,30,0.4) 55%, transparent 100%)',
                       animation: `explFlash ${EXPLOSION_MS}ms ease-out forwards`,
                       pointerEvents: 'none',
                     }}
@@ -724,19 +744,21 @@ export const ExplodingStars = memo(function ExplodingStars({
                     return (
                       <div
                         key={pi}
-                        style={{
-                          position: 'absolute',
-                          width: p.size * 2,
-                          height: p.size * 2,
-                          borderRadius: '50%',
-                          background: bg,
-                          boxShadow: glow,
-                          '--expl-tx': `${tx}px`,
-                          '--expl-ty': `${ty}px`,
-                          animation: `explParticle ${p.duration}ms ease-out forwards`,
-                          animationDelay: `${pi * 15}ms`,
-                          pointerEvents: 'none',
-                        } as React.CSSProperties}
+                        style={
+                          {
+                            position: 'absolute',
+                            width: p.size * 2,
+                            height: p.size * 2,
+                            borderRadius: '50%',
+                            background: bg,
+                            boxShadow: glow,
+                            '--expl-tx': `${tx}px`,
+                            '--expl-ty': `${ty}px`,
+                            animation: `explParticle ${p.duration}ms ease-out forwards`,
+                            animationDelay: `${pi * 15}ms`,
+                            pointerEvents: 'none',
+                          } as React.CSSProperties
+                        }
                       />
                     );
                   })}

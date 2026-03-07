@@ -20,7 +20,13 @@ export type DashboardSection =
   | 'admin';
 
 export interface NavItem {
-  icon: React.ComponentType<{ width?: number; height?: number; stroke?: string; strokeWidth?: number; isHovered?: boolean }>;
+  icon: React.ComponentType<{
+    width?: number;
+    height?: number;
+    stroke?: string;
+    strokeWidth?: number;
+    isHovered?: boolean;
+  }>;
   label: string;
   path: string;
   section: DashboardSection;

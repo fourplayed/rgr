@@ -66,8 +66,13 @@ export const SecurityStatus: React.FC = () => {
     const vulnerabilities = data.vulnerabilities || {};
 
     // Count vulnerabilities by severity
-    const severities: Array<'critical' | 'high' | 'medium' | 'low'> = ['critical', 'high', 'medium', 'low'];
-    severities.forEach(severity => {
+    const severities: Array<'critical' | 'high' | 'medium' | 'low'> = [
+      'critical',
+      'high',
+      'medium',
+      'low',
+    ];
+    severities.forEach((severity) => {
       const count = vulnerabilities[severity] || 0;
       if (count > 0) {
         alerts.push({ severity, count });
@@ -205,9 +210,7 @@ export const SecurityStatus: React.FC = () => {
             </div>
             <div>
               <p className="text-sm text-gray-400">Overall Status</p>
-              <p className="text-lg font-semibold text-white capitalize">
-                {securityData.status}
-              </p>
+              <p className="text-lg font-semibold text-white capitalize">{securityData.status}</p>
             </div>
           </div>
           <div className="text-right">

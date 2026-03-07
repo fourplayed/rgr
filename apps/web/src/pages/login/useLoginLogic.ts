@@ -176,11 +176,7 @@ export function useLoginLogic(deps?: LoginLogicDeps): UseLoginLogicResult {
 
   // Computed values
   const isValid = useMemo(() => {
-    return (
-      formData.email.length > 0 &&
-      formData.password.length > 0 &&
-      status !== 'loading'
-    );
+    return formData.email.length > 0 && formData.password.length > 0 && status !== 'loading';
   }, [formData.email, formData.password, status]);
 
   return {

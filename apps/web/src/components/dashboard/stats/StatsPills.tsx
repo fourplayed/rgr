@@ -86,14 +86,10 @@ export const StatsPills = React.memo<StatsPillsProps>(({ stats, className = '' }
             <div className={`w-1 h-6 rounded-full ${colors.accent}`} aria-hidden="true" />
 
             {/* Icon if provided */}
-            {Icon && (
-              <Icon className={`w-4 h-4 ${colors.text}`} aria-hidden="true" />
-            )}
+            {Icon && <Icon className={`w-4 h-4 ${colors.text}`} aria-hidden="true" />}
 
             {/* Value */}
-            <span className={`text-lg font-bold ${colors.text}`}>
-              {stat.value}
-            </span>
+            <span className={`text-lg font-bold ${colors.text}`}>{stat.value}</span>
 
             {/* Label */}
             <span className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>

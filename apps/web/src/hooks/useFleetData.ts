@@ -22,12 +22,7 @@ import {
 import type { AnalyticsTimeRange } from '@/services/analyticsService';
 
 // Re-export interfaces from shared for backward compatibility
-export type {
-  FleetStatistics,
-  RecentScan,
-  OutstandingAsset,
-  AssetLocation,
-} from '@rgr/shared';
+export type { FleetStatistics, RecentScan, OutstandingAsset, AssetLocation } from '@rgr/shared';
 
 /**
  * Query keys for React Query cache management
@@ -175,8 +170,16 @@ export function useFleetDashboard(options?: {
     recentScans,
     outstandingAssets,
     assetLocations,
-    isLoading: statistics.isLoading || recentScans.isLoading || outstandingAssets.isLoading || assetLocations.isLoading,
-    isError: statistics.isError || recentScans.isError || outstandingAssets.isError || assetLocations.isError,
+    isLoading:
+      statistics.isLoading ||
+      recentScans.isLoading ||
+      outstandingAssets.isLoading ||
+      assetLocations.isLoading,
+    isError:
+      statistics.isError ||
+      recentScans.isError ||
+      outstandingAssets.isError ||
+      assetLocations.isError,
     error: statistics.error || recentScans.error || outstandingAssets.error || assetLocations.error,
   };
 }

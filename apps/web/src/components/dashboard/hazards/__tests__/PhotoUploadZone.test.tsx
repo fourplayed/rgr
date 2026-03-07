@@ -388,9 +388,7 @@ describe('PhotoUploadZone', () => {
 
         expect(onFileSelect).not.toHaveBeenCalled();
         await waitFor(() => {
-          expect(
-            screen.getByText(/please select an image file/i)
-          ).toBeInTheDocument();
+          expect(screen.getByText(/please select an image file/i)).toBeInTheDocument();
         });
       });
 
@@ -405,9 +403,7 @@ describe('PhotoUploadZone', () => {
 
         expect(onFileSelect).not.toHaveBeenCalled();
         await waitFor(() => {
-          expect(
-            screen.getByText(/please select an image file/i)
-          ).toBeInTheDocument();
+          expect(screen.getByText(/please select an image file/i)).toBeInTheDocument();
         });
       });
 
@@ -670,9 +666,7 @@ describe('PhotoUploadZone', () => {
       fireEvent.change(input, { target: { files: [file] } });
 
       await waitFor(() => {
-        expect(
-          screen.getByText(/please select an image file/i)
-        ).toBeInTheDocument();
+        expect(screen.getByText(/please select an image file/i)).toBeInTheDocument();
       });
     });
 

@@ -4,7 +4,11 @@ import {
   MaintenancePrioritySchema,
   MaintenanceTypeSchema,
 } from '../enums/MaintenanceEnums';
-import type { MaintenanceStatus, MaintenancePriority, MaintenanceType } from '../enums/MaintenanceEnums';
+import type {
+  MaintenanceStatus,
+  MaintenancePriority,
+  MaintenanceType,
+} from '../enums/MaintenanceEnums';
 import type { Json } from '../database.types';
 import { safeParseEnum } from '../../utils/safeParseEnum';
 
@@ -149,9 +153,7 @@ export const UpdateMaintenanceInputSchema = z.object({
 
 // ── Mappers ──
 
-export function mapRowToMaintenanceRecord(
-  row: MaintenanceRecordRow
-): MaintenanceRecord {
+export function mapRowToMaintenanceRecord(row: MaintenanceRecordRow): MaintenanceRecord {
   return {
     id: row.id,
     assetId: row.asset_id,
@@ -177,12 +179,20 @@ export function mapRowToMaintenanceRecord(
   };
 }
 
-export type MaintenanceInsertRow = Omit<MaintenanceRecordRow, 'id' | 'created_at' | 'updated_at' | 'completed_by' | 'completed_at' | 'parts_used' | 'estimated_cost' | 'actual_cost'>;
+export type MaintenanceInsertRow = Omit<
+  MaintenanceRecordRow,
+  | 'id'
+  | 'created_at'
+  | 'updated_at'
+  | 'completed_by'
+  | 'completed_at'
+  | 'parts_used'
+  | 'estimated_cost'
+  | 'actual_cost'
+>;
 export type MaintenanceUpdateRow = Partial<Omit<MaintenanceRecordRow, 'id' | 'created_at'>>;
 
-export function mapMaintenanceToInsert(
-  input: CreateMaintenanceInput
-): MaintenanceInsertRow {
+export function mapMaintenanceToInsert(input: CreateMaintenanceInput): MaintenanceInsertRow {
   return {
     asset_id: input.assetId,
     reported_by: input.reportedBy ?? null,
@@ -200,9 +210,7 @@ export function mapMaintenanceToInsert(
   };
 }
 
-export function mapMaintenanceToUpdate(
-  input: UpdateMaintenanceInput
-): MaintenanceUpdateRow {
+export function mapMaintenanceToUpdate(input: UpdateMaintenanceInput): MaintenanceUpdateRow {
   const updates: MaintenanceUpdateRow = {};
 
   if (input.assignedTo !== undefined) updates['assigned_to'] = input.assignedTo;

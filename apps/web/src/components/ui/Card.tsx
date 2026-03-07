@@ -36,11 +36,7 @@ interface CardHeaderProps extends HTMLAttributes<HTMLDivElement> {}
 export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
   ({ className = '', children, ...props }, ref) => {
     return (
-      <div
-        ref={ref}
-        className={`px-6 py-4 border-b border-gray-200 ${className}`}
-        {...props}
-      >
+      <div ref={ref} className={`px-6 py-4 border-b border-gray-200 ${className}`} {...props}>
         {children}
       </div>
     );
@@ -54,11 +50,7 @@ interface CardTitleProps extends HTMLAttributes<HTMLHeadingElement> {}
 export const CardTitle = forwardRef<HTMLHeadingElement, CardTitleProps>(
   ({ className = '', children, ...props }, ref) => {
     return (
-      <h3
-        ref={ref}
-        className={`text-lg font-medium text-gray-900 ${className}`}
-        {...props}
-      >
+      <h3 ref={ref} className={`text-lg font-medium text-gray-900 ${className}`} {...props}>
         {children}
       </h3>
     );

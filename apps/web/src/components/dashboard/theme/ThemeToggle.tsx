@@ -8,9 +8,7 @@ export interface ThemeToggleProps {
   className?: string;
 }
 
-export const ThemeToggle = React.memo<ThemeToggleProps>(({
-  className = '',
-}) => {
+export const ThemeToggle = React.memo<ThemeToggleProps>(({ className = '' }) => {
   const { isDark, toggleTheme } = useTheme();
 
   return (

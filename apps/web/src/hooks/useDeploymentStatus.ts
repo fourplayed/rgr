@@ -28,7 +28,12 @@ function transformWorkflowRun(run: GitHubWorkflowRun): WorkflowRun {
   return {
     id: run.id,
     name: run.name,
-    status: run.status === 'in_progress' ? 'in_progress' : run.status === 'completed' ? 'completed' : (run.status as WorkflowRun['status']),
+    status:
+      run.status === 'in_progress'
+        ? 'in_progress'
+        : run.status === 'completed'
+          ? 'completed'
+          : (run.status as WorkflowRun['status']),
     conclusion: run.conclusion as WorkflowRun['conclusion'],
     created_at: run.created_at,
     updated_at: run.updated_at,
@@ -55,21 +60,23 @@ function calculateMetrics(workflows: WorkflowRun[]): DeploymentMetrics {
   }
 
   // Calculate average build time (completed workflows only)
-  const completedWorkflows = workflows.filter(w => w.status === 'completed' && w.duration > 0);
-  const avgBuildTime = completedWorkflows.length > 0
-    ? Math.round(completedWorkflows.reduce((sum, w) => sum + w.duration, 0) / completedWorkflows.length)
-    : 0;
+  const completedWorkflows = workflows.filter((w) => w.status === 'completed' && w.duration > 0);
+  const avgBuildTime =
+    completedWorkflows.length > 0
+      ? Math.round(
+          completedWorkflows.reduce((sum, w) => sum + w.duration, 0) / completedWorkflows.length
+        )
+      : 0;
 
   // Calculate success rate
-  const successCount = workflows.filter(w => w.conclusion === 'success').length;
-  const successRate = workflows.length > 0
-    ? Math.round((successCount / workflows.length) * 100)
-    : 0;
+  const successCount = workflows.filter((w) => w.conclusion === 'success').length;
+  const successRate =
+    workflows.length > 0 ? Math.round((successCount / workflows.length) * 100) : 0;
 
   // Count deployments today
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const deploymentsToday = workflows.filter(w => {
+  const deploymentsToday = workflows.filter((w) => {
     const workflowDate = new Date(w.created_at);
     return workflowDate >= today;
   }).length;
@@ -78,27 +85,32 @@ function calculateMetrics(workflows: WorkflowRun[]): DeploymentMetrics {
   // This is a simplified heuristic - in a real scenario, you'd parse workflow logs
   // or use GitHub Actions cache API for accurate data
   const recentWorkflows = workflows.slice(0, 5);
-  const fastBuilds = recentWorkflows.filter(w => w.duration > 0 && w.duration < avgBuildTime * 0.7).length;
-  const cacheHitRate = recentWorkflows.length > 0
-    ? Math.round((fastBuilds / recentWorkflows.length) * 100)
-    : 75; // Default estimate
+  const fastBuilds = recentWorkflows.filter(
+    (w) => w.duration > 0 && w.duration < avgBuildTime * 0.7
+  ).length;
+  const cacheHitRate =
+    recentWorkflows.length > 0 ? Math.round((fastBuilds / recentWorkflows.length) * 100) : 75; // Default estimate
 
   // Build time trend (last 7 workflows)
   const buildTimeTrend = workflows
     .slice(0, 7)
-    .filter(w => w.duration > 0)
-    .map(w => w.duration)
+    .filter((w) => w.duration > 0)
+    .map((w) => w.duration)
     .reverse();
 
   // Week 2 improvements (if we have enough data)
   let improvements;
   if (workflows.length >= 14) {
-    const week1Avg = workflows.slice(7, 14)
-      .filter(w => w.duration > 0)
-      .reduce((sum, w) => sum + w.duration, 0) / 7;
-    const week2Avg = workflows.slice(0, 7)
-      .filter(w => w.duration > 0)
-      .reduce((sum, w) => sum + w.duration, 0) / 7;
+    const week1Avg =
+      workflows
+        .slice(7, 14)
+        .filter((w) => w.duration > 0)
+        .reduce((sum, w) => sum + w.duration, 0) / 7;
+    const week2Avg =
+      workflows
+        .slice(0, 7)
+        .filter((w) => w.duration > 0)
+        .reduce((sum, w) => sum + w.duration, 0) / 7;
 
     if (week1Avg > 0) {
       improvements = {
@@ -157,7 +169,7 @@ export function useDeploymentStatus({
 
       // Prepare headers
       const headers: HeadersInit = {
-        'Accept': 'application/vnd.github+json',
+        Accept: 'application/vnd.github+json',
         'X-GitHub-Api-Version': '2022-11-28',
       };
 

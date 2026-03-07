@@ -12,7 +12,7 @@ describe('useEntranceAnimation', () => {
     // Mock matchMedia for the hook
     Object.defineProperty(window, 'matchMedia', {
       writable: true,
-      value: vi.fn().mockImplementation(query => ({
+      value: vi.fn().mockImplementation((query) => ({
         matches: false,
         media: query,
         onchange: null,
@@ -39,10 +39,9 @@ describe('useEntranceAnimation', () => {
   });
 
   it('should animate entrance when trigger becomes true', async () => {
-    const { result, rerender } = renderHook(
-      ({ trigger }) => useEntranceAnimation(trigger),
-      { initialProps: { trigger: false } }
-    );
+    const { result, rerender } = renderHook(({ trigger }) => useEntranceAnimation(trigger), {
+      initialProps: { trigger: false },
+    });
 
     // Initially preloading
     expect(result.current.isPreloading).toBe(true);
@@ -88,9 +87,7 @@ describe('useEntranceAnimation', () => {
   });
 
   it('should trigger fallback after maxLoadWait', () => {
-    const { result } = renderHook(() =>
-      useEntranceAnimation(false, { maxLoadWait: 1000 })
-    );
+    const { result } = renderHook(() => useEntranceAnimation(false, { maxLoadWait: 1000 }));
 
     // Initially preloading
     expect(result.current.isPreloading).toBe(true);
@@ -123,10 +120,9 @@ describe('useEntranceAnimation', () => {
 
     vi.stubGlobal('matchMedia', matchMediaMock);
 
-    const { result, rerender } = renderHook(
-      ({ trigger }) => useEntranceAnimation(trigger),
-      { initialProps: { trigger: false } }
-    );
+    const { result, rerender } = renderHook(({ trigger }) => useEntranceAnimation(trigger), {
+      initialProps: { trigger: false },
+    });
 
     // Trigger animation
     act(() => {
@@ -144,10 +140,9 @@ describe('useEntranceAnimation', () => {
   it('should clean up timers on unmount', () => {
     const clearTimeoutSpy = vi.spyOn(global, 'clearTimeout');
 
-    const { unmount, rerender } = renderHook(
-      ({ trigger }) => useEntranceAnimation(trigger),
-      { initialProps: { trigger: false } }
-    );
+    const { unmount, rerender } = renderHook(({ trigger }) => useEntranceAnimation(trigger), {
+      initialProps: { trigger: false },
+    });
 
     // Trigger animation to create timers
     rerender({ trigger: true });
@@ -159,10 +154,9 @@ describe('useEntranceAnimation', () => {
   });
 
   it('should not animate twice if already animated', async () => {
-    const { result, rerender } = renderHook(
-      ({ trigger }) => useEntranceAnimation(trigger),
-      { initialProps: { trigger: false } }
-    );
+    const { result, rerender } = renderHook(({ trigger }) => useEntranceAnimation(trigger), {
+      initialProps: { trigger: false },
+    });
 
     // First animation
     act(() => {
@@ -193,10 +187,9 @@ describe('useEntranceAnimation', () => {
   });
 
   it('should handle rapid trigger changes gracefully', () => {
-    const { result, rerender } = renderHook(
-      ({ trigger }) => useEntranceAnimation(trigger),
-      { initialProps: { trigger: false } }
-    );
+    const { result, rerender } = renderHook(({ trigger }) => useEntranceAnimation(trigger), {
+      initialProps: { trigger: false },
+    });
 
     // Rapidly toggle trigger
     act(() => {

@@ -30,8 +30,8 @@ export interface PlaceholderAsset {
 /** Map from asset status to marker color */
 export const STATUS_COLORS: Record<string, string> = {
   // TODO: Align with RGR_COLORS semantic palette
-  serviced: '#22c55e',         // Green
-  maintenance: '#f59e0b',    // Amber
+  serviced: '#22c55e', // Green
+  maintenance: '#f59e0b', // Amber
   out_of_service: '#ef4444', // Red
 };
 

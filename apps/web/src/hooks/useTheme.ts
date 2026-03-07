@@ -32,7 +32,7 @@ export function useTheme(): ThemeContextValue {
   if (!context) {
     throw new Error(
       'useTheme must be used within ThemeProvider. ' +
-      'Wrap your app with <ThemeProvider> to use theme features.'
+        'Wrap your app with <ThemeProvider> to use theme features.'
     );
   }
 

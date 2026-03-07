@@ -22,7 +22,9 @@ export const MapSkeleton: React.FC<SkeletonProps> = ({ className = '', isDark = 
     <SkeletonPulse isDark={isDark} className="absolute inset-0 rounded-xl" />
     <div className="absolute inset-0 flex items-center justify-center">
       <div className="text-center">
-        <div className={`w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto mb-3 ${isDark ? 'border-blue-500' : 'border-cyan-500'}`} />
+        <div
+          className={`w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto mb-3 ${isDark ? 'border-blue-500' : 'border-cyan-500'}`}
+        />
         <p className={`text-sm ${isDark ? 'text-white/60' : 'text-slate-500'}`}>Loading map...</p>
       </div>
     </div>
@@ -33,7 +35,9 @@ export const MapSkeleton: React.FC<SkeletonProps> = ({ className = '', isDark = 
 export const DashboardSkeleton: React.FC<SkeletonProps> = ({ isDark = true }) => (
   <div className="min-h-screen flex flex-col" role="status" aria-label="Loading dashboard">
     {/* Nav skeleton */}
-    <div className={`h-[66px] border-b ${isDark ? 'bg-navy-900/50 border-white/10' : 'bg-white border-slate-200'}`}>
+    <div
+      className={`h-[66px] border-b ${isDark ? 'bg-navy-900/50 border-white/10' : 'bg-white border-slate-200'}`}
+    >
       <div className="h-full px-6 flex items-center justify-between">
         <div className="flex items-center gap-6">
           {[1, 2, 3, 4].map((i) => (
@@ -74,7 +78,11 @@ export const DashboardSkeleton: React.FC<SkeletonProps> = ({ isDark = true }) =>
 
 /** Scan page skeleton */
 export const ScanSkeleton: React.FC<SkeletonProps> = ({ isDark = true }) => (
-  <div className="min-h-screen flex flex-col items-center justify-center p-4" role="status" aria-label="Loading scanner">
+  <div
+    className="min-h-screen flex flex-col items-center justify-center p-4"
+    role="status"
+    aria-label="Loading scanner"
+  >
     <div className="w-full max-w-md">
       <SkeletonPulse isDark={isDark} className="h-[300px] rounded-2xl mb-4" />
       <SkeletonPulse isDark={isDark} className="h-12 rounded-xl mb-2" />
@@ -87,7 +95,7 @@ export const ScanSkeleton: React.FC<SkeletonProps> = ({ isDark = true }) => (
 export const CardSkeleton: React.FC<SkeletonProps & { height?: string }> = ({
   className = '',
   isDark = true,
-  height = 'h-[200px]'
+  height = 'h-[200px]',
 }) => (
   <div className={`rounded-2xl overflow-hidden ${className}`} role="status" aria-label="Loading">
     <SkeletonPulse isDark={isDark} className={`w-full ${height}`} />
@@ -95,8 +103,15 @@ export const CardSkeleton: React.FC<SkeletonProps & { height?: string }> = ({
 );
 
 /** Activity list skeleton */
-export const ActivityListSkeleton: React.FC<SkeletonProps> = ({ className = '', isDark = true }) => (
-  <div className={`rounded-2xl overflow-hidden ${className}`} role="status" aria-label="Loading activity">
+export const ActivityListSkeleton: React.FC<SkeletonProps> = ({
+  className = '',
+  isDark = true,
+}) => (
+  <div
+    className={`rounded-2xl overflow-hidden ${className}`}
+    role="status"
+    aria-label="Loading activity"
+  >
     <div className={`p-5 border-b ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
       <SkeletonPulse isDark={isDark} className="h-5 w-32" />
     </div>

@@ -37,16 +37,13 @@ export interface AssetHoverCardProps {
  * - Flip-up animation with 3D perspective
  * - Bold text for improved readability
  */
-export const AssetHoverCard = React.memo<AssetHoverCardProps>(({
-  asset,
-  isDark = true,
-}) => {
+export const AssetHoverCard = React.memo<AssetHoverCardProps>(({ asset, isDark = true }) => {
   // Format status text: replace underscores with spaces and capitalize each word
   const formatStatus = (status: string): string => {
     return status
       .replace(/_/g, ' ')
       .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(' ');
   };
 

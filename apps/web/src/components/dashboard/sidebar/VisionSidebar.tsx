@@ -37,9 +37,7 @@ const NAV_ITEMS: NavItem[] = [
   { icon: FileText, label: 'Reports', path: '/reports' },
 ];
 
-const BOTTOM_ITEMS: NavItem[] = [
-  { icon: Settings, label: 'Settings', path: '/settings' },
-];
+const BOTTOM_ITEMS: NavItem[] = [{ icon: Settings, label: 'Settings', path: '/settings' }];
 
 export const VisionSidebar = React.memo<VisionSidebarProps>(({ className = '' }) => {
   const location = useLocation();
@@ -53,7 +51,10 @@ export const VisionSidebar = React.memo<VisionSidebarProps>(({ className = '' })
   };
 
   const bgStyle = isDark
-    ? { background: 'linear-gradient(127.09deg, rgba(6, 11, 40, 0.94) 19.41%, rgba(10, 14, 35, 0.49) 76.65%)' }
+    ? {
+        background:
+          'linear-gradient(127.09deg, rgba(6, 11, 40, 0.94) 19.41%, rgba(10, 14, 35, 0.49) 76.65%)',
+      }
     : { background: '#ffffff', boxShadow: '2px 0 8px rgba(0, 0, 0, 0.05)' }; // Light theme: solid white (100% opacity)
 
   return (
@@ -78,7 +79,9 @@ export const VisionSidebar = React.memo<VisionSidebarProps>(({ className = '' })
       <div className="h-[125px] flex-shrink-0" />
 
       {/* Divider below logo */}
-      <div className={`mx-4 mt-[45px] mb-2 h-px bg-gradient-to-r from-transparent ${isDark ? 'via-white/20' : 'via-slate-300'} to-transparent`} />
+      <div
+        className={`mx-4 mt-[45px] mb-2 h-px bg-gradient-to-r from-transparent ${isDark ? 'via-white/20' : 'via-slate-300'} to-transparent`}
+      />
 
       {/* Main Navigation */}
       <nav className="flex-1 px-4 py-6 space-y-1">
@@ -95,13 +98,20 @@ export const VisionSidebar = React.memo<VisionSidebarProps>(({ className = '' })
                 w-full flex items-center gap-3 px-4 py-4 rounded-xl
                 transition-all duration-200
                 group relative
-                ${active
-                  ? isDark ? 'bg-vision-info text-white shadow-vision-brand' : 'bg-brand text-white shadow-lg'
-                  : isDark ? 'text-vision-text-secondary hover:bg-navy-500/50 hover:text-white' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                ${
+                  active
+                    ? isDark
+                      ? 'bg-vision-info text-white shadow-vision-brand'
+                      : 'bg-brand text-white shadow-lg'
+                    : isDark
+                      ? 'text-vision-text-secondary hover:bg-navy-500/50 hover:text-white'
+                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                 }
               `}
             >
-              <Icon className={`w-6 h-6 ${active ? 'text-white' : isDark ? 'text-vision-text-muted group-hover:text-white' : 'text-slate-400 group-hover:text-slate-900'}`} />
+              <Icon
+                className={`w-6 h-6 ${active ? 'text-white' : isDark ? 'text-vision-text-muted group-hover:text-white' : 'text-slate-400 group-hover:text-slate-900'}`}
+              />
               <span className="font-semibold text-base">{item.label}</span>
               {item.badge && (
                 <span className="ml-auto px-2 py-0.5 text-xs font-bold rounded-full bg-error text-white">
@@ -109,7 +119,9 @@ export const VisionSidebar = React.memo<VisionSidebarProps>(({ className = '' })
                 </span>
               )}
               {active && (
-                <div className={`absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-l-full ${isDark ? 'bg-white' : 'bg-brand'}`} />
+                <div
+                  className={`absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-l-full ${isDark ? 'bg-white' : 'bg-brand'}`}
+                />
               )}
             </button>
           );
@@ -119,7 +131,9 @@ export const VisionSidebar = React.memo<VisionSidebarProps>(({ className = '' })
       {/* Bottom Section */}
       <div className="px-4 pb-4 space-y-1">
         {/* Divider */}
-        <div className={`mb-4 h-px bg-gradient-to-r from-transparent ${isDark ? 'via-vision-border/50' : 'via-slate-200'} to-transparent`} />
+        <div
+          className={`mb-4 h-px bg-gradient-to-r from-transparent ${isDark ? 'via-vision-border/50' : 'via-slate-200'} to-transparent`}
+        />
 
         {BOTTOM_ITEMS.map((item) => {
           const Icon = item.icon;
@@ -133,9 +147,14 @@ export const VisionSidebar = React.memo<VisionSidebarProps>(({ className = '' })
               className={`
                 w-full flex items-center gap-3 px-4 py-4 rounded-xl
                 transition-all duration-200
-                ${active
-                  ? isDark ? 'bg-navy-500/80 text-white' : 'bg-slate-100 text-slate-900'
-                  : isDark ? 'text-vision-text-secondary hover:bg-navy-500/50 hover:text-white' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                ${
+                  active
+                    ? isDark
+                      ? 'bg-navy-500/80 text-white'
+                      : 'bg-slate-100 text-slate-900'
+                    : isDark
+                      ? 'text-vision-text-secondary hover:bg-navy-500/50 hover:text-white'
+                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                 }
               `}
             >
@@ -156,14 +175,24 @@ export const VisionSidebar = React.memo<VisionSidebarProps>(({ className = '' })
         </button>
 
         {/* User Section */}
-        <div className={`mt-4 p-4 rounded-xl border ${isDark ? 'bg-navy-600/50 border-vision-border/20' : 'bg-slate-50 border-slate-200'}`}>
+        <div
+          className={`mt-4 p-4 rounded-xl border ${isDark ? 'bg-navy-600/50 border-vision-border/20' : 'bg-slate-50 border-slate-200'}`}
+        >
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-vision-info flex items-center justify-center text-white font-bold text-sm">
               JD
             </div>
             <div className="flex-1 min-w-0">
-              <p className={`font-medium text-sm truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>John Doe</p>
-              <p className={`text-xs truncate ${isDark ? 'text-vision-text-muted' : 'text-slate-500'}`}>Manager</p>
+              <p
+                className={`font-medium text-sm truncate ${isDark ? 'text-white' : 'text-slate-900'}`}
+              >
+                John Doe
+              </p>
+              <p
+                className={`text-xs truncate ${isDark ? 'text-vision-text-muted' : 'text-slate-500'}`}
+              >
+                Manager
+              </p>
             </div>
             <button
               type="button"

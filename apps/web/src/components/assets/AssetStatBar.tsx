@@ -23,10 +23,7 @@ function StatMiniCard({ icon: Icon, label, value, color, isDark }: StatMiniCardP
         backdropFilter: 'blur(8px)',
       }}
     >
-      <div
-        className="p-2 rounded-lg"
-        style={{ background: `${color}22` }}
-      >
+      <div className="p-2 rounded-lg" style={{ background: `${color}22` }}>
         <Icon className="w-5 h-5" style={{ color }} />
       </div>
       <div>

@@ -9,14 +9,9 @@ export const MaintenanceStatus = {
   CANCELLED: 'cancelled',
 } as const;
 
-export type MaintenanceStatus =
-  (typeof MaintenanceStatus)[keyof typeof MaintenanceStatus];
+export type MaintenanceStatus = (typeof MaintenanceStatus)[keyof typeof MaintenanceStatus];
 
-export const MaintenanceStatusSchema = z.enum([
-  'scheduled',
-  'completed',
-  'cancelled',
-]);
+export const MaintenanceStatusSchema = z.enum(['scheduled', 'completed', 'cancelled']);
 
 export const MaintenanceStatusLabels: Record<MaintenanceStatus, string> = {
   scheduled: 'Scheduled',
@@ -34,8 +29,7 @@ export const MaintenancePriority = {
   CRITICAL: 'critical',
 } as const;
 
-export type MaintenancePriority =
-  (typeof MaintenancePriority)[keyof typeof MaintenancePriority];
+export type MaintenancePriority = (typeof MaintenancePriority)[keyof typeof MaintenancePriority];
 
 export const MaintenancePrioritySchema = z.enum(['low', 'medium', 'high', 'critical']);
 
@@ -63,8 +57,7 @@ export const MaintenanceType = {
   DEFECT_REPORT: 'defect_report',
 } as const;
 
-export type MaintenanceType =
-  (typeof MaintenanceType)[keyof typeof MaintenanceType];
+export type MaintenanceType = (typeof MaintenanceType)[keyof typeof MaintenanceType];
 
 export const MaintenanceTypeSchema = z.enum([
   'scheduled',

@@ -90,26 +90,32 @@ export function Hover3D({
     e.preventDefault();
   }, []);
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    // Right mouse button = 2
-    if (e.button !== 2) return;
-    if (animation === 'rotate-x') return;
-    rightHeld.current = true;
-    stopAfterIteration.current = false;
-    if (animation === 'idle') {
-      setIsHovering(false);
-      setTransform('rotateX(0deg) rotateY(0deg) scale(1)');
-      setAnimation('bounce');
-    }
-  }, [animation]);
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      // Right mouse button = 2
+      if (e.button !== 2) return;
+      if (animation === 'rotate-x') return;
+      rightHeld.current = true;
+      stopAfterIteration.current = false;
+      if (animation === 'idle') {
+        setIsHovering(false);
+        setTransform('rotateX(0deg) rotateY(0deg) scale(1)');
+        setAnimation('bounce');
+      }
+    },
+    [animation]
+  );
 
-  const handleMouseUp = useCallback((e: React.MouseEvent) => {
-    if (e.button !== 2) return;
-    rightHeld.current = false;
-    if (animation === 'bounce') {
-      stopAfterIteration.current = true;
-    }
-  }, [animation]);
+  const handleMouseUp = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.button !== 2) return;
+      rightHeld.current = false;
+      if (animation === 'bounce') {
+        stopAfterIteration.current = true;
+      }
+    },
+    [animation]
+  );
 
   const handleAnimationIteration = useCallback(() => {
     if (animation === 'bounce' && stopAfterIteration.current) {
@@ -177,11 +183,12 @@ export function Hover3D({
       <div
         style={{
           transform: animation !== 'idle' ? undefined : transform,
-          transition: animation !== 'idle'
-            ? 'none'
-            : isHovering
-              ? `transform ${transitionMs}ms ease-out`
-              : `transform ${transitionMs * 2}ms ease-out`,
+          transition:
+            animation !== 'idle'
+              ? 'none'
+              : isHovering
+                ? `transform ${transitionMs}ms ease-out`
+                : `transform ${transitionMs * 2}ms ease-out`,
           animation: animationCss,
           transformOrigin: undefined,
           transformStyle: 'preserve-3d',

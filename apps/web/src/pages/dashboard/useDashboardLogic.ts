@@ -49,7 +49,7 @@ export function useDashboardLogic(): { state: DashboardState; actions: Dashboard
     (path: string) => {
       navigate(path);
     },
-    [navigate],
+    [navigate]
   );
 
   const handleSignOut = useCallback(async () => {

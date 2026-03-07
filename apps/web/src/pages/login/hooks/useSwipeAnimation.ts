@@ -48,21 +48,30 @@ export function useSwipeAnimation(): UseSwipeAnimationResult {
     setSwipePhase('swipe-out');
 
     // Phase 2: Instantly position on opposite side (no transition) + toggle theme
-    timersRef.current.push(setTimeout(() => {
-      toggleTheme(); // Use unified theme context
-      setSwipePhase('position-in'); // Instant position, no animation
-    }, THEME_SWIPE_DURATION_MS));
+    timersRef.current.push(
+      setTimeout(() => {
+        toggleTheme(); // Use unified theme context
+        setSwipePhase('position-in'); // Instant position, no animation
+      }, THEME_SWIPE_DURATION_MS)
+    );
 
     // Phase 3: Animate swipe back to center
-    timersRef.current.push(setTimeout(() => {
-      setSwipePhase('swipe-in');
-    }, THEME_SWIPE_DURATION_MS + 20)); // Small delay to ensure position is set
+    timersRef.current.push(
+      setTimeout(() => {
+        setSwipePhase('swipe-in');
+      }, THEME_SWIPE_DURATION_MS + 20)
+    ); // Small delay to ensure position is set
 
     // Phase 4: Reset to idle
-    timersRef.current.push(setTimeout(() => {
-      setSwipePhase('idle');
-      setIsThemeAnimating(false);
-    }, THEME_SWIPE_DURATION_MS * 2 + 50));
+    timersRef.current.push(
+      setTimeout(
+        () => {
+          setSwipePhase('idle');
+          setIsThemeAnimating(false);
+        },
+        THEME_SWIPE_DURATION_MS * 2 + 50
+      )
+    );
   }, [swipeDirection, isThemeAnimating, toggleTheme]);
 
   return {

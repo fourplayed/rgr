@@ -176,7 +176,20 @@ export const UpdateAssetInputSchema = CreateAssetInputSchema.partial().extend({
 
 // ── Typed insert/update row types ──
 
-export type AssetInsertRow = Omit<AssetRow, 'id' | 'created_at' | 'updated_at' | 'deleted_at' | 'last_latitude' | 'last_longitude' | 'last_location_accuracy' | 'last_location_updated_at' | 'last_scanned_by' | 'qr_code_data' | 'qr_generated_at'>;
+export type AssetInsertRow = Omit<
+  AssetRow,
+  | 'id'
+  | 'created_at'
+  | 'updated_at'
+  | 'deleted_at'
+  | 'last_latitude'
+  | 'last_longitude'
+  | 'last_location_accuracy'
+  | 'last_location_updated_at'
+  | 'last_scanned_by'
+  | 'qr_code_data'
+  | 'qr_generated_at'
+>;
 export type AssetUpdateRow = Partial<Omit<AssetRow, 'id' | 'created_at'>>;
 
 // ── Mappers ──
@@ -211,9 +224,7 @@ export function mapRowToAsset(row: AssetRow): Asset {
   };
 }
 
-export function mapAssetToInsert(
-  input: CreateAssetInput
-): AssetInsertRow {
+export function mapAssetToInsert(input: CreateAssetInput): AssetInsertRow {
   return {
     asset_number: input.assetNumber,
     category: input.category,
@@ -232,9 +243,7 @@ export function mapAssetToInsert(
   };
 }
 
-export function mapAssetToUpdate(
-  input: UpdateAssetInput
-): AssetUpdateRow {
+export function mapAssetToUpdate(input: UpdateAssetInput): AssetUpdateRow {
   const updates: AssetUpdateRow = {};
 
   if (input.assetNumber !== undefined) updates['asset_number'] = input.assetNumber;
@@ -246,8 +255,10 @@ export function mapAssetToUpdate(
   if (input.make !== undefined) updates['make'] = input.make;
   if (input.model !== undefined) updates['model'] = input.model;
   if (input.vin !== undefined) updates['vin'] = input.vin;
-  if (input.registrationNumber !== undefined) updates['registration_number'] = input.registrationNumber;
-  if (input.registrationExpiry !== undefined) updates['registration_expiry'] = input.registrationExpiry;
+  if (input.registrationNumber !== undefined)
+    updates['registration_number'] = input.registrationNumber;
+  if (input.registrationExpiry !== undefined)
+    updates['registration_expiry'] = input.registrationExpiry;
   if (input.assignedDepotId !== undefined) updates['assigned_depot_id'] = input.assignedDepotId;
   if (input.assignedDriverId !== undefined) updates['assigned_driver_id'] = input.assignedDriverId;
   if (input.notes !== undefined) updates['notes'] = input.notes;

@@ -10,12 +10,7 @@
  * @param lon2 - Longitude of second point in degrees
  * @returns Distance in kilometers
  */
-export function calculateDistance(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): number {
+export function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // Earth's radius in kilometers
 
   const dLat = toRadians(lat2 - lat1);
@@ -23,10 +18,7 @@ export function calculateDistance(
 
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRadians(lat1)) *
-      Math.cos(toRadians(lat2)) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+    Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
 
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
@@ -46,7 +38,7 @@ function toRadians(degrees: number): number {
  * @returns The nearest location and its distance, or null if none within threshold
  */
 export function findNearestLocation<
-  T extends { latitude: number | null; longitude: number | null }
+  T extends { latitude: number | null; longitude: number | null },
 >(
   lat: number,
   lon: number,
@@ -61,12 +53,7 @@ export function findNearestLocation<
       continue;
     }
 
-    const distance = calculateDistance(
-      lat,
-      lon,
-      location.latitude,
-      location.longitude
-    );
+    const distance = calculateDistance(lat, lon, location.latitude, location.longitude);
 
     if (distance < nearestDistance) {
       nearestDistance = distance;

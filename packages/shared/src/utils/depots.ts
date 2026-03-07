@@ -20,7 +20,7 @@ export function getDepotColorByCode(
   fallback = DEFAULT_DEPOT_COLOR
 ): string {
   const lc = code.toLowerCase();
-  const depot = depots.find(d => d.code.toLowerCase() === lc);
+  const depot = depots.find((d) => d.code.toLowerCase() === lc);
   return depot?.color ?? fallback;
 }
 
@@ -30,7 +30,7 @@ export function findDepotByLocationString(
   depots: Depot[]
 ): Depot | null {
   const location = locationDescription.toLowerCase();
-  return depots.find(d => location.includes(d.name.toLowerCase())) ?? null;
+  return depots.find((d) => location.includes(d.name.toLowerCase())) ?? null;
 }
 
 /** Get badge colors for a depot (background + text) */

@@ -3,11 +3,7 @@ import { Search, QrCode, AlertCircle, CheckCircle } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
-import {
-  isValidQRCode,
-  extractAssetInfo,
-  isAssetNumber,
-} from '@rgr/shared';
+import { isValidQRCode, extractAssetInfo, isAssetNumber } from '@rgr/shared';
 
 interface ManualEntryProps {
   onSubmit: (value: string, type: 'qr' | 'asset_number' | 'uuid') => void;
@@ -155,11 +151,7 @@ export default function ManualEntry({
             </span>
           );
         case 'asset_number':
-          return (
-            <span className="text-green-600">
-              Asset number detected: {parseResult.value}
-            </span>
-          );
+          return <span className="text-green-600">Asset number detected: {parseResult.value}</span>;
         case 'uuid':
           return (
             <span className="text-green-600">
@@ -189,9 +181,7 @@ export default function ManualEntry({
           </div>
           <div>
             <h3 className="text-lg font-medium text-gray-900">Manual Entry</h3>
-            <p className="text-sm text-gray-500">
-              Enter the QR code value or asset number
-            </p>
+            <p className="text-sm text-gray-500">Enter the QR code value or asset number</p>
           </div>
         </div>
 
@@ -203,13 +193,13 @@ export default function ManualEntry({
               value={inputValue}
               onChange={handleInputChange}
               {...(displayError ? { error: displayError } : {})}
-              {...(!displayError && getFormatHint() ? { helperText: getFormatHint() as unknown as string } : {})}
+              {...(!displayError && getFormatHint()
+                ? { helperText: getFormatHint() as unknown as string }
+                : {})}
               disabled={isLoading}
               className="pr-10"
             />
-            <div className="absolute right-3 top-8">
-              {getStatusIcon()}
-            </div>
+            <div className="absolute right-3 top-8">{getStatusIcon()}</div>
           </div>
 
           {/* Format Examples */}
@@ -217,14 +207,18 @@ export default function ManualEntry({
             <p className="font-medium text-gray-700 mb-2">Accepted formats:</p>
             <ul className="text-gray-600 space-y-1">
               <li>
-                <code className="bg-gray-200 px-1 rounded">rgr://asset/uuid-here</code> - Full QR code
+                <code className="bg-gray-200 px-1 rounded">rgr://asset/uuid-here</code> - Full QR
+                code
               </li>
               <li>
                 <code className="bg-gray-200 px-1 rounded">TL001</code> or{' '}
                 <code className="bg-gray-200 px-1 rounded">DL015</code> - Asset number
               </li>
               <li>
-                <code className="bg-gray-200 px-1 rounded">xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</code> - UUID
+                <code className="bg-gray-200 px-1 rounded">
+                  xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+                </code>{' '}
+                - UUID
               </li>
             </ul>
           </div>
@@ -319,9 +313,7 @@ export function CompactManualEntry({
           <Search className="w-4 h-4" />
         </Button>
       </div>
-      {error && (
-        <p className="text-sm text-red-600">{error}</p>
-      )}
+      {error && <p className="text-sm text-red-600">{error}</p>}
     </form>
   );
 }

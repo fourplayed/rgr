@@ -40,116 +40,137 @@ const FILTER_STATUSES = [
   { value: 'out_of_service', label: 'Out of Service', color: '#ef4444' },
 ] as const;
 
-export const SearchFilterBar = React.memo<SearchFilterBarProps>(({
-  isDark,
-  assets,
-  depots = [],
-  onSearch,
-  filters,
-  onFiltersChange,
-  onZoomIn,
-  onZoomOut,
-  onFitBounds,
-  showDepotLabels,
-  onToggleDepotLabels,
-}) => {
-  const [inputValue, setInputValue] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
-  const [hasOpenedFilters, setHasOpenedFilters] = useState(false);
+export const SearchFilterBar = React.memo<SearchFilterBarProps>(
+  ({
+    isDark,
+    assets,
+    depots = [],
+    onSearch,
+    filters,
+    onFiltersChange,
+    onZoomIn,
+    onZoomOut,
+    onFitBounds,
+    showDepotLabels,
+    onToggleDepotLabels,
+  }) => {
+    const [inputValue, setInputValue] = useState('');
+    const [showFilters, setShowFilters] = useState(false);
+    const [hasOpenedFilters, setHasOpenedFilters] = useState(false);
 
-  const subtypes = useMemo(() => {
-    const set = new Set<string>();
-    assets.forEach((a) => { if (a.subtype) set.add(a.subtype); });
-    return Array.from(set).sort();
-  }, [assets]);
+    const subtypes = useMemo(() => {
+      const set = new Set<string>();
+      assets.forEach((a) => {
+        if (a.subtype) set.add(a.subtype);
+      });
+      return Array.from(set).sort();
+    }, [assets]);
 
-  // Debounce search input by 300ms
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
+    // Debounce search input by 300ms
+    useEffect(() => {
+      const timeoutId = setTimeout(() => {
+        onSearch(inputValue.trim());
+      }, 300);
+
+      return () => clearTimeout(timeoutId);
+    }, [inputValue, onSearch]);
+
+    const handleSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      // Immediate search on submit
       onSearch(inputValue.trim());
-    }, 300);
+    };
 
-    return () => clearTimeout(timeoutId);
-  }, [inputValue, onSearch]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Immediate search on submit
-    onSearch(inputValue.trim());
-  };
-
-  const IconButton = ({ onClick, label, Icon }: { onClick: () => void; label: string; Icon: LucideIcon }) => (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`map-header-btn ${isDark ? 'map-header-btn-dark' : 'map-header-btn-light'} relative overflow-hidden p-2 rounded-lg transition-all duration-300 ease-out hover:-translate-y-0.5`}
-      aria-label={label}
-    >
-      <span className="relative z-[1]">
-        <Icon className="w-4 h-4 text-white" />
-      </span>
-    </button>
-  );
-
-  const mutedColor = '#94a3b8';
-  const filterLabelColor = '#e2e8f0';
-
-  const inputStyle = isDark
-    ? {
-        backgroundColor: 'rgba(0, 0, 0, 0.3)',
-        border: '1px solid rgba(235, 235, 235, 0.15)',
-        color: '#f8fafc',
-      }
-    : {
-        backgroundColor: 'rgba(209, 213, 219, 0.1)',
-        border: '1px solid rgba(255, 255, 255, 0.5)',
-        color: '#ffffff',
-      };
-
-  const pillDefaultColor = isDark ? 'rgba(203, 213, 225, 0.6)' : 'rgba(255, 255, 255, 0.6)';
-  const FilterPill = ({ active, label, color, onClick }: { active: boolean; label: string; color?: string; onClick: () => void }) => {
-    const accent = color || pillDefaultColor;
-    return (
+    const IconButton = ({
+      onClick,
+      label,
+      Icon,
+    }: {
+      onClick: () => void;
+      label: string;
+      Icon: LucideIcon;
+    }) => (
       <button
         type="button"
         onClick={onClick}
-        className="filter-pill relative py-1.5 px-4 rounded-lg text-xs font-semibold uppercase tracking-wide"
-        style={{
-          fontFamily: "'Lato', sans-serif",
-          overflow: 'visible',
-          background: active ? `${accent}30` : `${accent}20`,
-          border: `1px solid ${active ? accent : `${accent}50`}`,
-          color: active ? (color ? color : '#f1f5f9') : accent,
-        }}
+        className={`map-header-btn ${isDark ? 'map-header-btn-dark' : 'map-header-btn-light'} relative overflow-hidden p-2 rounded-lg transition-all duration-300 ease-out hover:-translate-y-0.5`}
+        aria-label={label}
       >
-        {active && (
-          <span
-            className="absolute flex items-center justify-center w-3.5 h-3.5 rounded-full text-[8px] leading-none"
-            style={{
-              top: '-6px',
-              right: '-6px',
-              backgroundColor: accent,
-              color: '#0f172a',
-              zIndex: 1,
-            }}
-          >
-            ✓
-          </span>
-        )}
-        {label}
+        <span className="relative z-[1]">
+          <Icon className="w-4 h-4 text-white" />
+        </span>
       </button>
     );
-  };
 
-  const hasActiveFilters =
-    (Array.isArray(filters.category) && filters.category.length > 0) ||
-    (Array.isArray(filters.status) && filters.status.length > 0) ||
-    (filters.subtype && filters.subtype !== 'all') ||
-    (Array.isArray(filters.depot) && filters.depot.length > 0);
+    const mutedColor = '#94a3b8';
+    const filterLabelColor = '#e2e8f0';
 
-  return (
-    <>
-      <style>{`
+    const inputStyle = isDark
+      ? {
+          backgroundColor: 'rgba(0, 0, 0, 0.3)',
+          border: '1px solid rgba(235, 235, 235, 0.15)',
+          color: '#f8fafc',
+        }
+      : {
+          backgroundColor: 'rgba(209, 213, 219, 0.1)',
+          border: '1px solid rgba(255, 255, 255, 0.5)',
+          color: '#ffffff',
+        };
+
+    const pillDefaultColor = isDark ? 'rgba(203, 213, 225, 0.6)' : 'rgba(255, 255, 255, 0.6)';
+    const FilterPill = ({
+      active,
+      label,
+      color,
+      onClick,
+    }: {
+      active: boolean;
+      label: string;
+      color?: string;
+      onClick: () => void;
+    }) => {
+      const accent = color || pillDefaultColor;
+      return (
+        <button
+          type="button"
+          onClick={onClick}
+          className="filter-pill relative py-1.5 px-4 rounded-lg text-xs font-semibold uppercase tracking-wide"
+          style={{
+            fontFamily: "'Lato', sans-serif",
+            overflow: 'visible',
+            background: active ? `${accent}30` : `${accent}20`,
+            border: `1px solid ${active ? accent : `${accent}50`}`,
+            color: active ? (color ? color : '#f1f5f9') : accent,
+          }}
+        >
+          {active && (
+            <span
+              className="absolute flex items-center justify-center w-3.5 h-3.5 rounded-full text-[8px] leading-none"
+              style={{
+                top: '-6px',
+                right: '-6px',
+                backgroundColor: accent,
+                color: '#0f172a',
+                zIndex: 1,
+              }}
+            >
+              ✓
+            </span>
+          )}
+          {label}
+        </button>
+      );
+    };
+
+    const hasActiveFilters =
+      (Array.isArray(filters.category) && filters.category.length > 0) ||
+      (Array.isArray(filters.status) && filters.status.length > 0) ||
+      (filters.subtype && filters.subtype !== 'all') ||
+      (Array.isArray(filters.depot) && filters.depot.length > 0);
+
+    return (
+      <>
+        <style>{`
         /* Dark theme button */
         .map-header-btn-dark {
           background: #1e3a8a;
@@ -310,317 +331,371 @@ export const SearchFilterBar = React.memo<SearchFilterBarProps>(({
         }
       `}</style>
 
-      {/* Search/Filter header bar */}
-      <div
-        style={{
-          width: 'calc(100% - 48px)',
-          maxWidth: '1360px',
-          height: '50px',
-          position: 'fixed',
-          top: '296px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          background: isDark ? 'rgba(0, 0, 48, 0.45)' : 'rgba(0, 0, 120, 0.55)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          borderRadius: '12px 12px 0 0',
-          border: isDark ? 'none' : '1px solid rgba(255, 255, 255, 0.2)',
-          borderBottom: isDark ? 'none' : '1px solid rgba(255, 255, 255, 0.1)',
-          display: 'flex',
-          alignItems: 'center',
-          padding: '0 12px',
-          gap: '8px',
-          zIndex: 21,
-        }}
-      >
-        {/* Filter toggle */}
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => { setShowFilters(!showFilters); setHasOpenedFilters(true); }}
-            className={`map-header-btn ${isDark ? 'map-header-btn-dark' : 'map-header-btn-light'} ${!showFilters && !hasOpenedFilters ? 'filter-btn-zoom filter-btn-shimmer' : ''} relative overflow-hidden px-3 py-2 rounded-lg transition-all duration-300 ease-out hover:-translate-y-0.5 flex items-center gap-1.5`}
-            aria-label="Toggle filters"
-          >
-            <span className="relative z-[1] flex items-center gap-1.5">
-              {showFilters ? <X className="w-4 h-4 text-white" /> : <Filter className="w-4 h-4 text-white" />}
-              <span className="text-xs font-semibold text-white" style={{ fontFamily: "'Lato', sans-serif" }}>ASSET FILTER</span>
-            </span>
-          </button>
-          {hasActiveFilters && !showFilters && (
-            <div
-              className="absolute top-0 right-0 w-2 h-2 rounded-full pointer-events-none"
-              style={{ backgroundColor: '#10b981', boxShadow: '0 0 4px #10b981' }}
-            />
-          )}
-        </div>
-
-        {/* Search bar */}
-        <form onSubmit={handleSubmit} className="flex items-center" style={{ width: '30%' }}>
-          <div className="relative flex items-center flex-1">
-            <Search
-              className="absolute left-3 w-4 h-4 pointer-events-none"
-              style={{ color: mutedColor }}
-            />
-            <input
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Search assets..."
-              className={`w-full pl-9 pr-4 py-1.5 rounded-lg text-sm transition-all duration-200 ${isDark ? 'map-search-dark' : 'map-search-light'}`}
-              style={{
-                ...inputStyle,
-                fontFamily: "'Lato', sans-serif",
-              }}
-            />
-          </div>
-        </form>
-
-        {/* Spacer */}
-        <div className="flex-1" />
-
-        {/* Zoom controls */}
-        <div className="flex items-center gap-2">
-          <IconButton onClick={onZoomIn} label="Zoom in" Icon={ZoomIn} />
-          <IconButton onClick={onZoomOut} label="Zoom out" Icon={ZoomOut} />
-          <IconButton onClick={onFitBounds} label="Fit all assets" Icon={Maximize2} />
-        </div>
-      </div>
-
-      {/* Filter panel - slides out from left, overlays map */}
-      {/* Clip container — same size/position as the map so panel doesn't overflow */}
-      <div
-        style={{
-          width: 'calc(100% - 48px)',
-          maxWidth: '1360px',
-          position: 'fixed',
-          top: '346px',
-          bottom: '20px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          overflow: 'hidden',
-          pointerEvents: 'none',
-          zIndex: 19,
-        }}
-      >
+        {/* Search/Filter header bar */}
         <div
-          className={`filter-panel ${showFilters ? 'filter-panel-open' : 'filter-panel-closed'}`}
           style={{
-            width: '250px',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            background: isDark ? 'rgba(0, 0, 48, 0.3)' : 'rgba(0, 0, 120, 0.3)',
+            width: 'calc(100% - 48px)',
+            maxWidth: '1360px',
+            height: '50px',
+            position: 'fixed',
+            top: '296px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: isDark ? 'rgba(0, 0, 48, 0.45)' : 'rgba(0, 0, 120, 0.55)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
-            padding: '10px 16px 16px',
-            overflowY: 'auto',
-            maxHeight: '100%',
-            pointerEvents: 'auto',
-            borderRadius: '0 0 12px 0',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.4)',
-            border: 'none',
+            borderRadius: '12px 12px 0 0',
+            border: isDark ? 'none' : '1px solid rgba(255, 255, 255, 0.2)',
+            borderBottom: isDark ? 'none' : '1px solid rgba(255, 255, 255, 0.1)',
+            display: 'flex',
+            alignItems: 'center',
+            padding: '0 12px',
+            gap: '8px',
+            zIndex: 21,
           }}
         >
-          {/* Top row — close chevron + flag toggle + clear filters */}
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setShowFilters(false)}
-                className={`map-header-btn ${isDark ? 'map-header-btn-dark' : 'map-header-btn-light'} relative overflow-hidden p-2 rounded-lg transition-all duration-300 ease-out hover:-translate-y-0.5`}
-                aria-label="Close filters"
-              >
-                <span className="relative z-[1]">
-                  <ChevronLeft className="w-4 h-4 text-white" />
+          {/* Filter toggle */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setShowFilters(!showFilters);
+                setHasOpenedFilters(true);
+              }}
+              className={`map-header-btn ${isDark ? 'map-header-btn-dark' : 'map-header-btn-light'} ${!showFilters && !hasOpenedFilters ? 'filter-btn-zoom filter-btn-shimmer' : ''} relative overflow-hidden px-3 py-2 rounded-lg transition-all duration-300 ease-out hover:-translate-y-0.5 flex items-center gap-1.5`}
+              aria-label="Toggle filters"
+            >
+              <span className="relative z-[1] flex items-center gap-1.5">
+                {showFilters ? (
+                  <X className="w-4 h-4 text-white" />
+                ) : (
+                  <Filter className="w-4 h-4 text-white" />
+                )}
+                <span
+                  className="text-xs font-semibold text-white"
+                  style={{ fontFamily: "'Lato', sans-serif" }}
+                >
+                  ASSET FILTER
                 </span>
-              </button>
-              <button
-                type="button"
-                onClick={onToggleDepotLabels}
-                className={`map-header-btn ${isDark ? 'map-header-btn-dark' : 'map-header-btn-light'} relative overflow-hidden p-2 rounded-lg transition-all duration-300 ease-out hover:-translate-y-0.5`}
-                aria-label="Toggle depot labels"
-                style={{ opacity: showDepotLabels ? 1 : 0.4 }}
-              >
-                <span className="relative z-[1]">
-                  <Flag className="w-4 h-4 text-white" />
-                </span>
-              </button>
-            </div>
-            {(hasActiveFilters || !showDepotLabels) && (
-              <button
-                type="button"
-                onClick={() => {
-                  onFiltersChange({ category: 'all', subtype: 'all', status: 'all', depot: 'all', lastScannedDays: 'all' });
-                  if (!showDepotLabels) onToggleDepotLabels();
-                }}
-                className={`map-header-btn ${isDark ? 'map-header-btn-dark' : 'map-header-btn-light'} relative overflow-hidden text-xs font-semibold px-3 py-2 rounded-lg transition-all duration-300 ease-out hover:-translate-y-0.5 text-white`}
-                style={{ fontFamily: "'Lato', sans-serif" }}
-              >
-                <span className="relative z-[1] flex items-center gap-1.5">
-                  <X className="w-3.5 h-3.5 text-white" />
-                  Clear All Filters
-                </span>
-              </button>
+              </span>
+            </button>
+            {hasActiveFilters && !showFilters && (
+              <div
+                className="absolute top-0 right-0 w-2 h-2 rounded-full pointer-events-none"
+                style={{ backgroundColor: '#10b981', boxShadow: '0 0 4px #10b981' }}
+              />
             )}
           </div>
 
-          <div className="flex flex-col gap-5">
-            {/* Location filters */}
-            <div>
-              <span
-                className="text-xs font-semibold uppercase tracking-wider block mb-2.5"
-                style={{ color: filterLabelColor, fontFamily: "'Lato', sans-serif", marginTop: '10px' }}
-              >
-                Location
-              </span>
-              <div className="filter-grid-locations" style={{ display: 'flex', flexDirection: 'column', gap: '5px', alignItems: 'flex-start' }}>
-                {depots.map((depot) => {
-                  const currentDepots = Array.isArray(filters.depot) ? filters.depot : [];
-                  const isActive = currentDepots.includes(depot.name);
-                  return (
-                    <FilterPill
-                      key={depot.id}
-                      active={isActive}
-                      label={depot.name}
-                      color={depot.color || DEFAULT_DEPOT_COLOR}
-                      onClick={() => {
-                        const next = isActive
-                          ? currentDepots.filter((v) => v !== depot.name)
-                          : [...currentDepots, depot.name];
-                        onFiltersChange({ ...filters, depot: next.length === 0 ? 'all' : next });
-                        if (!showDepotLabels && next.length > 0) onToggleDepotLabels();
-                      }}
-                    />
-                  );
-                })}
-              </div>
+          {/* Search bar */}
+          <form onSubmit={handleSubmit} className="flex items-center" style={{ width: '30%' }}>
+            <div className="relative flex items-center flex-1">
+              <Search
+                className="absolute left-3 w-4 h-4 pointer-events-none"
+                style={{ color: mutedColor }}
+              />
+              <input
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                placeholder="Search assets..."
+                className={`w-full pl-9 pr-4 py-1.5 rounded-lg text-sm transition-all duration-200 ${isDark ? 'map-search-dark' : 'map-search-light'}`}
+                style={{
+                  ...inputStyle,
+                  fontFamily: "'Lato', sans-serif",
+                }}
+              />
             </div>
+          </form>
 
-            {/* Divider */}
-            <div
-              className="w-full h-px"
-              style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
-            />
+          {/* Spacer */}
+          <div className="flex-1" />
 
-            {/* Asset Type filters */}
-            <div>
-              <span
-                className="text-xs font-semibold uppercase tracking-wider block mb-2.5"
-                style={{ color: filterLabelColor, fontFamily: "'Lato', sans-serif" }}
-              >
-                Asset Type
-              </span>
-              <div className="filter-grid-types" style={{ display: 'flex', flexDirection: 'column', gap: '5px', alignItems: 'flex-start' }}>
-                {FILTER_CATEGORIES.filter((c) => c.value !== 'all').map((cat) => {
-                  const currentCats = Array.isArray(filters.category) ? filters.category : [];
-                  const isActive = currentCats.includes(cat.value as 'trailer' | 'dolly');
-                  return (
-                    <FilterPill
-                      key={cat.value}
-                      active={isActive}
-                      label={cat.label}
-                      color={cat.color}
-                      onClick={() => {
-                        const next = isActive
-                          ? currentCats.filter((v) => v !== cat.value)
-                          : [...currentCats, cat.value as 'trailer' | 'dolly'];
-                        onFiltersChange({ ...filters, category: next.length === 0 ? 'all' : next });
-                      }}
-                    />
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Subtype dropdown */}
-            {subtypes.length > 0 && (
-              <>
-                {/* Divider */}
-                <div
-                  className="w-full h-px"
-                  style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
-                />
-                <div>
-                  <span
-                    className="text-xs font-semibold uppercase tracking-wider block mb-2.5"
-                    style={{ color: filterLabelColor, fontFamily: "'Lato', sans-serif" }}
-                  >
-                    Sub-Type
-                  </span>
-                  <select
-                    value={filters.subtype || 'all'}
-                    onChange={(e) => onFiltersChange({ ...filters, subtype: e.target.value })}
-                    className="filter-select"
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      borderRadius: '8px',
-                      fontSize: '13px',
-                      fontFamily: "'Lato', sans-serif",
-                      fontWeight: 600,
-                      background: isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(209, 213, 219, 0.1)',
-                      border: `1px solid ${isDark ? 'rgba(235, 235, 235, 0.15)' : 'rgba(255, 255, 255, 0.5)'}`,
-                      color: isDark ? '#f8fafc' : '#ffffff',
-                      cursor: 'pointer',
-                      appearance: 'none',
-                      WebkitAppearance: 'none',
-                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
-                      backgroundRepeat: 'no-repeat',
-                      backgroundPosition: 'right 10px center',
-                    }}
-                  >
-                    <option value="all">All Sub-Types</option>
-                    {subtypes.map((st) => (
-                      <option key={st} value={st}>
-                        {st.charAt(0).toUpperCase() + st.slice(1)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </>
-            )}
-
-            {/* Divider */}
-            <div
-              className="w-full h-px"
-              style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
-            />
-
-            {/* Service Status filters */}
-            <div>
-              <span
-                className="text-xs font-semibold uppercase tracking-wider block mb-2.5"
-                style={{ color: filterLabelColor, fontFamily: "'Lato', sans-serif" }}
-              >
-                Service Status
-              </span>
-              <div className="filter-grid-status" style={{ display: 'flex', flexDirection: 'column', gap: '5px', alignItems: 'flex-start' }}>
-                {FILTER_STATUSES.filter((s) => s.value !== 'all').map((status) => {
-                  const currentStatuses = Array.isArray(filters.status) ? filters.status : [];
-                  const isActive = currentStatuses.includes(status.value as 'serviced' | 'maintenance' | 'out_of_service');
-                  return (
-                    <FilterPill
-                      key={status.value}
-                      active={isActive}
-                      label={status.label}
-                      color={status.color}
-                      onClick={() => {
-                        const next = isActive
-                          ? currentStatuses.filter((v) => v !== status.value)
-                          : [...currentStatuses, status.value as 'serviced' | 'maintenance' | 'out_of_service'];
-                        onFiltersChange({ ...filters, status: next.length === 0 ? 'all' : next });
-                      }}
-                    />
-                  );
-                })}
-              </div>
-            </div>
-
+          {/* Zoom controls */}
+          <div className="flex items-center gap-2">
+            <IconButton onClick={onZoomIn} label="Zoom in" Icon={ZoomIn} />
+            <IconButton onClick={onZoomOut} label="Zoom out" Icon={ZoomOut} />
+            <IconButton onClick={onFitBounds} label="Fit all assets" Icon={Maximize2} />
           </div>
         </div>
-      </div>
-    </>
-  );
-});
+
+        {/* Filter panel - slides out from left, overlays map */}
+        {/* Clip container — same size/position as the map so panel doesn't overflow */}
+        <div
+          style={{
+            width: 'calc(100% - 48px)',
+            maxWidth: '1360px',
+            position: 'fixed',
+            top: '346px',
+            bottom: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            overflow: 'hidden',
+            pointerEvents: 'none',
+            zIndex: 19,
+          }}
+        >
+          <div
+            className={`filter-panel ${showFilters ? 'filter-panel-open' : 'filter-panel-closed'}`}
+            style={{
+              width: '250px',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              background: isDark ? 'rgba(0, 0, 48, 0.3)' : 'rgba(0, 0, 120, 0.3)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              padding: '10px 16px 16px',
+              overflowY: 'auto',
+              maxHeight: '100%',
+              pointerEvents: 'auto',
+              borderRadius: '0 0 12px 0',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.4)',
+              border: 'none',
+            }}
+          >
+            {/* Top row — close chevron + flag toggle + clear filters */}
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowFilters(false)}
+                  className={`map-header-btn ${isDark ? 'map-header-btn-dark' : 'map-header-btn-light'} relative overflow-hidden p-2 rounded-lg transition-all duration-300 ease-out hover:-translate-y-0.5`}
+                  aria-label="Close filters"
+                >
+                  <span className="relative z-[1]">
+                    <ChevronLeft className="w-4 h-4 text-white" />
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={onToggleDepotLabels}
+                  className={`map-header-btn ${isDark ? 'map-header-btn-dark' : 'map-header-btn-light'} relative overflow-hidden p-2 rounded-lg transition-all duration-300 ease-out hover:-translate-y-0.5`}
+                  aria-label="Toggle depot labels"
+                  style={{ opacity: showDepotLabels ? 1 : 0.4 }}
+                >
+                  <span className="relative z-[1]">
+                    <Flag className="w-4 h-4 text-white" />
+                  </span>
+                </button>
+              </div>
+              {(hasActiveFilters || !showDepotLabels) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onFiltersChange({
+                      category: 'all',
+                      subtype: 'all',
+                      status: 'all',
+                      depot: 'all',
+                      lastScannedDays: 'all',
+                    });
+                    if (!showDepotLabels) onToggleDepotLabels();
+                  }}
+                  className={`map-header-btn ${isDark ? 'map-header-btn-dark' : 'map-header-btn-light'} relative overflow-hidden text-xs font-semibold px-3 py-2 rounded-lg transition-all duration-300 ease-out hover:-translate-y-0.5 text-white`}
+                  style={{ fontFamily: "'Lato', sans-serif" }}
+                >
+                  <span className="relative z-[1] flex items-center gap-1.5">
+                    <X className="w-3.5 h-3.5 text-white" />
+                    Clear All Filters
+                  </span>
+                </button>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-5">
+              {/* Location filters */}
+              <div>
+                <span
+                  className="text-xs font-semibold uppercase tracking-wider block mb-2.5"
+                  style={{
+                    color: filterLabelColor,
+                    fontFamily: "'Lato', sans-serif",
+                    marginTop: '10px',
+                  }}
+                >
+                  Location
+                </span>
+                <div
+                  className="filter-grid-locations"
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '5px',
+                    alignItems: 'flex-start',
+                  }}
+                >
+                  {depots.map((depot) => {
+                    const currentDepots = Array.isArray(filters.depot) ? filters.depot : [];
+                    const isActive = currentDepots.includes(depot.name);
+                    return (
+                      <FilterPill
+                        key={depot.id}
+                        active={isActive}
+                        label={depot.name}
+                        color={depot.color || DEFAULT_DEPOT_COLOR}
+                        onClick={() => {
+                          const next = isActive
+                            ? currentDepots.filter((v) => v !== depot.name)
+                            : [...currentDepots, depot.name];
+                          onFiltersChange({ ...filters, depot: next.length === 0 ? 'all' : next });
+                          if (!showDepotLabels && next.length > 0) onToggleDepotLabels();
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div
+                className="w-full h-px"
+                style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
+              />
+
+              {/* Asset Type filters */}
+              <div>
+                <span
+                  className="text-xs font-semibold uppercase tracking-wider block mb-2.5"
+                  style={{ color: filterLabelColor, fontFamily: "'Lato', sans-serif" }}
+                >
+                  Asset Type
+                </span>
+                <div
+                  className="filter-grid-types"
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '5px',
+                    alignItems: 'flex-start',
+                  }}
+                >
+                  {FILTER_CATEGORIES.filter((c) => c.value !== 'all').map((cat) => {
+                    const currentCats = Array.isArray(filters.category) ? filters.category : [];
+                    const isActive = currentCats.includes(cat.value as 'trailer' | 'dolly');
+                    return (
+                      <FilterPill
+                        key={cat.value}
+                        active={isActive}
+                        label={cat.label}
+                        color={cat.color}
+                        onClick={() => {
+                          const next = isActive
+                            ? currentCats.filter((v) => v !== cat.value)
+                            : [...currentCats, cat.value as 'trailer' | 'dolly'];
+                          onFiltersChange({
+                            ...filters,
+                            category: next.length === 0 ? 'all' : next,
+                          });
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Subtype dropdown */}
+              {subtypes.length > 0 && (
+                <>
+                  {/* Divider */}
+                  <div
+                    className="w-full h-px"
+                    style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
+                  />
+                  <div>
+                    <span
+                      className="text-xs font-semibold uppercase tracking-wider block mb-2.5"
+                      style={{ color: filterLabelColor, fontFamily: "'Lato', sans-serif" }}
+                    >
+                      Sub-Type
+                    </span>
+                    <select
+                      value={filters.subtype || 'all'}
+                      onChange={(e) => onFiltersChange({ ...filters, subtype: e.target.value })}
+                      className="filter-select"
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        fontSize: '13px',
+                        fontFamily: "'Lato', sans-serif",
+                        fontWeight: 600,
+                        background: isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(209, 213, 219, 0.1)',
+                        border: `1px solid ${isDark ? 'rgba(235, 235, 235, 0.15)' : 'rgba(255, 255, 255, 0.5)'}`,
+                        color: isDark ? '#f8fafc' : '#ffffff',
+                        cursor: 'pointer',
+                        appearance: 'none',
+                        WebkitAppearance: 'none',
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                        backgroundRepeat: 'no-repeat',
+                        backgroundPosition: 'right 10px center',
+                      }}
+                    >
+                      <option value="all">All Sub-Types</option>
+                      {subtypes.map((st) => (
+                        <option key={st} value={st}>
+                          {st.charAt(0).toUpperCase() + st.slice(1)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              )}
+
+              {/* Divider */}
+              <div
+                className="w-full h-px"
+                style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
+              />
+
+              {/* Service Status filters */}
+              <div>
+                <span
+                  className="text-xs font-semibold uppercase tracking-wider block mb-2.5"
+                  style={{ color: filterLabelColor, fontFamily: "'Lato', sans-serif" }}
+                >
+                  Service Status
+                </span>
+                <div
+                  className="filter-grid-status"
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '5px',
+                    alignItems: 'flex-start',
+                  }}
+                >
+                  {FILTER_STATUSES.filter((s) => s.value !== 'all').map((status) => {
+                    const currentStatuses = Array.isArray(filters.status) ? filters.status : [];
+                    const isActive = currentStatuses.includes(
+                      status.value as 'serviced' | 'maintenance' | 'out_of_service'
+                    );
+                    return (
+                      <FilterPill
+                        key={status.value}
+                        active={isActive}
+                        label={status.label}
+                        color={status.color}
+                        onClick={() => {
+                          const next = isActive
+                            ? currentStatuses.filter((v) => v !== status.value)
+                            : [
+                                ...currentStatuses,
+                                status.value as 'serviced' | 'maintenance' | 'out_of_service',
+                              ];
+                          onFiltersChange({ ...filters, status: next.length === 0 ? 'all' : next });
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+);
 
 SearchFilterBar.displayName = 'SearchFilterBar';

@@ -1,10 +1,10 @@
-import { useEffect } from "react";
-import { motion, useAnimation } from "motion/react";
-import type { Transition, Variants } from "motion/react";
+import { useEffect } from 'react';
+import { motion, useAnimation } from 'motion/react';
+import type { Transition, Variants } from 'motion/react';
 
 const transition: Transition = {
   duration: 2,
-  ease: "linear",
+  ease: 'linear',
   repeat: 0,
 };
 
@@ -25,22 +25,22 @@ const Bolt = ({
   width = 28,
   height = 28,
   strokeWidth = 2,
-  stroke = "#ffffff",
+  stroke = '#ffffff',
   isHovered,
 }: BoltProps) => {
   const controls = useAnimation();
 
   useEffect(() => {
     if (isHovered) {
-      controls.start("animate");
+      controls.start('animate');
     } else {
       controls.stop();
-      controls.start("normal");
+      controls.start('normal');
     }
   }, [isHovered, controls]);
 
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width={width}
@@ -52,7 +52,12 @@ const Bolt = ({
         strokeLinecap="round"
         strokeLinejoin="round"
       >
-        <motion.g variants={spinVariants} animate={controls} initial="normal" transition={transition}>
+        <motion.g
+          variants={spinVariants}
+          animate={controls}
+          initial="normal"
+          transition={transition}
+        >
           <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
           <circle cx="12" cy="12" r="4" />
         </motion.g>

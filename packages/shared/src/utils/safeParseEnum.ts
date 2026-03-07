@@ -11,21 +11,21 @@ import { z } from 'zod';
 export function safeParseEnum<T extends [string, ...string[]]>(
   schema: z.ZodEnum<T>,
   value: unknown,
-  fallback: T[number],
+  fallback: T[number]
 ): T[number];
 
 // Nullable overload
 export function safeParseEnum<T extends [string, ...string[]]>(
   schema: z.ZodEnum<T>,
   value: unknown,
-  fallback: null,
+  fallback: null
 ): T[number] | null;
 
 // Implementation
 export function safeParseEnum<T extends [string, ...string[]]>(
   schema: z.ZodEnum<T>,
   value: unknown,
-  fallback: T[number] | null,
+  fallback: T[number] | null
 ): T[number] | null {
   const result = schema.safeParse(value);
   if (result.success) return result.data;

@@ -32,7 +32,10 @@ export interface CosmicButtonProps extends ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 export const CosmicButton = forwardRef<HTMLButtonElement, CosmicButtonProps>(
-  ({ isLoading = false, children, variant: _variant = 'primary', className = '', ...props }, ref) => {
+  (
+    { isLoading = false, children, variant: _variant = 'primary', className = '', ...props },
+    ref
+  ) => {
     return (
       <>
         <style>{`
@@ -426,9 +429,7 @@ export const CosmicButton = forwardRef<HTMLButtonElement, CosmicButtonProps>(
           <span className="meteor meteor-4" aria-hidden="true"></span>
 
           {/* Button Content */}
-          <span className="cosmic-gateway-content">
-            {children}
-          </span>
+          <span className="cosmic-gateway-content">{children}</span>
         </button>
       </>
     );

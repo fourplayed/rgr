@@ -41,9 +41,12 @@ export function useGeolocation() {
           resolve(loc);
         },
         (err) => {
-          const msg = err.code === 1 ? 'Location permission denied' :
-                      err.code === 2 ? 'Location unavailable' :
-                      'Location request timed out';
+          const msg =
+            err.code === 1
+              ? 'Location permission denied'
+              : err.code === 2
+                ? 'Location unavailable'
+                : 'Location request timed out';
           setError(msg);
           setLoading(false);
           resolve(null);

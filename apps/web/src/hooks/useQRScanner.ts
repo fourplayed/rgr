@@ -41,7 +41,7 @@ const DEFAULT_CONFIG: QRScannerConfig = {
  */
 function stopAllMediaTracks(stream: MediaStream | null): void {
   if (stream) {
-    stream.getTracks().forEach(track => track.stop());
+    stream.getTracks().forEach((track) => track.stop());
   }
 }
 
@@ -65,21 +65,21 @@ export function useQRScanner(
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const currentCameraRef = useRef<'back' | 'front'>('back');
-  const mergedConfig = useMemo(
-    () => ({ ...DEFAULT_CONFIG, ...config }),
-    [config]
-  );
+  const mergedConfig = useMemo(() => ({ ...DEFAULT_CONFIG, ...config }), [config]);
 
   /**
    * Parse QR code value and extract asset ID using shared utility
    */
-  const parseQRCodeValue = useCallback((value: string): { isValid: boolean; assetId: string | null } => {
-    const result = parseQRCode(value);
-    if (result.assetId) {
-      return { isValid: true, assetId: result.assetId };
-    }
-    return { isValid: false, assetId: null };
-  }, []);
+  const parseQRCodeValue = useCallback(
+    (value: string): { isValid: boolean; assetId: string | null } => {
+      const result = parseQRCode(value);
+      if (result.assetId) {
+        return { isValid: true, assetId: result.assetId };
+      }
+      return { isValid: false, assetId: null };
+    },
+    []
+  );
 
   /**
    * Handle successful QR code scan
@@ -178,7 +178,9 @@ export function useQRScanner(
 
         // Capture the video stream for proper cleanup
         // The html5-qrcode library creates a video element we can access
-        const videoElement = document.querySelector(`#${elementId} video`) as HTMLVideoElement | null;
+        const videoElement = document.querySelector(
+          `#${elementId} video`
+        ) as HTMLVideoElement | null;
         if (videoElement?.srcObject instanceof MediaStream) {
           streamRef.current = videoElement.srcObject;
         }
@@ -288,7 +290,7 @@ export function useQRScanner(
       // This ensures the camera indicator light turns off and the camera
       // is available for other applications/components
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current.getTracks().forEach((track) => track.stop());
         streamRef.current = null;
       }
 

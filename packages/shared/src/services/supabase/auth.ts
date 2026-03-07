@@ -2,7 +2,8 @@ import type { Session, AuthError, User as AuthUser } from '@supabase/supabase-js
 import { getSupabaseClient, getSupabaseConfig } from './client';
 
 // Singleton promise for deduplicating concurrent token refreshes
-let refreshPromise: Promise<{ data: { session: Session | null }; error: AuthError | null }> | null = null;
+let refreshPromise: Promise<{ data: { session: Session | null }; error: AuthError | null }> | null =
+  null;
 
 /**
  * Safely refresh the current session, deduplicating concurrent calls.
@@ -14,8 +15,9 @@ let refreshPromise: Promise<{ data: { session: Session | null }; error: AuthErro
 export async function refreshSessionSafe() {
   const supabase = getSupabaseClient();
   if (!refreshPromise) {
-    refreshPromise = supabase.auth.refreshSession()
-      .finally(() => { refreshPromise = null; });
+    refreshPromise = supabase.auth.refreshSession().finally(() => {
+      refreshPromise = null;
+    });
   }
   return refreshPromise;
 }
@@ -110,8 +112,8 @@ export async function signInWithEmailSecure(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'apikey': config.anonKey,
-        'Authorization': `Bearer ${config.anonKey}`,
+        apikey: config.anonKey,
+        Authorization: `Bearer ${config.anonKey}`,
       },
       body: JSON.stringify({
         email: credentials.email,
@@ -298,9 +300,7 @@ export async function verifyCurrentPassword(
 /**
  * Update user password (after reset or while authenticated)
  */
-export async function updatePassword(
-  newPassword: string
-): Promise<ServiceResult<AuthUser>> {
+export async function updatePassword(newPassword: string): Promise<ServiceResult<AuthUser>> {
   const supabase = getSupabaseClient();
 
   const { data, error } = await supabase.auth.updateUser({
@@ -338,9 +338,7 @@ export function onAuthStateChange(
 /**
  * Fetch user profile by ID
  */
-export async function fetchProfile(
-  userId: string
-): Promise<ServiceResult<Profile>> {
+export async function fetchProfile(userId: string): Promise<ServiceResult<Profile>> {
   const supabase = getSupabaseClient();
 
   const { data, error } = await supabase
@@ -392,9 +390,7 @@ export async function updateProfile(
 /**
  * Update last login timestamp
  */
-export async function updateLastLogin(
-  userId: string
-): Promise<ServiceResult<void>> {
+export async function updateLastLogin(userId: string): Promise<ServiceResult<void>> {
   const supabase = getSupabaseClient();
 
   const { error } = await supabase
@@ -418,8 +414,7 @@ function mapAuthError(message: string): string {
     'Email not confirmed': 'Please verify your email address',
     'User not found': 'No account found with this email',
     'Email already registered': 'An account with this email already exists',
-    'Password should be at least 6 characters':
-      'Password must be at least 6 characters',
+    'Password should be at least 6 characters': 'Password must be at least 6 characters',
     'Signup requires a valid password': 'Please provide a valid password',
   };
 

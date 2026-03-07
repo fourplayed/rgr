@@ -154,10 +154,7 @@ describe('persistence', () => {
 
   it('calls setItem on recordFailure', () => {
     recordFailure(TEST_EMAIL);
-    expect(mockStorage.setItem).toHaveBeenCalledWith(
-      'auth_rate_limit_state',
-      expect.any(String)
-    );
+    expect(mockStorage.setItem).toHaveBeenCalledWith('auth_rate_limit_state', expect.any(String));
   });
 
   it('calls setItem on recordSuccess', () => {
@@ -165,10 +162,7 @@ describe('persistence', () => {
     jest.mocked(mockStorage.setItem).mockClear();
 
     recordSuccess(TEST_EMAIL);
-    expect(mockStorage.setItem).toHaveBeenCalledWith(
-      'auth_rate_limit_state',
-      expect.any(String)
-    );
+    expect(mockStorage.setItem).toHaveBeenCalledWith('auth_rate_limit_state', expect.any(String));
   });
 
   it('calls setItem on resetRateLimit', () => {
@@ -176,10 +170,7 @@ describe('persistence', () => {
     jest.mocked(mockStorage.setItem).mockClear();
 
     resetRateLimit(TEST_EMAIL);
-    expect(mockStorage.setItem).toHaveBeenCalledWith(
-      'auth_rate_limit_state',
-      expect.any(String)
-    );
+    expect(mockStorage.setItem).toHaveBeenCalledWith('auth_rate_limit_state', expect.any(String));
   });
 
   it('loadPersistedState restores state from storage', async () => {

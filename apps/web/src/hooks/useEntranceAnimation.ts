@@ -65,7 +65,7 @@ export function useEntranceAnimation(
         callback();
       }
       // Remove this timer from tracked list
-      timersRef.current = timersRef.current.filter(t => t !== timer);
+      timersRef.current = timersRef.current.filter((t) => t !== timer);
     }, delay);
     timersRef.current.push(timer);
     return timer;

@@ -19,7 +19,7 @@ export function getSupabaseConfig(): SupabaseConfig {
   if (!url || !anonKey) {
     throw new Error(
       'Missing Supabase configuration. ' +
-      'Ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set in .env file.'
+        'Ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set in .env file.'
     );
   }
 

@@ -16,11 +16,14 @@ export interface QuickActionProps {
   className?: string;
 }
 
-const VARIANT_CONFIG: Record<ActionVariant, {
-  gradient: string;
-  hoverGradient: string;
-  shadow: string;
-}> = {
+const VARIANT_CONFIG: Record<
+  ActionVariant,
+  {
+    gradient: string;
+    hoverGradient: string;
+    shadow: string;
+  }
+> = {
   default: {
     gradient: 'from-slate-600 to-slate-700',
     hoverGradient: 'from-slate-500 to-slate-600',
@@ -48,23 +51,17 @@ const VARIANT_CONFIG: Record<ActionVariant, {
   },
 };
 
-export const QuickAction = React.memo<QuickActionProps>(({
-  icon: Icon,
-  label,
-  onClick,
-  variant = 'default',
-  disabled = false,
-  className = '',
-}) => {
-  const { isDark } = useTheme();
-  const config = VARIANT_CONFIG[variant];
+export const QuickAction = React.memo<QuickActionProps>(
+  ({ icon: Icon, label, onClick, variant = 'default', disabled = false, className = '' }) => {
+    const { isDark } = useTheme();
+    const config = VARIANT_CONFIG[variant];
 
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={`
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        className={`
         group relative w-full p-4 rounded-xl text-white font-medium
         transition-all duration-300
         hover:scale-[1.02] hover:-translate-y-0.5
@@ -75,36 +72,43 @@ export const QuickAction = React.memo<QuickActionProps>(({
         ${isDark ? 'focus:ring-offset-slate-900' : 'focus:ring-offset-white'}
         ${className}
       `}
-      aria-label={label}
-    >
-      {/* Base gradient */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${config.gradient} transition-all duration-300`} />
+        aria-label={label}
+      >
+        {/* Base gradient */}
+        <div
+          className={`absolute inset-0 bg-gradient-to-br ${config.gradient} transition-all duration-300`}
+        />
 
-      {/* Hover gradient */}
-      <div className={`
+        {/* Hover gradient */}
+        <div
+          className={`
         absolute inset-0 bg-gradient-to-br ${config.hoverGradient}
         opacity-0 group-hover:opacity-100 transition-opacity duration-300
-      `} />
+      `}
+        />
 
-      {/* Shimmer effect */}
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-      </div>
+        {/* Shimmer effect */}
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+        </div>
 
-      {/* Content */}
-      <div className="relative flex items-center gap-3">
-        <div className={`
+        {/* Content */}
+        <div className="relative flex items-center gap-3">
+          <div
+            className={`
           p-2.5 rounded-lg bg-white/20 backdrop-blur-sm
           ${config.shadow}
           group-hover:scale-110 transition-transform duration-300
-        `}>
-          <Icon className="w-5 h-5" aria-hidden="true" />
+        `}
+          >
+            <Icon className="w-5 h-5" aria-hidden="true" />
+          </div>
+          <span className="text-sm">{label}</span>
         </div>
-        <span className="text-sm">{label}</span>
-      </div>
-    </button>
-  );
-});
+      </button>
+    );
+  }
+);
 
 QuickAction.displayName = 'QuickAction';
 

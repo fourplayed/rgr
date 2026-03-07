@@ -19,29 +19,30 @@ interface WorkflowLogProps {
   onComplete?: () => void;
 }
 
-export function WorkflowLog({ isVisible, isDark: _isDark, onComplete }: WorkflowLogProps): JSX.Element | null {
+export function WorkflowLog({
+  isVisible,
+  isDark: _isDark,
+  onComplete,
+}: WorkflowLogProps): JSX.Element | null {
   const [steps, setSteps] = useState<WorkflowStep[]>([]);
   const [isComplete, setIsComplete] = useState(false);
 
   const addStep = useCallback((step: WorkflowStep): void => {
-    setSteps((prev) => [
-      ...prev,
-      { ...step, timestamp: new Date().toISOString() },
-    ]);
+    setSteps((prev) => [...prev, { ...step, timestamp: new Date().toISOString() }]);
   }, []);
 
   const updateStep = useCallback((id: string, updates: Partial<Omit<WorkflowStep, 'id'>>): void => {
     setSteps((prev) =>
       prev.map((step) =>
-        step.id === id
-          ? { ...step, ...updates, timestamp: new Date().toISOString() }
-          : step
+        step.id === id ? { ...step, ...updates, timestamp: new Date().toISOString() } : step
       )
     );
   }, []);
 
-  const sleep = useCallback((ms: number): Promise<void> =>
-    new Promise((resolve) => setTimeout(resolve, ms)), []);
+  const sleep = useCallback(
+    (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms)),
+    []
+  );
 
   useEffect(() => {
     if (!isVisible) {
@@ -213,30 +214,14 @@ export function WorkflowLog({ isVisible, isDark: _isDark, onComplete }: Workflow
         transform: isVisible ? 'translateY(0)' : 'translateY(100%)',
       }}
     >
-      <div
-        className="flex flex-col"
-        style={{ minHeight: '200px' }}
-      >
+      <div className="flex flex-col" style={{ minHeight: '200px' }}>
         {/* Header */}
-        <div
-          className="px-6 py-4 border-b"
-          style={styles.border}
-        >
-          <h2
-            id="workflow-title"
-            className="text-xl font-bold"
-            style={styles.text}
-          >
+        <div className="px-6 py-4 border-b" style={styles.border}>
+          <h2 id="workflow-title" className="text-xl font-bold" style={styles.text}>
             {isComplete ? '✓ Authentication Complete' : '⚡ Authentication Workflow'}
           </h2>
-          <p
-            id="workflow-description"
-            className="text-sm mt-1"
-            style={styles.textMuted}
-          >
-            {isComplete
-              ? 'Redirecting to dashboard...'
-              : 'Processing your sign-in request'}
+          <p id="workflow-description" className="text-sm mt-1" style={styles.textMuted}>
+            {isComplete ? 'Redirecting to dashboard...' : 'Processing your sign-in request'}
           </p>
         </div>
 
@@ -248,10 +233,7 @@ export function WorkflowLog({ isVisible, isDark: _isDark, onComplete }: Workflow
         {/* Workflow Steps */}
         <div className="px-6 py-4 space-y-3 max-h-[400px] overflow-y-auto">
           {steps.map((step) => (
-            <div
-              key={step.id}
-              className="flex items-start gap-3 transition-all duration-300"
-            >
+            <div key={step.id} className="flex items-start gap-3 transition-all duration-300">
               {/* Status Icon */}
               <div className="flex-shrink-0 mt-1">
                 {step.status === 'success' && (
@@ -288,17 +270,11 @@ export function WorkflowLog({ isVisible, isDark: _isDark, onComplete }: Workflow
 
               {/* Step Info */}
               <div className="flex-1 min-w-0">
-                <div
-                  className="font-medium"
-                  style={styles.text}
-                >
+                <div className="font-medium" style={styles.text}>
                   {step.label}
                 </div>
                 {step.detail && (
-                  <div
-                    className="text-sm mt-0.5 font-mono"
-                    style={styles.textSubtle}
-                  >
+                  <div className="text-sm mt-0.5 font-mono" style={styles.textSubtle}>
                     {step.detail}
                   </div>
                 )}
@@ -306,10 +282,7 @@ export function WorkflowLog({ isVisible, isDark: _isDark, onComplete }: Workflow
 
               {/* Timestamp */}
               {step.timestamp && (
-                <div
-                  className="text-xs font-mono"
-                  style={styles.textFaint}
-                >
+                <div className="text-xs font-mono" style={styles.textFaint}>
                   {new Date(step.timestamp).toLocaleTimeString()}
                 </div>
               )}
@@ -319,14 +292,8 @@ export function WorkflowLog({ isVisible, isDark: _isDark, onComplete }: Workflow
 
         {/* Success Message */}
         {isComplete && (
-          <div
-            className="px-6 py-4 border-t"
-            style={styles.border}
-          >
-            <div
-              className="text-center text-lg font-bold"
-              style={{ color: styles.successColor }}
-            >
+          <div className="px-6 py-4 border-t" style={styles.border}>
+            <div className="text-center text-lg font-bold" style={{ color: styles.successColor }}>
               ✓ Success! Workflow Complete!
             </div>
           </div>

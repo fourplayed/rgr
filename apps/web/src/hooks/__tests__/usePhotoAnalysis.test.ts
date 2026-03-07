@@ -186,7 +186,9 @@ function createMockFile(
 
   // Mock slice().arrayBuffer() for magic bytes validation
   // JPEG magic bytes: 0xFF, 0xD8, 0xFF
-  const jpegMagicBytes = new Uint8Array([0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, 0x01]);
+  const jpegMagicBytes = new Uint8Array([
+    0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01,
+  ]);
   const originalSlice = file.slice.bind(file);
   file.slice = (...args: Parameters<typeof file.slice>) => {
     const blob = originalSlice(...args);

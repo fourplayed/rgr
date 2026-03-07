@@ -69,7 +69,7 @@ beforeEach(() => {
   document.body.appendChild(navContainer);
 
   // Mock getBoundingClientRect
-  Element.prototype.getBoundingClientRect = function(this: Element) {
+  Element.prototype.getBoundingClientRect = function (this: Element) {
     // Dashboard button
     if (this.getAttribute('aria-label') === 'Dashboard') {
       return {
@@ -226,9 +226,7 @@ describe('SlidingNavIndicator', () => {
   });
 
   it('should apply custom className', () => {
-    const { container } = render(
-      <SlidingNavIndicator isDark={true} className="custom-class" />
-    );
+    const { container } = render(<SlidingNavIndicator isDark={true} className="custom-class" />);
     const indicator = container.querySelector('div');
 
     expect(indicator?.className).toContain('custom-class');

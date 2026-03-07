@@ -3,7 +3,14 @@
  */
 
 export type WorkflowStatus = 'success' | 'failure' | 'in_progress' | 'cancelled' | 'completed';
-export type WorkflowConclusion = 'success' | 'failure' | 'cancelled' | 'skipped' | 'timed_out' | 'action_required' | 'neutral';
+export type WorkflowConclusion =
+  | 'success'
+  | 'failure'
+  | 'cancelled'
+  | 'skipped'
+  | 'timed_out'
+  | 'action_required'
+  | 'neutral';
 export type WorkflowFilter = 'all' | 'ci' | 'deploy-web' | 'deploy-database' | 'mobile';
 
 /**

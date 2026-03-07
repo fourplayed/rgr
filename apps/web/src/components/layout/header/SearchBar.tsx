@@ -15,19 +15,25 @@ export function SearchBar({
   const isControlled = controlledValue !== undefined;
   const value = isControlled ? controlledValue : internalValue;
 
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    if (isControlled) {
-      onChange?.(newValue);
-    } else {
-      setInternalValue(newValue);
-    }
-  }, [isControlled, onChange]);
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newValue = e.target.value;
+      if (isControlled) {
+        onChange?.(newValue);
+      } else {
+        setInternalValue(newValue);
+      }
+    },
+    [isControlled, onChange]
+  );
 
-  const handleSubmit = useCallback((e: FormEvent) => {
-    e.preventDefault();
-    onSearch?.(value);
-  }, [onSearch, value]);
+  const handleSubmit = useCallback(
+    (e: FormEvent) => {
+      e.preventDefault();
+      onSearch?.(value);
+    },
+    [onSearch, value]
+  );
 
   return (
     <form onSubmit={handleSubmit} className="relative w-96">

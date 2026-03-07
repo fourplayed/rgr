@@ -8,10 +8,25 @@ import type {
   AdminUpdateProfileInput,
   CreateUserInput,
 } from '../../types/api/auth';
-import type { Depot, DepotRow, CreateDepotInput, UpdateDepotInput } from '../../types/entities/depot';
+import type {
+  Depot,
+  DepotRow,
+  CreateDepotInput,
+  UpdateDepotInput,
+} from '../../types/entities/depot';
 import type { AuditLogWithUser, AuditLogRow } from '../../types/entities/auditLog';
-import { mapRowToProfile, AdminUpdateProfileInputSchema, mapAdminProfileToUpdate } from '../../types/api/auth';
-import { mapRowToDepot, mapDepotToInsert, mapDepotToUpdate, CreateDepotInputSchema, UpdateDepotInputSchema } from '../../types/entities/depot';
+import {
+  mapRowToProfile,
+  AdminUpdateProfileInputSchema,
+  mapAdminProfileToUpdate,
+} from '../../types/api/auth';
+import {
+  mapRowToDepot,
+  mapDepotToInsert,
+  mapDepotToUpdate,
+  CreateDepotInputSchema,
+  UpdateDepotInputSchema,
+} from '../../types/entities/depot';
 import { mapRowToAuditLog } from '../../types/entities/auditLog';
 import { isValidUUID, isValidISOTimestamp } from '../../utils/constants';
 
@@ -28,22 +43,14 @@ export interface ListProfilesParams {
 export async function listProfiles(
   params: ListProfilesParams = {}
 ): Promise<ServiceResult<PaginatedResult<Profile>>> {
-  const {
-    page = 1,
-    pageSize = 20,
-    search,
-    roles,
-    isActive,
-  } = params;
+  const { page = 1, pageSize = 20, search, roles, isActive } = params;
 
   try {
     const supabase = getSupabaseClient();
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
-    let query = supabase
-      .from('profiles')
-      .select('*', { count: 'exact' });
+    let query = supabase.from('profiles').select('*', { count: 'exact' });
 
     if (search) {
       const safeSearch = search.replace(/[%_\\,().]/g, (c) => `\\${c}`);
@@ -93,7 +100,11 @@ export async function adminUpdateProfile(
 ): Promise<ServiceResult<Profile>> {
   const validation = AdminUpdateProfileInputSchema.safeParse(input);
   if (!validation.success) {
-    return { success: false, data: null, error: validation.error.errors[0]?.message ?? 'Invalid input' };
+    return {
+      success: false,
+      data: null,
+      error: validation.error.errors[0]?.message ?? 'Invalid input',
+    };
   }
 
   try {
@@ -146,23 +157,21 @@ export async function listAllDepots(): Promise<ServiceResult<Depot[]>> {
   }
 }
 
-export async function createDepot(
-  input: CreateDepotInput
-): Promise<ServiceResult<Depot>> {
+export async function createDepot(input: CreateDepotInput): Promise<ServiceResult<Depot>> {
   const validation = CreateDepotInputSchema.safeParse(input);
   if (!validation.success) {
-    return { success: false, data: null, error: validation.error.errors[0]?.message ?? 'Invalid input' };
+    return {
+      success: false,
+      data: null,
+      error: validation.error.errors[0]?.message ?? 'Invalid input',
+    };
   }
 
   try {
     const supabase = getSupabaseClient();
     const dbInsert = mapDepotToInsert(input);
 
-    const { data, error } = await supabase
-      .from('depots')
-      .insert(dbInsert)
-      .select()
-      .single();
+    const { data, error } = await supabase.from('depots').insert(dbInsert).select().single();
 
     if (error) {
       return { success: false, data: null, error: error.message };
@@ -180,7 +189,11 @@ export async function updateDepot(
 ): Promise<ServiceResult<Depot>> {
   const validation = UpdateDepotInputSchema.safeParse(input);
   if (!validation.success) {
-    return { success: false, data: null, error: validation.error.errors[0]?.message ?? 'Invalid input' };
+    return {
+      success: false,
+      data: null,
+      error: validation.error.errors[0]?.message ?? 'Invalid input',
+    };
   }
 
   try {
@@ -204,20 +217,19 @@ export async function updateDepot(
   }
 }
 
-export async function deleteDepot(
-  id: string
-): Promise<ServiceResult<void>> {
+export async function deleteDepot(id: string): Promise<ServiceResult<void>> {
   try {
     const supabase = getSupabaseClient();
 
-    const { error } = await supabase
-      .from('depots')
-      .delete()
-      .eq('id', id);
+    const { error } = await supabase.from('depots').delete().eq('id', id);
 
     if (error) {
       if (error.code === '23503') {
-        return { success: false, data: null, error: 'Cannot delete: assets are assigned to this depot' };
+        return {
+          success: false,
+          data: null,
+          error: 'Cannot delete: assets are assigned to this depot',
+        };
       }
       return { success: false, data: null, error: error.message };
     }
@@ -239,10 +251,7 @@ export async function getAssetRelatedCounts(
     const supabase = getSupabaseClient();
 
     const [scansResult, maintenanceResult] = await Promise.all([
-      supabase
-        .from('scan_events')
-        .select('id', { count: 'exact', head: true })
-        .eq('asset_id', id),
+      supabase.from('scan_events').select('id', { count: 'exact', head: true }).eq('asset_id', id),
       supabase
         .from('maintenance_records')
         .select('id', { count: 'exact', head: true })
@@ -314,15 +323,7 @@ interface AuditLogRowWithUser extends AuditLogRow {
 export async function listAuditLogs(
   params: ListAuditLogsParams = {}
 ): Promise<ServiceResult<{ data: AuditLogWithUser[]; hasMore: boolean }>> {
-  const {
-    pageSize = 30,
-    cursor,
-    cursorId,
-    userId,
-    action,
-    startDate,
-    endDate,
-  } = params;
+  const { pageSize = 30, cursor, cursorId, userId, action, startDate, endDate } = params;
 
   try {
     const supabase = getSupabaseClient();
@@ -343,9 +344,7 @@ export async function listAuditLogs(
         if (!isValidUUID(cursorId)) {
           return { success: true, data: { data: [], hasMore: false }, error: null };
         }
-        query = query.or(
-          `created_at.lt.${cursor},and(created_at.eq.${cursor},id.lt.${cursorId})`
-        );
+        query = query.or(`created_at.lt.${cursor},and(created_at.eq.${cursor},id.lt.${cursorId})`);
       } else {
         query = query.lt('created_at', cursor);
       }
@@ -396,7 +395,12 @@ export async function listAuditLogs(
 
 export async function adminCreateUser(
   input: CreateUserInput
-): Promise<ServiceResult<{ user: { id: string; email: string }; profile: { id: string; role: UserRole; fullName: string } }>> {
+): Promise<
+  ServiceResult<{
+    user: { id: string; email: string };
+    profile: { id: string; role: UserRole; fullName: string };
+  }>
+> {
   try {
     const config = getSupabaseConfig();
     const supabase = getSupabaseClient();
@@ -414,8 +418,8 @@ export async function adminCreateUser(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`,
-        'apikey': config.anonKey,
+        Authorization: `Bearer ${accessToken}`,
+        apikey: config.anonKey,
       },
       body: JSON.stringify({
         email: input.email,
