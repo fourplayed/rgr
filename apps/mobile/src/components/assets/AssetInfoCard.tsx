@@ -27,8 +27,12 @@ interface AssetInfoCardProps {
 export function AssetInfoCard({ asset, nextServiceDate, assessment, onPress }: AssetInfoCardProps) {
   const depotLookup = useDepotLookup();
   const depotCode = asset.depotCode?.toLowerCase();
-  const depot = depotCode ? depotLookup.byCode.get(depotCode) ?? null : null;
-  const { bg: depotColor, text: depotTextColor } = getDepotBadgeColors(depot, colors.chrome, colors.text);
+  const depot = depotCode ? (depotLookup.byCode.get(depotCode) ?? null) : null;
+  const { bg: depotColor, text: depotTextColor } = getDepotBadgeColors(
+    depot,
+    colors.chrome,
+    colors.text
+  );
   const statusColor = AssetStatusColors[asset.status];
 
   const cardContent = (
@@ -44,28 +48,30 @@ export function AssetInfoCard({ asset, nextServiceDate, assessment, onPress }: A
         <View style={styles.badgeColumn}>
           <StatusBadge status={asset.status} size="small" />
           {asset.depotName && (
-            <DepotBadge
-              label={asset.depotName}
-              bgColor={depotColor}
-              textColor={depotTextColor}
-            />
+            <DepotBadge label={asset.depotName} bgColor={depotColor} textColor={depotTextColor} />
           )}
         </View>
       </View>
 
-      {assessment ? (
-        <Text style={styles.assessmentText}>{assessment}</Text>
-      ) : null}
+      {assessment ? <Text style={styles.assessmentText}>{assessment}</Text> : null}
 
       <CollapsibleSection title="Details" variant="flat" defaultExpanded={false}>
         <View style={styles.infoGrid}>
           <InfoRow label="Registration" value={asset.registrationNumber || 'Unknown'} />
-          <InfoRow label="Registration Expiry" value={asset.registrationExpiry ? formatDate(asset.registrationExpiry) : 'Unknown'} />
+          <InfoRow
+            label="Registration Expiry"
+            value={asset.registrationExpiry ? formatDate(asset.registrationExpiry) : 'Unknown'}
+          />
           <InfoRow
             label="Last Scanned"
-            value={asset.lastLocationUpdatedAt ? formatDate(asset.lastLocationUpdatedAt) : 'Unknown'}
+            value={
+              asset.lastLocationUpdatedAt ? formatDate(asset.lastLocationUpdatedAt) : 'Unknown'
+            }
           />
-          <InfoRow label="Next Service Due" value={nextServiceDate ? formatDate(nextServiceDate) : 'Unknown'} />
+          <InfoRow
+            label="Next Service Due"
+            value={nextServiceDate ? formatDate(nextServiceDate) : 'Unknown'}
+          />
         </View>
       </CollapsibleSection>
     </View>
@@ -73,7 +79,12 @@ export function AssetInfoCard({ asset, nextServiceDate, assessment, onPress }: A
 
   if (onPress) {
     return (
-      <TouchableOpacity onPress={onPress} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="View QR Code">
+      <TouchableOpacity
+        onPress={onPress}
+        activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityLabel="View QR Code"
+      >
         {cardContent}
       </TouchableOpacity>
     );

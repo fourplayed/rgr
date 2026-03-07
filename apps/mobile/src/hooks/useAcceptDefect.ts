@@ -36,8 +36,12 @@ export function useAcceptDefect() {
       queryClient.invalidateQueries({ queryKey: maintenanceKeys.lists() });
       queryClient.invalidateQueries({ queryKey: maintenanceKeys.stats() });
       // Cross-cache: refresh asset detail's maintenance data so assessment updates
-      queryClient.invalidateQueries({ queryKey: assetKeys.maintenance(variables.maintenanceInput.assetId) });
-      queryClient.invalidateQueries({ queryKey: assetKeys.scanContext(variables.maintenanceInput.assetId) });
+      queryClient.invalidateQueries({
+        queryKey: assetKeys.maintenance(variables.maintenanceInput.assetId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: assetKeys.scanContext(variables.maintenanceInput.assetId),
+      });
     },
   });
 }

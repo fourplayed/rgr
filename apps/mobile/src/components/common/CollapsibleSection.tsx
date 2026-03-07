@@ -14,7 +14,13 @@ interface CollapsibleSectionProps {
   variant?: 'contained' | 'flat';
 }
 
-export function CollapsibleSection({ title, children, defaultExpanded = true, badge, variant = 'contained' }: CollapsibleSectionProps) {
+export function CollapsibleSection({
+  title,
+  children,
+  defaultExpanded = true,
+  badge,
+  variant = 'contained',
+}: CollapsibleSectionProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const rotateAnim = useRef(new Animated.Value(defaultExpanded ? 1 : 0)).current;
 
@@ -35,7 +41,7 @@ export function CollapsibleSection({ title, children, defaultExpanded = true, ba
 
   const toggle = useCallback(() => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpanded(prev => !prev);
+    setExpanded((prev) => !prev);
   }, []);
 
   const isFlat = variant === 'flat';
@@ -56,11 +62,7 @@ export function CollapsibleSection({ title, children, defaultExpanded = true, ba
           accessibilityState={{ expanded }}
         >
           <Animated.View style={{ transform: [{ rotate: chevronRotate }] }}>
-            <Ionicons
-              name="chevron-down"
-              size={20}
-              color={colors.text}
-            />
+            <Ionicons name="chevron-down" size={20} color={colors.text} />
           </Animated.View>
         </TouchableOpacity>
       </View>

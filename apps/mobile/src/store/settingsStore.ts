@@ -38,8 +38,7 @@ export const useSettingsStore = create<SettingsState>()(
           },
         })),
 
-      resetNotifications: () =>
-        set({ notifications: defaultNotifications }),
+      resetNotifications: () => set({ notifications: defaultNotifications }),
     }),
     {
       name: 'rgr-settings',

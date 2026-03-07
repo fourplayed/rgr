@@ -15,7 +15,7 @@ import { assetKeys } from './useAssetData';
  */
 export function useRealtimeInvalidation() {
   const queryClient = useQueryClient();
-  const isAuthenticated = useAuthStore(s => s.isAuthenticated);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -30,34 +30,26 @@ export function useRealtimeInvalidation() {
 
     const scanChannel = supabase
       .channel('mobile-scan-updates')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'scan_events' },
-        () => {
-          queryClient.invalidateQueries({
-            queryKey: assetKeys.recentScans(),
-            refetchType: 'none',
-          });
-          queryClient.invalidateQueries({
-            queryKey: assetKeys.totalScanCount(),
-            refetchType: 'none',
-          });
-        }
-      )
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'scan_events' }, () => {
+        queryClient.invalidateQueries({
+          queryKey: assetKeys.recentScans(),
+          refetchType: 'none',
+        });
+        queryClient.invalidateQueries({
+          queryKey: assetKeys.totalScanCount(),
+          refetchType: 'none',
+        });
+      })
       .subscribe();
 
     const assetChannel = supabase
       .channel('mobile-asset-updates')
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'assets' },
-        () => {
-          queryClient.invalidateQueries({
-            queryKey: assetKeys.lists(),
-            refetchType: 'none',
-          });
-        }
-      )
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'assets' }, () => {
+        queryClient.invalidateQueries({
+          queryKey: assetKeys.lists(),
+          refetchType: 'none',
+        });
+      })
       .subscribe();
 
     return () => {

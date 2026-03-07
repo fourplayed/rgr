@@ -1,11 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  SafeAreaView,
-  TouchableOpacity,
-  Animated,
-} from 'react-native';
+import { View, Text, SafeAreaView, TouchableOpacity, Animated } from 'react-native';
 import { LoadingDots } from '../common/LoadingDots';
 import { colors } from '../../theme/colors';
 import { styles } from './scan.styles';
@@ -46,7 +40,7 @@ function CameraOverlayComponent({
           duration: 800,
           useNativeDriver: true,
         }),
-      ]),
+      ])
     );
     animation.start();
     return () => animation.stop();
@@ -58,19 +52,25 @@ function CameraOverlayComponent({
       <View style={styles.topBar}>
         <View style={styles.topBarTitleCenter}>
           <Text style={styles.topBarTitleText}>Scan QR Code</Text>
-          <Text style={styles.topBarSubtitleText}>
-            Point camera at asset QR code
-          </Text>
+          <Text style={styles.topBarSubtitleText}>Point camera at asset QR code</Text>
         </View>
       </View>
 
       {/* ── Scan Frame ───────────────────────────── */}
       <View style={styles.scanFrame}>
         <View style={styles.scanReticle}>
-          <Animated.View style={[styles.corner, styles.cornerTopLeft, { opacity: cornerOpacity }]} />
-          <Animated.View style={[styles.corner, styles.cornerTopRight, { opacity: cornerOpacity }]} />
-          <Animated.View style={[styles.corner, styles.cornerBottomLeft, { opacity: cornerOpacity }]} />
-          <Animated.View style={[styles.corner, styles.cornerBottomRight, { opacity: cornerOpacity }]} />
+          <Animated.View
+            style={[styles.corner, styles.cornerTopLeft, { opacity: cornerOpacity }]}
+          />
+          <Animated.View
+            style={[styles.corner, styles.cornerTopRight, { opacity: cornerOpacity }]}
+          />
+          <Animated.View
+            style={[styles.corner, styles.cornerBottomLeft, { opacity: cornerOpacity }]}
+          />
+          <Animated.View
+            style={[styles.corner, styles.cornerBottomRight, { opacity: cornerOpacity }]}
+          />
         </View>
 
         {/* Scan status pill (below reticle) */}
@@ -93,12 +93,18 @@ function CameraOverlayComponent({
               accessibilityLabel="Enable location"
               accessibilityHint="Double tap to grant location permission for scan tracking"
             >
-              <Text style={[styles.scannerButtonText, styles.buttonPrimaryText]}>Enable Location</Text>
+              <Text style={[styles.scannerButtonText, styles.buttonPrimaryText]}>
+                Enable Location
+              </Text>
             </TouchableOpacity>
           )}
           {__DEV__ && onDebugScan && (
             <TouchableOpacity
-              style={[styles.scannerButtonBase, styles.buttonDefault, !hasLocationPermission && { marginTop: 8 }]}
+              style={[
+                styles.scannerButtonBase,
+                styles.buttonDefault,
+                !hasLocationPermission && { marginTop: 8 },
+              ]}
               onPress={onDebugScan}
               accessibilityRole="button"
               accessibilityLabel="Debug scan"

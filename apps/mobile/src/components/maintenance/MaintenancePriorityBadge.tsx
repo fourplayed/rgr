@@ -8,13 +8,10 @@ interface MaintenancePriorityBadgeProps {
   priority: MaintenancePriority;
 }
 
-export const MaintenancePriorityBadge = memo(function MaintenancePriorityBadge({ priority }: MaintenancePriorityBadgeProps) {
+export const MaintenancePriorityBadge = memo(function MaintenancePriorityBadge({
+  priority,
+}: MaintenancePriorityBadgeProps) {
   const color = colors.maintenancePriority[priority] ?? colors.textSecondary;
 
-  return (
-    <Badge
-      label={MaintenancePriorityLabels[priority] || priority}
-      color={color}
-    />
-  );
+  return <Badge label={MaintenancePriorityLabels[priority] || priority} color={color} />;
 });

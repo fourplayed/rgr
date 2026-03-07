@@ -48,17 +48,17 @@ export const colors = {
 
   // Count session status
   countSessionStatus: {
-    in_progress: '#3B82F6',  // info blue
-    completed: '#22C55E',    // success green
-    cancelled: '#EF4444',    // error red
+    in_progress: '#3B82F6', // info blue
+    completed: '#22C55E', // success green
+    cancelled: '#EF4444', // error red
   },
 
   // User role colors
   userRole: {
-    driver: '#00A8FF',     // Light blue
-    mechanic: '#F59E0B',   // Orange
-    manager: '#8B5CF6',    // Violet
-    superuser: '#A855F7',  // Purple
+    driver: '#00A8FF', // Light blue
+    mechanic: '#F59E0B', // Orange
+    manager: '#8B5CF6', // Violet
+    superuser: '#A855F7', // Purple
   },
 
   // UI elements

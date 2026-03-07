@@ -33,18 +33,14 @@ function FreightAnalysisCardComponent({ analysis, hazards }: FreightAnalysisCard
         <View style={styles.categorySection}>
           <Text style={styles.categoryLabel}>Category</Text>
           <View style={styles.categoryRow}>
-            <Text style={styles.categoryValue}>
-              {analysis.primaryCategory.replace(/_/g, ' ')}
-            </Text>
+            <Text style={styles.categoryValue}>{analysis.primaryCategory.replace(/_/g, ' ')}</Text>
             {confidencePercent !== null && (
               <View style={styles.confidenceBadge}>
                 <Text style={styles.confidenceText}>{confidencePercent}%</Text>
               </View>
             )}
           </View>
-          {analysis.description && (
-            <Text style={styles.description}>{analysis.description}</Text>
-          )}
+          {analysis.description && <Text style={styles.description}>{analysis.description}</Text>}
         </View>
       )}
 
@@ -53,9 +49,7 @@ function FreightAnalysisCardComponent({ analysis, hazards }: FreightAnalysisCard
         {analysis.estimatedWeightKg != null && (
           <View style={styles.statItem}>
             <Ionicons name="scale-outline" size={18} color={colors.textSecondary} />
-            <Text style={styles.statValue}>
-              {analysis.estimatedWeightKg.toLocaleString()} kg
-            </Text>
+            <Text style={styles.statValue}>{analysis.estimatedWeightKg.toLocaleString()} kg</Text>
             <Text style={styles.statLabel}>Est. Weight</Text>
           </View>
         )}
@@ -81,11 +75,7 @@ function FreightAnalysisCardComponent({ analysis, hazards }: FreightAnalysisCard
       {hazards.length > 0 && (
         <View style={styles.hazardSection}>
           <View style={styles.hazardHeader}>
-            <Ionicons
-              name="warning"
-              size={18}
-              color={getSeverityColor(analysis.maxSeverity)}
-            />
+            <Ionicons name="warning" size={18} color={getSeverityColor(analysis.maxSeverity)} />
             <Text style={styles.hazardTitle}>
               {hazards.length} Hazard{hazards.length !== 1 ? 's' : ''} Detected
             </Text>
@@ -100,9 +90,7 @@ function FreightAnalysisCardComponent({ analysis, hazards }: FreightAnalysisCard
                 ]}
               />
               <View style={styles.hazardContent}>
-                <Text style={styles.hazardType}>
-                  {hazard.hazardType.replace(/_/g, ' ')}
-                </Text>
+                <Text style={styles.hazardType}>{hazard.hazardType.replace(/_/g, ' ')}</Text>
                 <Text style={styles.hazardDescription} numberOfLines={2}>
                   {hazard.description}
                 </Text>
@@ -110,11 +98,7 @@ function FreightAnalysisCardComponent({ analysis, hazards }: FreightAnalysisCard
             </View>
           ))}
 
-          {hazards.length > 3 && (
-            <Text style={styles.moreHazards}>
-              +{hazards.length - 3} more
-            </Text>
-          )}
+          {hazards.length > 3 && <Text style={styles.moreHazards}>+{hazards.length - 3} more</Text>}
         </View>
       )}
 

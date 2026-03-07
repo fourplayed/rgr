@@ -209,10 +209,7 @@ export function useBatchSignedUrls(storagePaths: string[]) {
   const queryClient = useQueryClient();
 
   // Create a stable cache key from sorted paths
-  const pathsKey = useMemo(
-    () => storagePaths.slice().sort().join(','),
-    [storagePaths]
-  );
+  const pathsKey = useMemo(() => storagePaths.slice().sort().join(','), [storagePaths]);
 
   return useQuery({
     queryKey: [...photoKeys.all, 'signedUrls', pathsKey],
@@ -241,10 +238,7 @@ export function usePrefetchImages(photos: PhotoListItem[] | undefined) {
   const queryClient = useQueryClient();
 
   // Use stable dependency - photo IDs string, not array reference
-  const photoIds = useMemo(
-    () => photos?.map(p => p.id).join(',') ?? '',
-    [photos]
-  );
+  const photoIds = useMemo(() => photos?.map((p) => p.id).join(',') ?? '', [photos]);
 
   useEffect(() => {
     if (!photos?.length) return;

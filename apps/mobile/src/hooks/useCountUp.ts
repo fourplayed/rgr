@@ -42,7 +42,7 @@ export function useCountUp(target: number, durationMs = 600): number {
         cancelAnimationFrame(rafRef.current);
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [target, durationMs]);
 
   return display;

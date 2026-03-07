@@ -13,9 +13,7 @@ export interface ThumbnailResult {
  * Generate a thumbnail from an image.
  * Resizes to THUMBNAIL_WIDTH (256px) maintaining aspect ratio.
  */
-export async function generateThumbnail(
-  imageUri: string
-): Promise<ThumbnailResult> {
+export async function generateThumbnail(imageUri: string): Promise<ThumbnailResult> {
   const result = await ImageManipulator.manipulateAsync(
     imageUri,
     [{ resize: { width: THUMBNAIL_WIDTH } }],

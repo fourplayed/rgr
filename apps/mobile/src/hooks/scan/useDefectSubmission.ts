@@ -12,7 +12,7 @@ export function useDefectSubmission(
     confirmedActionRef: React.MutableRefObject<ConfirmAction>;
     setAlertSheet: (state: AlertSheetState) => void;
     addDebugLog: (msg: string) => void;
-  },
+  }
 ) {
   const { user, confirmedActionRef, setAlertSheet, addDebugLog } = helpers;
 
@@ -24,12 +24,7 @@ export function useDefectSubmission(
   }, [dispatch]);
 
   const handleDefectSubmit = useCallback(
-    async (
-      notes: string,
-      wantsPhoto: boolean,
-      scannedAssetId: string,
-      lastScanEventId: string,
-    ) => {
+    async (notes: string, wantsPhoto: boolean, scannedAssetId: string, lastScanEventId: string) => {
       addDebugLog('Submitting defect report...');
       if (!user) {
         setAlertSheet({
@@ -59,8 +54,7 @@ export function useDefectSubmission(
           dispatch({ type: 'CLOSE_SHEET' });
         }
       } catch (error: unknown) {
-        const message =
-          error instanceof Error ? error.message : 'Failed to submit defect report';
+        const message = error instanceof Error ? error.message : 'Failed to submit defect report';
         addDebugLog(`ERROR: ${message}`);
         setAlertSheet({
           visible: true,
@@ -70,7 +64,7 @@ export function useDefectSubmission(
         });
       }
     },
-    [user, createDefectReport, addDebugLog, setAlertSheet, dispatch],
+    [user, createDefectReport, addDebugLog, setAlertSheet, dispatch]
   );
 
   const handleDefectCancel = useCallback(() => {

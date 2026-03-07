@@ -13,7 +13,11 @@ interface DefectStatusBadgeProps {
   color?: string;
 }
 
-export const DefectStatusBadge = memo(function DefectStatusBadge({ status, label, color }: DefectStatusBadgeProps) {
+export const DefectStatusBadge = memo(function DefectStatusBadge({
+  status,
+  label,
+  color,
+}: DefectStatusBadgeProps) {
   return (
     <Badge
       label={label ?? DefectStatusLabels[status] ?? status}

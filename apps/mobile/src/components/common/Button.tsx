@@ -1,5 +1,13 @@
 import React, { useRef, useCallback } from 'react';
-import { View, Pressable, Animated, Text, StyleSheet, type ViewStyle, type StyleProp } from 'react-native';
+import {
+  View,
+  Pressable,
+  Animated,
+  Text,
+  StyleSheet,
+  type ViewStyle,
+  type StyleProp,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LoadingDots } from './LoadingDots';
@@ -43,7 +51,8 @@ export function Button({
   const bgOverride = color ? { backgroundColor: color } : undefined;
   const isDisabled = disabled || isLoading;
 
-  const disabledTextOverride = isDisabled && !isLoading ? { color: colors.textDisabled } : undefined;
+  const disabledTextOverride =
+    isDisabled && !isLoading ? { color: colors.textDisabled } : undefined;
 
   const handlePressIn = useCallback(() => {
     Animated.spring(scale, {

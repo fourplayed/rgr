@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  Keyboard,
-} from 'react-native';
+import { View, Text, TextInput, StyleSheet, Keyboard } from 'react-native';
 import type { KeyboardTypeOptions } from 'react-native';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius, lineHeight, fontFamily as fonts } from '../../theme/spacing';
+import {
+  spacing,
+  fontSize,
+  borderRadius,
+  lineHeight,
+  fontFamily as fonts,
+} from '../../theme/spacing';
 import { Button } from './Button';
 import { BottomSheet } from './BottomSheet';
 

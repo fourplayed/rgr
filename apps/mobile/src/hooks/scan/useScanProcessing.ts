@@ -1,12 +1,7 @@
 import { useCallback } from 'react';
 import * as Haptics from 'expo-haptics';
 import { useQueryClient } from '@tanstack/react-query';
-import {
-  assetKeys,
-  useCreateScanEvent,
-  useUpdateAsset,
-  useDeleteScanEvent,
-} from '../useAssetData';
+import { assetKeys, useCreateScanEvent, useUpdateAsset, useDeleteScanEvent } from '../useAssetData';
 import { useLocationStore } from '../../store/locationStore';
 import type { Asset } from '@rgr/shared';
 import { getAssetByQRCode, listAssets } from '@rgr/shared';
@@ -21,7 +16,7 @@ export function useScanProcessing(
     setAlertSheet: (state: AlertSheetState) => void;
     addDebugLog: (msg: string) => void;
     resetScannerRef: React.MutableRefObject<() => void>;
-  },
+  }
 ) {
   const { user, setAlertSheet, addDebugLog, resetScannerRef } = helpers;
   const queryClient = useQueryClient();
@@ -44,7 +39,7 @@ export function useScanProcessing(
         staleTime: 30_000,
       });
     },
-    [queryClient],
+    [queryClient]
   );
 
   // ── Core scan processing ──
@@ -161,7 +156,16 @@ export function useScanProcessing(
         resetScannerRef.current();
       }
     },
-    [user, lookupAsset, createScan, updateAssetMutation, addDebugLog, setAlertSheet, dispatch, resetScannerRef],
+    [
+      user,
+      lookupAsset,
+      createScan,
+      updateAssetMutation,
+      addDebugLog,
+      setAlertSheet,
+      dispatch,
+      resetScannerRef,
+    ]
   );
 
   // ── Debug: trigger scan with first asset from DB ──
@@ -181,7 +185,7 @@ export function useScanProcessing(
       resetScanner();
       await processScan(qrCode);
     },
-    [processScan],
+    [processScan]
   );
 
   // ── Undo ──
@@ -205,7 +209,7 @@ export function useScanProcessing(
         });
       }
     },
-    [addDebugLog, doDeleteScan, dispatch, setAlertSheet],
+    [addDebugLog, doDeleteScan, dispatch, setAlertSheet]
   );
 
   return { processScan, triggerDebugScan, handleUndoPress, isDeletingScan };

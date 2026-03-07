@@ -17,7 +17,7 @@ import type { MatchedDepot } from './scan/useScanActionFlow';
  */
 export function useAssetAssessment(
   asset: Asset | AssetWithRelations | null | undefined,
-  matchedDepot?: MatchedDepot | null,
+  matchedDepot?: MatchedDepot | null
 ) {
   const assetId = asset?.id;
 
@@ -31,17 +31,25 @@ export function useAssetAssessment(
     if (!asset) return null;
 
     // Build AssetWithRelations if we only have a plain Asset
-    const assetWithRelations: AssetWithRelations = 'depotName' in asset
-      ? asset as AssetWithRelations
-      : {
-          ...asset,
-          depotName: matchedDepot?.depot.name ?? null,
-          depotCode: matchedDepot?.depot.code ?? null,
-          driverName: null,
-          lastScannerName: null,
-          photoCount: 0,
-        };
+    const assetWithRelations: AssetWithRelations =
+      'depotName' in asset
+        ? (asset as AssetWithRelations)
+        : {
+            ...asset,
+            depotName: matchedDepot?.depot.name ?? null,
+            depotCode: matchedDepot?.depot.code ?? null,
+            driverName: null,
+            lastScannerName: null,
+            photoCount: 0,
+          };
 
-    return buildAssetAssessment({ asset: assetWithRelations, maintenance, photos, scans, depots, defectReports });
+    return buildAssetAssessment({
+      asset: assetWithRelations,
+      maintenance,
+      photos,
+      scans,
+      depots,
+      defectReports,
+    });
   }, [asset, matchedDepot, maintenance, photos, scans, depots, defectReports]);
 }

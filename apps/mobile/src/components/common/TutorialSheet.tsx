@@ -47,11 +47,7 @@ export const TutorialSheet = React.memo(function TutorialSheet({
           </View>
         )}
 
-        <Button
-          onPress={onDismiss}
-          style={styles.fullWidth}
-          accessibilityLabel={buttonLabel}
-        >
+        <Button onPress={onDismiss} style={styles.fullWidth} accessibilityLabel={buttonLabel}>
           {buttonLabel}
         </Button>
       </View>

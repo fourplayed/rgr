@@ -1,12 +1,5 @@
 import React, { useRef, useEffect, useCallback, memo } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Animated,
-  LayoutAnimation,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, LayoutAnimation } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { DefectStatus } from '@rgr/shared';
 import { DefectStatusLabels } from '@rgr/shared';
@@ -54,13 +47,16 @@ export const DefectFilterPanel = memo(function DefectFilterPanel({
     onToggleExpanded();
   }, [onToggleExpanded]);
 
-  const toggleStatus = useCallback((status: DefectStatus) => {
-    if (statuses.includes(status)) {
-      onStatusChange(statuses.filter((s) => s !== status));
-    } else {
-      onStatusChange([...statuses, status]);
-    }
-  }, [statuses, onStatusChange]);
+  const toggleStatus = useCallback(
+    (status: DefectStatus) => {
+      if (statuses.includes(status)) {
+        onStatusChange(statuses.filter((s) => s !== status));
+      } else {
+        onStatusChange([...statuses, status]);
+      }
+    },
+    [statuses, onStatusChange]
+  );
 
   const activeFilterCount = statuses.length;
 

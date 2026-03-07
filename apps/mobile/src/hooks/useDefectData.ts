@@ -9,11 +9,7 @@ import {
   getDefectReportStats,
   getAssetDefectReports,
 } from '@rgr/shared';
-import type {
-  DefectStatus,
-  CreateDefectReportInput,
-  UpdateDefectReportInput,
-} from '@rgr/shared';
+import type { DefectStatus, CreateDefectReportInput, UpdateDefectReportInput } from '@rgr/shared';
 import { assetKeys } from './useAssetData';
 
 /**
@@ -160,7 +156,10 @@ export function useCreateDefectReport() {
         queryKey: assetKeys.scanContext(variables.assetId),
       });
       // Cross-cache: defect creation triggers asset status change to 'maintenance'
-      queryClient.invalidateQueries({ queryKey: assetKeys.detail(variables.assetId), refetchType: 'none' });
+      queryClient.invalidateQueries({
+        queryKey: assetKeys.detail(variables.assetId),
+        refetchType: 'none',
+      });
       queryClient.invalidateQueries({ queryKey: assetKeys.lists(), refetchType: 'none' });
       queryClient.invalidateQueries({ queryKey: assetKeys.countsByStatus(), refetchType: 'none' });
     },
@@ -197,10 +196,16 @@ export function useUpdateDefectReportStatus() {
       queryClient.invalidateQueries({ queryKey: defectKeys.detail(data.id) });
       queryClient.invalidateQueries({ queryKey: defectKeys.stats(), refetchType: 'none' });
       // Cross-cache: resolving/dismissing defects may revert asset status to 'serviced'
-      queryClient.invalidateQueries({ queryKey: assetKeys.detail(data.assetId), refetchType: 'none' });
+      queryClient.invalidateQueries({
+        queryKey: assetKeys.detail(data.assetId),
+        refetchType: 'none',
+      });
       queryClient.invalidateQueries({ queryKey: assetKeys.lists(), refetchType: 'none' });
       queryClient.invalidateQueries({ queryKey: assetKeys.countsByStatus(), refetchType: 'none' });
-      queryClient.invalidateQueries({ queryKey: assetKeys.scanContext(data.assetId), refetchType: 'none' });
+      queryClient.invalidateQueries({
+        queryKey: assetKeys.scanContext(data.assetId),
+        refetchType: 'none',
+      });
     },
   });
 }

@@ -1,12 +1,5 @@
 import React, { useRef, useEffect, useCallback, memo } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Animated,
-  LayoutAnimation,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, LayoutAnimation } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { MaintenanceStatus, MaintenancePriority } from '@rgr/shared';
 import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '@rgr/shared';
@@ -52,21 +45,27 @@ export const MaintenanceFilterPanel = memo(function MaintenanceFilterPanel({
     onToggleExpanded();
   }, [onToggleExpanded]);
 
-  const toggleStatus = useCallback((status: MaintenanceStatus) => {
-    if (statuses.includes(status)) {
-      onStatusChange(statuses.filter((s) => s !== status));
-    } else {
-      onStatusChange([...statuses, status]);
-    }
-  }, [statuses, onStatusChange]);
+  const toggleStatus = useCallback(
+    (status: MaintenanceStatus) => {
+      if (statuses.includes(status)) {
+        onStatusChange(statuses.filter((s) => s !== status));
+      } else {
+        onStatusChange([...statuses, status]);
+      }
+    },
+    [statuses, onStatusChange]
+  );
 
-  const togglePriority = useCallback((priority: MaintenancePriority) => {
-    if (priorities.includes(priority)) {
-      onPriorityChange(priorities.filter((p) => p !== priority));
-    } else {
-      onPriorityChange([...priorities, priority]);
-    }
-  }, [priorities, onPriorityChange]);
+  const togglePriority = useCallback(
+    (priority: MaintenancePriority) => {
+      if (priorities.includes(priority)) {
+        onPriorityChange(priorities.filter((p) => p !== priority));
+      } else {
+        onPriorityChange([...priorities, priority]);
+      }
+    },
+    [priorities, onPriorityChange]
+  );
 
   // Count active filters
   const activeFilterCount = statuses.length + priorities.length;

@@ -1,11 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  ScrollView,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, TextInput, ScrollView, StyleSheet } from 'react-native';
 import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
 import { SheetFooter } from '../common/SheetFooter';
@@ -39,87 +33,88 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
 
   const guard = useSubmitGuard();
 
-  const handleSave = useCallback(() => guard(async () => {
-    if (!fullName.trim()) {
-      setError('Full name is required');
-      return;
-    }
+  const handleSave = useCallback(
+    () =>
+      guard(async () => {
+        if (!fullName.trim()) {
+          setError('Full name is required');
+          return;
+        }
 
-    setIsLoading(true);
-    setError(null);
+        setIsLoading(true);
+        setError(null);
 
-    const result = await updateUserProfile({
-      fullName: fullName.trim(),
-      phone: phone.trim() || null,
-    });
+        const result = await updateUserProfile({
+          fullName: fullName.trim(),
+          phone: phone.trim() || null,
+        });
 
-    setIsLoading(false);
+        setIsLoading(false);
 
-    if (result.success) {
-      onClose();
-    } else {
-      setError(result.error || 'Failed to update profile');
-    }
-  }), [guard, fullName, phone, updateUserProfile, onClose]);
+        if (result.success) {
+          onClose();
+        } else {
+          setError(result.error || 'Failed to update profile');
+        }
+      }),
+    [guard, fullName, phone, updateUserProfile, onClose]
+  );
 
   return (
     <SheetModal visible={visible} onClose={onClose} keyboardAvoiding>
-        <View style={styles.sheet}>
-          <SheetHeader icon="person" title="Edit Profile" onClose={onClose} />
+      <View style={styles.sheet}>
+        <SheetHeader icon="person" title="Edit Profile" onClose={onClose} />
 
-          <ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={styles.scrollContent}
-            bounces={true}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-          >
-            <View style={formStyles.inputGroup}>
-              <Text style={formStyles.label}>Full Name</Text>
-              <TextInput
-                style={formStyles.input}
-                value={fullName}
-                onChangeText={setFullName}
-                placeholder="Enter your full name"
-                placeholderTextColor={colors.textSecondary}
-                autoCapitalize="words"
-                autoCorrect={false}
-                accessibilityLabel="Full name"
-              />
-            </View>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          bounces={true}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={formStyles.inputGroup}>
+            <Text style={formStyles.label}>Full Name</Text>
+            <TextInput
+              style={formStyles.input}
+              value={fullName}
+              onChangeText={setFullName}
+              placeholder="Enter your full name"
+              placeholderTextColor={colors.textSecondary}
+              autoCapitalize="words"
+              autoCorrect={false}
+              accessibilityLabel="Full name"
+            />
+          </View>
 
-            <View style={formStyles.inputGroup}>
-              <Text style={formStyles.label}>Phone (optional)</Text>
-              <TextInput
-                style={formStyles.input}
-                value={phone}
-                onChangeText={setPhone}
-                placeholder="Enter your phone number"
-                placeholderTextColor={colors.textSecondary}
-                keyboardType="phone-pad"
-                autoCorrect={false}
-                accessibilityLabel="Phone number"
-              />
-            </View>
+          <View style={formStyles.inputGroup}>
+            <Text style={formStyles.label}>Phone (optional)</Text>
+            <TextInput
+              style={formStyles.input}
+              value={phone}
+              onChangeText={setPhone}
+              placeholder="Enter your phone number"
+              placeholderTextColor={colors.textSecondary}
+              keyboardType="phone-pad"
+              autoCorrect={false}
+              accessibilityLabel="Phone number"
+            />
+          </View>
 
-            {error && <Text style={formStyles.errorText}>{error}</Text>}
-          </ScrollView>
+          {error && <Text style={formStyles.errorText}>{error}</Text>}
+        </ScrollView>
 
-          <SheetFooter>
-            <View style={formStyles.buttonRow}>
-              <Button
-                variant="secondary"
-                onPress={onClose}
-                disabled={isLoading}
-                flex
-              >
-                Cancel
-              </Button>
+        <SheetFooter>
+          <View style={formStyles.buttonRow}>
+            <Button variant="secondary" onPress={onClose} disabled={isLoading} flex>
+              Cancel
+            </Button>
 
-              <Button isLoading={isLoading} onPress={handleSave} flex>Save</Button>
-            </View>
-          </SheetFooter>
-        </View>
+            <Button isLoading={isLoading} onPress={handleSave} flex>
+              Save
+            </Button>
+          </View>
+        </SheetFooter>
+      </View>
     </SheetModal>
   );
 }

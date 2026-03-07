@@ -20,10 +20,7 @@ interface UserPermissionsProviderProps {
   children: ReactNode;
 }
 
-export function UserPermissionsProvider({
-  userRole,
-  children,
-}: UserPermissionsProviderProps) {
+export function UserPermissionsProvider({ userRole, children }: UserPermissionsProviderProps) {
   const permissions = useMemo<UserPermissions>(() => {
     const level = userRole ? UserRoleLevel[userRole] : 0;
     const mechanicLevel = UserRoleLevel.mechanic;

@@ -16,11 +16,7 @@ import { useSheetLifecycle } from './useSheetLifecycle';
 
 export type MatchedDepot = { depot: Depot; distanceKm: number };
 
-export type SheetId =
-  | 'camera'
-  | 'defect'
-  | 'createTask'
-  | null;
+export type SheetId = 'camera' | 'defect' | 'createTask' | null;
 
 export type ScanFlowState =
   | { phase: 'idle' }
@@ -45,7 +41,7 @@ export type ScanFlowState =
       activeSheet: SheetId;
       pendingSheet: SheetId;
       selectedItemId: string | null;
-    }
+    };
 
 export interface AlertSheetState {
   visible: boolean;
@@ -237,17 +233,20 @@ interface UseScanActionFlowReturn {
 
 interface UseScanActionFlowOptions {
   canMarkMaintenance: boolean;
-  confirmedActionRef: React.MutableRefObject<import('../../components/scanner/ScanConfirmation').ConfirmAction>;
+  confirmedActionRef: React.MutableRefObject<
+    import('../../components/scanner/ScanConfirmation').ConfirmAction
+  >;
 }
 
-export function useScanActionFlow({ canMarkMaintenance, confirmedActionRef }: UseScanActionFlowOptions) {
+export function useScanActionFlow({
+  canMarkMaintenance,
+  confirmedActionRef,
+}: UseScanActionFlowOptions) {
   const [state, dispatch] = useReducer(reducer, { phase: 'idle' });
-  const user = useAuthStore(s => s.user);
-  const cachedDepot = useLocationStore(s => s.resolvedDepot);
-  const {
-    hasPermission: hasLocationPermission,
-    requestPermission: requestLocationPermission,
-  } = useLocation();
+  const user = useAuthStore((s) => s.user);
+  const cachedDepot = useLocationStore((s) => s.resolvedDepot);
+  const { hasPermission: hasLocationPermission, requestPermission: requestLocationPermission } =
+    useLocation();
 
   // ── Alert sheet ──
   const [alertSheet, setAlertSheet] = useState<AlertSheetState>({
@@ -312,7 +311,7 @@ export function useScanActionFlow({ canMarkMaintenance, confirmedActionRef }: Us
   const { handleBarCodeScanned, resetScanner } = useQRScanner(
     scanProcessing.processScan,
     2000,
-    handleInvalidQR,
+    handleInvalidQR
   );
   resetScannerRef.current = resetScanner;
 
@@ -337,11 +336,7 @@ export function useScanActionFlow({ canMarkMaintenance, confirmedActionRef }: Us
       return;
     }
     if (state.phase !== 'active') return;
-    scanProcessing.handleUndoPress(
-      state.lastScanEventId,
-      state.scannedAsset.id,
-      resetScanner,
-    );
+    scanProcessing.handleUndoPress(state.lastScanEventId, state.scannedAsset.id, resetScanner);
   }, [state, scanProcessing, resetScanner, dispatch]);
 
   // Wrap triggerDebugScan to pass resetScanner
@@ -357,16 +352,15 @@ export function useScanActionFlow({ canMarkMaintenance, confirmedActionRef }: Us
         notes,
         wantsPhoto,
         state.scannedAsset.id,
-        state.lastScanEventId,
+        state.lastScanEventId
       );
     },
-    [state, defectSubmission],
+    [state, defectSubmission]
   );
 
   // ── Scan context query (mechanic only) ──
   const scanContextAssetId =
-    canMarkMaintenance &&
-    (state.phase === 'confirming' || state.phase === 'active')
+    canMarkMaintenance && (state.phase === 'confirming' || state.phase === 'active')
       ? state.scannedAsset.id
       : undefined;
 
@@ -375,9 +369,12 @@ export function useScanActionFlow({ canMarkMaintenance, confirmedActionRef }: Us
   // ── Derived convenience getters ──
   // Plain property accesses — cheaper than useMemo overhead since state is
   // a new object on every dispatch (memo with [state] never caches).
-  const scannedAsset = (state.phase === 'confirming' || state.phase === 'active') ? state.scannedAsset : null;
-  const matchedDepot = (state.phase === 'confirming' || state.phase === 'active') ? state.matchedDepot : null;
-  const effectiveLocation = (state.phase === 'confirming' || state.phase === 'active') ? state.effectiveLocation : null;
+  const scannedAsset =
+    state.phase === 'confirming' || state.phase === 'active' ? state.scannedAsset : null;
+  const matchedDepot =
+    state.phase === 'confirming' || state.phase === 'active' ? state.matchedDepot : null;
+  const effectiveLocation =
+    state.phase === 'confirming' || state.phase === 'active' ? state.effectiveLocation : null;
   const lastScanEventId = state.phase === 'active' ? state.lastScanEventId : null;
   const activeSheet = state.phase === 'active' ? state.activeSheet : null;
   const pendingSheet = state.phase === 'active' ? state.pendingSheet : null;

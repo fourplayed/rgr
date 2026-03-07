@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  Switch,
-  ScrollView,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, Switch, ScrollView, StyleSheet } from 'react-native';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 import { Button } from '../common/Button';
@@ -52,70 +46,67 @@ export function NotificationsModal({ visible, onClose }: NotificationsModalProps
 
   return (
     <SheetModal visible={visible} onClose={onClose}>
-        <View style={styles.sheet}>
-          <SheetHeader icon="notifications" title="Notifications" onClose={onClose} />
+      <View style={styles.sheet}>
+        <SheetHeader icon="notifications" title="Notifications" onClose={onClose} />
 
-          <ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={styles.scrollContent}
-            bounces={true}
-            showsVerticalScrollIndicator={false}
-          >
-            <Text style={styles.description}>
-              Manage how you receive updates and alerts.
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          bounces={true}
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={styles.description}>Manage how you receive updates and alerts.</Text>
+
+          <View style={styles.comingSoonBanner}>
+            <Text style={styles.comingSoonText}>
+              Push notifications are not yet connected to a delivery service. These preferences are
+              saved locally and will take effect once notifications are enabled.
             </Text>
+          </View>
 
-            <View style={styles.comingSoonBanner}>
-              <Text style={styles.comingSoonText}>
-                Push notifications are not yet connected to a delivery service. These preferences are saved locally and will take effect once notifications are enabled.
-              </Text>
-            </View>
+          <View style={styles.toggleList}>
+            <ToggleRow
+              title="Push Notifications"
+              subtitle="Receive alerts on your device"
+              value={notifications.pushEnabled}
+              onValueChange={(value) => setNotificationSetting('pushEnabled', value)}
+            />
 
-            <View style={styles.toggleList}>
-              <ToggleRow
-                title="Push Notifications"
-                subtitle="Receive alerts on your device"
-                value={notifications.pushEnabled}
-                onValueChange={(value) => setNotificationSetting('pushEnabled', value)}
-              />
+            <View style={styles.divider} />
 
-              <View style={styles.divider} />
+            <ToggleRow
+              title="Email Notifications"
+              subtitle="Receive updates via email"
+              value={notifications.emailEnabled}
+              onValueChange={(value) => setNotificationSetting('emailEnabled', value)}
+            />
 
-              <ToggleRow
-                title="Email Notifications"
-                subtitle="Receive updates via email"
-                value={notifications.emailEnabled}
-                onValueChange={(value) => setNotificationSetting('emailEnabled', value)}
-              />
+            <View style={styles.divider} />
 
-              <View style={styles.divider} />
+            <ToggleRow
+              title="Maintenance Alerts"
+              subtitle="Get notified about equipment issues"
+              value={notifications.maintenanceAlerts && notifications.pushEnabled}
+              onValueChange={(value) => setNotificationSetting('maintenanceAlerts', value)}
+              disabled={isPushDisabled}
+            />
 
-              <ToggleRow
-                title="Maintenance Alerts"
-                subtitle="Get notified about equipment issues"
-                value={notifications.maintenanceAlerts && notifications.pushEnabled}
-                onValueChange={(value) => setNotificationSetting('maintenanceAlerts', value)}
-                disabled={isPushDisabled}
-              />
+            <View style={styles.divider} />
 
-              <View style={styles.divider} />
+            <ToggleRow
+              title="Scan Confirmations"
+              subtitle="Confirm when equipment is scanned"
+              value={notifications.scanConfirmations && notifications.pushEnabled}
+              onValueChange={(value) => setNotificationSetting('scanConfirmations', value)}
+              disabled={isPushDisabled}
+            />
+          </View>
+        </ScrollView>
 
-              <ToggleRow
-                title="Scan Confirmations"
-                subtitle="Confirm when equipment is scanned"
-                value={notifications.scanConfirmations && notifications.pushEnabled}
-                onValueChange={(value) => setNotificationSetting('scanConfirmations', value)}
-                disabled={isPushDisabled}
-              />
-            </View>
-          </ScrollView>
-
-          <SheetFooter>
-            <Button onPress={onClose}>
-              Done
-            </Button>
-          </SheetFooter>
-        </View>
+        <SheetFooter>
+          <Button onPress={onClose}>Done</Button>
+        </SheetFooter>
+      </View>
     </SheetModal>
   );
 }

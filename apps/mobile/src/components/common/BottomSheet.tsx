@@ -134,12 +134,10 @@ export function BottomSheet({
     >
       {visible && (
         <>
-          <Animated.View style={[StyleSheet.absoluteFillObject, styles.blur, { opacity: backdropOpacity }]}>
-            <BlurView
-              intensity={50}
-              tint="dark"
-              style={StyleSheet.absoluteFillObject}
-            />
+          <Animated.View
+            style={[StyleSheet.absoluteFillObject, styles.blur, { opacity: backdropOpacity }]}
+          >
+            <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFillObject} />
           </Animated.View>
           {keyboardAware ? (
             <KeyboardAvoidingView

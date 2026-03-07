@@ -1,12 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  TextInput,
-  StyleSheet,
-  ScrollView,
-} from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { MaintenancePriority, CreateMaintenanceInput } from '@rgr/shared';
 import { MaintenancePriorityLabels } from '@rgr/shared';
@@ -54,7 +47,7 @@ export function CreateMaintenanceModal({
   onExternalSubmit,
   inline,
 }: CreateMaintenanceModalProps) {
-  const user = useAuthStore(s => s.user);
+  const user = useAuthStore((s) => s.user);
   const { mutateAsync: createMaintenanceAsync, isPending } = useCreateMaintenance();
   const guard = useSubmitGuard();
 
@@ -92,205 +85,235 @@ export function CreateMaintenanceModal({
     }
   }, [visible, defaultTitle, defaultDescription, defaultPriority]);
 
-  const handleSubmit = useCallback(() => guard(async () => {
-    if (!title.trim()) {
-      setError('Title is required');
-      return;
-    }
-
-    if (!assetId) {
-      setError('Asset is required');
-      return;
-    }
-
-    setError(null);
-
-    const input: CreateMaintenanceInput = {
-      assetId,
-      title: title.trim(),
-      description: description.trim() || null,
-      priority,
-      status: 'scheduled',
-      reportedBy: user?.id || null,
-      dueDate: dueDate.trim() || null,
-      notes: notes.trim() || null,
-    };
-
-    try {
-      if (onExternalSubmit) {
-        await onExternalSubmit(input);
-      } else {
-        const record = await createMaintenanceAsync(input);
-        if (onCreated) {
-          onCreated(record.id);
+  const handleSubmit = useCallback(
+    () =>
+      guard(async () => {
+        if (!title.trim()) {
+          setError('Title is required');
+          return;
         }
-      }
-      if (!onExternalSubmit) {
-        onClose();
-      }
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to create maintenance record');
-    }
-  }), [guard, title, description, priority, dueDate, notes, assetId, user, createMaintenanceAsync, onClose, onCreated, onExternalSubmit]);
+
+        if (!assetId) {
+          setError('Asset is required');
+          return;
+        }
+
+        setError(null);
+
+        const input: CreateMaintenanceInput = {
+          assetId,
+          title: title.trim(),
+          description: description.trim() || null,
+          priority,
+          status: 'scheduled',
+          reportedBy: user?.id || null,
+          dueDate: dueDate.trim() || null,
+          notes: notes.trim() || null,
+        };
+
+        try {
+          if (onExternalSubmit) {
+            await onExternalSubmit(input);
+          } else {
+            const record = await createMaintenanceAsync(input);
+            if (onCreated) {
+              onCreated(record.id);
+            }
+          }
+          if (!onExternalSubmit) {
+            onClose();
+          }
+        } catch (err: unknown) {
+          setError(err instanceof Error ? err.message : 'Failed to create maintenance record');
+        }
+      }),
+    [
+      guard,
+      title,
+      description,
+      priority,
+      dueDate,
+      notes,
+      assetId,
+      user,
+      createMaintenanceAsync,
+      onClose,
+      onCreated,
+      onExternalSubmit,
+    ]
+  );
 
   const isLoading = isPending;
 
   return (
     <SheetModal visible={visible} onClose={onClose} keyboardAvoiding inline={!!inline}>
-        <View style={styles.sheet}>
-          <SheetHeader icon="construct" title="Schedule Maintenance" onClose={onClose} backgroundColor={colors.warning} />
+      <View style={styles.sheet}>
+        <SheetHeader
+          icon="construct"
+          title="Schedule Maintenance"
+          onClose={onClose}
+          backgroundColor={colors.warning}
+        />
 
-          <ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={styles.scrollContent}
-            bounces={true}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-          >
-
-            {/* Defect context banner */}
-            {defectReportId && (
-              <View style={styles.defectBanner}>
-                <Ionicons name="warning" size={16} color={colors.warningText} />
-                <Text style={styles.defectBannerText}>From Defect Report</Text>
-              </View>
-            )}
-
-            {/* Asset (read-only if pre-selected) */}
-            {assetId && assetNumber && (
-              <View style={formStyles.inputGroup}>
-                <Text style={formStyles.label}>Asset</Text>
-                <View style={styles.readOnlyField}>
-                  <Text style={styles.readOnlyText}>{assetNumber}</Text>
-                </View>
-              </View>
-            )}
-
-            {/* Title */}
-            <View style={formStyles.inputGroup}>
-              <Text style={formStyles.label}>Title *</Text>
-              <TextInput
-                style={formStyles.input}
-                value={title}
-                onChangeText={setTitle}
-                placeholder="e.g., Brake inspection, Tire replacement"
-                placeholderTextColor={colors.textSecondary}
-                autoCapitalize="sentences"
-                maxLength={200}
-                accessibilityLabel="Maintenance title"
-              />
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          bounces={true}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Defect context banner */}
+          {defectReportId && (
+            <View style={styles.defectBanner}>
+              <Ionicons name="warning" size={16} color={colors.warningText} />
+              <Text style={styles.defectBannerText}>From Defect Report</Text>
             </View>
+          )}
 
-            {/* Priority */}
+          {/* Asset (read-only if pre-selected) */}
+          {assetId && assetNumber && (
             <View style={formStyles.inputGroup}>
-              <Text style={formStyles.label}>Priority</Text>
-              <View style={styles.chipContainer}>
-                {PRIORITY_ORDER.map((p) => {
-                  const isSelected = priority === p;
-                  const selectedColor = colors.maintenancePriority[p];
-                  return (
-                    <TouchableOpacity
-                      key={p}
+              <Text style={formStyles.label}>Asset</Text>
+              <View style={styles.readOnlyField}>
+                <Text style={styles.readOnlyText}>{assetNumber}</Text>
+              </View>
+            </View>
+          )}
+
+          {/* Title */}
+          <View style={formStyles.inputGroup}>
+            <Text style={formStyles.label}>Title *</Text>
+            <TextInput
+              style={formStyles.input}
+              value={title}
+              onChangeText={setTitle}
+              placeholder="e.g., Brake inspection, Tire replacement"
+              placeholderTextColor={colors.textSecondary}
+              autoCapitalize="sentences"
+              maxLength={200}
+              accessibilityLabel="Maintenance title"
+            />
+          </View>
+
+          {/* Priority */}
+          <View style={formStyles.inputGroup}>
+            <Text style={formStyles.label}>Priority</Text>
+            <View style={styles.chipContainer}>
+              {PRIORITY_ORDER.map((p) => {
+                const isSelected = priority === p;
+                const selectedColor = colors.maintenancePriority[p];
+                return (
+                  <TouchableOpacity
+                    key={p}
+                    style={[
+                      styles.chip,
+                      {
+                        backgroundColor: isSelected ? selectedColor : colors.surface,
+                        borderColor: isSelected ? 'transparent' : colors.border,
+                      },
+                    ]}
+                    onPress={() => setPriority(p)}
+                    activeOpacity={0.7}
+                  >
+                    <Text
                       style={[
-                        styles.chip,
+                        styles.chipText,
                         {
-                          backgroundColor: isSelected ? selectedColor : colors.surface,
-                          borderColor: isSelected ? 'transparent' : colors.border,
+                          color: isSelected ? colors.textInverse : colors.text,
+                          fontFamily: isSelected ? fonts.bold : fonts.regular,
                         },
                       ]}
-                      onPress={() => setPriority(p)}
-                      activeOpacity={0.7}
                     >
-                      <Text
-                        style={[
-                          styles.chipText,
-                          {
-                            color: isSelected ? colors.textInverse : colors.text,
-                            fontFamily: isSelected ? fonts.bold : fonts.regular,
-                          },
-                        ]}
-                      >
-                        {MaintenancePriorityLabels[p]}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
+                      {MaintenancePriorityLabels[p]}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
+          </View>
 
-            {/* Due Date */}
-            <View style={formStyles.inputGroup}>
-              <Text style={formStyles.label}>Due Date (optional)</Text>
-              <View style={styles.datePresets}>
-                {datePresets.map(({ label, date }) => {
-                  const isSelected = date !== '' && dueDate === date;
-                  return (
-                    <TouchableOpacity
-                      key={label}
-                      style={[styles.datePresetChip, isSelected && styles.datePresetChipActive]}
-                      onPress={() => setDueDate(date)}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Set due date to ${label}`}
-                      accessibilityState={{ selected: isSelected }}
+          {/* Due Date */}
+          <View style={formStyles.inputGroup}>
+            <Text style={formStyles.label}>Due Date (optional)</Text>
+            <View style={styles.datePresets}>
+              {datePresets.map(({ label, date }) => {
+                const isSelected = date !== '' && dueDate === date;
+                return (
+                  <TouchableOpacity
+                    key={label}
+                    style={[styles.datePresetChip, isSelected && styles.datePresetChipActive]}
+                    onPress={() => setDueDate(date)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Set due date to ${label}`}
+                    accessibilityState={{ selected: isSelected }}
+                  >
+                    <Text
+                      style={[styles.datePresetText, isSelected && styles.datePresetTextActive]}
                     >
-                      <Text style={[styles.datePresetText, isSelected && styles.datePresetTextActive]}>
-                        {label}
-                      </Text>
-                    </TouchableOpacity>
-                  );
+                      {label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            {dueDate ? (
+              <Text style={styles.dateDisplay}>
+                {new Date(dueDate + 'T00:00:00').toLocaleDateString(undefined, {
+                  weekday: 'short',
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
                 })}
-              </View>
-              {dueDate ? (
-                <Text style={styles.dateDisplay}>
-                  {new Date(dueDate + 'T00:00:00').toLocaleDateString(undefined, {
-                    weekday: 'short', year: 'numeric', month: 'short', day: 'numeric',
-                  })}
-                </Text>
-              ) : null}
-            </View>
+              </Text>
+            ) : null}
+          </View>
 
-            {/* Description */}
-            <View style={formStyles.inputGroup}>
-              <Text style={formStyles.label}>Description (optional)</Text>
-              <TextInput
-                style={[formStyles.input, formStyles.textArea]}
-                value={description}
-                onChangeText={setDescription}
-                placeholder="Describe the maintenance work needed"
-                placeholderTextColor={colors.textSecondary}
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
-                accessibilityLabel="Maintenance description"
-              />
-            </View>
+          {/* Description */}
+          <View style={formStyles.inputGroup}>
+            <Text style={formStyles.label}>Description (optional)</Text>
+            <TextInput
+              style={[formStyles.input, formStyles.textArea]}
+              value={description}
+              onChangeText={setDescription}
+              placeholder="Describe the maintenance work needed"
+              placeholderTextColor={colors.textSecondary}
+              multiline
+              numberOfLines={3}
+              textAlignVertical="top"
+              accessibilityLabel="Maintenance description"
+            />
+          </View>
 
-            {/* Notes */}
-            <View style={formStyles.inputGroup}>
-              <Text style={formStyles.label}>Notes (optional)</Text>
-              <TextInput
-                style={[formStyles.input, formStyles.textArea]}
-                value={notes}
-                onChangeText={setNotes}
-                placeholder="Additional notes"
-                placeholderTextColor={colors.textSecondary}
-                multiline
-                numberOfLines={2}
-                textAlignVertical="top"
-                accessibilityLabel="Maintenance notes"
-              />
-            </View>
+          {/* Notes */}
+          <View style={formStyles.inputGroup}>
+            <Text style={formStyles.label}>Notes (optional)</Text>
+            <TextInput
+              style={[formStyles.input, formStyles.textArea]}
+              value={notes}
+              onChangeText={setNotes}
+              placeholder="Additional notes"
+              placeholderTextColor={colors.textSecondary}
+              multiline
+              numberOfLines={2}
+              textAlignVertical="top"
+              accessibilityLabel="Maintenance notes"
+            />
+          </View>
 
-            {error && <Text style={formStyles.errorText}>{error}</Text>}
-          </ScrollView>
+          {error && <Text style={formStyles.errorText}>{error}</Text>}
+        </ScrollView>
 
-          <SheetFooter>
-            <View style={formStyles.buttonRow}>
-              <Button variant="secondary" onPress={onClose} disabled={isLoading} flex>Cancel</Button>
-              <Button isLoading={isLoading} onPress={handleSubmit} flex>Schedule Maintenance</Button>
-            </View>
-          </SheetFooter>
-        </View>
+        <SheetFooter>
+          <View style={formStyles.buttonRow}>
+            <Button variant="secondary" onPress={onClose} disabled={isLoading} flex>
+              Cancel
+            </Button>
+            <Button isLoading={isLoading} onPress={handleSubmit} flex>
+              Schedule Maintenance
+            </Button>
+          </View>
+        </SheetFooter>
+      </View>
     </SheetModal>
   );
 }

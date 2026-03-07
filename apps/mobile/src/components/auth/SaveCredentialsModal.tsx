@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  Modal,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, Modal, TouchableOpacity, StyleSheet } from 'react-native';
 import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
@@ -16,18 +10,9 @@ interface SaveCredentialsModalProps {
   onSkip: () => void;
 }
 
-export function SaveCredentialsModal({
-  visible,
-  onSave,
-  onSkip,
-}: SaveCredentialsModalProps) {
+export function SaveCredentialsModal({ visible, onSave, onSkip }: SaveCredentialsModalProps) {
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onSkip}
-    >
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onSkip}>
       <View style={styles.backdrop}>
         <TouchableOpacity
           style={styles.backdropTouchable}
@@ -57,11 +42,7 @@ export function SaveCredentialsModal({
                 Not Now
               </Button>
 
-              <Button
-                onPress={onSave}
-                flex
-                accessibilityLabel="Save login credentials"
-              >
+              <Button onPress={onSave} flex accessibilityLabel="Save login credentials">
                 Save
               </Button>
             </View>

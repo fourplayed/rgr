@@ -8,7 +8,9 @@ interface MaintenanceStatusBadgeProps {
   status: MaintenanceStatus;
 }
 
-export const MaintenanceStatusBadge = memo(function MaintenanceStatusBadge({ status }: MaintenanceStatusBadgeProps) {
+export const MaintenanceStatusBadge = memo(function MaintenanceStatusBadge({
+  status,
+}: MaintenanceStatusBadgeProps) {
   return (
     <Badge
       label={MaintenanceStatusLabels[status] || status}

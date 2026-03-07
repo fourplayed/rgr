@@ -17,22 +17,15 @@ const makeDepot = (code: string, overrides?: Partial<Depot>): Depot => ({
 
 describe('sortDepotsByOrder', () => {
   it('sorts depots according to DEPOT_ORDER', () => {
-    const depots = [
-      makeDepot('WUB'),
-      makeDepot('PER'),
-      makeDepot('KAR'),
-    ];
+    const depots = [makeDepot('WUB'), makeDepot('PER'), makeDepot('KAR')];
     const sorted = sortDepotsByOrder(depots);
-    expect(sorted.map(d => d.code)).toEqual(['PER', 'KAR', 'WUB']);
+    expect(sorted.map((d) => d.code)).toEqual(['PER', 'KAR', 'WUB']);
   });
 
   it('puts unknown depots at the end', () => {
-    const depots = [
-      makeDepot('ZZZ'),
-      makeDepot('PER'),
-    ];
+    const depots = [makeDepot('ZZZ'), makeDepot('PER')];
     const sorted = sortDepotsByOrder(depots);
-    expect(sorted.map(d => d.code)).toEqual(['PER', 'ZZZ']);
+    expect(sorted.map((d) => d.code)).toEqual(['PER', 'ZZZ']);
   });
 
   it('does not mutate the original array', () => {

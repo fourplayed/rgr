@@ -1,15 +1,13 @@
 import React, { useRef, useEffect, useCallback, useMemo, memo } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Animated,
-  LayoutAnimation,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, LayoutAnimation } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { AssetStatus, AssetCategory, Depot } from '@rgr/shared';
-import { AssetStatusLabels, AssetStatusColors, AssetCategoryLabels, AssetSubtypesByCategory } from '@rgr/shared';
+import {
+  AssetStatusLabels,
+  AssetStatusColors,
+  AssetCategoryLabels,
+  AssetSubtypesByCategory,
+} from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, shadows, fontFamily as fonts } from '../../theme/spacing';
 import { DEPOT_ORDER, getDepotColor, getDepotTextColor } from '../../utils/depotDisplay';
@@ -66,55 +64,67 @@ export const AssetFilterPanel = memo(function AssetFilterPanel({
     onToggleExpanded();
   }, [onToggleExpanded]);
 
-  const toggleStatus = useCallback((status: AssetStatus) => {
-    if (statuses.includes(status)) {
-      onStatusChange(statuses.filter((s) => s !== status));
-    } else {
-      onStatusChange([...statuses, status]);
-    }
-  }, [statuses, onStatusChange]);
-
-  const toggleCategory = useCallback((category: AssetCategory) => {
-    if (categories.includes(category)) {
-      const newCategories = categories.filter((c) => c !== category);
-      onCategoryChange(newCategories);
-      // Clear subtypes that belong to the deselected category
-      const validSubtypes = new Set(
-        newCategories.flatMap((c) => [...AssetSubtypesByCategory[c]])
-      );
-      const filtered = subtypes.filter((s) => validSubtypes.has(s));
-      if (filtered.length !== subtypes.length) {
-        onSubtypeChange(filtered);
+  const toggleStatus = useCallback(
+    (status: AssetStatus) => {
+      if (statuses.includes(status)) {
+        onStatusChange(statuses.filter((s) => s !== status));
+      } else {
+        onStatusChange([...statuses, status]);
       }
-    } else {
-      const newCategories = [...categories, category];
-      onCategoryChange(newCategories);
-      // Clear subtypes that don't belong to any selected category
-      const validSubtypes = new Set(
-        newCategories.flatMap((c) => [...AssetSubtypesByCategory[c]])
-      );
-      const filtered = subtypes.filter((s) => validSubtypes.has(s));
-      if (filtered.length !== subtypes.length) {
-        onSubtypeChange(filtered);
+    },
+    [statuses, onStatusChange]
+  );
+
+  const toggleCategory = useCallback(
+    (category: AssetCategory) => {
+      if (categories.includes(category)) {
+        const newCategories = categories.filter((c) => c !== category);
+        onCategoryChange(newCategories);
+        // Clear subtypes that belong to the deselected category
+        const validSubtypes = new Set(
+          newCategories.flatMap((c) => [...AssetSubtypesByCategory[c]])
+        );
+        const filtered = subtypes.filter((s) => validSubtypes.has(s));
+        if (filtered.length !== subtypes.length) {
+          onSubtypeChange(filtered);
+        }
+      } else {
+        const newCategories = [...categories, category];
+        onCategoryChange(newCategories);
+        // Clear subtypes that don't belong to any selected category
+        const validSubtypes = new Set(
+          newCategories.flatMap((c) => [...AssetSubtypesByCategory[c]])
+        );
+        const filtered = subtypes.filter((s) => validSubtypes.has(s));
+        if (filtered.length !== subtypes.length) {
+          onSubtypeChange(filtered);
+        }
       }
-    }
-  }, [categories, subtypes, onCategoryChange, onSubtypeChange]);
+    },
+    [categories, subtypes, onCategoryChange, onSubtypeChange]
+  );
 
-  const toggleSubtype = useCallback((subtype: string) => {
-    if (subtypes.includes(subtype)) {
-      onSubtypeChange(subtypes.filter((s) => s !== subtype));
-    } else {
-      onSubtypeChange([...subtypes, subtype]);
-    }
-  }, [subtypes, onSubtypeChange]);
+  const toggleSubtype = useCallback(
+    (subtype: string) => {
+      if (subtypes.includes(subtype)) {
+        onSubtypeChange(subtypes.filter((s) => s !== subtype));
+      } else {
+        onSubtypeChange([...subtypes, subtype]);
+      }
+    },
+    [subtypes, onSubtypeChange]
+  );
 
-  const toggleDepot = useCallback((depotId: string) => {
-    if (depotIds.includes(depotId)) {
-      onDepotChange(depotIds.filter((id) => id !== depotId));
-    } else {
-      onDepotChange([...depotIds, depotId]);
-    }
-  }, [depotIds, onDepotChange]);
+  const toggleDepot = useCallback(
+    (depotId: string) => {
+      if (depotIds.includes(depotId)) {
+        onDepotChange(depotIds.filter((id) => id !== depotId));
+      } else {
+        onDepotChange([...depotIds, depotId]);
+      }
+    },
+    [depotIds, onDepotChange]
+  );
 
   // Sort depots by display order (memoized to avoid re-sorting on every render)
   const sortedDepots = useMemo(
@@ -126,7 +136,7 @@ export const AssetFilterPanel = memo(function AssetFilterPanel({
         const bPos = bIndex === -1 ? 999 : bIndex;
         return aPos - bPos;
       }),
-    [depots],
+    [depots]
   );
 
   // Count active filters

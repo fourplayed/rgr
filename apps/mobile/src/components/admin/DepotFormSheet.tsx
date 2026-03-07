@@ -1,12 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TextInput,
-  Switch,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, ScrollView, TextInput, Switch, StyleSheet } from 'react-native';
 import type { Depot, CreateDepotInput, UpdateDepotInput } from '@rgr/shared';
 import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
@@ -65,121 +58,120 @@ export function DepotFormSheet({
   const isValid = name.trim() && code.trim();
   const guard = useSubmitGuard();
 
-  const handleSubmit = useCallback(() => guard(async () => {
-    if (!isValid) return;
-    setError(null);
-    try {
-      if (isEdit) {
-        const update: UpdateDepotInput = {
-          name: name.trim(),
-          code: code.trim(),
-          address: address.trim() || null,
-          isActive,
-        };
-        await onSubmit(update);
-      } else {
-        const create: CreateDepotInput = {
-          name: name.trim(),
-          code: code.trim(),
-          address: address.trim() || null,
-          isActive,
-        };
-        await onSubmit(create);
-      }
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
-    }
-  }), [guard, isValid, isEdit, name, code, address, isActive, onSubmit]);
+  const handleSubmit = useCallback(
+    () =>
+      guard(async () => {
+        if (!isValid) return;
+        setError(null);
+        try {
+          if (isEdit) {
+            const update: UpdateDepotInput = {
+              name: name.trim(),
+              code: code.trim(),
+              address: address.trim() || null,
+              isActive,
+            };
+            await onSubmit(update);
+          } else {
+            const create: CreateDepotInput = {
+              name: name.trim(),
+              code: code.trim(),
+              address: address.trim() || null,
+              isActive,
+            };
+            await onSubmit(create);
+          }
+        } catch (err: unknown) {
+          setError(err instanceof Error ? err.message : 'An unexpected error occurred');
+        }
+      }),
+    [guard, isValid, isEdit, name, code, address, isActive, onSubmit]
+  );
 
   if (!visible) return null;
 
   return (
     <SheetModal visible={visible} onClose={onClose} keyboardAvoiding>
-        <View style={styles.sheet}>
-          <SheetHeader
-            icon="business"
-            title={isEdit ? 'Edit Depot' : 'Create Depot'}
-            onClose={onClose}
-          />
+      <View style={styles.sheet}>
+        <SheetHeader
+          icon="business"
+          title={isEdit ? 'Edit Depot' : 'Create Depot'}
+          onClose={onClose}
+        />
 
-          <ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={styles.scrollContent}
-            bounces={true}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-          >
-            <View style={styles.inputGroup}>
-              <Text style={formStyles.label}>Name *</Text>
-              <TextInput
-                style={formStyles.inputFixed}
-                value={name}
-                onChangeText={setName}
-                placeholder="e.g., Melbourne Central"
-                placeholderTextColor={colors.textSecondary}
-                autoCapitalize="words"
-                maxLength={100}
-                accessibilityLabel="Depot name"
-              />
-            </View>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          bounces={true}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.inputGroup}>
+            <Text style={formStyles.label}>Name *</Text>
+            <TextInput
+              style={formStyles.inputFixed}
+              value={name}
+              onChangeText={setName}
+              placeholder="e.g., Melbourne Central"
+              placeholderTextColor={colors.textSecondary}
+              autoCapitalize="words"
+              maxLength={100}
+              accessibilityLabel="Depot name"
+            />
+          </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={formStyles.label}>Code *</Text>
-              <TextInput
-                style={formStyles.inputFixed}
-                value={code}
-                onChangeText={setCode}
-                placeholder="e.g., MELB"
-                placeholderTextColor={colors.textSecondary}
-                autoCapitalize="characters"
-                maxLength={20}
-                accessibilityLabel="Depot code"
-              />
-            </View>
+          <View style={styles.inputGroup}>
+            <Text style={formStyles.label}>Code *</Text>
+            <TextInput
+              style={formStyles.inputFixed}
+              value={code}
+              onChangeText={setCode}
+              placeholder="e.g., MELB"
+              placeholderTextColor={colors.textSecondary}
+              autoCapitalize="characters"
+              maxLength={20}
+              accessibilityLabel="Depot code"
+            />
+          </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={formStyles.label}>Address</Text>
-              <TextInput
-                style={formStyles.inputFixed}
-                value={address}
-                onChangeText={setAddress}
-                placeholder="Optional"
-                placeholderTextColor={colors.textSecondary}
-                autoCapitalize="words"
-                accessibilityLabel="Depot address"
-              />
-            </View>
+          <View style={styles.inputGroup}>
+            <Text style={formStyles.label}>Address</Text>
+            <TextInput
+              style={formStyles.inputFixed}
+              value={address}
+              onChangeText={setAddress}
+              placeholder="Optional"
+              placeholderTextColor={colors.textSecondary}
+              autoCapitalize="words"
+              accessibilityLabel="Depot address"
+            />
+          </View>
 
-            <View style={styles.toggleRow}>
-              <Text style={formStyles.label}>Active</Text>
-              <Switch
-                value={isActive}
-                onValueChange={setIsActive}
-                trackColor={{ false: colors.border, true: colors.success }}
-                thumbColor={colors.background}
-              />
-            </View>
+          <View style={styles.toggleRow}>
+            <Text style={formStyles.label}>Active</Text>
+            <Switch
+              value={isActive}
+              onValueChange={setIsActive}
+              trackColor={{ false: colors.border, true: colors.success }}
+              thumbColor={colors.background}
+            />
+          </View>
 
-            {error && <Text style={styles.errorText}>{error}</Text>}
-          </ScrollView>
+          {error && <Text style={styles.errorText}>{error}</Text>}
+        </ScrollView>
 
-          <SheetFooter>
-            <View style={formStyles.buttonRow}>
-              <Button
-                variant="secondary"
-                onPress={onClose}
-                disabled={isLoading}
-                flex
-              >
-                Cancel
-              </Button>
+        <SheetFooter>
+          <View style={formStyles.buttonRow}>
+            <Button variant="secondary" onPress={onClose} disabled={isLoading} flex>
+              Cancel
+            </Button>
 
-              <Button isLoading={isLoading} onPress={handleSubmit} disabled={!isValid} flex>
-                {isEdit ? 'Save' : 'Create'}
-              </Button>
-            </View>
-          </SheetFooter>
-        </View>
+            <Button isLoading={isLoading} onPress={handleSubmit} disabled={!isValid} flex>
+              {isEdit ? 'Save' : 'Create'}
+            </Button>
+          </View>
+        </SheetFooter>
+      </View>
     </SheetModal>
   );
 }

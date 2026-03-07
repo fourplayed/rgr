@@ -25,7 +25,7 @@ export function useStaggeredEntrance(index: number, staggerMs = 80): Animated.Va
     return () => {
       anim.stop();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- opacity is a stable ref, not a dependency
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- opacity is a stable ref, not a dependency
   }, [index, staggerMs]);
 
   return opacity;

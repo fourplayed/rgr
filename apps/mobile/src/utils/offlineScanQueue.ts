@@ -74,9 +74,7 @@ export async function replayQueue(): Promise<{ replayed: number; failed: number 
   const rawQueue = await getQueue();
   // Filter out stale entries older than TTL
   const now = Date.now();
-  const queue = rawQueue.filter(
-    (entry) => now - new Date(entry.queuedAt).getTime() < TTL_MS
-  );
+  const queue = rawQueue.filter((entry) => now - new Date(entry.queuedAt).getTime() < TTL_MS);
   if (queue.length < rawQueue.length) {
     logger.info(`Dropped ${rawQueue.length - queue.length} stale queued scan(s) (>48h old)`);
   }

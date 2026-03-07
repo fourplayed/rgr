@@ -51,7 +51,7 @@ export function formatScanTypeLabel(scanType: string): string {
   return scanType
     .replace(/_/g, ' ')
     .split(' ')
-    .map(word => {
+    .map((word) => {
       const upper = word.toUpperCase();
       if (upper === 'QR' || upper === 'NFC' || upper === 'GPS') {
         return upper;
@@ -60,4 +60,3 @@ export function formatScanTypeLabel(scanType: string): string {
     })
     .join(' ');
 }
-

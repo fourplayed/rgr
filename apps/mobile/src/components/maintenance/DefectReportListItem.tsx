@@ -7,11 +7,14 @@ import { colors } from '../../theme/colors';
 import { DefectStatusBadge } from './DefectStatusBadge';
 import { cardStyles } from './maintenance.styles';
 
-export const DEFECT_STATUS_CONFIG: Record<DefectStatus, { icon: keyof typeof Ionicons.glyphMap; color: string }> = {
-  reported:  { icon: 'warning',          color: colors.warning },
-  accepted:  { icon: 'construct',        color: colors.info },
-  resolved:  { icon: 'checkmark-circle', color: colors.success },
-  dismissed: { icon: 'close-circle',     color: colors.textSecondary },
+export const DEFECT_STATUS_CONFIG: Record<
+  DefectStatus,
+  { icon: keyof typeof Ionicons.glyphMap; color: string }
+> = {
+  reported: { icon: 'warning', color: colors.warning },
+  accepted: { icon: 'construct', color: colors.info },
+  resolved: { icon: 'checkmark-circle', color: colors.success },
+  dismissed: { icon: 'close-circle', color: colors.textSecondary },
 };
 
 export const DEFECT_ITEM_HEIGHT = 72;
@@ -42,16 +45,17 @@ function DefectReportListItemComponent({ defect, onPress }: DefectReportListItem
               {defect.assetNumber ? formatAssetNumber(defect.assetNumber) : 'Unknown Asset'}
             </Text>
             <View style={cardStyles.cardBadges}>
-              <DefectStatusBadge status={defect.status} {...(defect.status === 'accepted' ? { label: 'Task Created' } : {})} />
+              <DefectStatusBadge
+                status={defect.status}
+                {...(defect.status === 'accepted' ? { label: 'Task Created' } : {})}
+              />
             </View>
           </View>
           <View style={cardStyles.cardFooter}>
             <Text style={cardStyles.cardSecondaryText} numberOfLines={1}>
               {defect.description || defect.title}
             </Text>
-            <Text style={cardStyles.cardTime}>
-              {formatRelativeTime(defect.createdAt)}
-            </Text>
+            <Text style={cardStyles.cardTime}>{formatRelativeTime(defect.createdAt)}</Text>
           </View>
         </View>
       </View>
@@ -69,4 +73,3 @@ export const DefectReportListItem = memo(
     prev.defect.assetNumber === next.defect.assetNumber &&
     prev.onPress === next.onPress
 );
-

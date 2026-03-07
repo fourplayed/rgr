@@ -75,9 +75,7 @@ export function SegmentedTabs<T extends string>({
             accessibilityState={{ selected }}
             accessibilityLabel={`${tab.label} tab`}
           >
-            <Text style={[styles.tabText, selected && styles.tabTextActive]}>
-              {tab.label}
-            </Text>
+            <Text style={[styles.tabText, selected && styles.tabTextActive]}>{tab.label}</Text>
           </TouchableOpacity>
         );
       })}

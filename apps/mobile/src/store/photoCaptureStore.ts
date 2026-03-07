@@ -63,14 +63,15 @@ export const usePhotoCaptureStore = create<PhotoCaptureState>((set) => ({
 
   setImageDimensions: (width, height) => set({ imageWidth: width, imageHeight: height }),
 
-  startCapture: (options: StartCaptureOptions) => set({
-    ...initialState,
-    assetId: options.assetId,
-    scanEventId: options.scanEventId ?? null,
-    locationDescription: options.locationDescription ?? null,
-    latitude: options.latitude ?? null,
-    longitude: options.longitude ?? null,
-  }),
+  startCapture: (options: StartCaptureOptions) =>
+    set({
+      ...initialState,
+      assetId: options.assetId,
+      scanEventId: options.scanEventId ?? null,
+      locationDescription: options.locationDescription ?? null,
+      latitude: options.latitude ?? null,
+      longitude: options.longitude ?? null,
+    }),
 
   reset: () => set(initialState),
 }));

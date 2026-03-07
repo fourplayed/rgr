@@ -139,7 +139,10 @@ export function useCreateMaintenance() {
       queryClient.invalidateQueries({ queryKey: maintenanceKeys.lists() });
       queryClient.invalidateQueries({ queryKey: maintenanceKeys.stats() });
       // Cross-cache: refresh asset detail's maintenance data so assessment updates
-      queryClient.invalidateQueries({ queryKey: assetKeys.maintenance(data.assetId), refetchType: 'none' });
+      queryClient.invalidateQueries({
+        queryKey: assetKeys.maintenance(data.assetId),
+        refetchType: 'none',
+      });
     },
   });
 }
@@ -178,12 +181,21 @@ export function useUpdateMaintenanceStatus() {
       queryClient.invalidateQueries({ queryKey: defectKeys.lists() });
       queryClient.invalidateQueries({ queryKey: defectKeys.stats() });
       // Cross-cache: refresh asset detail's maintenance data so assessment updates
-      queryClient.invalidateQueries({ queryKey: assetKeys.maintenance(data.assetId), refetchType: 'none' });
+      queryClient.invalidateQueries({
+        queryKey: assetKeys.maintenance(data.assetId),
+        refetchType: 'none',
+      });
       // Cross-cache: completing/cancelling maintenance may revert asset status to 'serviced'
-      queryClient.invalidateQueries({ queryKey: assetKeys.detail(data.assetId), refetchType: 'none' });
+      queryClient.invalidateQueries({
+        queryKey: assetKeys.detail(data.assetId),
+        refetchType: 'none',
+      });
       queryClient.invalidateQueries({ queryKey: assetKeys.lists(), refetchType: 'none' });
       queryClient.invalidateQueries({ queryKey: assetKeys.countsByStatus(), refetchType: 'none' });
-      queryClient.invalidateQueries({ queryKey: assetKeys.scanContext(data.assetId), refetchType: 'none' });
+      queryClient.invalidateQueries({
+        queryKey: assetKeys.scanContext(data.assetId),
+        refetchType: 'none',
+      });
     },
   });
 }
@@ -232,7 +244,10 @@ export function useUpdateMaintenance() {
       // Detail: immediate refetch — user is viewing this record
       queryClient.invalidateQueries({ queryKey: maintenanceKeys.detail(data.id) });
       // Cross-cache: refresh asset detail's maintenance data so assessment updates
-      queryClient.invalidateQueries({ queryKey: assetKeys.maintenance(data.assetId), refetchType: 'none' });
+      queryClient.invalidateQueries({
+        queryKey: assetKeys.maintenance(data.assetId),
+        refetchType: 'none',
+      });
     },
   });
 }

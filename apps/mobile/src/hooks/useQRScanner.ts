@@ -29,7 +29,7 @@ interface UseQRScannerResult {
 export function useQRScanner(
   onScan?: (data: string) => void | Promise<void>,
   debounceMs: number = 2000,
-  onInvalidQR?: () => void,
+  onInvalidQR?: () => void
 ): UseQRScannerResult {
   const [scannedData, setScannedData] = useState<QRScanResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -75,84 +75,87 @@ export function useQRScanner(
     };
   }, []);
 
-  const handleBarCodeScanned = useCallback(async (result: BarcodeScanningResult) => {
-    // Prevent processing if app is backgrounded or already processing
-    if (isPausedRef.current) return;
-    if (isProcessingRef.current) {
-      return;
-    }
-
-    const { data } = result;
-    const now = Date.now();
-
-    // Debounce: Ignore if same code scanned within debounce window
-    if (
-      lastScanRef.current &&
-      lastScanRef.current.data === data &&
-      now - lastScanRef.current.timestamp < debounceMs
-    ) {
-      return;
-    }
-
-    // Validate QR code format
-    if (!isValidQRCode(data)) {
-      logger.warn('Invalid QR code format', data);
-      onInvalidQRRef.current?.();
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      return;
-    }
-
-    // Set ref lock immediately to prevent concurrent processing
-    isProcessingRef.current = true;
-
-    // Clear any existing timeout
-    if (lockTimeoutRef.current) {
-      clearTimeout(lockTimeoutRef.current);
-    }
-
-    // Set safety timeout to auto-reset lock if stuck (e.g., callback never completes)
-    lockTimeoutRef.current = setTimeout(() => {
-      if (isMountedRef.current && isProcessingRef.current) {
-        logger.warn('Scanner lock timeout - auto-resetting after 30s');
-        isProcessingRef.current = false;
-        setIsProcessing(false);
+  const handleBarCodeScanned = useCallback(
+    async (result: BarcodeScanningResult) => {
+      // Prevent processing if app is backgrounded or already processing
+      if (isPausedRef.current) return;
+      if (isProcessingRef.current) {
+        return;
       }
-    }, SCANNER_LOCK_TIMEOUT_MS);
 
-    // Trigger haptic feedback
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      const { data } = result;
+      const now = Date.now();
 
-    // Update state only if still mounted
-    if (!isMountedRef.current) {
-      isProcessingRef.current = false;
-      return;
-    }
+      // Debounce: Ignore if same code scanned within debounce window
+      if (
+        lastScanRef.current &&
+        lastScanRef.current.data === data &&
+        now - lastScanRef.current.timestamp < debounceMs
+      ) {
+        return;
+      }
 
-    const scanResult: QRScanResult = {
-      data,
-      timestamp: now,
-    };
+      // Validate QR code format
+      if (!isValidQRCode(data)) {
+        logger.warn('Invalid QR code format', data);
+        onInvalidQRRef.current?.();
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        return;
+      }
 
-    lastScanRef.current = { data, timestamp: now };
-    setScannedData(scanResult);
-    setIsProcessing(true);
+      // Set ref lock immediately to prevent concurrent processing
+      isProcessingRef.current = true;
 
-    // Call callback via ref to always use the latest version (avoids stale closures)
-    const callback = onScanRef.current;
-    if (callback) {
-      try {
-        await callback(data);
-      } catch {
-        // Error handling is done by the caller; lock is released in finally
-      } finally {
-        // Always release the lock after callback completes (success or failure)
-        if (isMountedRef.current) {
+      // Clear any existing timeout
+      if (lockTimeoutRef.current) {
+        clearTimeout(lockTimeoutRef.current);
+      }
+
+      // Set safety timeout to auto-reset lock if stuck (e.g., callback never completes)
+      lockTimeoutRef.current = setTimeout(() => {
+        if (isMountedRef.current && isProcessingRef.current) {
+          logger.warn('Scanner lock timeout - auto-resetting after 30s');
           isProcessingRef.current = false;
           setIsProcessing(false);
         }
+      }, SCANNER_LOCK_TIMEOUT_MS);
+
+      // Trigger haptic feedback
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+      // Update state only if still mounted
+      if (!isMountedRef.current) {
+        isProcessingRef.current = false;
+        return;
       }
-    }
-  }, [debounceMs]);
+
+      const scanResult: QRScanResult = {
+        data,
+        timestamp: now,
+      };
+
+      lastScanRef.current = { data, timestamp: now };
+      setScannedData(scanResult);
+      setIsProcessing(true);
+
+      // Call callback via ref to always use the latest version (avoids stale closures)
+      const callback = onScanRef.current;
+      if (callback) {
+        try {
+          await callback(data);
+        } catch {
+          // Error handling is done by the caller; lock is released in finally
+        } finally {
+          // Always release the lock after callback completes (success or failure)
+          if (isMountedRef.current) {
+            isProcessingRef.current = false;
+            setIsProcessing(false);
+          }
+        }
+      }
+    },
+    [debounceMs]
+  );
 
   const resetScanner = useCallback(() => {
     if (!isMountedRef.current) return;

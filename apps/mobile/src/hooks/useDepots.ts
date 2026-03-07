@@ -44,8 +44,7 @@ export function useDepotLookup() {
       byName,
       getColor: (code: string, fallback = '#E8E8E8') =>
         byCode.get(code.toLowerCase())?.color ?? fallback,
-      getName: (code: string) =>
-        byCode.get(code.toLowerCase())?.name ?? code.toUpperCase(),
+      getName: (code: string) => byCode.get(code.toLowerCase())?.name ?? code.toUpperCase(),
     };
   }, [depots]);
 }

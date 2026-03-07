@@ -22,7 +22,11 @@ function PhotoThumbnailComponent({ photo, size, onPress, resolvedUrl }: PhotoThu
 
   // Use thumbnail if available, otherwise fall back to full image
   const storagePath = photo.thumbnailPath || photo.storagePath;
-  const { data: fetchedUrl, isLoading, error } = useSignedUrl(resolvedUrl ? undefined : storagePath);
+  const {
+    data: fetchedUrl,
+    isLoading,
+    error,
+  } = useSignedUrl(resolvedUrl ? undefined : storagePath);
 
   // Prefer pre-resolved URL from batch, fall back to individual query
   const imageUrl = resolvedUrl || fetchedUrl;
@@ -34,22 +38,29 @@ function PhotoThumbnailComponent({ photo, size, onPress, resolvedUrl }: PhotoThu
   if (isLoading || !imageUrl) {
     return (
       <TouchableOpacity
-        style={[styles.container, styles.placeholder, { width: size, height: size }, photo.photoType === 'damage' && styles.defectBorder]}
+        style={[
+          styles.container,
+          styles.placeholder,
+          { width: size, height: size },
+          photo.photoType === 'damage' && styles.defectBorder,
+        ]}
         onPress={handlePress}
         activeOpacity={0.8}
         accessibilityRole="image"
         accessibilityLabel={`Photo${error ? ' (failed to load)' : ' loading'}`}
       >
-        {error && (
-          <Ionicons name="image-outline" size={24} color={colors.textSecondary} />
-        )}
+        {error && <Ionicons name="image-outline" size={24} color={colors.textSecondary} />}
       </TouchableOpacity>
     );
   }
 
   return (
     <TouchableOpacity
-      style={[styles.container, { width: size, height: size }, photo.photoType === 'damage' && styles.defectBorder]}
+      style={[
+        styles.container,
+        { width: size, height: size },
+        photo.photoType === 'damage' && styles.defectBorder,
+      ]}
       onPress={handlePress}
       activeOpacity={0.8}
       accessibilityRole="image"
@@ -66,26 +77,15 @@ function PhotoThumbnailComponent({ photo, size, onPress, resolvedUrl }: PhotoThu
 
       {/* Hazard indicator */}
       {hasHazard && (
-        <View style={[
-          styles.hazardBadge,
-          hasCriticalHazard && styles.hazardBadgeCritical,
-        ]}>
-          <Ionicons
-            name="warning"
-            size={12}
-            color={colors.textInverse}
-          />
+        <View style={[styles.hazardBadge, hasCriticalHazard && styles.hazardBadgeCritical]}>
+          <Ionicons name="warning" size={12} color={colors.textInverse} />
         </View>
       )}
 
       {/* Analysis indicator */}
       {photo.primaryCategory && (
         <View style={styles.analyzedBadge}>
-          <Ionicons
-            name="checkmark-circle"
-            size={14}
-            color={colors.success}
-          />
+          <Ionicons name="checkmark-circle" size={14} color={colors.success} />
         </View>
       )}
     </TouchableOpacity>

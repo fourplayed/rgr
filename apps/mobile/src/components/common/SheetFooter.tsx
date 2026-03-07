@@ -12,12 +12,7 @@ export function SheetFooter({ children }: SheetFooterProps) {
   const insets = useSafeAreaInsets();
 
   return (
-    <View
-      style={[
-        styles.footer,
-        { paddingBottom: Math.max(insets.bottom, spacing.lg) },
-      ]}
-    >
+    <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.lg) }]}>
       {children}
     </View>
   );

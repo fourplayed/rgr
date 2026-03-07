@@ -20,7 +20,16 @@ interface PillBadgeProps {
   accessibilityRole?: 'text' | 'button' | 'none';
 }
 
-export function PillBadge({ icon, label, color, textColor, iconSize = 12, style, accessibilityLabel, accessibilityRole }: PillBadgeProps) {
+export function PillBadge({
+  icon,
+  label,
+  color,
+  textColor,
+  iconSize = 12,
+  style,
+  accessibilityLabel,
+  accessibilityRole,
+}: PillBadgeProps) {
   const foreground = textColor ?? colors.textInverse;
   return (
     <View

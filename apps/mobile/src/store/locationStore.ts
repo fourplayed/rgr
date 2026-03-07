@@ -47,7 +47,11 @@ export const useLocationStore = create<LocationState>((set, get) => ({
 
     // Rate-limit: skip if successfully resolved within cooldown period
     const { lastResolvedAt, resolvedDepot } = get();
-    if (resolvedDepot && lastResolvedAt && Date.now() - lastResolvedAt.getTime() < RESOLVE_COOLDOWN_MS) {
+    if (
+      resolvedDepot &&
+      lastResolvedAt &&
+      Date.now() - lastResolvedAt.getTime() < RESOLVE_COOLDOWN_MS
+    ) {
       return;
     }
 
@@ -75,27 +79,31 @@ export const useLocationStore = create<LocationState>((set, get) => ({
       }
 
       // Get GPS position (depot list is now provided by caller from React Query cache)
-      const locationPromise: Promise<Location.LocationObject> = useSimulatedGPS && debugLocation
-        ? Promise.resolve({
-            coords: {
-              latitude: debugLocation.latitude,
-              longitude: debugLocation.longitude,
-              accuracy: 5,
-              altitude: null,
-              altitudeAccuracy: null,
-              heading: null,
-              speed: null,
-            },
-            timestamp: Date.now(),
-          } as Location.LocationObject)
-        : Promise.race([
-            Location.getCurrentPositionAsync({
-              accuracy: Location.Accuracy.High,
-            }),
-            new Promise<never>((_, reject) =>
-              setTimeout(() => reject(new Error('Location request timed out')), LOCATION_TIMEOUT_MS)
-            ),
-          ]);
+      const locationPromise: Promise<Location.LocationObject> =
+        useSimulatedGPS && debugLocation
+          ? Promise.resolve({
+              coords: {
+                latitude: debugLocation.latitude,
+                longitude: debugLocation.longitude,
+                accuracy: 5,
+                altitude: null,
+                altitudeAccuracy: null,
+                heading: null,
+                speed: null,
+              },
+              timestamp: Date.now(),
+            } as Location.LocationObject)
+          : Promise.race([
+              Location.getCurrentPositionAsync({
+                accuracy: Location.Accuracy.High,
+              }),
+              new Promise<never>((_, reject) =>
+                setTimeout(
+                  () => reject(new Error('Location request timed out')),
+                  LOCATION_TIMEOUT_MS
+                )
+              ),
+            ]);
 
       let locationResult: Location.LocationObject;
       try {
@@ -161,7 +169,6 @@ export const useLocationStore = create<LocationState>((set, get) => ({
       lastLocation: null,
     });
   },
-
 }));
 
 // Subscribe to app events for cross-store coordination

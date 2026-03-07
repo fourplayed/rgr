@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  Modal,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, Modal, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { UserRole, UserRoleLabels, UserRoleDescriptions } from '@rgr/shared';
 import { colors } from '../../theme/colors';
@@ -21,21 +15,11 @@ interface UserRolePickerProps {
   onCancel: () => void;
 }
 
-export function UserRolePicker({
-  visible,
-  currentRole,
-  onSelect,
-  onCancel,
-}: UserRolePickerProps) {
+export function UserRolePicker({ visible, currentRole, onSelect, onCancel }: UserRolePickerProps) {
   if (!visible) return null;
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onCancel}
-    >
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel}>
       <View style={styles.backdrop}>
         <TouchableOpacity
           style={styles.backdropTouchable}
@@ -58,10 +42,7 @@ export function UserRolePicker({
               return (
                 <TouchableOpacity
                   key={role}
-                  style={[
-                    styles.option,
-                    isSelected && { borderColor: roleColor, borderWidth: 2 },
-                  ]}
+                  style={[styles.option, isSelected && { borderColor: roleColor, borderWidth: 2 }]}
                   onPress={() => onSelect(role)}
                   activeOpacity={0.7}
                   accessibilityRole="radio"
@@ -71,13 +52,9 @@ export function UserRolePicker({
                   <View style={styles.optionHeader}>
                     <View style={[styles.roleDot, { backgroundColor: roleColor }]} />
                     <Text style={styles.roleLabel}>{UserRoleLabels[role]}</Text>
-                    {isSelected && (
-                      <Ionicons name="checkmark-circle" size={20} color={roleColor} />
-                    )}
+                    {isSelected && <Ionicons name="checkmark-circle" size={20} color={roleColor} />}
                   </View>
-                  <Text style={styles.roleDescription}>
-                    {UserRoleDescriptions[role]}
-                  </Text>
+                  <Text style={styles.roleDescription}>{UserRoleDescriptions[role]}</Text>
                 </TouchableOpacity>
               );
             })}

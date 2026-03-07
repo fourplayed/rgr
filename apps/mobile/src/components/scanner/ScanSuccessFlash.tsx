@@ -1,10 +1,5 @@
 import React, { useEffect, useRef, useMemo } from 'react';
-import {
-  Text,
-  StyleSheet,
-  Animated,
-  TouchableWithoutFeedback,
-} from 'react-native';
+import { Text, StyleSheet, Animated, TouchableWithoutFeedback } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { fontSize, spacing, fontFamily as fonts } from '../../theme/spacing';
 
@@ -51,7 +46,7 @@ export function ScanSuccessFlash({
       translateY: new Animated.Value(8),
       translateX: new Animated.Value(0),
       checkScale: new Animated.Value(0),
-    })),
+    }))
   ).current;
 
   const checklistItems = useMemo(() => {
@@ -135,7 +130,15 @@ export function ScanSuccessFlash({
         });
       });
     });
-  }, [visible, overlayOpacity, hintOpacity, headerOpacity, headerTranslateY, rowAnims, checklistItems]);
+  }, [
+    visible,
+    overlayOpacity,
+    hintOpacity,
+    headerOpacity,
+    headerTranslateY,
+    rowAnims,
+    checklistItems,
+  ]);
 
   const handleTap = () => {
     if (dismissingRef.current) return;
@@ -160,7 +163,7 @@ export function ScanSuccessFlash({
             useNativeDriver: true,
           }),
         ]);
-      }),
+      })
     );
 
     // Phase 2 — Slide header up + fade
@@ -223,10 +226,7 @@ export function ScanSuccessFlash({
             return (
               <Animated.View
                 key={label}
-                style={[
-                  styles.checkRow,
-                  { opacity, transform: [{ translateY }, { translateX }] },
-                ]}
+                style={[styles.checkRow, { opacity, transform: [{ translateY }, { translateX }] }]}
               >
                 <Animated.View style={{ transform: [{ scale: checkScale }] }}>
                   <Ionicons name="checkmark-circle" size={22} color="#fff" />

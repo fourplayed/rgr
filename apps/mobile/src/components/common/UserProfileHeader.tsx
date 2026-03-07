@@ -21,12 +21,13 @@ const LOGO_WIDTH = 221;
 export function UserProfileHeader() {
   const router = useRouter();
   const segments = useSegments();
-  const logout = useAuthStore(s => s.logout);
+  const logout = useAuthStore((s) => s.logout);
   const insets = useSafeAreaInsets();
 
   // Show back button on detail pages (e.g., assets/[id])
   const segmentArray = segments as string[];
-  const isDetailPage = segmentArray.length > 2 && segmentArray[1] === 'assets' && segmentArray[2] !== 'index';
+  const isDetailPage =
+    segmentArray.length > 2 && segmentArray[1] === 'assets' && segmentArray[2] !== 'index';
 
   const handleBack = useCallback(() => {
     // Navigate to assets list explicitly to handle cross-tab navigation
@@ -83,11 +84,7 @@ export function UserProfileHeader() {
           </View>
         </View>
       </LinearGradient>
-      <Image
-        source={require('../../assets/logo.png')}
-        style={styles.logo}
-        resizeMode="contain"
-      />
+      <Image source={require('../../assets/logo.png')} style={styles.logo} resizeMode="contain" />
       <ConfirmSheet
         visible={showLogoutConfirm}
         type="warning"

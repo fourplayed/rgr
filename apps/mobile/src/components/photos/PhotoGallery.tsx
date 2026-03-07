@@ -36,7 +36,8 @@ function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto }: PhotoGalle
 
   // Batch-fetch all signed URLs in a single request instead of N individual requests
   const allPaths = useMemo(
-    () => (photos || []).map(p => p.thumbnailPath ?? p.storagePath).filter((p): p is string => !!p),
+    () =>
+      (photos || []).map((p) => p.thumbnailPath ?? p.storagePath).filter((p): p is string => !!p),
     [photos]
   );
   const { data: signedUrlMap } = useBatchSignedUrls(allPaths);
@@ -49,12 +50,12 @@ function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto }: PhotoGalle
 
   // Split photos into freight (catches legacy inspection/general too) and defects
   const freightPhotos = useMemo(
-    () => (photos || []).filter(p => p.photoType !== 'damage'),
-    [photos],
+    () => (photos || []).filter((p) => p.photoType !== 'damage'),
+    [photos]
   );
   const defectPhotos = useMemo(
-    () => (photos || []).filter(p => p.photoType === 'damage'),
-    [photos],
+    () => (photos || []).filter((p) => p.photoType === 'damage'),
+    [photos]
   );
 
   if (isLoading) {
@@ -85,10 +86,7 @@ function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto }: PhotoGalle
     return (
       <View style={styles.grid}>
         <TouchableOpacity
-          style={[
-            styles.addButton,
-            { width: thumbnailSize, height: thumbnailSize },
-          ]}
+          style={[styles.addButton, { width: thumbnailSize, height: thumbnailSize }]}
           onPress={onAddPhoto}
           activeOpacity={0.7}
           accessibilityRole="button"
@@ -111,8 +109,7 @@ function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto }: PhotoGalle
       {/* Freight Section */}
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>
-          FREIGHT{' '}
-          <Text style={styles.sectionCount}>({freightPhotos.length})</Text>
+          FREIGHT <Text style={styles.sectionCount}>({freightPhotos.length})</Text>
         </Text>
       </View>
       {freightPhotos.length === 0 && !onAddPhoto ? (
@@ -121,10 +118,7 @@ function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto }: PhotoGalle
         <View style={styles.grid}>
           {onAddPhoto && (
             <TouchableOpacity
-              style={[
-                styles.addButton,
-                { width: thumbnailSize, height: thumbnailSize },
-              ]}
+              style={[styles.addButton, { width: thumbnailSize, height: thumbnailSize }]}
               onPress={onAddPhoto}
               activeOpacity={0.7}
               accessibilityRole="button"
@@ -135,7 +129,7 @@ function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto }: PhotoGalle
               <Text style={styles.addButtonText}>Add Photo</Text>
             </TouchableOpacity>
           )}
-          {freightPhotos.map(photo => (
+          {freightPhotos.map((photo) => (
             <PhotoThumbnail
               key={photo.id}
               photo={photo}
@@ -150,15 +144,14 @@ function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto }: PhotoGalle
       {/* Defects Section */}
       <View style={[styles.sectionHeader, styles.defectSectionHeader]}>
         <Text style={styles.defectSectionTitle}>
-          DEFECTS{' '}
-          <Text style={styles.sectionCount}>({defectPhotos.length})</Text>
+          DEFECTS <Text style={styles.sectionCount}>({defectPhotos.length})</Text>
         </Text>
       </View>
       {defectPhotos.length === 0 ? (
         <Text style={styles.sectionEmptyText}>No defect photos</Text>
       ) : (
         <View style={styles.grid}>
-          {defectPhotos.map(photo => (
+          {defectPhotos.map((photo) => (
             <PhotoThumbnail
               key={photo.id}
               photo={photo}

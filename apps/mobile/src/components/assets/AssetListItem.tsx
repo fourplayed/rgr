@@ -2,7 +2,12 @@ import React, { memo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { AssetWithRelations, AssetStatus } from '@rgr/shared';
-import { AssetStatusColors, AssetStatusLabels, getDepotBadgeColors, formatAssetNumber } from '@rgr/shared';
+import {
+  AssetStatusColors,
+  AssetStatusLabels,
+  getDepotBadgeColors,
+  formatAssetNumber,
+} from '@rgr/shared';
 import type { useDepotLookup } from '../../hooks/useDepots';
 import { DepotBadge } from '../common/DepotBadge';
 import { StatusBadge } from '../common/StatusBadge';
@@ -32,8 +37,12 @@ const getStatusColor = (status: AssetStatus): string => {
 
 function AssetListItemComponent({ asset, onPress, depotLookup }: AssetListItemProps) {
   const statusColor = getStatusColor(asset.status);
-  const depot = asset.depotCode ? depotLookup.byCode.get(asset.depotCode.toLowerCase()) ?? null : null;
-  const depotBadgeColors = asset.depotCode ? getDepotBadgeColors(depot, colors.chrome, colors.text) : null;
+  const depot = asset.depotCode
+    ? (depotLookup.byCode.get(asset.depotCode.toLowerCase()) ?? null)
+    : null;
+  const depotBadgeColors = asset.depotCode
+    ? getDepotBadgeColors(depot, colors.chrome, colors.text)
+    : null;
 
   const statusIcon = ASSET_STATUS_ICONS[asset.status] ?? 'ellipse-outline';
 
@@ -51,7 +60,9 @@ function AssetListItemComponent({ asset, onPress, depotLookup }: AssetListItemPr
         </View>
         <View style={styles.cardBody}>
           <View style={styles.headerRow}>
-            <Text style={styles.assetNumber} numberOfLines={1}>{formatAssetNumber(asset.assetNumber)}</Text>
+            <Text style={styles.assetNumber} numberOfLines={1}>
+              {formatAssetNumber(asset.assetNumber)}
+            </Text>
             <StatusBadge status={asset.status} size="small" />
           </View>
           <View style={styles.footerRow}>

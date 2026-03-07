@@ -1,12 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  TextInput,
-  StyleSheet,
-  ScrollView,
-} from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -17,7 +10,12 @@ import { SheetFooter } from '../common/SheetFooter';
 import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
-import { useMaintenance, useUpdateMaintenanceStatus, useUpdateMaintenance, useCancelMaintenanceTask } from '../../hooks/useMaintenanceData';
+import {
+  useMaintenance,
+  useUpdateMaintenanceStatus,
+  useUpdateMaintenance,
+  useCancelMaintenanceTask,
+} from '../../hooks/useMaintenanceData';
 import { useAsset } from '../../hooks/useAssetData';
 import { useAuthStore } from '../../store/authStore';
 import { useScanEventPhotos, useSignedUrl } from '../../hooks/usePhotos';
@@ -25,7 +23,6 @@ import { useUserPermissions } from '../../contexts/UserPermissionsContext';
 import { MaintenanceStatusBadge } from './MaintenanceStatusBadge';
 import { MaintenancePriorityBadge } from './MaintenancePriorityBadge';
 import { MAINTENANCE_STATUS_CONFIG } from './MaintenanceListItem';
-
 
 interface MaintenanceDetailModalProps {
   visible: boolean;
@@ -46,7 +43,7 @@ export function MaintenanceDetailModal({
 }: MaintenanceDetailModalProps) {
   const router = useRouter();
   const { canMarkMaintenance } = useUserPermissions();
-  const user = useAuthStore(s => s.user);
+  const user = useAuthStore((s) => s.user);
   const { data: maintenance, isLoading } = useMaintenance(maintenanceId);
   const { data: asset } = useAsset(maintenance?.assetId);
   const updateStatusMutation = useUpdateMaintenanceStatus();
@@ -204,174 +201,177 @@ export function MaintenanceDetailModal({
 
   return (
     <SheetModal visible={visible} onClose={onClose} inline={!!inline}>
-        <View style={styles.sheet}>
-          {isLoading || !maintenance ? (
-            <>
-              <SheetHeader
-                icon="construct"
-                title="Maintenance"
-                onClose={onClose}
-                backgroundColor={colors.warning}
-                disabled
-              />
-              <View style={styles.loadingContainer}>
-                <LoadingDots color={colors.textSecondary} size={10} />
+      <View style={styles.sheet}>
+        {isLoading || !maintenance ? (
+          <>
+            <SheetHeader
+              icon="construct"
+              title="Maintenance"
+              onClose={onClose}
+              backgroundColor={colors.warning}
+              disabled
+            />
+            <View style={styles.loadingContainer}>
+              <LoadingDots color={colors.textSecondary} size={10} />
+            </View>
+          </>
+        ) : (
+          <>
+            <SheetHeader
+              icon="construct"
+              title={maintenance.title}
+              onClose={onClose}
+              backgroundColor={colors.warning}
+              titleNumberOfLines={2}
+            />
+
+            <ScrollView
+              style={styles.scrollView}
+              contentContainerStyle={styles.scrollContent}
+              bounces={true}
+              showsVerticalScrollIndicator={false}
+            >
+              {/* Info Row: Asset Number + View Asset */}
+              <View style={styles.infoRow}>
+                {asset?.assetNumber && (
+                  <Text style={styles.assetNumberText}>{formatAssetNumber(asset.assetNumber)}</Text>
+                )}
+                {variant === 'full' && (
+                  <TouchableOpacity
+                    style={styles.assetLink}
+                    onPress={handleNavigateToAsset}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.assetLinkText}>View Asset</Text>
+                    <Ionicons name="chevron-forward" size={16} color={colors.electricBlue} />
+                  </TouchableOpacity>
+                )}
               </View>
-            </>
-          ) : (
-            <>
-              <SheetHeader
-                icon="construct"
-                title={maintenance.title}
-                onClose={onClose}
-                backgroundColor={colors.warning}
-                titleNumberOfLines={2}
-              />
 
-              <ScrollView
-                style={styles.scrollView}
-                contentContainerStyle={styles.scrollContent}
-                bounces={true}
-                showsVerticalScrollIndicator={false}
-              >
-                {/* Info Row: Asset Number + View Asset */}
-                <View style={styles.infoRow}>
-                  {asset?.assetNumber && (
-                    <Text style={styles.assetNumberText}>{formatAssetNumber(asset.assetNumber)}</Text>
+              {/* Status & Priority Badges */}
+              <View style={styles.badgeRow}>
+                <MaintenanceStatusBadge status={maintenance.status} />
+                <MaintenancePriorityBadge priority={maintenance.priority} />
+              </View>
+
+              {/* Details Section */}
+              <View style={styles.sectionGroup}>
+                <Text style={styles.sectionTitle}>Details</Text>
+                <View style={styles.sectionCard}>
+                  {maintenance.description && (
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Description</Text>
+                      <Text style={styles.detailValue}>{maintenance.description}</Text>
+                    </View>
                   )}
-                  {variant === 'full' && (
-                    <TouchableOpacity
-                      style={styles.assetLink}
-                      onPress={handleNavigateToAsset}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={styles.assetLinkText}>View Asset</Text>
-                      <Ionicons name="chevron-forward" size={16} color={colors.electricBlue} />
-                    </TouchableOpacity>
+
+                  {maintenance.maintenanceType && (
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Type</Text>
+                      <Text style={styles.detailValue}>
+                        {maintenance.maintenanceType.replace(/_/g, ' ')}
+                      </Text>
+                    </View>
+                  )}
+
+                  {maintenance.scheduledDate && (
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Scheduled Date</Text>
+                      <Text style={styles.detailValue}>{maintenance.scheduledDate}</Text>
+                    </View>
+                  )}
+
+                  {maintenance.dueDate && (
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Due Date</Text>
+                      <Text style={styles.detailValue}>{maintenance.dueDate}</Text>
+                    </View>
+                  )}
+
+                  {maintenance.reporterName && (
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Reported By</Text>
+                      <Text style={styles.detailValue}>{maintenance.reporterName}</Text>
+                    </View>
+                  )}
+
+                  {maintenance.assigneeName && (
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Assigned To</Text>
+                      <Text style={styles.detailValue}>{maintenance.assigneeName}</Text>
+                    </View>
                   )}
                 </View>
+              </View>
 
-                {/* Status & Priority Badges */}
-                <View style={styles.badgeRow}>
-                  <MaintenanceStatusBadge status={maintenance.status} />
-                  <MaintenancePriorityBadge priority={maintenance.priority} />
-                </View>
-
-                {/* Details Section */}
+              {/* Defect Photo Section (hidden in compact mode) */}
+              {variant === 'full' && defectPhoto && (
                 <View style={styles.sectionGroup}>
-                  <Text style={styles.sectionTitle}>Details</Text>
+                  <Text style={styles.sectionTitle}>Defect Photo</Text>
                   <View style={styles.sectionCard}>
-                    {maintenance.description && (
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Description</Text>
-                        <Text style={styles.detailValue}>{maintenance.description}</Text>
+                    {isPhotoLoading ? (
+                      <View style={styles.defectPhotoPlaceholder}>
+                        <LoadingDots color={colors.textSecondary} size={8} />
                       </View>
-                    )}
-
-                    {maintenance.maintenanceType && (
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Type</Text>
-                        <Text style={styles.detailValue}>
-                          {maintenance.maintenanceType.replace(/_/g, ' ')}
-                        </Text>
+                    ) : photoError || !defectPhotoUrl ? (
+                      <View style={styles.defectPhotoPlaceholder}>
+                        <Ionicons name="image-outline" size={28} color={colors.textSecondary} />
+                        <Text style={styles.defectPhotoErrorText}>Photo unavailable</Text>
                       </View>
-                    )}
-
-                    {maintenance.scheduledDate && (
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Scheduled Date</Text>
-                        <Text style={styles.detailValue}>{maintenance.scheduledDate}</Text>
-                      </View>
-                    )}
-
-                    {maintenance.dueDate && (
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Due Date</Text>
-                        <Text style={styles.detailValue}>{maintenance.dueDate}</Text>
-                      </View>
-                    )}
-
-                    {maintenance.reporterName && (
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Reported By</Text>
-                        <Text style={styles.detailValue}>{maintenance.reporterName}</Text>
-                      </View>
-                    )}
-
-                    {maintenance.assigneeName && (
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Assigned To</Text>
-                        <Text style={styles.detailValue}>{maintenance.assigneeName}</Text>
+                    ) : (
+                      <View
+                        style={styles.defectPhotoContainer}
+                        accessible
+                        accessibilityRole="image"
+                        accessibilityLabel="Defect photo for this maintenance record"
+                      >
+                        <Image
+                          source={{ uri: defectPhotoUrl }}
+                          style={styles.defectPhoto}
+                          contentFit="cover"
+                          transition={200}
+                          cachePolicy="memory-disk"
+                        />
                       </View>
                     )}
                   </View>
                 </View>
+              )}
 
-                {/* Defect Photo Section (hidden in compact mode) */}
-                {variant === 'full' && defectPhoto && (
-                  <View style={styles.sectionGroup}>
-                    <Text style={styles.sectionTitle}>Defect Photo</Text>
-                    <View style={styles.sectionCard}>
-                      {isPhotoLoading ? (
-                        <View style={styles.defectPhotoPlaceholder}>
-                          <LoadingDots color={colors.textSecondary} size={8} />
-                        </View>
-                      ) : photoError || !defectPhotoUrl ? (
-                        <View style={styles.defectPhotoPlaceholder}>
-                          <Ionicons name="image-outline" size={28} color={colors.textSecondary} />
-                          <Text style={styles.defectPhotoErrorText}>Photo unavailable</Text>
-                        </View>
-                      ) : (
-                        <View
-                          style={styles.defectPhotoContainer}
-                          accessible
-                          accessibilityRole="image"
-                          accessibilityLabel="Defect photo for this maintenance record"
-                        >
-                          <Image
-                            source={{ uri: defectPhotoUrl }}
-                            style={styles.defectPhoto}
-                            contentFit="cover"
-                            transition={200}
-                            cachePolicy="memory-disk"
-                          />
-                        </View>
-                      )}
+              {/* Timestamps Section (hidden in compact mode) */}
+              {variant === 'full' && (
+                <View style={styles.sectionGroup}>
+                  <Text style={styles.sectionTitle}>Timeline</Text>
+                  <View style={styles.sectionCard}>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Created</Text>
+                      <Text style={styles.detailValue}>
+                        {formatRelativeTime(maintenance.createdAt)}
+                      </Text>
                     </View>
-                  </View>
-                )}
 
-                {/* Timestamps Section (hidden in compact mode) */}
-                {variant === 'full' && (
-                  <View style={styles.sectionGroup}>
-                    <Text style={styles.sectionTitle}>Timeline</Text>
-                    <View style={styles.sectionCard}>
+                    {maintenance.completedAt && (
                       <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Created</Text>
+                        <Text style={styles.detailLabel}>Completed</Text>
                         <Text style={styles.detailValue}>
-                          {formatRelativeTime(maintenance.createdAt)}
+                          {formatRelativeTime(maintenance.completedAt)}
                         </Text>
                       </View>
-
-                      {maintenance.completedAt && (
-                        <View style={styles.detailRow}>
-                          <Text style={styles.detailLabel}>Completed</Text>
-                          <Text style={styles.detailValue}>
-                            {formatRelativeTime(maintenance.completedAt)}
-                          </Text>
-                        </View>
-                      )}
-                    </View>
+                    )}
                   </View>
-                )}
+                </View>
+              )}
 
-                {/* Notes Section (hidden in compact mode) */}
-                {variant === 'full' && (
-                  <View style={styles.sectionGroup}>
-                    <View style={styles.sectionCard}>
-                      <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>Notes</Text>
-                        {canMarkMaintenance && !editingNotes && maintenance.status !== 'completed' && maintenance.status !== 'cancelled' && (
+              {/* Notes Section (hidden in compact mode) */}
+              {variant === 'full' && (
+                <View style={styles.sectionGroup}>
+                  <View style={styles.sectionCard}>
+                    <View style={styles.sectionHeader}>
+                      <Text style={styles.sectionTitle}>Notes</Text>
+                      {canMarkMaintenance &&
+                        !editingNotes &&
+                        maintenance.status !== 'completed' &&
+                        maintenance.status !== 'cancelled' && (
                           <TouchableOpacity
                             onPress={handleEditNotes}
                             style={styles.iconButton}
@@ -382,58 +382,52 @@ export function MaintenanceDetailModal({
                             <Ionicons name="pencil" size={18} color={colors.electricBlue} />
                           </TouchableOpacity>
                         )}
-                      </View>
-
-                      {editingNotes ? (
-                        <View style={styles.notesEdit}>
-                          <TextInput
-                            style={styles.notesInput}
-                            value={notes}
-                            onChangeText={setNotes}
-                            placeholder="Add notes..."
-                            placeholderTextColor={colors.textSecondary}
-                            multiline
-                            numberOfLines={4}
-                            textAlignVertical="top"
-                          />
-                          <View style={styles.notesButtonRow}>
-                            <TouchableOpacity
-                              style={styles.notesCancel}
-                              onPress={() => setEditingNotes(false)}
-                            >
-                              <Text style={styles.notesCancelText}>Cancel</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                              style={styles.notesSave}
-                              onPress={handleSaveNotes}
-                              disabled={updateMutation.isPending}
-                            >
-                              <Text style={styles.notesSaveText}>Save</Text>
-                            </TouchableOpacity>
-                          </View>
-                        </View>
-                      ) : (
-                        <Text style={styles.notesText}>
-                          {maintenance.notes || 'No notes'}
-                        </Text>
-                      )}
                     </View>
-                  </View>
-                )}
-              </ScrollView>
 
-              {/* Status Actions pinned in footer */}
-              {(() => {
-                const statusActions = renderStatusActions();
-                return statusActions && (
-                  <SheetFooter>
-                    {statusActions}
-                  </SheetFooter>
-                );
-              })()}
-            </>
-          )}
-        </View>
+                    {editingNotes ? (
+                      <View style={styles.notesEdit}>
+                        <TextInput
+                          style={styles.notesInput}
+                          value={notes}
+                          onChangeText={setNotes}
+                          placeholder="Add notes..."
+                          placeholderTextColor={colors.textSecondary}
+                          multiline
+                          numberOfLines={4}
+                          textAlignVertical="top"
+                        />
+                        <View style={styles.notesButtonRow}>
+                          <TouchableOpacity
+                            style={styles.notesCancel}
+                            onPress={() => setEditingNotes(false)}
+                          >
+                            <Text style={styles.notesCancelText}>Cancel</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.notesSave}
+                            onPress={handleSaveNotes}
+                            disabled={updateMutation.isPending}
+                          >
+                            <Text style={styles.notesSaveText}>Save</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    ) : (
+                      <Text style={styles.notesText}>{maintenance.notes || 'No notes'}</Text>
+                    )}
+                  </View>
+                </View>
+              )}
+            </ScrollView>
+
+            {/* Status Actions pinned in footer */}
+            {(() => {
+              const statusActions = renderStatusActions();
+              return statusActions && <SheetFooter>{statusActions}</SheetFooter>;
+            })()}
+          </>
+        )}
+      </View>
 
       {/* Cancel Confirmation Sheet */}
       <ConfirmSheet
@@ -454,7 +448,7 @@ export function MaintenanceDetailModal({
         type="error"
         title={alertSheet.title}
         message={alertSheet.message}
-        onDismiss={() => setAlertSheet(prev => ({ ...prev, visible: false }))}
+        onDismiss={() => setAlertSheet((prev) => ({ ...prev, visible: false }))}
       />
     </SheetModal>
   );
@@ -531,8 +525,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
-  detailRow: {
-  },
+  detailRow: {},
   detailLabel: {
     fontSize: fontSize.xs,
     fontFamily: fonts.regular,

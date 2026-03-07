@@ -483,9 +483,18 @@ export function useDeleteScanEvent() {
       queryClient.invalidateQueries({ queryKey: assetKeys.lists(), refetchType: 'none' });
       queryClient.invalidateQueries({ queryKey: ['scans'], refetchType: 'none' });
       // Invalidate asset-specific caches so detail screen auto-updates
-      queryClient.invalidateQueries({ queryKey: assetKeys.detail(variables.assetId), refetchType: 'none' });
-      queryClient.invalidateQueries({ queryKey: assetKeys.scans(variables.assetId), refetchType: 'none' });
-      queryClient.invalidateQueries({ queryKey: assetKeys.scanContext(variables.assetId), refetchType: 'none' });
+      queryClient.invalidateQueries({
+        queryKey: assetKeys.detail(variables.assetId),
+        refetchType: 'none',
+      });
+      queryClient.invalidateQueries({
+        queryKey: assetKeys.scans(variables.assetId),
+        refetchType: 'none',
+      });
+      queryClient.invalidateQueries({
+        queryKey: assetKeys.scanContext(variables.assetId),
+        refetchType: 'none',
+      });
     },
   });
 }

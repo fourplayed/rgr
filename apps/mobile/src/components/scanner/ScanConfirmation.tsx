@@ -33,8 +33,6 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 type ScanTab = 'actions' | 'openItems';
 
-
-
 // ── Types ────────────────────────────────────────────────────────────────────
 
 export type ConfirmAction = 'photo' | 'defect' | 'maintenance' | null;
@@ -74,33 +72,40 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
   const { asset, matchedDepot, disabled, isCreating } = props;
 
   // Build AssetWithRelations for AssetInfoCard
-  const assetWithRelations = useMemo<AssetWithRelations>(() => ({
-    ...asset,
-    depotName: matchedDepot?.depot.name ?? null,
-    depotCode: matchedDepot?.depot.code ?? null,
-    driverName: null,
-    lastScannerName: null,
-    photoCount: 0,
-  }), [asset, matchedDepot]);
+  const assetWithRelations = useMemo<AssetWithRelations>(
+    () => ({
+      ...asset,
+      depotName: matchedDepot?.depot.name ?? null,
+      depotCode: matchedDepot?.depot.code ?? null,
+      driverName: null,
+      lastScannerName: null,
+      photoCount: 0,
+    }),
+    [asset, matchedDepot]
+  );
 
   // Single-select action state (radio behavior)
   const [selectedAction, setSelectedAction] = useState<ConfirmAction>(null);
   const [activeTab, setActiveTab] = useState<ScanTab>('actions');
 
   // Show tabs only for mechanics with existing open items
-  const openItemCount = props.variant === 'mechanic' && props.scanContext != null
-    ? props.scanContext.openDefectCount + props.scanContext.activeTaskCount
-    : 0;
+  const openItemCount =
+    props.variant === 'mechanic' && props.scanContext != null
+      ? props.scanContext.openDefectCount + props.scanContext.activeTaskCount
+      : 0;
   const hasOpenItems = openItemCount > 0;
 
-  const scanTabs = useMemo(() => [
-    { key: 'actions' as const, label: 'Actions' },
-    { key: 'openItems' as const, label: `Open Items (${openItemCount})` },
-  ], [openItemCount]);
+  const scanTabs = useMemo(
+    () => [
+      { key: 'actions' as const, label: 'Actions' },
+      { key: 'openItems' as const, label: `Open Items (${openItemCount})` },
+    ],
+    [openItemCount]
+  );
 
   const toggleAction = useCallback((action: ConfirmAction) => {
     Haptics.selectionAsync();
-    setSelectedAction(prev => (prev === action ? null : action));
+    setSelectedAction((prev) => (prev === action ? null : action));
   }, []);
 
   // Derive completed states
@@ -108,13 +113,14 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
   const maintenanceCompleted = props.variant === 'mechanic' ? props.maintenanceCompleted : false;
 
   // Button color matches selected action
-  const buttonColor = selectedAction === 'maintenance'
-    ? colors.warning
-    : selectedAction === 'defect'
-      ? colors.defectYellow
-      : selectedAction === 'photo'
-        ? colors.violet
-        : colors.success;
+  const buttonColor =
+    selectedAction === 'maintenance'
+      ? colors.warning
+      : selectedAction === 'defect'
+        ? colors.defectYellow
+        : selectedAction === 'photo'
+          ? colors.violet
+          : colors.success;
 
   // Loading state during scan creation
   const isLoading = isCreating && disabled;
@@ -151,10 +157,12 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
           <View style={styles.locationRow}>
             <Ionicons name="location" size={16} color={colors.success} />
             <Text style={styles.locationText}>
-              Location updated to <Text style={styles.locationName}>{matchedDepot.depot.name}</Text>
-              {' '}({matchedDepot.distanceKm < 1
+              Location updated to <Text style={styles.locationName}>{matchedDepot.depot.name}</Text>{' '}
+              (
+              {matchedDepot.distanceKm < 1
                 ? `${Math.round(matchedDepot.distanceKm * 1000)}m away`
-                : `${matchedDepot.distanceKm.toFixed(1)}km away`})
+                : `${matchedDepot.distanceKm.toFixed(1)}km away`}
+              )
             </Text>
           </View>
         )}
@@ -163,11 +171,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
         {props.variant === 'mechanic' && hasOpenItems ? (
           <>
             <View style={styles.tabContainer}>
-              <SegmentedTabs
-                tabs={scanTabs}
-                activeTab={activeTab}
-                onTabPress={setActiveTab}
-              />
+              <SegmentedTabs tabs={scanTabs} activeTab={activeTab} onTabPress={setActiveTab} />
             </View>
             {activeTab === 'actions' ? (
               <View style={styles.checkboxList}>
@@ -254,7 +258,6 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
             </View>
           </>
         )}
-
       </ScrollView>
 
       {/* ── Pinned footer (outside ScrollView) ── */}
@@ -295,7 +298,7 @@ function OpenItemsSection({
 
   const toggleExpanded = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpanded(prev => !prev);
+    setExpanded((prev) => !prev);
   };
 
   const isExpanded = alwaysExpanded || expanded;
@@ -311,9 +314,7 @@ function OpenItemsSection({
           accessibilityRole="button"
           accessibilityLabel={`Open items, ${totalCount} total. ${expanded ? 'Collapse' : 'Expand'}`}
         >
-          <Text style={styles.checkboxSectionTitle}>
-            Open Items
-          </Text>
+          <Text style={styles.checkboxSectionTitle}>Open Items</Text>
           <View style={styles.openItemsHeaderRight}>
             <View style={styles.openItemsCountBadge}>
               <Text style={styles.openItemsCountText}>{totalCount}</Text>
@@ -332,36 +333,43 @@ function OpenItemsSection({
         <View style={styles.openItemsCardList}>
           {/* Defect cards */}
           {openDefects.map((defect) => (
-              <TouchableOpacity
-                key={defect.id}
-                style={[cardStyles.containerInline, { borderLeftColor: colors.defectYellow }]}
-                onPress={() => onDefectPress?.(defect.id)}
-                activeOpacity={0.7}
-                accessibilityRole="button"
-                accessibilityLabel={`Defect: ${defect.title}`}
-              >
-                <View style={cardStyles.cardRow}>
-                  <View style={cardStyles.cardIconContainer}>
-                    <Ionicons name="warning" size={32} color={colors.defectYellow} />
+            <TouchableOpacity
+              key={defect.id}
+              style={[cardStyles.containerInline, { borderLeftColor: colors.defectYellow }]}
+              onPress={() => onDefectPress?.(defect.id)}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={`Defect: ${defect.title}`}
+            >
+              <View style={cardStyles.cardRow}>
+                <View style={cardStyles.cardIconContainer}>
+                  <Ionicons name="warning" size={32} color={colors.defectYellow} />
+                </View>
+                <View style={cardStyles.cardBody}>
+                  <View style={cardStyles.cardContentRow}>
+                    <Text
+                      style={[cardStyles.cardTitle, { color: colors.defectYellow }]}
+                      numberOfLines={1}
+                    >
+                      Defect Report
+                    </Text>
+                    <View style={cardStyles.cardBadges}>
+                      <DefectStatusBadge
+                        status={defect.status}
+                        color={colors.defectYellow}
+                        {...(defect.status === 'accepted' ? { label: 'Task Created' } : {})}
+                      />
+                    </View>
                   </View>
-                  <View style={cardStyles.cardBody}>
-                    <View style={cardStyles.cardContentRow}>
-                      <Text style={[cardStyles.cardTitle, { color: colors.defectYellow }]} numberOfLines={1}>Defect Report</Text>
-                      <View style={cardStyles.cardBadges}>
-                        <DefectStatusBadge status={defect.status} color={colors.defectYellow} {...(defect.status === 'accepted' ? { label: 'Task Created' } : {})} />
-                      </View>
-                    </View>
-                    <View style={cardStyles.cardFooter}>
-                      <Text style={cardStyles.cardSecondaryText} numberOfLines={1}>
-                        {defect.description ?? defect.title}
-                      </Text>
-                      <Text style={cardStyles.cardTime}>
-                        {formatRelativeTime(defect.createdAt)}
-                      </Text>
-                    </View>
+                  <View style={cardStyles.cardFooter}>
+                    <Text style={cardStyles.cardSecondaryText} numberOfLines={1}>
+                      {defect.description ?? defect.title}
+                    </Text>
+                    <Text style={cardStyles.cardTime}>{formatRelativeTime(defect.createdAt)}</Text>
                   </View>
                 </View>
-              </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
           ))}
           {/* Maintenance task cards */}
           {activeTasks.map((task) => (
@@ -379,15 +387,15 @@ function OpenItemsSection({
                 </View>
                 <View style={cardStyles.cardBody}>
                   <View style={cardStyles.cardContentRow}>
-                    <Text style={cardStyles.cardTitle} numberOfLines={1}>Maintenance Task</Text>
+                    <Text style={cardStyles.cardTitle} numberOfLines={1}>
+                      Maintenance Task
+                    </Text>
                   </View>
                   <View style={cardStyles.cardFooter}>
                     <Text style={cardStyles.cardSecondaryText} numberOfLines={1}>
                       {task.title}
                     </Text>
-                    <Text style={cardStyles.cardTime}>
-                      {formatRelativeTime(task.createdAt)}
-                    </Text>
+                    <Text style={cardStyles.cardTime}>{formatRelativeTime(task.createdAt)}</Text>
                   </View>
                 </View>
               </View>

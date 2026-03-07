@@ -10,13 +10,12 @@ interface AssetStatusFilterChipsProps {
   onToggleStatus: (status: AssetStatus) => void;
 }
 
-const AVAILABLE_STATUSES: AssetStatus[] = [
-  'serviced',
-  'maintenance',
-  'out_of_service',
-];
+const AVAILABLE_STATUSES: AssetStatus[] = ['serviced', 'maintenance', 'out_of_service'];
 
-export const AssetStatusFilterChips = React.memo(function AssetStatusFilterChips({ selectedStatuses, onToggleStatus }: AssetStatusFilterChipsProps) {
+export const AssetStatusFilterChips = React.memo(function AssetStatusFilterChips({
+  selectedStatuses,
+  onToggleStatus,
+}: AssetStatusFilterChipsProps) {
   return (
     <ScrollView
       horizontal
@@ -31,25 +30,19 @@ export const AssetStatusFilterChips = React.memo(function AssetStatusFilterChips
         return (
           <TouchableOpacity
             key={status}
-            style={[
-              styles.chip,
-              isSelected && { backgroundColor: statusColor },
-            ]}
+            style={[styles.chip, isSelected && { backgroundColor: statusColor }]}
             onPress={() => onToggleStatus(status)}
             activeOpacity={0.7}
             accessibilityRole="button"
             accessibilityLabel={`${label} filter`}
-            accessibilityHint={isSelected ? `Double tap to remove ${label} filter` : `Double tap to add ${label} filter`}
+            accessibilityHint={
+              isSelected
+                ? `Double tap to remove ${label} filter`
+                : `Double tap to add ${label} filter`
+            }
             accessibilityState={{ selected: isSelected }}
           >
-            <Text
-              style={[
-                styles.label,
-                isSelected && styles.labelSelected,
-              ]}
-            >
-              {label}
-            </Text>
+            <Text style={[styles.label, isSelected && styles.labelSelected]}>{label}</Text>
           </TouchableOpacity>
         );
       })}

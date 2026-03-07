@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  Modal,
-  TouchableOpacity,
-  StyleSheet,
-  Pressable,
-} from 'react-native';
+import { View, Text, Modal, TouchableOpacity, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
@@ -26,17 +19,17 @@ export function AvatarPicker({ visible, onClose }: AvatarPickerProps) {
   };
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-    >
-      <Pressable style={styles.overlay} onPress={onClose} accessibilityRole="button" accessibilityLabel="Close">
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <Pressable
+        style={styles.overlay}
+        onPress={onClose}
+        accessibilityRole="button"
+        accessibilityLabel="Close"
+      >
         {/* Semi-transparent backdrop matching app's overlay */}
         <View style={styles.backdropTint} />
 
-        <Pressable style={styles.containerWrapper} onPress={e => e.stopPropagation()}>
+        <Pressable style={styles.containerWrapper} onPress={(e) => e.stopPropagation()}>
           <View style={styles.container}>
             {/* Handle bar */}
             <View style={styles.handle} />
@@ -54,38 +47,25 @@ export function AvatarPicker({ visible, onClose }: AvatarPickerProps) {
             </View>
 
             <View style={styles.grid}>
-              {AVATAR_OPTIONS.map(avatar => {
+              {AVATAR_OPTIONS.map((avatar) => {
                 const isSelected = selectedAvatarId === avatar.id;
                 return (
                   <TouchableOpacity
                     key={avatar.id}
-                    style={[
-                      styles.avatarOption,
-                      isSelected && styles.avatarOptionSelected,
-                    ]}
+                    style={[styles.avatarOption, isSelected && styles.avatarOptionSelected]}
                     onPress={() => handleSelectAvatar(avatar.id)}
                     accessibilityRole="button"
                     accessibilityLabel={`Select ${avatar.label} avatar`}
                     accessibilityState={{ selected: isSelected }}
                   >
-                    <View
-                      style={[
-                        styles.avatarCircle,
-                        isSelected && styles.avatarCircleSelected,
-                      ]}
-                    >
+                    <View style={[styles.avatarCircle, isSelected && styles.avatarCircleSelected]}>
                       <Ionicons
                         name={avatar.icon}
                         size={28}
                         color={isSelected ? colors.textInverse : colors.backgroundDark}
                       />
                     </View>
-                    <Text
-                      style={[
-                        styles.avatarLabel,
-                        isSelected && styles.avatarLabelSelected,
-                      ]}
-                    >
+                    <Text style={[styles.avatarLabel, isSelected && styles.avatarLabelSelected]}>
                       {avatar.label}
                     </Text>
                   </TouchableOpacity>

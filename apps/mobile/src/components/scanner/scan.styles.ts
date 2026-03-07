@@ -1,6 +1,13 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, fontWeight, borderRadius, shadows, fontFamily as fonts } from '../../theme/spacing';
+import {
+  spacing,
+  fontSize,
+  fontWeight,
+  borderRadius,
+  shadows,
+  fontFamily as fonts,
+} from '../../theme/spacing';
 import { HEADER_STATUS_BAR_GAP, HEADER_HEIGHT } from '../../theme/layout';
 
 export const SCAN_FRAME_SIZE = 250;

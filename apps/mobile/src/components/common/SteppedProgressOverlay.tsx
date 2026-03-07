@@ -1,12 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import {
-  View,
-  Text,
-  Modal,
-  TouchableOpacity,
-  StyleSheet,
-  Animated,
-} from 'react-native';
+import { View, Text, Modal, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LoadingDots } from './LoadingDots';
 import { colors } from '../../theme/colors';
@@ -45,7 +38,9 @@ export function SteppedProgressOverlay({
   const cardScale = useRef(new Animated.Value(0.9)).current;
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const onDismissRef = useRef(onDismiss);
-  useEffect(() => { onDismissRef.current = onDismiss; }, [onDismiss]);
+  useEffect(() => {
+    onDismissRef.current = onDismiss;
+  }, [onDismiss]);
 
   const clearTimer = useCallback(() => {
     if (timerRef.current) {
@@ -159,9 +154,7 @@ export function SteppedProgressOverlay({
                   );
                 })}
               </View>
-              {failed && error && (
-                <Text style={styles.errorText}>{error}</Text>
-              )}
+              {failed && error && <Text style={styles.errorText}>{error}</Text>}
               {failed && (
                 <TouchableOpacity style={styles.dismissButton} onPress={onDismiss}>
                   <Text style={styles.dismissButtonText}>Dismiss</Text>

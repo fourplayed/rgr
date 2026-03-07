@@ -1,11 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -171,186 +165,181 @@ export function DefectReportDetailModal({
 
   return (
     <SheetModal visible={visible} onClose={onClose} onDismiss={onDismiss} inline={!!inline}>
-        <View style={styles.sheet}>
-          {isLoading || !defect ? (
-            <>
-              <SheetHeader
-                icon="warning"
-                title="Defect Report"
-                onClose={onClose}
-                backgroundColor={colors.defectYellow}
-                disabled
-              />
-              <View style={styles.loadingContainer}>
-                <LoadingDots color={colors.textSecondary} size={10} />
-              </View>
-            </>
-          ) : (
-            <>
-              <SheetHeader
-                icon="warning"
-                title="Defect Report"
-                onClose={onClose}
-                backgroundColor={colors.defectYellow}
-              />
+      <View style={styles.sheet}>
+        {isLoading || !defect ? (
+          <>
+            <SheetHeader
+              icon="warning"
+              title="Defect Report"
+              onClose={onClose}
+              backgroundColor={colors.defectYellow}
+              disabled
+            />
+            <View style={styles.loadingContainer}>
+              <LoadingDots color={colors.textSecondary} size={10} />
+            </View>
+          </>
+        ) : (
+          <>
+            <SheetHeader
+              icon="warning"
+              title="Defect Report"
+              onClose={onClose}
+              backgroundColor={colors.defectYellow}
+            />
 
-              {/* Asset number + Dismiss link row */}
-              <View style={styles.subHeaderRow}>
-                {asset?.assetNumber ? (
-                  <Text style={styles.assetNumberText}>{formatAssetNumber(asset.assetNumber)}</Text>
-                ) : <View />}
-                {defect.status === 'reported' && canMarkMaintenance && (
+            {/* Asset number + Dismiss link row */}
+            <View style={styles.subHeaderRow}>
+              {asset?.assetNumber ? (
+                <Text style={styles.assetNumberText}>{formatAssetNumber(asset.assetNumber)}</Text>
+              ) : (
+                <View />
+              )}
+              {defect.status === 'reported' && canMarkMaintenance && (
+                <TouchableOpacity
+                  style={styles.dismissLink}
+                  onPress={handleDismiss}
+                  disabled={deleteMutation.isPending}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="trash-outline" size={16} color={colors.error} />
+                  <Text style={styles.dismissLinkText}>Dismiss</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Description — pinned below header */}
+            {defect.description && (
+              <View style={styles.descriptionRow}>
+                <Text style={styles.detailValue}>{defect.description}</Text>
+              </View>
+            )}
+
+            <ScrollView
+              style={styles.scrollView}
+              contentContainerStyle={styles.scrollContent}
+              bounces={true}
+              showsVerticalScrollIndicator={false}
+            >
+              {/* Asset Link */}
+              <View style={styles.badgeRow}>
+                {variant === 'full' && (
                   <TouchableOpacity
-                    style={styles.dismissLink}
-                    onPress={handleDismiss}
-                    disabled={deleteMutation.isPending}
+                    style={styles.assetLink}
+                    onPress={handleNavigateToAsset}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="trash-outline" size={16} color={colors.error} />
-                    <Text style={styles.dismissLinkText}>Dismiss</Text>
+                    <Text style={styles.assetLinkText}>View Asset</Text>
+                    <Ionicons name="chevron-forward" size={16} color={colors.electricBlue} />
                   </TouchableOpacity>
                 )}
               </View>
 
-              {/* Description — pinned below header */}
-              {defect.description && (
-                <View style={styles.descriptionRow}>
-                  <Text style={styles.detailValue}>{defect.description}</Text>
+              {/* Defect Photo (hidden in compact mode) */}
+              {variant === 'full' && defectPhoto && (
+                <View style={styles.sectionGroup}>
+                  <Text style={styles.sectionTitle}>Defect Photo</Text>
+                  {isPhotoLoading ? (
+                    <View style={styles.defectPhotoPlaceholder}>
+                      <LoadingDots color={colors.textSecondary} size={8} />
+                    </View>
+                  ) : photoError || !defectPhotoUrl ? (
+                    <View style={styles.defectPhotoPlaceholder}>
+                      <Ionicons name="image-outline" size={28} color={colors.textSecondary} />
+                      <Text style={styles.defectPhotoErrorText}>Photo unavailable</Text>
+                    </View>
+                  ) : (
+                    <View
+                      style={styles.defectPhotoContainer}
+                      accessible
+                      accessibilityRole="image"
+                      accessibilityLabel="Defect photo"
+                    >
+                      <Image
+                        source={{ uri: defectPhotoUrl }}
+                        style={styles.defectPhoto}
+                        contentFit="cover"
+                        transition={200}
+                        cachePolicy="memory-disk"
+                      />
+                    </View>
+                  )}
                 </View>
               )}
 
-              <ScrollView
-                style={styles.scrollView}
-                contentContainerStyle={styles.scrollContent}
-                bounces={true}
-                showsVerticalScrollIndicator={false}
-              >
-                {/* Asset Link */}
-                <View style={styles.badgeRow}>
-                  {variant === 'full' && (
-                    <TouchableOpacity
-                      style={styles.assetLink}
-                      onPress={handleNavigateToAsset}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={styles.assetLinkText}>View Asset</Text>
-                      <Ionicons name="chevron-forward" size={16} color={colors.electricBlue} />
-                    </TouchableOpacity>
+              {/* Linked Maintenance Task (hidden in compact mode) */}
+              {variant === 'full' && defect.maintenanceRecordId && (
+                <View style={styles.sectionGroup}>
+                  <Text style={styles.sectionTitle}>Linked Maintenance Task</Text>
+                  {linkedMaintenance && (
+                    <Text style={styles.detailValue}>{linkedMaintenance.title}</Text>
+                  )}
+                  <TouchableOpacity
+                    style={styles.linkedTaskLink}
+                    onPress={handleViewLinkedTask}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.linkedTaskLinkText}>View Task</Text>
+                    <Ionicons name="chevron-forward" size={16} color={colors.electricBlue} />
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {/* Timeline (hidden in compact mode) */}
+              {variant === 'full' && (
+                <View style={styles.sectionGroup}>
+                  <View style={styles.detailRowInline}>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Reported</Text>
+                      <Text style={styles.detailValue}>{formatRelativeTime(defect.createdAt)}</Text>
+                    </View>
+                    {defect.reporterName && (
+                      <View style={styles.detailRowEnd}>
+                        <Text style={styles.detailLabel}>Reported By</Text>
+                        <Text style={styles.detailValue}>{defect.reporterName}</Text>
+                      </View>
+                    )}
+                  </View>
+
+                  {defect.acceptedAt && (
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Accepted</Text>
+                      <Text style={styles.detailValue}>
+                        {formatRelativeTime(defect.acceptedAt)}
+                      </Text>
+                    </View>
+                  )}
+
+                  {defect.resolvedAt && (
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Resolved</Text>
+                      <Text style={styles.detailValue}>
+                        {formatRelativeTime(defect.resolvedAt)}
+                      </Text>
+                    </View>
                   )}
                 </View>
+              )}
 
-                {/* Defect Photo (hidden in compact mode) */}
-                {variant === 'full' && defectPhoto && (
-                  <View style={styles.sectionGroup}>
-                    <Text style={styles.sectionTitle}>Defect Photo</Text>
-                    {isPhotoLoading ? (
-                      <View style={styles.defectPhotoPlaceholder}>
-                        <LoadingDots color={colors.textSecondary} size={8} />
-                      </View>
-                    ) : photoError || !defectPhotoUrl ? (
-                      <View style={styles.defectPhotoPlaceholder}>
-                        <Ionicons name="image-outline" size={28} color={colors.textSecondary} />
-                        <Text style={styles.defectPhotoErrorText}>Photo unavailable</Text>
-                      </View>
-                    ) : (
-                      <View
-                        style={styles.defectPhotoContainer}
-                        accessible
-                        accessibilityRole="image"
-                        accessibilityLabel="Defect photo"
-                      >
-                        <Image
-                          source={{ uri: defectPhotoUrl }}
-                          style={styles.defectPhoto}
-                          contentFit="cover"
-                          transition={200}
-                          cachePolicy="memory-disk"
-                        />
-                      </View>
-                    )}
+              {/* Notes (hidden in compact mode) */}
+              {variant === 'full' && defect.notes && (
+                <View style={styles.sectionGroup}>
+                  <Text style={styles.sectionTitle}>Notes</Text>
+                  <View style={styles.sectionCard}>
+                    <Text style={styles.detailValue}>{defect.notes}</Text>
                   </View>
-                )}
+                </View>
+              )}
+            </ScrollView>
 
-                {/* Linked Maintenance Task (hidden in compact mode) */}
-                {variant === 'full' && defect.maintenanceRecordId && (
-                  <View style={styles.sectionGroup}>
-                    <Text style={styles.sectionTitle}>Linked Maintenance Task</Text>
-                    {linkedMaintenance && (
-                      <Text style={styles.detailValue}>{linkedMaintenance.title}</Text>
-                    )}
-                    <TouchableOpacity
-                      style={styles.linkedTaskLink}
-                      onPress={handleViewLinkedTask}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={styles.linkedTaskLinkText}>View Task</Text>
-                      <Ionicons name="chevron-forward" size={16} color={colors.electricBlue} />
-                    </TouchableOpacity>
-                  </View>
-                )}
-
-                {/* Timeline (hidden in compact mode) */}
-                {variant === 'full' && (
-                  <View style={styles.sectionGroup}>
-                    <View style={styles.detailRowInline}>
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Reported</Text>
-                        <Text style={styles.detailValue}>
-                          {formatRelativeTime(defect.createdAt)}
-                        </Text>
-                      </View>
-                      {defect.reporterName && (
-                        <View style={styles.detailRowEnd}>
-                          <Text style={styles.detailLabel}>Reported By</Text>
-                          <Text style={styles.detailValue}>{defect.reporterName}</Text>
-                        </View>
-                      )}
-                    </View>
-
-                    {defect.acceptedAt && (
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Accepted</Text>
-                        <Text style={styles.detailValue}>
-                          {formatRelativeTime(defect.acceptedAt)}
-                        </Text>
-                      </View>
-                    )}
-
-                    {defect.resolvedAt && (
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Resolved</Text>
-                        <Text style={styles.detailValue}>
-                          {formatRelativeTime(defect.resolvedAt)}
-                        </Text>
-                      </View>
-                    )}
-
-                  </View>
-                )}
-
-                {/* Notes (hidden in compact mode) */}
-                {variant === 'full' && defect.notes && (
-                  <View style={styles.sectionGroup}>
-                    <Text style={styles.sectionTitle}>Notes</Text>
-                    <View style={styles.sectionCard}>
-                      <Text style={styles.detailValue}>{defect.notes}</Text>
-                    </View>
-                  </View>
-                )}
-              </ScrollView>
-
-              {/* Status Actions pinned in footer */}
-              {(() => {
-                const statusActions = renderStatusActions();
-                return statusActions && (
-                  <SheetFooter>
-                    {statusActions}
-                  </SheetFooter>
-                );
-              })()}
-            </>
-          )}
-        </View>
+            {/* Status Actions pinned in footer */}
+            {(() => {
+              const statusActions = renderStatusActions();
+              return statusActions && <SheetFooter>{statusActions}</SheetFooter>;
+            })()}
+          </>
+        )}
+      </View>
 
       {/* Dismiss Confirmation */}
       <ConfirmSheet
@@ -371,7 +360,7 @@ export function DefectReportDetailModal({
         type="error"
         title={alertSheet.title}
         message={alertSheet.message}
-        onDismiss={() => setAlertSheet(prev => ({ ...prev, visible: false }))}
+        onDismiss={() => setAlertSheet((prev) => ({ ...prev, visible: false }))}
       />
     </SheetModal>
   );
@@ -445,8 +434,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
-  detailRow: {
-  },
+  detailRow: {},
   detailRowEnd: {
     alignItems: 'flex-end',
   },

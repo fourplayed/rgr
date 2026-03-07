@@ -13,7 +13,13 @@ interface ScreenHeaderProps {
   compact?: boolean;
 }
 
-export function ScreenHeader({ title, subtitle, onBack, rightAction, compact = false }: ScreenHeaderProps) {
+export function ScreenHeader({
+  title,
+  subtitle,
+  onBack,
+  rightAction,
+  compact = false,
+}: ScreenHeaderProps) {
   return (
     <View style={[styles.container, { paddingBottom: compact ? spacing.sm : spacing.md }]}>
       <View style={[styles.row, { alignItems: subtitle ? 'flex-start' : 'center' }]}>

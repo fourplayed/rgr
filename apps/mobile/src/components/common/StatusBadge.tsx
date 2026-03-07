@@ -24,22 +24,12 @@ export function Badge({ label, color, size = 'small', variant = 'solid' }: Badge
 
   return (
     <View
-      style={[
-        styles.badge,
-        { backgroundColor: bgColor },
-        size === 'small' && styles.badgeSmall,
-      ]}
+      style={[styles.badge, { backgroundColor: bgColor }, size === 'small' && styles.badgeSmall]}
       accessible={true}
       accessibilityRole="text"
       accessibilityLabel={label}
     >
-      <Text
-        style={[
-          styles.label,
-          { color: textColor },
-          size === 'small' && styles.labelSmall,
-        ]}
-      >
+      <Text style={[styles.label, { color: textColor }, size === 'small' && styles.labelSmall]}>
         {label}
       </Text>
     </View>

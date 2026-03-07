@@ -80,7 +80,7 @@ export const shadows = {
   lg: {
     shadowColor: '#000030',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.10,
+    shadowOpacity: 0.1,
     shadowRadius: 10,
     elevation: 6,
   },

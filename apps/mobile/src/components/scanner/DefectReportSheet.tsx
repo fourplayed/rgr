@@ -69,85 +69,85 @@ function DefectReportSheetComponent({
 
   return (
     <SheetModal visible={visible} onClose={handleCancel} onDismiss={onDismiss} keyboardAvoiding>
-        <View style={styles.sheet}>
-          <SheetHeader
-            icon="warning"
-            title="Report Defect"
-            onClose={handleCancel}
-            backgroundColor={colors.defectYellow}
-            titleStyle={{
-              textShadowColor: 'rgba(0, 0, 0, 0.3)',
-              textShadowOffset: { width: 0, height: 1 },
-              textShadowRadius: 2,
-            }}
-          />
+      <View style={styles.sheet}>
+        <SheetHeader
+          icon="warning"
+          title="Report Defect"
+          onClose={handleCancel}
+          backgroundColor={colors.defectYellow}
+          titleStyle={{
+            textShadowColor: 'rgba(0, 0, 0, 0.3)',
+            textShadowOffset: { width: 0, height: 1 },
+            textShadowRadius: 2,
+          }}
+        />
 
-          <ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={styles.scrollContent}
-            bounces={true}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-          >
-            {/* Notes Input */}
-            <View style={styles.inputSection}>
-              <Text style={styles.inputLabel}>Describe the defect</Text>
-              <TextInput
-                style={styles.textInput}
-                placeholder="Enter details about the defect, damage, or issue..."
-                placeholderTextColor={colors.textSecondary}
-                value={notes}
-                onChangeText={setNotes}
-                multiline
-                numberOfLines={4}
-                maxLength={2000}
-                textAlignVertical="top"
-                autoFocus
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          bounces={true}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Notes Input */}
+          <View style={styles.inputSection}>
+            <Text style={styles.inputLabel}>Describe the defect</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Enter details about the defect, damage, or issue..."
+              placeholderTextColor={colors.textSecondary}
+              value={notes}
+              onChangeText={setNotes}
+              multiline
+              numberOfLines={4}
+              maxLength={2000}
+              textAlignVertical="top"
+              autoFocus
+            />
+            <Text style={styles.charCount}>
+              {notes.length > 0 ? `${notes.length}/2000` : 'Required'}
+            </Text>
+          </View>
+
+          {/* Photo Option (hidden when showPhotoOption is false) */}
+          {showPhotoOption && (
+            <TouchableOpacity
+              style={styles.photoOption}
+              onPress={() => setWantsPhoto(!wantsPhoto)}
+              activeOpacity={0.7}
+              accessibilityRole="radio"
+              accessibilityLabel="Capture Photo"
+              accessibilityState={{ checked: wantsPhoto }}
+            >
+              <Ionicons name="camera" size={32} color={colors.violet} />
+              <View style={styles.photoOptionText}>
+                <Text style={styles.photoOptionLabel}>Capture Photo</Text>
+                <Text style={styles.photoOptionDescription}>
+                  Capture a photo of the defect to document the issue
+                </Text>
+              </View>
+              <Ionicons
+                name={wantsPhoto ? 'radio-button-on' : 'radio-button-off'}
+                size={26}
+                color={colors.violet}
               />
-              <Text style={styles.charCount}>
-                {notes.length > 0 ? `${notes.length}/2000` : 'Required'}
-              </Text>
-            </View>
+            </TouchableOpacity>
+          )}
+        </ScrollView>
 
-            {/* Photo Option (hidden when showPhotoOption is false) */}
-            {showPhotoOption && (
-              <TouchableOpacity
-                style={styles.photoOption}
-                onPress={() => setWantsPhoto(!wantsPhoto)}
-                activeOpacity={0.7}
-                accessibilityRole="radio"
-                accessibilityLabel="Capture Photo"
-                accessibilityState={{ checked: wantsPhoto }}
-              >
-                <Ionicons name="camera" size={32} color={colors.violet} />
-                <View style={styles.photoOptionText}>
-                  <Text style={styles.photoOptionLabel}>Capture Photo</Text>
-                  <Text style={styles.photoOptionDescription}>
-                    Capture a photo of the defect to document the issue
-                  </Text>
-                </View>
-                <Ionicons
-                  name={wantsPhoto ? 'radio-button-on' : 'radio-button-off'}
-                  size={26}
-                  color={colors.violet}
-                />
-              </TouchableOpacity>
-            )}
-          </ScrollView>
-
-          <SheetFooter>
-            <Animated.View style={{ opacity: submitOpacity }}>
-              <Button
-                isLoading={isSubmitting}
-                onPress={handleSubmit}
-                disabled={!canSubmit}
-                color={wantsPhoto ? colors.violet : colors.success}
-              >
-                {wantsPhoto ? 'Capture & Submit' : 'Submit'}
-              </Button>
-            </Animated.View>
-          </SheetFooter>
-        </View>
+        <SheetFooter>
+          <Animated.View style={{ opacity: submitOpacity }}>
+            <Button
+              isLoading={isSubmitting}
+              onPress={handleSubmit}
+              disabled={!canSubmit}
+              color={wantsPhoto ? colors.violet : colors.success}
+            >
+              {wantsPhoto ? 'Capture & Submit' : 'Submit'}
+            </Button>
+          </Animated.View>
+        </SheetFooter>
+      </View>
     </SheetModal>
   );
 }

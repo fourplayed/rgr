@@ -47,7 +47,7 @@ export const useAvatarStore = create<AvatarState>()(
 
       getSelectedAvatar: (): AvatarOption => {
         const { selectedAvatarId } = get();
-        const found = AVATAR_OPTIONS.find(opt => opt.id === selectedAvatarId);
+        const found = AVATAR_OPTIONS.find((opt) => opt.id === selectedAvatarId);
         return found ?? DEFAULT_AVATAR;
       },
     }),

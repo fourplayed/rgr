@@ -15,9 +15,16 @@ function isPlainObject(v: unknown): v is Record<string, unknown> {
 
 /** Fields that may contain sensitive data — redact before display */
 const REDACTED_FIELDS = new Set([
-  'password', 'password_hash', 'encrypted_password',
-  'access_token', 'refresh_token', 'token',
-  'secret', 'api_key', 'ssn', 'tax_id',
+  'password',
+  'password_hash',
+  'encrypted_password',
+  'access_token',
+  'refresh_token',
+  'token',
+  'secret',
+  'api_key',
+  'ssn',
+  'tax_id',
 ]);
 
 function redactSensitiveFields(obj: Record<string, unknown>): Record<string, unknown> {
@@ -26,9 +33,7 @@ function redactSensitiveFields(obj: Record<string, unknown>): Record<string, unk
     if (REDACTED_FIELDS.has(key.toLowerCase())) {
       result[key] = '[REDACTED]';
     } else if (Array.isArray(value)) {
-      result[key] = value.map((item) =>
-        isPlainObject(item) ? redactSensitiveFields(item) : item
-      );
+      result[key] = value.map((item) => (isPlainObject(item) ? redactSensitiveFields(item) : item));
     } else if (isPlainObject(value)) {
       result[key] = redactSensitiveFields(value);
     } else {
@@ -72,13 +77,11 @@ function AuditLogItemInner({ item }: AuditLogItemProps) {
   const toggleExpand = useCallback(() => setExpanded((prev) => !prev), []);
 
   const uppercased = item.action.toUpperCase();
-  const actionKey = uppercased in ACTION_ICONS ? uppercased as keyof typeof ACTION_ICONS : null;
+  const actionKey = uppercased in ACTION_ICONS ? (uppercased as keyof typeof ACTION_ICONS) : null;
   const icon = (actionKey ? ACTION_ICONS[actionKey] : undefined) ?? 'document-outline';
   const iconColor = (actionKey ? ACTION_COLORS[actionKey] : undefined) ?? colors.textSecondary;
 
-  const description = item.tableName
-    ? `${item.action} on ${item.tableName}`
-    : item.action;
+  const description = item.tableName ? `${item.action} on ${item.tableName}` : item.action;
 
   const hasDetails =
     (item.oldValues && Object.keys(item.oldValues).length > 0) ||
@@ -103,9 +106,7 @@ function AuditLogItemInner({ item }: AuditLogItemProps) {
           </Text>
           <View style={styles.meta}>
             <Text style={styles.userName}>{item.userName || 'System'}</Text>
-            <Text style={styles.timestamp}>
-              {formatRelativeTime(item.createdAt)}
-            </Text>
+            <Text style={styles.timestamp}>{formatRelativeTime(item.createdAt)}</Text>
           </View>
         </View>
         {hasDetails && (
@@ -123,9 +124,7 @@ function AuditLogItemInner({ item }: AuditLogItemProps) {
             <View style={styles.detailBlock}>
               <Text style={styles.detailLabel}>Old Values</Text>
               <View style={styles.jsonBox}>
-                <Text style={styles.jsonText}>
-                  {safeStringify(item.oldValues)}
-                </Text>
+                <Text style={styles.jsonText}>{safeStringify(item.oldValues)}</Text>
               </View>
             </View>
           )}
@@ -133,9 +132,7 @@ function AuditLogItemInner({ item }: AuditLogItemProps) {
             <View style={styles.detailBlock}>
               <Text style={styles.detailLabel}>New Values</Text>
               <View style={styles.jsonBox}>
-                <Text style={styles.jsonText}>
-                  {safeStringify(item.newValues)}
-                </Text>
+                <Text style={styles.jsonText}>{safeStringify(item.newValues)}</Text>
               </View>
             </View>
           )}

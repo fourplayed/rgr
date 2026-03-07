@@ -21,10 +21,11 @@ interface ConfirmSheetProps {
   isLoading?: boolean;
 }
 
-const confirmConfig: Record<ConfirmType, { icon: keyof typeof Ionicons.glyphMap; color: string }> = {
-  danger: { icon: 'alert-circle', color: colors.error },
-  warning: { icon: 'warning', color: colors.warning },
-};
+const confirmConfig: Record<ConfirmType, { icon: keyof typeof Ionicons.glyphMap; color: string }> =
+  {
+    danger: { icon: 'alert-circle', color: colors.error },
+    warning: { icon: 'warning', color: colors.warning },
+  };
 
 export function ConfirmSheet({
   visible,

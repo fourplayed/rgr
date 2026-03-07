@@ -49,11 +49,7 @@ export function AlertSheet({
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.message}>{message}</Text>
 
-        <Button
-          onPress={onDismiss}
-          style={styles.fullWidth}
-          accessibilityLabel={buttonLabel}
-        >
+        <Button onPress={onDismiss} style={styles.fullWidth} accessibilityLabel={buttonLabel}>
           {buttonLabel}
         </Button>
         {actionLabel && onAction && (

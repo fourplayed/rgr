@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 import { BottomSheet } from '../common/BottomSheet';
@@ -19,9 +12,11 @@ function isValidDate(s: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
   const d = new Date(s + 'T00:00:00');
   // Verify the parsed date matches input (catches Feb 30, etc.)
-  return d.getFullYear() === Number(s.slice(0, 4))
-    && d.getMonth() + 1 === Number(s.slice(5, 7))
-    && d.getDate() === Number(s.slice(8, 10));
+  return (
+    d.getFullYear() === Number(s.slice(0, 4)) &&
+    d.getMonth() + 1 === Number(s.slice(5, 7)) &&
+    d.getDate() === Number(s.slice(8, 10))
+  );
 }
 
 export interface AuditLogFilters {
@@ -113,24 +108,14 @@ export function AuditLogFilterSheet({
               return (
                 <TouchableOpacity
                   key={type}
-                  style={[
-                    styles.chip,
-                    isSelected && styles.chipSelected,
-                  ]}
-                  onPress={() =>
-                    setAction(isSelected ? undefined : type)
-                  }
+                  style={[styles.chip, isSelected && styles.chipSelected]}
+                  onPress={() => setAction(isSelected ? undefined : type)}
                   activeOpacity={0.7}
                   accessibilityRole="button"
                   accessibilityLabel={`Filter by ${type}`}
                   accessibilityState={{ selected: isSelected }}
                 >
-                  <Text
-                    style={[
-                      styles.chipText,
-                      isSelected && styles.chipTextSelected,
-                    ]}
-                  >
+                  <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
                     {type}
                   </Text>
                 </TouchableOpacity>

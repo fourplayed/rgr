@@ -37,9 +37,11 @@ interface CameraCaptureProps {
 
 const getGuideText = (type: PhotoType): string => {
   switch (type) {
-    case 'damage': return 'Position defect in frame';
+    case 'damage':
+      return 'Position defect in frame';
     case 'freight':
-    default: return 'Position freight in frame';
+    default:
+      return 'Position freight in frame';
   }
 };
 
@@ -136,10 +138,20 @@ function CameraCaptureComponent({
   // Permission checking state
   if (!permission) {
     return (
-      <Modal visible={visible} animationType="slide" onRequestClose={handleClose} onDismiss={onDismiss}>
+      <Modal
+        visible={visible}
+        animationType="slide"
+        onRequestClose={handleClose}
+        onDismiss={onDismiss}
+      >
         <View style={styles.container}>
           <SafeAreaView style={styles.centered}>
-            <Ionicons name="camera-outline" size={48} color={colors.electricBlue} style={styles.checkingIcon} />
+            <Ionicons
+              name="camera-outline"
+              size={48}
+              color={colors.electricBlue}
+              style={styles.checkingIcon}
+            />
             <Text style={styles.messageText}>Checking Camera...</Text>
             <LoadingDots color={colors.textSecondary} size={8} />
           </SafeAreaView>
@@ -152,11 +164,21 @@ function CameraCaptureComponent({
   if (!permission.granted) {
     const permanentlyDenied = permission.canAskAgain === false;
     return (
-      <Modal visible={visible} animationType="slide" onRequestClose={handleClose} onDismiss={onDismiss}>
+      <Modal
+        visible={visible}
+        animationType="slide"
+        onRequestClose={handleClose}
+        onDismiss={onDismiss}
+      >
         <View style={styles.container}>
           <SafeAreaView style={styles.centered}>
             <View style={styles.permissionCard}>
-              <Ionicons name="ban-outline" size={48} color={colors.error} style={styles.permissionIcon} />
+              <Ionicons
+                name="ban-outline"
+                size={48}
+                color={colors.error}
+                style={styles.permissionIcon}
+              />
               <Text style={styles.permissionTitle}>Camera Access Required</Text>
               <Text style={styles.permissionBody}>
                 {permanentlyDenied
@@ -176,7 +198,9 @@ function CameraCaptureComponent({
                   style={styles.permissionGrantButton}
                   onPress={permanentlyDenied ? () => Linking.openSettings() : requestPermission}
                   accessibilityRole="button"
-                  accessibilityLabel={permanentlyDenied ? 'Open device settings' : 'Grant camera permission'}
+                  accessibilityLabel={
+                    permanentlyDenied ? 'Open device settings' : 'Grant camera permission'
+                  }
                 >
                   <Text style={styles.permissionGrantButtonText}>
                     {permanentlyDenied ? 'Open Settings' : 'Grant'}
@@ -191,7 +215,12 @@ function CameraCaptureComponent({
   }
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={handleClose} onDismiss={onDismiss}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      onRequestClose={handleClose}
+      onDismiss={onDismiss}
+    >
       <View style={styles.container}>
         {capturedUri ? (
           // Preview Mode — split layout: photo on top, chrome card on bottom
@@ -263,11 +292,7 @@ function CameraCaptureComponent({
           </SafeAreaView>
         ) : (
           // Camera Mode
-          <CameraView
-            ref={cameraRef}
-            style={styles.camera}
-            facing="back"
-          >
+          <CameraView ref={cameraRef} style={styles.camera} facing="back">
             <SafeAreaView style={styles.cameraOverlay}>
               <View style={styles.cameraHeaderBand}>
                 <View style={styles.header}>
@@ -289,10 +314,34 @@ function CameraCaptureComponent({
 
               <View style={styles.cameraGuide}>
                 <View style={styles.guideFrame}>
-                  <View style={[styles.guideCorner, styles.guideTopLeft, isDamage && { borderColor: colors.error }]} />
-                  <View style={[styles.guideCorner, styles.guideTopRight, isDamage && { borderColor: colors.error }]} />
-                  <View style={[styles.guideCorner, styles.guideBottomLeft, isDamage && { borderColor: colors.error }]} />
-                  <View style={[styles.guideCorner, styles.guideBottomRight, isDamage && { borderColor: colors.error }]} />
+                  <View
+                    style={[
+                      styles.guideCorner,
+                      styles.guideTopLeft,
+                      isDamage && { borderColor: colors.error },
+                    ]}
+                  />
+                  <View
+                    style={[
+                      styles.guideCorner,
+                      styles.guideTopRight,
+                      isDamage && { borderColor: colors.error },
+                    ]}
+                  />
+                  <View
+                    style={[
+                      styles.guideCorner,
+                      styles.guideBottomLeft,
+                      isDamage && { borderColor: colors.error },
+                    ]}
+                  />
+                  <View
+                    style={[
+                      styles.guideCorner,
+                      styles.guideBottomRight,
+                      isDamage && { borderColor: colors.error },
+                    ]}
+                  />
                 </View>
               </View>
 
@@ -306,7 +355,12 @@ function CameraCaptureComponent({
                     accessibilityLabel="Take photo"
                     accessibilityHint="Double tap to capture a photo"
                   >
-                    <View style={[styles.captureButtonInner, isDamage && { backgroundColor: colors.error }]} />
+                    <View
+                      style={[
+                        styles.captureButtonInner,
+                        isDamage && { backgroundColor: colors.error },
+                      ]}
+                    />
                   </TouchableOpacity>
                 </View>
               </View>

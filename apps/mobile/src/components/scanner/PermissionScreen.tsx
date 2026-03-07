@@ -11,7 +11,11 @@ interface PermissionScreenProps {
   canAskAgain?: boolean;
 }
 
-export function PermissionScreen({ isLoading, onRequestPermission, canAskAgain = true }: PermissionScreenProps) {
+export function PermissionScreen({
+  isLoading,
+  onRequestPermission,
+  canAskAgain = true,
+}: PermissionScreenProps) {
   if (isLoading) {
     return (
       <View style={styles.container}>
@@ -40,9 +44,11 @@ export function PermissionScreen({ isLoading, onRequestPermission, canAskAgain =
             onPress={showOpenSettings ? () => Linking.openSettings() : onRequestPermission}
             accessibilityRole="button"
             accessibilityLabel={showOpenSettings ? 'Open Settings' : 'Grant camera permission'}
-            accessibilityHint={showOpenSettings
-              ? 'Double tap to open device settings to enable camera access'
-              : 'Double tap to allow camera access for scanning QR codes'}
+            accessibilityHint={
+              showOpenSettings
+                ? 'Double tap to open device settings to enable camera access'
+                : 'Double tap to allow camera access for scanning QR codes'
+            }
           >
             <Text style={styles.buttonText}>
               {showOpenSettings ? 'Open Settings' : 'Grant Permission'}

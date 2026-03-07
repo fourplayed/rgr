@@ -31,12 +31,7 @@ interface PhotoDetailModalProps {
   onClose: () => void;
 }
 
-function PhotoDetailModalComponent({
-  visible,
-  photoId,
-  assetId,
-  onClose,
-}: PhotoDetailModalProps) {
+function PhotoDetailModalComponent({ visible, photoId, assetId, onClose }: PhotoDetailModalProps) {
   const { data: photoData, isLoading, error } = usePhoto(photoId ?? undefined);
   const { data: thumbnailUrl } = useSignedUrl(photoData?.thumbnailPath ?? undefined);
   const { data: fullImageUrl, error: urlError } = useSignedUrl(photoData?.storagePath);
@@ -90,11 +85,7 @@ function PhotoDetailModalComponent({
   }, []);
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
           {/* Header */}
@@ -171,9 +162,7 @@ function PhotoDetailModalComponent({
                 <View style={styles.metadataRow}>
                   <View style={styles.metadataItem}>
                     <Text style={styles.metadataLabel}>Type</Text>
-                    <Text style={styles.metadataValue}>
-                      {formatPhotoType(photoData.photoType)}
-                    </Text>
+                    <Text style={styles.metadataValue}>{formatPhotoType(photoData.photoType)}</Text>
                   </View>
                   <View style={styles.metadataItem}>
                     <Text style={styles.metadataLabel}>Captured</Text>
@@ -252,9 +241,7 @@ function PhotoDetailModalComponent({
           ) : (
             <View style={styles.errorContainer}>
               <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
-              <Text style={styles.errorText}>
-                {error?.message || 'Photo not found'}
-              </Text>
+              <Text style={styles.errorText}>{error?.message || 'Photo not found'}</Text>
               <Text style={styles.errorSubtext}>
                 The photo may have been deleted or is unavailable.
               </Text>
@@ -280,7 +267,7 @@ function PhotoDetailModalComponent({
         type="error"
         title={alertSheet.title}
         message={alertSheet.message}
-        onDismiss={() => setAlertSheet(prev => ({ ...prev, visible: false }))}
+        onDismiss={() => setAlertSheet((prev) => ({ ...prev, visible: false }))}
       />
     </Modal>
   );

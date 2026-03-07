@@ -23,7 +23,7 @@ export function useSheetLifecycle(dispatch: React.Dispatch<ScanFlowAction>) {
         dispatch({ type: 'CLOSE_SHEET' });
       }
     },
-    [dispatch],
+    [dispatch]
   );
 
   const handlePhotoUploaded = useCallback(() => {

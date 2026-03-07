@@ -10,9 +10,7 @@ export const HEADER_GRADIENT_HEIGHT = 45;
 
 // Total header height (not including safe area)
 export const HEADER_HEIGHT =
-  HEADER_ACCENT_LINE_HEIGHT +
-  HEADER_ACCENT_LINE_GAP +
-  HEADER_GRADIENT_HEIGHT; // = 54px
+  HEADER_ACCENT_LINE_HEIGHT + HEADER_ACCENT_LINE_GAP + HEADER_GRADIENT_HEIGHT; // = 54px
 
 // Standard content offset from screen top (below header gradient)
 // 74px (header baseline) + 35px (breathing room) = 109px

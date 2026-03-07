@@ -1,20 +1,29 @@
 import React, { memo } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import type { MaintenanceListItem as MaintenanceListItemType, MaintenanceStatus } from '@rgr/shared';
+import type {
+  MaintenanceListItem as MaintenanceListItemType,
+  MaintenanceStatus,
+} from '@rgr/shared';
 import { formatRelativeTime, formatAssetNumber } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { MaintenanceStatusBadge } from './MaintenanceStatusBadge';
 import { cardStyles } from './maintenance.styles';
 
-export const MAINTENANCE_STATUS_CONFIG: Record<MaintenanceStatus, { icon: keyof typeof Ionicons.glyphMap; color: string }> = {
-  scheduled:   { icon: 'construct-outline',     color: colors.maintenanceStatus.scheduled },
-  completed:   { icon: 'checkmark-circle',      color: colors.maintenanceStatus.completed },
-  cancelled:   { icon: 'close-circle-outline',  color: colors.maintenanceStatus.cancelled },
+export const MAINTENANCE_STATUS_CONFIG: Record<
+  MaintenanceStatus,
+  { icon: keyof typeof Ionicons.glyphMap; color: string }
+> = {
+  scheduled: { icon: 'construct-outline', color: colors.maintenanceStatus.scheduled },
+  completed: { icon: 'checkmark-circle', color: colors.maintenanceStatus.completed },
+  cancelled: { icon: 'close-circle-outline', color: colors.maintenanceStatus.cancelled },
 };
 
 /** Derived visual state for overdue tasks (scheduled + past due date) */
-export const MAINTENANCE_OVERDUE_CONFIG = { icon: 'alert-circle' as keyof typeof Ionicons.glyphMap, color: colors.warning };
+export const MAINTENANCE_OVERDUE_CONFIG = {
+  icon: 'alert-circle' as keyof typeof Ionicons.glyphMap,
+  color: colors.warning,
+};
 
 /** Returns the icon/color config, upgrading scheduled → overdue when past due date */
 export function getMaintenanceVisualConfig(status: MaintenanceStatus, dueDate: string | null) {
@@ -52,7 +61,9 @@ function MaintenanceListItemComponent({ maintenance, onPress }: MaintenanceListI
         <View style={cardStyles.cardBody}>
           <View style={cardStyles.cardContentRow}>
             <Text style={cardStyles.cardTitle} numberOfLines={1}>
-              {maintenance.assetNumber ? formatAssetNumber(maintenance.assetNumber) : 'Unknown Asset'}
+              {maintenance.assetNumber
+                ? formatAssetNumber(maintenance.assetNumber)
+                : 'Unknown Asset'}
             </Text>
             <View style={cardStyles.cardBadges}>
               <MaintenanceStatusBadge status={maintenance.status} />
@@ -62,9 +73,7 @@ function MaintenanceListItemComponent({ maintenance, onPress }: MaintenanceListI
             <Text style={cardStyles.cardSecondaryText} numberOfLines={1}>
               {maintenance.description || maintenance.title}
             </Text>
-            <Text style={cardStyles.cardTime}>
-              {formatRelativeTime(maintenance.createdAt)}
-            </Text>
+            <Text style={cardStyles.cardTime}>{formatRelativeTime(maintenance.createdAt)}</Text>
           </View>
         </View>
       </View>
@@ -85,4 +94,3 @@ export const MaintenanceListItem = memo(
     prev.maintenance.createdAt === next.maintenance.createdAt &&
     prev.onPress === next.onPress
 );
-

@@ -1,4 +1,11 @@
-import type { AssetWithRelations, MaintenanceRecordWithNames, PhotoListItem, ScanEventWithScanner, Depot, DefectReportListItem } from '@rgr/shared';
+import type {
+  AssetWithRelations,
+  MaintenanceRecordWithNames,
+  PhotoListItem,
+  ScanEventWithScanner,
+  Depot,
+  DefectReportListItem,
+} from '@rgr/shared';
 import { formatDate, findDepotByLocationString } from '@rgr/shared';
 
 const DAY_MS = 86_400_000;
@@ -23,7 +30,6 @@ function relativeTime(dateStr: string, now: Date): string {
   return `${days} days ago`;
 }
 
-
 interface LocationHistory {
   durationDays: number;
   previousName: string | null;
@@ -40,7 +46,7 @@ function analyzeLocationHistory(
   scans: ScanEventWithScanner[],
   depots: Depot[],
   currentDepotName: string,
-  now: Date,
+  now: Date
 ): LocationHistory | null {
   if (scans.length === 0) return null;
 
@@ -90,12 +96,12 @@ function describeScanContext(
   scanType: string,
   scanDate: string,
   maintenance: MaintenanceRecordWithNames[],
-  photos: PhotoListItem[],
+  photos: PhotoListItem[]
 ): string {
-  const linkedMaint = maintenance.find(m => m.scanEventId === scanId);
+  const linkedMaint = maintenance.find((m) => m.scanEventId === scanId);
   const scanMs = new Date(scanDate).getTime();
   const linkedPhoto = photos.some(
-    p => Math.abs(new Date(p.createdAt).getTime() - scanMs) < FIVE_MINUTES_MS,
+    (p) => Math.abs(new Date(p.createdAt).getTime() - scanMs) < FIVE_MINUTES_MS
   );
 
   const isDefect = linkedMaint?.title.toLowerCase().includes('defect');
@@ -106,11 +112,16 @@ function describeScanContext(
   if (linkedPhoto) return 'during a photo upload';
 
   switch (scanType) {
-    case 'qr_scan': return 'via a QR scan';
-    case 'nfc_scan': return 'via an NFC scan';
-    case 'manual_entry': return 'via manual entry';
-    case 'gps_auto': return 'via GPS auto-detection';
-    default: return 'via a scan';
+    case 'qr_scan':
+      return 'via a QR scan';
+    case 'nfc_scan':
+      return 'via an NFC scan';
+    case 'manual_entry':
+      return 'via manual entry';
+    case 'gps_auto':
+      return 'via GPS auto-detection';
+    default:
+      return 'via a scan';
   }
 }
 
@@ -128,8 +139,7 @@ export function buildAssetAssessment({
   defectReports = [],
   now = new Date(),
 }: AssetAssessmentInput): string {
-  const type =
-    asset.subtype?.toLowerCase() || (asset.category === 'dolly' ? 'dolly' : 'trailer');
+  const type = asset.subtype?.toLowerCase() || (asset.category === 'dolly' ? 'dolly' : 'trailer');
   const nowMs = now.getTime();
 
   // ── Aggregate hazard data across all photos ──
@@ -145,27 +155,23 @@ export function buildAssetAssessment({
 
   // ── Categorize defects and maintenance ──
   const openDefects = defectReports.filter(
-    d => d.status === 'reported' || d.status === 'accepted',
+    (d) => d.status === 'reported' || d.status === 'accepted'
   );
 
   const overdue = maintenance.filter(
-    m =>
-      m.status === 'scheduled' &&
-      m.dueDate &&
-      new Date(m.dueDate).getTime() < nowMs,
+    (m) => m.status === 'scheduled' && m.dueDate && new Date(m.dueDate).getTime() < nowMs
   );
 
   const nextScheduled = maintenance
-    .filter(m => m.status === 'scheduled' && m.scheduledDate)
+    .filter((m) => m.status === 'scheduled' && m.scheduledDate)
     .sort((a, b) => new Date(a.scheduledDate!).getTime() - new Date(b.scheduledDate!).getTime())[0];
 
   const recentlyCompleted = maintenance
-    .filter(m => m.status === 'completed' && m.completedAt)
+    .filter((m) => m.status === 'completed' && m.completedAt)
     .sort((a, b) => new Date(b.completedAt!).getTime() - new Date(a.completedAt!).getTime())[0];
 
   const isRecentCompletion =
-    recentlyCompleted &&
-    nowMs - new Date(recentlyCompleted.completedAt!).getTime() <= 14 * DAY_MS;
+    recentlyCompleted && nowMs - new Date(recentlyCompleted.completedAt!).getTime() <= 14 * DAY_MS;
 
   // ── Sentence B — most important issue (pick first match) ──
   let sentenceB = '';
@@ -181,9 +187,10 @@ export function buildAssetAssessment({
     sentenceB = `${totalHazards} minor hazard${totalHazards !== 1 ? 's were' : ' was'} picked up in recent photos.`;
     isIssue = true;
   } else if (openDefects.length > 0) {
-    sentenceB = openDefects.length === 1
-      ? "there's an open defect report that needs attention."
-      : `there are ${openDefects.length} open defect reports that need attention.`;
+    sentenceB =
+      openDefects.length === 1
+        ? "there's an open defect report that needs attention."
+        : `there are ${openDefects.length} open defect reports that need attention.`;
     isIssue = true;
   } else if (overdue.length > 0) {
     sentenceB = `there ${overdue.length === 1 ? 'is' : 'are'} ${overdue.length} overdue maintenance task${overdue.length !== 1 ? 's' : ''} that need${overdue.length === 1 ? 's' : ''} attention.`;
@@ -224,9 +231,7 @@ export function buildAssetAssessment({
         : `This ${type}'s currently in for maintenance.`;
       break;
     case 'out_of_service':
-      sentenceA = isIssue
-        ? `This ${type}'s out of service.`
-        : `This ${type} is out of service.`;
+      sentenceA = isIssue ? `This ${type}'s out of service.` : `This ${type} is out of service.`;
       break;
     default:
       sentenceA = `This ${type} has status "${asset.status}".`;
@@ -252,15 +257,12 @@ export function buildAssetAssessment({
 
   // C1: Registration warnings (actionable — highest priority)
   if (sentences.length < 3 && asset.registrationExpiry) {
-    const daysUntilExpiry =
-      (new Date(asset.registrationExpiry).getTime() - nowMs) / DAY_MS;
+    const daysUntilExpiry = (new Date(asset.registrationExpiry).getTime() - nowMs) / DAY_MS;
     if (daysUntilExpiry < 0) {
-      sentences.push(
-        `Registration's been expired since ${formatDate(asset.registrationExpiry)}.`,
-      );
+      sentences.push(`Registration's been expired since ${formatDate(asset.registrationExpiry)}.`);
     } else if (daysUntilExpiry <= 30) {
       sentences.push(
-        `Heads up — registration's due for renewal on ${formatDate(asset.registrationExpiry)}.`,
+        `Heads up — registration's due for renewal on ${formatDate(asset.registrationExpiry)}.`
       );
     }
   }
@@ -268,12 +270,21 @@ export function buildAssetAssessment({
   // C2: Location history — where it was before, how it got there
   if (sentences.length < 3 && asset.depotName) {
     const location = analyzeLocationHistory(scans, depots, asset.depotName, now);
-    if (location?.previousName && location.previousDate && location.previousScanId && location.previousScanType) {
+    if (
+      location?.previousName &&
+      location.previousDate &&
+      location.previousScanId &&
+      location.previousScanType
+    ) {
       const context = describeScanContext(
-        location.previousScanId, location.previousScanType, location.previousDate, maintenance, photos,
+        location.previousScanId,
+        location.previousScanType,
+        location.previousDate,
+        maintenance,
+        photos
       );
       sentences.push(
-        `It was previously scanned at ${location.previousName} ${context}, ${relativeTime(location.previousDate, now)}.`,
+        `It was previously scanned at ${location.previousName} ${context}, ${relativeTime(location.previousDate, now)}.`
       );
     }
   }
@@ -281,7 +292,7 @@ export function buildAssetAssessment({
   // C3: Stale scan warning (only if location history didn't already cover it)
   if (sentences.length < 3 && asset.lastLocationUpdatedAt) {
     const daysSinceScan = Math.floor(
-      (nowMs - new Date(asset.lastLocationUpdatedAt).getTime()) / DAY_MS,
+      (nowMs - new Date(asset.lastLocationUpdatedAt).getTime()) / DAY_MS
     );
     if (daysSinceScan >= 30) {
       sentences.push(`It hasn't been scanned in over ${daysSinceScan} days.`);

@@ -11,8 +11,13 @@ export interface FilterChipProps {
   selectedColor?: string;
 }
 
-export const FilterChip = memo(function FilterChip({ label, isSelected, onPress, selectedColor }: FilterChipProps) {
-  const bgColor = isSelected ? (selectedColor || colors.electricBlue) : colors.surface;
+export const FilterChip = memo(function FilterChip({
+  label,
+  isSelected,
+  onPress,
+  selectedColor,
+}: FilterChipProps) {
+  const bgColor = isSelected ? selectedColor || colors.electricBlue : colors.surface;
   const textColor = isSelected ? colors.textInverse : colors.text;
   const borderColor = isSelected ? 'transparent' : colors.border;
 
@@ -36,14 +41,7 @@ export const FilterChip = memo(function FilterChip({ label, isSelected, onPress,
       accessibilityLabel={`Filter by ${label}`}
       accessibilityState={{ selected: isSelected }}
     >
-      <Text
-        style={[
-          styles.chipText,
-          { color: textColor },
-        ]}
-      >
-        {label}
-      </Text>
+      <Text style={[styles.chipText, { color: textColor }]}>{label}</Text>
     </TouchableOpacity>
   );
 });
