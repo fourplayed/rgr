@@ -393,9 +393,7 @@ export async function listAuditLogs(
 
 // ── Create User (calls edge function) ──
 
-export async function adminCreateUser(
-  input: CreateUserInput
-): Promise<
+export async function adminCreateUser(input: CreateUserInput): Promise<
   ServiceResult<{
     user: { id: string; email: string };
     profile: { id: string; role: UserRole; fullName: string };
