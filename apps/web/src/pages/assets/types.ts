@@ -1,4 +1,4 @@
-import type { AssetStatus, AssetCategory } from '@rgr/shared';
+import type { AssetStatus, AssetCategory, AssetSortField } from '@rgr/shared';
 
 /**
  * Filter state for the assets page
@@ -15,7 +15,7 @@ export interface AssetFilters {
  * Sort state for the assets page
  */
 export interface AssetSort {
-  field: string;
+  field: AssetSortField;
   direction: 'asc' | 'desc';
 }
 

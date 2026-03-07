@@ -1,5 +1,6 @@
 import { HazardSeveritySchema } from '../enums/HazardEnums';
 import type { HazardSeverity } from '../enums/HazardEnums';
+import type { Json } from '../database.types';
 import { safeParseEnum } from '../../utils/safeParseEnum';
 
 /**
@@ -21,7 +22,7 @@ export interface FreightAnalysis {
   maxSeverity: HazardSeverity | null;
   requiresAcknowledgment: boolean;
   blockedFromDeparture: boolean;
-  rawResponse: Record<string, unknown> | null;
+  rawResponse: Json | null;
   modelVersion: string | null;
   processingDurationMs: number | null;
   createdAt: string;
@@ -44,10 +45,10 @@ export interface FreightAnalysisRow {
   load_distribution_score: number | null;
   restraint_count: number | null;
   hazard_count: number;
-  max_severity: string | null;
+  max_severity: HazardSeverity | null;
   requires_acknowledgment: boolean;
   blocked_from_departure: boolean;
-  raw_response: Record<string, unknown> | null;
+  raw_response: Json | null;
   model_version: string | null;
   processing_duration_ms: number | null;
   created_at: string;

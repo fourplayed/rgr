@@ -58,7 +58,7 @@ export interface ProfileRow {
   id: string;
   email: string;
   full_name: string;
-  role: string;
+  role: UserRole;
   phone: string | null;
   avatar_url: string | null;
   is_active: boolean;
@@ -208,27 +208,6 @@ export function mapAdminProfileToUpdate(
   if (input.isActive !== undefined) updates.is_active = input.isActive;
 
   return updates;
-}
-
-/**
- * Auth result from sign-in/sign-up operations
- */
-export interface AuthResult {
-  profile: Profile | null;
-  accessToken: string | null;
-  refreshToken: string | null;
-  expiresAt: number | null;
-  error: string | null;
-}
-
-/**
- * Session information
- */
-export interface SessionInfo {
-  isAuthenticated: boolean;
-  profile: Profile | null;
-  accessToken: string | null;
-  expiresAt: number | null;
 }
 
 /**

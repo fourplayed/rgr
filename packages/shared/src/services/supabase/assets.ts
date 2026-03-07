@@ -25,7 +25,7 @@ import {
   CreateAssetInputSchema,
   UpdateAssetInputSchema,
 } from '../../types/entities/asset';
-import { AssetCategorySchema } from '../../types/enums/AssetEnums';
+import { AssetCategorySchema, AssetStatusSchema } from '../../types/enums/AssetEnums';
 import { DefectStatusSchema } from '../../types/enums/DefectEnums';
 import { MaintenanceStatusSchema, MaintenancePrioritySchema } from '../../types/enums/MaintenanceEnums';
 import { safeParseEnum } from '../../utils/safeParseEnum';
@@ -72,7 +72,7 @@ export interface ListAssetsParams {
   depotId?: string | null;
   depotIds?: string[];
   hasLocation?: boolean;
-  sortField?: string;
+  sortField?: AssetSortField;
   sortDirection?: 'asc' | 'desc';
   /** Cursor for keyset pagination — value of the sort field from last item */
   cursor?: string;
@@ -84,7 +84,7 @@ export interface ListAssetsParams {
 
 // ── Sort field mapping ──
 
-const SORT_FIELD_MAP = {
+export const SORT_FIELD_MAP = {
   assetNumber: 'asset_number',
   category: 'category',
   status: 'status',
@@ -93,6 +93,8 @@ const SORT_FIELD_MAP = {
   createdAt: 'created_at',
   updatedAt: 'updated_at',
 } as const;
+
+export type AssetSortField = keyof typeof SORT_FIELD_MAP;
 
 // ── Asset CRUD ──
 
@@ -160,10 +162,7 @@ export async function listAssets(
   }
 
   // Sort
-  const dbSortField = SORT_FIELD_MAP[sortField as keyof typeof SORT_FIELD_MAP];
-  if (!dbSortField) {
-    console.warn(`[listAssets] Unknown sort field "${sortField}", falling back to asset_number`);
-  }
+  const dbSortField = SORT_FIELD_MAP[sortField];
   const resolvedSortField = dbSortField || 'asset_number';
   const ascending = sortDirection === 'asc';
   query = query.order(resolvedSortField, { ascending });
@@ -216,7 +215,7 @@ export async function listAssets(
 
   interface ListAssetRow extends AssetRow {
     depot: { name: string; code: string } | null;
-    photos: [{ count: number }];
+    photos: { count: number }[];
   }
 
   const rows = data || [];
@@ -619,7 +618,14 @@ export async function getAssetMaintenance(
   }
 
   const total = count ?? 0;
-  const records = (data || []).map((row: MaintenanceRowWithJoins) => {
+
+  interface MaintenanceJoinRow extends MaintenanceRecordRow {
+    reporter: { full_name: string } | null;
+    assignee: { full_name: string } | null;
+    completer: { full_name: string } | null;
+  }
+
+  const records = ((data || []) as unknown as MaintenanceJoinRow[]).map((row) => {
     const { reporter, assignee, completer, ...maintenanceRow } = row;
     const record = mapRowToMaintenanceRecord(maintenanceRow as MaintenanceRecordRow);
     return {
@@ -716,7 +722,7 @@ export async function listDepots(): Promise<ServiceResult<Depot[]>> {
  * Asset count by status from RPC function
  */
 export interface AssetCountByStatus {
-  status: string;
+  status: AssetStatus;
   count: number;
 }
 
@@ -736,7 +742,7 @@ export async function getAssetCountsByStatus(): Promise<ServiceResult<AssetCount
   return {
     success: true,
     data: (data || []).map((row: { status: string; count: string | number }) => ({
-      status: row.status,
+      status: safeParseEnum(AssetStatusSchema, row.status, 'serviced'),
       count: typeof row.count === 'string' ? parseInt(row.count, 10) : row.count,
     })),
     error: null,
@@ -823,7 +829,7 @@ export async function getAssetScanContext(
  */
 export async function deleteScanEvent(
   id: string
-): Promise<ServiceResult<null>> {
+): Promise<ServiceResult<void>> {
   const supabase = getSupabaseClient();
 
   const { error } = await supabase
@@ -835,7 +841,7 @@ export async function deleteScanEvent(
     return { success: false, data: null, error: `Failed to delete scan event: ${error.message}` };
   }
 
-  return { success: true, data: null, error: null };
+  return { success: true, data: undefined, error: null };
 }
 
 // ── Helpers ──

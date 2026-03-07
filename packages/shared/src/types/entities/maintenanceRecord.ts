@@ -5,6 +5,7 @@ import {
   MaintenanceTypeSchema,
 } from '../enums/MaintenanceEnums';
 import type { MaintenanceStatus, MaintenancePriority, MaintenanceType } from '../enums/MaintenanceEnums';
+import type { Json } from '../database.types';
 import { safeParseEnum } from '../../utils/safeParseEnum';
 
 /**
@@ -26,7 +27,7 @@ export interface MaintenanceRecord {
   dueDate: string | null;
   estimatedCost: number | null;
   actualCost: number | null;
-  partsUsed: Record<string, unknown>[] | null;
+  partsUsed: Json | null;
   hazardAlertId: string | null;
   scanEventId: string | null;
   notes: string | null;
@@ -45,15 +46,15 @@ export interface MaintenanceRecordRow {
   completed_by: string | null;
   title: string;
   description: string | null;
-  priority: string;
-  status: string;
-  maintenance_type: string | null;
+  priority: MaintenancePriority;
+  status: MaintenanceStatus;
+  maintenance_type: MaintenanceType | null;
   scheduled_date: string | null;
   completed_at: string | null;
   due_date: string | null;
   estimated_cost: number | null;
   actual_cost: number | null;
-  parts_used: Record<string, unknown>[] | null;
+  parts_used: Json | null;
   hazard_alert_id: string | null;
   scan_event_id: string | null;
   notes: string | null;
@@ -105,7 +106,7 @@ export interface UpdateMaintenanceInput {
   dueDate?: string | null;
   estimatedCost?: number | null;
   actualCost?: number | null;
-  partsUsed?: Record<string, unknown>[] | null;
+  partsUsed?: Json | null;
   notes?: string | null;
 }
 
@@ -142,7 +143,7 @@ export const UpdateMaintenanceInputSchema = z.object({
   dueDate: z.string().date().nullable().optional(),
   estimatedCost: z.number().min(0).nullable().optional(),
   actualCost: z.number().min(0).nullable().optional(),
-  partsUsed: z.array(z.record(z.unknown())).nullable().optional(),
+  partsUsed: z.any().nullable().optional(),
   notes: z.string().nullable().optional(),
 });
 

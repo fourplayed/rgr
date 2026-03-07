@@ -5,7 +5,7 @@ import React from 'react';
 import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAssets } from '@/hooks/useAssetData';
 import { AssetStatusLabels, AssetStatusColors, AssetCategoryLabels } from '@rgr/shared';
-import type { AssetStatus, AssetCategory } from '@rgr/shared';
+import type { AssetStatus, AssetCategory, AssetSortField } from '@rgr/shared';
 import type { AssetFilters, AssetSort, AssetPagination } from '@/pages/assets/types';
 
 export interface AssetsTableProps {
@@ -14,7 +14,7 @@ export interface AssetsTableProps {
   sort: AssetSort;
   pagination: AssetPagination;
   selectedAssetId: string | null;
-  onSort: (field: string) => void;
+  onSort: (field: AssetSortField) => void;
   onPageChange: (page: number) => void;
   onSelectAsset: (id: string) => void;
 }
@@ -82,7 +82,7 @@ export const AssetsTable = React.memo<AssetsTableProps>(
                       col.sortable ? 'cursor-pointer select-none hover:text-blue-400 transition-colors' : ''
                     }`}
                     style={{ width: col.width }}
-                    onClick={col.sortable ? () => onSort(col.key) : undefined}
+                    onClick={col.sortable ? () => onSort(col.key as AssetSortField) : undefined}
                   >
                     <div className="flex items-center gap-1">
                       {col.label}

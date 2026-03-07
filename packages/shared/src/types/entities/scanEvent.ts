@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { ScanTypeSchema } from '../enums/ScanEnums';
 import type { ScanType } from '../enums/ScanEnums';
 import type { AssetCategory } from '../enums/AssetEnums';
+import type { Json } from '../database.types';
 import { safeParseEnum } from '../../utils/safeParseEnum';
 
 /**
@@ -19,7 +20,7 @@ export interface ScanEvent {
   heading: number | null;
   speed: number | null;
   locationDescription: string | null;
-  deviceInfo: Record<string, unknown> | null;
+  deviceInfo: Json | null;
   rawScanData: string | null;
   createdAt: string;
 }
@@ -31,7 +32,7 @@ export interface ScanEventRow {
   id: string;
   asset_id: string;
   scanned_by: string | null;
-  scan_type: string;
+  scan_type: ScanType;
   latitude: number | null;
   longitude: number | null;
   accuracy: number | null;
@@ -39,7 +40,7 @@ export interface ScanEventRow {
   heading: number | null;
   speed: number | null;
   location_description: string | null;
-  device_info: Record<string, unknown> | null;
+  device_info: Json | null;
   raw_scan_data: string | null;
   created_at: string;
 }
@@ -67,7 +68,7 @@ export interface CreateScanEventInput {
   heading?: number | null;
   speed?: number | null;
   locationDescription?: string | null;
-  deviceInfo?: Record<string, unknown> | null;
+  deviceInfo?: Json | null;
   rawScanData?: string | null;
 }
 
@@ -82,7 +83,7 @@ export const CreateScanEventInputSchema = z.object({
   heading: z.number().min(0).max(360).nullable().optional(),
   speed: z.number().min(0).nullable().optional(),
   locationDescription: z.string().max(255).nullable().optional(),
-  deviceInfo: z.record(z.unknown()).nullable().optional(),
+  deviceInfo: z.any().nullable().optional(),
   rawScanData: z.string().nullable().optional(),
 });
 

@@ -34,7 +34,7 @@ export interface PhotoRow {
   asset_id: string | null;
   scan_event_id: string | null;
   uploaded_by: string;
-  photo_type: string;
+  photo_type: PhotoType;
   storage_path: string;
   thumbnail_path: string | null;
   filename: string | null;

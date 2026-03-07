@@ -35,7 +35,7 @@ export interface DefectReportRow {
   scan_event_id: string | null;
   title: string;
   description: string | null;
-  status: string;
+  status: DefectStatus;
   maintenance_record_id: string | null;
   accepted_at: string | null;
   resolved_at: string | null;

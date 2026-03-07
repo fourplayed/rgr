@@ -5,6 +5,7 @@ import {
   ReviewOutcomeSchema,
 } from '../enums/HazardEnums';
 import type { HazardSeverity, HazardStatus, ReviewOutcome } from '../enums/HazardEnums';
+import type { Json } from '../database.types';
 import { safeParseEnum } from '../../utils/safeParseEnum';
 
 /**
@@ -24,7 +25,7 @@ export interface HazardAlert {
   evidencePoints: string[];
   recommendedActions: string[];
   locationInImage: string | null;
-  boundingBox: Record<string, unknown> | null;
+  boundingBox: Json | null;
   status: HazardStatus;
   acknowledgedBy: string | null;
   acknowledgedAt: string | null;
@@ -48,20 +49,20 @@ export interface HazardAlertRow {
   scan_event_id: string | null;
   hazard_rule_id: string | null;
   hazard_type: string;
-  severity: string;
+  severity: HazardSeverity;
   confidence_score: number;
   description: string;
-  evidence_points: string[];
-  recommended_actions: string[];
+  evidence_points: string[] | null;
+  recommended_actions: string[] | null;
   location_in_image: string | null;
-  bounding_box: Record<string, unknown> | null;
-  status: string;
+  bounding_box: Json | null;
+  status: HazardStatus;
   acknowledged_by: string | null;
   acknowledged_at: string | null;
   acknowledgment_type: string | null;
   manager_review_by: string | null;
   manager_review_at: string | null;
-  review_outcome: string | null;
+  review_outcome: ReviewOutcome | null;
   review_notes: string | null;
   created_at: string;
   updated_at: string;

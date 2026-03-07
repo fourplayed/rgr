@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '../../types/database.types';
 
 /**
  * Supabase client configuration
@@ -18,7 +19,7 @@ export interface SupabaseConfig {
 /**
  * Singleton Supabase client instance
  */
-let supabaseClient: SupabaseClient | null = null;
+let supabaseClient: SupabaseClient<Database> | null = null;
 let currentConfig: SupabaseConfig | null = null;
 
 /**
@@ -35,7 +36,7 @@ let currentConfig: SupabaseConfig | null = null;
  * });
  * ```
  */
-export function initSupabase(config: SupabaseConfig): SupabaseClient {
+export function initSupabase(config: SupabaseConfig): SupabaseClient<Database> {
   // Return existing client if already initialized
   if (supabaseClient) {
     if (config.url !== currentConfig?.url) {
@@ -58,7 +59,7 @@ export function initSupabase(config: SupabaseConfig): SupabaseClient {
   }
 
   currentConfig = config;
-  supabaseClient = createClient(config.url, config.anonKey, {
+  supabaseClient = createClient<Database>(config.url, config.anonKey, {
     auth: {
       autoRefreshToken: true,
       persistSession: true,
@@ -91,7 +92,7 @@ export function initSupabase(config: SupabaseConfig): SupabaseClient {
  * @throws Error if client not initialized
  * @returns Supabase client
  */
-export function getSupabaseClient(): SupabaseClient {
+export function getSupabaseClient(): SupabaseClient<Database> {
   if (!supabaseClient) {
     throw new Error(
       'Supabase client not initialized. Call initSupabase() first.'
@@ -128,13 +129,6 @@ export function resetSupabaseClient(): void {
   currentConfig = null;
 }
 
-/**
- * Type helper for Supabase queries
- * Returns a typed table reference for query building
- */
-export function getTable<T extends string>(tableName: T) {
-  return getSupabaseClient().from(tableName);
-}
-
 // Re-export types from supabase-js
-export type { SupabaseClient } from '@supabase/supabase-js';
+export type { SupabaseClient, RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+export type { Database } from '../../types/database.types';

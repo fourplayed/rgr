@@ -380,7 +380,7 @@ export async function getDefectReportStats(): Promise<ServiceResult<DefectReport
     return { success: false, data: null, error: `Failed to fetch defect stats: ${error.message}` };
   }
 
-  const stats = data as DefectReportStats;
+  const stats = data as unknown as DefectReportStats;
 
   return {
     success: true,

@@ -17,6 +17,7 @@ import {
 import type {
   AssetStatus,
   AssetCategory,
+  AssetSortField,
   CreateScanEventInput,
   UpdateAssetInput,
 } from '@rgr/shared';
@@ -85,7 +86,7 @@ export function useInfiniteAssetList(filters?: {
         search?: string;
         cursor?: string;
         cursorId?: string;
-        sortField: string;
+        sortField: AssetSortField;
         sortDirection: 'asc' | 'desc';
       } = {
         pageSize,
@@ -143,7 +144,7 @@ export function useAssetList(filters?: {
         categories?: AssetCategory[];
         depotIds?: string[];
         search?: string;
-        sortField: string;
+        sortField: AssetSortField;
         sortDirection: 'asc' | 'desc';
       } = {
         page: filters?.page ?? 1,

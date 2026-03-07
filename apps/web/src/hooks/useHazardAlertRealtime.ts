@@ -12,14 +12,14 @@
  */
 import { useEffect, useCallback, useRef, useState } from 'react';
 import { getSupabaseClient } from '@rgr/shared';
-import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@rgr/shared';
+import type { HazardSeverity, HazardStatus } from '@rgr/shared';
 
 // ============================================================================
 // Types
 // ============================================================================
 
-export type HazardSeverity = 'low' | 'medium' | 'high' | 'critical';
-export type HazardAlertStatus = 'active' | 'acknowledged' | 'resolved' | 'dismissed' | 'escalated';
+export type HazardAlertStatus = HazardStatus;
 
 export interface RealtimeHazardAlert {
   id: string;

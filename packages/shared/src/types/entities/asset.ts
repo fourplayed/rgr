@@ -24,6 +24,8 @@ export const TrailerSubtypes = [
 
 export type TrailerSubtype = (typeof TrailerSubtypes)[number];
 
+export const TrailerSubtypeSchema = z.enum(TrailerSubtypes);
+
 /**
  * Map of asset categories to their available subtypes
  * Note: Dollies have no subtypes
@@ -40,7 +42,7 @@ export interface Asset {
   id: string;
   assetNumber: string;
   category: AssetCategory;
-  subtype: string | null;
+  subtype: TrailerSubtype | null;
   status: AssetStatus;
   description: string | null;
   yearManufactured: number | null;
@@ -70,9 +72,9 @@ export interface Asset {
 export interface AssetRow {
   id: string;
   asset_number: string;
-  category: string;
+  category: AssetCategory;
   subtype: string | null;
-  status: string;
+  status: AssetStatus;
   description: string | null;
   year_manufactured: number | null;
   make: string | null;
@@ -112,7 +114,7 @@ export interface AssetWithRelations extends Asset {
 export interface CreateAssetInput {
   assetNumber: string;
   category: AssetCategory;
-  subtype?: string | null;
+  subtype?: TrailerSubtype | null;
   status?: AssetStatus;
   description?: string | null;
   yearManufactured?: number | null;
@@ -132,7 +134,7 @@ export interface CreateAssetInput {
 export interface UpdateAssetInput {
   assetNumber?: string;
   category?: AssetCategory;
-  subtype?: string | null;
+  subtype?: TrailerSubtype | null;
   status?: AssetStatus;
   description?: string | null;
   yearManufactured?: number | null;
@@ -153,7 +155,7 @@ export interface UpdateAssetInput {
 export const CreateAssetInputSchema = z.object({
   assetNumber: z.string().min(1).max(20),
   category: AssetCategorySchema,
-  subtype: z.string().max(50).nullable().optional(),
+  subtype: TrailerSubtypeSchema.nullable().optional(),
   status: AssetStatusSchema.optional(),
   description: z.string().nullable().optional(),
   yearManufactured: z.number().int().min(1900).max(2100).nullable().optional(),
@@ -184,7 +186,7 @@ export function mapRowToAsset(row: AssetRow): Asset {
     id: row.id,
     assetNumber: row.asset_number,
     category: safeParseEnum(AssetCategorySchema, row.category, 'trailer'),
-    subtype: row.subtype,
+    subtype: row.subtype ? safeParseEnum(TrailerSubtypeSchema, row.subtype, null) : null,
     status: safeParseEnum(AssetStatusSchema, row.status, 'serviced'),
     description: row.description,
     yearManufactured: row.year_manufactured,

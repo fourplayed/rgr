@@ -8,8 +8,8 @@ import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { useTheme } from '@/hooks/useTheme';
-import { hasRoleLevel, UserRole } from '@rgr/shared';
-import type { Profile } from '@rgr/shared';
+import { hasRoleLevel, UserRole, SORT_FIELD_MAP } from '@rgr/shared';
+import type { Profile, AssetSortField } from '@rgr/shared';
 import type { AssetStatus, AssetCategory } from '@rgr/shared';
 import type {
   AssetFilters,
@@ -43,7 +43,7 @@ export interface AssetsActions {
   setSearch: (search: string) => void;
   setFilters: (filters: Partial<AssetFilters>) => void;
   resetFilters: () => void;
-  setSort: (field: string) => void;
+  setSort: (field: AssetSortField) => void;
   setPage: (page: number) => void;
   selectAsset: (id: string | null) => void;
   setDetailTab: (tab: AssetDetailTab) => void;
@@ -75,7 +75,10 @@ function parseSearchParams(params: URLSearchParams): {
     ? (categoryParam.split(',') as AssetCategory[])
     : [];
 
-  const sortField = params.get('sortField') ?? DEFAULT_ASSET_SORT.field;
+  const rawSortField = params.get('sortField') ?? DEFAULT_ASSET_SORT.field;
+  const sortField: AssetSortField = rawSortField in SORT_FIELD_MAP
+    ? (rawSortField as AssetSortField)
+    : DEFAULT_ASSET_SORT.field;
   const sortDir = params.get('sortDir');
   const sortDirection: 'asc' | 'desc' = sortDir === 'desc' ? 'desc' : 'asc';
 
@@ -166,7 +169,7 @@ export function useAssetsLogic(): { state: AssetsState; actions: AssetsActions }
         });
       },
 
-      setSort: (field: string) => {
+      setSort: (field: AssetSortField) => {
         const currentDir = parsed.sort.field === field ? parsed.sort.direction : 'asc';
         const newDir = parsed.sort.field === field && currentDir === 'asc' ? 'desc' : 'asc';
         updateParams({ sortField: field, sortDir: newDir, page: null });

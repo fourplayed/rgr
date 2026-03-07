@@ -197,7 +197,7 @@ export async function getMaintenanceById(
     return { success: false, data: null, error: 'Maintenance record not found' };
   }
 
-  const { reporter, assignee, completer, ...maintenanceRow } = data as MaintenanceRowWithJoins & { assignee: { full_name: string } | null; completer: { full_name: string } | null };
+  const { reporter, assignee, completer, ...maintenanceRow } = data as unknown as MaintenanceRowWithJoins & { assignee: { full_name: string } | null; completer: { full_name: string } | null };
   const record = mapRowToMaintenanceRecord(maintenanceRow as MaintenanceRecordRow);
 
   return {
