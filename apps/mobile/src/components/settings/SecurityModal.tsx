@@ -389,11 +389,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.chrome,
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
-    overflow: 'hidden',
     maxHeight: '85%',
   },
   scrollView: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
   },
   scrollContent: {
     paddingHorizontal: spacing.lg,

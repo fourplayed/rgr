@@ -467,7 +467,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.chrome,
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
-    overflow: 'hidden',
   },
 
   // Scrollable content
