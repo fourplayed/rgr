@@ -5,6 +5,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  LayoutAnimation,
+  Platform,
+  UIManager,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Asset, AssetWithRelations, AssetScanContext } from '@rgr/shared';
@@ -13,9 +16,24 @@ import { AssetInfoCard } from '../assets/AssetInfoCard';
 import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
 import { SheetFooter } from '../common/SheetFooter';
+import { SegmentedTabs } from '../common/SegmentedTabs';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, shadows, fontFamily as fonts } from '../../theme/spacing';
 import type { MatchedDepot } from '../../hooks/scan/useScanActionFlow';
+
+// Enable LayoutAnimation on Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+// ── Tab configuration ─────────────────────────────────────────────────────────
+
+type ScanTab = 'actions' | 'openItems';
+
+const SCAN_TABS = [
+  { key: 'actions' as const, label: 'Actions' },
+  { key: 'openItems' as const, label: 'Open Items' },
+] as const;
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -67,6 +85,11 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
 
   // Single-select action state (radio behavior)
   const [selectedAction, setSelectedAction] = useState<ConfirmAction>(null);
+  const [activeTab, setActiveTab] = useState<ScanTab>('actions');
+
+  // Show tabs only for mechanics with existing open items
+  const hasOpenItems = props.variant === 'mechanic' && props.scanContext != null
+    && (props.scanContext.openDefectCount + props.scanContext.activeTaskCount) > 0;
 
   const toggleAction = (action: ConfirmAction) => {
     setSelectedAction(prev => (prev === action ? null : action));
@@ -80,7 +103,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
   const buttonColor = selectedAction === 'maintenance'
     ? colors.warning
     : selectedAction === 'defect'
-      ? '#FACC15'
+      ? colors.defectYellow
       : selectedAction === 'photo'
         ? colors.violet
         : colors.success;
@@ -106,8 +129,8 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
-        bounces={true}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         {/* ── Asset detail card (collapsible) ── */}
         <View style={styles.assetCard}>
@@ -119,7 +142,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
           <View style={styles.locationRow}>
             <Ionicons name="location" size={16} color={colors.success} />
             <Text style={styles.locationText}>
-              Location automatically updated to <Text style={styles.locationName}>{matchedDepot.depot.name}</Text>
+              Location updated to <Text style={styles.locationName}>{matchedDepot.depot.name}</Text>
               {' '}({matchedDepot.distanceKm < 1
                 ? `${Math.round(matchedDepot.distanceKm * 1000)}m away`
                 : `${matchedDepot.distanceKm.toFixed(1)}km away`})
@@ -127,59 +150,106 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
           </View>
         )}
 
-        {/* Open Items (mechanic only) */}
-        {props.variant === 'mechanic' && props.scanContext && (
-          <OpenItemsSection
-            scanContext={props.scanContext}
-            onDefectPress={props.onDefectPress}
-            onTaskPress={props.onTaskPress}
-          />
+        {/* ── Tabbed layout (mechanic with open items) or flat actions ── */}
+        {props.variant === 'mechanic' && hasOpenItems ? (
+          <>
+            <View style={styles.tabContainer}>
+              <SegmentedTabs
+                tabs={SCAN_TABS}
+                activeTab={activeTab}
+                onTabPress={setActiveTab}
+              />
+            </View>
+            {activeTab === 'actions' ? (
+              <View style={styles.checkboxList}>
+                <CheckboxOption
+                  icon="camera"
+                  label="Capture Photo"
+                  description="Take a photo for visual records"
+                  checked={props.photoCompleted || selectedAction === 'photo'}
+                  completed={props.photoCompleted}
+                  onToggle={() => toggleAction('photo')}
+                  disabled={disabled || props.photoCompleted}
+                  accentColor={colors.violet}
+                />
+                <CheckboxOption
+                  icon="warning"
+                  label="Report Defect"
+                  description="Log severity, description, and photo evidence"
+                  checked={defectCompleted || selectedAction === 'defect'}
+                  completed={defectCompleted}
+                  onToggle={() => toggleAction('defect')}
+                  disabled={disabled || defectCompleted}
+                  accentColor={colors.defectYellow}
+                />
+                <CheckboxOption
+                  icon="construct"
+                  label="Schedule Maintenance"
+                  description="Create a task with priority and work details"
+                  checked={maintenanceCompleted || selectedAction === 'maintenance'}
+                  completed={maintenanceCompleted}
+                  onToggle={() => toggleAction('maintenance')}
+                  disabled={disabled || maintenanceCompleted}
+                  accentColor={colors.warning}
+                />
+              </View>
+            ) : (
+              props.scanContext && (
+                <OpenItemsSection
+                  scanContext={props.scanContext}
+                  onDefectPress={props.onDefectPress}
+                  onTaskPress={props.onTaskPress}
+                  alwaysExpanded
+                />
+              )
+            )}
+          </>
+        ) : (
+          <>
+            <Text style={styles.checkboxSectionTitle}>Actions</Text>
+            <View style={styles.checkboxList}>
+              <CheckboxOption
+                icon="camera"
+                label="Capture Photo"
+                description="Take a photo for visual records"
+                checked={props.photoCompleted || selectedAction === 'photo'}
+                completed={props.photoCompleted}
+                onToggle={() => toggleAction('photo')}
+                disabled={disabled || props.photoCompleted}
+                accentColor={colors.violet}
+              />
+              {props.variant === 'mechanic' && (
+                <>
+                  <CheckboxOption
+                    icon="warning"
+                    label="Report Defect"
+                    description="Log severity, description, and photo evidence"
+                    checked={defectCompleted || selectedAction === 'defect'}
+                    completed={defectCompleted}
+                    onToggle={() => toggleAction('defect')}
+                    disabled={disabled || defectCompleted}
+                    accentColor={colors.defectYellow}
+                  />
+                  <CheckboxOption
+                    icon="construct"
+                    label="Schedule Maintenance"
+                    description="Create a task with priority and work details"
+                    checked={maintenanceCompleted || selectedAction === 'maintenance'}
+                    completed={maintenanceCompleted}
+                    onToggle={() => toggleAction('maintenance')}
+                    disabled={disabled || maintenanceCompleted}
+                    accentColor={colors.warning}
+                  />
+                </>
+              )}
+            </View>
+          </>
         )}
-
-        {/* Action options (single-select radio) */}
-        <Text style={styles.checkboxSectionTitle}>Role Specific Options</Text>
-        <View style={styles.checkboxList}>
-          <CheckboxOption
-            icon="camera"
-            label="Capture Photo"
-            description="Capture a photo of the asset for visual records and condition tracking"
-            checked={props.photoCompleted || selectedAction === 'photo'}
-            completed={props.photoCompleted}
-            onToggle={() => toggleAction('photo')}
-            disabled={disabled || props.photoCompleted}
-            accentColor={colors.violet}
-          />
-          {props.variant === 'mechanic' && (
-            <>
-              <CheckboxOption
-                icon="warning"
-                label="Report Defect"
-                description="Log a defect report including severity, description, and optional photo evidence"
-                checked={defectCompleted || selectedAction === 'defect'}
-                completed={defectCompleted}
-                onToggle={() => toggleAction('defect')}
-                disabled={disabled || defectCompleted}
-                accentColor={'#FACC15'}
-              />
-              <CheckboxOption
-                icon="construct"
-                label="Schedule Maintenance"
-                description="Schedule a maintenance task with priority, assignee, and work details"
-                checked={maintenanceCompleted || selectedAction === 'maintenance'}
-                completed={maintenanceCompleted}
-                onToggle={() => toggleAction('maintenance')}
-                disabled={disabled || maintenanceCompleted}
-                accentColor={colors.warning}
-              />
-            </>
-          )}
-        </View>
 
       </ScrollView>
 
       {/* ── Pinned footer (outside ScrollView) ── */}
       <SheetFooter>
-        {/* Done / Confirm button */}
         <Button
           onPress={() => props.onConfirm(selectedAction)}
           disabled={disabled}
@@ -190,7 +260,6 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
         >
           {buttonLabel}
         </Button>
-
       </SheetFooter>
     </View>
   );
@@ -202,70 +271,140 @@ function OpenItemsSection({
   scanContext,
   onDefectPress,
   onTaskPress,
+  alwaysExpanded = false,
 }: {
   scanContext: AssetScanContext;
   onDefectPress?: ((id: string) => void) | undefined;
   onTaskPress?: ((id: string) => void) | undefined;
+  alwaysExpanded?: boolean;
 }) {
   const { openDefects, activeTasks, openDefectCount, activeTaskCount } = scanContext;
+  const [expanded, setExpanded] = useState(false);
 
-  if (openDefectCount === 0 && activeTaskCount === 0) return null;
+  const totalCount = openDefectCount + activeTaskCount;
+  if (totalCount === 0) return null;
 
   const extraDefects = openDefectCount - openDefects.length;
   const extraTasks = activeTaskCount - activeTasks.length;
 
+  const toggleExpanded = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpanded(prev => !prev);
+  };
+
+  const isExpanded = alwaysExpanded || expanded;
+
   return (
     <>
-      <Text style={styles.checkboxSectionTitle}>Open Items</Text>
-      <View style={styles.openItemsList}>
-        {openDefects.map((defect, i) => (
-          <TouchableOpacity
-            key={defect.id}
-            style={[
-              styles.openItemRow,
-              i < openDefects.length + activeTasks.length - 1 && styles.openItemRowBorder,
-            ]}
-            onPress={() => onDefectPress?.(defect.id)}
-            activeOpacity={0.6}
-            accessibilityRole="button"
-            accessibilityLabel={`Defect: ${defect.title}`}
-          >
-            <Ionicons name="warning" size={20} color="#FACC15" />
-            <View style={styles.openItemTextColumn}>
-              <Text style={styles.openItemTitle} numberOfLines={1}>{defect.title}</Text>
-              <Text style={styles.openItemStatus}>{DefectStatusLabels[defect.status] ?? defect.status}</Text>
+      {/* Collapsible header (hidden when rendered inside a tab) */}
+      {!alwaysExpanded && (
+        <TouchableOpacity
+          style={styles.openItemsHeader}
+          onPress={toggleExpanded}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={`Open items, ${totalCount} total. ${expanded ? 'Collapse' : 'Expand'}`}
+        >
+          <Text style={styles.checkboxSectionTitle}>
+            Open Items
+          </Text>
+          <View style={styles.openItemsHeaderRight}>
+            <View style={styles.openItemsCountBadge}>
+              <Text style={styles.openItemsCountText}>{totalCount}</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
-          </TouchableOpacity>
-        ))}
-        {extraDefects > 0 && (
-          <Text style={styles.openItemMore}>+{extraDefects} more open {extraDefects === 1 ? 'defect' : 'defects'}</Text>
-        )}
+            <Ionicons
+              name={expanded ? 'chevron-up' : 'chevron-down'}
+              size={18}
+              color={colors.textSecondary}
+            />
+          </View>
+        </TouchableOpacity>
+      )}
 
-        {activeTasks.map((task, i) => (
-          <TouchableOpacity
-            key={task.id}
-            style={[
-              styles.openItemRow,
-              i < activeTasks.length - 1 && styles.openItemRowBorder,
-            ]}
-            onPress={() => onTaskPress?.(task.id)}
-            activeOpacity={0.6}
-            accessibilityRole="button"
-            accessibilityLabel={`Task: ${task.title}`}
-          >
-            <Ionicons name="construct" size={20} color={colors.warning} />
-            <View style={styles.openItemTextColumn}>
-              <Text style={styles.openItemTitle} numberOfLines={1}>{task.title}</Text>
-              <Text style={styles.openItemStatus}>{MaintenanceStatusLabels[task.status] ?? task.status}</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
-          </TouchableOpacity>
-        ))}
-        {extraTasks > 0 && (
-          <Text style={styles.openItemMore}>+{extraTasks} more {extraTasks === 1 ? 'task' : 'tasks'}</Text>
-        )}
-      </View>
+      {/* Content */}
+      {isExpanded && (
+        <View style={styles.openItemsList}>
+          {openDefects.map((defect, i) => (
+            <TouchableOpacity
+              key={defect.id}
+              style={[
+                styles.openItemRow,
+                i < openDefects.length + activeTasks.length - 1 && styles.openItemRowBorder,
+              ]}
+              onPress={() => onDefectPress?.(defect.id)}
+              activeOpacity={0.6}
+              accessibilityRole="button"
+              accessibilityLabel={`Defect: ${defect.title}`}
+            >
+              <View style={[styles.openItemIconContainer, { backgroundColor: `${colors.defectYellow}18` }]}>
+                <Ionicons name="warning" size={18} color={colors.defectYellow} />
+              </View>
+              <View style={styles.openItemTextColumn}>
+                <Text style={[styles.openItemTypeLabel, { color: colors.defectYellow }]}>Defect Report</Text>
+                <Text style={styles.openItemTitle} numberOfLines={1}>{defect.title}</Text>
+                <View style={styles.openItemStatusRow}>
+                  <View style={[styles.openItemStatusDot, { backgroundColor: colors.defectYellow }]} />
+                  <Text style={styles.openItemStatus}>{DefectStatusLabels[defect.status] ?? defect.status}</Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={colors.textDisabled} />
+            </TouchableOpacity>
+          ))}
+          {extraDefects > 0 && (
+            <TouchableOpacity
+              style={styles.openItemMoreRow}
+              onPress={() => onDefectPress?.(openDefects[0]?.id ?? '')}
+              activeOpacity={0.6}
+              accessibilityRole="link"
+              accessibilityLabel={`View ${extraDefects} more defects`}
+            >
+              <Text style={[styles.openItemMore, { color: colors.defectYellow }]}>
+                +{extraDefects} more {extraDefects === 1 ? 'defect' : 'defects'}
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {activeTasks.map((task, i) => (
+            <TouchableOpacity
+              key={task.id}
+              style={[
+                styles.openItemRow,
+                i < activeTasks.length - 1 && styles.openItemRowBorder,
+              ]}
+              onPress={() => onTaskPress?.(task.id)}
+              activeOpacity={0.6}
+              accessibilityRole="button"
+              accessibilityLabel={`Task: ${task.title}`}
+            >
+              <View style={[styles.openItemIconContainer, { backgroundColor: `${colors.warning}18` }]}>
+                <Ionicons name="construct" size={18} color={colors.warning} />
+              </View>
+              <View style={styles.openItemTextColumn}>
+                <Text style={[styles.openItemTypeLabel, { color: colors.warning }]}>Maintenance Task</Text>
+                <Text style={styles.openItemTitle} numberOfLines={1}>{task.title}</Text>
+                <View style={styles.openItemStatusRow}>
+                  <View style={[styles.openItemStatusDot, { backgroundColor: colors.warning }]} />
+                  <Text style={styles.openItemStatus}>{MaintenanceStatusLabels[task.status] ?? task.status}</Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={colors.textDisabled} />
+            </TouchableOpacity>
+          ))}
+          {extraTasks > 0 && (
+            <TouchableOpacity
+              style={styles.openItemMoreRow}
+              onPress={() => onTaskPress?.(activeTasks[0]?.id ?? '')}
+              activeOpacity={0.6}
+              accessibilityRole="link"
+              accessibilityLabel={`View ${extraTasks} more tasks`}
+            >
+              <Text style={[styles.openItemMore, { color: colors.warning }]}>
+                +{extraTasks} more {extraTasks === 1 ? 'task' : 'tasks'}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
     </>
   );
 }
@@ -340,7 +479,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xl,
+    paddingBottom: spacing.lg,
   },
 
   // Asset detail card
@@ -362,18 +501,24 @@ const styles = StyleSheet.create({
   locationText: {
     flex: 1,
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
   },
   locationName: {
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
+  },
+
+  // Tab container
+  tabContainer: {
+    marginTop: spacing.base,
+    marginBottom: spacing.sm,
   },
 
   // Checkbox section
   checkboxSectionTitle: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -381,7 +526,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   checkboxList: {
-    gap: spacing.md,
+    gap: spacing.sm,
   },
   checkboxRow: {
     flexDirection: 'row',
@@ -400,7 +545,7 @@ const styles = StyleSheet.create({
   },
   checkboxLabel: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -410,15 +555,41 @@ const styles = StyleSheet.create({
   },
   checkboxDescription: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     marginTop: 2,
   },
 
   // Open Items section
+  openItemsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: spacing.base,
+    marginBottom: spacing.sm,
+  },
+  openItemsHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  openItemsCountBadge: {
+    backgroundColor: colors.warning,
+    borderRadius: borderRadius.full,
+    minWidth: 22,
+    height: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xs,
+  },
+  openItemsCountText: {
+    fontSize: 11,
+    fontFamily: fonts.bold,
+    color: colors.textInverse,
+  },
   openItemsList: {
     backgroundColor: colors.background,
-    borderRadius: borderRadius.sm,
+    borderRadius: borderRadius.base,
     borderWidth: 1,
     borderColor: colors.border,
     overflow: 'hidden',
@@ -426,7 +597,7 @@ const styles = StyleSheet.create({
   openItemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: spacing.md,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.base,
   },
@@ -434,33 +605,60 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
+  openItemIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: borderRadius.base,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   openItemTextColumn: {
     flex: 1,
   },
+  openItemTypeLabel: {
+    fontSize: 11,
+    fontFamily: fonts.bold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
   openItemTitle: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.regular,
     color: colors.text,
+    marginTop: 1,
+  },
+  openItemStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginTop: 3,
+  },
+  openItemStatusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   openItemStatus: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
-    marginTop: 1,
+  },
+  openItemMoreRow: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.base,
   },
   openItemMore: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
-    color: '#94A3B8',
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.base,
+    fontFamily: fonts.bold,
     textAlign: 'center',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 
-  // Confirm button (separate, below action card)
+  // Confirm button
   confirmButton: {
-    marginTop: -spacing.sm,
     ...shadows.sm,
   },
-
 });
