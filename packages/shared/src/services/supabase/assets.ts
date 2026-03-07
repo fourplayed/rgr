@@ -54,13 +54,6 @@ interface ScanEventRowWithJoins extends ScanEventRow {
   assets: { asset_number: string; category: string } | null;
 }
 
-/** Maintenance record row with joined reporter, assignee, and completer */
-interface MaintenanceRowWithJoins extends MaintenanceRecordRow {
-  reporter: { full_name: string } | null;
-  assignee: { full_name: string } | null;
-  completer: { full_name: string } | null;
-}
-
 // ── Types ──
 
 export interface ListAssetsParams {
