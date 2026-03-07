@@ -18,6 +18,7 @@ import { RGR_COLORS } from '@/styles/color-palette';
 import type { DepotLocation } from '@/constants/fleetMap';
 import type { AssetLocation } from '@/hooks/useFleetData';
 import { useDepots } from '@/hooks/useAssetData';
+import { escapeHtml, isValidHexColor } from '@rgr/shared';
 import type { Depot } from '@rgr/shared';
 
 export interface FleetMapHandle {
@@ -330,8 +331,11 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
     };
 
     depotLocations.forEach((depot: DepotLocation) => {
-      const depotColor = depot.color;
+      const depotColor = isValidHexColor(depot.color) ? depot.color : DEFAULT_DEPOT_COLOR;
       const tipTextColor = depot.name === 'Newman' ? '#6366f1' : depotColor;
+      const safeName = escapeHtml(depot.name);
+      const safeTrailers = escapeHtml(String(depot.trailers));
+      const safeDollies = escapeHtml(String(depot.dollies));
       const layout = depotLayout[depot.name] ?? { stem: 68, anchor: 'center', z: 10 };
 
       const offsetX = layout.anchor === 'west' ? '-100%' : layout.anchor === 'east' ? '0%' : '-50%';
@@ -352,14 +356,14 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
           <div style="width: 2px; height: ${layout.stem}px; background: linear-gradient(to bottom, ${depotColor}cc, ${depotColor}44 70%, transparent); pointer-events: none;"></div>
           <div style="position: absolute; top: 0; width: 4px; height: ${layout.stem}px; background: linear-gradient(to bottom, ${depotColor}25, ${depotColor}0a 60%, transparent); filter: blur(2px); pointer-events: none; left: 50%; transform: translateX(-50%);"></div>
           <div class="depot-label-wrap" style="position: absolute; top: -7px; left: 50%; transform: translateX(${offsetX}); display: inline-flex; align-items: center; pointer-events: auto; cursor: pointer;">
-            <span class="depot-label" style="position: relative; z-index: 1; color: white; font-family: 'Lato', sans-serif; font-size: 14px; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; text-shadow: 0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.6); background: ${depotColor}cc; border: 1px solid ${depotColor}; padding: 8px 10px 12px 10px; border-radius: 8px; backdrop-filter: blur(4px);">${depot.name}</span>
+            <span class="depot-label" style="position: relative; z-index: 1; color: white; font-family: 'Lato', sans-serif; font-size: 14px; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; text-shadow: 0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.6); background: ${depotColor}cc; border: 1px solid ${depotColor}; padding: 8px 10px 12px 10px; border-radius: 8px; backdrop-filter: blur(4px);">${safeName}</span>
           </div>
           <div class="depot-tooltip" style="position: absolute; top: -7px; ${tipPosition} ${tipOrigin} ${tipHidden} line-height: 1.4; white-space: nowrap; color: white; font-family: 'Lato', sans-serif; font-size: 12px; font-weight: 600; background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: none; padding: 0; ${tipRadius} opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease; pointer-events: none; overflow: hidden;">
             <div style="display: grid; grid-template-columns: auto auto; line-height: 1;">
               <div style="padding: 8px 10px; border-right: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1); color: ${tipTextColor};">TL</div>
-              <div style="padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.1); color: ${tipTextColor}; font-weight: 800;">${depot.trailers}</div>
+              <div style="padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.1); color: ${tipTextColor}; font-weight: 800;">${safeTrailers}</div>
               <div style="padding: 8px 10px; border-right: 1px solid rgba(255,255,255,0.1); color: ${tipTextColor};">DL</div>
-              <div style="padding: 8px 10px; color: ${tipTextColor}; font-weight: 800;">${depot.dollies}</div>
+              <div style="padding: 8px 10px; color: ${tipTextColor}; font-weight: 800;">${safeDollies}</div>
             </div>
           </div>
           <div style="width: 5px; height: 5px; border-radius: 50%; background-color: ${depotColor}; box-shadow: 0 0 6px ${depotColor}, 0 0 12px ${depotColor}80; cursor: pointer; flex-shrink: 0;"></div>

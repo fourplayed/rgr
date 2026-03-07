@@ -14,16 +14,18 @@ const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Assets = lazy(() => import('./pages/Assets'));
 const StubPage = lazy(() => import('./pages/StubPage'));
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 2 * 60 * 1000,      // 2 minutes
-      gcTime: 10 * 60 * 1000,         // 10 minutes
-      refetchOnWindowFocus: false,
-      retry: 1,
+function createQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 2 * 60 * 1000,      // 2 minutes
+        gcTime: 10 * 60 * 1000,         // 10 minutes
+        refetchOnWindowFocus: false,
+        retry: 1,
+      },
     },
-  },
-});
+  });
+}
 
 /**
  * Protected Route wrapper - redirects to login if not authenticated
@@ -54,6 +56,8 @@ function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode;
 }
 
 function App() {
+  // useState (not useMemo) ensures QueryClient survives React fast-refresh
+  const [queryClient] = useState(() => createQueryClient());
   const [isInitialized, setIsInitialized] = useState(false);
   const [initError, setInitError] = useState<string | null>(null);
   const { checkAuth } = useAuthStore();
@@ -71,6 +75,7 @@ function App() {
         unsubscribeAuth = onAuthStateChange((event, session) => {
           if (event === 'SIGNED_OUT' || !session) {
             useAuthStore.setState({ user: null, isAuthenticated: false, error: null });
+            queryClient.clear();
           } else if (event === 'TOKEN_REFRESHED') {
             // Refresh profile to pick up role/status changes
             useAuthStore.getState().checkAuth();
@@ -134,7 +139,7 @@ function App() {
         <PersistentBackground />
 
         {/* Global dev tool panels — fixed to viewport, persist across routes */}
-        <DebugToolbar />
+        {import.meta.env.DEV && <DebugToolbar />}
 
         <Suspense fallback={
           <div className="relative z-10 flex items-center justify-center min-h-screen">

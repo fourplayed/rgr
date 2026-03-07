@@ -89,10 +89,26 @@ export interface RateLimitResult {
   retryAfterSeconds: number;
 }
 
+const MAX_MAP_ENTRIES = 50;
+
+function pruneExpiredEntries(): void {
+  const now = Date.now();
+  for (const [key, entry] of rateLimitMap) {
+    if (entry.lockoutUntil > 0 && now >= entry.lockoutUntil + MAX_LOCKOUT_SECONDS * 1000) {
+      rateLimitMap.delete(key);
+    }
+  }
+}
+
 /**
  * Check if an auth attempt is allowed for the given email.
  */
 export function checkRateLimit(email: string): RateLimitResult {
+  // Prune stale entries to prevent unbounded map growth
+  if (rateLimitMap.size > MAX_MAP_ENTRIES) {
+    pruneExpiredEntries();
+  }
+
   const key = normalizeEmail(email);
   const entry = rateLimitMap.get(key);
 

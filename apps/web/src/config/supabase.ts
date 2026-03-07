@@ -46,8 +46,10 @@ export function initializeSupabase() {
     const config = getSupabaseConfig();
     const client = initSupabase(config);
 
-    console.log('[Supabase] Client initialized successfully');
-    console.log('[Supabase] Project URL:', config.url);
+    if (import.meta.env.DEV) {
+      console.log('[Supabase] Client initialized successfully');
+      console.log('[Supabase] Project URL:', config.url);
+    }
 
     return client;
   } catch (error) {

@@ -15,6 +15,7 @@ export { safeParseEnum } from './safeParseEnum';
 export { formatAssetNumber } from './formatAssetNumber';
 export { withRetry } from './withRetry';
 export type { RetryOptions } from './withRetry';
+export { escapeHtml, isValidHexColor } from './sanitize';
 
 /**
  * Validate email format

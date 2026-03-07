@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { signInWithEmail, signOut, getSession, fetchProfile, updateLastLogin } from '@rgr/shared';
+import { signInWithEmail, signInWithEmailSecure, signOut, getSession, fetchProfile, updateLastLogin } from '@rgr/shared';
 import type { Profile } from '@rgr/shared';
 
 interface AuthState {
@@ -23,7 +23,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       set({ error: null });
 
-      const result = await signInWithEmail({ email, password });
+      // Use secure auth (server-side rate limiting) by default; env var allows rollback
+      const loginFn = import.meta.env['VITE_USE_SECURE_AUTH'] !== 'false'
+        ? signInWithEmailSecure : signInWithEmail;
+      const result = await loginFn({ email, password });
 
       if (!result.success) {
         console.error('[Auth] Login error:', result.error);
