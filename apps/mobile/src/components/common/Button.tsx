@@ -120,6 +120,9 @@ const textStyles = StyleSheet.create({
     fontFamily: 'Lato_700Bold',
     color: colors.textInverse,
     textTransform: 'uppercase',
+    textShadowColor: 'rgba(0, 0, 0, 0.25)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   secondary: {
     fontSize: fontSize.base,

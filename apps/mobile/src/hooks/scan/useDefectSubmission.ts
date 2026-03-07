@@ -54,7 +54,6 @@ export function useDefectSubmission(
 
         dispatch({ type: 'MARK_DEFECT_COMPLETED' });
         if (wantsPhoto) {
-          dispatch({ type: 'MARK_PHOTO_COMPLETED' });
           dispatch({ type: 'CLOSE_SHEET', pendingSheet: 'camera' });
         } else {
           dispatch({ type: 'CLOSE_SHEET' });

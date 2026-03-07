@@ -197,6 +197,7 @@ interface UseScanActionFlowReturn {
   effectiveLocation: CachedLocationData | null;
   lastScanEventId: string | null;
   activeSheet: SheetId;
+  pendingSheet: SheetId;
   isCreatingScan: boolean;
   scanStatus: string | null;
   showCard: boolean;
@@ -363,6 +364,7 @@ export function useScanActionFlow({ canMarkMaintenance, confirmedActionRef }: Us
   const effectiveLocation = (state.phase === 'confirming' || state.phase === 'active') ? state.effectiveLocation : null;
   const lastScanEventId = state.phase === 'active' ? state.lastScanEventId : null;
   const activeSheet = state.phase === 'active' ? state.activeSheet : null;
+  const pendingSheet = state.phase === 'active' ? state.pendingSheet : null;
   const isCreatingScan = state.phase === 'confirming';
   const scanStatus = state.phase === 'scanning' ? state.scanStatus : null;
   const showCard = state.phase === 'confirming' || state.phase === 'active';
@@ -379,6 +381,7 @@ export function useScanActionFlow({ canMarkMaintenance, confirmedActionRef }: Us
     effectiveLocation,
     lastScanEventId,
     activeSheet,
+    pendingSheet,
     isCreatingScan,
     scanStatus,
     showCard,

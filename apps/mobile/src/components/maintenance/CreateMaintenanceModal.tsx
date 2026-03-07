@@ -283,7 +283,7 @@ export function CreateMaintenanceModal({
           <SheetFooter>
             <View style={styles.buttonRow}>
               <Button variant="secondary" onPress={onClose} disabled={isLoading} flex>Cancel</Button>
-              <Button isLoading={isLoading} onPress={handleSubmit} flex>Create</Button>
+              <Button isLoading={isLoading} onPress={handleSubmit} flex>Schedule Maintenance</Button>
             </View>
           </SheetFooter>
         </View>

@@ -61,6 +61,9 @@ const styles = StyleSheet.create({
     color: colors.textInverse,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.25)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   closeButton: {
     width: 36,

@@ -250,7 +250,7 @@ export function ScanSuccessFlash({
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(34, 197, 94, 0.92)',
+    backgroundColor: 'rgba(34, 197, 94, 1)',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 999,

@@ -17,7 +17,7 @@ import { useAssetPhotos } from '../../../src/hooks/usePhotos';
 import { useAssetDefectReports } from '../../../src/hooks/useDefectData';
 import type { ScanEventWithScanner, MaintenanceRecord, MaintenanceRecordWithNames, PhotoListItem, DefectReportListItem, CreateMaintenanceInput } from '@rgr/shared';
 import { AssetInfoCard } from '../../../src/components/assets/AssetInfoCard';
-import { buildAssetAssessment } from '../../../src/utils/assetAssessment';
+import { useAssetAssessment } from '../../../src/hooks/useAssetAssessment';
 import { SegmentedTabs } from '../../../src/components/common/SegmentedTabs';
 import { PhotoGallery, PhotoDetailModal } from '../../../src/components/photos';
 import {
@@ -143,6 +143,9 @@ export default function AssetDetailScreen() {
     error: assetError,
   } = useAsset(id);
 
+  // Assessment fetches all data sources unconditionally (not tab-gated)
+  const assessment = useAssetAssessment(asset);
+
   // Gate tab-specific queries: activity + maintenance tabs share scans/maintenance/defects
   const activityOrMaint = activeTab === 'activity' || activeTab === 'maintenance';
 
@@ -215,12 +218,6 @@ export default function AssetDetailScreen() {
         .filter(m => m.status === 'scheduled' && m.scheduledDate)
         .sort((a, b) => new Date(a.scheduledDate!).getTime() - new Date(b.scheduledDate!).getTime())[0],
     [maintenance],
-  );
-
-  // Build a natural-language assessment of the asset's current state
-  const assessment = useMemo(
-    () => asset ? buildAssetAssessment({ asset, maintenance, photos, scans, depots, defectReports }) : null,
-    [asset, maintenance, photos, scans, depots, defectReports],
   );
 
   // Validate required route param

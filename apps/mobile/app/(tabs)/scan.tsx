@@ -61,6 +61,7 @@ export default function ScanScreen() {
     scanStatus,
     handleUndoPress,
     activeSheet,
+    pendingSheet,
     lastScanEventId,
     effectiveLocation,
     handleCameraClose,
@@ -203,14 +204,15 @@ export default function ScanScreen() {
   }, [handleDonePress, scannedAsset, matchedDepot, photoCompleted, defectCompleted, maintenanceCompleted]);
 
   // When a sheet closes after a confirmed action, go to success flash
+  // Skip when pendingSheet exists — another sheet is about to open via RESOLVE_PENDING
   useEffect(() => {
     const wasOpen = prevActiveSheetRef.current !== null;
     const nowClosed = activeSheet === null;
     prevActiveSheetRef.current = activeSheet;
-    if (wasOpen && nowClosed && confirmedActionRef.current !== null) {
+    if (wasOpen && nowClosed && !pendingSheet && confirmedActionRef.current !== null) {
       finishConfirmFlow();
     }
-  }, [activeSheet, finishConfirmFlow]);
+  }, [activeSheet, pendingSheet, finishConfirmFlow]);
 
   const handleConfirm = useCallback((action: ConfirmAction) => {
     if (action === null) {
@@ -306,6 +308,9 @@ export default function ScanScreen() {
                 maintenanceCompleted={maintenanceCompleted}
                 disabled={buttonsDisabled}
                 assessment={assessment}
+                scanContext={flow.scanContext}
+                onDefectPress={(id) => setContextDefectId(id)}
+                onTaskPress={(id) => setContextMaintenanceId(id)}
               />
             ) : (
               <ScanConfirmation

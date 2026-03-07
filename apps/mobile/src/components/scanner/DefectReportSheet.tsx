@@ -105,12 +105,12 @@ function DefectReportSheetComponent({
                 onPress={() => setWantsPhoto(!wantsPhoto)}
                 activeOpacity={0.7}
                 accessibilityRole="radio"
-                accessibilityLabel="Photo"
+                accessibilityLabel="Capture Photo"
                 accessibilityState={{ checked: wantsPhoto }}
               >
                 <Ionicons name="camera" size={32} color={colors.violet} />
                 <View style={styles.photoOptionText}>
-                  <Text style={styles.photoOptionLabel}>Photo</Text>
+                  <Text style={styles.photoOptionLabel}>Capture Photo</Text>
                   <Text style={styles.photoOptionDescription}>
                     Capture a photo of the defect to document the issue
                   </Text>

@@ -7,7 +7,8 @@ import {
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import type { Asset, AssetWithRelations } from '@rgr/shared';
+import type { Asset, AssetWithRelations, AssetScanContext } from '@rgr/shared';
+import { DefectStatusLabels, MaintenanceStatusLabels } from '@rgr/shared';
 import { AssetInfoCard } from '../assets/AssetInfoCard';
 import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
@@ -44,6 +45,9 @@ type ScanConfirmationProps =
       maintenanceCompleted: boolean;
       disabled: boolean;
       assessment?: string | null;
+      scanContext?: AssetScanContext | null;
+      onDefectPress?: (id: string) => void;
+      onTaskPress?: (id: string) => void;
     };
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -85,9 +89,13 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
   const isLoading = isCreating && disabled;
   const buttonLabel = isLoading
     ? 'Creating scan...'
-    : selectedAction
-      ? 'CONFIRM'
-      : 'DONE';
+    : selectedAction === 'photo'
+      ? 'Capture Photo'
+      : selectedAction === 'defect'
+        ? 'Report Defect'
+        : selectedAction === 'maintenance'
+          ? 'Schedule Maintenance'
+          : 'DONE';
 
   return (
     <View style={styles.container}>
@@ -119,12 +127,21 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
           </View>
         )}
 
+        {/* Open Items (mechanic only) */}
+        {props.variant === 'mechanic' && props.scanContext && (
+          <OpenItemsSection
+            scanContext={props.scanContext}
+            onDefectPress={props.onDefectPress}
+            onTaskPress={props.onTaskPress}
+          />
+        )}
+
         {/* Action options (single-select radio) */}
         <Text style={styles.checkboxSectionTitle}>Role Specific Options</Text>
         <View style={styles.checkboxList}>
           <CheckboxOption
             icon="camera"
-            label="Photo"
+            label="Capture Photo"
             description="Capture a photo of the asset for visual records and condition tracking"
             checked={props.photoCompleted || selectedAction === 'photo'}
             completed={props.photoCompleted}
@@ -136,7 +153,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
             <>
               <CheckboxOption
                 icon="warning"
-                label="Defect"
+                label="Report Defect"
                 description="Log a defect report including severity, description, and optional photo evidence"
                 checked={defectCompleted || selectedAction === 'defect'}
                 completed={defectCompleted}
@@ -146,7 +163,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
               />
               <CheckboxOption
                 icon="construct"
-                label="Maintenance"
+                label="Schedule Maintenance"
                 description="Schedule a maintenance task with priority, assignee, and work details"
                 checked={maintenanceCompleted || selectedAction === 'maintenance'}
                 completed={maintenanceCompleted}
@@ -169,7 +186,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
           isLoading={isLoading}
           style={styles.confirmButton}
           color={buttonColor}
-          accessibilityLabel={selectedAction ? 'Confirm' : 'Done'}
+          accessibilityLabel={buttonLabel}
         >
           {buttonLabel}
         </Button>
@@ -179,7 +196,79 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
   );
 }
 
-// ── Context section sub-component ─────────────────────────────────────────────
+// ── Open Items section sub-component ──────────────────────────────────────────
+
+function OpenItemsSection({
+  scanContext,
+  onDefectPress,
+  onTaskPress,
+}: {
+  scanContext: AssetScanContext;
+  onDefectPress?: ((id: string) => void) | undefined;
+  onTaskPress?: ((id: string) => void) | undefined;
+}) {
+  const { openDefects, activeTasks, openDefectCount, activeTaskCount } = scanContext;
+
+  if (openDefectCount === 0 && activeTaskCount === 0) return null;
+
+  const extraDefects = openDefectCount - openDefects.length;
+  const extraTasks = activeTaskCount - activeTasks.length;
+
+  return (
+    <>
+      <Text style={styles.checkboxSectionTitle}>Open Items</Text>
+      <View style={styles.openItemsList}>
+        {openDefects.map((defect, i) => (
+          <TouchableOpacity
+            key={defect.id}
+            style={[
+              styles.openItemRow,
+              i < openDefects.length + activeTasks.length - 1 && styles.openItemRowBorder,
+            ]}
+            onPress={() => onDefectPress?.(defect.id)}
+            activeOpacity={0.6}
+            accessibilityRole="button"
+            accessibilityLabel={`Defect: ${defect.title}`}
+          >
+            <Ionicons name="warning" size={20} color="#FACC15" />
+            <View style={styles.openItemTextColumn}>
+              <Text style={styles.openItemTitle} numberOfLines={1}>{defect.title}</Text>
+              <Text style={styles.openItemStatus}>{DefectStatusLabels[defect.status] ?? defect.status}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+          </TouchableOpacity>
+        ))}
+        {extraDefects > 0 && (
+          <Text style={styles.openItemMore}>+{extraDefects} more open {extraDefects === 1 ? 'defect' : 'defects'}</Text>
+        )}
+
+        {activeTasks.map((task, i) => (
+          <TouchableOpacity
+            key={task.id}
+            style={[
+              styles.openItemRow,
+              i < activeTasks.length - 1 && styles.openItemRowBorder,
+            ]}
+            onPress={() => onTaskPress?.(task.id)}
+            activeOpacity={0.6}
+            accessibilityRole="button"
+            accessibilityLabel={`Task: ${task.title}`}
+          >
+            <Ionicons name="construct" size={20} color={colors.warning} />
+            <View style={styles.openItemTextColumn}>
+              <Text style={styles.openItemTitle} numberOfLines={1}>{task.title}</Text>
+              <Text style={styles.openItemStatus}>{MaintenanceStatusLabels[task.status] ?? task.status}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+          </TouchableOpacity>
+        ))}
+        {extraTasks > 0 && (
+          <Text style={styles.openItemMore}>+{extraTasks} more {extraTasks === 1 ? 'task' : 'tasks'}</Text>
+        )}
+      </View>
+    </>
+  );
+}
 
 // ── Checkbox option sub-component ────────────────────────────────────────────
 
@@ -292,7 +381,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   checkboxList: {
-    gap: spacing.sm,
+    gap: spacing.md,
   },
   checkboxRow: {
     flexDirection: 'row',
@@ -315,6 +404,9 @@ const styles = StyleSheet.create({
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.15)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   checkboxDescription: {
     fontSize: fontSize.xs,
@@ -323,9 +415,51 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
+  // Open Items section
+  openItemsList: {
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    overflow: 'hidden',
+  },
+  openItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.base,
+  },
+  openItemRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  openItemTextColumn: {
+    flex: 1,
+  },
+  openItemTitle: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Lato_700Bold',
+    color: colors.text,
+  },
+  openItemStatus: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_400Regular',
+    color: colors.textSecondary,
+    marginTop: 1,
+  },
+  openItemMore: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Lato_400Regular',
+    color: '#94A3B8',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.base,
+    textAlign: 'center',
+  },
+
   // Confirm button (separate, below action card)
   confirmButton: {
-    marginTop: spacing.sm,
+    marginTop: -spacing.sm,
     ...shadows.sm,
   },
 
