@@ -52,6 +52,7 @@ export function useScanProcessing(
     async (qrData: string) => {
       try {
         logger.scan(`QR code detected: ${qrData.substring(0, 30)}...`);
+        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         dispatch({ type: 'QR_DETECTED', scanStatus: 'QR detected' });
 
         // 1. Read fresh location from the Zustand store to avoid stale closures
@@ -86,15 +87,7 @@ export function useScanProcessing(
         const asset = await lookupAsset(qrData);
         logger.scan(`Asset found: ${asset.assetNumber}`);
 
-        // 3. Transition to confirming (card shown, buttons disabled)
-        dispatch({
-          type: 'ASSET_FOUND',
-          scannedAsset: asset,
-          matchedDepot: nearestDepot,
-          effectiveLocation: scanLocation,
-        });
-
-        // 4. Guard against expired session
+        // 3. Guard against expired session (before showing UI)
         if (!user) {
           dispatch({ type: 'RESET' });
           setAlertSheet({
@@ -106,6 +99,14 @@ export function useScanProcessing(
           resetScannerRef.current();
           return;
         }
+
+        // 4. Transition to confirming (card shown, buttons disabled)
+        dispatch({
+          type: 'ASSET_FOUND',
+          scannedAsset: asset,
+          matchedDepot: nearestDepot,
+          effectiveLocation: scanLocation,
+        });
 
         // 5. Auto-create scan event
         addDebugLog('Auto-creating scan event...');

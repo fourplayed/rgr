@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../src/store/authStore';
@@ -16,7 +15,15 @@ import { useUserPermissions } from '../src/contexts/UserPermissionsContext';
 import { UserRoleLabels } from '@rgr/shared';
 import { colors } from '../src/theme/colors';
 import { spacing, fontSize, borderRadius } from '../src/theme/spacing';
-import { AlertSheet } from '../src/components/common';
+import {
+  AlertSheet,
+  ConfirmSheet,
+  Button,
+  SheetHeader,
+  SheetFooter,
+  CollapsibleSection,
+  PillBadge,
+} from '../src/components/common';
 import { EditProfileModal } from '../src/components/settings/EditProfileModal';
 import { NotificationsModal } from '../src/components/settings/NotificationsModal';
 import { SecurityModal } from '../src/components/settings/SecurityModal';
@@ -54,17 +61,24 @@ function SettingsItem({ icon, title, subtitle, onPress, showChevron = true }: Se
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const { canAccessAdmin, canViewAuditLog } = useUserPermissions();
   const resetTutorials = useTutorialStore(s => s.resetAll);
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSecurity, setShowSecurity] = useState(false);
   const [showTutorialReset, setShowTutorialReset] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const handleResetTutorials = () => {
     resetTutorials();
     setShowTutorialReset(true);
+  };
+
+  const handleLogoutConfirm = async () => {
+    setShowLogoutConfirm(false);
+    await logout();
+    router.replace('/(auth)/login');
   };
 
   const handleBack = () => {
@@ -76,50 +90,29 @@ export default function SettingsScreen() {
   }
 
   const roleLabel = UserRoleLabels[user.role] || user.role;
+  const roleColor = colors.userRole[user.role as keyof typeof colors.userRole] || colors.backgroundDark;
 
   return (
-    <LinearGradient
-      colors={[...colors.gradientColors]}
-      locations={[...colors.gradientLocations]}
-      start={colors.gradientStart}
-      end={colors.gradientEnd}
-      style={styles.container}
-    >
+    <View style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={handleBack}
-            style={styles.backButton}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Settings</Text>
-          <View style={styles.headerSpacer} />
-        </View>
+        <SheetHeader icon="settings" title="Settings" onClose={handleBack} />
 
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-          {/* Profile Section */}
+          {/* Profile card */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Profile</Text>
             <View style={styles.card}>
               <View style={styles.profileHeader}>
                 <View style={styles.profileInfo}>
                   <Text style={styles.profileName}>{user.fullName}</Text>
                   <Text style={styles.profileEmail}>{user.email}</Text>
                 </View>
-                <View style={[styles.roleBadge, { backgroundColor: colors.userRole[user.role as keyof typeof colors.userRole] || colors.backgroundDark }]}>
-                  <Text style={styles.roleText}>{roleLabel}</Text>
-                </View>
+                <PillBadge icon="person" label={roleLabel} color={roleColor} />
               </View>
             </View>
           </View>
 
-          {/* Account Section */}
+          {/* Account */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Account</Text>
             <View style={styles.card}>
               <SettingsItem
                 icon="person-outline"
@@ -144,9 +137,8 @@ export default function SettingsScreen() {
             </View>
           </View>
 
-          {/* Help Section */}
+          {/* Help */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Help</Text>
             <View style={styles.card}>
               <SettingsItem
                 icon="book-outline"
@@ -157,7 +149,7 @@ export default function SettingsScreen() {
             </View>
           </View>
 
-          {/* Audit Log - Manager+ */}
+          {/* Oversight — Manager+ */}
           {canViewAuditLog && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Oversight</Text>
@@ -172,43 +164,53 @@ export default function SettingsScreen() {
             </View>
           )}
 
-          {/* Administration Section - Superuser only */}
+          {/* Administration — Superuser */}
           {canAccessAdmin && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Administration</Text>
-              <View style={styles.card}>
-                <SettingsItem
-                  icon="people-outline"
-                  title="User Management"
-                  subtitle="Manage users, roles, and access"
-                  onPress={() => router.replace('/(admin)/users')}
-                />
-                <View style={styles.divider} />
-                <SettingsItem
-                  icon="business-outline"
-                  title="Depot Management"
-                  subtitle="Create, edit, and remove depots"
-                  onPress={() => router.replace('/(admin)/depots')}
-                />
-                <View style={styles.divider} />
-                <SettingsItem
-                  icon="cube-outline"
-                  title="Asset Administration"
-                  subtitle="Bulk operations and asset deletion"
-                  onPress={() => router.replace('/(admin)/asset-admin')}
-                />
-                <View style={styles.divider} />
-                <SettingsItem
-                  icon="bug-outline"
-                  title="Debug"
-                  subtitle="Connection status and sync info"
-                  onPress={() => router.replace('/(admin)/debug')}
-                />
-              </View>
+              <CollapsibleSection title="Administration" variant="flat" defaultExpanded>
+                <View style={styles.card}>
+                  <SettingsItem
+                    icon="people-outline"
+                    title="User Management"
+                    subtitle="Manage users, roles, and access"
+                    onPress={() => router.push('/(admin)/users')}
+                  />
+                  <View style={styles.divider} />
+                  <SettingsItem
+                    icon="business-outline"
+                    title="Depot Management"
+                    subtitle="Create, edit, and remove depots"
+                    onPress={() => router.push('/(admin)/depots')}
+                  />
+                  <View style={styles.divider} />
+                  <SettingsItem
+                    icon="cube-outline"
+                    title="Asset Administration"
+                    subtitle="Bulk operations and asset deletion"
+                    onPress={() => router.push('/(admin)/asset-admin')}
+                  />
+                  <View style={styles.divider} />
+                  <SettingsItem
+                    icon="bug-outline"
+                    title="Debug"
+                    subtitle="Connection status and sync info"
+                    onPress={() => router.push('/(admin)/debug')}
+                  />
+                </View>
+              </CollapsibleSection>
             </View>
           )}
-
         </ScrollView>
+
+        <SheetFooter>
+          <Button
+            onPress={() => setShowLogoutConfirm(true)}
+            variant="secondary"
+            icon="log-out-outline"
+          >
+            Sign Out
+          </Button>
+        </SheetFooter>
 
         <EditProfileModal
           visible={showEditProfile}
@@ -232,44 +234,35 @@ export default function SettingsScreen() {
           message="Tutorials will show again next time you open the scanner or start a count."
           onDismiss={() => setShowTutorialReset(false)}
         />
+
+        <ConfirmSheet
+          visible={showLogoutConfirm}
+          type="warning"
+          title="Sign Out"
+          message="Are you sure you want to sign out?"
+          confirmLabel="Sign Out"
+          onConfirm={handleLogoutConfirm}
+          onCancel={() => setShowLogoutConfirm(false)}
+        />
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.chrome,
   },
   safeArea: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.base,
-    paddingVertical: spacing.md,
-  },
-  backButton: {
-    padding: spacing.sm,
-  },
-  headerTitle: {
-    fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  headerSpacer: {
-    width: 40,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     padding: spacing.base,
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing['2xl'],
   },
   section: {
     marginBottom: spacing.lg,
@@ -309,18 +302,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Lato_400Regular',
     color: colors.textSecondary,
     marginTop: spacing.xs,
-  },
-  roleBadge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm,
-  },
-  roleText: {
-    fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
-    color: colors.textInverse,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   settingsItem: {
     flexDirection: 'row',

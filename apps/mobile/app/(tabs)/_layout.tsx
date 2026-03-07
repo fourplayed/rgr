@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
-import { View, TouchableOpacity, Animated, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Animated, StyleSheet } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,6 +16,13 @@ const TAB_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   scan: 'qr-code-outline',
   assets: 'cube-outline',
   maintenance: 'construct-outline',
+};
+
+const TAB_LABELS: Record<string, string> = {
+  home: 'HOME',
+  scan: 'SCAN',
+  assets: 'ASSETS',
+  maintenance: 'MAINT',
 };
 
 // ── Animated tab bar with sliding active indicator ──────────────
@@ -130,23 +137,25 @@ function AnimatedTabBar({ state, navigation }: BottomTabBarProps) {
         {visibleRoutes.map((route, index) => {
           const isFocused = activeVisualIndex === index;
           const icon = TAB_ICONS[route.name] ?? 'help-outline';
+          const label = TAB_LABELS[route.name] ?? route.name;
 
           return (
             <TouchableOpacity
               key={route.key}
               accessibilityRole="tab"
               accessibilityState={isFocused ? { selected: true } : {}}
-              accessibilityLabel={route.name}
+              accessibilityLabel={label}
               onPress={() => handleTabPress(route, isFocused)}
               onLongPress={() => handleTabLongPress(route.key)}
               style={tabStyles.button}
             >
               <Ionicons
                 name={icon}
-                size={28}
+                size={24}
                 color={TAB_ICON_COLOR}
                 style={tabStyles.iconShadow}
               />
+              <Text style={tabStyles.tabLabel}>{label}</Text>
               {/* Subtle separator between tabs */}
               {index < tabCount - 1 && (
                 <View style={tabStyles.separator} />
@@ -245,6 +254,13 @@ const tabStyles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
+  },
+  tabLabel: {
+    fontSize: 9,
+    fontFamily: 'Lato_700Bold',
+    color: TAB_ICON_COLOR,
+    letterSpacing: 0.5,
+    marginTop: 1,
   },
   separator: {
     position: 'absolute',

@@ -9,7 +9,6 @@ import {
   Platform,
   Animated,
   Easing,
-  Keyboard,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -61,33 +60,7 @@ export default function LoginScreen() {
     }
   }, [authError, clearAuthError]);
   const tiltAnim = useRef(new Animated.Value(-1)).current;
-  const keyboardOffset = useRef(new Animated.Value(0)).current;
   const accentAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    if (Platform.OS !== 'ios') return;
-
-    const showSub = Keyboard.addListener('keyboardWillShow', () => {
-      Animated.timing(keyboardOffset, {
-        toValue: -100,
-        duration: 250,
-        useNativeDriver: true,
-      }).start();
-    });
-
-    const hideSub = Keyboard.addListener('keyboardWillHide', () => {
-      Animated.timing(keyboardOffset, {
-        toValue: 0,
-        duration: 250,
-        useNativeDriver: true,
-      }).start();
-    });
-
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, [keyboardOffset]);
 
   useEffect(() => {
     const accentAnimation = Animated.loop(
@@ -213,10 +186,9 @@ export default function LoginScreen() {
     <View style={styles.container}>
     <KeyboardAvoidingView
       style={styles.containerInner}
-      behavior={Platform.OS === 'ios' ? undefined : 'height'}
-      enabled={Platform.OS !== 'ios'}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <Animated.View style={[styles.content, { transform: [{ translateY: keyboardOffset }] }]}>
+      <Animated.View style={styles.content}>
         <View style={styles.header}>
           <View style={styles.loginStripeContainer}>
             <View style={styles.loginAccentLine}>

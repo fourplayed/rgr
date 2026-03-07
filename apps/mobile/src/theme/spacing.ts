@@ -41,10 +41,15 @@ export const fontSize = {
   '2xl': 24,
   '3xl': 30,
   '4xl': 36,
-  // Dashboard-specific
-  userName: 28,
-  statValue: 35,
-  statLabel: 14,
+} as const;
+
+/**
+ * Line heights
+ */
+export const lineHeight = {
+  tight: 18,
+  body: 22,
+  relaxed: 26,
 } as const;
 
 /**

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, type TextStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, shadows, fontFamily as fonts } from '../../theme/spacing';
 
 interface SheetHeaderProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
   title: {
     flex: 1,
     fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -66,8 +66,8 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
   },
   closeButton: {
-    width: 36,
-    height: 36,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -3,6 +3,8 @@ import {
   View,
   Modal,
   TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
   StyleSheet,
   type ViewStyle,
   type StyleProp,
@@ -19,6 +21,8 @@ interface BottomSheetProps {
   maxHeight?: ViewStyle['maxHeight'];
   /** Additional styles for the sheet container */
   style?: StyleProp<ViewStyle>;
+  /** Wrap in KeyboardAvoidingView for sheets with text inputs */
+  keyboardAware?: boolean;
 }
 
 /**
@@ -38,7 +42,25 @@ export function BottomSheet({
   children,
   maxHeight,
   style,
+  keyboardAware = false,
 }: BottomSheetProps) {
+  const content = (
+    <View style={styles.backdrop}>
+      <TouchableOpacity
+        style={styles.backdropTouchable}
+        activeOpacity={1}
+        onPress={onDismiss}
+        accessibilityRole="button"
+        accessibilityLabel="Close"
+      />
+
+      <View style={[styles.sheet, maxHeight != null && { maxHeight }, style]}>
+        <View style={styles.handle} />
+        {children}
+      </View>
+    </View>
+  );
+
   return (
     <Modal
       visible={visible}
@@ -54,20 +76,16 @@ export function BottomSheet({
             tint="dark"
             style={[StyleSheet.absoluteFillObject, styles.blur]}
           />
-          <View style={styles.backdrop}>
-            <TouchableOpacity
-              style={styles.backdropTouchable}
-              activeOpacity={1}
-              onPress={onDismiss}
-              accessibilityRole="button"
-              accessibilityLabel="Close"
-            />
-
-            <View style={[styles.sheet, maxHeight != null && { maxHeight }, style]}>
-              <View style={styles.handle} />
-              {children}
-            </View>
-          </View>
+          {keyboardAware ? (
+            <KeyboardAvoidingView
+              style={styles.keyboardView}
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            >
+              {content}
+            </KeyboardAvoidingView>
+          ) : (
+            content
+          )}
         </>
       )}
     </Modal>
@@ -75,6 +93,9 @@ export function BottomSheet({
 }
 
 const styles = StyleSheet.create({
+  keyboardView: {
+    flex: 1,
+  },
   blur: {
     backgroundColor: 'rgba(0,0,30,0.3)',
   },

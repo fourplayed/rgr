@@ -1,4 +1,4 @@
-import React, { useState, useEffect, memo } from 'react';
+import React, { useState, useEffect, useRef, memo } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   TextInput,
   StyleSheet,
   ScrollView,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../common/Button';
@@ -13,7 +14,7 @@ import { SheetHeader } from '../common/SheetHeader';
 import { SheetFooter } from '../common/SheetFooter';
 import { SheetModal } from '../common/SheetModal';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 
 interface DefectReportSheetProps {
   visible: boolean;
@@ -56,6 +57,16 @@ function DefectReportSheetComponent({
 
   const canSubmit = notes.trim().length > 0;
 
+  // Fade submit button in/out instead of showing it disabled
+  const submitOpacity = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(submitOpacity, {
+      toValue: canSubmit ? 1 : 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  }, [canSubmit, submitOpacity]);
+
   return (
     <SheetModal visible={visible} onClose={handleCancel} onDismiss={onDismiss} keyboardAvoiding>
         <View style={styles.sheet}>
@@ -63,7 +74,7 @@ function DefectReportSheetComponent({
             icon="warning"
             title="Report Defect"
             onClose={handleCancel}
-            backgroundColor="#FACC15"
+            backgroundColor={colors.defectYellow}
             titleStyle={{
               textShadowColor: 'rgba(0, 0, 0, 0.3)',
               textShadowOffset: { width: 0, height: 1 },
@@ -125,14 +136,16 @@ function DefectReportSheetComponent({
           </ScrollView>
 
           <SheetFooter>
-            <Button
-              isLoading={isSubmitting}
-              onPress={handleSubmit}
-              disabled={!canSubmit}
-              color={wantsPhoto ? colors.violet : colors.success}
-            >
-              {wantsPhoto ? 'Capture & Submit' : 'Submit'}
-            </Button>
+            <Animated.View style={{ opacity: submitOpacity }}>
+              <Button
+                isLoading={isSubmitting}
+                onPress={handleSubmit}
+                disabled={!canSubmit}
+                color={wantsPhoto ? colors.violet : colors.success}
+              >
+                {wantsPhoto ? 'Capture & Submit' : 'Submit'}
+              </Button>
+            </Animated.View>
           </SheetFooter>
         </View>
     </SheetModal>
@@ -165,7 +178,7 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     marginBottom: spacing.sm,
     textTransform: 'uppercase',
@@ -178,13 +191,13 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     padding: spacing.base,
     fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.text,
     minHeight: 120,
   },
   charCount: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     textAlign: 'right',
     marginTop: spacing.xs,
@@ -207,7 +220,7 @@ const styles = StyleSheet.create({
   },
   photoOptionLabel: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.violet,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -217,7 +230,7 @@ const styles = StyleSheet.create({
   },
   photoOptionDescription: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     marginTop: 2,
   },

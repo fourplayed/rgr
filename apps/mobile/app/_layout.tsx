@@ -238,7 +238,8 @@ export default function RootLayout() {
               <Stack.Screen
                 name="(admin)"
                 options={{
-                  presentation: 'card',
+                  presentation: 'modal',
+                  animation: 'slide_from_bottom',
                 }}
               />
             </Stack>

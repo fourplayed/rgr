@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LoadingDots } from '../../../src/components/common/LoadingDots';
 import { RefreshLoadingDots } from '../../../src/components/common/RefreshLoadingDots';
 import { ScreenHeader } from '../../../src/components/common/ScreenHeader';
+import { EmptyState } from '../../../src/components/common/EmptyState';
 import { useRouter } from 'expo-router';
 import type { AssetStatus, AssetCategory, AssetWithRelations } from '@rgr/shared';
 import { useInfiniteAssetList, useDepots } from '../../../src/hooks/useAssetData';
@@ -140,6 +141,13 @@ export default function AssetListScreen() {
     setIsFilterExpanded((prev) => !prev);
   }, []);
 
+  // Memoized getItemLayout for FlatList optimization
+  const getItemLayout = useCallback((_: unknown, index: number) => ({
+    length: ASSET_ITEM_HEIGHT,
+    offset: ASSET_ITEM_HEIGHT * index,
+    index,
+  }), []);
+
   // Memoized renderItem for FlatList - critical for list performance
   const renderAssetItem = useCallback(({ item }: { item: AssetWithRelations }) => (
     <AssetListItem asset={item} onPress={handleAssetPress} depotLookup={depotLookup} />
@@ -218,19 +226,13 @@ export default function AssetListScreen() {
           }
           ListHeaderComponent={<RefreshLoadingDots isRefetching={!!isRefetching} />}
           ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <View style={styles.emptyIconContainer}>
-                <Ionicons name="cube-outline" size={64} color={colors.textSecondary} />
-              </View>
-              <Text style={styles.emptyTitle}>No assets found</Text>
-              <Text style={styles.emptySubtext}>Try adjusting your search or filters</Text>
-            </View>
+            <EmptyState
+              icon="cube-outline"
+              title="No assets found"
+              subtitle="Try adjusting your search or filters"
+            />
           }
-          getItemLayout={(data, index) => ({
-            length: ASSET_ITEM_HEIGHT,
-            offset: ASSET_ITEM_HEIGHT * index,
-            index,
-          })}
+          getItemLayout={getItemLayout}
           onEndReached={handleEndReached}
           onEndReachedThreshold={0.5}
           removeClippedSubviews={true}
@@ -313,7 +315,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    backgroundColor: colors.surfaceSubtle,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.lg,

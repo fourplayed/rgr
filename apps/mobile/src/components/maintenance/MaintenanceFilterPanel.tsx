@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { MaintenanceStatus, MaintenancePriority } from '@rgr/shared';
 import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '@rgr/shared';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, shadows } from '../../theme/spacing';
+import { spacing, fontSize, shadows, fontFamily as fonts } from '../../theme/spacing';
 import { FilterChip } from '../common/FilterChip';
 import '../../utils/enableLayoutAnimation';
 
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
   },
   headerLabel: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
   },
   countBadgeText: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
   },
   filterSection: {
@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,

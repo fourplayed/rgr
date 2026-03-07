@@ -33,7 +33,7 @@ export const photoKeys = {
  */
 export function useAssetPhotos(assetId: string | undefined) {
   return useQuery({
-    queryKey: photoKeys.asset(assetId!),
+    queryKey: photoKeys.asset(assetId ?? ''),
     queryFn: async () => {
       if (!assetId) throw new Error('Asset ID is required');
 
@@ -55,7 +55,7 @@ export function useAssetPhotos(assetId: string | undefined) {
  */
 export function useScanEventPhotos(scanEventId: string | null) {
   return useQuery({
-    queryKey: photoKeys.scanEvent(scanEventId!),
+    queryKey: photoKeys.scanEvent(scanEventId ?? ''),
     queryFn: async () => {
       if (!scanEventId) throw new Error('Scan event ID is required');
 
@@ -77,7 +77,7 @@ export function useScanEventPhotos(scanEventId: string | null) {
  */
 export function usePhoto(photoId: string | undefined) {
   return useQuery({
-    queryKey: photoKeys.detail(photoId!),
+    queryKey: photoKeys.detail(photoId ?? ''),
     queryFn: async () => {
       if (!photoId) throw new Error('Photo ID is required');
 
@@ -102,7 +102,7 @@ export function usePhoto(photoId: string | undefined) {
  */
 export function useSignedUrl(storagePath: string | undefined) {
   return useQuery({
-    queryKey: photoKeys.signedUrl(storagePath!),
+    queryKey: photoKeys.signedUrl(storagePath ?? ''),
     queryFn: async () => {
       if (!storagePath) throw new Error('Storage path is required');
 

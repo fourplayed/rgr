@@ -2,19 +2,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
-  Modal,
-  TouchableOpacity,
   TextInput,
   StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
   Keyboard,
 } from 'react-native';
 import type { KeyboardTypeOptions } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, lineHeight, fontFamily as fonts } from '../../theme/spacing';
 import { Button } from './Button';
+import { BottomSheet } from './BottomSheet';
 
 interface InputSheetProps {
   visible: boolean;
@@ -68,115 +64,57 @@ export function InputSheet({
     onCancel();
   };
 
-  if (!visible) return null;
-
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      statusBarTranslucent
-      onRequestClose={handleCancel}
-    >
-      <BlurView
-        intensity={50}
-        tint="dark"
-        style={[StyleSheet.absoluteFillObject, styles.blur]}
-      />
-      <KeyboardAvoidingView
-        style={styles.keyboardView}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <View style={styles.backdrop}>
-          <TouchableOpacity
-            style={styles.backdropTouchable}
-            activeOpacity={1}
+    <BottomSheet visible={visible} onDismiss={handleCancel} keyboardAware>
+      <View style={styles.content}>
+        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.message}>{message}</Text>
+
+        <TextInput
+          ref={inputRef}
+          style={styles.input}
+          value={value}
+          onChangeText={setValue}
+          placeholder={placeholder}
+          placeholderTextColor={colors.textSecondary}
+          keyboardType={keyboardType}
+          editable={!isLoading}
+          returnKeyType="done"
+          onSubmitEditing={handleSubmit}
+        />
+
+        <View style={styles.buttonRow}>
+          <Button
+            variant="secondary"
             onPress={handleCancel}
-          />
+            disabled={isLoading}
+            flex
+            accessibilityLabel={cancelLabel}
+          >
+            {cancelLabel}
+          </Button>
 
-          <View style={styles.sheet}>
-            <View style={styles.handle} />
-
-            <View style={styles.content}>
-              <Text style={styles.title}>{title}</Text>
-              <Text style={styles.message}>{message}</Text>
-
-              <TextInput
-                ref={inputRef}
-                style={styles.input}
-                value={value}
-                onChangeText={setValue}
-                placeholder={placeholder}
-                placeholderTextColor={colors.textSecondary}
-                keyboardType={keyboardType}
-                editable={!isLoading}
-                returnKeyType="done"
-                onSubmitEditing={handleSubmit}
-              />
-
-              <View style={styles.buttonRow}>
-                <Button
-                  variant="secondary"
-                  onPress={handleCancel}
-                  disabled={isLoading}
-                  flex
-                  accessibilityLabel={cancelLabel}
-                >
-                  {cancelLabel}
-                </Button>
-
-                <Button
-                  onPress={handleSubmit}
-                  isLoading={isLoading}
-                  flex
-                  accessibilityLabel={submitLabel}
-                >
-                  {submitLabel}
-                </Button>
-              </View>
-            </View>
-          </View>
+          <Button
+            onPress={handleSubmit}
+            isLoading={isLoading}
+            flex
+            accessibilityLabel={submitLabel}
+          >
+            {submitLabel}
+          </Button>
         </View>
-      </KeyboardAvoidingView>
-    </Modal>
+      </View>
+    </BottomSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  keyboardView: {
-    flex: 1,
-  },
-  blur: {
-    backgroundColor: 'rgba(0,0,30,0.3)',
-  },
-  backdrop: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  backdropTouchable: {
-    flex: 1,
-  },
-  sheet: {
-    backgroundColor: colors.background,
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
-    paddingBottom: spacing['2xl'],
-  },
-  handle: {
-    width: 40,
-    height: 4,
-    backgroundColor: colors.border,
-    borderRadius: borderRadius.full,
-    alignSelf: 'center',
-    marginTop: spacing.md,
-    marginBottom: spacing.lg,
-  },
   content: {
     paddingHorizontal: spacing.lg,
   },
   title: {
     fontSize: fontSize['2xl'],
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     marginBottom: spacing.sm,
     textAlign: 'center',
@@ -184,11 +122,11 @@ const styles = StyleSheet.create({
   },
   message: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: spacing.lg,
-    lineHeight: 22,
+    lineHeight: lineHeight.body,
   },
   input: {
     backgroundColor: colors.surface,
@@ -198,7 +136,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.base,
     paddingVertical: spacing.md,
     fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.text,
     marginBottom: spacing.lg,
   },

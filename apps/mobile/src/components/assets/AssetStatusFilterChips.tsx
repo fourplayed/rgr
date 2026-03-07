@@ -3,7 +3,7 @@ import { Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { AssetStatusColors, AssetStatusLabels } from '@rgr/shared';
 import type { AssetStatus } from '@rgr/shared';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 
 interface AssetStatusFilterChipsProps {
   selectedStatuses: AssetStatus[];
@@ -73,11 +73,11 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.text,
   },
   labelSelected: {
     color: colors.textInverse,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
   },
 });

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { FreightAnalysis, HazardAlert, HazardSeverity } from '@rgr/shared';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 
 interface FreightAnalysisCardProps {
   analysis: FreightAnalysis;
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
   },
   categoryLabel: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     textTransform: 'uppercase',
   },
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
   },
   categoryValue: {
     fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.electricBlue,
     textTransform: 'capitalize',
   },
@@ -188,12 +188,12 @@ const styles = StyleSheet.create({
   },
   confidenceText: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
   },
   description: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     marginTop: spacing.xs,
   },
@@ -211,12 +211,12 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
   },
   statLabel: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     textTransform: 'uppercase',
   },
@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
   },
   hazardTitle: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
   },
@@ -254,18 +254,18 @@ const styles = StyleSheet.create({
   },
   hazardType: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'capitalize',
   },
   hazardDescription: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
   },
   moreHazards: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     paddingLeft: spacing.sm,
     fontStyle: 'italic',
@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
   },
   blockedText: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
   },
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
   },
   acknowledgeText: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
   },

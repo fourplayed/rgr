@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,7 @@ import { SheetHeader } from '../common/SheetHeader';
 import { SheetFooter } from '../common/SheetFooter';
 import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 import { useDefectReport, useDeleteDefectReport } from '../../hooks/useDefectData';
 import { useAsset } from '../../hooks/useAssetData';
 import { useMaintenance } from '../../hooks/useMaintenanceData';
@@ -38,6 +38,10 @@ interface DefectReportDetailModalProps {
   }) => void;
   /** Called when user taps "View Task" on a linked maintenance record. */
   onViewTaskPress?: (maintenanceId: string) => void;
+  /** Called after the modal's dismiss animation completes. */
+  onDismiss?: () => void;
+  /** Render inline (no native Modal) — use when already inside a Modal. */
+  inline?: boolean;
 }
 
 export function DefectReportDetailModal({
@@ -47,6 +51,8 @@ export function DefectReportDetailModal({
   variant = 'full',
   onAcceptPress,
   onViewTaskPress,
+  onDismiss,
+  inline,
 }: DefectReportDetailModalProps) {
   const router = useRouter();
   const { canMarkMaintenance } = useUserPermissions();
@@ -64,13 +70,6 @@ export function DefectReportDetailModal({
     isLoading: isPhotoLoading,
     error: photoError,
   } = useSignedUrl(defectPhoto?.thumbnailPath ?? defectPhoto?.storagePath ?? undefined);
-
-  // Unmount guard for async operations
-  const isMountedRef = useRef(true);
-  useEffect(() => {
-    isMountedRef.current = true;
-    return () => { isMountedRef.current = false; };
-  }, []);
 
   // Dismiss flow
   const [showDismissConfirm, setShowDismissConfirm] = useState(false);
@@ -112,13 +111,11 @@ export function DefectReportDetailModal({
       await deleteDefect(defectId);
       onClose();
     } catch (err: unknown) {
-      if (isMountedRef.current) {
-        setAlertSheet({
-          visible: true,
-          title: 'Error',
-          message: err instanceof Error ? err.message : 'Failed to dismiss defect',
-        });
-      }
+      setAlertSheet({
+        visible: true,
+        title: 'Error',
+        message: err instanceof Error ? err.message : 'Failed to dismiss defect',
+      });
     }
   }, [defectId, deleteDefect, onClose]);
 
@@ -141,17 +138,10 @@ export function DefectReportDetailModal({
             onPress={handleAccept}
             disabled={!onAcceptPress || deleteMutation.isPending}
             flex
+            icon="construct-outline"
+            color={colors.warning}
           >
-            Accept
-          </Button>
-          <Button
-            variant="secondary"
-            onPress={handleDismiss}
-            disabled={deleteMutation.isPending}
-            style={{ borderColor: colors.error }}
-            flex
-          >
-            Dismiss
+            Schedule Maintenance
           </Button>
         </View>
       );
@@ -167,7 +157,7 @@ export function DefectReportDetailModal({
               color={status === 'accepted' ? colors.info : colors.success}
             />
             <Text style={styles.closedStatusText}>
-              {status === 'accepted' ? 'Accepted' : 'Resolved'}
+              {status === 'accepted' ? 'Maintenance Task Created' : 'Resolved'}
             </Text>
           </View>
         </View>
@@ -180,7 +170,7 @@ export function DefectReportDetailModal({
   if (!visible) return null;
 
   return (
-    <SheetModal visible={visible} onClose={onClose}>
+    <SheetModal visible={visible} onClose={onClose} onDismiss={onDismiss} inline={!!inline}>
         <View style={styles.sheet}>
           {isLoading || !defect ? (
             <>
@@ -188,7 +178,7 @@ export function DefectReportDetailModal({
                 icon="warning"
                 title="Defect Report"
                 onClose={onClose}
-                backgroundColor="#FACC15"
+                backgroundColor={colors.defectYellow}
                 disabled
               />
               <View style={styles.loadingContainer}>
@@ -201,8 +191,33 @@ export function DefectReportDetailModal({
                 icon="warning"
                 title="Defect Report"
                 onClose={onClose}
-                backgroundColor="#FACC15"
+                backgroundColor={colors.defectYellow}
               />
+
+              {/* Asset number + Dismiss link row */}
+              <View style={styles.subHeaderRow}>
+                {asset?.assetNumber ? (
+                  <Text style={styles.assetNumberText}>{formatAssetNumber(asset.assetNumber)}</Text>
+                ) : <View />}
+                {defect.status === 'reported' && canMarkMaintenance && (
+                  <TouchableOpacity
+                    style={styles.dismissLink}
+                    onPress={handleDismiss}
+                    disabled={deleteMutation.isPending}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="trash-outline" size={16} color={colors.error} />
+                    <Text style={styles.dismissLinkText}>Dismiss</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {/* Description — pinned below header */}
+              {defect.description && (
+                <View style={styles.descriptionRow}>
+                  <Text style={styles.detailValue}>{defect.description}</Text>
+                </View>
+              )}
 
               <ScrollView
                 style={styles.scrollView}
@@ -210,11 +225,8 @@ export function DefectReportDetailModal({
                 bounces={true}
                 showsVerticalScrollIndicator={false}
               >
-                {/* Asset ID + Asset Link */}
+                {/* Asset Link */}
                 <View style={styles.badgeRow}>
-                  {asset?.assetNumber && (
-                    <Text style={styles.assetNumberText}>{formatAssetNumber(asset.assetNumber)}</Text>
-                  )}
                   {variant === 'full' && (
                     <TouchableOpacity
                       style={styles.assetLink}
@@ -226,14 +238,6 @@ export function DefectReportDetailModal({
                     </TouchableOpacity>
                   )}
                 </View>
-
-                {/* Description */}
-                {defect.description && (
-                  <View style={styles.sectionGroup}>
-                    <Text style={styles.sectionTitle}>Description</Text>
-                    <Text style={styles.detailValue}>{defect.description}</Text>
-                  </View>
-                )}
 
                 {/* Defect Photo (hidden in compact mode) */}
                 {variant === 'full' && defectPhoto && (
@@ -403,7 +407,7 @@ const styles = StyleSheet.create({
   },
   assetNumberText: {
     fontSize: fontSize.xl,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
   },
@@ -414,7 +418,7 @@ const styles = StyleSheet.create({
   },
   assetLinkText: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.electricBlue,
     textTransform: 'uppercase',
   },
@@ -431,7 +435,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -448,14 +452,14 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     textTransform: 'uppercase',
     marginBottom: 2,
   },
   detailValue: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
   },
   linkedTaskLink: {
@@ -465,8 +469,30 @@ const styles = StyleSheet.create({
   },
   linkedTaskLinkText: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.electricBlue,
+    textTransform: 'uppercase',
+  },
+  subHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.base,
+  },
+  descriptionRow: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+  },
+  dismissLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  dismissLinkText: {
+    fontSize: fontSize.sm,
+    fontFamily: fonts.bold,
+    color: colors.error,
     textTransform: 'uppercase',
   },
   actionsContainer: {
@@ -483,7 +509,7 @@ const styles = StyleSheet.create({
   },
   closedStatusText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textSecondary,
     textTransform: 'uppercase',
   },
@@ -505,7 +531,7 @@ const styles = StyleSheet.create({
   },
   defectPhotoErrorText: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 1,

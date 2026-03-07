@@ -2,7 +2,7 @@ import React, { memo } from 'react';
 import { Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import type { Depot } from '@rgr/shared';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 import { sortDepotsByOrder, getDepotColor, getDepotTextColor } from '../../utils/depotDisplay';
 
 interface DepotFilterChipsProps {
@@ -46,7 +46,7 @@ export const DepotFilterChips = memo(function DepotFilterChips({
                 styles.chipText,
                 {
                   color: chipText,
-                  fontFamily: isSelected ? 'Lato_700Bold' : 'Lato_400Regular',
+                  fontFamily: isSelected ? fonts.bold : fonts.regular,
                 },
               ]}
             >

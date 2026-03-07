@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { BlurView } from 'expo-blur';
+
 import { useTutorialStore } from '../../src/store/tutorialStore';
 import { useUserPermissions } from '../../src/contexts/UserPermissionsContext';
 import { useScanActionFlow } from '../../src/hooks/scan/useScanActionFlow';
@@ -18,6 +19,8 @@ import type { ConfirmAction } from '../../src/components/scanner/ScanConfirmatio
 import { DefectReportSheet } from '../../src/components/scanner/DefectReportSheet';
 import { CameraCapture } from '../../src/components/photos';
 import { CreateMaintenanceModal, DefectReportDetailModal, MaintenanceDetailModal } from '../../src/components/maintenance';
+import { useAcceptDefect } from '../../src/hooks/useAcceptDefect';
+import type { CreateMaintenanceInput } from '@rgr/shared';
 import { TutorialSheet, AlertSheet, ErrorBoundary } from '../../src/components/common';
 import { styles } from '../../src/components/scanner/scan.styles';
 
@@ -78,7 +81,6 @@ export default function ScanScreen() {
 
   // ── Bottom sheet animation state ──
   const { height: SCREEN_HEIGHT } = useWindowDimensions();
-  const backdropOpacity = useRef(new Animated.Value(0)).current;
   const sheetTranslateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const [isPanelMounted, setIsPanelMounted] = useState(false);
   const lastAssetRef = useRef(scannedAsset);
@@ -97,9 +99,26 @@ export default function ScanScreen() {
     maintenanceCompleted: boolean;
   } | null>(null);
 
+  // Unmount Modal after success flash is dismissed (card already slid out)
+  useEffect(() => {
+    if (!successFlash && !showCard && isPanelMounted) {
+      setIsPanelMounted(false);
+    }
+  }, [successFlash, showCard, isPanelMounted]);
+
   // ── Context detail modal state ──
   const [contextDefectId, setContextDefectId] = useState<string | null>(null);
   const [contextMaintenanceId, setContextMaintenanceId] = useState<string | null>(null);
+
+  // ── Accept defect → create maintenance task flow ──
+  const { mutateAsync: acceptDefect } = useAcceptDefect();
+  const [acceptDefectContext, setAcceptDefectContext] = useState<{
+    defectId: string;
+    assetId: string;
+    assetNumber?: string;
+    title: string;
+    description?: string | null;
+  } | null>(null);
 
   // ── Asset assessment (lazy-loaded when asset is scanned) ──
   const assessment = useAssetAssessment(scannedAsset, matchedDepot);
@@ -138,50 +157,34 @@ export default function ScanScreen() {
     markSeen('scan');
   }, [markSeen]);
 
-  // ── Blur backdrop + sheet slide animation ──
+  // ── Sheet slide animation ──
   useEffect(() => {
     if (showCard) {
-      // Reset to off-screen before mounting so first frame is correct
-      backdropOpacity.setValue(0);
       sheetTranslateY.setValue(SCREEN_HEIGHT);
       setIsPanelMounted(true);
 
       // Delay animation to next frame so Modal is rendered first
       requestAnimationFrame(() => {
-        Animated.parallel([
-          Animated.timing(backdropOpacity, {
-            toValue: 1,
-            duration: 200,
-            useNativeDriver: true,
-          }),
-          Animated.spring(sheetTranslateY, {
-            toValue: 0,
-            friction: 8,
-            tension: 65,
-            useNativeDriver: true,
-          }),
-        ]).start();
+        Animated.spring(sheetTranslateY, {
+          toValue: 0,
+          friction: 8,
+          tension: 65,
+          useNativeDriver: true,
+        }).start();
       });
     } else {
-      Animated.parallel([
-        Animated.timing(backdropOpacity, {
-          toValue: 0,
-          duration: 250,
-          useNativeDriver: true,
-        }),
-        Animated.spring(sheetTranslateY, {
-          toValue: SCREEN_HEIGHT,
-          friction: 9,
-          tension: 50,
-          useNativeDriver: true,
-        }),
-      ]).start(({ finished }) => {
-        if (finished) {
+      Animated.spring(sheetTranslateY, {
+        toValue: SCREEN_HEIGHT,
+        friction: 9,
+        tension: 50,
+        useNativeDriver: true,
+      }).start(({ finished }) => {
+        if (finished && !successFlash) {
           setIsPanelMounted(false);
         }
       });
     }
-  }, [showCard, backdropOpacity, sheetTranslateY, SCREEN_HEIGHT]);
+  }, [showCard, sheetTranslateY, SCREEN_HEIGHT, successFlash]);
 
   // ── Single-action confirm flow ──
 
@@ -199,6 +202,7 @@ export default function ScanScreen() {
     }
     setContextDefectId(null);
     setContextMaintenanceId(null);
+    setAcceptDefectContext(null);
     confirmedActionRef.current = null;
     handleDonePress();
   }, [handleDonePress, scannedAsset, matchedDepot, photoCompleted, defectCompleted, maintenanceCompleted]);
@@ -228,6 +232,7 @@ export default function ScanScreen() {
   const handleUndoPressWithReset = useCallback(() => {
     setContextDefectId(null);
     setContextMaintenanceId(null);
+    setAcceptDefectContext(null);
     confirmedActionRef.current = null;
     handleUndoPress();
   }, [handleUndoPress]);
@@ -239,6 +244,28 @@ export default function ScanScreen() {
     refetchContext();
     markMaintenanceCompleted();
   }, [refetchContext, markMaintenanceCompleted]);
+
+  // ── Accept defect handlers ──
+  const handleAcceptPress = useCallback((context: {
+    defectId: string;
+    assetId: string;
+    assetNumber?: string;
+    title: string;
+    description?: string | null;
+  }) => {
+    setContextDefectId(null);
+    setAcceptDefectContext(context);
+  }, []);
+
+  const handleAcceptSubmit = useCallback(async (input: CreateMaintenanceInput) => {
+    if (!acceptDefectContext) return;
+    await acceptDefect({
+      defectReportId: acceptDefectContext.defectId,
+      maintenanceInput: input,
+    });
+    setAcceptDefectContext(null);
+    refetchContext();
+  }, [acceptDefectContext, acceptDefect, refetchContext]);
 
   // ── Render ──
 
@@ -274,20 +301,14 @@ export default function ScanScreen() {
             hasLocationPermission={hasLocationPermission}
             onRequestLocationPermission={requestLocationPermission}
             scanStatus={scanStatus}
-            onDebugScan={__DEV__ ? triggerDebugScan : undefined}
+            onDebugScan={triggerDebugScan}
           />
         )}
       </CameraView>
 
       {/* Blur backdrop + confirmation bottom sheet (Modal for z-index above tab header) */}
       <Modal visible={isPanelMounted} transparent animationType="none" statusBarTranslucent>
-        <Animated.View style={[StyleSheet.absoluteFillObject, { opacity: backdropOpacity }]}>
-          <BlurView
-            intensity={50}
-            tint="dark"
-            style={{ flex: 1, backgroundColor: 'rgba(0,0,30,0.3)' }}
-          />
-        </Animated.View>
+        <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFillObject} />
         {displayAsset && (
           <Animated.View
             style={[
@@ -327,18 +348,50 @@ export default function ScanScreen() {
             )}
           </Animated.View>
         )}
-      </Modal>
 
-      {/* Success flash overlay (after confirm) */}
-      <ScanSuccessFlash
-        visible={successFlash !== null}
-        assetNumber={successFlash?.assetNumber ?? ''}
-        depotName={successFlash?.depotName ?? null}
-        photoCompleted={successFlash?.photoCompleted ?? false}
-        defectCompleted={successFlash?.defectCompleted ?? false}
-        maintenanceCompleted={successFlash?.maintenanceCompleted ?? false}
-        onDismiss={() => setSuccessFlash(null)}
-      />
+        {/* Context modals — rendered inline (no nested native Modal) to avoid iOS stacking issues */}
+        <DefectReportDetailModal
+          visible={contextDefectId !== null}
+          defectId={contextDefectId}
+          onClose={() => setContextDefectId(null)}
+          onAcceptPress={handleAcceptPress}
+          variant="compact"
+          inline
+        />
+        <MaintenanceDetailModal
+          visible={contextMaintenanceId !== null}
+          maintenanceId={contextMaintenanceId}
+          onClose={() => setContextMaintenanceId(null)}
+          variant="compact"
+          inline
+        />
+        {/* Create maintenance from defect accept */}
+        {acceptDefectContext && (
+          <CreateMaintenanceModal
+            visible
+            onClose={() => setAcceptDefectContext(null)}
+            assetId={acceptDefectContext.assetId}
+            assetNumber={acceptDefectContext.assetNumber}
+            defectReportId={acceptDefectContext.defectId}
+            defaultTitle={acceptDefectContext.title}
+            defaultDescription={acceptDefectContext.description ?? undefined}
+            defaultPriority="high"
+            onExternalSubmit={handleAcceptSubmit}
+            inline
+          />
+        )}
+
+        {/* Success flash — inside Modal so it renders above the dark backdrop */}
+        <ScanSuccessFlash
+          visible={successFlash !== null}
+          assetNumber={successFlash?.assetNumber ?? ''}
+          depotName={successFlash?.depotName ?? null}
+          photoCompleted={successFlash?.photoCompleted ?? false}
+          defectCompleted={successFlash?.defectCompleted ?? false}
+          maintenanceCompleted={successFlash?.maintenanceCompleted ?? false}
+          onDismiss={() => setSuccessFlash(null)}
+        />
+      </Modal>
 
       {/* ── Sheet modals (controlled by activeSheet enum) ── */}
 
@@ -391,20 +444,6 @@ export default function ScanScreen() {
         onDismiss={() => setAlertSheet(prev => ({ ...prev, visible: false }))}
         actionLabel={alertSheet.actionLabel}
         onAction={alertSheet.onAction}
-      />
-
-      {/* Context detail modals (inline previews during scan flow) */}
-      <DefectReportDetailModal
-        visible={contextDefectId !== null}
-        defectId={contextDefectId}
-        onClose={() => setContextDefectId(null)}
-        variant="compact"
-      />
-      <MaintenanceDetailModal
-        visible={contextMaintenanceId !== null}
-        maintenanceId={contextMaintenanceId}
-        onClose={() => setContextMaintenanceId(null)}
-        variant="compact"
       />
 
       <TutorialSheet

@@ -5,9 +5,10 @@ import type { AssetWithRelations, AssetStatus } from '@rgr/shared';
 import { AssetStatusColors, AssetStatusLabels, getDepotBadgeColors, formatAssetNumber } from '@rgr/shared';
 import type { useDepotLookup } from '../../hooks/useDepots';
 import { DepotBadge } from '../common/DepotBadge';
+import { StatusBadge } from '../common/StatusBadge';
 import { colors } from '../../theme/colors';
 import { cardStyles } from '../../theme/cardStyles';
-import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 
 const ASSET_STATUS_ICONS: Record<AssetStatus, keyof typeof Ionicons.glyphMap> = {
   serviced: 'checkmark-circle',
@@ -51,11 +52,7 @@ function AssetListItemComponent({ asset, onPress, depotLookup }: AssetListItemPr
         <View style={styles.cardBody}>
           <View style={styles.headerRow}>
             <Text style={styles.assetNumber} numberOfLines={1}>{formatAssetNumber(asset.assetNumber)}</Text>
-            <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
-              <Text style={styles.statusBadgeText}>
-                {getStatusLabel(asset.status)}
-              </Text>
-            </View>
+            <StatusBadge status={asset.status} size="small" />
           </View>
           <View style={styles.footerRow}>
             <Text style={styles.subtypeLabel}>
@@ -108,7 +105,7 @@ const styles = StyleSheet.create({
   },
   assetNumber: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
   },
   statusBadge: {
@@ -118,7 +115,7 @@ const styles = StyleSheet.create({
   },
   statusBadgeText: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
   },
@@ -129,7 +126,7 @@ const styles = StyleSheet.create({
   },
   subtypeLabel: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 0.5,

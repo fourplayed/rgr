@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize } from '../../theme/spacing';
+import { spacing, fontSize, fontFamily as fonts } from '../../theme/spacing';
 import { cardStyles as sharedCardStyles } from '../../theme/cardStyles';
 
 /**
@@ -34,7 +34,7 @@ export const cardStyles = {
     },
     cardTitle: {
       fontSize: fontSize.sm,
-      fontFamily: 'Lato_700Bold',
+      fontFamily: fonts.bold,
       color: colors.text,
       flex: 1,
     },
@@ -49,14 +49,14 @@ export const cardStyles = {
     },
     cardSecondaryText: {
       fontSize: fontSize.xs,
-      fontFamily: 'Lato_400Regular',
+      fontFamily: fonts.regular,
       color: colors.textSecondary,
       flex: 1,
       marginRight: spacing.sm,
     },
     cardTime: {
       fontSize: fontSize.xs,
-      fontFamily: 'Lato_400Regular',
+      fontFamily: fonts.regular,
       color: colors.textSecondary,
     },
   }),

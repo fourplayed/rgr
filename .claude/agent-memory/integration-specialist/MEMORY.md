@@ -2,67 +2,62 @@
 
 ## Project: RGR (Trailer Management System)
 
-### Authentication Flow Patterns
+### Architecture Overview
+- Expo React Native mobile app + Supabase (auth, DB, storage, edge functions)
+- React Query for server state, Zustand for client state
+- Shared service layer in `packages/shared/src/services/supabase/`
+- All service functions return `ServiceResult<T>` pattern: `{ success, data, error }`
+- React Query hooks convert `!result.success` to thrown errors
 
-**Deferred Navigation Pattern** (Login.tsx + LoginPresenter.tsx)
-- Navigation is deferred using a ref-based queue to allow async workflows to complete
-- `pendingNavRef` stores the navigation path
-- `onNavigationReady()` callback flushes pending navigation
-- 2-second delay after workflow completion gives users time to review logs
-- Pattern: Store nav path → Wait for signal → Execute navigation
+### Authentication Flow (Mobile)
+- Primary: `signInWithEmailSecure` -> Edge Function `secure-auth` -> server-side rate limiting
+- Fallback: Direct `signInWithEmail` on 404 (not deployed) or network error (SECURITY ISSUE)
+- Auto-login: Tokens in SecureStore, checked on app launch with expiry buffer (1min)
+- Session refresh: `autoRefreshToken: true` + manual `getSession()` on foreground resume
+- Auth state listener: catches `SIGNED_OUT` and failed `TOKEN_REFRESHED`
+- Logout: clears state BEFORE signOut to prevent listener race
 
-**Workflow Visualization** (DebugToolbar.tsx)
-- Dev-tools panel with workflow log tab for authentication steps
-- Auto-opens and switches tabs when workflow starts
-- Persists state across remounts via localStorage
-- Accumulates multiple workflow runs with separators
-- Never auto-closes (manual close only)
-- Keys: `debug-toolbar-open`, `debug-toolbar-tab`, `debug-toolbar-workflow-steps`
+### Authentication Flow (Web)
+- Deferred navigation pattern with `pendingNavRef`
+- Debug toolbar with workflow visualization (dev-only)
+- 6-step workflow: connect -> auth -> session -> profile -> permissions -> sync
 
-### State Persistence Patterns
+### React Query Config (apps/mobile/app/_layout.tsx)
+- staleTime=5min, gcTime=10min, retry=1 (skip auth errors), refetchOnWindowFocus=false
+- refetchOnReconnect=false (known gap)
+- Auth errors detected via string matching in `authErrors.ts`
+- Cache cleared on logout via `queryClient.clear()`
 
-**localStorage for Dev Tools**
-- Panel state persists across page navigations/remounts
-- Workflow step history accumulates across login attempts
-- Visual separators between workflow runs (id: `separator-${timestamp}`)
-- useRef tracks current workflow run ID to detect new runs vs. updates
+### Key Integration Patterns
+- `refetchType: 'none'` in mutation onSuccess to mark stale without refetching
+- Cursor-based pagination with composite cursors (createdAt, id) for tie-breaking
+- PostgREST filter metachar escaping: `search.replace(/[%_\\,().]/g, ...)`
+- Status transitions validated client-side before update (defects, maintenance)
+- Optimistic concurrency: `.eq('status', currentStatus)` prevents stale writes
 
-### React Patterns in Codebase
+### Edge Functions
+- `secure-auth`: In-memory rate limiting (email: 5/15min, IP: 20/15min) - RESETS ON COLD START
+- `admin-create-user`: Superuser-only, role verified from profiles table, rollback on failure
+- Both use deprecated `serve()` from deno std; should migrate to `Deno.serve()`
+- CORS: `Access-Control-Allow-Origin: *` (should restrict)
 
-**useState with localStorage initialization**
-```typescript
-const [state, setState] = useState(() => {
-  const stored = localStorage.getItem('key');
-  return stored ? JSON.parse(stored) : defaultValue;
-});
-```
-
-**useEffect for localStorage sync**
-```typescript
-useEffect(() => {
-  localStorage.setItem('key', JSON.stringify(value));
-}, [value]);
-```
-
-**useRef for workflow tracking**
-- Used to track workflow run IDs without triggering re-renders
-- Persists across renders but doesn't cause updates
+### Known Issues (Audit 2026-03-06)
+See `integration-audit-findings.md` for full details.
+- No timeouts on any fetch call (Edge Functions, Supabase client)
+- No offline queue or optimistic updates
+- Photo upload has no retry mechanism
+- Network error fallback bypasses server-side rate limiting
+- `refetchOnReconnect: false` prevents auto-sync after offline
 
 ### File Locations
-
-- Login page container: `rgr/apps/web/src/pages/Login.tsx`
-- Login presenter (UI): `rgr/apps/web/src/pages/login/LoginPresenter.tsx`
-- Login form card: `rgr/apps/web/src/pages/login/components/LoginFormCard.tsx`
-- Debug toolbar: `rgr/apps/web/src/pages/login/components/DebugToolbar.tsx`
-- Login logic hook: `rgr/apps/web/src/pages/login/useLoginLogic.ts`
-
-### Authentication Workflow Steps
-
-1. Establishing connection (Supabase)
-2. Authenticating user (credential verification)
-3. Creating session (JWT token)
-4. Loading user profile (database query)
-5. Checking permissions (RBAC)
-6. Syncing application data (fleet assets, scans)
-
-Total duration: ~4 seconds with staggered delays
+- Supabase client: `packages/shared/src/services/supabase/client.ts`
+- Auth service: `packages/shared/src/services/supabase/auth.ts`
+- Assets service: `packages/shared/src/services/supabase/assets.ts`
+- Photos service: `packages/shared/src/services/supabase/photos.ts`
+- Auth store: `apps/mobile/src/store/authStore.ts`
+- Location store: `apps/mobile/src/store/locationStore.ts`
+- Root layout (RQ config): `apps/mobile/app/_layout.tsx`
+- Scan flow: `apps/mobile/src/hooks/scan/useScanActionFlow.ts`
+- Rate limiter: `packages/shared/src/utils/authRateLimiter.ts`
+- Web login: `apps/web/src/pages/Login.tsx` + `login/LoginPresenter.tsx`
+- Web debug toolbar: `apps/web/src/pages/login/components/DebugToolbar.tsx`

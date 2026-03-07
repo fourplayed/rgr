@@ -12,6 +12,21 @@ import { spacing, borderRadius } from './spacing';
  * - `container`       — includes marginBottom for FlatList usage
  * - `containerInline` — no marginBottom, for gap-managed scroll lists
  */
+/**
+ * Shared sheet container style for bottom sheet modals.
+ * Used by MaintenanceDetailModal, DefectReportDetailModal,
+ * CreateMaintenanceModal, SecurityModal, EditProfileModal, etc.
+ */
+export function sheetContainerStyle(maxHeight: string = '85%') {
+  return {
+    backgroundColor: colors.chrome,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
+    overflow: 'hidden' as const,
+    maxHeight,
+  };
+}
+
 export const cardStyles = StyleSheet.create({
   container: {
     backgroundColor: colors.background,

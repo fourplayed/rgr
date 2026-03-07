@@ -13,7 +13,8 @@ import { SheetHeader } from '../common/SheetHeader';
 import { SheetFooter } from '../common/SheetFooter';
 import { SheetModal } from '../common/SheetModal';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
+import { formStyles } from '../../theme/formStyles';
 import { useSubmitGuard } from '../../hooks/useSubmitGuard';
 
 interface DepotFormSheetProps {
@@ -109,9 +110,9 @@ export function DepotFormSheet({
             keyboardShouldPersistTaps="handled"
           >
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Name *</Text>
+              <Text style={formStyles.label}>Name *</Text>
               <TextInput
-                style={styles.input}
+                style={formStyles.inputFixed}
                 value={name}
                 onChangeText={setName}
                 placeholder="e.g., Melbourne Central"
@@ -123,9 +124,9 @@ export function DepotFormSheet({
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Code *</Text>
+              <Text style={formStyles.label}>Code *</Text>
               <TextInput
-                style={styles.input}
+                style={formStyles.inputFixed}
                 value={code}
                 onChangeText={setCode}
                 placeholder="e.g., MELB"
@@ -137,9 +138,9 @@ export function DepotFormSheet({
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Address</Text>
+              <Text style={formStyles.label}>Address</Text>
               <TextInput
-                style={styles.input}
+                style={formStyles.inputFixed}
                 value={address}
                 onChangeText={setAddress}
                 placeholder="Optional"
@@ -150,7 +151,7 @@ export function DepotFormSheet({
             </View>
 
             <View style={styles.toggleRow}>
-              <Text style={styles.label}>Active</Text>
+              <Text style={formStyles.label}>Active</Text>
               <Switch
                 value={isActive}
                 onValueChange={setIsActive}
@@ -163,7 +164,7 @@ export function DepotFormSheet({
           </ScrollView>
 
           <SheetFooter>
-            <View style={styles.buttonRow}>
+            <View style={formStyles.buttonRow}>
               <Button
                 variant="secondary"
                 onPress={onClose}
@@ -200,27 +201,9 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.base,
     paddingTop: spacing.lg,
   },
+  // Looser rhythm than the shared default (spacing.base vs spacing.md)
   inputGroup: {
     marginBottom: spacing.base,
-  },
-  label: {
-    fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: spacing.xs,
-  },
-  input: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.md,
-    height: 48,
-    fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
-    color: colors.text,
   },
   toggleRow: {
     flexDirection: 'row',
@@ -228,14 +211,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.base,
   },
+  // Larger bottom margin than shared default (spacing.base vs spacing.md)
   errorText: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.error,
     marginBottom: spacing.base,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
   },
 });

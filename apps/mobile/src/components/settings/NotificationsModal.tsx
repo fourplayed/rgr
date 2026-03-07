@@ -7,7 +7,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
 import { SheetFooter } from '../common/SheetFooter';
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     marginVertical: spacing.lg,
   },
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
   },
   toggleTitle: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   },
   toggleSubtitle: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     marginTop: spacing.xs,
   },

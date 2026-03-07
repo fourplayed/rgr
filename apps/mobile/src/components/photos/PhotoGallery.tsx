@@ -13,7 +13,7 @@ import { LoadingDots } from '../common/LoadingDots';
 import { useAssetPhotos, usePrefetchImages, useBatchSignedUrls } from '../../hooks/usePhotos';
 import type { PhotoListItem } from '@rgr/shared';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 
 const NUM_COLUMNS = 3;
 const THUMBNAIL_GAP = spacing.sm;
@@ -196,13 +196,13 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.error,
     textTransform: 'uppercase',
   },
   emptyText: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     fontStyle: 'italic',
     textTransform: 'uppercase',
@@ -215,14 +215,14 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   defectSectionTitle: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.error,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
   },
   sectionEmptyText: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     fontStyle: 'italic',
     textTransform: 'uppercase',
@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
   },
   addButtonText: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.electricBlue,
     textTransform: 'uppercase',
   },

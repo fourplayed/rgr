@@ -11,11 +11,10 @@ import {
 import { LoadingDots } from '../common/LoadingDots';
 import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
-import { SheetFooter } from '../common/SheetFooter';
 import { SheetModal } from '../common/SheetModal';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 import { isAutoLoginEnabled, setAutoLoginEnabled } from '../../utils/secureStorage';
 import { updatePassword, verifyCurrentPassword } from '@rgr/shared';
 import { useAuthStore } from '../../store/authStore';
@@ -127,8 +126,15 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
   }, [visible, loadAutoLoginState, resetPasswordForm]);
 
   const handleAutoLoginToggle = async (enabled: boolean) => {
+    const previous = autoLogin;
     setAutoLogin(enabled);
-    await setAutoLoginEnabled(enabled);
+    try {
+      await setAutoLoginEnabled(enabled);
+    } catch {
+      // Revert on secure storage failure
+      setAutoLogin(previous);
+      setError('Failed to update auto-login setting');
+    }
   };
 
   const guard = useSubmitGuard();
@@ -158,26 +164,29 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
 
     setIsLoading(true);
 
-    // Verify current password before allowing change
-    const verifyResult = await verifyCurrentPassword(user.email, currentPassword);
-    if (!verifyResult.success) {
+    try {
+      // Verify current password before allowing change
+      const verifyResult = await verifyCurrentPassword(user.email, currentPassword);
+      if (!verifyResult.success) {
+        setError('Current password is incorrect');
+        return;
+      }
+
+      const result = await updatePassword(newPassword);
+
+      if (result.success) {
+        setSuccess(true);
+        successTimerRef.current = setTimeout(() => {
+          successTimerRef.current = null;
+          resetPasswordForm();
+        }, 2000);
+      } else {
+        setError(result.error || 'Failed to update password');
+      }
+    } catch {
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
       setIsLoading(false);
-      setError('Current password is incorrect');
-      return;
-    }
-
-    const result = await updatePassword(newPassword);
-
-    setIsLoading(false);
-
-    if (result.success) {
-      setSuccess(true);
-      successTimerRef.current = setTimeout(() => {
-        successTimerRef.current = null;
-        resetPasswordForm();
-      }, 2000);
-    } else {
-      setError(result.error || 'Failed to update password');
     }
   });
 
@@ -360,12 +369,6 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
               )}
             </View>
           </ScrollView>
-
-          <SheetFooter>
-            <Button onPress={onClose}>
-              Done
-            </Button>
-          </SheetFooter>
         </View>
     </SheetModal>
   );
@@ -392,7 +395,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -415,14 +418,14 @@ const styles = StyleSheet.create({
   },
   toggleTitle: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   toggleSubtitle: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     marginTop: spacing.xs,
   },
@@ -439,7 +442,7 @@ const styles = StyleSheet.create({
   },
   changePasswordText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.electricBlue,
   },
   passwordForm: {
@@ -454,7 +457,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -473,7 +476,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.base,
     fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.text,
   },
   eyeButton: {
@@ -491,7 +494,7 @@ const styles = StyleSheet.create({
   },
   validationText: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
   },
   validationTextValid: {
@@ -505,7 +508,7 @@ const styles = StyleSheet.create({
   },
   matchText: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
   },
   matchTextValid: {
     color: colors.success,
@@ -515,7 +518,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.error,
     marginBottom: spacing.md,
   },
@@ -530,7 +533,7 @@ const styles = StyleSheet.create({
   },
   successText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.success,
   },
 });

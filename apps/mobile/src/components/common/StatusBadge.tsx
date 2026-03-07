@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { AssetStatusColors, AssetStatusLabels } from '@rgr/shared';
 import type { AssetStatus } from '@rgr/shared';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 
 type BadgeSize = 'small' | 'medium';
 
@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
   label: {
     color: colors.textInverse,
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     textTransform: 'uppercase',
   },
   labelSmall: {

@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 
 interface SaveCredentialsModalProps {
   visible: boolean;
@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: fontSize['2xl'],
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     marginBottom: spacing.md,
     textAlign: 'center',
@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     marginBottom: spacing.xl,
     lineHeight: 22,

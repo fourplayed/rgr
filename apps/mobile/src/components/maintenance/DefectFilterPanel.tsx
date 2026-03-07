@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { DefectStatus } from '@rgr/shared';
 import { DefectStatusLabels } from '@rgr/shared';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, shadows } from '../../theme/spacing';
+import { spacing, fontSize, shadows, fontFamily as fonts } from '../../theme/spacing';
 import { FilterChip } from '../common/FilterChip';
 import '../../utils/enableLayoutAnimation';
 
@@ -98,21 +98,16 @@ export const DefectFilterPanel = memo(function DefectFilterPanel({
 
       {/* Expandable Content */}
       {isExpanded && (
-        <View style={styles.container}>
-          <View style={styles.filterSection}>
-            <Text style={styles.sectionLabel}>Status</Text>
-            <View style={styles.chipsContainer}>
-              {STATUS_ORDER.map((status) => (
-                <FilterChip
-                  key={status}
-                  label={DefectStatusLabels[status]}
-                  isSelected={statuses.includes(status)}
-                  onPress={() => toggleStatus(status)}
-                  selectedColor={DEFECT_STATUS_COLORS[status] ?? colors.electricBlue}
-                />
-              ))}
-            </View>
-          </View>
+        <View style={styles.chipsContainer}>
+          {STATUS_ORDER.map((status) => (
+            <FilterChip
+              key={status}
+              label={DefectStatusLabels[status]}
+              isSelected={statuses.includes(status)}
+              onPress={() => toggleStatus(status)}
+              selectedColor={DEFECT_STATUS_COLORS[status] ?? colors.electricBlue}
+            />
+          ))}
         </View>
       )}
     </View>
@@ -124,22 +119,10 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.base,
     marginBottom: spacing.md,
   },
-  container: {
-    paddingTop: spacing.sm,
-  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  chevronButton: {
-    backgroundColor: colors.background,
-    borderRadius: 14,
-    width: 28,
-    height: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...shadows.sm,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -148,7 +131,7 @@ const styles = StyleSheet.create({
   },
   headerLabel: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -164,23 +147,22 @@ const styles = StyleSheet.create({
   },
   countBadgeText: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
   },
-  filterSection: {
-    marginBottom: 0,
-  },
-  sectionLabel: {
-    fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
-    color: colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: spacing.sm,
+  chevronButton: {
+    backgroundColor: colors.background,
+    borderRadius: 14,
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadows.sm,
   },
   chipsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.xs,
+    paddingTop: spacing.sm,
   },
 });

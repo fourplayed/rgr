@@ -24,6 +24,8 @@ import { spacing, fontSize, borderRadius } from '../../src/theme/spacing';
 import { CONTENT_TOP_OFFSET } from '../../src/theme/layout';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
 import { RefreshLoadingDots } from '../../src/components/common/RefreshLoadingDots';
+import { EmptyState } from '../../src/components/common/EmptyState';
+import { Badge } from '../../src/components/common/StatusBadge';
 import {
   MaintenanceStatusBadge,
   MaintenanceDetailModal,
@@ -41,6 +43,12 @@ import {
 import { findDepotByLocationString, getDepotBadgeColors } from '@rgr/shared';
 import { useDepotLookup } from '../../src/hooks/useDepots';
 import { useAcceptDefect } from '../../src/hooks/useAcceptDefect';
+import { useModalTransition } from '../../src/hooks/useModalTransition';
+
+// Dashboard-specific font sizes (not part of global token system)
+const FONT_SIZE_USERNAME = 28;
+const FONT_SIZE_STAT_VALUE = 35;
+const FONT_SIZE_STAT_LABEL = 14;
 
 type HomeModalState =
   | { type: 'none' }
@@ -190,23 +198,7 @@ export default function HomeScreen() {
   const { depots } = useDepotLookup();
 
   // Modal state machine — only one modal visible at a time
-  const [modal, setModal] = useState<HomeModalState>({ type: 'none' });
-  const pendingTransition = useRef<HomeModalState | null>(null);
-
-  const closeModal = useCallback(() => setModal({ type: 'none' }), []);
-
-  const transitionTo = useCallback((next: HomeModalState) => {
-    pendingTransition.current = next;
-    setModal({ type: 'none' });
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        if (pendingTransition.current) {
-          setModal(pendingTransition.current);
-          pendingTransition.current = null;
-        }
-      });
-    });
-  }, []);
+  const { modal, closeModal, transitionTo } = useModalTransition<HomeModalState>({ type: 'none' });
 
   const { mutateAsync: acceptDefect } = useAcceptDefect();
 
@@ -291,23 +283,31 @@ export default function HomeScreen() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFocused]);
 
-  // Staggered fade in animations
+  // Staggered fade in animations — play once per session, not on every tab focus
   const greetingOpacity = useRef(new Animated.Value(0)).current;
   const usernameOpacity = useRef(new Animated.Value(0)).current;
   const geofenceOpacity = useRef(new Animated.Value(0)).current;
+  const hasAnimated = useRef(false);
 
   const animRef = useRef<Animated.CompositeAnimation | null>(null);
 
   useEffect(() => {
-    // Don't run animation when screen isn't focused (saves CPU/battery)
     if (!isFocused) return;
 
-    // Reset
+    // On subsequent visits, render at full opacity immediately
+    if (hasAnimated.current) {
+      greetingOpacity.setValue(1);
+      usernameOpacity.setValue(1);
+      geofenceOpacity.setValue(1);
+      return;
+    }
+
+    // First visit — play staggered fade-in
+    hasAnimated.current = true;
     greetingOpacity.setValue(0);
     usernameOpacity.setValue(0);
     geofenceOpacity.setValue(0);
 
-    // Play once — staggered fade-in, then stay visible
     const anim = Animated.sequence([
       Animated.timing(greetingOpacity, {
         toValue: 1,
@@ -366,11 +366,11 @@ export default function HomeScreen() {
     if (item.type === 'scan') {
       router.navigate(`/(tabs)/assets/${item.data.assetId}`);
     } else if (item.type === 'defect') {
-      setModal({ type: 'defectDetail', defectId: item.data.id });
+      transitionTo({ type: 'defectDetail', defectId: item.data.id });
     } else {
-      setModal({ type: 'maintenanceDetail', maintenanceId: item.data.id });
+      transitionTo({ type: 'maintenanceDetail', maintenanceId: item.data.id });
     }
-  }, [router]);
+  }, [router, transitionTo]);
 
   // Thin wrapper delegates to memoized ActivityCard
   const renderActivityItem = useCallback(({ item }: { item: DashboardActivityItem }) => (
@@ -390,8 +390,12 @@ export default function HomeScreen() {
             <Animated.Text style={[styles.greeting, { opacity: greetingOpacity }]}>{greeting},</Animated.Text>
             <Animated.Text style={[styles.userName, { opacity: usernameOpacity }]}>{user?.fullName}</Animated.Text>
           </View>
-          <View style={[styles.badgeBase, { backgroundColor: colors.userRole[user?.role as keyof typeof colors.userRole] || colors.electricBlue, position: 'absolute', top: 0, right: 0 }]}>
-            <Text style={[styles.badgeText, { color: colors.textInverse }]}>{roleLabel}</Text>
+          <View style={{ position: 'absolute', top: 0, right: 0 }}>
+            <Badge
+              label={roleLabel}
+              color={colors.userRole[user?.role as keyof typeof colors.userRole] || colors.electricBlue}
+              size="small"
+            />
           </View>
         </View>
         <Animated.View style={{ opacity: geofenceOpacity, alignItems: 'flex-end', marginRight: 16 }}>
@@ -422,13 +426,20 @@ export default function HomeScreen() {
         <Text style={styles.sectionTitle}>Asset Overview</Text>
         <View style={styles.statsGrid}>
           {statsCards.map((stat) => (
-            <View key={stat.label} style={[styles.statCard, { backgroundColor: stat.color }]}>
+            <TouchableOpacity
+              key={stat.label}
+              style={[styles.statCard, { backgroundColor: stat.color }]}
+              onPress={() => router.navigate('/(tabs)/assets')}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel={`${stat.label}: ${stat.value}. Tap to view assets.`}
+            >
               <View style={styles.statRow}>
                 <Ionicons name={stat.icon} size={32} color="#FFFFFF" style={styles.statIcon} />
                 <Text style={styles.statValue}>{stat.value}</Text>
               </View>
               <Text style={styles.statLabel}>{stat.label}</Text>
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
       </View>
@@ -476,15 +487,11 @@ export default function HomeScreen() {
             />
           }
           ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <View style={styles.emptyIconContainer}>
-                <Ionicons name="scan-outline" size={64} color={colors.textSecondary} />
-              </View>
-              <Text style={styles.emptyTitle}>No recent activity</Text>
-              <Text style={styles.emptySubtext}>
-                Start scanning assets to see your activity here
-              </Text>
-            </View>
+            <EmptyState
+              icon="scan-outline"
+              title="No recent activity"
+              subtitle="Start scanning assets to see your activity here"
+            />
           }
         />
 
@@ -565,7 +572,7 @@ const styles = StyleSheet.create({
     marginTop: -5,
   },
   userName: {
-    fontSize: fontSize.userName,
+    fontSize: FONT_SIZE_USERNAME,
     fontFamily: 'Lato_700Bold',
     color: colors.text,
     marginBottom: spacing.xs,
@@ -585,17 +592,6 @@ const styles = StyleSheet.create({
   geofenceLocation: {
     fontFamily: 'Lato_700Bold',
     fontStyle: 'normal',
-  },
-  badgeBase: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm,
-  },
-  badgeText: {
-    fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   
   // Stats Section
@@ -633,13 +629,13 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
   },
   statValue: {
-    fontSize: fontSize.statValue,
+    fontSize: FONT_SIZE_STAT_VALUE,
     fontFamily: 'Lato_700Bold',
     marginBottom: spacing.xs,
     color: colors.textInverse,
   },
   statLabel: {
-    fontSize: fontSize.statLabel,
+    fontSize: FONT_SIZE_STAT_LABEL,
     fontFamily: 'Lato_400Regular',
     color: colors.textInverse,
     textAlign: 'center',
@@ -729,7 +725,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    backgroundColor: colors.surfaceSubtle,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.lg,

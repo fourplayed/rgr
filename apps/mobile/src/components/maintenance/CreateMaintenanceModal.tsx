@@ -15,7 +15,8 @@ import { SheetHeader } from '../common/SheetHeader';
 import { SheetFooter } from '../common/SheetFooter';
 import { SheetModal } from '../common/SheetModal';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
+import { formStyles } from '../../theme/formStyles';
 import { useAuthStore } from '../../store/authStore';
 import { useCreateMaintenance } from '../../hooks/useMaintenanceData';
 import { useSubmitGuard } from '../../hooks/useSubmitGuard';
@@ -34,6 +35,8 @@ interface CreateMaintenanceModalProps {
   /** When provided, the modal collects form data but delegates creation to this callback.
    *  Used by the atomic accept-defect flow to wrap both operations in a transaction. */
   onExternalSubmit?: (input: CreateMaintenanceInput) => Promise<void>;
+  /** Render inline (no native Modal) — use when already inside a Modal. */
+  inline?: boolean;
 }
 
 const PRIORITY_ORDER: MaintenancePriority[] = ['low', 'medium', 'high', 'critical'];
@@ -49,6 +52,7 @@ export function CreateMaintenanceModal({
   defaultPriority,
   onCreated,
   onExternalSubmit,
+  inline,
 }: CreateMaintenanceModalProps) {
   const user = useAuthStore(s => s.user);
   const { mutateAsync: createMaintenanceAsync, isPending } = useCreateMaintenance();
@@ -132,7 +136,7 @@ export function CreateMaintenanceModal({
   const isLoading = isPending;
 
   return (
-    <SheetModal visible={visible} onClose={onClose} keyboardAvoiding>
+    <SheetModal visible={visible} onClose={onClose} keyboardAvoiding inline={!!inline}>
         <View style={styles.sheet}>
           <SheetHeader icon="construct" title="Schedule Maintenance" onClose={onClose} backgroundColor={colors.warning} />
 
@@ -154,8 +158,8 @@ export function CreateMaintenanceModal({
 
             {/* Asset (read-only if pre-selected) */}
             {assetId && assetNumber && (
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Asset</Text>
+              <View style={formStyles.inputGroup}>
+                <Text style={formStyles.label}>Asset</Text>
                 <View style={styles.readOnlyField}>
                   <Text style={styles.readOnlyText}>{assetNumber}</Text>
                 </View>
@@ -163,10 +167,10 @@ export function CreateMaintenanceModal({
             )}
 
             {/* Title */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Title *</Text>
+            <View style={formStyles.inputGroup}>
+              <Text style={formStyles.label}>Title *</Text>
               <TextInput
-                style={styles.input}
+                style={formStyles.input}
                 value={title}
                 onChangeText={setTitle}
                 placeholder="e.g., Brake inspection, Tire replacement"
@@ -178,8 +182,8 @@ export function CreateMaintenanceModal({
             </View>
 
             {/* Priority */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Priority</Text>
+            <View style={formStyles.inputGroup}>
+              <Text style={formStyles.label}>Priority</Text>
               <View style={styles.chipContainer}>
                 {PRIORITY_ORDER.map((p) => {
                   const isSelected = priority === p;
@@ -202,7 +206,7 @@ export function CreateMaintenanceModal({
                           styles.chipText,
                           {
                             color: isSelected ? colors.textInverse : colors.text,
-                            fontFamily: isSelected ? 'Lato_700Bold' : 'Lato_400Regular',
+                            fontFamily: isSelected ? fonts.bold : fonts.regular,
                           },
                         ]}
                       >
@@ -215,8 +219,8 @@ export function CreateMaintenanceModal({
             </View>
 
             {/* Due Date */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Due Date (optional)</Text>
+            <View style={formStyles.inputGroup}>
+              <Text style={formStyles.label}>Due Date (optional)</Text>
               <View style={styles.datePresets}>
                 {datePresets.map(({ label, date }) => {
                   const isSelected = date !== '' && dueDate === date;
@@ -246,10 +250,10 @@ export function CreateMaintenanceModal({
             </View>
 
             {/* Description */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Description (optional)</Text>
+            <View style={formStyles.inputGroup}>
+              <Text style={formStyles.label}>Description (optional)</Text>
               <TextInput
-                style={[styles.input, styles.textArea]}
+                style={[formStyles.input, formStyles.textArea]}
                 value={description}
                 onChangeText={setDescription}
                 placeholder="Describe the maintenance work needed"
@@ -262,10 +266,10 @@ export function CreateMaintenanceModal({
             </View>
 
             {/* Notes */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Notes (optional)</Text>
+            <View style={formStyles.inputGroup}>
+              <Text style={formStyles.label}>Notes (optional)</Text>
               <TextInput
-                style={[styles.input, styles.textArea]}
+                style={[formStyles.input, formStyles.textArea]}
                 value={notes}
                 onChangeText={setNotes}
                 placeholder="Additional notes"
@@ -277,11 +281,11 @@ export function CreateMaintenanceModal({
               />
             </View>
 
-            {error && <Text style={styles.errorText}>{error}</Text>}
+            {error && <Text style={formStyles.errorText}>{error}</Text>}
           </ScrollView>
 
           <SheetFooter>
-            <View style={styles.buttonRow}>
+            <View style={formStyles.buttonRow}>
               <Button variant="secondary" onPress={onClose} disabled={isLoading} flex>Cancel</Button>
               <Button isLoading={isLoading} onPress={handleSubmit} flex>Schedule Maintenance</Button>
             </View>
@@ -308,32 +312,6 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.base,
     paddingTop: spacing.base,
   },
-  inputGroup: {
-    marginBottom: spacing.md,
-  },
-  label: {
-    fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: spacing.xs,
-  },
-  input: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.base,
-    fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
-    color: colors.text,
-  },
-  textArea: {
-    minHeight: 80,
-    paddingTop: spacing.md,
-  },
   readOnlyField: {
     backgroundColor: colors.chrome,
     borderWidth: 1,
@@ -344,7 +322,7 @@ const styles = StyleSheet.create({
   },
   readOnlyText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.electricBlue,
     textTransform: 'uppercase',
   },
@@ -363,16 +341,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     textTransform: 'uppercase',
   },
-  errorText: {
-    fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
-    color: colors.error,
-    marginBottom: spacing.md,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
   defectBanner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -387,7 +355,7 @@ const styles = StyleSheet.create({
   },
   defectBannerText: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.warningText,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -411,7 +379,7 @@ const styles = StyleSheet.create({
   },
   datePresetText: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textSecondary,
     textTransform: 'uppercase',
   },
@@ -420,7 +388,7 @@ const styles = StyleSheet.create({
   },
   dateDisplay: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.text,
     marginTop: spacing.sm,
   },

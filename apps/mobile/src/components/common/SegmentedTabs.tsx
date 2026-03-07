@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 import { colors } from '../../theme/colors';
-import { borderRadius, fontSize, spacing } from '../../theme/spacing';
+import { borderRadius, fontSize, spacing, fontFamily as fonts } from '../../theme/spacing';
 
 const PADDING = spacing.xs; // 4 — breathing room between tray edge and pill
 
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 1,

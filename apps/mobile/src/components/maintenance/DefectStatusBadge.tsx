@@ -9,13 +9,15 @@ interface DefectStatusBadgeProps {
   status: DefectStatus;
   /** Override the default label from DefectStatusLabels */
   label?: string;
+  /** Override the default status color */
+  color?: string;
 }
 
-export const DefectStatusBadge = memo(function DefectStatusBadge({ status, label }: DefectStatusBadgeProps) {
+export const DefectStatusBadge = memo(function DefectStatusBadge({ status, label, color }: DefectStatusBadgeProps) {
   return (
     <Badge
       label={label ?? DefectStatusLabels[status] ?? status}
-      color={DEFECT_STATUS_CONFIG[status]?.color ?? colors.textSecondary}
+      color={color ?? DEFECT_STATUS_CONFIG[status]?.color ?? colors.textSecondary}
     />
   );
 });

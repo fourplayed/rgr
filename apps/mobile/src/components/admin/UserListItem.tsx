@@ -2,8 +2,9 @@ import React, { memo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import type { Profile } from '@rgr/shared';
 import { UserRoleLabels } from '@rgr/shared';
+import { Badge } from '../common/StatusBadge';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 import { getUserRoleColor } from '../../utils/getUserRoleColor';
 
 export const USER_ITEM_HEIGHT = 88;
@@ -32,18 +33,11 @@ function UserListItemInner({ user, onPress }: UserListItemProps) {
           {user.fullName}
         </Text>
         <View style={styles.badges}>
-          <View
-            style={[
-              styles.roleBadge,
-              {
-                backgroundColor: getUserRoleColor(user.role) ?? colors.backgroundDark,
-              },
-            ]}
-          >
-            <Text style={styles.roleBadgeText}>
-              {UserRoleLabels[user.role]}
-            </Text>
-          </View>
+          <Badge
+            label={UserRoleLabels[user.role]}
+            color={getUserRoleColor(user.role) ?? colors.backgroundDark}
+            size="small"
+          />
           <Text
             style={[
               styles.statusText,
@@ -103,7 +97,7 @@ const styles = StyleSheet.create({
   name: {
     flex: 1,
     fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     marginRight: spacing.sm,
   },
@@ -112,20 +106,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
   },
-  roleBadge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: borderRadius.sm,
-  },
-  roleBadgeText: {
-    fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
-    color: colors.textInverse,
-    textTransform: 'uppercase',
-  },
   statusText: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     textTransform: 'uppercase',
   },
   footerRow: {
@@ -136,13 +119,13 @@ const styles = StyleSheet.create({
   email: {
     flex: 1,
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     marginRight: spacing.sm,
   },
   depot: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
   },
 });

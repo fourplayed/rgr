@@ -295,8 +295,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   setAuthError: (error: string | null) => set({ authError: error }),
 
   handleSessionExpired: async () => {
-    await clearSession();
-    eventBus.emit(AppEvents.USER_LOGOUT);
+    // Clear local state first to prevent auth listener re-entrancy
     set({
       user: null,
       isAuthenticated: false,
@@ -305,6 +304,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       authError: 'Session expired. Please log in again.',
       autoLoginAttempted: false,
     });
+
+    await clearSession();
+    eventBus.emit(AppEvents.USER_LOGOUT);
+
+    // Invalidate server-side session (best-effort)
+    try {
+      await signOut();
+    } catch (error: unknown) {
+      logger.warn('signOut failed during session expiry', error);
+    }
   },
 
   clearSavedSession: async () => {

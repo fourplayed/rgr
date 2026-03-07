@@ -11,7 +11,8 @@ import { SheetHeader } from '../common/SheetHeader';
 import { SheetFooter } from '../common/SheetFooter';
 import { SheetModal } from '../common/SheetModal';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { spacing, borderRadius } from '../../theme/spacing';
+import { formStyles } from '../../theme/formStyles';
 import { useAuthStore } from '../../store/authStore';
 import { useSubmitGuard } from '../../hooks/useSubmitGuard';
 
@@ -73,10 +74,10 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Full Name</Text>
+            <View style={formStyles.inputGroup}>
+              <Text style={formStyles.label}>Full Name</Text>
               <TextInput
-                style={styles.input}
+                style={formStyles.input}
                 value={fullName}
                 onChangeText={setFullName}
                 placeholder="Enter your full name"
@@ -87,10 +88,10 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
               />
             </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Phone (optional)</Text>
+            <View style={formStyles.inputGroup}>
+              <Text style={formStyles.label}>Phone (optional)</Text>
               <TextInput
-                style={styles.input}
+                style={formStyles.input}
                 value={phone}
                 onChangeText={setPhone}
                 placeholder="Enter your phone number"
@@ -101,11 +102,11 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
               />
             </View>
 
-            {error && <Text style={styles.errorText}>{error}</Text>}
+            {error && <Text style={formStyles.errorText}>{error}</Text>}
           </ScrollView>
 
           <SheetFooter>
-            <View style={styles.buttonRow}>
+            <View style={formStyles.buttonRow}>
               <Button
                 variant="secondary"
                 onPress={onClose}
@@ -139,37 +140,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.base,
     paddingTop: spacing.lg,
-  },
-  inputGroup: {
-    marginBottom: spacing.md,
-  },
-  label: {
-    fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: spacing.xs,
-  },
-  input: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.base,
-    fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
-    color: colors.text,
-  },
-  errorText: {
-    fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
-    color: colors.error,
-    marginBottom: spacing.md,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
   },
 });

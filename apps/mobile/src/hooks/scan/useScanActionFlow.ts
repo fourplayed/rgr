@@ -1,4 +1,4 @@
-import { useReducer, useCallback, useRef, useState } from 'react';
+import { useReducer, useCallback, useRef, useState, useEffect } from 'react';
 import type { AssetScanContext } from '@rgr/shared';
 import { useAssetScanContext } from '../useAssetData';
 import { useLocation } from '../useLocation';
@@ -287,10 +287,26 @@ export function useScanActionFlow({ canMarkMaintenance, confirmedActionRef }: Us
   const sheetLifecycle = useSheetLifecycle(dispatch);
 
   // ── Invalid QR callback ──
+  const invalidQRTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const handleInvalidQR = useCallback(() => {
     dispatch({ type: 'INVALID_QR' });
-    setTimeout(() => dispatch({ type: 'CLEAR_INVALID_STATUS' }), 2000);
+    if (invalidQRTimerRef.current) clearTimeout(invalidQRTimerRef.current);
+    invalidQRTimerRef.current = setTimeout(() => {
+      invalidQRTimerRef.current = null;
+      dispatch({ type: 'CLEAR_INVALID_STATUS' });
+    }, 2000);
   }, [dispatch]);
+
+  // Cleanup invalid QR timer on unmount
+  useEffect(() => {
+    return () => {
+      if (invalidQRTimerRef.current) {
+        clearTimeout(invalidQRTimerRef.current);
+        invalidQRTimerRef.current = null;
+      }
+    };
+  }, []);
 
   // ── QR Scanner ──
   const { handleBarCodeScanned, resetScanner } = useQRScanner(

@@ -9,7 +9,7 @@ import { StatusBadge } from '../common/StatusBadge';
 import { DepotBadge } from '../common/DepotBadge';
 import { CollapsibleSection } from '../common/CollapsibleSection';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 
 const STATUS_ICONS: Record<AssetStatus, keyof typeof Ionicons.glyphMap> = {
   serviced: 'checkmark-circle',
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
   },
   assessmentText: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     lineHeight: fontSize.xs * 1.5,
   },
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
   },
   assetNumber: {
     fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
   },
@@ -137,20 +137,20 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   infoLabel: {
-    fontSize: 10,
-    fontFamily: 'Lato_400Regular',
+    fontSize: fontSize.xs,
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     textTransform: 'uppercase',
   },
   infoValue: {
-    fontSize: 10,
-    fontFamily: 'Lato_700Bold',
+    fontSize: fontSize.xs,
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
   },
   categoryText: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textSecondary,
     textTransform: 'uppercase',
   },

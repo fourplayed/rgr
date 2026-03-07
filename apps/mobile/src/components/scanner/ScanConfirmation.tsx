@@ -11,8 +11,10 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Asset, AssetWithRelations, AssetScanContext } from '@rgr/shared';
-import { DefectStatusLabels, MaintenanceStatusLabels } from '@rgr/shared';
+import { MaintenanceStatusLabels, formatRelativeTime } from '@rgr/shared';
 import { AssetInfoCard } from '../assets/AssetInfoCard';
+import { DefectStatusBadge } from '../maintenance/DefectStatusBadge';
+import { cardStyles } from '../maintenance/maintenance.styles';
 import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
 import { SheetFooter } from '../common/SheetFooter';
@@ -88,8 +90,15 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
   const [activeTab, setActiveTab] = useState<ScanTab>('actions');
 
   // Show tabs only for mechanics with existing open items
-  const hasOpenItems = props.variant === 'mechanic' && props.scanContext != null
-    && (props.scanContext.openDefectCount + props.scanContext.activeTaskCount) > 0;
+  const openItemCount = props.variant === 'mechanic' && props.scanContext != null
+    ? props.scanContext.openDefectCount + props.scanContext.activeTaskCount
+    : 0;
+  const hasOpenItems = openItemCount > 0;
+
+  const scanTabs = useMemo(() => [
+    { key: 'actions' as const, label: 'Actions' },
+    { key: 'openItems' as const, label: `Open Items (${openItemCount})` },
+  ], [openItemCount]);
 
   const toggleAction = (action: ConfirmAction) => {
     setSelectedAction(prev => (prev === action ? null : action));
@@ -130,6 +139,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        bounces={false}
         keyboardShouldPersistTaps="handled"
       >
         {/* ── Asset detail card (collapsible) ── */}
@@ -155,7 +165,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
           <>
             <View style={styles.tabContainer}>
               <SegmentedTabs
-                tabs={SCAN_TABS}
+                tabs={scanTabs}
                 activeTab={activeTab}
                 onTabPress={setActiveTab}
               />
@@ -165,7 +175,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
                 <CheckboxOption
                   icon="camera"
                   label="Capture Photo"
-                  description="Take a photo for visual records"
+                  description="Timestamped photo for records"
                   checked={props.photoCompleted || selectedAction === 'photo'}
                   completed={props.photoCompleted}
                   onToggle={() => toggleAction('photo')}
@@ -175,7 +185,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
                 <CheckboxOption
                   icon="warning"
                   label="Report Defect"
-                  description="Log severity, description, and photo evidence"
+                  description="Log damage with details and photo"
                   checked={defectCompleted || selectedAction === 'defect'}
                   completed={defectCompleted}
                   onToggle={() => toggleAction('defect')}
@@ -185,7 +195,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
                 <CheckboxOption
                   icon="construct"
                   label="Schedule Maintenance"
-                  description="Create a task with priority and work details"
+                  description="Create a task with priority"
                   checked={maintenanceCompleted || selectedAction === 'maintenance'}
                   completed={maintenanceCompleted}
                   onToggle={() => toggleAction('maintenance')}
@@ -211,7 +221,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
               <CheckboxOption
                 icon="camera"
                 label="Capture Photo"
-                description="Take a photo for visual records"
+                description="Timestamped photo for records"
                 checked={props.photoCompleted || selectedAction === 'photo'}
                 completed={props.photoCompleted}
                 onToggle={() => toggleAction('photo')}
@@ -223,7 +233,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
                   <CheckboxOption
                     icon="warning"
                     label="Report Defect"
-                    description="Log severity, description, and photo evidence"
+                    description="Log damage with details and photo"
                     checked={defectCompleted || selectedAction === 'defect'}
                     completed={defectCompleted}
                     onToggle={() => toggleAction('defect')}
@@ -233,7 +243,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
                   <CheckboxOption
                     icon="construct"
                     label="Schedule Maintenance"
-                    description="Create a task with priority and work details"
+                    description="Create a task with priority"
                     checked={maintenanceCompleted || selectedAction === 'maintenance'}
                     completed={maintenanceCompleted}
                     onToggle={() => toggleAction('maintenance')}
@@ -284,9 +294,6 @@ function OpenItemsSection({
   const totalCount = openDefectCount + activeTaskCount;
   if (totalCount === 0) return null;
 
-  const extraDefects = openDefectCount - openDefects.length;
-  const extraTasks = activeTaskCount - activeTasks.length;
-
   const toggleExpanded = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded(prev => !prev);
@@ -323,86 +330,70 @@ function OpenItemsSection({
 
       {/* Content */}
       {isExpanded && (
-        <View style={styles.openItemsList}>
-          {openDefects.map((defect, i) => (
-            <TouchableOpacity
-              key={defect.id}
-              style={[
-                styles.openItemRow,
-                i < openDefects.length + activeTasks.length - 1 && styles.openItemRowBorder,
-              ]}
-              onPress={() => onDefectPress?.(defect.id)}
-              activeOpacity={0.6}
-              accessibilityRole="button"
-              accessibilityLabel={`Defect: ${defect.title}`}
-            >
-              <View style={[styles.openItemIconContainer, { backgroundColor: `${colors.defectYellow}18` }]}>
-                <Ionicons name="warning" size={18} color={colors.defectYellow} />
-              </View>
-              <View style={styles.openItemTextColumn}>
-                <Text style={[styles.openItemTypeLabel, { color: colors.defectYellow }]}>Defect Report</Text>
-                <Text style={styles.openItemTitle} numberOfLines={1}>{defect.title}</Text>
-                <View style={styles.openItemStatusRow}>
-                  <View style={[styles.openItemStatusDot, { backgroundColor: colors.defectYellow }]} />
-                  <Text style={styles.openItemStatus}>{DefectStatusLabels[defect.status] ?? defect.status}</Text>
+        <View style={styles.openItemsCardList}>
+          {/* Defect cards */}
+          {openDefects.map((defect) => (
+              <TouchableOpacity
+                key={defect.id}
+                style={[cardStyles.containerInline, { borderLeftColor: colors.defectYellow }]}
+                onPress={() => onDefectPress?.(defect.id)}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={`Defect: ${defect.title}`}
+              >
+                <View style={cardStyles.cardRow}>
+                  <View style={cardStyles.cardIconContainer}>
+                    <Ionicons name="warning" size={31} color={colors.defectYellow} />
+                  </View>
+                  <View style={cardStyles.cardBody}>
+                    <View style={cardStyles.cardContentRow}>
+                      <Text style={[cardStyles.cardTitle, { color: colors.defectYellow }]} numberOfLines={1}>Defect Report</Text>
+                      <View style={cardStyles.cardBadges}>
+                        <DefectStatusBadge status={defect.status} color={colors.defectYellow} {...(defect.status === 'accepted' ? { label: 'Task Created' } : {})} />
+                      </View>
+                    </View>
+                    <View style={cardStyles.cardFooter}>
+                      <Text style={cardStyles.cardSecondaryText} numberOfLines={1}>
+                        {defect.description ?? defect.title}
+                      </Text>
+                      <Text style={cardStyles.cardTime}>
+                        {formatRelativeTime(defect.createdAt)}
+                      </Text>
+                    </View>
+                  </View>
                 </View>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color={colors.textDisabled} />
-            </TouchableOpacity>
+              </TouchableOpacity>
           ))}
-          {extraDefects > 0 && (
-            <TouchableOpacity
-              style={styles.openItemMoreRow}
-              onPress={() => onDefectPress?.(openDefects[0]?.id ?? '')}
-              activeOpacity={0.6}
-              accessibilityRole="link"
-              accessibilityLabel={`View ${extraDefects} more defects`}
-            >
-              <Text style={[styles.openItemMore, { color: colors.defectYellow }]}>
-                +{extraDefects} more {extraDefects === 1 ? 'defect' : 'defects'}
-              </Text>
-            </TouchableOpacity>
-          )}
-
-          {activeTasks.map((task, i) => (
+          {/* Maintenance task cards */}
+          {activeTasks.map((task) => (
             <TouchableOpacity
               key={task.id}
-              style={[
-                styles.openItemRow,
-                i < activeTasks.length - 1 && styles.openItemRowBorder,
-              ]}
+              style={[cardStyles.containerInline, { borderLeftColor: colors.warning }]}
               onPress={() => onTaskPress?.(task.id)}
-              activeOpacity={0.6}
+              activeOpacity={0.7}
               accessibilityRole="button"
               accessibilityLabel={`Task: ${task.title}`}
             >
-              <View style={[styles.openItemIconContainer, { backgroundColor: `${colors.warning}18` }]}>
-                <Ionicons name="construct" size={18} color={colors.warning} />
-              </View>
-              <View style={styles.openItemTextColumn}>
-                <Text style={[styles.openItemTypeLabel, { color: colors.warning }]}>Maintenance Task</Text>
-                <Text style={styles.openItemTitle} numberOfLines={1}>{task.title}</Text>
-                <View style={styles.openItemStatusRow}>
-                  <View style={[styles.openItemStatusDot, { backgroundColor: colors.warning }]} />
-                  <Text style={styles.openItemStatus}>{MaintenanceStatusLabels[task.status] ?? task.status}</Text>
+              <View style={cardStyles.cardRow}>
+                <View style={cardStyles.cardIconContainer}>
+                  <Ionicons name="construct" size={31} color={colors.warning} />
+                </View>
+                <View style={cardStyles.cardBody}>
+                  <View style={cardStyles.cardContentRow}>
+                    <Text style={cardStyles.cardTitle} numberOfLines={1}>Maintenance Task</Text>
+                  </View>
+                  <View style={cardStyles.cardFooter}>
+                    <Text style={cardStyles.cardSecondaryText} numberOfLines={1}>
+                      {task.title}
+                    </Text>
+                    <Text style={cardStyles.cardTime}>
+                      {formatRelativeTime(task.createdAt)}
+                    </Text>
+                  </View>
                 </View>
               </View>
-              <Ionicons name="chevron-forward" size={16} color={colors.textDisabled} />
             </TouchableOpacity>
           ))}
-          {extraTasks > 0 && (
-            <TouchableOpacity
-              style={styles.openItemMoreRow}
-              onPress={() => onTaskPress?.(activeTasks[0]?.id ?? '')}
-              activeOpacity={0.6}
-              accessibilityRole="link"
-              accessibilityLabel={`View ${extraTasks} more tasks`}
-            >
-              <Text style={[styles.openItemMore, { color: colors.warning }]}>
-                +{extraTasks} more {extraTasks === 1 ? 'task' : 'tasks'}
-              </Text>
-            </TouchableOpacity>
-          )}
         </View>
       )}
     </>
@@ -466,7 +457,6 @@ export const ScanConfirmation = React.memo(ScanConfirmationComponent);
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     backgroundColor: colors.chrome,
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
@@ -475,11 +465,11 @@ const styles = StyleSheet.create({
 
   // Scrollable content
   scrollView: {
-    flex: 1,
+    flexShrink: 1,
   },
   scrollContent: {
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.sm,
   },
 
   // Asset detail card
@@ -511,7 +501,7 @@ const styles = StyleSheet.create({
 
   // Tab container
   tabContainer: {
-    marginTop: spacing.base,
+    marginTop: spacing.sm,
     marginBottom: spacing.sm,
   },
 
@@ -522,17 +512,17 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    marginTop: spacing.base,
+    marginTop: spacing.sm,
     marginBottom: spacing.sm,
   },
   checkboxList: {
-    gap: spacing.sm,
+    gap: spacing.base,
   },
   checkboxRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    borderRadius: borderRadius.sm,
+    borderRadius: borderRadius.md,
     borderWidth: 1,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.base,
@@ -587,74 +577,8 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bold,
     color: colors.textInverse,
   },
-  openItemsList: {
-    backgroundColor: colors.background,
-    borderRadius: borderRadius.base,
-    borderWidth: 1,
-    borderColor: colors.border,
-    overflow: 'hidden',
-  },
-  openItemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.base,
-  },
-  openItemRowBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  openItemIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: borderRadius.base,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  openItemTextColumn: {
-    flex: 1,
-  },
-  openItemTypeLabel: {
-    fontSize: 11,
-    fontFamily: fonts.bold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  openItemTitle: {
-    fontSize: fontSize.sm,
-    fontFamily: fonts.regular,
-    color: colors.text,
-    marginTop: 1,
-  },
-  openItemStatusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    marginTop: 3,
-  },
-  openItemStatusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  openItemStatus: {
-    fontSize: fontSize.xs,
-    fontFamily: fonts.regular,
-    color: colors.textSecondary,
-  },
-  openItemMoreRow: {
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.base,
-  },
-  openItemMore: {
-    fontSize: fontSize.xs,
-    fontFamily: fonts.bold,
-    textAlign: 'center',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+  openItemsCardList: {
+    gap: spacing.sm,
   },
 
   // Confirm button

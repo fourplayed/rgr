@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   Modal,
   Linking,
+  Animated,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Image } from 'expo-image';
@@ -15,8 +16,11 @@ import * as Haptics from 'expo-haptics';
 import type { PhotoType } from '@rgr/shared';
 import { usePhotoCapture } from '../../hooks/usePhotoCapture';
 import { LoadingDots } from '../common/LoadingDots';
+import { SheetHeader } from '../common/SheetHeader';
+import { SheetFooter } from '../common/SheetFooter';
+import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, shadows, fontFamily as fonts } from '../../theme/spacing';
 
 interface CameraCaptureProps {
   visible: boolean;
@@ -119,6 +123,16 @@ function CameraCaptureComponent({
 
   const isDamage = photoType === 'damage';
 
+  // Fade the Retake button in/out instead of showing it disabled
+  const retakeOpacity = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    Animated.timing(retakeOpacity, {
+      toValue: isUploading ? 0 : 1,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  }, [isUploading, retakeOpacity]);
+
   // Permission checking state
   if (!permission) {
     return (
@@ -180,21 +194,8 @@ function CameraCaptureComponent({
     <Modal visible={visible} animationType="slide" onRequestClose={handleClose} onDismiss={onDismiss}>
       <View style={styles.container}>
         {capturedUri ? (
-          // Preview Mode
+          // Preview Mode — split layout: photo on top, chrome card on bottom
           <SafeAreaView style={styles.previewContainer}>
-            <View style={styles.previewHeader}>
-              <TouchableOpacity
-                style={styles.headerButton}
-                onPress={handleClose}
-                accessibilityRole="button"
-                accessibilityLabel="Close camera"
-              >
-                <Ionicons name="close" size={28} color={colors.text} />
-              </TouchableOpacity>
-              <Text style={styles.previewHeaderTitle}>Review Photo</Text>
-              <View style={styles.headerButton} />
-            </View>
-
             <View style={styles.previewImageContainer}>
               <Image
                 source={{ uri: capturedUri }}
@@ -203,47 +204,61 @@ function CameraCaptureComponent({
               />
             </View>
 
-            {uploadError && (
-              <View style={styles.errorContainer}>
-                <View style={styles.errorRow}>
-                  <Ionicons name="alert-circle" size={18} color={colors.error} />
-                  <View>
-                    <Text style={styles.errorTitle}>Upload Failed</Text>
-                    <Text style={styles.errorText}>{uploadError}</Text>
+            <View style={styles.reviewCard}>
+              <SheetHeader
+                icon="checkmark"
+                title="Review Photo"
+                onClose={handleClose}
+                backgroundColor={colors.violet}
+              />
+
+              <View style={styles.photoTypeRow}>
+                <Ionicons
+                  name={isDamage ? 'warning' : 'camera'}
+                  size={18}
+                  color={isDamage ? colors.defectYellow : colors.violet}
+                />
+                <Text style={styles.photoTypeText}>
+                  {isDamage ? 'Defect Photo' : 'Freight Photo'}
+                </Text>
+              </View>
+
+              {uploadError && (
+                <View style={styles.errorContainer}>
+                  <View style={styles.errorRow}>
+                    <Ionicons name="alert-circle" size={18} color={colors.error} />
+                    <View>
+                      <Text style={styles.errorTitle}>Upload Failed</Text>
+                      <Text style={styles.errorText}>{uploadError}</Text>
+                    </View>
                   </View>
                 </View>
-              </View>
-            )}
+              )}
 
-            <View style={styles.previewActions}>
-              <TouchableOpacity
-                style={[styles.actionButton, styles.retakeButton]}
-                onPress={handleRetake}
-                disabled={isUploading}
-                accessibilityRole="button"
-                accessibilityLabel="Retake photo"
-              >
-                <Ionicons name="refresh" size={24} color={colors.text} />
-                <Text style={styles.retakeButtonText}>Retake</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.actionButton, styles.confirmButton]}
-                onPress={handleConfirm}
-                disabled={isUploading}
-                accessibilityRole="button"
-                accessibilityLabel="Use photo"
-                accessibilityHint="Double tap to upload this photo"
-              >
-                {isUploading ? (
-                  <LoadingDots color={colors.textInverse} size={8} />
-                ) : (
-                  <>
-                    <Ionicons name="checkmark" size={24} color={colors.textInverse} />
-                    <Text style={styles.confirmButtonText}>Use Photo</Text>
-                  </>
-                )}
-              </TouchableOpacity>
+              <SheetFooter>
+                <View style={styles.buttonRow}>
+                  <Animated.View style={[styles.flexOne, { opacity: retakeOpacity }]}>
+                    <Button
+                      variant="secondary"
+                      onPress={handleRetake}
+                      disabled={isUploading}
+                      flex
+                      icon="camera-reverse-outline"
+                    >
+                      Retake
+                    </Button>
+                  </Animated.View>
+                  <Button
+                    onPress={handleConfirm}
+                    isLoading={isUploading}
+                    flex
+                    icon="checkmark"
+                    color={colors.violet}
+                  >
+                    Use Photo
+                  </Button>
+                </View>
+              </SheetFooter>
             </View>
           </SafeAreaView>
         ) : (
@@ -327,7 +342,7 @@ const styles = StyleSheet.create({
   },
   messageText: {
     fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
     textAlign: 'center',
     textTransform: 'uppercase',
@@ -350,7 +365,7 @@ const styles = StyleSheet.create({
   },
   permissionTitle: {
     fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -359,7 +374,7 @@ const styles = StyleSheet.create({
   },
   permissionBody: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textInverse,
     opacity: 0.7,
     textAlign: 'center',
@@ -383,7 +398,7 @@ const styles = StyleSheet.create({
   },
   permissionCancelButtonText: {
     fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
   },
@@ -398,7 +413,7 @@ const styles = StyleSheet.create({
   },
   permissionGrantButtonText: {
     fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
   },
@@ -436,7 +451,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -486,7 +501,7 @@ const styles = StyleSheet.create({
   guideText: {
     marginTop: spacing.xs,
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textInverse,
     opacity: 0.8,
     letterSpacing: 0.5,
@@ -519,35 +534,45 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.navy,
   },
-  previewHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.base,
-    paddingVertical: spacing.md,
-    backgroundColor: colors.background,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  previewHeaderTitle: {
-    fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
-    color: colors.text,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
   previewImageContainer: {
     flex: 1,
-    margin: spacing.base,
-    backgroundColor: colors.surface,
-    overflow: 'hidden',
   },
   previewImage: {
     flex: 1,
-    borderRadius: borderRadius.md,
   },
+
+  // Review card (bottom chrome panel)
+  reviewCard: {
+    backgroundColor: colors.chrome,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
+  },
+  photoTypeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.base,
+  },
+  photoTypeText: {
+    fontSize: fontSize.sm,
+    fontFamily: fonts.bold,
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    alignSelf: 'stretch',
+  },
+  flexOne: {
+    flex: 1,
+  },
+
+  // Error banner (shared between review card and camera)
   errorContainer: {
-    marginHorizontal: spacing.base,
+    marginHorizontal: spacing.lg,
     marginBottom: spacing.md,
     padding: spacing.md,
     borderLeftWidth: 3,
@@ -562,50 +587,14 @@ const styles = StyleSheet.create({
   },
   errorTitle: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.error,
     textTransform: 'uppercase',
   },
   errorText: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
-    color: colors.textInverse,
-    opacity: 0.8,
-  },
-  previewActions: {
-    flexDirection: 'row',
-    paddingHorizontal: spacing.base,
-    paddingBottom: spacing['3xl'],
-    gap: spacing.md,
-  },
-  actionButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 48,
-    borderRadius: borderRadius.md,
-    gap: spacing.sm,
-  },
-  retakeButton: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  retakeButtonText: {
-    fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.regular,
     color: colors.text,
-    textTransform: 'uppercase',
-  },
-  confirmButton: {
-    backgroundColor: colors.primary,
-    ...shadows.md,
-  },
-  confirmButtonText: {
-    fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
-    color: colors.textInverse,
-    textTransform: 'uppercase',
+    opacity: 0.8,
   },
 });

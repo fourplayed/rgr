@@ -39,10 +39,6 @@ export function UserProfileHeader() {
     router.push('/settings');
   };
 
-  const handleLogoutPress = useCallback(() => {
-    setShowLogoutConfirm(true);
-  }, []);
-
   const handleLogoutConfirm = useCallback(async () => {
     setShowLogoutConfirm(false);
     await logout();
@@ -83,15 +79,6 @@ export function UserProfileHeader() {
               accessibilityHint="Open settings screen"
             >
               <Ionicons name="settings-outline" size={24} color={colors.textInverse} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={handleLogoutPress}
-              style={styles.actionButton}
-              accessibilityRole="button"
-              accessibilityLabel="Logout"
-              accessibilityHint="Sign out of your account"
-            >
-              <Ionicons name="log-out-outline" size={24} color={colors.textInverse} />
             </TouchableOpacity>
           </View>
         </View>

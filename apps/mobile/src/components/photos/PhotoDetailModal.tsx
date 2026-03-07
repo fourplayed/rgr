@@ -18,7 +18,7 @@ import { FreightAnalysisCard } from './FreightAnalysisCard';
 import { LoadingDots, AlertSheet, ConfirmSheet } from '../common';
 import { formatRelativeTime } from '@rgr/shared';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 
 const formatPhotoType = (type: string): string => {
   return type.charAt(0).toUpperCase() + type.slice(1).replace(/_/g, ' ');
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -333,14 +333,14 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.error,
     textTransform: 'uppercase',
     textAlign: 'center',
   },
   errorSubtext: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     textAlign: 'center',
   },
@@ -368,7 +368,7 @@ const styles = StyleSheet.create({
   },
   imageLoadingText: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     textAlign: 'center',
   },
@@ -389,19 +389,19 @@ const styles = StyleSheet.create({
   },
   metadataLabel: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     textTransform: 'uppercase',
     marginBottom: 2,
   },
   metadataValue: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
   },
   metadataValueSmall: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
   },
   locationValue: {
@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
   },
   metadataValueLink: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.electricBlue,
   },
   analysisStatus: {
@@ -426,13 +426,13 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.success,
     textTransform: 'uppercase',
   },
   statusTextPending: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.warning,
     textTransform: 'uppercase',
   },

@@ -9,6 +9,7 @@ import { useDebugLocationStore } from './debugLocationStore';
 // Configuration constants
 const MAX_DEPOT_DISTANCE_KM = 100;
 const LOCATION_TIMEOUT_MS = 15000; // 15 seconds - GPS timeout for indoor environments
+const RESOLVE_COOLDOWN_MS = 30_000; // 30 seconds — prevents rapid successive GPS queries
 
 export interface CachedLocationData {
   latitude: number;
@@ -41,6 +42,12 @@ export const useLocationStore = create<LocationState>((set, get) => ({
   resolveDepot: async (depots: Depot[]) => {
     // Don't resolve if already resolving
     if (get().isResolvingDepot) {
+      return;
+    }
+
+    // Rate-limit: skip if successfully resolved within cooldown period
+    const { lastResolvedAt, resolvedDepot } = get();
+    if (resolvedDepot && lastResolvedAt && Date.now() - lastResolvedAt.getTime() < RESOLVE_COOLDOWN_MS) {
       return;
     }
 

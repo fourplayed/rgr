@@ -21,3 +21,4 @@ export type { TutorialSheetProps } from './TutorialSheet';
 export { SheetHeader } from './SheetHeader';
 export { SheetFooter } from './SheetFooter';
 export { SheetModal } from './SheetModal';
+export { EmptyState } from './EmptyState';

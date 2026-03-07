@@ -73,7 +73,12 @@ export const colors = {
   // Text
   text: '#1E293B',
   textSecondary: '#475569',
+  textDisabled: '#94A3B8',
   textInverse: '#FFFFFF',
+
+  // Feature-specific semantic colors
+  defectYellow: '#FACC15',
+  categoryDolly: '#0E7490',
 
   // Semantic colors
   success: '#22C55E',

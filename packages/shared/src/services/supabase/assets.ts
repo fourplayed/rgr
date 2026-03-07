@@ -754,6 +754,7 @@ export interface AssetScanContext {
   openDefects: Array<{
     id: string;
     title: string;
+    description: string | null;
     status: DefectStatus;
     createdAt: string;
   }>;
@@ -786,7 +787,7 @@ export async function getAssetScanContext(
   const raw = data as {
     open_defect_count: number;
     active_task_count: number;
-    open_defects: Array<{ id: string; title: string; status: string; created_at: string }>;
+    open_defects: Array<{ id: string; title: string; description: string | null; status: string; created_at: string }>;
     active_tasks: Array<{ id: string; title: string; status: string; priority: string; created_at: string }>;
   };
 
@@ -798,6 +799,7 @@ export async function getAssetScanContext(
       openDefects: (raw.open_defects ?? []).map((d) => ({
         id: d.id,
         title: d.title,
+        description: d.description ?? null,
         status: safeParseEnum(DefectStatusSchema, d.status, 'reported'),
         createdAt: d.created_at,
       })),

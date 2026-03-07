@@ -272,5 +272,11 @@ $$;
 -- invalid strings from being stored.
 -- ============================================================================
 
+-- Clean up any invalid maintenance_type values before adding constraint
+UPDATE maintenance_records
+  SET maintenance_type = NULL
+  WHERE maintenance_type IS NOT NULL
+    AND maintenance_type NOT IN ('scheduled', 'reactive', 'inspection', 'defect_report');
+
 ALTER TABLE maintenance_records ADD CONSTRAINT chk_maintenance_type
   CHECK (maintenance_type IS NULL OR maintenance_type IN ('scheduled', 'reactive', 'inspection', 'defect_report'));

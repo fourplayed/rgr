@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, fontWeight, borderRadius, shadows } from '../../theme/spacing';
+import { spacing, fontSize, fontWeight, borderRadius, shadows, fontFamily as fonts } from '../../theme/spacing';
 import { HEADER_STATUS_BAR_GAP, HEADER_HEIGHT } from '../../theme/layout';
 
 export const SCAN_FRAME_SIZE = 250;
@@ -41,14 +41,14 @@ export const styles = StyleSheet.create({
   topBarTitleText: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.bold,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   topBarSubtitleText: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textInverse,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -110,7 +110,7 @@ export const styles = StyleSheet.create({
   },
   scanStatusText: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
   },
 
@@ -135,7 +135,7 @@ export const styles = StyleSheet.create({
   },
   scannerButtonText: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     textTransform: 'uppercase',
   },
 
@@ -179,14 +179,14 @@ export const styles = StyleSheet.create({
   statusLabel: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.chrome,
     marginRight: spacing.sm,
   },
   statusValue: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.bold,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.scanSuccess,
   },
   statusValueError: {
@@ -200,7 +200,7 @@ export const styles = StyleSheet.create({
   },
   messageText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.text,
     textAlign: 'center',
     marginBottom: spacing.lg,
@@ -216,7 +216,7 @@ export const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
   },

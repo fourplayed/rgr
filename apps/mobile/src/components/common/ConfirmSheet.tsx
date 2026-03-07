@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize } from '../../theme/spacing';
+import { spacing, fontSize, lineHeight, fontFamily as fonts } from '../../theme/spacing';
 import { BottomSheet } from './BottomSheet';
 import { Button } from './Button';
 import { IconCircle } from './IconCircle';
@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: fontSize['2xl'],
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     marginBottom: spacing.sm,
     textAlign: 'center',
@@ -93,11 +93,11 @@ const styles = StyleSheet.create({
   },
   message: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: spacing.xl,
-    lineHeight: 22,
+    lineHeight: lineHeight.body,
   },
   buttonRow: {
     flexDirection: 'row',

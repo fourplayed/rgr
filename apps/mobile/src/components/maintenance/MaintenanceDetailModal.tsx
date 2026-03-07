@@ -16,7 +16,7 @@ import { SheetHeader } from '../common/SheetHeader';
 import { SheetFooter } from '../common/SheetFooter';
 import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 import { useMaintenance, useUpdateMaintenanceStatus, useUpdateMaintenance, useCancelMaintenanceTask } from '../../hooks/useMaintenanceData';
 import { useAsset } from '../../hooks/useAssetData';
 import { useAuthStore } from '../../store/authStore';
@@ -33,6 +33,8 @@ interface MaintenanceDetailModalProps {
   onClose: () => void;
   /** 'compact' hides timeline, notes, defect photo, and asset nav link. Default 'full'. */
   variant?: 'full' | 'compact';
+  /** Render inline (no native Modal) — use when already inside a Modal. */
+  inline?: boolean;
 }
 
 export function MaintenanceDetailModal({
@@ -40,6 +42,7 @@ export function MaintenanceDetailModal({
   maintenanceId,
   onClose,
   variant = 'full',
+  inline,
 }: MaintenanceDetailModalProps) {
   const router = useRouter();
   const { canMarkMaintenance } = useUserPermissions();
@@ -200,7 +203,7 @@ export function MaintenanceDetailModal({
   if (!visible) return null;
 
   return (
-    <SheetModal visible={visible} onClose={onClose}>
+    <SheetModal visible={visible} onClose={onClose} inline={!!inline}>
         <View style={styles.sheet}>
           {isLoading || !maintenance ? (
             <>
@@ -486,7 +489,7 @@ const styles = StyleSheet.create({
   },
   assetNumberText: {
     fontSize: fontSize.xl,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
   },
@@ -501,7 +504,7 @@ const styles = StyleSheet.create({
   },
   assetLinkText: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.electricBlue,
     textTransform: 'uppercase',
   },
@@ -523,7 +526,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -532,19 +535,19 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     textTransform: 'uppercase',
     marginBottom: 2,
   },
   detailValue: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
   },
   notesText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
   },
   notesEdit: {
@@ -558,7 +561,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.text,
     minHeight: 100,
   },
@@ -576,7 +579,7 @@ const styles = StyleSheet.create({
   },
   notesCancelText: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textSecondary,
     textTransform: 'uppercase',
   },
@@ -590,7 +593,7 @@ const styles = StyleSheet.create({
   },
   notesSaveText: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
   },
@@ -614,7 +617,7 @@ const styles = StyleSheet.create({
   },
   closedStatusText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textSecondary,
     textTransform: 'uppercase',
   },
@@ -636,7 +639,7 @@ const styles = StyleSheet.create({
   },
   defectPhotoErrorText: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 1,

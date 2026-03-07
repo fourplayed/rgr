@@ -3,7 +3,7 @@ import { View, TouchableOpacity, Text, StyleSheet, type ViewStyle, type StylePro
 import { Ionicons } from '@expo/vector-icons';
 import { LoadingDots } from './LoadingDots';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, shadows, fontFamily as fonts } from '../../theme/spacing';
 
 type ButtonVariant = 'primary' | 'secondary' | 'danger';
 
@@ -41,13 +41,13 @@ export function Button({
   const bgOverride = color ? { backgroundColor: color } : undefined;
   const isDisabled = disabled || isLoading;
 
-  const disabledTextOverride = isDisabled && !isLoading ? { color: '#94A3B8' } : undefined;
+  const disabledTextOverride = isDisabled && !isLoading ? { color: colors.textDisabled } : undefined;
 
   const content = isLoading ? (
     <LoadingDots color={textStyle.color} size={8} />
   ) : icon ? (
     <View style={styles.iconRow}>
-      <Ionicons name={icon} size={18} color={isDisabled ? '#94A3B8' : textStyle.color} />
+      <Ionicons name={icon} size={18} color={isDisabled ? colors.textDisabled : textStyle.color} />
       <Text style={[textStyle, disabledTextOverride]}>{children}</Text>
     </View>
   ) : (
@@ -117,7 +117,7 @@ const variantStyles = StyleSheet.create({
 const textStyles = StyleSheet.create({
   primary: {
     fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
     textShadowColor: 'rgba(0, 0, 0, 0.25)',
@@ -126,13 +126,13 @@ const textStyles = StyleSheet.create({
   },
   secondary: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
   },
   danger: {
     fontSize: fontSize.lg,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
   },

@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { AssetStatus, AssetCategory, Depot } from '@rgr/shared';
 import { AssetStatusLabels, AssetStatusColors, AssetCategoryLabels, AssetSubtypesByCategory } from '@rgr/shared';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius, shadows } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, shadows, fontFamily as fonts } from '../../theme/spacing';
 import { DEPOT_ORDER, getDepotColor, getDepotTextColor } from '../../utils/depotDisplay';
 import { FilterChip } from '../common/FilterChip';
 import '../../utils/enableLayoutAnimation';
@@ -19,7 +19,7 @@ import '../../utils/enableLayoutAnimation';
 // Category-specific colors for Asset Type filter chips
 const CATEGORY_COLORS: Record<AssetCategory, string> = {
   trailer: '#8B5CF6', // Violet
-  dolly: '#0E7490', // Cyan (WCAG AA compliant with white text)
+  dolly: colors.categoryDolly, // Cyan (WCAG AA compliant with white text)
 };
 
 interface AssetFilterPanelProps {
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
   },
   headerLabel: {
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
   },
   countBadgeText: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textInverse,
   },
   filterSection: {
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontSize: fontSize.xs,
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     textTransform: 'uppercase',
   },
 });

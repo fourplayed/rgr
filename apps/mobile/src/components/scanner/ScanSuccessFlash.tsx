@@ -6,11 +6,10 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { fontSize, spacing } from '../../theme/spacing';
+import { fontSize, spacing, fontFamily as fonts } from '../../theme/spacing';
 
 const FADE_DURATION = 200;
-const STAGGER_DELAY = 400;
-const HINT_DELAY = 500;
+const STAGGER_DELAY = 80;
 const MAX_ITEMS = 5;
 
 interface ScanSuccessFlashProps {
@@ -91,32 +90,31 @@ export function ScanSuccessFlash({
       Animated.parallel([
         Animated.timing(headerOpacity, {
           toValue: 1,
-          duration: 300,
+          duration: 250,
           useNativeDriver: true,
         }),
         Animated.timing(headerTranslateY, {
           toValue: 0,
-          duration: 300,
+          duration: 250,
           useNativeDriver: true,
         }),
       ]).start(() => {
-        // 3. Stagger each checklist row
+        // 3. Stagger each checklist row (fast 80ms stagger)
         const rowAnimations = checklistItems.map((_, i) => {
           const { opacity, translateY, checkScale } = rowAnims[i]!;
           return Animated.parallel([
             Animated.timing(opacity, {
               toValue: 1,
-              duration: 400,
+              duration: 250,
               useNativeDriver: true,
             }),
             Animated.timing(translateY, {
               toValue: 0,
-              duration: 400,
+              duration: 250,
               useNativeDriver: true,
             }),
-            // Checkmark spring starts 50ms after row begins
             Animated.sequence([
-              Animated.delay(50),
+              Animated.delay(30),
               Animated.spring(checkScale, {
                 toValue: 1,
                 friction: 5,
@@ -128,11 +126,10 @@ export function ScanSuccessFlash({
         });
 
         Animated.stagger(STAGGER_DELAY, rowAnimations).start(() => {
-          // 4. Show "Tap to continue" hint after last item
+          // 4. Show "Tap to continue" hint immediately after last item
           Animated.timing(hintOpacity, {
             toValue: 1,
             duration: FADE_DURATION,
-            delay: HINT_DELAY,
             useNativeDriver: true,
           }).start();
         });
@@ -144,12 +141,13 @@ export function ScanSuccessFlash({
     if (dismissingRef.current) return;
     dismissingRef.current = true;
 
+    // Cancel auto-dismiss if user tapped manually
     // Phase 1 — Scatter rows out (alternating left/right, staggered 80ms)
     const scatterRows = Animated.stagger(
       80,
       checklistItems.map((_, i) => {
         const { opacity, translateX } = rowAnims[i]!;
-        const direction = i % 2 === 0 ? -200 : 200; // even=left, odd=right
+        const direction = i % 2 === 0 ? -200 : 200;
         return Animated.parallel([
           Animated.timing(opacity, {
             toValue: 0,
@@ -165,7 +163,7 @@ export function ScanSuccessFlash({
       }),
     );
 
-    // Phase 2 — Slide header up + fade (starts ~100ms after rows begin)
+    // Phase 2 — Slide header up + fade
     const slideHeader = Animated.sequence([
       Animated.delay(100),
       Animated.parallel([
@@ -182,18 +180,18 @@ export function ScanSuccessFlash({
       ]),
     ]);
 
-    // Phase 3 — Fade hint immediately (parallel with phase 1)
+    // Phase 3 — Fade hint
     const fadeHint = Animated.timing(hintOpacity, {
       toValue: 0,
       duration: 150,
       useNativeDriver: true,
     });
 
-    // Run phases 1, 2, 3 in parallel, then phase 4 — fade green background
+    // Run scatter + header + hint, then fade the green background
     Animated.parallel([scatterRows, slideHeader, fadeHint]).start(() => {
       Animated.timing(overlayOpacity, {
         toValue: 0,
-        duration: 200,
+        duration: 300,
         useNativeDriver: true,
       }).start(({ finished }) => {
         if (finished) onDismissRef.current();
@@ -260,7 +258,7 @@ const styles = StyleSheet.create({
   },
   assetNumber: {
     fontSize: fontSize['2xl'],
-    fontFamily: 'Lato_700Bold',
+    fontFamily: fonts.bold,
     color: '#fff',
     marginTop: spacing.lg,
     marginBottom: spacing.xl,
@@ -276,7 +274,7 @@ const styles = StyleSheet.create({
   },
   checkText: {
     fontSize: fontSize.base,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: '#fff',
     flexShrink: 1,
   },
@@ -284,7 +282,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 60,
     fontSize: fontSize.sm,
-    fontFamily: 'Lato_400Regular',
+    fontFamily: fonts.regular,
     color: 'rgba(255, 255, 255, 0.7)',
   },
 });
