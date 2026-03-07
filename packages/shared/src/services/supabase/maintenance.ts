@@ -7,7 +7,7 @@ import type {
   UpdateMaintenanceInput,
   MaintenanceRecordRow,
 } from '../../types/entities';
-import type { MaintenanceStatus, MaintenancePriority } from '../../types/enums';
+import type { MaintenanceStatus, MaintenancePriority, MaintenanceType, AssetCategory } from '../../types/enums';
 import {
   mapRowToMaintenanceRecord,
   mapMaintenanceToInsert,
@@ -15,6 +15,10 @@ import {
   CreateMaintenanceInputSchema,
   UpdateMaintenanceInputSchema,
 } from '../../types/entities/maintenanceRecord';
+import { MaintenanceTypeSchema, MaintenancePrioritySchema, MaintenanceStatusSchema } from '../../types/enums/MaintenanceEnums';
+import { AssetCategorySchema } from '../../types/enums/AssetEnums';
+import { safeParseEnum } from '../../utils/safeParseEnum';
+import { isValidUUID, isValidISOTimestamp } from '../../utils/constants';
 
 // ── Types ──
 
@@ -49,13 +53,13 @@ export interface MaintenanceListItem {
   description: string | null;
   priority: MaintenancePriority;
   status: MaintenanceStatus;
-  maintenanceType: string | null;
+  maintenanceType: MaintenanceType | null;
   scheduledDate: string | null;
   dueDate: string | null;
   createdAt: string;
   reporterName: string | null;
   assetNumber: string | null;
-  assetCategory: string | null;
+  assetCategory: AssetCategory | null;
 }
 
 // ── Status Transition Validation ──
@@ -112,6 +116,9 @@ export async function listMaintenance(
   // Composite cursor keyset pagination — no extra lookup query needed.
   // Handles ties in created_at by using id as a tiebreaker.
   if (cursor) {
+    if (!isValidISOTimestamp(cursor.createdAt) || !isValidUUID(cursor.id)) {
+      return { success: true, data: { data: [], hasMore: false }, error: null };
+    }
     query = query.or(
       `created_at.lt.${cursor.createdAt},and(created_at.eq.${cursor.createdAt},id.lt.${cursor.id})`
     );
@@ -128,8 +135,8 @@ export async function listMaintenance(
     asset_id: string;
     title: string;
     description: string | null;
-    priority: MaintenancePriority;
-    status: MaintenanceStatus;
+    priority: string;
+    status: string;
     maintenance_type: string | null;
     scheduled_date: string | null;
     due_date: string | null;
@@ -147,15 +154,15 @@ export async function listMaintenance(
     assetId: row.asset_id,
     title: row.title,
     description: row.description,
-    priority: row.priority,
-    status: row.status,
-    maintenanceType: row.maintenance_type,
+    priority: safeParseEnum(MaintenancePrioritySchema, row.priority, 'medium'),
+    status: safeParseEnum(MaintenanceStatusSchema, row.status, 'scheduled'),
+    maintenanceType: safeParseEnum(MaintenanceTypeSchema, row.maintenance_type, null),
     scheduledDate: row.scheduled_date,
     dueDate: row.due_date,
     createdAt: row.created_at,
     reporterName: row.reporter?.full_name ?? null,
     assetNumber: row.asset?.asset_number ?? null,
-    assetCategory: row.asset?.category ?? null,
+    assetCategory: safeParseEnum(AssetCategorySchema, row.asset?.category, null),
   }));
 
   return { success: true, data: { data: items, hasMore }, error: null };
@@ -246,7 +253,8 @@ export async function createMaintenance(
  */
 export async function updateMaintenanceStatus(
   id: string,
-  newStatus: MaintenanceStatus
+  newStatus: MaintenanceStatus,
+  extras?: { completedBy?: string }
 ): Promise<ServiceResult<MaintenanceRecord>> {
   const supabase = getSupabaseClient();
 
@@ -272,10 +280,13 @@ export async function updateMaintenanceStatus(
   }
 
   // Build update payload with auto-timestamps
-  const updates: { status: MaintenanceStatus; completed_at?: string } = { status: newStatus };
+  const updates: { status: MaintenanceStatus; completed_at?: string; completed_by?: string } = { status: newStatus };
 
   if (newStatus === 'completed' && currentStatus === 'scheduled') {
     updates.completed_at = new Date().toISOString();
+    if (extras?.completedBy) {
+      updates.completed_by = extras.completedBy;
+    }
   }
 
   const { data, error } = await supabase

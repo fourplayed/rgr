@@ -20,7 +20,7 @@ import {
 } from '../../types/entities/photo';
 import { mapRowToFreightAnalysis } from '../../types/entities/freightAnalysis';
 import { mapRowToHazardAlert } from '../../types/entities/hazardAlert';
-import { MAX_PHOTO_SIZE_BYTES, STORAGE_BUCKETS, isValidUUID } from '../../utils/constants';
+import { MAX_PHOTO_SIZE_BYTES, STORAGE_BUCKETS, isValidUUID, isValidISOTimestamp } from '../../utils/constants';
 
 /**
  * Generate a unique ID for filenames.
@@ -235,7 +235,7 @@ interface PhotoListRow {
 export async function getAssetPhotos(
   assetId: string,
   limit: number = 20,
-  beforeId?: string
+  cursor?: { createdAt: string; id: string }
 ): Promise<ServiceResult<PhotoListItem[]>> {
   const supabase = getSupabaseClient();
 
@@ -262,24 +262,14 @@ export async function getAssetPhotos(
     .order('id', { ascending: false })
     .limit(limit);
 
-  // Keyset pagination: composite cursor on (created_at, id) to handle
-  // items with identical timestamps correctly
-  if (beforeId) {
-    if (!isValidUUID(beforeId)) {
+  // Composite cursor keyset pagination — no extra DB round-trip
+  if (cursor) {
+    if (!isValidISOTimestamp(cursor.createdAt) || !isValidUUID(cursor.id)) {
       return { success: true, data: [], error: null };
     }
-
-    const { data: cursorPhoto } = await supabase
-      .from('photos')
-      .select('created_at')
-      .eq('id', beforeId)
-      .single();
-
-    if (cursorPhoto) {
-      query = query.or(
-        `created_at.lt.${cursorPhoto.created_at},and(created_at.eq.${cursorPhoto.created_at},id.lt.${beforeId})`
-      );
-    }
+    query = query.or(
+      `created_at.lt.${cursor.createdAt},and(created_at.eq.${cursor.createdAt},id.lt.${cursor.id})`
+    );
   }
 
   const { data, error } = await query;

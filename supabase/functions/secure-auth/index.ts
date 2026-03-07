@@ -123,10 +123,10 @@ function recordFailure(
   entry.failures += 1;
 
   if (entry.failures >= maxFailures) {
-    const lockoutSeconds = Math.min(
-      entry.lockoutSeconds * 2,
-      maxLockoutS,
-    );
+    const isFirstLockout = entry.lockoutUntil === 0;
+    const lockoutSeconds = isFirstLockout
+      ? initialLockoutS
+      : Math.min(entry.lockoutSeconds * 2, maxLockoutS);
     entry.lockoutUntil = now + lockoutSeconds * 1000;
     entry.lockoutSeconds = lockoutSeconds;
   }

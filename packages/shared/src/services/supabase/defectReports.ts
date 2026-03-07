@@ -17,6 +17,9 @@ import {
   CreateDefectReportInputSchema,
   UpdateDefectReportInputSchema,
 } from '../../types/entities/defectReport';
+import { AssetCategorySchema } from '../../types/enums/AssetEnums';
+import { safeParseEnum } from '../../utils/safeParseEnum';
+import { isValidUUID, isValidISOTimestamp } from '../../utils/constants';
 
 // ── Types ──
 
@@ -81,6 +84,9 @@ export async function listDefectReports(
   // Composite cursor keyset pagination — no extra lookup query needed.
   // Handles ties in created_at by using id as a tiebreaker.
   if (cursor) {
+    if (!isValidISOTimestamp(cursor.createdAt) || !isValidUUID(cursor.id)) {
+      return { success: true, data: { data: [], hasMore: false }, error: null };
+    }
     query = query.or(
       `created_at.lt.${cursor.createdAt},and(created_at.eq.${cursor.createdAt},id.lt.${cursor.id})`
     );
@@ -118,7 +124,7 @@ export async function listDefectReports(
     createdAt: row.created_at,
     reporterName: row.reporter?.full_name ?? null,
     assetNumber: row.asset?.asset_number ?? null,
-    assetCategory: row.asset?.category ?? null,
+    assetCategory: safeParseEnum(AssetCategorySchema, row.asset?.category, null),
   }));
 
   return { success: true, data: { data: items, hasMore }, error: null };

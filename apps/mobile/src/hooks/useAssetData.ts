@@ -411,7 +411,7 @@ export function useAssetCountsByStatus() {
         outOfService: counts['out_of_service'] ?? 0,
       };
     },
-    staleTime: 30000, // Cache for 30 seconds
+    staleTime: 60_000, // Dashboard stat — doesn't change rapidly
   });
 }
 

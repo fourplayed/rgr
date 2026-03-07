@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { DefectStatusSchema } from '../enums/DefectEnums';
 import type { DefectStatus } from '../enums/DefectEnums';
+import type { AssetCategory } from '../enums/AssetEnums';
 import { safeParseEnum } from '../../utils/safeParseEnum';
 
 /**
@@ -65,7 +66,7 @@ export interface DefectReportListItem {
   createdAt: string;
   reporterName: string | null;
   assetNumber: string | null;
-  assetCategory: string | null;
+  assetCategory: AssetCategory | null;
 }
 
 /**
@@ -86,7 +87,6 @@ export interface CreateDefectReportInput {
 export interface UpdateDefectReportInput {
   title?: string;
   description?: string | null;
-  status?: DefectStatus;
   maintenanceRecordId?: string | null;
   acceptedAt?: string | null;
   resolvedAt?: string | null;
@@ -106,14 +106,15 @@ export const CreateDefectReportInputSchema = z.object({
   notes: z.string().nullable().optional(),
 });
 
+const isoDateString = z.string().regex(/^\d{4}-\d{2}-\d{2}/, 'Invalid date format');
+
 export const UpdateDefectReportInputSchema = z.object({
   title: z.string().min(1).max(200).optional(),
   description: z.string().nullable().optional(),
-  status: DefectStatusSchema.optional(),
   maintenanceRecordId: z.string().uuid().nullable().optional(),
-  acceptedAt: z.string().nullable().optional(),
-  resolvedAt: z.string().nullable().optional(),
-  dismissedAt: z.string().nullable().optional(),
+  acceptedAt: isoDateString.nullable().optional(),
+  resolvedAt: isoDateString.nullable().optional(),
+  dismissedAt: isoDateString.nullable().optional(),
   dismissedReason: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
 });
@@ -167,7 +168,6 @@ export function mapDefectReportToUpdate(
 
   if (input.title !== undefined) updates['title'] = input.title;
   if (input.description !== undefined) updates['description'] = input.description;
-  if (input.status !== undefined) updates['status'] = input.status;
   if (input.maintenanceRecordId !== undefined) updates['maintenance_record_id'] = input.maintenanceRecordId;
   if (input.acceptedAt !== undefined) updates['accepted_at'] = input.acceptedAt;
   if (input.resolvedAt !== undefined) updates['resolved_at'] = input.resolvedAt;

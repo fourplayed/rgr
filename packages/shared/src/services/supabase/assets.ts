@@ -25,6 +25,11 @@ import {
   CreateAssetInputSchema,
   UpdateAssetInputSchema,
 } from '../../types/entities/asset';
+import { AssetCategorySchema } from '../../types/enums/AssetEnums';
+import { DefectStatusSchema } from '../../types/enums/DefectEnums';
+import { MaintenanceStatusSchema, MaintenancePrioritySchema } from '../../types/enums/MaintenanceEnums';
+import { safeParseEnum } from '../../utils/safeParseEnum';
+import { isValidUUID, isValidISOTimestamp } from '../../utils/constants';
 import {
   mapRowToScanEvent,
   mapScanEventToInsert,
@@ -79,7 +84,7 @@ export interface ListAssetsParams {
 
 // ── Sort field mapping ──
 
-const SORT_FIELD_MAP: Record<string, string> = {
+const SORT_FIELD_MAP = {
   assetNumber: 'asset_number',
   category: 'category',
   status: 'status',
@@ -87,7 +92,7 @@ const SORT_FIELD_MAP: Record<string, string> = {
   registrationExpiry: 'registration_expiry',
   createdAt: 'created_at',
   updatedAt: 'updated_at',
-};
+} as const;
 
 // ── Asset CRUD ──
 
@@ -155,7 +160,7 @@ export async function listAssets(
   }
 
   // Sort
-  const dbSortField = SORT_FIELD_MAP[sortField];
+  const dbSortField = SORT_FIELD_MAP[sortField as keyof typeof SORT_FIELD_MAP];
   if (!dbSortField) {
     console.warn(`[listAssets] Unknown sort field "${sortField}", falling back to asset_number`);
   }
@@ -167,12 +172,29 @@ export async function listAssets(
 
   // Pagination: cursor-based or offset-based
   if (useCursorPagination && cursorId) {
+    // Validate cursor values to prevent PostgREST injection
+    if (!isValidUUID(cursorId)) {
+      return { success: true, data: { data: [], total: 0, page: 1, pageSize, totalPages: 0, hasMore: false }, error: null };
+    }
+    // Validate cursor value based on sort field type
+    const isCursorSafe = resolvedSortField === 'asset_number'
+      ? /^[a-zA-Z0-9_-]+$/.test(cursor!)
+      : isValidISOTimestamp(cursor!);
+    if (!isCursorSafe) {
+      return { success: true, data: { data: [], total: 0, page: 1, pageSize, totalPages: 0, hasMore: false }, error: null };
+    }
     // Composite cursor on (sortField, id) to handle ties
     const op = ascending ? 'gt' : 'lt';
     query = query.or(
       `${resolvedSortField}.${op}.${cursor},and(${resolvedSortField}.eq.${cursor},id.${op}.${cursorId})`
     );
   } else if (useCursorPagination && cursor) {
+    const isCursorSafe = resolvedSortField === 'asset_number'
+      ? /^[a-zA-Z0-9_-]+$/.test(cursor)
+      : isValidISOTimestamp(cursor);
+    if (!isCursorSafe) {
+      return { success: true, data: { data: [], total: 0, page: 1, pageSize, totalPages: 0, hasMore: false }, error: null };
+    }
     const op = ascending ? 'gt' : 'lt';
     query = query.filter(resolvedSortField, op, cursor);
   }
@@ -404,7 +426,7 @@ export async function getAssetScans(
       ...scan,
       scannerName: profiles?.full_name ?? null,
       assetNumber: assets?.asset_number ?? null,
-      assetCategory: assets?.category ?? null,
+      assetCategory: safeParseEnum(AssetCategorySchema, assets?.category, null),
     } as ScanEventWithScanner;
   });
 
@@ -517,7 +539,7 @@ export async function getRecentScans(
       ...scan,
       scannerName: profiles?.full_name ?? null,
       assetNumber: assets?.asset_number ?? null,
-      assetCategory: assets?.category ?? null,
+      assetCategory: safeParseEnum(AssetCategorySchema, assets?.category, null),
     } as ScanEventWithScanner;
   });
 
@@ -556,7 +578,7 @@ export async function getMyRecentScans(
       ...scan,
       scannerName: profiles?.full_name ?? null,
       assetNumber: assets?.asset_number ?? null,
-      assetCategory: assets?.category ?? null,
+      assetCategory: safeParseEnum(AssetCategorySchema, assets?.category, null),
     } as ScanEventWithScanner;
   });
 
@@ -776,14 +798,14 @@ export async function getAssetScanContext(
       openDefects: (raw.open_defects ?? []).map((d) => ({
         id: d.id,
         title: d.title,
-        status: d.status as DefectStatus,
+        status: safeParseEnum(DefectStatusSchema, d.status, 'reported'),
         createdAt: d.created_at,
       })),
       activeTasks: (raw.active_tasks ?? []).map((t) => ({
         id: t.id,
         title: t.title,
-        status: t.status as MaintenanceStatus,
-        priority: t.priority as MaintenancePriority,
+        status: safeParseEnum(MaintenanceStatusSchema, t.status, 'scheduled'),
+        priority: safeParseEnum(MaintenancePrioritySchema, t.priority, 'medium'),
         createdAt: t.created_at,
       })),
     },

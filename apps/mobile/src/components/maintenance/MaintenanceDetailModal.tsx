@@ -19,6 +19,7 @@ import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
 import { useMaintenance, useUpdateMaintenanceStatus, useUpdateMaintenance, useCancelMaintenanceTask } from '../../hooks/useMaintenanceData';
 import { useAsset } from '../../hooks/useAssetData';
+import { useAuthStore } from '../../store/authStore';
 import { useScanEventPhotos, useSignedUrl } from '../../hooks/usePhotos';
 import { useUserPermissions } from '../../contexts/UserPermissionsContext';
 import { MaintenanceStatusBadge } from './MaintenanceStatusBadge';
@@ -42,6 +43,7 @@ export function MaintenanceDetailModal({
 }: MaintenanceDetailModalProps) {
   const router = useRouter();
   const { canMarkMaintenance } = useUserPermissions();
+  const user = useAuthStore(s => s.user);
   const { data: maintenance, isLoading } = useMaintenance(maintenanceId);
   const { data: asset } = useAsset(maintenance?.assetId);
   const updateStatusMutation = useUpdateMaintenanceStatus();
@@ -85,6 +87,7 @@ export function MaintenanceDetailModal({
       await updateMaintenanceStatus({
         id: maintenanceId,
         status: 'completed',
+        ...(user?.id ? { extras: { completedBy: user.id } } : {}),
       });
     } catch (err: unknown) {
       setAlertSheet({
@@ -346,15 +349,6 @@ export function MaintenanceDetailModal({
                           {formatRelativeTime(maintenance.createdAt)}
                         </Text>
                       </View>
-
-                      {maintenance.startedAt && (
-                        <View style={styles.detailRow}>
-                          <Text style={styles.detailLabel}>Started</Text>
-                          <Text style={styles.detailValue}>
-                            {formatRelativeTime(maintenance.startedAt)}
-                          </Text>
-                        </View>
-                      )}
 
                       {maintenance.completedAt && (
                         <View style={styles.detailRow}>

@@ -52,3 +52,23 @@ export const MaintenancePriorityColors: Record<MaintenancePriority, string> = {
   high: '#e8a020',
   critical: '#d43050',
 };
+
+/**
+ * Maintenance type enum — matches DB CHECK constraint on maintenance_records.maintenance_type
+ */
+export const MaintenanceType = {
+  SCHEDULED: 'scheduled',
+  REACTIVE: 'reactive',
+  INSPECTION: 'inspection',
+  DEFECT_REPORT: 'defect_report',
+} as const;
+
+export type MaintenanceType =
+  (typeof MaintenanceType)[keyof typeof MaintenanceType];
+
+export const MaintenanceTypeSchema = z.enum([
+  'scheduled',
+  'reactive',
+  'inspection',
+  'defect_report',
+]);

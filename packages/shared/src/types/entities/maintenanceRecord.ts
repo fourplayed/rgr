@@ -2,8 +2,9 @@ import { z } from 'zod';
 import {
   MaintenanceStatusSchema,
   MaintenancePrioritySchema,
+  MaintenanceTypeSchema,
 } from '../enums/MaintenanceEnums';
-import type { MaintenanceStatus, MaintenancePriority } from '../enums/MaintenanceEnums';
+import type { MaintenanceStatus, MaintenancePriority, MaintenanceType } from '../enums/MaintenanceEnums';
 import { safeParseEnum } from '../../utils/safeParseEnum';
 
 /**
@@ -19,11 +20,12 @@ export interface MaintenanceRecord {
   description: string | null;
   priority: MaintenancePriority;
   status: MaintenanceStatus;
-  maintenanceType: string | null;
+  maintenanceType: MaintenanceType | null;
   scheduledDate: string | null;
-  startedAt: string | null;
   completedAt: string | null;
   dueDate: string | null;
+  estimatedCost: number | null;
+  actualCost: number | null;
   partsUsed: Record<string, unknown>[] | null;
   hazardAlertId: string | null;
   scanEventId: string | null;
@@ -47,9 +49,10 @@ export interface MaintenanceRecordRow {
   status: string;
   maintenance_type: string | null;
   scheduled_date: string | null;
-  started_at: string | null;
   completed_at: string | null;
   due_date: string | null;
+  estimated_cost: number | null;
+  actual_cost: number | null;
   parts_used: Record<string, unknown>[] | null;
   hazard_alert_id: string | null;
   scan_event_id: string | null;
@@ -78,7 +81,7 @@ export interface CreateMaintenanceInput {
   description?: string | null;
   priority?: MaintenancePriority;
   status?: MaintenanceStatus;
-  maintenanceType?: string | null;
+  maintenanceType?: MaintenanceType | null;
   scheduledDate?: string | null;
   dueDate?: string | null;
   hazardAlertId?: string | null;
@@ -96,11 +99,12 @@ export interface UpdateMaintenanceInput {
   description?: string | null;
   priority?: MaintenancePriority;
   status?: MaintenanceStatus;
-  maintenanceType?: string | null;
+  maintenanceType?: MaintenanceType | null;
   scheduledDate?: string | null;
-  startedAt?: string | null;
   completedAt?: string | null;
   dueDate?: string | null;
+  estimatedCost?: number | null;
+  actualCost?: number | null;
   partsUsed?: Record<string, unknown>[] | null;
   notes?: string | null;
 }
@@ -115,13 +119,15 @@ export const CreateMaintenanceInputSchema = z.object({
   description: z.string().nullable().optional(),
   priority: MaintenancePrioritySchema.optional(),
   status: MaintenanceStatusSchema.optional(),
-  maintenanceType: z.string().max(50).nullable().optional(),
-  scheduledDate: z.string().nullable().optional(),
-  dueDate: z.string().nullable().optional(),
+  maintenanceType: MaintenanceTypeSchema.nullable().optional(),
+  scheduledDate: z.string().date().nullable().optional(),
+  dueDate: z.string().date().nullable().optional(),
   hazardAlertId: z.string().uuid().nullable().optional(),
   scanEventId: z.string().uuid().nullable().optional(),
   notes: z.string().nullable().optional(),
 });
+
+const isoDateString = z.string().regex(/^\d{4}-\d{2}-\d{2}/, 'Invalid date format');
 
 export const UpdateMaintenanceInputSchema = z.object({
   assignedTo: z.string().uuid().nullable().optional(),
@@ -130,11 +136,12 @@ export const UpdateMaintenanceInputSchema = z.object({
   description: z.string().nullable().optional(),
   priority: MaintenancePrioritySchema.optional(),
   status: MaintenanceStatusSchema.optional(),
-  maintenanceType: z.string().max(50).nullable().optional(),
-  scheduledDate: z.string().nullable().optional(),
-  startedAt: z.string().nullable().optional(),
-  completedAt: z.string().nullable().optional(),
-  dueDate: z.string().nullable().optional(),
+  maintenanceType: MaintenanceTypeSchema.nullable().optional(),
+  scheduledDate: z.string().date().nullable().optional(),
+  completedAt: isoDateString.nullable().optional(),
+  dueDate: z.string().date().nullable().optional(),
+  estimatedCost: z.number().min(0).nullable().optional(),
+  actualCost: z.number().min(0).nullable().optional(),
   partsUsed: z.array(z.record(z.unknown())).nullable().optional(),
   notes: z.string().nullable().optional(),
 });
@@ -154,11 +161,12 @@ export function mapRowToMaintenanceRecord(
     description: row.description,
     priority: safeParseEnum(MaintenancePrioritySchema, row.priority, 'medium'),
     status: safeParseEnum(MaintenanceStatusSchema, row.status, 'scheduled'),
-    maintenanceType: row.maintenance_type,
+    maintenanceType: safeParseEnum(MaintenanceTypeSchema, row.maintenance_type, null),
     scheduledDate: row.scheduled_date,
-    startedAt: row.started_at,
     completedAt: row.completed_at,
     dueDate: row.due_date,
+    estimatedCost: row.estimated_cost,
+    actualCost: row.actual_cost,
     partsUsed: row.parts_used,
     hazardAlertId: row.hazard_alert_id,
     scanEventId: row.scan_event_id,
@@ -168,7 +176,7 @@ export function mapRowToMaintenanceRecord(
   };
 }
 
-export type MaintenanceInsertRow = Omit<MaintenanceRecordRow, 'id' | 'created_at' | 'updated_at' | 'completed_by' | 'started_at' | 'completed_at' | 'parts_used'>;
+export type MaintenanceInsertRow = Omit<MaintenanceRecordRow, 'id' | 'created_at' | 'updated_at' | 'completed_by' | 'completed_at' | 'parts_used' | 'estimated_cost' | 'actual_cost'>;
 export type MaintenanceUpdateRow = Partial<Omit<MaintenanceRecordRow, 'id' | 'created_at'>>;
 
 export function mapMaintenanceToInsert(
@@ -204,9 +212,10 @@ export function mapMaintenanceToUpdate(
   if (input.status !== undefined) updates['status'] = input.status;
   if (input.maintenanceType !== undefined) updates['maintenance_type'] = input.maintenanceType;
   if (input.scheduledDate !== undefined) updates['scheduled_date'] = input.scheduledDate;
-  if (input.startedAt !== undefined) updates['started_at'] = input.startedAt;
   if (input.completedAt !== undefined) updates['completed_at'] = input.completedAt;
   if (input.dueDate !== undefined) updates['due_date'] = input.dueDate;
+  if (input.estimatedCost !== undefined) updates['estimated_cost'] = input.estimatedCost;
+  if (input.actualCost !== undefined) updates['actual_cost'] = input.actualCost;
   if (input.partsUsed !== undefined) updates['parts_used'] = input.partsUsed;
   if (input.notes !== undefined) updates['notes'] = input.notes;
 

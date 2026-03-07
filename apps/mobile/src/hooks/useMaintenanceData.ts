@@ -153,11 +153,13 @@ export function useUpdateMaintenanceStatus() {
     mutationFn: async ({
       id,
       status,
+      extras,
     }: {
       id: string;
       status: MaintenanceStatus;
+      extras?: { completedBy?: string };
     }) => {
-      const result = await updateMaintenanceStatus(id, status);
+      const result = await updateMaintenanceStatus(id, status, extras);
 
       if (!result.success) {
         throw new Error(result.error);

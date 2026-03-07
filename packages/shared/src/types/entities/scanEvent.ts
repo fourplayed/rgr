@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ScanTypeSchema } from '../enums/ScanEnums';
 import type { ScanType } from '../enums/ScanEnums';
+import type { AssetCategory } from '../enums/AssetEnums';
 import { safeParseEnum } from '../../utils/safeParseEnum';
 
 /**
@@ -49,7 +50,7 @@ export interface ScanEventRow {
 export interface ScanEventWithScanner extends ScanEvent {
   scannerName: string | null;
   assetNumber: string | null;
-  assetCategory: string | null;
+  assetCategory: AssetCategory | null;
 }
 
 /**
