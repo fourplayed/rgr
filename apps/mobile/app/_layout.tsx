@@ -189,8 +189,7 @@ export default function RootLayout() {
     return () => subscription.remove();
   }, []);
 
-  // Subscribe to Supabase Realtime for live dashboard updates from other users
-  useRealtimeInvalidation();
+  // Realtime subscription moved to <RealtimeSubscriber /> inside QueryClientProvider
 
   // Set error reporting user context when authenticated
   useEffect(() => {
@@ -244,6 +243,7 @@ export default function RootLayout() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
+        <RealtimeSubscriber />
         <UserPermissionsProvider userRole={user?.role ?? null}>
           <StatusBar style="dark" />
           <View style={styles.container}>
@@ -278,6 +278,12 @@ export default function RootLayout() {
       </QueryClientProvider>
     </ErrorBoundary>
   );
+}
+
+/** Must be rendered inside QueryClientProvider so useQueryClient() resolves. */
+function RealtimeSubscriber() {
+  useRealtimeInvalidation();
+  return null;
 }
 
 const styles = StyleSheet.create({

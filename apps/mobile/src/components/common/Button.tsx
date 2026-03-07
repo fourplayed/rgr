@@ -94,6 +94,7 @@ export function Button({
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       disabled={isDisabled}
+      style={flex ? styles.flex : undefined}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? children}
     >
