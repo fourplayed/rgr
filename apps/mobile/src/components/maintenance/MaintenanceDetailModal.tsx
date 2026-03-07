@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { formatRelativeTime, formatAssetNumber } from '@rgr/shared';
 import { LoadingDots, AlertSheet, ConfirmSheet, SheetModal } from '../common';
-import { SheetHeader } from '../common/SheetHeader';
+import { IconCircle } from '../common/IconCircle';
 import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
@@ -207,29 +207,34 @@ export function MaintenanceDetailModal({
 
   return (
     <SheetModal visible={visible} onClose={onClose} inline={!!inline} backdrop={backdrop} onExitComplete={onExitComplete}>
-      <View style={sheetLayout.containerTall}>
+      <View style={styles.container}>
+        <View style={styles.handle} />
+        <TouchableOpacity
+          style={styles.closeButton}
+          onPress={onClose}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Close"
+        >
+          <Ionicons name="close" size={24} color={colors.textSecondary} />
+        </TouchableOpacity>
+
         {isLoading || !maintenance ? (
           <>
-            <SheetHeader
-              icon="construct"
-              title="Maintenance"
-              onClose={onClose}
-              backgroundColor={colors.warning}
-              disabled
-            />
+            <View style={styles.headerContent}>
+              <IconCircle icon="construct" color={colors.warning} />
+              <Text style={styles.headerTitle}>Maintenance</Text>
+            </View>
             <View style={styles.loadingContainer}>
               <LoadingDots color={colors.textSecondary} size={10} />
             </View>
           </>
         ) : (
           <>
-            <SheetHeader
-              icon="construct"
-              title={maintenance.title}
-              onClose={onClose}
-              backgroundColor={colors.warning}
-              titleNumberOfLines={2}
-            />
+            <View style={styles.headerContent}>
+              <IconCircle icon="construct" color={colors.warning} />
+              <Text style={styles.headerTitle} numberOfLines={2}>{maintenance.title}</Text>
+            </View>
 
             <ScrollView
               style={sheetLayout.scroll}
@@ -457,6 +462,43 @@ export function MaintenanceDetailModal({
 }
 
 const styles = StyleSheet.create({
+  container: {
+    backgroundColor: colors.background,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
+    maxHeight: '90%',
+  },
+  handle: {
+    width: 40,
+    height: 4,
+    backgroundColor: colors.border,
+    borderRadius: borderRadius.full,
+    alignSelf: 'center',
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  closeButton: {
+    position: 'absolute',
+    top: spacing.md,
+    right: spacing.md,
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  headerContent: {
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    gap: spacing.sm,
+  },
+  headerTitle: {
+    fontSize: fontSize['2xl'],
+    fontFamily: fonts.bold,
+    color: colors.text,
+    textAlign: 'center',
+    textTransform: 'uppercase',
+  },
   loadingContainer: {
     padding: spacing['3xl'],
     alignItems: 'center',
