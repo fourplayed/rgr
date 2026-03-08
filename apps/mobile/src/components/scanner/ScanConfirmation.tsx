@@ -587,5 +587,6 @@ const styles = StyleSheet.create({
   // Confirm button
   confirmButton: {
     ...shadows.sm,
+    marginTop: spacing.lg,
   },
 });

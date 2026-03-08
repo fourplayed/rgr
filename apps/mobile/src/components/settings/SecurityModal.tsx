@@ -523,6 +523,7 @@ const styles = StyleSheet.create({
   passwordButtonRow: {
     flexDirection: 'row',
     gap: spacing.md,
+    marginTop: spacing.lg,
   },
   successMessage: {
     alignItems: 'center',

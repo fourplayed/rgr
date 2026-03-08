@@ -104,7 +104,7 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
 
           {error && <Text style={formStyles.errorText}>{error}</Text>}
 
-          <View style={formStyles.buttonRow}>
+          <View style={[formStyles.buttonRow, { marginTop: spacing.lg }]}>
             <Button variant="secondary" onPress={onClose} disabled={isLoading} flex>
               Cancel
             </Button>

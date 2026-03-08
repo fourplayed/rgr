@@ -135,7 +135,7 @@ function DefectReportSheetComponent({
               />
             </TouchableOpacity>
           )}
-          <Animated.View style={{ opacity: submitOpacity }}>
+          <Animated.View style={{ opacity: submitOpacity, marginTop: spacing.lg }}>
             <Button
               isLoading={isSubmitting}
               onPress={handleSubmit}
