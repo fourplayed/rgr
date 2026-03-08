@@ -4,8 +4,6 @@ import type {
   AssetWithRelations,
   MaintenanceRecordWithNames,
   PhotoListItem,
-  ScanEventWithScanner,
-  Depot,
   DefectReportListItem,
 } from '@rgr/shared';
 
@@ -99,43 +97,6 @@ const makePhoto = (overrides?: Partial<PhotoListItem>): PhotoListItem =>
     blockedFromDeparture: false,
     ...overrides,
   }) satisfies PhotoListItem;
-
-const makeScan = (overrides?: Partial<ScanEventWithScanner>): ScanEventWithScanner =>
-  ({
-    id: 'scan-1',
-    assetId: 'asset-1',
-    scannedBy: null,
-    scanType: 'qr_scan',
-    latitude: -31.95,
-    longitude: 115.86,
-    accuracy: 10,
-    altitude: null,
-    heading: null,
-    speed: null,
-    locationDescription: 'Perth Depot',
-    deviceInfo: null,
-    rawScanData: null,
-    createdAt: '2026-03-07T08:00:00Z',
-    scannerName: null,
-    assetNumber: 'T-001',
-    assetCategory: 'trailer',
-    ...overrides,
-  }) satisfies ScanEventWithScanner;
-
-const makeDepot = (overrides?: Partial<Depot>): Depot =>
-  ({
-    id: 'depot-1',
-    name: 'Perth Depot',
-    code: 'PER',
-    address: null,
-    latitude: -31.95,
-    longitude: 115.86,
-    color: null,
-    isActive: true,
-    createdAt: '2025-01-01T00:00:00Z',
-    updatedAt: '2025-01-01T00:00:00Z',
-    ...overrides,
-  }) satisfies Depot;
 
 const makeDefect = (overrides?: Partial<DefectReportListItem>): DefectReportListItem =>
   ({

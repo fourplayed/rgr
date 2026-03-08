@@ -20,14 +20,9 @@ jest.mock('@react-native-async-storage/async-storage', () => {
   };
 });
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const mockAsyncStorage = require('@react-native-async-storage/async-storage').default;
 import { useTutorialStore } from '../tutorialStore';
-
-const defaultState = {
-  _hasHydrated: false,
-  seen: { scan: false },
-};
 
 describe('useTutorialStore', () => {
   beforeEach(async () => {

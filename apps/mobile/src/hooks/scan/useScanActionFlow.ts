@@ -1,4 +1,4 @@
-import { useReducer, useCallback, useRef, useState, useEffect } from 'react';
+import { useReducer, useCallback, useRef, useState, useEffect, useMemo } from 'react';
 import type { AssetScanContext, PhotoType } from '@rgr/shared';
 import { useAssetScanContext } from '../useAssetData';
 import { useLocation } from '../useLocation';
@@ -13,7 +13,7 @@ import { useScanProcessing } from './useScanProcessing';
 import { useDefectSubmission } from './useDefectSubmission';
 import { useSheetLifecycle } from './useSheetLifecycle';
 import { scanFlowReducer, initialScanFlowState } from './scanFlowReducer';
-import type { ScanFlowState, ScanFlowAction, MatchedDepot, SheetId } from './scanFlowReducer';
+import type { ScanFlowState, MatchedDepot, SheetId } from './scanFlowReducer';
 
 // Re-export types for consumers
 export type { ScanFlowState, ScanFlowAction, MatchedDepot, SheetId } from './scanFlowReducer';
@@ -94,7 +94,8 @@ export function useScanActionFlow({
   const user = useAuthStore((s) => s.user);
   const cachedDepot = useLocationStore((s) => s.resolvedDepot);
   const ensureFresh = useLocationStore((s) => s.ensureFresh);
-  const depots = useDepots().data ?? [];
+  const depotsData = useDepots().data;
+  const depots = useMemo(() => depotsData ?? [], [depotsData]);
   const { hasPermission: hasLocationPermission, requestPermission: requestLocationPermission } =
     useLocation();
 

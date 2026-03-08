@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { AppState } from 'react-native';
 import { useDepots } from './useDepots';
 import { useLocationStore } from '../store/locationStore';
@@ -11,7 +11,8 @@ import { useLocationStore } from '../store/locationStore';
  * Mount once inside the authenticated tab layout.
  */
 export function useLocationLifecycle() {
-  const depots = useDepots().data ?? [];
+  const depotsData = useDepots().data;
+  const depots = useMemo(() => depotsData ?? [], [depotsData]);
   const ensureFresh = useLocationStore((s) => s.ensureFresh);
 
   useEffect(() => {

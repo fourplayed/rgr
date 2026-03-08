@@ -1,18 +1,5 @@
 import { usePhotoCaptureStore } from '../photoCaptureStore';
 
-const initialState = {
-  capturedUri: null,
-  assetId: null,
-  scanEventId: null,
-  locationDescription: null,
-  latitude: null,
-  longitude: null,
-  isUploading: false,
-  uploadError: null,
-  imageWidth: null,
-  imageHeight: null,
-};
-
 describe('usePhotoCaptureStore', () => {
   beforeEach(() => {
     usePhotoCaptureStore.getState().reset();

@@ -7,7 +7,7 @@ import { LoadingDots, AlertSheet, SheetModal } from '../common';
 import { SheetHeader } from '../common/SheetHeader';
 import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius, shadows, fontFamily as fonts } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 import { sheetLayout } from '../../theme/sheetLayout';
 import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 import { useDefectReport, useDeleteDefectReport } from '../../hooks/useDefectData';

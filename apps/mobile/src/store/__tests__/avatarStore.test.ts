@@ -20,14 +20,9 @@ jest.mock('@react-native-async-storage/async-storage', () => {
   };
 });
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const mockAsyncStorage = require('@react-native-async-storage/async-storage').default;
 import { useAvatarStore, AVATAR_OPTIONS } from '../avatarStore';
-
-const defaultState = {
-  _hasHydrated: false,
-  selectedAvatarId: 'person',
-};
 
 describe('useAvatarStore', () => {
   beforeEach(async () => {

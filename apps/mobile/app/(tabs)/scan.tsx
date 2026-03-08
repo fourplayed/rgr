@@ -69,7 +69,6 @@ export default function ScanScreen() {
     lastScanEventId,
     effectiveLocation,
     handleCameraClose,
-    handlePhotoUploaded,
     handlePhotoCaptured,
     handleReviewConfirmed,
     handleReviewRetake,

@@ -5,7 +5,7 @@ import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
 import { SheetModal } from '../common/SheetModal';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
+import { spacing, fontSize, fontFamily as fonts } from '../../theme/spacing';
 import { formStyles } from '../../theme/formStyles';
 import { sheetLayout } from '../../theme/sheetLayout';
 import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';

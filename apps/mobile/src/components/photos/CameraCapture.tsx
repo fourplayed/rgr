@@ -98,7 +98,6 @@ function CameraCaptureComponent({
     onClose();
   }, [cancelCapture, onClose]);
 
-  const isDamage = photoType === 'defect';
   const [torchOn, setTorchOn] = useState(false);
 
   // Pulse guide corners

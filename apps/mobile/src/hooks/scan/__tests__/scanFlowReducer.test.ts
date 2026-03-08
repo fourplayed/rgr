@@ -1,5 +1,7 @@
 import { scanFlowReducer, initialScanFlowState } from '../scanFlowReducer';
 import type { ScanFlowState, MatchedDepot } from '../scanFlowReducer';
+import type { Asset } from '@rgr/shared';
+import type { CachedLocationData } from '../../../store/locationStore';
 
 // Narrow types for phase-specific assertions
 type ScanningState = Extract<ScanFlowState, { phase: 'scanning' }>;
@@ -44,9 +46,9 @@ function buildActiveState(): ActiveState {
   });
   s = scanFlowReducer(s, {
     type: 'ASSET_FOUND',
-    scannedAsset: makeAssetStub() as any,
+    scannedAsset: makeAssetStub() as unknown as Asset,
     matchedDepot: makeDepotMatch(),
-    effectiveLocation: makeLocation() as any,
+    effectiveLocation: makeLocation() as unknown as CachedLocationData,
   });
   s = scanFlowReducer(s, {
     type: 'SCAN_CREATED',
@@ -69,9 +71,9 @@ describe('scanFlowReducer', () => {
     it('ASSET_FOUND from idle is ignored (returns same reference)', () => {
       const next = scanFlowReducer(initialScanFlowState, {
         type: 'ASSET_FOUND',
-        scannedAsset: makeAssetStub() as any,
+        scannedAsset: makeAssetStub() as unknown as Asset,
         matchedDepot: makeDepotMatch(),
-        effectiveLocation: makeLocation() as any,
+        effectiveLocation: makeLocation() as unknown as CachedLocationData,
       });
       expect(next).toBe(initialScanFlowState);
     });
@@ -106,9 +108,9 @@ describe('scanFlowReducer', () => {
     });
 
     it('ASSET_FOUND transitions to confirming with asset, depot, location, isCreatingScan', () => {
-      const asset = makeAssetStub() as any;
+      const asset = makeAssetStub() as unknown as Asset;
       const depot = makeDepotMatch();
-      const location = makeLocation() as any;
+      const location = makeLocation() as unknown as CachedLocationData;
       const next = scanFlowReducer(scanningState, {
         type: 'ASSET_FOUND',
         scannedAsset: asset,
@@ -145,9 +147,9 @@ describe('scanFlowReducer', () => {
       });
       confirmingState = scanFlowReducer(s, {
         type: 'ASSET_FOUND',
-        scannedAsset: makeAssetStub() as any,
+        scannedAsset: makeAssetStub() as unknown as Asset,
         matchedDepot: makeDepotMatch(),
-        effectiveLocation: makeLocation() as any,
+        effectiveLocation: makeLocation() as unknown as CachedLocationData,
       }) as ConfirmingState;
     });
 

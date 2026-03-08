@@ -28,6 +28,10 @@ import { UserPermissionsProvider } from '../src/contexts/UserPermissionsContext'
 import { ErrorBoundary } from '../src/components/common/ErrorBoundary';
 import { OfflineBanner } from '../src/components/common/OfflineBanner';
 import { useRealtimeInvalidation } from '../src/hooks/useRealtimeInvalidation';
+import { useConsoleQueryLogger } from '../src/hooks/useConsoleQueryLogger';
+import { useConsoleNetworkLogger } from '../src/hooks/useConsoleNetworkLogger';
+import { useConsoleStoreLogger } from '../src/hooks/useConsoleStoreLogger';
+import { DevConsole } from '../src/components/dev/DevConsole';
 import { replayQueue, clearQueue } from '../src/utils/offlineScanQueue';
 import { setUser as setErrorReportingUser } from '../src/utils/errorReporting';
 import { colors } from '../src/theme/colors';
@@ -284,6 +288,7 @@ export default function RootLayout() {
             </Stack>
           </View>
         </UserPermissionsProvider>
+        <DevConsole />
       </QueryClientProvider>
     </ErrorBoundary>
   );
@@ -292,6 +297,9 @@ export default function RootLayout() {
 /** Must be rendered inside QueryClientProvider so useQueryClient() resolves. */
 function RealtimeSubscriber() {
   useRealtimeInvalidation();
+  useConsoleQueryLogger();
+  useConsoleNetworkLogger();
+  useConsoleStoreLogger();
   return null;
 }
 
