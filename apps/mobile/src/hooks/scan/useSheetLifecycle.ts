@@ -1,8 +1,12 @@
 import { useCallback, useRef } from 'react';
 import { logger } from '../../utils/logger';
 import type { ScanFlowAction, SheetId } from './useScanActionFlow';
+import type { ConfirmAction } from '../../components/scanner/ScanConfirmation';
 
-export function useSheetLifecycle(dispatch: React.Dispatch<ScanFlowAction>) {
+export function useSheetLifecycle(
+  dispatch: React.Dispatch<ScanFlowAction>,
+  confirmedActionRef: React.MutableRefObject<ConfirmAction>
+) {
   // ── Photo capture tracking ──
   const photoUploadedRef = useRef(false);
 
@@ -36,10 +40,13 @@ export function useSheetLifecycle(dispatch: React.Dispatch<ScanFlowAction>) {
   const handleCameraClose = useCallback(() => {
     if (photoUploadedRef.current) {
       dispatch({ type: 'MARK_PHOTO_COMPLETED' });
+    } else {
+      // User backed out without uploading — clear so completion effect doesn't fire
+      confirmedActionRef.current = null;
     }
     photoUploadedRef.current = false;
     dispatch({ type: 'CLOSE_SHEET' });
-  }, [dispatch]);
+  }, [dispatch, confirmedActionRef]);
 
   // ── Review sheet handlers ──
 
@@ -62,8 +69,10 @@ export function useSheetLifecycle(dispatch: React.Dispatch<ScanFlowAction>) {
 
   /** Review: user closed without confirming */
   const handleReviewClose = useCallback(() => {
+    // User backed out of review — clear so completion effect doesn't fire
+    confirmedActionRef.current = null;
     dispatch({ type: 'CLOSE_SHEET' });
-  }, [dispatch]);
+  }, [dispatch, confirmedActionRef]);
 
   return {
     handlePhotoPress,

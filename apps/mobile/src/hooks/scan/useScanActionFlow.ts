@@ -288,7 +288,7 @@ export function useScanActionFlow({
     addDebugLog,
   });
 
-  const sheetLifecycle = useSheetLifecycle(dispatch);
+  const sheetLifecycle = useSheetLifecycle(dispatch, confirmedActionRef);
 
   // ── Invalid QR callback ──
   const invalidQRTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
