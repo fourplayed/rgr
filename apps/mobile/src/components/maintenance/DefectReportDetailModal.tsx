@@ -1,20 +1,21 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useCallback, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { formatRelativeTime, formatAssetNumber } from '@rgr/shared';
-import { LoadingDots, AlertSheet, SheetModal } from '../common';
+import { LoadingDots, AlertSheet, ConfirmSheet, SheetModal } from '../common';
 import { SheetHeader } from '../common/SheetHeader';
 import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, shadows, fontFamily as fonts } from '../../theme/spacing';
 import { sheetLayout } from '../../theme/sheetLayout';
 import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
-import { useDefectReport } from '../../hooks/useDefectData';
+import { useDefectReport, useDeleteDefectReport } from '../../hooks/useDefectData';
 import { useAsset } from '../../hooks/useAssetData';
 import { useMaintenance } from '../../hooks/useMaintenanceData';
 import { useScanEventPhotos, useSignedUrl } from '../../hooks/usePhotos';
 import { useUserPermissions } from '../../contexts/UserPermissionsContext';
+import { useScatterExit } from '../../hooks/useScatterExit';
 
 interface DefectReportDetailModalProps {
   visible: boolean;
@@ -32,8 +33,8 @@ interface DefectReportDetailModalProps {
   }) => void;
   /** Called when user taps "View Task" on a linked maintenance record. */
   onViewTaskPress?: (maintenanceId: string) => void;
-  /** Called when user taps Dismiss — parent handles confirmation flow. */
-  onDismissPress?: (defectId: string) => void;
+  /** Called after dismiss is confirmed, deleted, and scatter animation completes. */
+  onDismissConfirmed?: (defectId: string) => void;
   /** Called after the modal's dismiss animation completes. */
   onDismiss?: () => void;
   /** Render inline (no native Modal) — use when already inside a Modal. */
@@ -51,7 +52,7 @@ export function DefectReportDetailModal({
   variant = 'full',
   onAcceptPress,
   onViewTaskPress,
-  onDismissPress,
+  onDismissConfirmed,
   onDismiss,
   inline,
   backdrop,
@@ -71,6 +72,21 @@ export function DefectReportDetailModal({
     isLoading: isPhotoLoading,
     error: photoError,
   } = useSignedUrl(defectPhoto?.thumbnailPath ?? defectPhoto?.storagePath ?? undefined);
+
+  // Dismiss confirmation + delete
+  const [showDismissConfirm, setShowDismissConfirm] = useState(false);
+  const { mutateAsync: deleteDefect, isPending: isDeleting } = useDeleteDefectReport();
+
+  // Scatter exit animation
+  const { getStyle, scatter, reset, isScattering } = useScatterExit();
+
+  // Reset scatter + confirm state when modal opens
+  useEffect(() => {
+    if (visible) {
+      reset();
+      setShowDismissConfirm(false);
+    }
+  }, [visible, reset]);
 
   // Alert sheet
   const [alertSheet, setAlertSheet] = useState<{
@@ -96,9 +112,24 @@ export function DefectReportDetailModal({
   }, [defect, onViewTaskPress]);
 
   const handleDismiss = useCallback(() => {
-    if (!defectId || !onDismissPress) return;
-    onDismissPress(defectId);
-  }, [defectId, onDismissPress]);
+    if (!defectId) return;
+    setShowDismissConfirm(true);
+  }, [defectId]);
+
+  const handleConfirmDismiss = useCallback(async () => {
+    if (!defectId) return;
+    setShowDismissConfirm(false);
+    try {
+      await deleteDefect(defectId);
+      scatter(7, () => onDismissConfirmed?.(defectId));
+    } catch (err: unknown) {
+      setAlertSheet({
+        visible: true,
+        title: 'Error',
+        message: err instanceof Error ? err.message : 'Failed to dismiss defect report',
+      });
+    }
+  }, [defectId, deleteDefect, scatter, onDismissConfirmed]);
 
   const renderStatusActions = () => {
     if (!defect || !canMarkMaintenance) return null;
@@ -110,7 +141,7 @@ export function DefectReportDetailModal({
         <View style={styles.actionsContainer}>
           <Button
             onPress={handleAccept}
-            disabled={!onAcceptPress}
+            disabled={!onAcceptPress || isScattering}
             flex
             color={colors.defectYellow}
           >
@@ -119,7 +150,7 @@ export function DefectReportDetailModal({
           <Button
             variant="secondary"
             onPress={handleDismiss}
-            disabled={!onDismissPress}
+            disabled={isScattering}
             flex
             textColor={colors.error}
             style={{ borderColor: colors.error, backgroundColor: colors.error + '15', ...shadows.md }}
@@ -176,112 +207,139 @@ export function DefectReportDetailModal({
             bounces={true}
             showsVerticalScrollIndicator={false}
           >
-            {/* Asset info */}
-            {asset?.assetNumber && (
-              <Text style={styles.assetNumberText}>{formatAssetNumber(asset.assetNumber)}</Text>
-            )}
-            {defect.reporterName && (
-              <Text style={styles.reporterText}>
-                {formatRelativeTime(defect.createdAt)} by {defect.reporterName}
-              </Text>
-            )}
+            {/* Asset info + reporter */}
+            <Animated.View style={getStyle(0)}>
+              {asset?.assetNumber && (
+                <Text style={styles.assetNumberText}>{formatAssetNumber(asset.assetNumber)}</Text>
+              )}
+              {defect.reporterName && (
+                <Text style={styles.reporterText}>
+                  {formatRelativeTime(defect.createdAt)} by {defect.reporterName}
+                </Text>
+              )}
+            </Animated.View>
 
             {/* Description */}
             {defect.description && (
-              <View style={styles.sectionGroup}>
-                <Text style={styles.detailLabel}>Description</Text>
-                <Text style={styles.detailValue}>{defect.description}</Text>
-              </View>
+              <Animated.View style={getStyle(1)}>
+                <View style={styles.sectionGroup}>
+                  <Text style={styles.detailLabel}>Description</Text>
+                  <Text style={styles.detailValue}>{defect.description}</Text>
+                </View>
+              </Animated.View>
             )}
 
             {/* Defect Photo (hidden in compact mode) */}
             {variant === 'full' && defectPhoto && (
-              <View style={styles.sectionGroup}>
-                <Text style={styles.sectionTitle}>Defect Photo</Text>
-                {isPhotoLoading ? (
-                  <View style={styles.defectPhotoPlaceholder}>
-                    <LoadingDots color={colors.textSecondary} size={8} />
-                  </View>
-                ) : photoError || !defectPhotoUrl ? (
-                  <View style={styles.defectPhotoPlaceholder}>
-                    <Ionicons name="image-outline" size={28} color={colors.textSecondary} />
-                    <Text style={styles.defectPhotoErrorText}>Photo unavailable</Text>
-                  </View>
-                ) : (
-                  <View
-                    style={styles.defectPhotoContainer}
-                    accessible
-                    accessibilityRole="image"
-                    accessibilityLabel="Defect photo"
-                  >
-                    <Image
-                      source={{ uri: defectPhotoUrl }}
-                      style={styles.defectPhoto}
-                      contentFit="cover"
-                      transition={200}
-                      cachePolicy="memory-disk"
-                    />
-                  </View>
-                )}
-              </View>
+              <Animated.View style={getStyle(2)}>
+                <View style={styles.sectionGroup}>
+                  <Text style={styles.sectionTitle}>Defect Photo</Text>
+                  {isPhotoLoading ? (
+                    <View style={styles.defectPhotoPlaceholder}>
+                      <LoadingDots color={colors.textSecondary} size={8} />
+                    </View>
+                  ) : photoError || !defectPhotoUrl ? (
+                    <View style={styles.defectPhotoPlaceholder}>
+                      <Ionicons name="image-outline" size={28} color={colors.textSecondary} />
+                      <Text style={styles.defectPhotoErrorText}>Photo unavailable</Text>
+                    </View>
+                  ) : (
+                    <View
+                      style={styles.defectPhotoContainer}
+                      accessible
+                      accessibilityRole="image"
+                      accessibilityLabel="Defect photo"
+                    >
+                      <Image
+                        source={{ uri: defectPhotoUrl }}
+                        style={styles.defectPhoto}
+                        contentFit="cover"
+                        transition={200}
+                        cachePolicy="memory-disk"
+                      />
+                    </View>
+                  )}
+                </View>
+              </Animated.View>
             )}
 
             {/* Linked Maintenance Task (hidden in compact mode) */}
             {variant === 'full' && defect.maintenanceRecordId && (
-              <View style={styles.sectionGroup}>
-                <Text style={styles.sectionTitle}>Linked Maintenance Task</Text>
-                {linkedMaintenance && (
-                  <Text style={styles.detailValue}>{linkedMaintenance.title}</Text>
-                )}
-                <TouchableOpacity
-                  style={styles.linkedTaskLink}
-                  onPress={handleViewLinkedTask}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.linkedTaskLinkText}>View Task</Text>
-                  <Ionicons name="chevron-forward" size={16} color={colors.electricBlue} />
-                </TouchableOpacity>
-              </View>
+              <Animated.View style={getStyle(3)}>
+                <View style={styles.sectionGroup}>
+                  <Text style={styles.sectionTitle}>Linked Maintenance Task</Text>
+                  {linkedMaintenance && (
+                    <Text style={styles.detailValue}>{linkedMaintenance.title}</Text>
+                  )}
+                  <TouchableOpacity
+                    style={styles.linkedTaskLink}
+                    onPress={handleViewLinkedTask}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.linkedTaskLinkText}>View Task</Text>
+                    <Ionicons name="chevron-forward" size={16} color={colors.electricBlue} />
+                  </TouchableOpacity>
+                </View>
+              </Animated.View>
             )}
 
             {/* Timeline (hidden in compact mode) */}
             {variant === 'full' && (defect.acceptedAt || defect.resolvedAt) && (
-              <View style={styles.sectionGroup}>
-                {defect.acceptedAt && (
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Accepted</Text>
-                    <Text style={styles.detailValue}>
-                      {formatRelativeTime(defect.acceptedAt)}
-                    </Text>
-                  </View>
-                )}
+              <Animated.View style={getStyle(4)}>
+                <View style={styles.sectionGroup}>
+                  {defect.acceptedAt && (
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Accepted</Text>
+                      <Text style={styles.detailValue}>
+                        {formatRelativeTime(defect.acceptedAt)}
+                      </Text>
+                    </View>
+                  )}
 
-                {defect.resolvedAt && (
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Resolved</Text>
-                    <Text style={styles.detailValue}>
-                      {formatRelativeTime(defect.resolvedAt)}
-                    </Text>
-                  </View>
-                )}
-              </View>
+                  {defect.resolvedAt && (
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Resolved</Text>
+                      <Text style={styles.detailValue}>
+                        {formatRelativeTime(defect.resolvedAt)}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </Animated.View>
             )}
 
             {/* Notes (hidden in compact mode) */}
             {variant === 'full' && defect.notes && (
-              <View style={styles.sectionGroup}>
-                <Text style={styles.sectionTitle}>Notes</Text>
-                <View style={styles.sectionCard}>
-                  <Text style={styles.detailValue}>{defect.notes}</Text>
+              <Animated.View style={getStyle(5)}>
+                <View style={styles.sectionGroup}>
+                  <Text style={styles.sectionTitle}>Notes</Text>
+                  <View style={styles.sectionCard}>
+                    <Text style={styles.detailValue}>{defect.notes}</Text>
+                  </View>
                 </View>
-              </View>
+              </Animated.View>
             )}
 
             {/* Status Actions */}
-            {renderStatusActions()}
+            <Animated.View style={getStyle(6)}>
+              {renderStatusActions()}
+            </Animated.View>
           </ScrollView>
         )}
       </View>
+
+      {/* Dismiss Confirmation */}
+      <ConfirmSheet
+        visible={showDismissConfirm}
+        type="danger"
+        title="Dismiss Defect Report"
+        message="Are you sure? This will permanently delete this defect report."
+        confirmLabel="Dismiss"
+        cancelLabel="Cancel"
+        onConfirm={handleConfirmDismiss}
+        onCancel={() => setShowDismissConfirm(false)}
+        isLoading={isDeleting}
+      />
 
       {/* Alert Sheet */}
       <AlertSheet

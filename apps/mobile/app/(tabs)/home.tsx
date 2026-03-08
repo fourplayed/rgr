@@ -8,14 +8,13 @@ import {
   RefreshControl,
   TouchableOpacity,
   Animated,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useIsFocused } from '@react-navigation/native';
 import { useRecentScans, useAssetCountsByStatus, useTotalScanCount } from '../../src/hooks/useAssetData';
 import { useRecentMaintenance } from '../../src/hooks/useMaintenanceData';
-import { useRecentDefectReports, useDeleteDefectReport } from '../../src/hooks/useDefectData';
+import { useRecentDefectReports } from '../../src/hooks/useDefectData';
 import { useAuthStore } from '../../src/store/authStore';
 import { useLocationStore } from '../../src/store/locationStore';
 import { formatRelativeTime, UserRoleLabels, formatAssetNumber } from '@rgr/shared';
@@ -244,26 +243,10 @@ export default function HomeScreen() {
     closeModal();
   }, [modal, acceptDefect, closeModal]);
 
-  // Dismiss defect flow
-  const { mutateAsync: deleteDefect } = useDeleteDefectReport();
-
-  const handleDismissPress = useCallback((defectId: string) => {
-    Alert.alert(
-      'Dismiss Defect Report',
-      'Are you sure you want to dismiss this defect report? This will permanently delete it.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Dismiss',
-          style: 'destructive',
-          onPress: async () => {
-            await deleteDefect(defectId);
-            closeModal();
-          },
-        },
-      ],
-    );
-  }, [deleteDefect, closeModal]);
+  // Dismiss defect flow (confirmation + delete handled inside DefectReportDetailModal)
+  const handleDismissConfirmed = useCallback(() => {
+    closeModal();
+  }, [closeModal]);
 
   // Recent scans across all users (global activity)
   const {
@@ -543,7 +526,7 @@ export default function HomeScreen() {
             onClose={closeModal}
             onAcceptPress={handleAcceptPress}
             onViewTaskPress={handleViewTaskPress}
-            onDismissPress={handleDismissPress}
+            onDismissConfirmed={handleDismissConfirmed}
             inline backdrop={false} onExitComplete={handleExitComplete}
           />
 

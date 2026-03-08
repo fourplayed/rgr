@@ -2,7 +2,6 @@ import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
-  Alert,
   ScrollView,
   StyleSheet,
   SafeAreaView,
@@ -15,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
 import { useAsset, useAssetScans, useAssetMaintenance } from '../../../src/hooks/useAssetData';
 import { useAssetPhotos } from '../../../src/hooks/usePhotos';
-import { useAssetDefectReports, useDeleteDefectReport } from '../../../src/hooks/useDefectData';
+import { useAssetDefectReports } from '../../../src/hooks/useDefectData';
 import type { ScanEventWithScanner, MaintenanceRecord, MaintenanceRecordWithNames, PhotoListItem, DefectReportListItem, CreateMaintenanceInput } from '@rgr/shared';
 import { AssetInfoCard } from '../../../src/components/assets/AssetInfoCard';
 import { useAssetAssessment } from '../../../src/hooks/useAssetAssessment';
@@ -322,26 +321,10 @@ export default function AssetDetailScreen() {
     closeModal();
   }, [modal, acceptDefect, closeModal]);
 
-  // Dismiss defect flow
-  const { mutateAsync: deleteDefect } = useDeleteDefectReport();
-
-  const handleDismissPress = useCallback((defectId: string) => {
-    Alert.alert(
-      'Dismiss Defect Report',
-      'Are you sure you want to dismiss this defect report? This will permanently delete it.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Dismiss',
-          style: 'destructive',
-          onPress: async () => {
-            await deleteDefect(defectId);
-            closeModal();
-          },
-        },
-      ],
-    );
-  }, [deleteDefect, closeModal]);
+  // Dismiss defect flow (confirmation + delete handled inside DefectReportDetailModal)
+  const handleDismissConfirmed = useCallback(() => {
+    closeModal();
+  }, [closeModal]);
 
   const isSuperuser = !!user?.role && hasRoleLevel(user.role, UserRole.SUPERUSER);
   const { depots } = useDepotLookup();
@@ -626,7 +609,7 @@ export default function AssetDetailScreen() {
           onClose={closeModal}
           onAcceptPress={handleAcceptPress}
           onViewTaskPress={handleViewTaskPress}
-          onDismissPress={handleDismissPress}
+          onDismissConfirmed={handleDismissConfirmed}
           inline backdrop={false} onExitComplete={handleExitComplete}
         />
 

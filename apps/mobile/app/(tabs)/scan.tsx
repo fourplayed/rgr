@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Modal,
-  Alert,
   Animated,
   InteractionManager,
   StyleSheet,
@@ -22,7 +21,6 @@ import { DefectReportSheet } from '../../src/components/scanner/DefectReportShee
 import { CameraCapture } from '../../src/components/photos';
 import { CreateMaintenanceModal, DefectReportDetailModal, MaintenanceDetailModal } from '../../src/components/maintenance';
 import { useAcceptDefect } from '../../src/hooks/useAcceptDefect';
-import { useDeleteDefectReport } from '../../src/hooks/useDefectData';
 import type { CreateMaintenanceInput } from '@rgr/shared';
 import { TutorialSheet, AlertSheet, ErrorBoundary } from '../../src/components/common';
 import { styles } from '../../src/components/scanner/scan.styles';
@@ -122,6 +120,18 @@ export default function ScanScreen() {
     title: string;
     description?: string | null;
   } | null>(null);
+
+  // Fade confirmation card when a context modal overlays it
+  const confirmOpacity = useRef(new Animated.Value(1)).current;
+  const contextModalOpen = contextDefectId !== null || contextMaintenanceId !== null || acceptDefectContext !== null;
+
+  useEffect(() => {
+    Animated.timing(confirmOpacity, {
+      toValue: contextModalOpen ? 0 : 1,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  }, [contextModalOpen, confirmOpacity]);
 
   // ── Asset assessment (lazy-loaded when asset is scanned) ──
   const assessment = useAssetAssessment(scannedAsset, matchedDepot);
@@ -270,27 +280,11 @@ export default function ScanScreen() {
     refetchContext();
   }, [acceptDefectContext, acceptDefect, refetchContext]);
 
-  // ── Dismiss defect flow ──
-  const { mutateAsync: deleteDefect } = useDeleteDefectReport();
-
-  const handleDismissPress = useCallback((defectId: string) => {
-    Alert.alert(
-      'Dismiss Defect Report',
-      'Are you sure you want to dismiss this defect report? This will permanently delete it.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Dismiss',
-          style: 'destructive',
-          onPress: async () => {
-            await deleteDefect(defectId);
-            setContextDefectId(null);
-            refetchContext();
-          },
-        },
-      ],
-    );
-  }, [deleteDefect, refetchContext]);
+  // ── Dismiss defect flow (confirmation + delete handled inside DefectReportDetailModal) ──
+  const handleDismissConfirmed = useCallback(() => {
+    setContextDefectId(null);
+    refetchContext();
+  }, [refetchContext]);
 
   // ── Render ──
 
@@ -339,8 +333,9 @@ export default function ScanScreen() {
           <Animated.View
             style={[
               styles.confirmSheet,
-              { transform: [{ translateY: sheetTranslateY }] },
+              { transform: [{ translateY: sheetTranslateY }], opacity: confirmOpacity },
             ]}
+            pointerEvents={contextModalOpen ? 'none' : 'auto'}
           >
             {variant === 'mechanic' ? (
               <ScanConfirmation
@@ -381,7 +376,7 @@ export default function ScanScreen() {
           defectId={contextDefectId}
           onClose={() => setContextDefectId(null)}
           onAcceptPress={handleAcceptPress}
-          onDismissPress={handleDismissPress}
+          onDismissConfirmed={handleDismissConfirmed}
           variant="compact"
           inline
         />

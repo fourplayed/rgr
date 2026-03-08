@@ -2,7 +2,6 @@ import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
-  Alert,
   FlatList,
   StyleSheet,
   SafeAreaView,
@@ -35,7 +34,7 @@ import {
   DEFECT_ITEM_HEIGHT,
 } from '../../src/components/maintenance';
 import { useMaintenanceList } from '../../src/hooks/useMaintenanceData';
-import { useDefectReportList, useDeleteDefectReport } from '../../src/hooks/useDefectData';
+import { useDefectReportList } from '../../src/hooks/useDefectData';
 import { useAcceptDefect } from '../../src/hooks/useAcceptDefect';
 import { useModalTransition } from '../../src/hooks/useModalTransition';
 import { ModalShell } from '../../src/components/common/ModalShell';
@@ -103,26 +102,10 @@ export default function MaintenanceScreen() {
     close();
   }, [modal, acceptDefect, close]);
 
-  // Dismiss defect flow
-  const { mutateAsync: deleteDefect } = useDeleteDefectReport();
-
-  const handleDismissPress = useCallback((defectId: string) => {
-    Alert.alert(
-      'Dismiss Defect Report',
-      'Are you sure you want to dismiss this defect report? This will permanently delete it.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Dismiss',
-          style: 'destructive',
-          onPress: async () => {
-            await deleteDefect(defectId);
-            close();
-          },
-        },
-      ],
-    );
-  }, [deleteDefect, close]);
+  // Dismiss defect flow (confirmation + delete handled inside DefectReportDetailModal)
+  const handleDismissConfirmed = useCallback(() => {
+    close();
+  }, [close]);
 
   // Fetch maintenance list with filters
   const maintenanceFilters = useMemo(() => ({
@@ -357,7 +340,7 @@ export default function MaintenanceScreen() {
             onClose={close}
             onAcceptPress={handleAcceptPress}
             onViewTaskPress={handleViewTaskPress}
-            onDismissPress={handleDismissPress}
+            onDismissConfirmed={handleDismissConfirmed}
             inline backdrop={false} onExitComplete={handleExitComplete}
           />
 
