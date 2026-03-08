@@ -8,8 +8,13 @@ import { useDebugLocationStore } from './debugLocationStore';
 
 // Configuration constants
 const MAX_DEPOT_DISTANCE_KM = 100;
-const LOCATION_TIMEOUT_MS = 15000; // 15 seconds - GPS timeout for indoor environments
+const LOCATION_TIMEOUT_MS = 10000; // 10 seconds — high-accuracy GPS attempt
+const BALANCED_TIMEOUT_MS = 8000; // 8 seconds — cell/Wi-Fi fallback (faster indoors)
 const RESOLVE_COOLDOWN_MS = 30_000; // 30 seconds — prevents rapid successive GPS queries
+const STALE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes — triggers background refresh
+const MAX_RETRIES = 5;
+const BASE_RETRY_MS = 5000; // 5s base, doubles each attempt, caps at 60s
+const MAX_RETRY_MS = 60000;
 
 export interface CachedLocationData {
   latitude: number;
@@ -27,8 +32,13 @@ interface LocationState {
   depotResolutionError: string | null;
   lastResolvedAt: Date | null;
   lastLocation: CachedLocationData | null;
+  retryCount: number;
+  retryTimeoutId: ReturnType<typeof setTimeout> | null;
+  permissionDenied: boolean;
 
   resolveDepot: (depots: Depot[]) => Promise<void>;
+  ensureFresh: (depots: Depot[]) => void;
+  cancelRetries: () => void;
   clearResolvedDepot: () => void;
 }
 
@@ -38,6 +48,9 @@ export const useLocationStore = create<LocationState>((set, get) => ({
   depotResolutionError: null,
   lastResolvedAt: null,
   lastLocation: null,
+  retryCount: 0,
+  retryTimeoutId: null,
+  permissionDenied: false,
 
   resolveDepot: async (depots: Depot[]) => {
     // Don't resolve if already resolving
@@ -72,53 +85,82 @@ export const useLocationStore = create<LocationState>((set, get) => ({
               isResolvingDepot: false,
               depotResolutionError: 'Location permission denied',
               resolvedDepot: null,
+              permissionDenied: true,
             });
+            // Permission denied — do NOT retry (user action required)
             return;
           }
         }
       }
 
       // Get GPS position (depot list is now provided by caller from React Query cache)
-      const locationPromise: Promise<Location.LocationObject> =
-        useSimulatedGPS && debugLocation
-          ? Promise.resolve({
-              coords: {
-                latitude: debugLocation.latitude,
-                longitude: debugLocation.longitude,
-                accuracy: 5,
-                altitude: null,
-                altitudeAccuracy: null,
-                heading: null,
-                speed: null,
-              },
-              timestamp: Date.now(),
-            } as Location.LocationObject)
-          : Promise.race([
+      let locationResult: Location.LocationObject;
+
+      if (useSimulatedGPS && debugLocation) {
+        locationResult = {
+          coords: {
+            latitude: debugLocation.latitude,
+            longitude: debugLocation.longitude,
+            accuracy: 5,
+            altitude: null,
+            altitudeAccuracy: null,
+            heading: null,
+            speed: null,
+          },
+          timestamp: Date.now(),
+        } as Location.LocationObject;
+      } else {
+        // Accuracy fallback: try High first, fall back to Balanced on timeout
+        try {
+          locationResult = await Promise.race([
+            Location.getCurrentPositionAsync({
+              accuracy: Location.Accuracy.High,
+            }),
+            new Promise<never>((_, reject) =>
+              setTimeout(
+                () => reject(new Error('Location request timed out')),
+                LOCATION_TIMEOUT_MS
+              )
+            ),
+          ]);
+        } catch {
+          // High accuracy timed out — try Balanced (cell/Wi-Fi, faster indoors)
+          try {
+            locationResult = await Promise.race([
               Location.getCurrentPositionAsync({
-                accuracy: Location.Accuracy.High,
+                accuracy: Location.Accuracy.Balanced,
               }),
               new Promise<never>((_, reject) =>
                 setTimeout(
                   () => reject(new Error('Location request timed out')),
-                  LOCATION_TIMEOUT_MS
+                  BALANCED_TIMEOUT_MS
                 )
               ),
             ]);
+          } catch (error: unknown) {
+            // Both attempts failed — schedule retry with exponential backoff
+            const { retryCount } = get();
+            if (retryCount < MAX_RETRIES) {
+              const delay = Math.min(BASE_RETRY_MS * Math.pow(2, retryCount), MAX_RETRY_MS);
+              const jitteredDelay = delay * (1 + Math.random() * 0.5);
+              const timeoutId = setTimeout(() => {
+                set({ retryTimeoutId: null });
+                get().resolveDepot(depots);
+              }, jitteredDelay);
+              set({ retryTimeoutId: timeoutId });
+            }
 
-      let locationResult: Location.LocationObject;
-      try {
-        locationResult = await locationPromise;
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : 'Failed to resolve depot';
-        set({
-          isResolvingDepot: false,
-          depotResolutionError: message,
-          resolvedDepot: null,
-        });
-        return;
+            const message = error instanceof Error ? error.message : 'Failed to resolve depot';
+            set({
+              isResolvingDepot: false,
+              depotResolutionError: message,
+              resolvedDepot: null,
+              retryCount: get().retryCount + 1,
+            });
+            return;
+          }
+        }
       }
-
-      const depotList = depots;
 
       const { coords } = locationResult;
 
@@ -137,9 +179,13 @@ export const useLocationStore = create<LocationState>((set, get) => ({
       const nearestResult = findNearestLocation(
         coords.latitude,
         coords.longitude,
-        depotList,
+        depots,
         MAX_DEPOT_DISTANCE_KM
       );
+
+      // Success — reset retry counter, clear any pending timeout
+      const pendingTimeout = get().retryTimeoutId;
+      if (pendingTimeout) clearTimeout(pendingTimeout);
 
       set({
         isResolvingDepot: false,
@@ -149,6 +195,9 @@ export const useLocationStore = create<LocationState>((set, get) => ({
           : null,
         lastLocation: cachedLocation,
         lastResolvedAt: new Date(),
+        retryCount: 0,
+        retryTimeoutId: null,
+        permissionDenied: false,
       });
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Failed to resolve depot';
@@ -160,13 +209,33 @@ export const useLocationStore = create<LocationState>((set, get) => ({
     }
   },
 
+  ensureFresh: (depots: Depot[]) => {
+    const { lastResolvedAt, isResolvingDepot, permissionDenied } = get();
+    if (isResolvingDepot || permissionDenied) return;
+
+    const isStale =
+      !lastResolvedAt || Date.now() - lastResolvedAt.getTime() > STALE_THRESHOLD_MS;
+
+    if (isStale) {
+      get().resolveDepot(depots);
+    }
+  },
+
+  cancelRetries: () => {
+    const { retryTimeoutId } = get();
+    if (retryTimeoutId) clearTimeout(retryTimeoutId);
+    set({ retryCount: 0, retryTimeoutId: null });
+  },
+
   clearResolvedDepot: () => {
+    get().cancelRetries();
     set({
       resolvedDepot: null,
       isResolvingDepot: false,
       depotResolutionError: null,
       lastResolvedAt: null,
       lastLocation: null,
+      permissionDenied: false,
     });
   },
 }));

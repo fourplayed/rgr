@@ -5,17 +5,18 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { UserProfileHeader } from '../../src/components/common/UserProfileHeader';
+import { useLocationLifecycle } from '../../src/hooks/useLocationLifecycle';
 import { colors } from '../../src/theme/colors';
 
 const TAB_BAR_BACKGROUND = colors.brandTabBar;
 const TAB_ACTIVE_BACKGROUND = colors.brandTabActive;
 const TAB_ICON_COLOR = colors.textInverse;
 
-const TAB_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
-  home: 'home-outline',
-  scan: 'qr-code-outline',
-  assets: 'cube-outline',
-  maintenance: 'construct-outline',
+const TAB_ICONS: Record<string, { outline: keyof typeof Ionicons.glyphMap; filled: keyof typeof Ionicons.glyphMap }> = {
+  home: { outline: 'home-outline', filled: 'home' },
+  scan: { outline: 'qr-code-outline', filled: 'qr-code' },
+  assets: { outline: 'cube-outline', filled: 'cube' },
+  maintenance: { outline: 'construct-outline', filled: 'construct' },
 };
 
 const TAB_LABELS: Record<string, string> = {
@@ -136,7 +137,8 @@ function AnimatedTabBar({ state, navigation }: BottomTabBarProps) {
       <View style={tabStyles.buttonRow}>
         {visibleRoutes.map((route, index) => {
           const isFocused = activeVisualIndex === index;
-          const icon = TAB_ICONS[route.name] ?? 'help-outline';
+          const iconSet = TAB_ICONS[route.name];
+          const icon = iconSet ? (isFocused ? iconSet.filled : iconSet.outline) : 'help-outline';
           const label = TAB_LABELS[route.name] ?? route.name;
 
           return (
@@ -169,6 +171,8 @@ function AnimatedTabBar({ state, navigation }: BottomTabBarProps) {
 }
 
 export default function TabsLayout() {
+  useLocationLifecycle();
+
   return (
     <View style={tabStyles.layoutRoot}>
       <Tabs

@@ -3,6 +3,7 @@ import type { AssetScanContext, PhotoType } from '@rgr/shared';
 import { useAssetScanContext } from '../useAssetData';
 import { useLocation } from '../useLocation';
 import { useQRScanner } from '../useQRScanner';
+import { useDepots } from '../useDepots';
 import { useAuthStore } from '../../store/authStore';
 import { useLocationStore } from '../../store/locationStore';
 import type { CachedLocationData } from '../../store/locationStore';
@@ -250,8 +251,15 @@ export function useScanActionFlow({
   const [state, dispatch] = useReducer(reducer, { phase: 'idle' });
   const user = useAuthStore((s) => s.user);
   const cachedDepot = useLocationStore((s) => s.resolvedDepot);
+  const ensureFresh = useLocationStore((s) => s.ensureFresh);
+  const depots = useDepots().data ?? [];
   const { hasPermission: hasLocationPermission, requestPermission: requestLocationPermission } =
     useLocation();
+
+  // ── Proactively refresh location when scan tab mounts ──
+  useEffect(() => {
+    if (depots.length > 0) ensureFresh(depots);
+  }, [depots, ensureFresh]);
 
   // ── Alert sheet ──
   const [alertSheet, setAlertSheet] = useState<AlertSheetState>({
