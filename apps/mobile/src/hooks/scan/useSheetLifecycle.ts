@@ -12,7 +12,9 @@ export function useSheetLifecycle(dispatch: React.Dispatch<ScanFlowAction>) {
   }, [dispatch]);
 
   const handleSheetDismiss = useCallback(() => {
-    dispatch({ type: 'RESOLVE_PENDING' });
+    requestAnimationFrame(() => {
+      dispatch({ type: 'RESOLVE_PENDING' });
+    });
   }, [dispatch]);
 
   const handleCloseSheet = useCallback(
@@ -39,11 +41,39 @@ export function useSheetLifecycle(dispatch: React.Dispatch<ScanFlowAction>) {
     dispatch({ type: 'CLOSE_SHEET' });
   }, [dispatch]);
 
+  // ── Review sheet handlers ──
+
+  /** Camera captured a photo — close camera, open review sheet */
+  const handlePhotoCaptured = useCallback(() => {
+    dispatch({ type: 'CLOSE_SHEET', pendingSheet: 'review' });
+  }, [dispatch]);
+
+  /** Review: user confirmed upload — mark completed + close */
+  const handleReviewConfirmed = useCallback(() => {
+    logger.scan('Photo uploaded successfully');
+    dispatch({ type: 'MARK_PHOTO_COMPLETED' });
+    dispatch({ type: 'CLOSE_SHEET' });
+  }, [dispatch]);
+
+  /** Review: user wants to retake — close review, reopen camera */
+  const handleReviewRetake = useCallback(() => {
+    dispatch({ type: 'CLOSE_SHEET', pendingSheet: 'camera' });
+  }, [dispatch]);
+
+  /** Review: user closed without confirming */
+  const handleReviewClose = useCallback(() => {
+    dispatch({ type: 'CLOSE_SHEET' });
+  }, [dispatch]);
+
   return {
     handlePhotoPress,
     handleSheetDismiss,
     handleCloseSheet,
     handlePhotoUploaded,
     handleCameraClose,
+    handlePhotoCaptured,
+    handleReviewConfirmed,
+    handleReviewRetake,
+    handleReviewClose,
   };
 }

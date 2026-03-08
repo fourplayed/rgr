@@ -18,7 +18,7 @@ import { useAssetAssessment } from '../../src/hooks/useAssetAssessment';
 import { PermissionScreen, CameraOverlay, ScanConfirmation, ScanSuccessFlash } from '../../src/components/scanner';
 import type { ConfirmAction } from '../../src/components/scanner/ScanConfirmation';
 import { DefectReportSheet } from '../../src/components/scanner/DefectReportSheet';
-import { CameraCapture } from '../../src/components/photos';
+import { CameraCapture, PhotoReviewSheet } from '../../src/components/photos';
 import { CreateMaintenanceModal, DefectReportDetailModal, MaintenanceDetailModal } from '../../src/components/maintenance';
 import { useAcceptDefect } from '../../src/hooks/useAcceptDefect';
 import type { CreateMaintenanceInput } from '@rgr/shared';
@@ -70,6 +70,10 @@ export default function ScanScreen() {
     effectiveLocation,
     handleCameraClose,
     handlePhotoUploaded,
+    handlePhotoCaptured,
+    handleReviewConfirmed,
+    handleReviewRetake,
+    handleReviewClose,
     handleSheetDismiss,
     handleCloseSheet,
     isSubmittingDefect,
@@ -404,6 +408,17 @@ export default function ScanScreen() {
           />
         )}
 
+        {/* Photo Review — rendered inline to avoid iOS stacked-Modal layout issues */}
+        <PhotoReviewSheet
+          visible={activeSheet === 'review'}
+          photoType={activePhotoType}
+          onClose={handleReviewClose}
+          onConfirmed={handleReviewConfirmed}
+          onRetake={handleReviewRetake}
+          onDismiss={handleSheetDismiss}
+          inline
+        />
+
         {/* Success flash — inside Modal so it renders above the dark backdrop */}
         <ScanSuccessFlash
           visible={successFlash !== null}
@@ -431,7 +446,7 @@ export default function ScanScreen() {
             latitude={effectiveLocation?.latitude ?? null}
             longitude={effectiveLocation?.longitude ?? null}
             onClose={handleCameraClose}
-            onPhotoUploaded={handlePhotoUploaded}
+            onPhotoCaptured={handlePhotoCaptured}
             onDismiss={handleSheetDismiss}
           />
         </ErrorBoundary>

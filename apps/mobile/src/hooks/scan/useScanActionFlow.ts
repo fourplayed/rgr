@@ -16,7 +16,7 @@ import { useSheetLifecycle } from './useSheetLifecycle';
 
 export type MatchedDepot = { depot: Depot; distanceKm: number };
 
-export type SheetId = 'camera' | 'defect' | 'createTask' | null;
+export type SheetId = 'camera' | 'review' | 'defect' | 'createTask' | null;
 
 export type ScanFlowState =
   | { phase: 'idle' }
@@ -214,6 +214,10 @@ interface UseScanActionFlowReturn {
   handleCloseSheet: (pendingSheet?: SheetId) => void;
   handleCameraClose: () => void;
   handlePhotoUploaded: () => void;
+  handlePhotoCaptured: () => void;
+  handleReviewConfirmed: () => void;
+  handleReviewRetake: () => void;
+  handleReviewClose: () => void;
   handleDefectSubmit: (notes: string, wantsPhoto: boolean) => void;
   handleDefectCancel: () => void;
   isSubmittingDefect: boolean;
@@ -387,7 +391,9 @@ export function useScanActionFlow({
   const defectCompleted = state.phase === 'active' ? state.defectCompleted : false;
   const maintenanceCompleted = state.phase === 'active' ? state.maintenanceCompleted : false;
   const activePhotoType: PhotoType =
-    state.phase === 'active' && state.defectCompleted && state.activeSheet === 'camera'
+    state.phase === 'active' &&
+    state.defectCompleted &&
+    (state.activeSheet === 'camera' || state.activeSheet === 'review')
       ? 'defect'
       : 'freight';
 
@@ -430,6 +436,12 @@ export function useScanActionFlow({
     // Camera
     handleCameraClose: sheetLifecycle.handleCameraClose,
     handlePhotoUploaded: sheetLifecycle.handlePhotoUploaded,
+    handlePhotoCaptured: sheetLifecycle.handlePhotoCaptured,
+
+    // Review
+    handleReviewConfirmed: sheetLifecycle.handleReviewConfirmed,
+    handleReviewRetake: sheetLifecycle.handleReviewRetake,
+    handleReviewClose: sheetLifecycle.handleReviewClose,
 
     // Defect
     handleDefectSubmit,
