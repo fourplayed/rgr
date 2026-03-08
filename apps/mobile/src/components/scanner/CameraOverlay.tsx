@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, SafeAreaView, TouchableOpacity, Animated } from 'react-native';
 import { LoadingDots } from '../common/LoadingDots';
+import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
 import { styles } from './scan.styles';
 
@@ -83,7 +84,7 @@ function CameraOverlayComponent({
       </View>
 
       {/* ── Footer: location prompt + debug scan ── */}
-      {(!hasLocationPermission || (__DEV__ && onDebugScan)) && (
+      {(!hasLocationPermission || onDebugScan) && (
         <View style={styles.footerTray}>
           {!hasLocationPermission && (
             <TouchableOpacity
@@ -98,19 +99,15 @@ function CameraOverlayComponent({
               </Text>
             </TouchableOpacity>
           )}
-          {__DEV__ && onDebugScan && (
-            <TouchableOpacity
-              style={[
-                styles.scannerButtonBase,
-                styles.buttonDefault,
-                !hasLocationPermission && { marginTop: 8 },
-              ]}
+          {onDebugScan && (
+            <Button
               onPress={onDebugScan}
-              accessibilityRole="button"
-              accessibilityLabel="Debug scan"
+              color="#CCFF00"
+              textColor="#000000"
+              style={!hasLocationPermission ? { marginTop: 8 } : undefined}
             >
-              <Text style={[styles.scannerButtonText, styles.buttonDefaultText]}>Debug Scan</Text>
-            </TouchableOpacity>
+              Debug Scan
+            </Button>
           )}
         </View>
       )}

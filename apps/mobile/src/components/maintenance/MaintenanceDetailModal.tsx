@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { formatRelativeTime, formatAssetNumber } from '@rgr/shared';
 import { LoadingDots, AlertSheet, SheetModal } from '../common';
-import { IconCircle } from '../common/IconCircle';
+import { SheetHeader } from '../common/SheetHeader';
 import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
@@ -204,7 +204,7 @@ export function MaintenanceDetailModal({
         <View style={styles.actionsContainer}>
           <View style={styles.closedStatus}>
             <Ionicons
-              name={MAINTENANCE_STATUS_CONFIG[status]?.icon ?? 'construct-outline'}
+              name={MAINTENANCE_STATUS_CONFIG[status]?.icon ?? 'construct'}
               size={20}
               color={MAINTENANCE_STATUS_CONFIG[status]?.color ?? colors.textSecondary}
             />
@@ -219,41 +219,25 @@ export function MaintenanceDetailModal({
 
   return (
     <SheetModal visible={visible} onClose={onClose} inline={!!inline} backdrop={backdrop} onExitComplete={onExitComplete}>
-      <View style={styles.container}>
-        <View style={styles.handle} />
-        <TouchableOpacity
-          style={styles.closeButton}
-          onPress={onClose}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel="Close"
-        >
-          <Ionicons name="close" size={24} color={colors.textSecondary} />
-        </TouchableOpacity>
+      <View style={sheetLayout.containerTall}>
+        <SheetHeader
+          icon="construct"
+          title="Maintenance Task"
+          onClose={onClose}
+          backgroundColor={colors.warning}
+        />
 
         {isLoading || !maintenance ? (
-          <>
-            <View style={styles.headerContent}>
-              <IconCircle icon="construct" color={colors.warning} />
-              <Text style={styles.headerTitle}>Maintenance</Text>
-            </View>
-            <View style={styles.loadingContainer}>
-              <LoadingDots color={colors.textSecondary} size={10} />
-            </View>
-          </>
+          <View style={styles.loadingContainer}>
+            <LoadingDots color={colors.textSecondary} size={10} />
+          </View>
         ) : (
-          <>
-            <View style={styles.headerContent}>
-              <IconCircle icon="construct" color={colors.warning} />
-              <Text style={styles.headerTitle} numberOfLines={2}>{maintenance.title}</Text>
-            </View>
-
-            <ScrollView
-              style={sheetLayout.scroll}
-              contentContainerStyle={[sheetLayout.scrollContent, { paddingTop: spacing.base, paddingBottom: sheetBottomPadding, gap: spacing.md }]}
-              bounces={true}
-              showsVerticalScrollIndicator={false}
-            >
+          <ScrollView
+            style={sheetLayout.scroll}
+            contentContainerStyle={[sheetLayout.scrollContent, { paddingTop: spacing.lg, paddingBottom: sheetBottomPadding, gap: spacing.md }]}
+            bounces={true}
+            showsVerticalScrollIndicator={false}
+          >
               {/* Info Row: Asset Number + View Asset */}
               <Animated.View style={getStyle(0)}>
                 <View style={styles.infoRow}>
@@ -457,8 +441,7 @@ export function MaintenanceDetailModal({
               <Animated.View style={getStyle(6)}>
                 {renderStatusActions()}
               </Animated.View>
-            </ScrollView>
-          </>
+          </ScrollView>
         )}
       </View>
 
@@ -475,43 +458,6 @@ export function MaintenanceDetailModal({
 }
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.background,
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
-    maxHeight: '90%',
-  },
-  handle: {
-    width: 40,
-    height: 4,
-    backgroundColor: colors.border,
-    borderRadius: borderRadius.full,
-    alignSelf: 'center',
-    marginTop: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  closeButton: {
-    position: 'absolute',
-    top: spacing.md,
-    right: spacing.md,
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1,
-  },
-  headerContent: {
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    gap: spacing.sm,
-  },
-  headerTitle: {
-    fontSize: fontSize['2xl'],
-    fontFamily: fonts.bold,
-    color: colors.text,
-    textAlign: 'center',
-    textTransform: 'uppercase',
-  },
   loadingContainer: {
     padding: spacing['3xl'],
     alignItems: 'center',

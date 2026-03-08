@@ -13,8 +13,8 @@ import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../them
 
 const STATUS_ICONS: Record<AssetStatus, keyof typeof Ionicons.glyphMap> = {
   serviced: 'checkmark-circle',
-  maintenance: 'construct-outline',
-  out_of_service: 'close-circle-outline',
+  maintenance: 'construct',
+  out_of_service: 'close-circle',
 };
 
 interface AssetInfoCardProps {

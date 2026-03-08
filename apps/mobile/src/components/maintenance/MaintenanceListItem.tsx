@@ -14,9 +14,9 @@ export const MAINTENANCE_STATUS_CONFIG: Record<
   MaintenanceStatus,
   { icon: keyof typeof Ionicons.glyphMap; color: string }
 > = {
-  scheduled: { icon: 'construct-outline', color: colors.maintenanceStatus.scheduled },
+  scheduled: { icon: 'construct', color: colors.maintenanceStatus.scheduled },
   completed: { icon: 'checkmark-circle', color: colors.maintenanceStatus.completed },
-  cancelled: { icon: 'close-circle-outline', color: colors.maintenanceStatus.cancelled },
+  cancelled: { icon: 'close-circle', color: colors.maintenanceStatus.cancelled },
 };
 
 /** Derived visual state for overdue tasks (scheduled + past due date) */

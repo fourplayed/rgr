@@ -505,7 +505,7 @@ export default function AssetDetailScreen() {
             ) : recentActivity.length === 0 ? (
               <View style={styles.emptyState}>
                 <View style={styles.emptyIconContainer}>
-                  <Ionicons name="time-outline" size={64} color={colors.textSecondary} />
+                  <Ionicons name="time" size={64} color={colors.textSecondary} />
                 </View>
                 <Text style={styles.emptyTitle}>No activity recorded</Text>
                 <Text style={styles.emptySubtext}>Scans and maintenance will appear here</Text>
@@ -537,7 +537,7 @@ export default function AssetDetailScreen() {
             {maintenance.length === 0 ? (
               <View style={styles.emptyState}>
                 <View style={styles.emptyIconContainer}>
-                  <Ionicons name="construct-outline" size={64} color={colors.textSecondary} />
+                  <Ionicons name="construct" size={64} color={colors.textSecondary} />
                 </View>
                 <Text style={styles.emptyTitle}>No maintenance records</Text>
                 <Text style={styles.emptySubtext}>Scheduled tasks will appear here</Text>

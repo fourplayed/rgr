@@ -52,8 +52,14 @@ export function ScanSuccessFlash({
   const checklistItems = useMemo(() => {
     const items: string[] = ['Scan recorded'];
     if (depotName) items.push(`Location updated to ${depotName}`);
-    if (photoCompleted) items.push('Photo captured');
-    if (defectCompleted) items.push('Defect report submitted');
+    if (defectCompleted && photoCompleted) {
+      items.push('Defect report submitted');
+      items.push('Uploaded defect report photo');
+    } else if (defectCompleted) {
+      items.push('Defect report submitted');
+    } else if (photoCompleted) {
+      items.push('Uploaded asset photo');
+    }
     if (maintenanceCompleted) items.push('Maintenance task created');
     return items;
   }, [depotName, photoCompleted, defectCompleted, maintenanceCompleted]);

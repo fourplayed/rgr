@@ -138,7 +138,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
   return (
     <View style={styles.container}>
       {/* ── Header bar ── */}
-      <SheetHeader icon="cube" title="Asset Found" onClose={props.onUndoPress} backgroundColor={colors.success} />
+      <SheetHeader icon="checkmark-circle" title="Asset Found" onClose={props.onUndoPress} backgroundColor={colors.success} />
 
       {/* ── Scrollable content ── */}
       <ScrollView

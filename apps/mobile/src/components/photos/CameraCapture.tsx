@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useEffect, memo } from 'react';
+import React, { useRef, useCallback, useEffect, useState, memo } from 'react';
 import {
   View,
   Text,
@@ -99,6 +99,7 @@ function CameraCaptureComponent({
   }, [cancelCapture, onClose]);
 
   const isDamage = photoType === 'defect';
+  const [torchOn, setTorchOn] = useState(false);
 
   // Pulse guide corners
   const guideOpacity = useRef(new Animated.Value(1)).current;
@@ -213,26 +214,33 @@ function CameraCaptureComponent({
     >
       <SafeAreaProvider>
         <View style={styles.container}>
-          <CameraView ref={cameraRef} style={styles.camera} facing="back">
+          <CameraView ref={cameraRef} style={styles.camera} facing="back" enableTorch={torchOn}>
             <SafeAreaView style={styles.cameraOverlay}>
-              <View style={styles.cameraHeaderBand}>
-                <View style={styles.header}>
-                  <View style={styles.headerButton}>
-                    <Ionicons name="camera" size={36} color={colors.textInverse} />
-                  </View>
-                  <View style={styles.headerTitleContainer}>
-                    <Text style={styles.headerTitle}>Capture Photo</Text>
-                    <Text style={styles.guideText}>Position asset within the frame</Text>
-                  </View>
-                  <TouchableOpacity
-                    style={styles.headerButton}
-                    onPress={handleClose}
-                    accessibilityRole="button"
-                    accessibilityLabel="Close camera"
-                  >
-                    <Ionicons name="close" size={28} color={colors.textInverse} />
-                  </TouchableOpacity>
+              <View style={styles.topBar}>
+                <TouchableOpacity
+                  style={styles.topBarButton}
+                  onPress={() => setTorchOn((v) => !v)}
+                  accessibilityRole="button"
+                  accessibilityLabel={torchOn ? 'Turn off torch' : 'Turn on torch'}
+                >
+                  <Ionicons
+                    name={torchOn ? 'flashlight' : 'flashlight-outline'}
+                    size={22}
+                    color={torchOn ? colors.warning : colors.textInverse}
+                  />
+                </TouchableOpacity>
+                <View style={styles.topBarTitleCenter}>
+                  <Text style={styles.topBarTitleText}>Capture Photo</Text>
+                  <Text style={styles.topBarSubtitleText}>{getGuideText(photoType)}</Text>
                 </View>
+                <TouchableOpacity
+                  style={styles.topBarButton}
+                  onPress={handleClose}
+                  accessibilityRole="button"
+                  accessibilityLabel="Close camera"
+                >
+                  <Ionicons name="close" size={24} color={colors.textInverse} />
+                </TouchableOpacity>
               </View>
 
               <View style={styles.cameraGuide}>
@@ -397,37 +405,43 @@ const styles = StyleSheet.create({
   cameraOverlay: {
     flex: 1,
   },
-  cameraHeaderBand: {
-    backgroundColor: colors.electricBlue,
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
-  },
-  cameraCaptureBand: {
-    paddingTop: spacing.xl,
-  },
-  header: {
+  topBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.base,
     paddingHorizontal: spacing.lg,
-    gap: spacing.sm,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.sm,
   },
-  headerButton: {
+  topBarButton: {
     width: 44,
     height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  headerTitleContainer: {
+  topBarTitleCenter: {
     flex: 1,
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
-  headerTitle: {
-    fontSize: fontSize.lg,
+  topBarTitleText: {
+    fontSize: fontSize.sm,
     fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
     letterSpacing: 1,
+  },
+  topBarSubtitleText: {
+    fontSize: fontSize.xs,
+    fontFamily: fonts.regular,
+    color: colors.textInverse,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginTop: spacing.xs,
+    opacity: 0.8,
+  },
+  cameraCaptureBand: {
+    paddingTop: spacing.xl,
   },
 
   // Camera guide
@@ -470,14 +484,6 @@ const styles = StyleSheet.create({
     right: 0,
     borderBottomWidth: CORNER_THICKNESS,
     borderRightWidth: CORNER_THICKNESS,
-  },
-  guideText: {
-    marginTop: spacing.xs,
-    fontSize: fontSize.sm,
-    fontFamily: fonts.regular,
-    color: colors.textInverse,
-    opacity: 0.8,
-    letterSpacing: 0.5,
   },
 
   // Capture button

@@ -95,7 +95,7 @@ function DefectReportSheetComponent({
           <View style={styles.inputSection}>
             <Text style={styles.inputLabel}>Describe the defect</Text>
             <TextInput
-              style={styles.textInput}
+              style={[styles.textInput, notes ? { fontFamily: fonts.regular } : { fontFamily: fonts.italic }]}
               placeholder="Enter details about the defect, damage, or issue..."
               placeholderTextColor={colors.textSecondary}
               value={notes}
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     padding: spacing.base,
     fontSize: fontSize.base,
-    fontFamily: fonts.regular,
+    fontFamily: fonts.italic,
     color: colors.text,
     minHeight: 120,
   },

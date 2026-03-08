@@ -154,7 +154,7 @@ export function DefectReportDetailModal({
             onPress={handleAccept}
             disabled={!onAcceptPress || isScattering}
             flex
-            color={colors.defectYellow}
+            color={colors.success}
           >
             Create Task
           </Button>

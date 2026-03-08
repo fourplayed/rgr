@@ -364,10 +364,10 @@ export default function HomeScreen() {
   // Memoize stats cards to prevent recreation on every render
   // Note: Must be before any early returns to maintain hook order
   const statsCards = useMemo(() => [
-    { label: 'Total Assets', value: totalAssets, color: colors.electricBlue, icon: 'cube-outline' as const },
-    { label: 'Serviced', value: servicedCount, color: colors.status.active, icon: 'checkmark-circle-outline' as const },
-    { label: 'Total Scans', value: totalScanCount ?? 0, color: colors.status.maintenance, icon: 'qr-code-outline' as const },
-    { label: 'Out of Service', value: outOfServiceCount, color: colors.status.outOfService, icon: 'close-circle-outline' as const },
+    { label: 'Total Assets', value: totalAssets, color: colors.electricBlue, icon: 'cube' as const, route: '/(tabs)/assets' as const },
+    { label: 'Serviced', value: servicedCount, color: colors.status.active, icon: 'checkmark-circle' as const, route: '/(tabs)/assets' as const },
+    { label: 'Total Scans', value: totalScanCount ?? 0, color: colors.status.maintenance, icon: 'qr-code' as const, route: '/(tabs)/maintenance' as const },
+    { label: 'Out of Service', value: outOfServiceCount, color: colors.status.outOfService, icon: 'close-circle' as const, route: '/(tabs)/assets' as const },
   ], [totalAssets, servicedCount, totalScanCount, outOfServiceCount]);
 
   // Merge scans, maintenance, and defects into a unified activity feed
@@ -452,7 +452,7 @@ export default function HomeScreen() {
             <TouchableOpacity
               key={stat.label}
               style={[styles.statCard, { backgroundColor: stat.color }]}
-              onPress={() => router.navigate('/(tabs)/assets')}
+              onPress={() => router.navigate(stat.route)}
               activeOpacity={0.8}
               accessibilityRole="button"
               accessibilityLabel={`${stat.label}: ${stat.value}. Tap to view assets.`}
