@@ -36,7 +36,7 @@ interface CameraCaptureProps {
 
 const getGuideText = (type: PhotoType): string => {
   switch (type) {
-    case 'damage':
+    case 'defect':
       return 'Position defect in frame';
     case 'freight':
     default:
@@ -122,7 +122,7 @@ function CameraCaptureComponent({
     onClose();
   }, [cancelCapture, onClose]);
 
-  const isDamage = photoType === 'damage';
+  const isDamage = photoType === 'defect';
 
   // Fade the Retake button in/out instead of showing it disabled
   const retakeOpacity = useRef(new Animated.Value(1)).current;

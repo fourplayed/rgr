@@ -78,6 +78,7 @@ export default function ScanScreen() {
     alertSheet,
     setAlertSheet,
     triggerDebugScan,
+    activePhotoType,
   } = flow;
 
   // ── Bottom sheet animation state ──
@@ -424,7 +425,7 @@ export default function ScanScreen() {
           <CameraCapture
             visible={activeSheet === 'camera'}
             assetId={scannedAsset.id}
-            photoType="freight"
+            photoType={activePhotoType}
             scanEventId={lastScanEventId}
             locationDescription={matchedDepot?.depot.name ?? null}
             latitude={effectiveLocation?.latitude ?? null}

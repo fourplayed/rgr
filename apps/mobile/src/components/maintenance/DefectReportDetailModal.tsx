@@ -66,7 +66,7 @@ export function DefectReportDetailModal({
 
   // Defect photo data
   const { data: scanEventPhotos } = useScanEventPhotos(defect?.scanEventId ?? null);
-  const defectPhoto = scanEventPhotos?.find((p) => p.photoType === 'damage') ?? null;
+  const defectPhoto = scanEventPhotos?.find((p) => p.photoType === 'defect') ?? null;
   const {
     data: defectPhotoUrl,
     isLoading: isPhotoLoading,

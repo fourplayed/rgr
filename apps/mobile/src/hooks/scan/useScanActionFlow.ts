@@ -1,5 +1,5 @@
 import { useReducer, useCallback, useRef, useState, useEffect } from 'react';
-import type { AssetScanContext } from '@rgr/shared';
+import type { AssetScanContext, PhotoType } from '@rgr/shared';
 import { useAssetScanContext } from '../useAssetData';
 import { useLocation } from '../useLocation';
 import { useQRScanner } from '../useQRScanner';
@@ -201,6 +201,7 @@ interface UseScanActionFlowReturn {
   photoCompleted: boolean;
   defectCompleted: boolean;
   maintenanceCompleted: boolean;
+  activePhotoType: PhotoType;
   handleBarCodeScanned: (result: BarcodeScanningResult) => void;
   handlePhotoPress: () => void;
   handleDefectPress: () => void;
@@ -385,6 +386,10 @@ export function useScanActionFlow({
   const photoCompleted = state.phase === 'active' ? state.photoCompleted : false;
   const defectCompleted = state.phase === 'active' ? state.defectCompleted : false;
   const maintenanceCompleted = state.phase === 'active' ? state.maintenanceCompleted : false;
+  const activePhotoType: PhotoType =
+    state.phase === 'active' && state.defectCompleted && state.activeSheet === 'camera'
+      ? 'defect'
+      : 'freight';
 
   return {
     // State
@@ -402,6 +407,7 @@ export function useScanActionFlow({
     photoCompleted,
     defectCompleted,
     maintenanceCompleted,
+    activePhotoType,
 
     // QR scanner
     handleBarCodeScanned,

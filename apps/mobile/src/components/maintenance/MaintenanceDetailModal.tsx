@@ -64,7 +64,7 @@ export function MaintenanceDetailModal({
 
   // Defect photo data
   const { data: scanEventPhotos } = useScanEventPhotos(maintenance?.scanEventId ?? null);
-  const defectPhoto = scanEventPhotos?.find((p) => p.photoType === 'damage') ?? null;
+  const defectPhoto = scanEventPhotos?.find((p) => p.photoType === 'defect') ?? null;
   const {
     data: defectPhotoUrl,
     isLoading: isPhotoLoading,

@@ -5,9 +5,9 @@ import { z } from 'zod';
  */
 export const PhotoType = {
   FREIGHT: 'freight',
-  DAMAGE: 'damage',
+  DEFECT: 'defect',
 } as const;
 
 export type PhotoType = (typeof PhotoType)[keyof typeof PhotoType];
 
-export const PhotoTypeSchema = z.enum(['freight', 'damage']);
+export const PhotoTypeSchema = z.enum(['freight', 'defect']);

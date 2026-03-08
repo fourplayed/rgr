@@ -42,7 +42,7 @@ function PhotoThumbnailComponent({ photo, size, onPress, resolvedUrl }: PhotoThu
           styles.container,
           styles.placeholder,
           { width: size, height: size },
-          photo.photoType === 'damage' && styles.defectBorder,
+          photo.photoType === 'defect' && styles.defectBorder,
         ]}
         onPress={handlePress}
         activeOpacity={0.8}
@@ -59,7 +59,7 @@ function PhotoThumbnailComponent({ photo, size, onPress, resolvedUrl }: PhotoThu
       style={[
         styles.container,
         { width: size, height: size },
-        photo.photoType === 'damage' && styles.defectBorder,
+        photo.photoType === 'defect' && styles.defectBorder,
       ]}
       onPress={handlePress}
       activeOpacity={0.8}

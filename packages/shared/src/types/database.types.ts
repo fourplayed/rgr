@@ -1088,7 +1088,7 @@ export type Database = {
       hazard_status: 'active' | 'acknowledged' | 'resolved' | 'dismissed';
       maintenance_priority: 'low' | 'medium' | 'high' | 'critical';
       maintenance_status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
-      photo_type: 'freight' | 'damage' | 'inspection' | 'general';
+      photo_type: 'freight' | 'defect' | 'inspection' | 'general';
       review_outcome: 'confirmed' | 'false_positive' | 'needs_training';
       scan_type: 'qr_scan' | 'manual_entry' | 'nfc_scan' | 'gps_auto';
       user_role: 'driver' | 'mechanic' | 'manager' | 'superuser';
@@ -1224,7 +1224,7 @@ export const Constants = {
       hazard_status: ['active', 'acknowledged', 'resolved', 'dismissed'],
       maintenance_priority: ['low', 'medium', 'high', 'critical'],
       maintenance_status: ['scheduled', 'in_progress', 'completed', 'cancelled'],
-      photo_type: ['freight', 'damage', 'inspection', 'general'],
+      photo_type: ['freight', 'defect', 'inspection', 'general'],
       review_outcome: ['confirmed', 'false_positive', 'needs_training'],
       scan_type: ['qr_scan', 'manual_entry', 'nfc_scan', 'gps_auto'],
       user_role: ['driver', 'mechanic', 'manager', 'superuser'],

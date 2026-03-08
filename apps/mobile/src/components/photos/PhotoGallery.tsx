@@ -50,11 +50,11 @@ function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto }: PhotoGalle
 
   // Split photos into freight (catches legacy inspection/general too) and defects
   const freightPhotos = useMemo(
-    () => (photos || []).filter((p) => p.photoType !== 'damage'),
+    () => (photos || []).filter((p) => p.photoType !== 'defect'),
     [photos]
   );
   const defectPhotos = useMemo(
-    () => (photos || []).filter((p) => p.photoType === 'damage'),
+    () => (photos || []).filter((p) => p.photoType === 'defect'),
     [photos]
   );
 
