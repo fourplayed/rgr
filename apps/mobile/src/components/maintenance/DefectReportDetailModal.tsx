@@ -143,22 +143,20 @@ export function DefectReportDetailModal({
       return (
         <View style={styles.actionsContainer}>
           <Button
+            variant="danger"
+            onPress={handleDismiss}
+            disabled={isScattering}
+            flex
+          >
+            Dismiss
+          </Button>
+          <Button
             onPress={handleAccept}
             disabled={!onAcceptPress || isScattering}
             flex
             color={colors.defectYellow}
           >
             Create Task
-          </Button>
-          <Button
-            variant="secondary"
-            onPress={handleDismiss}
-            disabled={isScattering}
-            flex
-            textColor={colors.error}
-            style={{ borderColor: colors.error, backgroundColor: colors.error + '15', ...shadows.md }}
-          >
-            Dismiss
           </Button>
         </View>
       );

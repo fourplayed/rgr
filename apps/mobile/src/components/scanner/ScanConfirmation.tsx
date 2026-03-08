@@ -120,7 +120,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
       : selectedAction === 'defect'
         ? colors.defectYellow
         : selectedAction === 'photo'
-          ? colors.violet
+          ? colors.electricBlue
           : colors.success;
 
   // Loading state during scan creation
@@ -138,7 +138,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
   return (
     <View style={styles.container}>
       {/* ── Header bar ── */}
-      <SheetHeader icon="cube" title="Asset Found" onClose={props.onUndoPress} />
+      <SheetHeader icon="cube" title="Asset Found" onClose={props.onUndoPress} backgroundColor={colors.success} />
 
       {/* ── Scrollable content ── */}
       <ScrollView
@@ -184,7 +184,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
                   completed={props.photoCompleted}
                   onToggle={() => toggleAction('photo')}
                   disabled={disabled || props.photoCompleted}
-                  accentColor={colors.violet}
+                  accentColor={colors.electricBlue}
                 />
                 <CheckboxOption
                   icon="warning"
@@ -230,7 +230,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
                 completed={props.photoCompleted}
                 onToggle={() => toggleAction('photo')}
                 disabled={disabled || props.photoCompleted}
-                accentColor={colors.violet}
+                accentColor={colors.electricBlue}
               />
               {props.variant === 'mechanic' && (
                 <>

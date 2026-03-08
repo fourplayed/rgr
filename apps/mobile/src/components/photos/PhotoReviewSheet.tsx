@@ -87,9 +87,10 @@ function PhotoReviewSheetComponent({
           icon="checkmark"
           title="Review Photo"
           onClose={handleClose}
-          backgroundColor={colors.violet}
+          backgroundColor={colors.success}
         />
 
+        <Text style={styles.capturedLabel}>Captured Photo</Text>
         {displayUri && (
           <View style={styles.photoContainer}>
             <Image
@@ -100,16 +101,12 @@ function PhotoReviewSheetComponent({
           </View>
         )}
 
-        <View style={styles.photoTypeRow}>
-          <Ionicons
-            name={isDamage ? 'warning' : 'camera'}
-            size={18}
-            color={isDamage ? colors.defectYellow : colors.violet}
-          />
-          <Text style={styles.photoTypeText}>
-            {isDamage ? 'Defect Photo' : 'Freight Photo'}
-          </Text>
-        </View>
+        {isDamage && (
+          <View style={styles.photoTypeRow}>
+            <Ionicons name="warning" size={18} color={colors.defectYellow} />
+            <Text style={styles.photoTypeText}>Defect Photo</Text>
+          </View>
+        )}
 
         {uploadError && (
           <View style={styles.errorContainer}>
@@ -126,21 +123,19 @@ function PhotoReviewSheetComponent({
         <View style={[styles.buttonRow, { paddingBottom: bottomPad }]}>
           <Animated.View style={[styles.flexOne, { opacity: retakeOpacity }]}>
             <Button
-              variant="secondary"
+              variant="danger"
               onPress={handleRetake}
               disabled={isUploading}
               flex
-              icon="camera-reverse-outline"
             >
-              Retake
+              Recapture
             </Button>
           </Animated.View>
           <Button
             onPress={handleConfirm}
             isLoading={isUploading}
             flex
-            icon="checkmark"
-            color={colors.violet}
+            color={colors.success}
           >
             Use Photo
           </Button>
@@ -157,17 +152,29 @@ const styles = StyleSheet.create({
     backgroundColor: colors.chrome,
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
   photoContainer: {
-    height: 200,
+    height: 360,
     marginHorizontal: spacing.lg,
     marginTop: spacing.md,
     borderRadius: borderRadius.md,
     overflow: 'hidden',
-    backgroundColor: colors.navy,
   },
   photo: {
     flex: 1,
+  },
+  capturedLabel: {
+    fontSize: fontSize.sm,
+    fontFamily: fonts.bold,
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    paddingHorizontal: spacing.lg,
+    marginTop: spacing.base,
   },
   photoTypeRow: {
     flexDirection: 'row',
@@ -188,6 +195,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     alignSelf: 'stretch',
     paddingHorizontal: spacing.lg,
+    marginTop: spacing.lg,
   },
   flexOne: {
     flex: 1,

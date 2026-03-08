@@ -121,7 +121,7 @@ function DefectReportSheetComponent({
               accessibilityLabel="Capture Photo"
               accessibilityState={{ checked: wantsPhoto }}
             >
-              <Ionicons name="camera" size={32} color={colors.violet} />
+              <Ionicons name="camera" size={32} color={colors.electricBlue} />
               <View style={styles.photoOptionText}>
                 <Text style={styles.photoOptionLabel}>Capture Photo</Text>
                 <Text style={styles.photoOptionDescription}>
@@ -131,7 +131,7 @@ function DefectReportSheetComponent({
               <Ionicons
                 name={wantsPhoto ? 'radio-button-on' : 'radio-button-off'}
                 size={26}
-                color={colors.violet}
+                color={colors.electricBlue}
               />
             </TouchableOpacity>
           )}
@@ -140,7 +140,7 @@ function DefectReportSheetComponent({
               isLoading={isSubmitting}
               onPress={handleSubmit}
               disabled={!canSubmit}
-              color={wantsPhoto ? colors.violet : colors.success}
+              color={wantsPhoto ? colors.electricBlue : colors.success}
             >
               {wantsPhoto ? 'Capture & Submit' : 'Submit'}
             </Button>
@@ -189,8 +189,8 @@ const styles = StyleSheet.create({
   photoOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderColor: colors.violet,
-    backgroundColor: colors.violet + '18',
+    borderColor: colors.electricBlue,
+    backgroundColor: colors.electricBlue + '18',
     borderRadius: borderRadius.sm,
     borderWidth: 1,
     paddingVertical: spacing.md,
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
   photoOptionLabel: {
     fontSize: fontSize.sm,
     fontFamily: fonts.bold,
-    color: colors.violet,
+    color: colors.electricBlue,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     textShadowColor: 'rgba(0, 0, 0, 0.3)',

@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Modal,
   Linking,
+  Animated,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -98,6 +99,27 @@ function CameraCaptureComponent({
   }, [cancelCapture, onClose]);
 
   const isDamage = photoType === 'defect';
+
+  // Pulse guide corners
+  const guideOpacity = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(guideOpacity, {
+          toValue: 0.4,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(guideOpacity, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [guideOpacity]);
 
   // Permission checking state
   if (!permission) {
@@ -195,6 +217,13 @@ function CameraCaptureComponent({
             <SafeAreaView style={styles.cameraOverlay}>
               <View style={styles.cameraHeaderBand}>
                 <View style={styles.header}>
+                  <View style={styles.headerButton}>
+                    <Ionicons name="camera" size={36} color={colors.textInverse} />
+                  </View>
+                  <View style={styles.headerTitleContainer}>
+                    <Text style={styles.headerTitle}>Capture Photo</Text>
+                    <Text style={styles.guideText}>Position asset within the frame</Text>
+                  </View>
                   <TouchableOpacity
                     style={styles.headerButton}
                     onPress={handleClose}
@@ -203,51 +232,42 @@ function CameraCaptureComponent({
                   >
                     <Ionicons name="close" size={28} color={colors.textInverse} />
                   </TouchableOpacity>
-                  <View style={styles.headerTitleContainer}>
-                    <Text style={styles.headerTitle}>Capture Photo</Text>
-                    <Text style={styles.guideText}>{getGuideText(photoType)}</Text>
-                  </View>
-                  <View style={styles.headerButton} />
                 </View>
               </View>
 
               <View style={styles.cameraGuide}>
-                <View style={styles.guideFrame}>
+                <Animated.View style={[styles.guideFrame, { opacity: guideOpacity }]}>
                   <View
                     style={[
                       styles.guideCorner,
                       styles.guideTopLeft,
-                      isDamage && { borderColor: colors.error },
-                    ]}
+                                          ]}
                   />
                   <View
                     style={[
                       styles.guideCorner,
                       styles.guideTopRight,
-                      isDamage && { borderColor: colors.error },
-                    ]}
+                                          ]}
                   />
                   <View
                     style={[
                       styles.guideCorner,
                       styles.guideBottomLeft,
-                      isDamage && { borderColor: colors.error },
-                    ]}
+                                          ]}
                   />
                   <View
                     style={[
                       styles.guideCorner,
                       styles.guideBottomRight,
-                      isDamage && { borderColor: colors.error },
-                    ]}
+                                          ]}
                   />
-                </View>
+                </Animated.View>
               </View>
 
               <View style={styles.cameraCaptureBand}>
                 <View style={styles.captureContainer}>
                   <TouchableOpacity
-                    style={[styles.captureButton, isDamage && { borderColor: colors.error }]}
+                    style={styles.captureButton}
                     onPress={handleCapture}
                     activeOpacity={0.7}
                     accessibilityRole="button"
@@ -257,8 +277,7 @@ function CameraCaptureComponent({
                     <View
                       style={[
                         styles.captureButtonInner,
-                        isDamage && { backgroundColor: colors.error },
-                      ]}
+                                              ]}
                     />
                   </TouchableOpacity>
                 </View>
@@ -379,19 +398,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cameraHeaderBand: {
-    backgroundColor: 'rgba(0,0,48,0.6)',
-    paddingBottom: spacing.lg,
+    backgroundColor: colors.electricBlue,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
   },
   cameraCaptureBand: {
-    backgroundColor: 'rgba(0,0,48,0.6)',
     paddingTop: spacing.xl,
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.base,
-    paddingTop: spacing.md,
+    paddingVertical: spacing.base,
+    paddingHorizontal: spacing.lg,
+    gap: spacing.sm,
   },
   headerButton: {
     width: 44,
@@ -400,7 +419,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitleContainer: {
-    alignItems: 'center',
+    flex: 1,
+    alignItems: 'flex-start',
   },
   headerTitle: {
     fontSize: fontSize.lg,
@@ -473,12 +493,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 4,
-    borderColor: colors.textInverse,
+    borderColor: colors.electricBlue,
   },
   captureButtonInner: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: colors.textInverse,
+    backgroundColor: colors.electricBlue,
   },
 });
