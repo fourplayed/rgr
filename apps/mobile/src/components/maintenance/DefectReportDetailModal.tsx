@@ -1,9 +1,9 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { formatRelativeTime, formatAssetNumber } from '@rgr/shared';
-import { LoadingDots, AlertSheet, ConfirmSheet, SheetModal } from '../common';
+import { LoadingDots, AlertSheet, SheetModal } from '../common';
 import { SheetHeader } from '../common/SheetHeader';
 import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
@@ -73,19 +73,15 @@ export function DefectReportDetailModal({
     error: photoError,
   } = useSignedUrl(defectPhoto?.thumbnailPath ?? defectPhoto?.storagePath ?? undefined);
 
-  // Dismiss confirmation + delete
-  const [showDismissConfirm, setShowDismissConfirm] = useState(false);
-  const { mutateAsync: deleteDefect, isPending: isDeleting } = useDeleteDefectReport();
+  // Dismiss delete mutation
+  const { mutateAsync: deleteDefect } = useDeleteDefectReport();
 
   // Scatter exit animation
   const { getStyle, scatter, reset, isScattering } = useScatterExit();
 
-  // Reset scatter + confirm state when modal opens
+  // Reset scatter state when modal opens
   useEffect(() => {
-    if (visible) {
-      reset();
-      setShowDismissConfirm(false);
-    }
+    if (visible) reset();
   }, [visible, reset]);
 
   // Alert sheet
@@ -113,22 +109,29 @@ export function DefectReportDetailModal({
 
   const handleDismiss = useCallback(() => {
     if (!defectId) return;
-    setShowDismissConfirm(true);
-  }, [defectId]);
-
-  const handleConfirmDismiss = useCallback(async () => {
-    if (!defectId) return;
-    setShowDismissConfirm(false);
-    try {
-      await deleteDefect(defectId);
-      scatter(7, () => onDismissConfirmed?.(defectId));
-    } catch (err: unknown) {
-      setAlertSheet({
-        visible: true,
-        title: 'Error',
-        message: err instanceof Error ? err.message : 'Failed to dismiss defect report',
-      });
-    }
+    Alert.alert(
+      'Dismiss Defect Report',
+      'Are you sure? This will permanently delete this defect report.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Dismiss',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteDefect(defectId);
+              scatter(7, () => onDismissConfirmed?.(defectId));
+            } catch (err: unknown) {
+              setAlertSheet({
+                visible: true,
+                title: 'Error',
+                message: err instanceof Error ? err.message : 'Failed to dismiss defect report',
+              });
+            }
+          },
+        },
+      ],
+    );
   }, [defectId, deleteDefect, scatter, onDismissConfirmed]);
 
   const renderStatusActions = () => {
@@ -327,19 +330,6 @@ export function DefectReportDetailModal({
           </ScrollView>
         )}
       </View>
-
-      {/* Dismiss Confirmation */}
-      <ConfirmSheet
-        visible={showDismissConfirm}
-        type="danger"
-        title="Dismiss Defect Report"
-        message="Are you sure? This will permanently delete this defect report."
-        confirmLabel="Dismiss"
-        cancelLabel="Cancel"
-        onConfirm={handleConfirmDismiss}
-        onCancel={() => setShowDismissConfirm(false)}
-        isLoading={isDeleting}
-      />
 
       {/* Alert Sheet */}
       <AlertSheet
