@@ -1,10 +1,10 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView, Animated, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { formatRelativeTime, formatAssetNumber } from '@rgr/shared';
-import { LoadingDots, AlertSheet, ConfirmSheet, SheetModal } from '../common';
+import { LoadingDots, AlertSheet, SheetModal } from '../common';
 import { IconCircle } from '../common/IconCircle';
 import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
@@ -94,8 +94,6 @@ export function MaintenanceDetailModal({
     title: string;
     message: string;
   }>({ visible: false, title: '', message: '' });
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-
   const handleComplete = useCallback(async () => {
     if (!maintenanceId) return;
 
@@ -116,23 +114,29 @@ export function MaintenanceDetailModal({
 
   const handleCancelMaintenance = useCallback(() => {
     if (!maintenanceId) return;
-    setShowCancelConfirm(true);
-  }, [maintenanceId]);
-
-  const handleConfirmCancel = useCallback(async () => {
-    if (!maintenanceId) return;
-
-    setShowCancelConfirm(false);
-    try {
-      await cancelTask(maintenanceId);
-      scatter(7, () => onClose());
-    } catch (err: unknown) {
-      setAlertSheet({
-        visible: true,
-        title: 'Error',
-        message: err instanceof Error ? err.message : 'Failed to cancel',
-      });
-    }
+    Alert.alert(
+      'Cancel Maintenance',
+      'Are you sure you want to cancel this maintenance task? This will permanently delete it and any linked defect reports.',
+      [
+        { text: 'No', style: 'cancel' },
+        {
+          text: 'Yes, Cancel',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await cancelTask(maintenanceId);
+              scatter(7, () => onClose());
+            } catch (err: unknown) {
+              setAlertSheet({
+                visible: true,
+                title: 'Error',
+                message: err instanceof Error ? err.message : 'Failed to cancel',
+              });
+            }
+          },
+        },
+      ],
+    );
   }, [maintenanceId, cancelTask, onClose, scatter]);
 
   const handleSaveNotes = useCallback(async () => {
@@ -457,19 +461,6 @@ export function MaintenanceDetailModal({
           </>
         )}
       </View>
-
-      {/* Cancel Confirmation Sheet */}
-      <ConfirmSheet
-        visible={showCancelConfirm}
-        type="danger"
-        title="Cancel Maintenance"
-        message="Are you sure you want to cancel this maintenance task? This will permanently delete it and any linked defect reports."
-        confirmLabel="Yes, Cancel"
-        cancelLabel="No"
-        onConfirm={handleConfirmCancel}
-        onCancel={() => setShowCancelConfirm(false)}
-        isLoading={cancelMutation.isPending}
-      />
 
       {/* Alert Sheet for errors */}
       <AlertSheet
