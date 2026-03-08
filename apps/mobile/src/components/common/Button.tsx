@@ -22,6 +22,8 @@ interface ButtonProps {
   variant?: ButtonVariant;
   /** Override background color (e.g. for dynamic confirm buttons) */
   color?: string;
+  /** Override label color */
+  textColor?: string;
   disabled?: boolean;
   /** Show loading dots instead of children */
   isLoading?: boolean;
@@ -38,6 +40,7 @@ export function Button({
   children,
   variant = 'primary',
   color,
+  textColor,
   disabled = false,
   isLoading = false,
   icon,
@@ -49,6 +52,7 @@ export function Button({
   const variantStyle = variantStyles[variant];
   const textStyle = textStyles[variant];
   const bgOverride = color ? { backgroundColor: color } : undefined;
+  const textColorOverride = textColor ? { color: textColor } : undefined;
   const isDisabled = disabled || isLoading;
 
   const disabledTextOverride =
@@ -77,15 +81,16 @@ export function Button({
     onPress();
   }, [onPress]);
 
+  const resolvedColor = isDisabled ? colors.textDisabled : (textColor ?? textStyle.color);
   const content = isLoading ? (
-    <LoadingDots color={textStyle.color} size={8} />
+    <LoadingDots color={resolvedColor} size={8} />
   ) : icon ? (
     <View style={styles.iconRow}>
-      <Ionicons name={icon} size={18} color={isDisabled ? colors.textDisabled : textStyle.color} />
-      <Text style={[textStyle, disabledTextOverride]}>{children}</Text>
+      <Ionicons name={icon} size={18} color={resolvedColor} />
+      <Text style={[textStyle, textColorOverride, disabledTextOverride]}>{children}</Text>
     </View>
   ) : (
-    <Text style={[textStyle, disabledTextOverride]}>{children}</Text>
+    <Text style={[textStyle, textColorOverride, disabledTextOverride]}>{children}</Text>
   );
 
   return (

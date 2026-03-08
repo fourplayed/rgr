@@ -336,8 +336,6 @@ export function useTotalScanCount() {
  * Create scan event
  */
 export function useCreateScanEvent() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (input: CreateScanEventInput) => {
       const result = await createScanEvent(input);
@@ -348,38 +346,7 @@ export function useCreateScanEvent() {
 
       return result.data;
     },
-    onSuccess: (data, variables) => {
-      // Mark detail stale but don't refetch yet — the subsequent useUpdateAsset.onSuccess
-      // will trigger the single refetch, avoiding a double network request.
-      queryClient.invalidateQueries({
-        queryKey: assetKeys.detail(variables.assetId),
-        refetchType: 'none',
-      });
-      // Mark other queries stale without immediate refetch — they will refetch when the
-      // user navigates to the relevant screen. This avoids unnecessary network requests.
-      queryClient.invalidateQueries({
-        queryKey: assetKeys.scans(variables.assetId),
-        refetchType: 'none',
-      });
-      queryClient.invalidateQueries({
-        queryKey: assetKeys.recentScans(),
-        refetchType: 'none',
-      });
-      if (variables.scannedBy) {
-        queryClient.invalidateQueries({
-          queryKey: assetKeys.myScans(variables.scannedBy),
-          refetchType: 'none',
-        });
-      }
-      queryClient.invalidateQueries({
-        queryKey: assetKeys.totalScanCount(),
-        refetchType: 'none',
-      });
-      queryClient.invalidateQueries({
-        queryKey: assetKeys.lists(),
-        refetchType: 'none',
-      });
-    },
+    // Global MutationCache.onSuccess handles cross-domain invalidation
   });
 }
 
@@ -434,13 +401,9 @@ export function useUpdateAsset() {
       return result.data;
     },
     onSuccess: (data) => {
-      // Invalidate related queries to refresh data
-      // Detail query gets immediate refetch, lists marked stale without refetch
+      // Immediate refetch — user is viewing this record
       queryClient.invalidateQueries({ queryKey: assetKeys.detail(data.id) });
-      queryClient.invalidateQueries({
-        queryKey: assetKeys.lists(),
-        refetchType: 'none',
-      });
+      // Global MutationCache.onSuccess handles cross-domain invalidation
     },
   });
 }
@@ -468,8 +431,6 @@ export function useAssetScanContext(assetId: string | undefined) {
  * RLS limits this to the scanner's own recent scans (< 30s old).
  */
 export function useDeleteScanEvent() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async ({ scanEventId }: { scanEventId: string; assetId: string }) => {
       const result = await deleteScanEvent(scanEventId);
@@ -478,23 +439,6 @@ export function useDeleteScanEvent() {
       }
       return result.data;
     },
-    onSuccess: (_data, variables) => {
-      // Mark all scan-related queries stale
-      queryClient.invalidateQueries({ queryKey: assetKeys.lists(), refetchType: 'none' });
-      queryClient.invalidateQueries({ queryKey: ['scans'], refetchType: 'none' });
-      // Invalidate asset-specific caches so detail screen auto-updates
-      queryClient.invalidateQueries({
-        queryKey: assetKeys.detail(variables.assetId),
-        refetchType: 'none',
-      });
-      queryClient.invalidateQueries({
-        queryKey: assetKeys.scans(variables.assetId),
-        refetchType: 'none',
-      });
-      queryClient.invalidateQueries({
-        queryKey: assetKeys.scanContext(variables.assetId),
-        refetchType: 'none',
-      });
-    },
+    // Global MutationCache.onSuccess handles all invalidation
   });
 }

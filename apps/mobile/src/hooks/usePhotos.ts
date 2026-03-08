@@ -11,7 +11,6 @@ import {
   getSignedUrls,
 } from '@rgr/shared';
 import type { UploadPhotoOptions, PhotoListItem } from '@rgr/shared';
-import { assetKeys } from './useAssetData';
 import { logger } from '../utils/logger';
 
 /** Supabase signed URLs expire at 60 min — use 45 min for a safe buffer. */
@@ -135,11 +134,10 @@ export function useUploadPhoto() {
 
       return result.data;
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       // Invalidate photo list for the asset
       queryClient.invalidateQueries({ queryKey: photoKeys.asset(variables.assetId) });
-      // Also invalidate asset detail to refresh photo count if displayed
-      queryClient.invalidateQueries({ queryKey: assetKeys.detail(variables.assetId) });
+      // Global MutationCache.onSuccess handles asset detail invalidation
     },
   });
 }
@@ -165,8 +163,7 @@ export function useDeletePhoto() {
       queryClient.invalidateQueries({ queryKey: photoKeys.asset(data.assetId) });
       // Remove the specific photo from cache
       queryClient.removeQueries({ queryKey: photoKeys.detail(data.photoId) });
-      // Also invalidate asset detail
-      queryClient.invalidateQueries({ queryKey: assetKeys.detail(data.assetId) });
+      // Global MutationCache.onSuccess handles asset detail invalidation
     },
   });
 }
@@ -194,8 +191,7 @@ export function useBulkDeletePhotos() {
       for (const photoId of data.photoIds) {
         queryClient.removeQueries({ queryKey: photoKeys.detail(photoId) });
       }
-      // Invalidate asset detail
-      queryClient.invalidateQueries({ queryKey: assetKeys.detail(data.assetId) });
+      // Global MutationCache.onSuccess handles asset detail invalidation
     },
   });
 }

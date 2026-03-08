@@ -1,14 +1,14 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
+  Alert,
   FlatList,
   StyleSheet,
   SafeAreaView,
   TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useIsFocused } from '@react-navigation/native';
 import type {
   MaintenanceStatus,
   MaintenancePriority,
@@ -35,7 +35,7 @@ import {
   DEFECT_ITEM_HEIGHT,
 } from '../../src/components/maintenance';
 import { useMaintenanceList } from '../../src/hooks/useMaintenanceData';
-import { useDefectReportList } from '../../src/hooks/useDefectData';
+import { useDefectReportList, useDeleteDefectReport } from '../../src/hooks/useDefectData';
 import { useAcceptDefect } from '../../src/hooks/useAcceptDefect';
 import { useModalTransition } from '../../src/hooks/useModalTransition';
 import { ModalShell } from '../../src/components/common/ModalShell';
@@ -103,6 +103,27 @@ export default function MaintenanceScreen() {
     close();
   }, [modal, acceptDefect, close]);
 
+  // Dismiss defect flow
+  const { mutateAsync: deleteDefect } = useDeleteDefectReport();
+
+  const handleDismissPress = useCallback((defectId: string) => {
+    Alert.alert(
+      'Dismiss Defect Report',
+      'Are you sure you want to dismiss this defect report? This will permanently delete it.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Dismiss',
+          style: 'destructive',
+          onPress: async () => {
+            await deleteDefect(defectId);
+            close();
+          },
+        },
+      ],
+    );
+  }, [deleteDefect, close]);
+
   // Fetch maintenance list with filters
   const maintenanceFilters = useMemo(() => ({
     ...(statuses.length > 0 && { status: statuses }),
@@ -121,7 +142,7 @@ export default function MaintenanceScreen() {
 
   // Flatten infinite query pages into a single array for FlatList
   const maintenance = useMemo(
-    () => maintenanceData?.pages.flatMap(p => p.data) ?? [],
+    () => (maintenanceData?.pages.flatMap(p => p.data) ?? []).filter(m => m.status !== 'cancelled'),
     [maintenanceData]
   );
 
@@ -141,21 +162,9 @@ export default function MaintenanceScreen() {
   } = useDefectReportList(defectFilters);
 
   const defects = useMemo(
-    () => defectsData?.pages.flatMap(p => p.data) ?? [],
+    () => (defectsData?.pages.flatMap(p => p.data) ?? []).filter(d => d.status !== 'dismissed'),
     [defectsData]
   );
-
-  // Safety net: refetch when tab gains focus to catch invalidations that fired
-  // before this tab's query observers were mounted (e.g., first visit after
-  // an accept happened on the scan tab).
-  const isFocused = useIsFocused();
-  useEffect(() => {
-    if (isFocused) {
-      refetchMaintenance();
-      refetchDefects();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally refetch only on focus change, not on fn identity
-  }, [isFocused]);
 
   const handleToggleFilters = useCallback(() => {
     setFiltersExpanded(prev => !prev);
@@ -348,6 +357,7 @@ export default function MaintenanceScreen() {
             onClose={close}
             onAcceptPress={handleAcceptPress}
             onViewTaskPress={handleViewTaskPress}
+            onDismissPress={handleDismissPress}
             inline backdrop={false} onExitComplete={handleExitComplete}
           />
 
@@ -372,6 +382,7 @@ export default function MaintenanceScreen() {
             onClose={close}
             inline backdrop={false} onExitComplete={handleExitComplete}
           />
+
         </ModalShell>
       </SafeAreaView>
     </View>

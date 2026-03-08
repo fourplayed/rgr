@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Modal,
+  Alert,
   Animated,
   InteractionManager,
   StyleSheet,
@@ -21,6 +22,7 @@ import { DefectReportSheet } from '../../src/components/scanner/DefectReportShee
 import { CameraCapture } from '../../src/components/photos';
 import { CreateMaintenanceModal, DefectReportDetailModal, MaintenanceDetailModal } from '../../src/components/maintenance';
 import { useAcceptDefect } from '../../src/hooks/useAcceptDefect';
+import { useDeleteDefectReport } from '../../src/hooks/useDefectData';
 import type { CreateMaintenanceInput } from '@rgr/shared';
 import { TutorialSheet, AlertSheet, ErrorBoundary } from '../../src/components/common';
 import { styles } from '../../src/components/scanner/scan.styles';
@@ -268,6 +270,28 @@ export default function ScanScreen() {
     refetchContext();
   }, [acceptDefectContext, acceptDefect, refetchContext]);
 
+  // ── Dismiss defect flow ──
+  const { mutateAsync: deleteDefect } = useDeleteDefectReport();
+
+  const handleDismissPress = useCallback((defectId: string) => {
+    Alert.alert(
+      'Dismiss Defect Report',
+      'Are you sure you want to dismiss this defect report? This will permanently delete it.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Dismiss',
+          style: 'destructive',
+          onPress: async () => {
+            await deleteDefect(defectId);
+            setContextDefectId(null);
+            refetchContext();
+          },
+        },
+      ],
+    );
+  }, [deleteDefect, refetchContext]);
+
   // ── Render ──
 
   if (!permission || !permission.granted) {
@@ -357,6 +381,7 @@ export default function ScanScreen() {
           defectId={contextDefectId}
           onClose={() => setContextDefectId(null)}
           onAcceptPress={handleAcceptPress}
+          onDismissPress={handleDismissPress}
           variant="compact"
           inline
         />

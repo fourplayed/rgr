@@ -2,16 +2,15 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import { formatRelativeTime, formatAssetNumber } from '@rgr/shared';
-import { LoadingDots, AlertSheet, ConfirmSheet, SheetModal } from '../common';
+import { LoadingDots, AlertSheet, SheetModal } from '../common';
 import { IconCircle } from '../common/IconCircle';
 import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, shadows, fontFamily as fonts } from '../../theme/spacing';
 import { sheetLayout } from '../../theme/sheetLayout';
 import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
-import { useDefectReport, useDeleteDefectReport } from '../../hooks/useDefectData';
+import { useDefectReport } from '../../hooks/useDefectData';
 import { useAsset } from '../../hooks/useAssetData';
 import { useMaintenance } from '../../hooks/useMaintenanceData';
 import { useScanEventPhotos, useSignedUrl } from '../../hooks/usePhotos';
@@ -33,6 +32,8 @@ interface DefectReportDetailModalProps {
   }) => void;
   /** Called when user taps "View Task" on a linked maintenance record. */
   onViewTaskPress?: (maintenanceId: string) => void;
+  /** Called when user taps Dismiss — parent handles confirmation flow. */
+  onDismissPress?: (defectId: string) => void;
   /** Called after the modal's dismiss animation completes. */
   onDismiss?: () => void;
   /** Render inline (no native Modal) — use when already inside a Modal. */
@@ -50,19 +51,17 @@ export function DefectReportDetailModal({
   variant = 'full',
   onAcceptPress,
   onViewTaskPress,
+  onDismissPress,
   onDismiss,
   inline,
   backdrop,
   onExitComplete,
 }: DefectReportDetailModalProps) {
-  const router = useRouter();
   const { canMarkMaintenance } = useUserPermissions();
   const sheetBottomPadding = useSheetBottomPadding();
   const { data: defect, isLoading } = useDefectReport(defectId);
   const { data: asset } = useAsset(defect?.assetId);
   const { data: linkedMaintenance } = useMaintenance(defect?.maintenanceRecordId ?? null);
-  const deleteMutation = useDeleteDefectReport();
-  const { mutateAsync: deleteDefect } = deleteMutation;
 
   // Defect photo data
   const { data: scanEventPhotos } = useScanEventPhotos(defect?.scanEventId ?? null);
@@ -72,9 +71,6 @@ export function DefectReportDetailModal({
     isLoading: isPhotoLoading,
     error: photoError,
   } = useSignedUrl(defectPhoto?.thumbnailPath ?? defectPhoto?.storagePath ?? undefined);
-
-  // Dismiss flow
-  const [showDismissConfirm, setShowDismissConfirm] = useState(false);
 
   // Alert sheet
   const [alertSheet, setAlertSheet] = useState<{
@@ -100,31 +96,9 @@ export function DefectReportDetailModal({
   }, [defect, onViewTaskPress]);
 
   const handleDismiss = useCallback(() => {
-    setShowDismissConfirm(true);
-  }, []);
-
-  const handleConfirmDismiss = useCallback(async () => {
-    if (!defectId) return;
-
-    setShowDismissConfirm(false);
-    try {
-      await deleteDefect(defectId);
-      onClose();
-    } catch (err: unknown) {
-      setAlertSheet({
-        visible: true,
-        title: 'Error',
-        message: err instanceof Error ? err.message : 'Failed to dismiss defect',
-      });
-    }
-  }, [defectId, deleteDefect, onClose]);
-
-  const handleNavigateToAsset = useCallback(() => {
-    if (defect?.assetId) {
-      onClose();
-      router.push(`/assets/${defect.assetId}`);
-    }
-  }, [defect, router, onClose]);
+    if (!defectId || !onDismissPress) return;
+    onDismissPress(defectId);
+  }, [defectId, onDismissPress]);
 
   const renderStatusActions = () => {
     if (!defect || !canMarkMaintenance) return null;
@@ -136,12 +110,21 @@ export function DefectReportDetailModal({
         <View style={styles.actionsContainer}>
           <Button
             onPress={handleAccept}
-            disabled={!onAcceptPress || deleteMutation.isPending}
+            disabled={!onAcceptPress}
             flex
-            icon="construct-outline"
-            color={colors.warning}
+            color={colors.defectYellow}
           >
-            Schedule Maintenance
+            Create Task
+          </Button>
+          <Button
+            variant="secondary"
+            onPress={handleDismiss}
+            disabled={!onDismissPress}
+            flex
+            textColor={colors.error}
+            style={{ borderColor: colors.error, backgroundColor: colors.error + '15', ...shadows.md }}
+          >
+            Dismiss
           </Button>
         </View>
       );
@@ -182,7 +165,14 @@ export function DefectReportDetailModal({
         </TouchableOpacity>
         <View style={styles.headerContent}>
           <IconCircle icon="warning" color={colors.defectYellow} />
-          <Text style={styles.headerTitle}>Defect Report</Text>
+          <Text style={styles.headerTitle}>
+            Defect Report{asset?.assetNumber ? `: ${formatAssetNumber(asset.assetNumber)}` : ''}
+          </Text>
+          {!isLoading && defect && (
+            <Text style={styles.headerSubtitle}>
+              {formatRelativeTime(defect.createdAt)}{defect.reporterName ? ` by ${defect.reporterName}` : ''}
+            </Text>
+          )}
         </View>
 
         {isLoading || !defect ? (
@@ -193,30 +183,11 @@ export function DefectReportDetailModal({
           </>
         ) : (
           <>
+            <View style={styles.divider} />
 
-            {/* Asset number + Dismiss link row */}
-            <View style={styles.subHeaderRow}>
-              {asset?.assetNumber ? (
-                <Text style={styles.assetNumberText}>{formatAssetNumber(asset.assetNumber)}</Text>
-              ) : (
-                <View />
-              )}
-              {defect.status === 'reported' && canMarkMaintenance && (
-                <TouchableOpacity
-                  style={styles.dismissLink}
-                  onPress={handleDismiss}
-                  disabled={deleteMutation.isPending}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="trash-outline" size={16} color={colors.error} />
-                  <Text style={styles.dismissLinkText}>Dismiss</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-
-            {/* Description — pinned below header */}
             {defect.description && (
-              <View style={styles.descriptionRow}>
+              <View style={styles.infoRow}>
+                <Text style={styles.detailLabel}>Description</Text>
                 <Text style={styles.detailValue}>{defect.description}</Text>
               </View>
             )}
@@ -227,20 +198,6 @@ export function DefectReportDetailModal({
               bounces={true}
               showsVerticalScrollIndicator={false}
             >
-              {/* Asset Link */}
-              <View style={styles.badgeRow}>
-                {variant === 'full' && (
-                  <TouchableOpacity
-                    style={styles.assetLink}
-                    onPress={handleNavigateToAsset}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.assetLinkText}>View Asset</Text>
-                    <Ionicons name="chevron-forward" size={16} color={colors.electricBlue} />
-                  </TouchableOpacity>
-                )}
-              </View>
-
               {/* Defect Photo (hidden in compact mode) */}
               {variant === 'full' && defectPhoto && (
                 <View style={styles.sectionGroup}>
@@ -292,21 +249,8 @@ export function DefectReportDetailModal({
               )}
 
               {/* Timeline (hidden in compact mode) */}
-              {variant === 'full' && (
+              {variant === 'full' && (defect.acceptedAt || defect.resolvedAt) && (
                 <View style={styles.sectionGroup}>
-                  <View style={styles.detailRowInline}>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Reported</Text>
-                      <Text style={styles.detailValue}>{formatRelativeTime(defect.createdAt)}</Text>
-                    </View>
-                    {defect.reporterName && (
-                      <View style={styles.detailRowEnd}>
-                        <Text style={styles.detailLabel}>Reported By</Text>
-                        <Text style={styles.detailValue}>{defect.reporterName}</Text>
-                      </View>
-                    )}
-                  </View>
-
                   {defect.acceptedAt && (
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Accepted</Text>
@@ -343,19 +287,6 @@ export function DefectReportDetailModal({
           </>
         )}
       </View>
-
-      {/* Dismiss Confirmation */}
-      <ConfirmSheet
-        visible={showDismissConfirm}
-        type="danger"
-        title="Dismiss Defect Report"
-        message="Are you sure you want to dismiss this defect report? This will permanently delete it."
-        confirmLabel="Dismiss"
-        cancelLabel="Cancel"
-        onConfirm={handleConfirmDismiss}
-        onCancel={() => setShowDismissConfirm(false)}
-        isLoading={deleteMutation.isPending}
-      />
 
       {/* Alert Sheet */}
       <AlertSheet
@@ -407,32 +338,25 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     textTransform: 'uppercase',
   },
+  headerSubtitle: {
+    fontSize: fontSize.sm,
+    fontFamily: fonts.regular,
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
   loadingContainer: {
     padding: spacing['3xl'],
     alignItems: 'center',
   },
-  badgeRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: spacing.sm,
+  divider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.md,
   },
-  assetNumberText: {
-    fontSize: fontSize.xl,
-    fontFamily: fonts.bold,
-    color: colors.text,
-    textTransform: 'uppercase',
-  },
-  assetLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  assetLinkText: {
-    fontSize: fontSize.sm,
-    fontFamily: fonts.bold,
-    color: colors.electricBlue,
-    textTransform: 'uppercase',
+  infoRow: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
   },
   sectionGroup: {
     gap: spacing.sm,
@@ -452,15 +376,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
-  detailRowInline: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
   detailRow: {},
-  detailRowEnd: {
-    alignItems: 'flex-end',
-  },
   detailLabel: {
     fontSize: fontSize.xs,
     fontFamily: fonts.regular,
@@ -484,31 +400,10 @@ const styles = StyleSheet.create({
     color: colors.electricBlue,
     textTransform: 'uppercase',
   },
-  subHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.base,
-  },
-  descriptionRow: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-  },
-  dismissLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  dismissLinkText: {
-    fontSize: fontSize.sm,
-    fontFamily: fonts.bold,
-    color: colors.error,
-    textTransform: 'uppercase',
-  },
   actionsContainer: {
     flexDirection: 'row',
     gap: spacing.md,
+    marginTop: spacing.lg,
   },
   closedStatus: {
     flexDirection: 'row',
