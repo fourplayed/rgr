@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../src/store/authStore';
@@ -22,6 +21,7 @@ import {
 } from '../src/components/common';
 import { useConsoleStore } from '../src/store/consoleStore';
 import { useSheetBottomPadding } from '../src/hooks/useSheetBottomPadding';
+import { SheetHeader } from '../src/components/common/SheetHeader';
 import { EditProfileModal } from '../src/components/settings/EditProfileModal';
 import { NotificationsModal } from '../src/components/settings/NotificationsModal';
 import { SecurityModal } from '../src/components/settings/SecurityModal';
@@ -89,23 +89,9 @@ export default function SettingsScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.safeArea}>
-        <View style={styles.headerWrapper}>
-          <View style={styles.headerContent}>
-            <Ionicons name="settings" size={30} color={colors.textInverse} />
-            <Text style={styles.headerTitle} numberOfLines={1}>Settings</Text>
-            <TouchableOpacity
-              onPress={handleBack}
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel="Close"
-              style={styles.headerCloseButton}
-            >
-              <Ionicons name="close" size={26} color={colors.textInverse} />
-            </TouchableOpacity>
-          </View>
-        </View>
+        <SheetHeader icon="settings" title="Settings" onClose={handleBack} />
 
-        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        <ScrollView style={styles.scrollView} contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingTop: spacing.base, paddingBottom: spacing['2xl'] }}>
           {/* Profile card */}
           <View style={styles.section}>
             <View style={styles.card}>
@@ -265,39 +251,8 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  headerWrapper: {
-    backgroundColor: colors.electricBlue,
-  },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.base,
-    paddingHorizontal: spacing.lg,
-    gap: spacing.sm,
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: fontSize.lg,
-    fontFamily: fonts.bold,
-    color: colors.textInverse,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    textShadowColor: 'rgba(0, 0, 0, 0.25)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  headerCloseButton: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   scrollView: {
     flex: 1,
-  },
-  scrollContent: {
-    padding: spacing.base,
-    paddingBottom: spacing['2xl'],
   },
   section: {
     marginBottom: spacing.lg,

@@ -8,7 +8,6 @@ import {
   StyleSheet,
   useWindowDimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { formatAssetNumber } from '@rgr/shared';
@@ -18,7 +17,7 @@ import {
   useAdminBulkDeletePhotos,
 } from '../../src/hooks/useAdminPhotos';
 import { PhotoThumbnail } from '../../src/components/photos/PhotoThumbnail';
-import { ScreenHeader } from '../../src/components/common/ScreenHeader';
+import { SheetHeader } from '../../src/components/common/SheetHeader';
 import { ConfirmSheet } from '../../src/components/common/ConfirmSheet';
 import { AlertSheet } from '../../src/components/common/AlertSheet';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
@@ -210,40 +209,25 @@ export default function PhotosAdminScreen() {
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <ScreenHeader
-          title="Photos Admin"
-          onBack={() => router.back()}
-          rightAction={
-            selectionMode ? (
-              <TouchableOpacity
-                onPress={exitSelectionMode}
-                style={styles.headerButton}
-                accessibilityRole="button"
-                accessibilityLabel="Cancel selection"
-              >
-                <Text style={styles.headerActionText}>Cancel</Text>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                onPress={() => enterSelectionMode()}
-                style={styles.headerButton}
-                accessibilityRole="button"
-                accessibilityLabel="Select photos"
-                disabled={!photos.length}
-              >
-                <Text
-                  style={[
-                    styles.headerActionText,
-                    !photos.length && styles.headerActionDisabled,
-                  ]}
-                >
-                  Select
-                </Text>
-              </TouchableOpacity>
-            )
-          }
-        />
+        {selectionMode ? (
+          <SheetHeader
+            icon="images"
+            title={`${selectedIds.size} Selected`}
+            onClose={exitSelectionMode}
+          />
+        ) : (
+          <SheetHeader
+            icon="images"
+            title="Photos"
+            onClose={() => router.back()}
+            closeIcon="arrow-back"
+            headerAction={photos.length ? {
+              icon: 'checkmark-circle',
+              onPress: () => enterSelectionMode(),
+              accessibilityLabel: 'Select photos',
+            } : undefined}
+          />
+        )}
 
         {/* Search */}
         <View style={styles.searchContainer}>
@@ -385,25 +369,12 @@ export default function PhotosAdminScreen() {
           message={alertSheet.message}
           onDismiss={() => setAlertSheet((prev) => ({ ...prev, visible: false }))}
         />
-      </SafeAreaView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.chrome },
-  safeArea: { flex: 1 },
-  headerButton: { padding: spacing.sm },
-  headerActionText: {
-    fontSize: fontSize.sm,
-    fontFamily: fonts.bold,
-    color: colors.electricBlue,
-    textTransform: 'uppercase',
-  },
-  headerActionDisabled: {
-    color: colors.textSecondary,
-    opacity: 0.5,
-  },
+  container: { flex: 1, backgroundColor: colors.chrome, borderTopLeftRadius: borderRadius.xl, borderTopRightRadius: borderRadius.xl, overflow: 'hidden' },
   searchContainer: {
     paddingHorizontal: spacing.base,
     marginBottom: spacing.sm,

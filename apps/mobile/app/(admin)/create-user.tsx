@@ -9,15 +9,13 @@ import {
   Platform,
   StyleSheet,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { UserRoleLabels } from '@rgr/shared';
 import type { UserRole } from '@rgr/shared';
 import { useCreateUser } from '../../src/hooks/useAdminUsers';
 import { useDepots } from '../../src/hooks/useDepots';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
+import { SheetHeader } from '../../src/components/common/SheetHeader';
 import { CreateUserOverlay } from '../../src/components/admin/CreateUserOverlay';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
@@ -83,26 +81,8 @@ export default function CreateUserScreen() {
   ]);
 
   return (
-    <LinearGradient
-      colors={[...colors.gradientColors]}
-      locations={[...colors.gradientLocations]}
-      start={colors.gradientStart}
-      end={colors.gradientEnd}
-      style={styles.container}
-    >
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backButton}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Create User</Text>
-          <View style={styles.headerSpacer} />
-        </View>
+    <View style={styles.container}>
+        <SheetHeader icon="person-add" title="Create User" onClose={() => router.back()} closeIcon="arrow-back" />
 
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -110,7 +90,7 @@ export default function CreateUserScreen() {
         >
           <ScrollView
             style={styles.scrollView}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingTop: spacing.base, paddingBottom: spacing['3xl'] }}
             keyboardShouldPersistTaps="handled"
           >
             <View style={styles.card}>
@@ -293,7 +273,6 @@ export default function CreateUserScreen() {
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
-      </SafeAreaView>
 
       <CreateUserOverlay
         visible={showOverlay}
@@ -302,46 +281,23 @@ export default function CreateUserScreen() {
         error={overlayError}
         onDismiss={handleOverlayDismiss}
       />
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  safeArea: {
-    flex: 1,
+    backgroundColor: colors.chrome,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
+    overflow: 'hidden',
   },
   flex: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.base,
-    paddingVertical: spacing.md,
-  },
-  backButton: {
-    padding: spacing.sm,
-  },
-  headerTitle: {
-    fontSize: fontSize.lg,
-    fontFamily: fonts.bold,
-    color: colors.text,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  headerSpacer: {
-    width: 40,
-  },
   scrollView: {
     flex: 1,
-  },
-  scrollContent: {
-    padding: spacing.base,
-    paddingBottom: spacing['3xl'],
   },
   card: {
     backgroundColor: colors.background,

@@ -9,6 +9,7 @@ import {
   TextInput,
 } from 'react-native';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
+import { SheetHeader } from '../../src/components/common/SheetHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
@@ -415,24 +416,9 @@ export default function DebugScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.safeArea}>
-        {/* Header */}
-        <View style={styles.headerWrapper}>
-          <View style={styles.header}>
-            <TouchableOpacity
-              onPress={() => router.back()}
-              style={styles.backButton}
-              accessibilityRole="button"
-              accessibilityLabel="Go back"
-            >
-              <Ionicons name="arrow-back" size={24} color={colors.textInverse} />
-            </TouchableOpacity>
-            <Ionicons name="terminal" size={24} color={colors.textInverse} />
-            <Text style={styles.headerTitle}>Console</Text>
-            <View style={styles.headerSpacer} />
-          </View>
-        </View>
+        <SheetHeader icon="terminal" title="Console" onClose={() => router.back()} closeIcon="arrow-back" />
 
-        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        <ScrollView style={styles.scrollView} contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingTop: spacing.base, paddingBottom: spacing.lg }}>
           {/* 1. Health Banner */}
           <View
             style={[styles.healthBanner, { backgroundColor: healthColors[health.level] }]}
@@ -690,48 +676,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.chrome,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
+    overflow: 'hidden',
   },
   safeArea: {
     flex: 1,
   },
-  headerWrapper: {
-    backgroundColor: colors.electricBlue,
-    borderBottomLeftRadius: borderRadius.xl,
-    borderBottomRightRadius: borderRadius.xl,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.base,
-    gap: spacing.sm,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: fontSize.lg,
-    fontFamily: fonts.bold,
-    color: colors.textInverse,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    textShadowColor: 'rgba(0, 0, 0, 0.25)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  headerSpacer: {
-    width: 44,
-  },
   scrollView: {
     flex: 1,
-  },
-  scrollContent: {
-    padding: spacing.base,
-    paddingBottom: spacing.lg,
   },
   // Health banner
   healthBanner: {

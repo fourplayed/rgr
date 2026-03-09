@@ -7,8 +7,6 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { UserRoleLabels } from '@rgr/shared';
@@ -16,6 +14,7 @@ import type { UserRole, Profile } from '@rgr/shared';
 import { useUserList } from '../../src/hooks/useAdminUsers';
 import { UserListItem, USER_ITEM_HEIGHT } from '../../src/components/admin/UserListItem';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
+import { SheetHeader } from '../../src/components/common/SheetHeader';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
 
@@ -94,35 +93,18 @@ export default function UsersScreen() {
   );
 
   return (
-    <LinearGradient
-      colors={[...colors.gradientColors]}
-      locations={[...colors.gradientLocations]}
-      start={colors.gradientStart}
-      end={colors.gradientEnd}
-      style={styles.container}
-    >
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backButton}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Users</Text>
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => router.push('/(admin)/create-user')}
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel="Create user"
-          >
-            <Ionicons name="add" size={24} color={colors.textInverse} />
-          </TouchableOpacity>
-        </View>
+    <View style={styles.container}>
+        <SheetHeader
+          icon="people"
+          title="Users"
+          onClose={() => router.back()}
+          closeIcon="arrow-back"
+          headerAction={{
+            icon: 'add-circle',
+            onPress: () => router.push('/(admin)/create-user'),
+            accessibilityLabel: 'Add user',
+          }}
+        />
 
         {/* Search */}
         <View style={styles.searchContainer}>
@@ -242,47 +224,17 @@ export default function UsersScreen() {
             }
           />
         )}
-      </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.base,
-    paddingVertical: spacing.md,
-  },
-  backButton: {
-    padding: spacing.sm,
-  },
-  headerTitle: {
-    fontSize: fontSize.lg,
-    fontFamily: fonts.bold,
-    color: colors.text,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  addButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.electricBlue,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
+    backgroundColor: colors.chrome,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
+    overflow: 'hidden',
   },
   searchContainer: {
     paddingHorizontal: spacing.base,
@@ -382,6 +334,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   listContent: {
+    paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
     paddingBottom: spacing['2xl'],
   },

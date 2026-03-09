@@ -20,6 +20,8 @@ interface SheetHeaderProps {
   titleStyle?: TextStyle;
   /** Optional action icon rendered to the left of the close button. */
   headerAction?: HeaderAction | undefined;
+  /** Override close button icon (e.g. 'arrow-back' for stacked screens). Default: 'close'. */
+  closeIcon?: keyof typeof Ionicons.glyphMap;
 }
 
 export function SheetHeader({
@@ -31,6 +33,7 @@ export function SheetHeader({
   titleNumberOfLines = 1,
   titleStyle,
   headerAction,
+  closeIcon = 'close',
 }: SheetHeaderProps) {
   return (
     <View style={[styles.header, { backgroundColor }]}>
@@ -57,7 +60,7 @@ export function SheetHeader({
         accessibilityLabel="Close"
         style={styles.closeButton}
       >
-        <Ionicons name="close" size={26} color={colors.textInverse} />
+        <Ionicons name={closeIcon} size={26} color={colors.textInverse} />
       </TouchableOpacity>
     </View>
   );

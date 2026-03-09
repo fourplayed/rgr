@@ -7,8 +7,6 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import {
@@ -26,6 +24,7 @@ import {
   useBulkUpdateStatus,
   useAssetRelatedCounts,
 } from '../../src/hooks/useAdminAssets';
+import { SheetHeader } from '../../src/components/common/SheetHeader';
 import { ConfirmSheet } from '../../src/components/common/ConfirmSheet';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
 import { colors } from '../../src/theme/colors';
@@ -210,48 +209,27 @@ export default function AssetAdminScreen() {
   const hasSelection = selectedIds.size > 0;
 
   return (
-    <LinearGradient
-      colors={[...colors.gradientColors]}
-      locations={[...colors.gradientLocations]}
-      start={colors.gradientStart}
-      end={colors.gradientEnd}
-      style={styles.container}
-    >
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <View style={styles.container}>
         {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backButton}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>
-            {hasSelection ? `${selectedIds.size} Selected` : 'Asset Admin'}
-          </Text>
-          {hasSelection ? (
-            <TouchableOpacity
-              onPress={clearSelection}
-              style={styles.backButton}
-              accessibilityRole="button"
-              accessibilityLabel="Clear selection"
-            >
-              <Ionicons name="close" size={24} color={colors.text} />
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              style={styles.addButton}
-              onPress={() => router.push('/(admin)/create-asset')}
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel="Create asset"
-            >
-              <Ionicons name="add" size={24} color={colors.textInverse} />
-            </TouchableOpacity>
-          )}
-        </View>
+        {hasSelection ? (
+          <SheetHeader
+            icon="cube"
+            title={`${selectedIds.size} Selected`}
+            onClose={clearSelection}
+          />
+        ) : (
+          <SheetHeader
+            icon="cube"
+            title="Asset Admin"
+            onClose={() => router.back()}
+            closeIcon="arrow-back"
+            headerAction={{
+              icon: 'add-circle',
+              onPress: () => router.push('/(admin)/create-asset'),
+              accessibilityLabel: 'Add asset',
+            }}
+          />
+        )}
 
         {/* Search */}
         <View style={styles.searchContainer}>
@@ -411,42 +389,17 @@ export default function AssetAdminScreen() {
             </TouchableOpacity>
           </View>
         )}
-      </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safeArea: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.base,
-    paddingVertical: spacing.md,
-  },
-  backButton: { padding: spacing.sm },
-  headerTitle: {
-    fontSize: fontSize.lg,
-    fontFamily: fonts.bold,
-    color: colors.text,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  headerSpacer: { width: 40 },
-  addButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.electricBlue,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
+  container: {
+    flex: 1,
+    backgroundColor: colors.chrome,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
+    overflow: 'hidden',
   },
   searchContainer: {
     paddingHorizontal: spacing.base,
@@ -640,7 +593,7 @@ const styles = StyleSheet.create({
     color: colors.textInverse,
     textTransform: 'uppercase',
   },
-  listContent: { paddingTop: spacing.sm, paddingBottom: spacing['2xl'] },
+  listContent: { paddingTop: spacing.sm, paddingBottom: spacing['2xl'], paddingHorizontal: spacing.lg },
   emptyListContent: { flex: 1 },
   // Status picker sheet
   statusPickerBackdrop: {

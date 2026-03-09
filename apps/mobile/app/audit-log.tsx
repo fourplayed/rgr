@@ -6,8 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import type { AuditLogWithUser } from '@rgr/shared';
@@ -18,6 +16,7 @@ import {
   type AuditLogFilters,
 } from '../src/components/admin/AuditLogFilterSheet';
 import { LoadingDots } from '../src/components/common/LoadingDots';
+import { SheetHeader } from '../src/components/common/SheetHeader';
 import { useUserPermissions } from '../src/contexts/UserPermissionsContext';
 import { colors } from '../src/theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../src/theme/spacing';
@@ -100,37 +99,18 @@ export default function AuditLogScreen() {
     !!filters.action || !!filters.startDate || !!filters.endDate;
 
   return (
-    <LinearGradient
-      colors={[...colors.gradientColors]}
-      locations={[...colors.gradientLocations]}
-      start={colors.gradientStart}
-      end={colors.gradientEnd}
-      style={styles.container}
-    >
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backButton}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Audit Log</Text>
-          <TouchableOpacity
-            onPress={() => setShowFilters(true)}
-            style={styles.filterButton}
-            accessibilityRole="button"
-            accessibilityLabel="Filter audit logs"
-          >
-            <Ionicons
-              name={hasActiveFilters ? 'funnel' : 'funnel-outline'}
-              size={22}
-              color={hasActiveFilters ? colors.electricBlue : colors.text}
-            />
-          </TouchableOpacity>
-        </View>
+    <View style={styles.container}>
+        <SheetHeader
+          icon="document-text"
+          title="Audit Log"
+          onClose={() => router.back()}
+          closeIcon="arrow-back"
+          headerAction={{
+            icon: hasActiveFilters ? 'funnel' : 'funnel-outline',
+            onPress: () => setShowFilters(true),
+            accessibilityLabel: 'Filter audit logs',
+          }}
+        />
 
         {isLoading ? (
           <View style={styles.loadingContainer}>
@@ -164,31 +144,17 @@ export default function AuditLogScreen() {
           onApply={handleApplyFilters}
           onClose={() => setShowFilters(false)}
         />
-      </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safeArea: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.base,
-    paddingVertical: spacing.md,
-  },
-  backButton: { padding: spacing.sm },
-  headerTitle: {
-    fontSize: fontSize.lg,
-    fontFamily: fonts.bold,
-    color: colors.text,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  filterButton: {
-    padding: spacing.sm,
+  container: {
+    flex: 1,
+    backgroundColor: colors.chrome,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
+    overflow: 'hidden',
   },
   loadingContainer: {
     flex: 1,
@@ -247,6 +213,7 @@ const styles = StyleSheet.create({
   listContent: {
     paddingTop: spacing.sm,
     paddingBottom: spacing['2xl'],
+    paddingHorizontal: spacing.lg,
   },
   emptyListContent: { flex: 1 },
   footerLoader: {

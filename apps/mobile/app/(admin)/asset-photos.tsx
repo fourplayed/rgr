@@ -7,8 +7,6 @@ import {
   StyleSheet,
   useWindowDimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { formatAssetNumber } from '@rgr/shared';
@@ -19,6 +17,7 @@ import { PhotoDetailModal } from '../../src/components/photos/PhotoDetailModal';
 import { ConfirmSheet } from '../../src/components/common/ConfirmSheet';
 import { AlertSheet } from '../../src/components/common/AlertSheet';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
+import { SheetHeader } from '../../src/components/common/SheetHeader';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
 
@@ -202,55 +201,26 @@ export default function AssetPhotosScreen() {
   );
 
   return (
-    <LinearGradient
-      colors={[...colors.gradientColors]}
-      locations={[...colors.gradientLocations]}
-      start={colors.gradientStart}
-      end={colors.gradientEnd}
-      style={styles.container}
-    >
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.headerButton}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle} numberOfLines={1}>
-            {assetNumber ? `${formatAssetNumber(assetNumber)} Photos` : 'Photos'}
-          </Text>
-          {selectionMode ? (
-            <TouchableOpacity
-              onPress={exitSelectionMode}
-              style={styles.headerButton}
-              accessibilityRole="button"
-              accessibilityLabel="Cancel selection"
-            >
-              <Text style={styles.headerActionText}>Cancel</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              onPress={() => enterSelectionMode()}
-              style={styles.headerButton}
-              accessibilityRole="button"
-              accessibilityLabel="Select photos"
-              disabled={!photos?.length}
-            >
-              <Text
-                style={[
-                  styles.headerActionText,
-                  !photos?.length && styles.headerActionDisabled,
-                ]}
-              >
-                Select
-              </Text>
-            </TouchableOpacity>
-          )}
-        </View>
+    <View style={styles.container}>
+        {selectionMode ? (
+          <SheetHeader
+            icon="images"
+            title={`${selectedIds.size} Selected`}
+            onClose={exitSelectionMode}
+          />
+        ) : (
+          <SheetHeader
+            icon="images"
+            title={assetNumber ? `${formatAssetNumber(assetNumber)} Photos` : 'Photos'}
+            onClose={() => router.back()}
+            closeIcon="arrow-back"
+            headerAction={photos?.length ? {
+              icon: 'checkmark-circle',
+              onPress: () => enterSelectionMode(),
+              accessibilityLabel: 'Select photos',
+            } : undefined}
+          />
+        )}
 
         {/* Select All bar */}
         {selectionMode && photos && photos.length > 0 && (
@@ -327,7 +297,6 @@ export default function AssetPhotosScreen() {
             </TouchableOpacity>
           </View>
         )}
-      </SafeAreaView>
 
       {/* Photo Detail Modal */}
       {detailPhotoId && assetId && (
@@ -360,39 +329,17 @@ export default function AssetPhotosScreen() {
         message={alertSheet.message}
         onDismiss={() => setAlertSheet((prev) => ({ ...prev, visible: false }))}
       />
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safeArea: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.base,
-    paddingVertical: spacing.md,
-  },
-  headerButton: { padding: spacing.sm },
-  headerTitle: {
+  container: {
     flex: 1,
-    fontSize: fontSize.lg,
-    fontFamily: fonts.bold,
-    color: colors.text,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    textAlign: 'center',
-  },
-  headerActionText: {
-    fontSize: fontSize.sm,
-    fontFamily: fonts.bold,
-    color: colors.electricBlue,
-    textTransform: 'uppercase',
-  },
-  headerActionDisabled: {
-    color: colors.textSecondary,
-    opacity: 0.5,
+    backgroundColor: colors.chrome,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
+    overflow: 'hidden',
   },
   selectAllBar: {
     flexDirection: 'row',

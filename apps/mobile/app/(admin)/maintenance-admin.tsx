@@ -8,7 +8,6 @@ import {
   StyleSheet,
   ScrollView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import {
@@ -22,7 +21,7 @@ import {
   useAdminMaintenanceList,
   useBulkCancelMaintenance,
 } from '../../src/hooks/useAdminMaintenance';
-import { ScreenHeader } from '../../src/components/common/ScreenHeader';
+import { SheetHeader } from '../../src/components/common/SheetHeader';
 import { FilterChip } from '../../src/components/common/FilterChip';
 import { ConfirmSheet } from '../../src/components/common/ConfirmSheet';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
@@ -169,23 +168,22 @@ export default function MaintenanceAdminScreen() {
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <ScreenHeader
-          title={hasSelection ? `${selectedIds.size} Selected` : 'Maintenance Admin'}
-          onBack={() => router.back()}
-          rightAction={
-            hasSelection ? (
-              <TouchableOpacity
-                onPress={clearSelection}
-                style={styles.headerButton}
-                accessibilityRole="button"
-                accessibilityLabel="Clear selection"
-              >
-                <Ionicons name="close" size={24} color={colors.text} />
-              </TouchableOpacity>
-            ) : undefined
-          }
-        />
+        {hasSelection ? (
+          <SheetHeader
+            icon="construct"
+            title={`${selectedIds.size} Selected`}
+            onClose={clearSelection}
+            backgroundColor={colors.warning}
+          />
+        ) : (
+          <SheetHeader
+            icon="construct"
+            title="Maintenance"
+            onClose={() => router.back()}
+            closeIcon="arrow-back"
+            backgroundColor={colors.warning}
+          />
+        )}
 
         {/* Search */}
         <View style={styles.searchContainer}>
@@ -307,15 +305,12 @@ export default function MaintenanceAdminScreen() {
           onCancel={() => setShowDeleteConfirm(false)}
           isLoading={bulkCancelMutation.isPending}
         />
-      </SafeAreaView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.chrome },
-  safeArea: { flex: 1 },
-  headerButton: { padding: spacing.sm },
+  container: { flex: 1, backgroundColor: colors.chrome, borderTopLeftRadius: borderRadius.xl, borderTopRightRadius: borderRadius.xl, overflow: 'hidden' as const },
   searchContainer: {
     paddingHorizontal: spacing.base,
     marginBottom: spacing.sm,

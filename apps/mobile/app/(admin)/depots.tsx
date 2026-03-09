@@ -6,8 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import type { Depot, CreateDepotInput, UpdateDepotInput } from '@rgr/shared';
@@ -19,6 +17,7 @@ import {
 } from '../../src/hooks/useAdminDepots';
 import { DepotListItem, DEPOT_ITEM_HEIGHT } from '../../src/components/admin/DepotListItem';
 import { DepotFormSheet } from '../../src/components/admin/DepotFormSheet';
+import { SheetHeader } from '../../src/components/common/SheetHeader';
 import { ConfirmSheet } from '../../src/components/common/ConfirmSheet';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
 import { colors } from '../../src/theme/colors';
@@ -114,34 +113,18 @@ export default function DepotsScreen() {
   );
 
   return (
-    <LinearGradient
-      colors={[...colors.gradientColors]}
-      locations={[...colors.gradientLocations]}
-      start={colors.gradientStart}
-      end={colors.gradientEnd}
-      style={styles.container}
-    >
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backButton}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Depots</Text>
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={handleCreate}
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel="Create depot"
-          >
-            <Ionicons name="add" size={24} color={colors.textInverse} />
-          </TouchableOpacity>
-        </View>
+    <View style={styles.container}>
+        <SheetHeader
+          icon="business"
+          title="Depots"
+          onClose={() => router.back()}
+          closeIcon="arrow-back"
+          headerAction={{
+            icon: 'add-circle',
+            onPress: handleCreate,
+            accessibilityLabel: 'Add depot',
+          }}
+        />
 
         {isLoading ? (
           <View style={styles.loadingContainer}>
@@ -195,47 +178,17 @@ export default function DepotsScreen() {
           }}
           isLoading={deleteMutation.isPending}
         />
-      </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.base,
-    paddingVertical: spacing.md,
-  },
-  backButton: {
-    padding: spacing.sm,
-  },
-  headerTitle: {
-    fontSize: fontSize.lg,
-    fontFamily: fonts.bold,
-    color: colors.text,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  addButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.electricBlue,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
+    backgroundColor: colors.chrome,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
+    overflow: 'hidden',
   },
   loadingContainer: {
     flex: 1,
@@ -299,6 +252,7 @@ const styles = StyleSheet.create({
   listContent: {
     paddingTop: spacing.sm,
     paddingBottom: spacing['2xl'],
+    paddingHorizontal: spacing.lg,
   },
   emptyListContent: {
     flex: 1,

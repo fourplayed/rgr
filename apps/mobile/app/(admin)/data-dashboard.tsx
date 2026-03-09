@@ -1,11 +1,10 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAdminDataStats } from '../../src/hooks/useAdminDataStats';
 import { useCountUp } from '../../src/hooks/useCountUp';
-import { ScreenHeader } from '../../src/components/common/ScreenHeader';
+import { SheetHeader } from '../../src/components/common/SheetHeader';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
@@ -60,11 +59,7 @@ export default function DataDashboardScreen() {
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <ScreenHeader
-          title="Data Dashboard"
-          onBack={() => router.back()}
-        />
+      <SheetHeader icon="stats-chart" title="Data Dashboard" onClose={() => router.back()} closeIcon="arrow-back" />
 
         {isLoading ? (
           <View style={styles.centerContent}>
@@ -80,7 +75,7 @@ export default function DataDashboardScreen() {
         ) : (
           <ScrollView
             style={styles.scrollView}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingTop: spacing.base, paddingBottom: spacing['3xl'] }}
           >
             <Text style={styles.sectionTitle}>Overview</Text>
             <View style={styles.statsGrid}>
@@ -122,7 +117,6 @@ export default function DataDashboardScreen() {
             </View>
           </ScrollView>
         )}
-      </SafeAreaView>
     </View>
   );
 }
@@ -131,8 +125,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.chrome,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
+    overflow: 'hidden',
   },
-  safeArea: { flex: 1 },
   centerContent: {
     flex: 1,
     justifyContent: 'center',
@@ -140,10 +136,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing['3xl'],
   },
   scrollView: { flex: 1 },
-  scrollContent: {
-    padding: spacing.base,
-    paddingBottom: spacing['3xl'],
-  },
   sectionTitle: {
     fontSize: fontSize.sm,
     fontFamily: fonts.bold,

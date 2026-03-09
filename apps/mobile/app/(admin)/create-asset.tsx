@@ -8,7 +8,6 @@ import {
   Platform,
   StyleSheet,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
   AssetCategoryLabels,
@@ -19,15 +18,16 @@ import { useCreateAsset } from '../../src/hooks/useAdminAssets';
 import { useDepots } from '../../src/hooks/useDepots';
 import { triggerRegoLookup } from '../../src/utils/regoLookup';
 import { CreateAssetOverlay } from '../../src/components/admin/CreateAssetOverlay';
-import { ScreenHeader } from '../../src/components/common/ScreenHeader';
+import { SheetHeader } from '../../src/components/common/SheetHeader';
 import { FilterChip } from '../../src/components/common/FilterChip';
 import { Button } from '../../src/components/common/Button';
 import { colors } from '../../src/theme/colors';
-import { spacing, fontSize, shadows, fontFamily as fonts } from '../../src/theme/spacing';
+import { spacing, fontSize, shadows, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
 import { formStyles } from '../../src/theme/formStyles';
 
 const CATEGORIES: AssetCategoryType[] = ['trailer', 'dolly'];
 const ASSET_NUMBER_REGEX = /^[A-Z]{2}\d{3,}$/;
+const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
 export default function CreateAssetScreen() {
   const router = useRouter();
@@ -52,7 +52,10 @@ export default function CreateAssetScreen() {
   const assetNumberUpper = assetNumber.trim().toUpperCase();
   const isAssetNumberValid = ASSET_NUMBER_REGEX.test(assetNumberUpper);
   const isRegoValid = registrationNumber.trim().length > 0;
-  const isValid = assetNumberUpper.length > 0 && isAssetNumberValid && isRegoValid;
+  const isExpiryFormatValid =
+    registrationExpiry.trim().length === 0 || DATE_REGEX.test(registrationExpiry.trim());
+  const isValid =
+    assetNumberUpper.length > 0 && isAssetNumberValid && isRegoValid && isExpiryFormatValid;
 
   const handleOverlayDismiss = useCallback(() => {
     const wasSuccess = createMutation.isSuccess;
@@ -115,8 +118,7 @@ export default function CreateAssetScreen() {
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <ScreenHeader title="Create Asset" onBack={() => router.back()} />
+      <SheetHeader icon="add-circle" title="Create Asset" onClose={() => router.back()} closeIcon="arrow-back" />
 
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -275,6 +277,11 @@ export default function CreateAssetScreen() {
                 placeholderTextColor={colors.textSecondary}
                 maxLength={10}
               />
+              {registrationExpiry.trim().length > 0 && !isExpiryFormatValid && (
+                <Text style={styles.hintText}>
+                  Format: YYYY-MM-DD (e.g. 2026-06-30)
+                </Text>
+              )}
             </View>
 
             {/* Depot */}
@@ -358,7 +365,6 @@ export default function CreateAssetScreen() {
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
-      </SafeAreaView>
 
       <CreateAssetOverlay
         visible={showOverlay}
@@ -375,9 +381,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.chrome,
-  },
-  safeArea: {
-    flex: 1,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
+    overflow: 'hidden',
   },
   flex: {
     flex: 1,

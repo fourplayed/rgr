@@ -6,8 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { UserRoleLabels } from '@rgr/shared';
@@ -17,6 +15,7 @@ import { useAuthStore } from '../../src/store/authStore';
 import { UserRolePicker } from '../../src/components/admin/UserRolePicker';
 import { ConfirmSheet } from '../../src/components/common/ConfirmSheet';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
+import { SheetHeader } from '../../src/components/common/SheetHeader';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
 
@@ -59,31 +58,12 @@ export default function UserDetailScreen() {
 
   if (!profile) {
     return (
-      <LinearGradient
-        colors={[...colors.gradientColors]}
-        locations={[...colors.gradientLocations]}
-        start={colors.gradientStart}
-        end={colors.gradientEnd}
-        style={styles.container}
-      >
-        <SafeAreaView style={styles.safeArea} edges={['top']}>
-          <View style={styles.header}>
-            <TouchableOpacity
-              onPress={() => router.back()}
-              style={styles.backButton}
-              accessibilityRole="button"
-              accessibilityLabel="Go back"
-            >
-              <Ionicons name="arrow-back" size={24} color={colors.text} />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>User</Text>
-            <View style={styles.headerSpacer} />
-          </View>
-          <View style={styles.loadingContainer}>
-            <LoadingDots color={colors.textSecondary} size={12} />
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
+      <View style={styles.container}>
+        <SheetHeader icon="person" title="User" onClose={() => router.back()} closeIcon="arrow-back" />
+        <View style={styles.loadingContainer}>
+          <LoadingDots color={colors.textSecondary} size={12} />
+        </View>
+      </View>
     );
   }
 
@@ -101,28 +81,10 @@ export default function UserDetailScreen() {
   };
 
   return (
-    <LinearGradient
-      colors={[...colors.gradientColors]}
-      locations={[...colors.gradientLocations]}
-      start={colors.gradientStart}
-      end={colors.gradientEnd}
-      style={styles.container}
-    >
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backButton}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>User Detail</Text>
-          <View style={styles.headerSpacer} />
-        </View>
+    <View style={styles.container}>
+        <SheetHeader icon="person" title="User Detail" onClose={() => router.back()} closeIcon="arrow-back" />
 
-        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        <ScrollView style={styles.scrollView} contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingTop: spacing.base, paddingBottom: spacing['2xl'] }}>
           {/* Profile Card */}
           <View style={styles.card}>
             <View style={styles.profileHeader}>
@@ -279,37 +241,17 @@ export default function UserDetailScreen() {
           onCancel={() => setShowStatusConfirm(false)}
           isLoading={updateStatusMutation.isPending}
         />
-      </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.base,
-    paddingVertical: spacing.md,
-  },
-  backButton: {
-    padding: spacing.sm,
-  },
-  headerTitle: {
-    fontSize: fontSize.lg,
-    fontFamily: fonts.bold,
-    color: colors.text,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  headerSpacer: {
-    width: 40,
+    backgroundColor: colors.chrome,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
+    overflow: 'hidden',
   },
   loadingContainer: {
     flex: 1,
@@ -318,10 +260,6 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-  },
-  scrollContent: {
-    padding: spacing.base,
-    paddingBottom: spacing['2xl'],
   },
   card: {
     backgroundColor: colors.background,
