@@ -190,7 +190,6 @@ export function MaintenanceDetailModal({
             variant="secondary"
             onPress={handleCancelMaintenance}
             disabled={updateStatusMutation.isPending || cancelMutation.isPending || isScattering}
-            style={{ borderColor: colors.error }}
             flex
           >
             Cancel
@@ -415,19 +414,12 @@ export function MaintenanceDetailModal({
                             textAlignVertical="top"
                           />
                           <View style={styles.notesButtonRow}>
-                            <TouchableOpacity
-                              style={styles.notesCancel}
-                              onPress={() => setEditingNotes(false)}
-                            >
-                              <Text style={styles.notesCancelText}>Cancel</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                              style={styles.notesSave}
-                              onPress={handleSaveNotes}
-                              disabled={updateMutation.isPending}
-                            >
-                              <Text style={styles.notesSaveText}>Save</Text>
-                            </TouchableOpacity>
+                            <Button variant="secondary" onPress={() => setEditingNotes(false)}>
+                              Cancel
+                            </Button>
+                            <Button onPress={handleSaveNotes} disabled={updateMutation.isPending} isLoading={updateMutation.isPending}>
+                              Save
+                            </Button>
                           </View>
                         </View>
                       ) : (
@@ -549,32 +541,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     gap: spacing.sm,
     marginTop: spacing.md,
-  },
-  notesCancel: {
-    height: 44,
-    paddingHorizontal: spacing.lg,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  notesCancelText: {
-    fontSize: fontSize.sm,
-    fontFamily: fonts.bold,
-    color: colors.textSecondary,
-    textTransform: 'uppercase',
-  },
-  notesSave: {
-    backgroundColor: colors.electricBlue,
-    paddingHorizontal: spacing.lg,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: borderRadius.md,
-  },
-  notesSaveText: {
-    fontSize: fontSize.sm,
-    fontFamily: fonts.bold,
-    color: colors.textInverse,
-    textTransform: 'uppercase',
   },
   iconButton: {
     width: 44,

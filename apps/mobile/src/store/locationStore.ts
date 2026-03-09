@@ -245,6 +245,37 @@ export const useLocationStore = create<LocationState>((set, get) => ({
   },
 }));
 
+/**
+ * Wait for an in-flight GPS resolution to complete.
+ * Returns `true` if `lastLocation` becomes non-null, `false` on timeout or failure.
+ * Resolves immediately if location already exists or nothing is resolving.
+ */
+export function waitForLocationResolution(timeoutMs = 15_000): Promise<boolean> {
+  return new Promise((resolve) => {
+    const current = useLocationStore.getState();
+    if (current.lastLocation) { resolve(true); return; }
+    if (!current.isResolvingDepot) { resolve(false); return; }
+
+    let settled = false;
+    const timeout = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      unsubscribe();
+      resolve(false);
+    }, timeoutMs);
+
+    const unsubscribe = useLocationStore.subscribe((state) => {
+      if (!state.isResolvingDepot) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeout);
+        unsubscribe();
+        resolve(state.lastLocation !== null);
+      }
+    });
+  });
+}
+
 // Subscribe to app events for cross-store coordination
 // This decouples locationStore from authStore
 eventBus.on(AppEvents.USER_LOGOUT, () => {

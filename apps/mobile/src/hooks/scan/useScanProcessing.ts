@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import * as Haptics from 'expo-haptics';
 import { useQueryClient, onlineManager } from '@tanstack/react-query';
 import { assetKeys, useCreateScanEvent, useUpdateAsset, useDeleteScanEvent } from '../useAssetData';
-import { useLocationStore } from '../../store/locationStore';
+import { useLocationStore, waitForLocationResolution } from '../../store/locationStore';
 import type { Asset } from '@rgr/shared';
 import { getAssetByQRCode, listAssets } from '@rgr/shared';
 import { logger } from '../../utils/logger';
@@ -52,26 +52,44 @@ export function useScanProcessing(
         dispatch({ type: 'QR_DETECTED', scanStatus: 'QR detected' });
 
         // 1. Read fresh location from the Zustand store to avoid stale closures
-        const { lastLocation: freshLocation, resolvedDepot: freshDepot } =
+        let { lastLocation: freshLocation, resolvedDepot: freshDepot } =
           useLocationStore.getState();
 
         if (!freshLocation) {
-          logger.scan('No resolved location available');
-          dispatch({ type: 'RESET' });
-          setAlertSheet({
-            visible: true,
-            type: 'error',
-            title: 'Location Not Available',
-            message:
-              'Please return to the home screen and ensure your location is resolved before scanning.',
-            actionLabel: 'Retry',
-            onAction: () => {
-              setAlertSheet({ visible: false, type: 'error', title: '', message: '' });
-              resetScannerRef.current();
-            },
-          });
-          resetScannerRef.current();
-          return;
+          const { isResolvingDepot } = useLocationStore.getState();
+
+          if (isResolvingDepot) {
+            logger.scan('Location resolving — waiting for GPS...');
+            dispatch({ type: 'UPDATE_SCAN_STATUS', scanStatus: 'Resolving location...' });
+
+            const resolved = await waitForLocationResolution(15_000);
+
+            if (resolved) {
+              const updated = useLocationStore.getState();
+              freshLocation = updated.lastLocation;
+              freshDepot = updated.resolvedDepot;
+              logger.scan('Location resolved — continuing scan');
+            }
+          }
+
+          if (!freshLocation) {
+            logger.scan('No resolved location available');
+            dispatch({ type: 'RESET' });
+            setAlertSheet({
+              visible: true,
+              type: 'error',
+              title: 'Location Not Available',
+              message:
+                'Please return to the home screen and ensure your location is resolved before scanning.',
+              actionLabel: 'Retry',
+              onAction: () => {
+                setAlertSheet({ visible: false, type: 'error', title: '', message: '' });
+                resetScannerRef.current();
+              },
+            });
+            resetScannerRef.current();
+            return;
+          }
         }
 
         const scanLocation = freshLocation;

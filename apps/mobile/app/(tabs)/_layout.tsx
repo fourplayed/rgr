@@ -19,12 +19,6 @@ const TAB_ICONS: Record<string, { outline: keyof typeof Ionicons.glyphMap; fille
   maintenance: { outline: 'construct-outline', filled: 'construct' },
 };
 
-const TAB_LABELS: Record<string, string> = {
-  home: 'HOME',
-  scan: 'SCAN',
-  assets: 'ASSETS',
-  maintenance: 'MAINT',
-};
 
 // ── Animated tab bar with sliding active indicator ──────────────
 function AnimatedTabBar({ state, navigation }: BottomTabBarProps) {
@@ -139,7 +133,7 @@ function AnimatedTabBar({ state, navigation }: BottomTabBarProps) {
           const isFocused = activeVisualIndex === index;
           const iconSet = TAB_ICONS[route.name];
           const icon = iconSet ? (isFocused ? iconSet.filled : iconSet.outline) : 'help-outline';
-          const label = TAB_LABELS[route.name] ?? route.name;
+          const label = route.name;
 
           return (
             <TouchableOpacity
@@ -153,11 +147,10 @@ function AnimatedTabBar({ state, navigation }: BottomTabBarProps) {
             >
               <Ionicons
                 name={icon}
-                size={24}
+                size={28}
                 color={TAB_ICON_COLOR}
                 style={tabStyles.iconShadow}
               />
-              <Text style={tabStyles.tabLabel}>{label}</Text>
               {/* Subtle separator between tabs */}
               {index < tabCount - 1 && (
                 <View style={tabStyles.separator} />
@@ -258,13 +251,6 @@ const tabStyles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
-  },
-  tabLabel: {
-    fontSize: 11,
-    fontFamily: 'Lato_700Bold',
-    color: TAB_ICON_COLOR,
-    letterSpacing: 0.5,
-    marginTop: 1,
   },
   separator: {
     position: 'absolute',

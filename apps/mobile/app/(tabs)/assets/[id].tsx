@@ -83,7 +83,7 @@ const ActivityCard = React.memo(function ActivityCard({
     activityColor = visual.color;
     activityIcon = visual.icon;
   } else if (item.type === 'defect') {
-    activityColor = colors.warning;
+    activityColor = colors.defectYellow;
     activityIcon = 'warning';
   } else {
     const activityType = item.type === 'scan' ? item.data.scanType : 'photo_upload';

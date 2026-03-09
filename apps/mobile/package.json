@@ -21,6 +21,7 @@
   "dependencies": {
     "@expo-google-fonts/lato": "^0.4.1",
     "@react-native-async-storage/async-storage": "1.23.1",
+    "@react-native-community/datetimepicker": "8.2.0",
     "@react-native-community/netinfo": "11.4.1",
     "@rgr/config": "*",
     "@rgr/shared": "*",

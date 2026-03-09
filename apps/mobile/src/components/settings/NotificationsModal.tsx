@@ -103,7 +103,7 @@ export function NotificationsModal({ visible, onClose }: NotificationsModalProps
               disabled={isPushDisabled}
             />
           </View>
-          <Button onPress={onClose}>Done</Button>
+          <Button onPress={onClose} style={{ alignSelf: 'stretch' }}>Done</Button>
         </ScrollView>
       </View>
     </SheetModal>

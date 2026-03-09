@@ -11,7 +11,7 @@ export const DEFECT_STATUS_CONFIG: Record<
   DefectStatus,
   { icon: keyof typeof Ionicons.glyphMap; color: string }
 > = {
-  reported: { icon: 'warning', color: colors.warning },
+  reported: { icon: 'warning', color: colors.defectYellow },
   accepted: { icon: 'construct', color: colors.info },
   resolved: { icon: 'checkmark-circle', color: colors.success },
   dismissed: { icon: 'close-circle', color: colors.textSecondary },
@@ -29,7 +29,7 @@ function DefectReportListItemComponent({ defect, onPress }: DefectReportListItem
 
   return (
     <TouchableOpacity
-      style={[cardStyles.container, { borderLeftColor: color }]}
+      style={[cardStyles.container, { borderLeftColor: colors.defectYellow }]}
       onPress={() => onPress(defect)}
       activeOpacity={0.7}
       accessibilityRole="button"
@@ -37,7 +37,7 @@ function DefectReportListItemComponent({ defect, onPress }: DefectReportListItem
     >
       <View style={cardStyles.cardRow}>
         <View style={cardStyles.cardIconContainer}>
-          <Ionicons name={icon} size={31} color={color} />
+          <Ionicons name={icon} size={31} color={colors.defectYellow} />
         </View>
         <View style={cardStyles.cardBody}>
           <View style={cardStyles.cardContentRow}>
