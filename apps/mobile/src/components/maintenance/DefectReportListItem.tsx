@@ -25,11 +25,11 @@ interface DefectReportListItemProps {
 }
 
 function DefectReportListItemComponent({ defect, onPress }: DefectReportListItemProps) {
-  const { icon } = DEFECT_STATUS_CONFIG[defect.status] ?? DEFECT_STATUS_CONFIG.reported;
+  const { icon, color } = DEFECT_STATUS_CONFIG[defect.status] ?? DEFECT_STATUS_CONFIG.reported;
 
   return (
     <TouchableOpacity
-      style={[cardStyles.container, { borderLeftColor: colors.defectYellow }]}
+      style={[cardStyles.container, { borderLeftColor: color }]}
       onPress={() => onPress(defect)}
       activeOpacity={0.7}
       accessibilityRole="button"
@@ -37,7 +37,7 @@ function DefectReportListItemComponent({ defect, onPress }: DefectReportListItem
     >
       <View style={cardStyles.cardRow}>
         <View style={cardStyles.cardIconContainer}>
-          <Ionicons name={icon} size={31} color={colors.defectYellow} />
+          <Ionicons name={icon} size={31} color={color} />
         </View>
         <View style={cardStyles.cardBody}>
           <View style={cardStyles.cardContentRow}>
