@@ -158,11 +158,12 @@ const styles = StyleSheet.create({
     right: 0,
   },
   photoContainer: {
-    height: 360,
+    aspectRatio: 3 / 4,
     marginHorizontal: spacing.lg,
     marginTop: spacing.md,
     borderRadius: borderRadius.md,
     overflow: 'hidden',
+    backgroundColor: '#000',
   },
   photo: {
     flex: 1,

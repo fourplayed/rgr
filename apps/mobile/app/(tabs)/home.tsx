@@ -372,10 +372,10 @@ export default function HomeScreen() {
   // Memoize stats cards to prevent recreation on every render
   // Note: Must be before any early returns to maintain hook order
   const statsCards = useMemo(() => [
-    { label: 'Total Scans', value: totalScanCount ?? 0, color: colors.electricBlue, icon: 'qr-code' as const, route: '/(tabs)/maintenance' as const },
-    { label: 'Serviced', value: servicedCount, color: colors.status.active, icon: 'checkmark-circle' as const, route: '/(tabs)/assets' as const },
-    { label: 'Reported Defects', value: defectStats?.reported ?? 0, color: colors.defectYellow, icon: 'warning' as const, route: '/(tabs)/maintenance' as const },
-    { label: 'Out of Service', value: outOfServiceCount, color: colors.status.outOfService, icon: 'close-circle' as const, route: '/(tabs)/assets' as const },
+    { label: 'Total Scans', value: totalScanCount ?? 0, color: colors.electricBlue, icon: 'qr-code' as const, route: '/(tabs)/scan' as const, params: {} },
+    { label: 'Serviced', value: servicedCount, color: colors.status.active, icon: 'checkmark-circle' as const, route: '/(tabs)/assets' as const, params: { status: 'serviced' } },
+    { label: 'Reported Defects', value: defectStats?.reported ?? 0, color: colors.defectYellow, icon: 'warning' as const, route: '/(tabs)/maintenance' as const, params: { tab: 'defects', defectStatus: 'reported' } },
+    { label: 'Out of Service', value: outOfServiceCount, color: colors.status.outOfService, icon: 'close-circle' as const, route: '/(tabs)/assets' as const, params: { status: 'out_of_service' } },
   ], [totalScanCount, servicedCount, defectStats?.reported, outOfServiceCount]);
 
   // Merge scans, maintenance, and defects into a unified activity feed
@@ -460,7 +460,7 @@ export default function HomeScreen() {
             <TouchableOpacity
               key={stat.label}
               style={[styles.statCard, { backgroundColor: stat.color }]}
-              onPress={() => router.navigate(stat.route)}
+              onPress={() => router.navigate({ pathname: stat.route, params: stat.params })}
               activeOpacity={0.8}
               accessibilityRole="button"
               accessibilityLabel={`${stat.label}: ${stat.value}. Tap to view assets.`}
@@ -641,7 +641,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: fontSize.sm,
-    fontFamily: fonts.regular,
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,

@@ -4,6 +4,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, shadows, fontFamily as fonts } from '../../theme/spacing';
 
+interface HeaderAction {
+  icon: keyof typeof Ionicons.glyphMap;
+  onPress: () => void;
+  accessibilityLabel: string;
+}
+
 interface SheetHeaderProps {
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
@@ -12,6 +18,8 @@ interface SheetHeaderProps {
   disabled?: boolean;
   titleNumberOfLines?: number;
   titleStyle?: TextStyle;
+  /** Optional action icon rendered to the left of the close button. */
+  headerAction?: HeaderAction | undefined;
 }
 
 export function SheetHeader({
@@ -22,6 +30,7 @@ export function SheetHeader({
   disabled = false,
   titleNumberOfLines = 1,
   titleStyle,
+  headerAction,
 }: SheetHeaderProps) {
   return (
     <View style={[styles.header, { backgroundColor }]}>
@@ -29,6 +38,17 @@ export function SheetHeader({
       <Text style={[styles.title, titleStyle]} numberOfLines={titleNumberOfLines}>
         {title}
       </Text>
+      {headerAction && (
+        <TouchableOpacity
+          onPress={headerAction.onPress}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={headerAction.accessibilityLabel}
+          style={styles.actionButton}
+        >
+          <Ionicons name={headerAction.icon} size={22} color={colors.textInverse} />
+        </TouchableOpacity>
+      )}
       <TouchableOpacity
         onPress={onClose}
         disabled={disabled}
@@ -64,6 +84,12 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.25)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
+  },
+  actionButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   closeButton: {
     width: 44,

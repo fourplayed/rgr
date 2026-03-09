@@ -1,14 +1,18 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView, Animated, Alert } from 'react-native';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView, Animated, Pressable, Platform } from 'react-native';
+import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { formatRelativeTime, formatAssetNumber } from '@rgr/shared';
-import { LoadingDots, AlertSheet, SheetModal } from '../common';
+import type { MaintenancePriority, UpdateMaintenanceInput } from '@rgr/shared';
+import { formatRelativeTime, formatAssetNumber, MaintenancePriorityLabels } from '@rgr/shared';
+import { LoadingDots, AlertSheet, ConfirmSheet, SheetModal } from '../common';
 import { SheetHeader } from '../common/SheetHeader';
 import { Button } from '../common/Button';
+import { FilterChip } from '../common/FilterChip';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
+import { formStyles } from '../../theme/formStyles';
 import { sheetLayout } from '../../theme/sheetLayout';
 import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 import {
@@ -25,6 +29,8 @@ import { useScatterExit } from '../../hooks/useScatterExit';
 import { MaintenanceStatusBadge } from './MaintenanceStatusBadge';
 import { MaintenancePriorityBadge } from './MaintenancePriorityBadge';
 import { MAINTENANCE_STATUS_CONFIG } from './MaintenanceListItem';
+
+const PRIORITY_ORDER: MaintenancePriority[] = ['low', 'medium', 'high', 'critical'];
 
 interface MaintenanceDetailModalProps {
   visible: boolean;
@@ -78,15 +84,97 @@ export function MaintenanceDetailModal({
     if (visible) resetScatter();
   }, [visible, resetScatter]);
 
+  const [cancelConfirmVisible, setCancelConfirmVisible] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
   const [notes, setNotes] = useState('');
 
-  // Reset notes editing state when the modal switches to a different record.
-  // Modal visible={false} keeps the tree mounted, so stale state persists otherwise.
+  // ── Edit mode state ──
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editPriority, setEditPriority] = useState<MaintenancePriority>('medium');
+  const [editDueDate, setEditDueDate] = useState('');
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  const canEdit = canMarkMaintenance && maintenance?.status === 'scheduled';
+
+  // Reset all editing state when the modal switches to a different record or closes.
   useEffect(() => {
     setEditingNotes(false);
     setNotes('');
-  }, [maintenanceId]);
+    setIsEditing(false);
+    setShowDatePicker(false);
+    setCancelConfirmVisible(false);
+  }, [maintenanceId, visible]);
+
+  const handleEnterEditMode = useCallback(() => {
+    if (!maintenance) return;
+    setEditTitle(maintenance.title);
+    setEditDescription(maintenance.description ?? '');
+    setEditPriority(maintenance.priority);
+    setEditDueDate(maintenance.dueDate ?? '');
+    setShowDatePicker(false);
+    setIsEditing(true);
+  }, [maintenance]);
+
+  const handleCancelEdit = useCallback(() => {
+    setIsEditing(false);
+    setShowDatePicker(false);
+  }, []);
+
+  const handleSaveEdit = useCallback(async () => {
+    if (!maintenanceId || !maintenance) return;
+
+    // Only send changed fields
+    const input: UpdateMaintenanceInput = {};
+    if (editTitle !== maintenance.title) input['title'] = editTitle;
+    if (editDescription !== (maintenance.description ?? '')) {
+      input['description'] = editDescription || null;
+    }
+    if (editPriority !== maintenance.priority) input['priority'] = editPriority;
+    if (editDueDate !== (maintenance.dueDate ?? '')) {
+      input['dueDate'] = editDueDate || null;
+    }
+
+    // Nothing changed — just exit
+    if (Object.keys(input).length === 0) {
+      setIsEditing(false);
+      setShowDatePicker(false);
+      return;
+    }
+
+    try {
+      await updateMaintenance({ id: maintenanceId, input });
+      setIsEditing(false);
+      setShowDatePicker(false);
+    } catch (err: unknown) {
+      setAlertSheet({
+        visible: true,
+        title: 'Error',
+        message: err instanceof Error ? err.message : 'Failed to save changes',
+      });
+    }
+  }, [maintenanceId, maintenance, editTitle, editDescription, editPriority, editDueDate, updateMaintenance]);
+
+  const handleDateChange = useCallback(
+    (_event: DateTimePickerEvent, selectedDate?: Date) => {
+      if (Platform.OS === 'android') setShowDatePicker(false);
+      if (selectedDate) {
+        setEditDueDate(selectedDate.toISOString().slice(0, 10));
+      }
+    },
+    [],
+  );
+
+  // Header action: pencil → enter edit mode (only for scheduled tasks by permitted users)
+  const headerAction = useMemo(() => {
+    if (!canEdit || isEditing) return undefined;
+    return {
+      icon: 'pencil' as const,
+      onPress: handleEnterEditMode,
+      accessibilityLabel: 'Edit maintenance task',
+    };
+  }, [canEdit, isEditing, handleEnterEditMode]);
 
   // Sheet states
   const [alertSheet, setAlertSheet] = useState<{
@@ -112,32 +200,30 @@ export function MaintenanceDetailModal({
     }
   }, [maintenanceId, updateMaintenanceStatus, user?.id]);
 
-  const handleCancelMaintenance = useCallback(() => {
+  const handleCancelPress = useCallback(() => {
     if (!maintenanceId) return;
-    Alert.alert(
-      'Cancel Maintenance',
-      'Are you sure you want to cancel this maintenance task? This will permanently delete it and any linked defect reports.',
-      [
-        { text: 'No', style: 'cancel' },
-        {
-          text: 'Yes, Cancel',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await cancelTask(maintenanceId);
-              scatter(7, () => onClose());
-            } catch (err: unknown) {
-              setAlertSheet({
-                visible: true,
-                title: 'Error',
-                message: err instanceof Error ? err.message : 'Failed to cancel',
-              });
-            }
-          },
-        },
-      ],
-    );
+    setCancelConfirmVisible(true);
+  }, [maintenanceId]);
+
+  const handleCancelConfirm = useCallback(async () => {
+    if (!maintenanceId) return;
+    try {
+      await cancelTask(maintenanceId);
+      setCancelConfirmVisible(false);
+      scatter(7, () => onClose());
+    } catch (err: unknown) {
+      setCancelConfirmVisible(false);
+      setAlertSheet({
+        visible: true,
+        title: 'Error',
+        message: err instanceof Error ? err.message : 'Failed to cancel',
+      });
+    }
   }, [maintenanceId, cancelTask, onClose, scatter]);
+
+  const handleCancelCancel = useCallback(() => {
+    setCancelConfirmVisible(false);
+  }, []);
 
   const handleSaveNotes = useCallback(async () => {
     if (!maintenanceId) return;
@@ -172,11 +258,45 @@ export function MaintenanceDetailModal({
   const renderStatusActions = () => {
     if (!maintenance) return null;
 
+    // In edit mode, show Save/Cancel instead of normal actions
+    if (isEditing) {
+      return (
+        <View style={styles.actionsContainer}>
+          <Button
+            variant="secondary"
+            onPress={handleCancelEdit}
+            disabled={updateMutation.isPending}
+            flex
+          >
+            Cancel
+          </Button>
+          <Button
+            color={colors.success}
+            icon="checkmark"
+            onPress={handleSaveEdit}
+            disabled={updateMutation.isPending}
+            isLoading={updateMutation.isPending}
+            flex
+          >
+            Save
+          </Button>
+        </View>
+      );
+    }
+
     const status = maintenance.status;
 
     if (canMarkMaintenance && status === 'scheduled') {
       return (
         <View style={styles.actionsContainer}>
+          <Button
+            variant="danger"
+            onPress={handleCancelPress}
+            disabled={updateStatusMutation.isPending || cancelMutation.isPending || isScattering}
+            flex
+          >
+            Cancel
+          </Button>
           <Button
             color={colors.success}
             icon="checkmark"
@@ -184,15 +304,7 @@ export function MaintenanceDetailModal({
             disabled={updateStatusMutation.isPending || cancelMutation.isPending || isScattering}
             flex
           >
-            Mark Complete
-          </Button>
-          <Button
-            variant="secondary"
-            onPress={handleCancelMaintenance}
-            disabled={updateStatusMutation.isPending || cancelMutation.isPending || isScattering}
-            flex
-          >
-            Cancel
+            Complete Task
           </Button>
         </View>
       );
@@ -216,6 +328,140 @@ export function MaintenanceDetailModal({
     return null;
   };
 
+  // ── Render helpers for detail fields (read-only vs. edit) ──
+
+  const renderTitleSection = () => {
+    if (!maintenance) return null;
+
+    if (isEditing) {
+      return (
+        <View style={formStyles.inputGroup}>
+          <Text style={formStyles.label}>Title</Text>
+          <TextInput
+            style={formStyles.input}
+            value={editTitle}
+            onChangeText={setEditTitle}
+            placeholder="Task title"
+            placeholderTextColor={colors.textSecondary}
+            autoCapitalize="sentences"
+            maxLength={200}
+            accessibilityLabel="Maintenance title"
+          />
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.detailRow}>
+        <Text style={styles.detailLabel}>Title</Text>
+        <Text style={styles.detailValue}>{maintenance.title}</Text>
+      </View>
+    );
+  };
+
+  const renderDescriptionSection = () => {
+    if (!maintenance) return null;
+
+    if (isEditing) {
+      return (
+        <View style={formStyles.inputGroup}>
+          <Text style={formStyles.label}>Description</Text>
+          <TextInput
+            style={[formStyles.input, formStyles.textArea]}
+            value={editDescription}
+            onChangeText={setEditDescription}
+            placeholder="Describe the maintenance work needed"
+            placeholderTextColor={colors.textSecondary}
+            multiline
+            numberOfLines={3}
+            textAlignVertical="top"
+            accessibilityLabel="Maintenance description"
+          />
+        </View>
+      );
+    }
+
+    if (!maintenance.description) return null;
+
+    return (
+      <View style={styles.detailRow}>
+        <Text style={styles.detailLabel}>Description</Text>
+        <Text style={styles.detailValue}>{maintenance.description}</Text>
+      </View>
+    );
+  };
+
+  const renderPrioritySection = () => {
+    if (!maintenance) return null;
+
+    if (isEditing) {
+      return (
+        <View style={formStyles.inputGroup}>
+          <Text style={formStyles.label}>Priority</Text>
+          <View style={styles.chipContainer}>
+            {PRIORITY_ORDER.map((p) => (
+              <FilterChip
+                key={p}
+                label={MaintenancePriorityLabels[p]}
+                isSelected={editPriority === p}
+                onPress={() => setEditPriority(p)}
+                selectedColor={colors.maintenancePriority[p]}
+              />
+            ))}
+          </View>
+        </View>
+      );
+    }
+
+    return null; // Priority is shown via badge row in read-only mode
+  };
+
+  const renderDueDateSection = () => {
+    if (!maintenance) return null;
+
+    if (isEditing) {
+      return (
+        <View style={formStyles.inputGroup}>
+          <Text style={formStyles.label}>Due Date</Text>
+          <Pressable
+            style={styles.dateField}
+            onPress={() => setShowDatePicker((prev) => !prev)}
+            accessibilityRole="button"
+            accessibilityLabel="Select due date"
+          >
+            <Ionicons name="calendar-outline" size={18} color={editDueDate ? colors.text : colors.textSecondary} />
+            <Text style={[styles.dateFieldText, !editDueDate && styles.dateFieldPlaceholder]}>
+              {editDueDate
+                ? new Date(editDueDate + 'T00:00:00').toLocaleDateString(undefined, {
+                    weekday: 'short', year: 'numeric', month: 'short', day: 'numeric',
+                  })
+                : 'Tap to select date'}
+            </Text>
+          </Pressable>
+          {showDatePicker && (
+            <DateTimePicker
+              value={editDueDate ? new Date(editDueDate + 'T00:00:00') : new Date()}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'inline' : 'default'}
+              minimumDate={new Date()}
+              onChange={handleDateChange}
+              accentColor={colors.primary}
+            />
+          )}
+        </View>
+      );
+    }
+
+    if (!maintenance.dueDate) return null;
+
+    return (
+      <View style={styles.detailRow}>
+        <Text style={styles.detailLabel}>Due Date</Text>
+        <Text style={styles.detailValue}>{maintenance.dueDate}</Text>
+      </View>
+    );
+  };
+
   return (
     <SheetModal visible={visible} onClose={onClose} inline={!!inline} backdrop={backdrop} onExitComplete={onExitComplete}>
       <View style={sheetLayout.containerTall}>
@@ -224,6 +470,7 @@ export function MaintenanceDetailModal({
           title="Maintenance Task"
           onClose={onClose}
           backgroundColor={colors.warning}
+          headerAction={headerAction}
         />
 
         {isLoading || !maintenance ? (
@@ -236,6 +483,7 @@ export function MaintenanceDetailModal({
             contentContainerStyle={[sheetLayout.scrollContent, { paddingTop: spacing.lg, paddingBottom: sheetBottomPadding, gap: spacing.md }]}
             bounces={true}
             showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps={isEditing ? 'handled' : undefined}
           >
               {/* Info Row: Asset Number + View Asset */}
               <Animated.View style={getStyle(0)}>
@@ -243,7 +491,7 @@ export function MaintenanceDetailModal({
                   {asset?.assetNumber && (
                     <Text style={styles.assetNumberText}>{formatAssetNumber(asset.assetNumber)}</Text>
                   )}
-                  {variant === 'full' && (
+                  {variant === 'full' && !isEditing && (
                     <TouchableOpacity
                       style={styles.assetLink}
                       onPress={handleNavigateToAsset}
@@ -256,68 +504,73 @@ export function MaintenanceDetailModal({
                 </View>
               </Animated.View>
 
-              {/* Status & Priority Badges */}
-              <Animated.View style={getStyle(1)}>
-                <View style={styles.badgeRow}>
-                  <MaintenanceStatusBadge status={maintenance.status} />
-                  <MaintenancePriorityBadge priority={maintenance.priority} />
-                </View>
-              </Animated.View>
+              {/* Status & Priority Badges (hidden in edit mode) */}
+              {!isEditing && (
+                <Animated.View style={getStyle(1)}>
+                  <View style={styles.badgeRow}>
+                    <MaintenanceStatusBadge status={maintenance.status} />
+                    <MaintenancePriorityBadge priority={maintenance.priority} />
+                  </View>
+                </Animated.View>
+              )}
 
               {/* Details Section */}
               <Animated.View style={getStyle(2)}>
-                <View style={styles.sectionGroup}>
-                  <Text style={styles.sectionTitle}>Details</Text>
-                  <View style={styles.sectionCard}>
-                    {maintenance.description && (
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Description</Text>
-                        <Text style={styles.detailValue}>{maintenance.description}</Text>
-                      </View>
-                    )}
-
-                    {maintenance.maintenanceType && (
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Type</Text>
-                        <Text style={styles.detailValue}>
-                          {maintenance.maintenanceType.replace(/_/g, ' ')}
-                        </Text>
-                      </View>
-                    )}
-
-                    {maintenance.scheduledDate && (
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Scheduled Date</Text>
-                        <Text style={styles.detailValue}>{maintenance.scheduledDate}</Text>
-                      </View>
-                    )}
-
-                    {maintenance.dueDate && (
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Due Date</Text>
-                        <Text style={styles.detailValue}>{maintenance.dueDate}</Text>
-                      </View>
-                    )}
-
-                    {maintenance.reporterName && (
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Reported By</Text>
-                        <Text style={styles.detailValue}>{maintenance.reporterName}</Text>
-                      </View>
-                    )}
-
-                    {maintenance.assigneeName && (
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Assigned To</Text>
-                        <Text style={styles.detailValue}>{maintenance.assigneeName}</Text>
-                      </View>
-                    )}
+                {isEditing ? (
+                  <View style={styles.sectionGroup}>
+                    <Text style={styles.sectionTitle}>Edit Details</Text>
+                    <View style={styles.sectionCard}>
+                      {renderTitleSection()}
+                      {renderDescriptionSection()}
+                      {renderPrioritySection()}
+                      {renderDueDateSection()}
+                    </View>
                   </View>
-                </View>
+                ) : (
+                  <View style={styles.sectionGroup}>
+                    <Text style={styles.sectionTitle}>Details</Text>
+                    <View style={styles.sectionCard}>
+                      {renderTitleSection()}
+                      {renderDescriptionSection()}
+
+                      {maintenance.maintenanceType && (
+                        <View style={styles.detailRow}>
+                          <Text style={styles.detailLabel}>Type</Text>
+                          <Text style={styles.detailValue}>
+                            {maintenance.maintenanceType.replace(/_/g, ' ')}
+                          </Text>
+                        </View>
+                      )}
+
+                      {maintenance.scheduledDate && (
+                        <View style={styles.detailRow}>
+                          <Text style={styles.detailLabel}>Scheduled Date</Text>
+                          <Text style={styles.detailValue}>{maintenance.scheduledDate}</Text>
+                        </View>
+                      )}
+
+                      {renderDueDateSection()}
+
+                      {maintenance.reporterName && (
+                        <View style={styles.detailRow}>
+                          <Text style={styles.detailLabel}>Reported By</Text>
+                          <Text style={styles.detailValue}>{maintenance.reporterName}</Text>
+                        </View>
+                      )}
+
+                      {maintenance.assigneeName && (
+                        <View style={styles.detailRow}>
+                          <Text style={styles.detailLabel}>Assigned To</Text>
+                          <Text style={styles.detailValue}>{maintenance.assigneeName}</Text>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                )}
               </Animated.View>
 
-              {/* Defect Photo Section (hidden in compact mode) */}
-              {variant === 'full' && defectPhoto && (
+              {/* Defect Photo Section (hidden in compact mode and edit mode) */}
+              {variant === 'full' && defectPhoto && !isEditing && (
                 <Animated.View style={getStyle(3)}>
                   <View style={styles.sectionGroup}>
                     <Text style={styles.sectionTitle}>Defect Photo</Text>
@@ -352,8 +605,8 @@ export function MaintenanceDetailModal({
                 </Animated.View>
               )}
 
-              {/* Timestamps Section (hidden in compact mode) */}
-              {variant === 'full' && (
+              {/* Timestamps Section (hidden in compact mode and edit mode) */}
+              {variant === 'full' && !isEditing && (
                 <Animated.View style={getStyle(4)}>
                   <View style={styles.sectionGroup}>
                     <Text style={styles.sectionTitle}>Timeline</Text>
@@ -378,8 +631,8 @@ export function MaintenanceDetailModal({
                 </Animated.View>
               )}
 
-              {/* Notes Section (hidden in compact mode) */}
-              {variant === 'full' && (
+              {/* Notes Section (hidden in compact mode and edit mode) */}
+              {variant === 'full' && !isEditing && (
                 <Animated.View style={getStyle(5)}>
                   <View style={styles.sectionGroup}>
                     <View style={styles.sectionCard}>
@@ -436,6 +689,19 @@ export function MaintenanceDetailModal({
           </ScrollView>
         )}
       </View>
+
+      {/* Cancel confirmation */}
+      <ConfirmSheet
+        visible={cancelConfirmVisible}
+        type="danger"
+        title="Cancel Maintenance"
+        message="Are you sure you want to cancel this maintenance task? This will permanently delete it and any linked defect reports."
+        confirmLabel="Yes, Cancel"
+        cancelLabel="No"
+        onConfirm={handleCancelConfirm}
+        onCancel={handleCancelCancel}
+        isLoading={cancelMutation.isPending}
+      />
 
       {/* Alert Sheet for errors */}
       <AlertSheet
@@ -499,22 +765,48 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize.sm,
     fontFamily: fonts.bold,
-    color: colors.textSecondary,
+    color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   detailRow: {},
   detailLabel: {
-    fontSize: fontSize.xs,
+    fontSize: fontSize.sm,
     fontFamily: fonts.regular,
-    color: colors.textSecondary,
+    color: colors.text,
     textTransform: 'uppercase',
+    letterSpacing: 1,
     marginBottom: 2,
   },
   detailValue: {
     fontSize: fontSize.base,
     fontFamily: fonts.bold,
     color: colors.text,
+  },
+  chipContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  dateField: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.base,
+  },
+  dateFieldText: {
+    flex: 1,
+    fontSize: fontSize.base,
+    fontFamily: fonts.regular,
+    color: colors.text,
+  },
+  dateFieldPlaceholder: {
+    color: colors.textSecondary,
   },
   notesText: {
     fontSize: fontSize.base,

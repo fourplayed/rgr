@@ -147,7 +147,7 @@ function AnimatedTabBar({ state, navigation }: BottomTabBarProps) {
             >
               <Ionicons
                 name={icon}
-                size={28}
+                size={32}
                 color={TAB_ICON_COLOR}
                 style={tabStyles.iconShadow}
               />

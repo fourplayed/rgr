@@ -9,8 +9,6 @@ import {
   TextInput,
 } from 'react-native';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
@@ -405,26 +403,23 @@ export default function DebugScreen() {
   }
 
   return (
-    <LinearGradient
-      colors={[...colors.gradientColors]}
-      locations={[...colors.gradientLocations]}
-      start={colors.gradientStart}
-      end={colors.gradientEnd}
-      style={styles.container}
-    >
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <View style={styles.container}>
+      <View style={styles.safeArea}>
         {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backButton}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Debug</Text>
-          <View style={styles.headerSpacer} />
+        <View style={styles.headerWrapper}>
+          <View style={styles.header}>
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={styles.backButton}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+            >
+              <Ionicons name="arrow-back" size={24} color={colors.textInverse} />
+            </TouchableOpacity>
+            <Ionicons name="terminal" size={24} color={colors.textInverse} />
+            <Text style={styles.headerTitle}>Console</Text>
+            <View style={styles.headerSpacer} />
+          </View>
         </View>
 
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
@@ -676,37 +671,50 @@ export default function DebugScreen() {
             </Text>
           </TouchableOpacity>
         </ScrollView>
-      </SafeAreaView>
-    </LinearGradient>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.chrome,
   },
   safeArea: {
     flex: 1,
   },
+  headerWrapper: {
+    backgroundColor: colors.electricBlue,
+    borderBottomLeftRadius: borderRadius.xl,
+    borderBottomRightRadius: borderRadius.xl,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.base,
-    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.base,
+    gap: spacing.sm,
   },
   backButton: {
-    padding: spacing.sm,
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerTitle: {
+    flex: 1,
     fontSize: fontSize.lg,
     fontFamily: fonts.bold,
-    color: colors.text,
+    color: colors.textInverse,
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.25)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   headerSpacer: {
-    width: 40,
+    width: 44,
   },
   scrollView: {
     flex: 1,
@@ -821,17 +829,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primary,
+    backgroundColor: colors.electricBlue,
     marginHorizontal: spacing.base,
     marginVertical: spacing.base,
     paddingVertical: spacing.base,
     borderRadius: borderRadius.md,
     gap: spacing.sm,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.6,
-    shadowRadius: 6,
-    elevation: 6,
   },
   syncButtonText: {
     fontSize: fontSize.base,
@@ -844,7 +847,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.textSecondary,
+    backgroundColor: colors.backgroundDark,
     paddingVertical: spacing.base,
     borderRadius: borderRadius.md,
     gap: spacing.sm,

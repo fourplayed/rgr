@@ -10,16 +10,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../src/store/authStore';
-import { useTutorialStore } from '../src/store/tutorialStore';
 import { useUserPermissions } from '../src/contexts/UserPermissionsContext';
 import { UserRoleLabels } from '@rgr/shared';
 import { colors } from '../src/theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../src/theme/spacing';
 import {
-  AlertSheet,
   ConfirmSheet,
   Button,
-  SheetHeader,
   CollapsibleSection,
   PillBadge,
 } from '../src/components/common';
@@ -46,7 +43,7 @@ function SettingsItem({ icon, title, subtitle, onPress, showChevron = true }: Se
       accessibilityLabel={title}
     >
       <View style={styles.settingsItemIcon}>
-        <Ionicons name={icon} size={24} color={colors.backgroundDark} />
+        <Ionicons name={icon} size={24} color={colors.electricBlue} />
       </View>
       <View style={styles.settingsItemContent}>
         <Text style={styles.settingsItemTitle}>{title}</Text>
@@ -63,18 +60,12 @@ export default function SettingsScreen() {
   const router = useRouter();
   const sheetBottomPadding = useSheetBottomPadding();
   const { user, logout } = useAuthStore();
-  const { canAccessAdmin, canViewAuditLog } = useUserPermissions();
-  const resetTutorials = useTutorialStore(s => s.resetAll);
+  const { canAccessAdmin } = useUserPermissions();
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSecurity, setShowSecurity] = useState(false);
-  const [showTutorialReset, setShowTutorialReset] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-
-  const handleResetTutorials = () => {
-    resetTutorials();
-    setShowTutorialReset(true);
-  };
+  const [consoleEnabled, setConsoleEnabled] = useState(false);
 
   const handleLogoutConfirm = async () => {
     setShowLogoutConfirm(false);
@@ -95,8 +86,22 @@ export default function SettingsScreen() {
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <SheetHeader icon="settings" title="Settings" onClose={handleBack} />
+      <View style={styles.safeArea}>
+        <View style={styles.headerWrapper}>
+          <View style={styles.headerContent}>
+            <Ionicons name="settings" size={30} color={colors.textInverse} />
+            <Text style={styles.headerTitle} numberOfLines={1}>Settings</Text>
+            <TouchableOpacity
+              onPress={handleBack}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Close"
+              style={styles.headerCloseButton}
+            >
+              <Ionicons name="close" size={26} color={colors.textInverse} />
+            </TouchableOpacity>
+          </View>
+        </View>
 
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
           {/* Profile card */}
@@ -116,21 +121,21 @@ export default function SettingsScreen() {
           <View style={styles.section}>
             <View style={styles.card}>
               <SettingsItem
-                icon="person-outline"
+                icon="person"
                 title="Edit Profile"
                 subtitle="Update your name and contact info"
                 onPress={() => setShowEditProfile(true)}
               />
               <View style={styles.divider} />
               <SettingsItem
-                icon="notifications-outline"
+                icon="notifications"
                 title="Notifications"
                 subtitle="Manage notification preferences"
                 onPress={() => setShowNotifications(true)}
               />
               <View style={styles.divider} />
               <SettingsItem
-                icon="lock-closed-outline"
+                icon="lock-closed"
                 title="Security"
                 subtitle="Password and authentication"
                 onPress={() => setShowSecurity(true)}
@@ -138,65 +143,63 @@ export default function SettingsScreen() {
             </View>
           </View>
 
-          {/* Help */}
-          <View style={styles.section}>
-            <View style={styles.card}>
-              <SettingsItem
-                icon="book-outline"
-                title="View Tutorials"
-                subtitle="Re-watch the scanning guide"
-                onPress={handleResetTutorials}
-              />
-            </View>
-          </View>
-
-          {/* Oversight — Manager+ */}
-          {canViewAuditLog && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Oversight</Text>
-              <View style={styles.card}>
-                <SettingsItem
-                  icon="document-text-outline"
-                  title="Audit Log"
-                  subtitle="View system activity and changes"
-                  onPress={() => router.push('/audit-log')}
-                />
-              </View>
-            </View>
-          )}
-
           {/* Administration — Superuser */}
           {canAccessAdmin && (
             <View style={styles.section}>
               <CollapsibleSection title="Administration" variant="flat" defaultExpanded>
                 <View style={styles.card}>
                   <SettingsItem
-                    icon="people-outline"
+                    icon="people"
                     title="User Management"
                     subtitle="Manage users, roles, and access"
                     onPress={() => router.push('/(admin)/users')}
                   />
                   <View style={styles.divider} />
                   <SettingsItem
-                    icon="business-outline"
+                    icon="business"
                     title="Depot Management"
                     subtitle="Create, edit, and remove depots"
                     onPress={() => router.push('/(admin)/depots')}
                   />
                   <View style={styles.divider} />
                   <SettingsItem
-                    icon="cube-outline"
+                    icon="cube"
                     title="Asset Administration"
                     subtitle="Bulk operations and asset deletion"
                     onPress={() => router.push('/(admin)/asset-admin')}
                   />
                   <View style={styles.divider} />
-                  <SettingsItem
-                    icon="bug-outline"
-                    title="Debug"
-                    subtitle="Connection status and sync info"
-                    onPress={() => router.push('/(admin)/debug')}
-                  />
+                  <TouchableOpacity
+                    style={styles.settingsItem}
+                    onPress={() => setConsoleEnabled(v => !v)}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: consoleEnabled }}
+                    accessibilityLabel="Enable Console"
+                  >
+                    <View style={styles.settingsItemIcon}>
+                      <Ionicons name="terminal" size={24} color={colors.electricBlue} />
+                    </View>
+                    <View style={styles.settingsItemContent}>
+                      <Text style={styles.settingsItemTitle}>Enable Console</Text>
+                      <Text style={styles.settingsItemSubtitle}>Diagnostics and sync tools</Text>
+                    </View>
+                    <Ionicons
+                      name={consoleEnabled ? 'checkbox' : 'square-outline'}
+                      size={24}
+                      color={consoleEnabled ? colors.electricBlue : colors.textSecondary}
+                    />
+                  </TouchableOpacity>
+                  {consoleEnabled && (
+                    <>
+                      <View style={styles.divider} />
+                      <SettingsItem
+                        icon="terminal"
+                        title="Console"
+                        subtitle="Connection status and sync info"
+                        onPress={() => router.push('/(admin)/debug')}
+                      />
+                    </>
+                  )}
                 </View>
               </CollapsibleSection>
             </View>
@@ -206,8 +209,8 @@ export default function SettingsScreen() {
         <View style={{ paddingHorizontal: spacing.lg, paddingTop: spacing.base, paddingBottom: sheetBottomPadding }}>
           <Button
             onPress={() => setShowLogoutConfirm(true)}
-            variant="secondary"
-            icon="log-out-outline"
+            color={colors.electricBlue}
+            icon="log-out"
           >
             Sign Out
           </Button>
@@ -228,14 +231,6 @@ export default function SettingsScreen() {
           onClose={() => setShowSecurity(false)}
         />
 
-        <AlertSheet
-          visible={showTutorialReset}
-          type="success"
-          title="Tutorials Reset"
-          message="Tutorials will show again next time you open the scanner or start a count."
-          onDismiss={() => setShowTutorialReset(false)}
-        />
-
         <ConfirmSheet
           visible={showLogoutConfirm}
           type="warning"
@@ -245,7 +240,7 @@ export default function SettingsScreen() {
           onConfirm={handleLogoutConfirm}
           onCancel={() => setShowLogoutConfirm(false)}
         />
-      </SafeAreaView>
+      </View>
     </View>
   );
 }
@@ -254,9 +249,39 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.chrome,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
+    overflow: 'hidden',
   },
   safeArea: {
     flex: 1,
+  },
+  headerWrapper: {
+    backgroundColor: colors.electricBlue,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.base,
+    paddingHorizontal: spacing.lg,
+    gap: spacing.sm,
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: fontSize.lg,
+    fontFamily: fonts.bold,
+    color: colors.textInverse,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.25)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  headerCloseButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scrollView: {
     flex: 1,

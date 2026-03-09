@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,7 @@ import { LoadingDots } from '../../../src/components/common/LoadingDots';
 import { RefreshLoadingDots } from '../../../src/components/common/RefreshLoadingDots';
 import { ScreenHeader } from '../../../src/components/common/ScreenHeader';
 import { EmptyState } from '../../../src/components/common/EmptyState';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import type { AssetStatus, AssetCategory, AssetWithRelations } from '@rgr/shared';
 import { useInfiniteAssetList, useDepots } from '../../../src/hooks/useAssetData';
 import { useDepotLookup } from '../../../src/hooks/useDepots';
@@ -46,6 +46,7 @@ interface AssetFilters {
 
 export default function AssetListScreen() {
   const router = useRouter();
+  const { status } = useLocalSearchParams<{ status?: string }>();
   const [searchInput, setSearchInput] = useState('');
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
   const [filters, setFilters] = useState<AssetFilters>({
@@ -54,6 +55,14 @@ export default function AssetListScreen() {
     subtypes: [],
     depotIds: [],
   });
+
+  // Apply status filter from route params (e.g. navigating from dashboard stat card)
+  useEffect(() => {
+    if (status && ['serviced', 'maintenance', 'out_of_service'].includes(status)) {
+      setFilters(prev => ({ ...prev, statuses: [status as AssetStatus] }));
+      router.setParams({ status: undefined });
+    }
+  }, [status, router]);
 
   // Debounce search input to avoid triggering queries on every keystroke
   const debouncedSearch = useDebounce(searchInput, 300);

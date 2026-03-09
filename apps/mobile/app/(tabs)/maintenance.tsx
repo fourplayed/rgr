@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import type {
   MaintenanceStatus,
   MaintenancePriority,
@@ -59,7 +60,9 @@ const DEFAULT_STATUSES: MaintenanceStatus[] = [];
 const DEFAULT_PRIORITIES: MaintenancePriority[] = [];
 
 export default function MaintenanceScreen() {
+  const router = useRouter();
   const { canMarkMaintenance } = useUserPermissions();
+  const { tab, defectStatus } = useLocalSearchParams<{ tab?: string; defectStatus?: string }>();
 
   // Tab state
   const [activeTab, setActiveTab] = useState<TabKey>('tasks');
@@ -72,6 +75,19 @@ export default function MaintenanceScreen() {
   // Defect filter state
   const [defectStatuses, setDefectStatuses] = useState<DefectStatus[]>([]);
   const [defectFiltersExpanded, setDefectFiltersExpanded] = useState(false);
+
+  // Apply tab/filter from route params (e.g. navigating from dashboard stat card)
+  useEffect(() => {
+    if (tab === 'defects') {
+      setActiveTab('defects');
+    }
+    if (defectStatus === 'reported') {
+      setDefectStatuses(['reported']);
+    }
+    if (tab || defectStatus) {
+      router.setParams({ tab: undefined, defectStatus: undefined });
+    }
+  }, [tab, defectStatus, router]);
 
   // Modal state machine — only one modal visible at a time
   const { modal, closeModal: close, transitionTo, isTransitioning, handleExitComplete } = useModalTransition<ModalState>({ type: 'none' });

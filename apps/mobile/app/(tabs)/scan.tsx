@@ -3,7 +3,6 @@ import {
   View,
   Modal,
   Animated,
-  InteractionManager,
   StyleSheet,
   useWindowDimensions,
 } from 'react-native';
@@ -11,7 +10,6 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { BlurView } from 'expo-blur';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { useTutorialStore } from '../../src/store/tutorialStore';
 import { useUserPermissions } from '../../src/contexts/UserPermissionsContext';
 import { useScanActionFlow } from '../../src/hooks/scan/useScanActionFlow';
 import { useAssetAssessment } from '../../src/hooks/useAssetAssessment';
@@ -22,19 +20,13 @@ import { CameraCapture, PhotoReviewSheet } from '../../src/components/photos';
 import { CreateMaintenanceModal, DefectReportDetailModal, MaintenanceDetailModal } from '../../src/components/maintenance';
 import { useAcceptDefect } from '../../src/hooks/useAcceptDefect';
 import type { CreateMaintenanceInput } from '@rgr/shared';
-import { TutorialSheet, AlertSheet, ErrorBoundary } from '../../src/components/common';
+import { AlertSheet, ErrorBoundary } from '../../src/components/common';
 import { styles } from '../../src/components/scanner/scan.styles';
 
 export default function ScanScreen() {
   const permissions = useUserPermissions();
   const { canMarkMaintenance } = permissions;
   const [permission, requestPermission] = useCameraPermissions();
-
-  // Tutorial state
-  const hasSeenScan = useTutorialStore(s => s.seen.scan);
-  const hasHydrated = useTutorialStore(s => s._hasHydrated);
-  const markSeen = useTutorialStore(s => s.markSeen);
-  const [showScanTutorial, setShowScanTutorial] = useState(false);
 
   // ── Single-action confirm flow ref (passed into flow hook so cancel clears it) ──
   const confirmedActionRef = useRef<ConfirmAction>(null);
@@ -155,24 +147,6 @@ export default function ScanScreen() {
       requestLocationPermission();
     }
   }, [permission?.granted, hasLocationPermission, requestLocationPermission, requestPermission]);
-
-  // ── Scan Tutorial (first visit, after camera ready) ──
-
-  useEffect(() => {
-    if (!hasHydrated) return;
-    if (hasSeenScan) return;
-    if (!permission?.granted) return;
-
-    const task = InteractionManager.runAfterInteractions(() => {
-      setShowScanTutorial(true);
-    });
-    return () => task.cancel();
-  }, [hasHydrated, hasSeenScan, permission?.granted]);
-
-  const handleScanTutorialDismiss = useCallback(() => {
-    setShowScanTutorial(false);
-    markSeen('scan');
-  }, [markSeen]);
 
   // ── Sheet slide animation ──
   useEffect(() => {
@@ -482,15 +456,6 @@ export default function ScanScreen() {
         onDismiss={() => setAlertSheet(prev => ({ ...prev, visible: false }))}
         actionLabel={alertSheet.actionLabel}
         onAction={alertSheet.onAction}
-      />
-
-      <TutorialSheet
-        visible={showScanTutorial}
-        icon="qr-code-outline"
-        title="Getting Started"
-        body="Point your camera at an asset QR code. We'll detect it automatically and confirm your scan."
-        buttonLabel="GOT IT"
-        onDismiss={handleScanTutorialDismiss}
       />
 
     </View>

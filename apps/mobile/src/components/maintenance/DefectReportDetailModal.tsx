@@ -3,14 +3,14 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated } from '
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { formatRelativeTime, formatAssetNumber } from '@rgr/shared';
-import { LoadingDots, AlertSheet, SheetModal } from '../common';
+import { LoadingDots, AlertSheet, ConfirmSheet, SheetModal } from '../common';
 import { SheetHeader } from '../common/SheetHeader';
 import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts, shadows } from '../../theme/spacing';
 import { sheetLayout } from '../../theme/sheetLayout';
 import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
-import { useDefectReport } from '../../hooks/useDefectData';
+import { useDefectReport, useDeleteDefectReport } from '../../hooks/useDefectData';
 import { useAsset } from '../../hooks/useAssetData';
 import { useMaintenance } from '../../hooks/useMaintenanceData';
 import { useScanEventPhotos, useSignedUrl } from '../../hooks/usePhotos';
@@ -52,7 +52,7 @@ export function DefectReportDetailModal({
   variant = 'full',
   onAcceptPress,
   onViewTaskPress,
-  onDismissConfirmed: _onDismissConfirmed,
+  onDismissConfirmed,
   onDismiss,
   inline,
   backdrop,
@@ -105,6 +105,30 @@ export function DefectReportDetailModal({
     onViewTaskPress(defect.maintenanceRecordId);
   }, [defect, onViewTaskPress]);
 
+  // Dismiss flow: confirm → delete → scatter → callback
+  const { mutateAsync: deleteDefect, isPending: isDeleting } = useDeleteDefectReport();
+  const [dismissConfirmVisible, setDismissConfirmVisible] = useState(false);
+
+  const handleDismissPress = useCallback(() => {
+    setDismissConfirmVisible(true);
+  }, []);
+
+  const handleDismissCancel = useCallback(() => {
+    setDismissConfirmVisible(false);
+  }, []);
+
+  const handleDismissConfirm = useCallback(async () => {
+    if (!defect) return;
+    try {
+      await deleteDefect(defect.id);
+      setDismissConfirmVisible(false);
+      onDismissConfirmed?.(defect.id);
+    } catch {
+      setDismissConfirmVisible(false);
+      setAlertSheet({ visible: true, title: 'Error', message: 'Failed to dismiss defect report. Please try again.' });
+    }
+  }, [defect, deleteDefect, onDismissConfirmed]);
+
   const renderStatusActions = () => {
     if (!defect || !canMarkMaintenance) return null;
 
@@ -113,6 +137,14 @@ export function DefectReportDetailModal({
     if (status === 'reported') {
       return (
         <View style={styles.actionsContainer}>
+          <Button
+            onPress={handleDismissPress}
+            disabled={isScattering || isDeleting}
+            flex
+            variant="danger"
+          >
+            Dismiss
+          </Button>
           <Button
             onPress={handleAccept}
             disabled={!onAcceptPress || isScattering}
@@ -190,6 +222,8 @@ export function DefectReportDetailModal({
                 )}
               </View>
             </Animated.View>
+
+            <View style={styles.divider} />
 
             {/* Description */}
             {defect.description && (
@@ -300,7 +334,20 @@ export function DefectReportDetailModal({
         )}
       </View>
 
-      {/* Alert Sheet */}
+      {/* Dismiss confirmation */}
+      <ConfirmSheet
+        visible={dismissConfirmVisible}
+        type="danger"
+        title="Dismiss Defect Report?"
+        message="This will permanently delete this defect report. This action cannot be undone."
+        confirmLabel="Dismiss"
+        cancelLabel="Cancel"
+        onConfirm={handleDismissConfirm}
+        onCancel={handleDismissCancel}
+        isLoading={isDeleting}
+      />
+
+      {/* Error alert */}
       <AlertSheet
         visible={alertSheet.visible}
         type="error"
@@ -313,6 +360,10 @@ export function DefectReportDetailModal({
 }
 
 const styles = StyleSheet.create({
+  divider: {
+    height: 1,
+    backgroundColor: colors.border,
+  },
   loadingContainer: {
     padding: spacing['3xl'],
     alignItems: 'center',
@@ -360,8 +411,9 @@ const styles = StyleSheet.create({
   detailLabel: {
     fontSize: fontSize.sm,
     fontFamily: fonts.bold,
-    color: colors.textSecondary,
+    color: colors.text,
     textTransform: 'uppercase',
+    letterSpacing: 1,
     marginBottom: 2,
   },
   detailValue: {

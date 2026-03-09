@@ -16,7 +16,7 @@
 -- Without this index, Postgres does a sequential scan + sort.
 -- ============================================================================
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_defect_reports_cursor
+CREATE INDEX IF NOT EXISTS idx_defect_reports_cursor
   ON defect_reports (created_at DESC, id DESC);
 
 
@@ -27,7 +27,7 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_defect_reports_cursor
 -- (created_at DESC, id DESC) ordering.
 -- ============================================================================
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_maintenance_records_cursor
+CREATE INDEX IF NOT EXISTS idx_maintenance_records_cursor
   ON maintenance_records (created_at DESC, id DESC);
 
 

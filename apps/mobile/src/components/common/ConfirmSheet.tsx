@@ -64,6 +64,7 @@ export function ConfirmSheet({
           <Button
             onPress={onConfirm}
             disabled={isLoading}
+            isLoading={isLoading}
             color={config.color}
             flex
             accessibilityLabel={confirmLabel}

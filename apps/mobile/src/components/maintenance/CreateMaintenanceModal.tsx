@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TextInput, StyleSheet, ScrollView, Pressable, Platform } from 'react-native';
+import { View, Text, TextInput, StyleSheet, ScrollView, Pressable, Platform, TouchableOpacity } from 'react-native';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import type { MaintenancePriority, CreateMaintenanceInput } from '@rgr/shared';
-import { MaintenancePriorityLabels } from '@rgr/shared';
+import { MaintenancePriorityLabels, formatAssetNumber } from '@rgr/shared';
 import { Button } from '../common/Button';
 import { FilterChip } from '../common/FilterChip';
 import { SheetHeader } from '../common/SheetHeader';
 import { SheetModal } from '../common/SheetModal';
+import { LoadingDots } from '../common/LoadingDots';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts, shadows } from '../../theme/spacing';
 import { formStyles } from '../../theme/formStyles';
@@ -15,6 +16,7 @@ import { sheetLayout } from '../../theme/sheetLayout';
 import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 import { useAuthStore } from '../../store/authStore';
 import { useCreateMaintenance } from '../../hooks/useMaintenanceData';
+import { useAssetList } from '../../hooks/useAssetData';
 import { useSubmitGuard } from '../../hooks/useSubmitGuard';
 
 interface CreateMaintenanceModalProps {
@@ -69,6 +71,34 @@ export function CreateMaintenanceModal({
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Asset selection state (used when no assetId prop is provided)
+  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+  const [selectedAssetNumber, setSelectedAssetNumber] = useState<string | null>(null);
+  const [assetSearch, setAssetSearch] = useState('');
+  const [showAssetPicker, setShowAssetPicker] = useState(false);
+
+  const effectiveAssetId = assetId ?? selectedAssetId ?? undefined;
+  const effectiveAssetNumber = assetNumber ?? selectedAssetNumber ?? undefined;
+
+  // Fetch assets for picker (always called to satisfy hook rules; cached by React Query)
+  const assetSearchFilters = assetSearch
+    ? { search: assetSearch, pageSize: 20 }
+    : { pageSize: 20 };
+  const { data: assetListData, isLoading: assetsLoading } = useAssetList(assetSearchFilters);
+  const assetResults = assetListData?.data ?? [];
+
+  const handleSelectAsset = useCallback((id: string, number: string) => {
+    setSelectedAssetId(id);
+    setSelectedAssetNumber(number);
+    setShowAssetPicker(false);
+    setAssetSearch('');
+  }, []);
+
+  const handleClearAsset = useCallback(() => {
+    setSelectedAssetId(null);
+    setSelectedAssetNumber(null);
+  }, []);
+
   // Reset form when modal opens, pre-filling from defect context if provided
   useEffect(() => {
     if (visible) {
@@ -78,6 +108,10 @@ export function CreateMaintenanceModal({
       setDueDate('');
       setShowDatePicker(false);
       setError(null);
+      setSelectedAssetId(null);
+      setSelectedAssetNumber(null);
+      setAssetSearch('');
+      setShowAssetPicker(false);
     }
   }, [visible, defaultTitle, defaultDescription, defaultPriority]);
 
@@ -94,13 +128,13 @@ export function CreateMaintenanceModal({
   const handleSubmit = useCallback(
     () =>
       guard(async () => {
-        if (!title.trim()) {
-          setError('Title is required');
+        if (!effectiveAssetId) {
+          setError('Asset is required');
           return;
         }
 
-        if (!assetId) {
-          setError('Asset is required');
+        if (!title.trim()) {
+          setError('Title is required');
           return;
         }
 
@@ -112,7 +146,7 @@ export function CreateMaintenanceModal({
         setError(null);
 
         const input: CreateMaintenanceInput = {
-          assetId,
+          assetId: effectiveAssetId,
           title: title.trim(),
           description: description.trim() || null,
           priority,
@@ -144,7 +178,7 @@ export function CreateMaintenanceModal({
       description,
       priority,
       dueDate,
-      assetId,
+      effectiveAssetId,
       user,
       createMaintenanceAsync,
       onClose,
@@ -180,13 +214,77 @@ export function CreateMaintenanceModal({
             </View>
           )}
 
-          {/* Asset (read-only if pre-selected) */}
-          {assetId && assetNumber && (
-            <View style={[formStyles.inputGroup, styles.assetRow]}>
-              <Ionicons name="cube" size={22} color={colors.text} />
-              <Text style={styles.readOnlyText}>{assetNumber}</Text>
-            </View>
-          )}
+          {/* Asset selection */}
+          <View style={formStyles.inputGroup}>
+            <Text style={formStyles.label}>Asset *</Text>
+            {assetId && assetNumber ? (
+              // Pre-selected (read-only) — from defect accept or asset detail
+              <View style={styles.assetSelected}>
+                <Ionicons name="cube" size={20} color={colors.text} />
+                <Text style={styles.assetSelectedText}>{formatAssetNumber(assetNumber)}</Text>
+              </View>
+            ) : selectedAssetId && selectedAssetNumber ? (
+              // User-selected — show with clear option
+              <View style={styles.assetSelected}>
+                <Ionicons name="cube" size={20} color={colors.text} />
+                <Text style={styles.assetSelectedText}>{formatAssetNumber(selectedAssetNumber)}</Text>
+                <TouchableOpacity
+                  onPress={handleClearAsset}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  accessibilityLabel="Clear asset selection"
+                >
+                  <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              // No asset — show search picker
+              <>
+                <Pressable
+                  style={styles.assetPickerField}
+                  onPress={() => setShowAssetPicker((prev) => !prev)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Select an asset"
+                >
+                  <Ionicons name="cube-outline" size={18} color={colors.textSecondary} />
+                  <Text style={styles.assetPickerPlaceholder}>Tap to select asset</Text>
+                  <Ionicons name={showAssetPicker ? 'chevron-up' : 'chevron-down'} size={16} color={colors.textSecondary} />
+                </Pressable>
+                {showAssetPicker && (
+                  <View style={styles.assetPickerDropdown}>
+                    <TextInput
+                      style={styles.assetSearchInput}
+                      value={assetSearch}
+                      onChangeText={setAssetSearch}
+                      placeholder="Search by asset number..."
+                      placeholderTextColor={colors.textSecondary}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                    />
+                    {assetsLoading ? (
+                      <View style={styles.assetPickerLoading}>
+                        <LoadingDots color={colors.textSecondary} size={6} />
+                      </View>
+                    ) : assetResults.length === 0 ? (
+                      <Text style={styles.assetPickerEmpty}>No assets found</Text>
+                    ) : (
+                      assetResults.map((asset) => (
+                        <TouchableOpacity
+                          key={asset.id}
+                          style={styles.assetPickerItem}
+                          onPress={() => handleSelectAsset(asset.id, asset.assetNumber)}
+                          activeOpacity={0.7}
+                        >
+                          <Ionicons name="cube" size={16} color={colors.text} />
+                          <Text style={styles.assetPickerItemText}>{formatAssetNumber(asset.assetNumber)}</Text>
+                          <Text style={styles.assetPickerItemSub}>{asset.category}</Text>
+                        </TouchableOpacity>
+                      ))
+                    )}
+                  </View>
+                )}
+              </>
+            )}
+          </View>
 
           {/* Title */}
           <View style={formStyles.inputGroup}>
@@ -279,11 +377,92 @@ export function CreateMaintenanceModal({
 }
 
 const styles = StyleSheet.create({
-  readOnlyText: {
-    fontSize: fontSize.xl,
+  assetSelected: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.base,
+  },
+  assetSelectedText: {
+    flex: 1,
+    fontSize: fontSize.base,
     fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
+  },
+  assetPickerField: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.base,
+  },
+  assetPickerPlaceholder: {
+    flex: 1,
+    fontSize: fontSize.base,
+    fontFamily: fonts.regular,
+    color: colors.textSecondary,
+  },
+  assetPickerDropdown: {
+    marginTop: spacing.xs,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.md,
+    overflow: 'hidden',
+    maxHeight: 200,
+  },
+  assetSearchInput: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    fontSize: fontSize.sm,
+    fontFamily: fonts.regular,
+    color: colors.text,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  assetPickerLoading: {
+    paddingVertical: spacing.lg,
+    alignItems: 'center',
+  },
+  assetPickerEmpty: {
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.md,
+    fontSize: fontSize.sm,
+    fontFamily: fonts.regular,
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  assetPickerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 2,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  assetPickerItemText: {
+    flex: 1,
+    fontSize: fontSize.sm,
+    fontFamily: fonts.bold,
+    color: colors.text,
+    textTransform: 'uppercase',
+  },
+  assetPickerItemSub: {
+    fontSize: fontSize.xs,
+    fontFamily: fonts.regular,
+    color: colors.textSecondary,
+    textTransform: 'capitalize',
   },
   chipContainer: {
     flexDirection: 'row',
@@ -325,11 +504,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.base,
     fontFamily: fonts.regular,
     color: colors.text,
-  },
-  assetRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
   },
   dateFieldPlaceholder: {
     color: colors.textSecondary,

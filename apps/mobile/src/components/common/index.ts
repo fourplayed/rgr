@@ -17,8 +17,6 @@ export { ScreenHeader } from './ScreenHeader';
 export { PillBadge } from './PillBadge';
 export { SteppedProgressOverlay } from './SteppedProgressOverlay';
 export { SegmentedTabs } from './SegmentedTabs';
-export { TutorialSheet } from './TutorialSheet';
-export type { TutorialSheetProps } from './TutorialSheet';
 export { SheetHeader } from './SheetHeader';
 export { SheetModal } from './SheetModal';
 export { ModalShell } from './ModalShell';
