@@ -32,6 +32,7 @@ import { useConsoleQueryLogger } from '../src/hooks/useConsoleQueryLogger';
 import { useConsoleNetworkLogger } from '../src/hooks/useConsoleNetworkLogger';
 import { useConsoleStoreLogger } from '../src/hooks/useConsoleStoreLogger';
 import { DevConsole } from '../src/components/dev/DevConsole';
+import { usePushNotifications } from '../src/hooks/usePushNotifications';
 import { replayQueue, clearQueue } from '../src/utils/offlineScanQueue';
 import { setUser as setErrorReportingUser } from '../src/utils/errorReporting';
 import { colors } from '../src/theme/colors';
@@ -290,6 +291,7 @@ export default function RootLayout() {
 /** Must be rendered inside QueryClientProvider so useQueryClient() resolves. */
 function RealtimeSubscriber() {
   useRealtimeInvalidation();
+  usePushNotifications();
   useConsoleQueryLogger();
   useConsoleNetworkLogger();
   useConsoleStoreLogger();

@@ -8,6 +8,7 @@ export * from './services/supabase/hazards';
 export * from './services/supabase/maintenance';
 export * from './services/supabase/defectReports';
 export * from './services/supabase/admin';
+export * from './services/supabase/pushTokens';
 export * from './services/csrf.service';
 
 // Export all types

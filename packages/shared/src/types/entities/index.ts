@@ -7,3 +7,4 @@ export * from './depot';
 export * from './photo';
 export * from './freightAnalysis';
 export * from './auditLog';
+export * from './pushToken';

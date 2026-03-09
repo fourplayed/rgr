@@ -51,6 +51,10 @@ export interface Asset {
   vin: string | null;
   registrationNumber: string | null;
   registrationExpiry: string | null;
+  dotLookupStatus: string | null;
+  dotLookupAt: string | null;
+  dotLookupFailures: number;
+  registrationOverdue: boolean;
   lastLatitude: number | null;
   lastLongitude: number | null;
   lastLocationAccuracy: number | null;
@@ -82,6 +86,10 @@ export interface AssetRow {
   vin: string | null;
   registration_number: string | null;
   registration_expiry: string | null;
+  dot_lookup_status: string | null;
+  dot_lookup_at: string | null;
+  dot_lookup_failures: number;
+  registration_overdue: boolean;
   last_latitude: number | null;
   last_longitude: number | null;
   last_location_accuracy: number | null;
@@ -121,7 +129,7 @@ export interface CreateAssetInput {
   make?: string | null;
   model?: string | null;
   vin?: string | null;
-  registrationNumber?: string | null;
+  registrationNumber: string;
   registrationExpiry?: string | null;
   assignedDepotId?: string | null;
   assignedDriverId?: string | null;
@@ -162,7 +170,7 @@ export const CreateAssetInputSchema = z.object({
   make: z.string().max(100).nullable().optional(),
   model: z.string().max(100).nullable().optional(),
   vin: z.string().max(50).nullable().optional(),
-  registrationNumber: z.string().max(20).nullable().optional(),
+  registrationNumber: z.string().min(1, 'Registration number is required').max(20),
   registrationExpiry: z.string().nullable().optional(),
   assignedDepotId: z.string().uuid().nullable().optional(),
   assignedDriverId: z.string().uuid().nullable().optional(),
@@ -189,6 +197,10 @@ export type AssetInsertRow = Omit<
   | 'last_scanned_by'
   | 'qr_code_data'
   | 'qr_generated_at'
+  | 'dot_lookup_status'
+  | 'dot_lookup_at'
+  | 'dot_lookup_failures'
+  | 'registration_overdue'
 >;
 export type AssetUpdateRow = Partial<Omit<AssetRow, 'id' | 'created_at'>>;
 
@@ -208,6 +220,10 @@ export function mapRowToAsset(row: AssetRow): Asset {
     vin: row.vin,
     registrationNumber: row.registration_number,
     registrationExpiry: row.registration_expiry,
+    dotLookupStatus: row.dot_lookup_status,
+    dotLookupAt: row.dot_lookup_at,
+    dotLookupFailures: row.dot_lookup_failures,
+    registrationOverdue: row.registration_overdue,
     lastLatitude: row.last_latitude,
     lastLongitude: row.last_longitude,
     lastLocationAccuracy: row.last_location_accuracy,
@@ -235,7 +251,7 @@ export function mapAssetToInsert(input: CreateAssetInput): AssetInsertRow {
     make: input.make ?? null,
     model: input.model ?? null,
     vin: input.vin ?? null,
-    registration_number: input.registrationNumber ?? null,
+    registration_number: input.registrationNumber,
     registration_expiry: input.registrationExpiry ?? null,
     assigned_depot_id: input.assignedDepotId ?? null,
     assigned_driver_id: input.assignedDriverId ?? null,

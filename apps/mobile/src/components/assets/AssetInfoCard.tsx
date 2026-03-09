@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { AssetWithRelations } from '@rgr/shared';
 import type { AssetStatus } from '@rgr/shared';
@@ -24,6 +24,23 @@ interface AssetInfoCardProps {
   onPress?: () => void;
 }
 
+/**
+ * Compute the color for the registration expiry display.
+ * Green: >30 days, Yellow: 7-30 days, Red: <7 days or overdue
+ */
+function getExpiryColor(expiryDate: string | null, isOverdue: boolean): string {
+  if (isOverdue) return colors.error;
+  if (!expiryDate) return colors.textSecondary;
+
+  const now = new Date();
+  const expiry = new Date(expiryDate);
+  const daysUntil = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (daysUntil < 7) return colors.error;
+  if (daysUntil <= 30) return colors.warning;
+  return colors.success;
+}
+
 export function AssetInfoCard({ asset, nextServiceDate, assessment, onPress }: AssetInfoCardProps) {
   const depotLookup = useDepotLookup();
   const depotCode = asset.depotCode?.toLowerCase();
@@ -34,6 +51,12 @@ export function AssetInfoCard({ asset, nextServiceDate, assessment, onPress }: A
     colors.text
   );
   const statusColor = AssetStatusColors[asset.status];
+
+  const expiryColor = useMemo(
+    () => getExpiryColor(asset.registrationExpiry, asset.registrationOverdue),
+    [asset.registrationExpiry, asset.registrationOverdue]
+  );
+  const isDotPending = asset.dotLookupStatus === 'pending';
 
   const cardContent = (
     <View style={[styles.card, { borderLeftWidth: 4, borderLeftColor: statusColor }]}>
@@ -58,10 +81,22 @@ export function AssetInfoCard({ asset, nextServiceDate, assessment, onPress }: A
       <CollapsibleSection title="Details" variant="flat" defaultExpanded={false}>
         <View style={styles.infoGrid}>
           <InfoRow label="Registration" value={asset.registrationNumber || 'Unknown'} />
-          <InfoRow
-            label="Registration Expiry"
-            value={asset.registrationExpiry ? formatDate(asset.registrationExpiry) : 'Unknown'}
-          />
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Registration Expiry</Text>
+            <View style={styles.expiryValueRow}>
+              {isDotPending && (
+                <ActivityIndicator size="small" color={colors.textSecondary} />
+              )}
+              {asset.registrationOverdue && (
+                <View style={styles.overdueBadge}>
+                  <Text style={styles.overdueBadgeText}>OVERDUE</Text>
+                </View>
+              )}
+              <Text style={[styles.infoValue, { color: expiryColor }]}>
+                {asset.registrationExpiry ? formatDate(asset.registrationExpiry) : 'Unknown'}
+              </Text>
+            </View>
+          </View>
           <InfoRow
             label="Last Scanned"
             value={
@@ -164,5 +199,23 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bold,
     color: colors.textSecondary,
     textTransform: 'uppercase',
+  },
+  expiryValueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  overdueBadge: {
+    backgroundColor: colors.error,
+    borderRadius: borderRadius.sm,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 2,
+  },
+  overdueBadgeText: {
+    fontSize: 9,
+    fontFamily: fonts.bold,
+    color: colors.textInverse,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 });

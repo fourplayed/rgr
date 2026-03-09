@@ -42,7 +42,14 @@
           "locationWhenInUsePermission": "Location is captured during asset scans"
         }
       ],
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-notifications",
+        {
+          "icon": "./src/assets/icon.png",
+          "color": "#3B3BFF"
+        }
+      ]
     ]
   }
 }

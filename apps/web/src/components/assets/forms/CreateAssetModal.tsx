@@ -11,6 +11,26 @@ import { AssetCategory, AssetCategoryLabels } from '@rgr/shared';
 import { useCreateAsset, useDepots } from '@/hooks/useAssetData';
 import type { CreateAssetInput } from '@rgr/shared';
 
+/** Fire-and-forget DOT lookup trigger via edge function */
+async function triggerWebRegoLookup(assetId: string, registrationNumber: string): Promise<void> {
+  try {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    if (!supabaseUrl || !registrationNumber) return;
+    // Use the anon key for auth — the edge function accepts authenticated users
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    await fetch(`${supabaseUrl}/functions/v1/rego-lookup`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${supabaseAnonKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ registrationNumber, assetId }),
+    });
+  } catch {
+    // Silently ignore — this is fire-and-forget
+  }
+}
+
 interface CreateAssetModalProps {
   isDark: boolean;
   onClose: () => void;
@@ -28,7 +48,7 @@ export const CreateAssetModal = React.memo<CreateAssetModalProps>(({ isDark, onC
     make: null,
     model: null,
     yearManufactured: null,
-    registrationNumber: null,
+    registrationNumber: '',
     registrationExpiry: null,
     assignedDepotId: null,
     notes: null,
@@ -39,7 +59,11 @@ export const CreateAssetModal = React.memo<CreateAssetModalProps>(({ isDark, onC
     setError(null);
 
     try {
-      await createAsset.mutateAsync(form);
+      const created = await createAsset.mutateAsync(form);
+      // Fire-and-forget: trigger DOT rego lookup for the new asset
+      if (created?.id) {
+        triggerWebRegoLookup(created.id, form.registrationNumber).catch(() => {});
+      }
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create asset');
@@ -240,12 +264,14 @@ export const CreateAssetModal = React.memo<CreateAssetModalProps>(({ isDark, onC
                 className={`block text-xs font-semibold uppercase tracking-wider mb-1.5 ${labelColor}`}
                 style={{ fontFamily: "'Lato', sans-serif" }}
               >
-                Registration #
+                Registration # *
               </label>
               <input
                 type="text"
-                value={form.registrationNumber ?? ''}
-                onChange={(e) => updateField('registrationNumber', e.target.value || null)}
+                required
+                value={form.registrationNumber}
+                onChange={(e) => updateField('registrationNumber', e.target.value.toUpperCase())}
+                placeholder="e.g. 1ABC234"
                 className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors"
                 style={inputStyle}
               />
@@ -348,7 +374,7 @@ export const CreateAssetModal = React.memo<CreateAssetModalProps>(({ isDark, onC
           <button
             type="submit"
             form="create-asset-form"
-            disabled={createAsset.isPending || !form.assetNumber}
+            disabled={createAsset.isPending || !form.assetNumber || !form.registrationNumber}
             onClick={handleSubmit}
             className="px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-all duration-200 disabled:opacity-40"
             style={{

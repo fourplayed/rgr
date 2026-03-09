@@ -184,6 +184,9 @@ export type Database = {
           created_at: string;
           deleted_at: string | null;
           description: string | null;
+          dot_lookup_at: string | null;
+          dot_lookup_failures: number;
+          dot_lookup_status: string | null;
           id: string;
           last_latitude: number | null;
           last_location_accuracy: number | null;
@@ -197,6 +200,7 @@ export type Database = {
           qr_generated_at: string | null;
           registration_expiry: string | null;
           registration_number: string | null;
+          registration_overdue: boolean;
           status: Database['public']['Enums']['asset_status'];
           subtype: string | null;
           updated_at: string;
@@ -211,6 +215,9 @@ export type Database = {
           created_at?: string;
           deleted_at?: string | null;
           description?: string | null;
+          dot_lookup_at?: string | null;
+          dot_lookup_failures?: number;
+          dot_lookup_status?: string | null;
           id?: string;
           last_latitude?: number | null;
           last_location_accuracy?: number | null;
@@ -224,6 +231,7 @@ export type Database = {
           qr_generated_at?: string | null;
           registration_expiry?: string | null;
           registration_number?: string | null;
+          registration_overdue?: boolean;
           status?: Database['public']['Enums']['asset_status'];
           subtype?: string | null;
           updated_at?: string;
@@ -238,6 +246,9 @@ export type Database = {
           created_at?: string;
           deleted_at?: string | null;
           description?: string | null;
+          dot_lookup_at?: string | null;
+          dot_lookup_failures?: number;
+          dot_lookup_status?: string | null;
           id?: string;
           last_latitude?: number | null;
           last_location_accuracy?: number | null;
@@ -251,6 +262,7 @@ export type Database = {
           qr_generated_at?: string | null;
           registration_expiry?: string | null;
           registration_number?: string | null;
+          registration_overdue?: boolean;
           status?: Database['public']['Enums']['asset_status'];
           subtype?: string | null;
           updated_at?: string;
@@ -909,6 +921,118 @@ export type Database = {
           updated_at?: string;
         };
         Relationships: [];
+      };
+      notification_log: {
+        Row: {
+          asset_id: string;
+          created_at: string;
+          error_message: string | null;
+          id: string;
+          notification_type: string;
+          sent_at: string | null;
+          status: string;
+          target_date: string;
+        };
+        Insert: {
+          asset_id: string;
+          created_at?: string;
+          error_message?: string | null;
+          id?: string;
+          notification_type: string;
+          sent_at?: string | null;
+          status?: string;
+          target_date: string;
+        };
+        Update: {
+          asset_id?: string;
+          created_at?: string;
+          error_message?: string | null;
+          id?: string;
+          notification_type?: string;
+          sent_at?: string | null;
+          status?: string;
+          target_date?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'notification_log_asset_id_fkey';
+            columns: ['asset_id'];
+            isOneToOne: false;
+            referencedRelation: 'assets';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      push_tokens: {
+        Row: {
+          created_at: string;
+          device_id: string;
+          id: string;
+          platform: string;
+          token: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          device_id: string;
+          id?: string;
+          platform: string;
+          token: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          device_id?: string;
+          id?: string;
+          platform?: string;
+          token?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      rego_lookup_log: {
+        Row: {
+          asset_id: string;
+          created_at: string;
+          error_message: string | null;
+          expiry_date: string | null;
+          id: string;
+          raw_response: string | null;
+          registration_number: string;
+          status: string;
+        };
+        Insert: {
+          asset_id: string;
+          created_at?: string;
+          error_message?: string | null;
+          expiry_date?: string | null;
+          id?: string;
+          raw_response?: string | null;
+          registration_number: string;
+          status: string;
+        };
+        Update: {
+          asset_id?: string;
+          created_at?: string;
+          error_message?: string | null;
+          expiry_date?: string | null;
+          id?: string;
+          raw_response?: string | null;
+          registration_number?: string;
+          status?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'rego_lookup_log_asset_id_fkey';
+            columns: ['asset_id'];
+            isOneToOne: false;
+            referencedRelation: 'assets';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       rate_limits: {
         Row: {
