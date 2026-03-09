@@ -1,12 +1,12 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView, Animated, Pressable, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView, Animated, Pressable, Platform, Alert } from 'react-native';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import type { MaintenancePriority, UpdateMaintenanceInput } from '@rgr/shared';
 import { formatRelativeTime, formatAssetNumber, MaintenancePriorityLabels } from '@rgr/shared';
-import { LoadingDots, AlertSheet, ConfirmSheet, SheetModal } from '../common';
+import { LoadingDots, AlertSheet, SheetModal } from '../common';
 import { SheetHeader } from '../common/SheetHeader';
 import { Button } from '../common/Button';
 import { FilterChip } from '../common/FilterChip';
@@ -84,7 +84,6 @@ export function MaintenanceDetailModal({
     if (visible) resetScatter();
   }, [visible, resetScatter]);
 
-  const [cancelConfirmVisible, setCancelConfirmVisible] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
   const [notes, setNotes] = useState('');
 
@@ -104,7 +103,6 @@ export function MaintenanceDetailModal({
     setNotes('');
     setIsEditing(false);
     setShowDatePicker(false);
-    setCancelConfirmVisible(false);
   }, [maintenanceId, visible]);
 
   const handleEnterEditMode = useCallback(() => {
@@ -200,30 +198,32 @@ export function MaintenanceDetailModal({
     }
   }, [maintenanceId, updateMaintenanceStatus, user?.id]);
 
-  const handleCancelPress = useCallback(() => {
+  const handleCancelMaintenance = useCallback(() => {
     if (!maintenanceId) return;
-    setCancelConfirmVisible(true);
-  }, [maintenanceId]);
-
-  const handleCancelConfirm = useCallback(async () => {
-    if (!maintenanceId) return;
-    try {
-      await cancelTask(maintenanceId);
-      setCancelConfirmVisible(false);
-      scatter(7, () => onClose());
-    } catch (err: unknown) {
-      setCancelConfirmVisible(false);
-      setAlertSheet({
-        visible: true,
-        title: 'Error',
-        message: err instanceof Error ? err.message : 'Failed to cancel',
-      });
-    }
+    Alert.alert(
+      'Cancel Maintenance',
+      'Are you sure you want to cancel this maintenance task? This will permanently delete it and any linked defect reports.',
+      [
+        { text: 'No', style: 'cancel' },
+        {
+          text: 'Yes, Cancel',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await cancelTask(maintenanceId);
+              scatter(7, () => onClose());
+            } catch (err: unknown) {
+              setAlertSheet({
+                visible: true,
+                title: 'Error',
+                message: err instanceof Error ? err.message : 'Failed to cancel',
+              });
+            }
+          },
+        },
+      ],
+    );
   }, [maintenanceId, cancelTask, onClose, scatter]);
-
-  const handleCancelCancel = useCallback(() => {
-    setCancelConfirmVisible(false);
-  }, []);
 
   const handleSaveNotes = useCallback(async () => {
     if (!maintenanceId) return;
@@ -291,7 +291,7 @@ export function MaintenanceDetailModal({
         <View style={styles.actionsContainer}>
           <Button
             variant="danger"
-            onPress={handleCancelPress}
+            onPress={handleCancelMaintenance}
             disabled={updateStatusMutation.isPending || cancelMutation.isPending || isScattering}
             flex
           >
@@ -689,19 +689,6 @@ export function MaintenanceDetailModal({
           </ScrollView>
         )}
       </View>
-
-      {/* Cancel confirmation */}
-      <ConfirmSheet
-        visible={cancelConfirmVisible}
-        type="danger"
-        title="Cancel Maintenance"
-        message="Are you sure you want to cancel this maintenance task? This will permanently delete it and any linked defect reports."
-        confirmLabel="Yes, Cancel"
-        cancelLabel="No"
-        onConfirm={handleCancelConfirm}
-        onCancel={handleCancelCancel}
-        isLoading={cancelMutation.isPending}
-      />
 
       {/* Alert Sheet for errors */}
       <AlertSheet

@@ -54,7 +54,8 @@ export function useDefectReportList(filters: DefectFilters = {}) {
         assetId?: string;
         limit: number;
         cursor?: DefectCursor;
-      } = { limit: 20 };
+        staleCutoffDays?: number;
+      } = { limit: 20, staleCutoffDays: 7 };
 
       if (filters.status) params.status = filters.status;
       if (filters.assetId) params.assetId = filters.assetId;

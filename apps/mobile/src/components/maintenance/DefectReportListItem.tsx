@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { DefectReportListItem as DefectReportListItemType, DefectStatus } from '@rgr/shared';
@@ -26,11 +26,16 @@ interface DefectReportListItemProps {
 
 function DefectReportListItemComponent({ defect, onPress }: DefectReportListItemProps) {
   const { icon, color } = DEFECT_STATUS_CONFIG[defect.status] ?? DEFECT_STATUS_CONFIG.reported;
+  const handlePress = useCallback(() => { onPress(defect); }, [onPress, defect]);
+  const containerStyle = useMemo(
+    () => [cardStyles.container, { borderLeftColor: color }],
+    [color]
+  );
 
   return (
     <TouchableOpacity
-      style={[cardStyles.container, { borderLeftColor: color }]}
-      onPress={() => onPress(defect)}
+      style={containerStyle}
+      onPress={handlePress}
       activeOpacity={0.7}
       accessibilityRole="button"
       accessibilityLabel={`Defect report ${defect.title}, status ${defect.status}`}

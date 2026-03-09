@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type {
@@ -45,11 +45,16 @@ interface MaintenanceListItemProps {
 
 function MaintenanceListItemComponent({ maintenance, onPress }: MaintenanceListItemProps) {
   const { icon, color } = getMaintenanceVisualConfig(maintenance.status, maintenance.dueDate);
+  const handlePress = useCallback(() => { onPress(maintenance); }, [onPress, maintenance]);
+  const containerStyle = useMemo(
+    () => [cardStyles.container, { borderLeftColor: color }],
+    [color]
+  );
 
   return (
     <TouchableOpacity
-      style={[cardStyles.container, { borderLeftColor: color }]}
-      onPress={() => onPress(maintenance)}
+      style={containerStyle}
+      onPress={handlePress}
       activeOpacity={0.7}
       accessibilityRole="button"
       accessibilityLabel={`Maintenance ${maintenance.title}, status ${maintenance.status}`}

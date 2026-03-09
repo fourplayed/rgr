@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import type { Depot } from '@rgr/shared';
 import { colors } from '../../theme/colors';
@@ -13,16 +13,19 @@ interface DepotListItemProps {
 }
 
 function DepotListItemInner({ depot, onPress, onLongPress }: DepotListItemProps) {
+  const handlePress = useCallback(() => { onPress(depot); }, [onPress, depot]);
+  const handleLongPress = useCallback(() => { onLongPress?.(depot); }, [onLongPress, depot]);
+  const borderColor = depot.isActive ? colors.success : colors.textSecondary;
+  const containerStyle = useMemo(
+    () => [styles.container, { borderLeftColor: borderColor }],
+    [borderColor]
+  );
+
   return (
     <TouchableOpacity
-      style={[
-        styles.container,
-        {
-          borderLeftColor: depot.isActive ? colors.success : colors.textSecondary,
-        },
-      ]}
-      onPress={() => onPress(depot)}
-      onLongPress={() => onLongPress?.(depot)}
+      style={containerStyle}
+      onPress={handlePress}
+      onLongPress={handleLongPress}
       activeOpacity={0.7}
       accessibilityRole="button"
       accessibilityLabel={`${depot.name}, ${depot.isActive ? 'active' : 'inactive'}`}

@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import type { Profile } from '@rgr/shared';
 import { UserRoleLabels } from '@rgr/shared';
@@ -15,15 +15,17 @@ interface UserListItemProps {
 }
 
 function UserListItemInner({ user, onPress }: UserListItemProps) {
+  const handlePress = useCallback(() => { onPress(user); }, [onPress, user]);
+  const borderColor = getUserRoleColor(user.role) ?? colors.border;
+  const containerStyle = useMemo(
+    () => [styles.container, { borderLeftColor: borderColor }],
+    [borderColor]
+  );
+
   return (
     <TouchableOpacity
-      style={[
-        styles.container,
-        {
-          borderLeftColor: getUserRoleColor(user.role) ?? colors.border,
-        },
-      ]}
-      onPress={() => onPress(user)}
+      style={containerStyle}
+      onPress={handlePress}
       activeOpacity={0.7}
       accessibilityRole="button"
       accessibilityLabel={`${user.fullName}, ${UserRoleLabels[user.role]}, ${user.isActive ? 'active' : 'inactive'}`}

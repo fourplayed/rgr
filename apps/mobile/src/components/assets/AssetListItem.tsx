@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { AssetWithRelations, AssetStatus } from '@rgr/shared';
@@ -45,11 +45,16 @@ function AssetListItemComponent({ asset, onPress, depotLookup }: AssetListItemPr
     : null;
 
   const statusIcon = ASSET_STATUS_ICONS[asset.status] ?? 'ellipse-outline';
+  const handlePress = useCallback(() => { onPress(asset); }, [onPress, asset]);
+  const containerStyle = useMemo(
+    () => [cardStyles.container, { borderLeftColor: statusColor }],
+    [statusColor]
+  );
 
   return (
     <TouchableOpacity
-      style={[cardStyles.container, { borderLeftColor: statusColor }]}
-      onPress={() => onPress(asset)}
+      style={containerStyle}
+      onPress={handlePress}
       activeOpacity={0.7}
       accessibilityRole="button"
       accessibilityLabel={`Asset ${formatAssetNumber(asset.assetNumber)}, status ${getStatusLabel(asset.status)}`}

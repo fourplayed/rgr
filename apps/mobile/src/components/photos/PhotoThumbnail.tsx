@@ -1,4 +1,4 @@
-import React, { memo, useCallback } from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,6 +20,16 @@ function PhotoThumbnailComponent({ photo, size, onPress, resolvedUrl }: PhotoThu
     onPress(photo);
   }, [photo, onPress]);
 
+  const isDefect = photo.photoType === 'defect';
+  const baseStyle = useMemo(
+    () => [styles.container, { width: size, height: size }, isDefect && styles.defectBorder],
+    [size, isDefect]
+  );
+  const placeholderStyle = useMemo(
+    () => [styles.container, styles.placeholder, { width: size, height: size }, isDefect && styles.defectBorder],
+    [size, isDefect]
+  );
+
   // Use thumbnail if available, otherwise fall back to full image
   const storagePath = photo.thumbnailPath || photo.storagePath;
   const {
@@ -38,12 +48,7 @@ function PhotoThumbnailComponent({ photo, size, onPress, resolvedUrl }: PhotoThu
   if (isLoading || !imageUrl) {
     return (
       <TouchableOpacity
-        style={[
-          styles.container,
-          styles.placeholder,
-          { width: size, height: size },
-          photo.photoType === 'defect' && styles.defectBorder,
-        ]}
+        style={placeholderStyle}
         onPress={handlePress}
         activeOpacity={0.8}
         accessibilityRole="image"
@@ -56,11 +61,7 @@ function PhotoThumbnailComponent({ photo, size, onPress, resolvedUrl }: PhotoThu
 
   return (
     <TouchableOpacity
-      style={[
-        styles.container,
-        { width: size, height: size },
-        photo.photoType === 'defect' && styles.defectBorder,
-      ]}
+      style={baseStyle}
       onPress={handlePress}
       activeOpacity={0.8}
       accessibilityRole="image"

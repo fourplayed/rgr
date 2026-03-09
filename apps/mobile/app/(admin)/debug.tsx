@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -233,6 +233,10 @@ export default function DebugScreen() {
     storedSessionExists: false,
   });
 
+  // Guard async setState calls against unmount
+  const isMountedRef = useRef(true);
+  useEffect(() => { return () => { isMountedRef.current = false; }; }, []);
+
   // Tick for GPS age display (every 10s)
   const [, tick] = useState(0);
   useEffect(() => {
@@ -243,6 +247,7 @@ export default function DebugScreen() {
   // One-shot permission check (no side effects unlike useLocation)
   useEffect(() => {
     Location.getForegroundPermissionsAsync().then(({ status }) => {
+      if (!isMountedRef.current) return;
       setHasPermission(status === 'granted');
     });
   }, []);
@@ -260,6 +265,7 @@ export default function DebugScreen() {
     try {
       // Check local storage
       const storedSession = await getStoredSession();
+      if (!isMountedRef.current) return;
       const localProfile = user;
 
       setDebugInfo((prev) => ({
@@ -273,9 +279,11 @@ export default function DebugScreen() {
       try {
         const supabase = getSupabaseClient();
         const { data: sessionData } = await supabase.auth.getSession();
+        if (!isMountedRef.current) return;
 
         if (sessionData?.session) {
           const remoteResult = await fetchProfile(user.id);
+          if (!isMountedRef.current) return;
 
           if (remoteResult.success) {
             const remoteProfile = remoteResult.data;
@@ -306,6 +314,7 @@ export default function DebugScreen() {
           }));
         }
       } catch {
+        if (!isMountedRef.current) return;
         setDebugInfo((prev) => ({
           ...prev,
           remoteConnectionStatus: 'disconnected',
@@ -313,6 +322,7 @@ export default function DebugScreen() {
         }));
       }
     } catch {
+      if (!isMountedRef.current) return;
       setDebugInfo((prev) => ({
         ...prev,
         localConnectionStatus: 'disconnected',

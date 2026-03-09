@@ -38,6 +38,8 @@ export interface ListMaintenanceParams {
   limit?: number;
   /** Composite cursor for keyset pagination — pass both values from the last item */
   cursor?: { createdAt: string; id: string };
+  /** Hide completed tasks where completed_at is older than this many days */
+  staleCutoffDays?: number;
 }
 
 export interface MaintenanceStats {
@@ -92,7 +94,7 @@ function isValidTransition(from: MaintenanceStatus, to: MaintenanceStatus): bool
 export async function listMaintenance(
   params: ListMaintenanceParams = {}
 ): Promise<ServiceResult<{ data: MaintenanceListItem[]; hasMore: boolean }>> {
-  const { status, priority, assetId, limit = 20, cursor } = params;
+  const { status, priority, assetId, limit = 20, cursor, staleCutoffDays } = params;
 
   const supabase = getSupabaseClient();
 
@@ -133,6 +135,12 @@ export async function listMaintenance(
     query = query.or(
       `created_at.lt.${cursor.createdAt},and(created_at.eq.${cursor.createdAt},id.lt.${cursor.id})`
     );
+  }
+
+  // Hide completed tasks older than the cutoff to reduce list clutter
+  if (staleCutoffDays !== undefined) {
+    const cutoff = new Date(Date.now() - staleCutoffDays * 24 * 60 * 60 * 1000).toISOString();
+    query = query.or(`status.neq.completed,completed_at.gt.${cutoff}`);
   }
 
   const { data, error } = await query;

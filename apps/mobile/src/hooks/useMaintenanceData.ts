@@ -60,7 +60,8 @@ export function useMaintenanceList(filters: MaintenanceFilters = {}) {
         assetId?: string;
         limit: number;
         cursor?: MaintenanceCursor;
-      } = { limit: 20 };
+        staleCutoffDays?: number;
+      } = { limit: 20, staleCutoffDays: 7 };
 
       if (filters.status) params.status = filters.status;
       if (filters.priority) params.priority = filters.priority;

@@ -20,6 +20,7 @@ import {
   CollapsibleSection,
   PillBadge,
 } from '../src/components/common';
+import { useConsoleStore } from '../src/store/consoleStore';
 import { useSheetBottomPadding } from '../src/hooks/useSheetBottomPadding';
 import { EditProfileModal } from '../src/components/settings/EditProfileModal';
 import { NotificationsModal } from '../src/components/settings/NotificationsModal';
@@ -65,7 +66,8 @@ export default function SettingsScreen() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSecurity, setShowSecurity] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [consoleEnabled, setConsoleEnabled] = useState(false);
+  const consoleEnabled = useConsoleStore((s) => s.enabled);
+  const setConsoleEnabled = useConsoleStore((s) => s.setEnabled);
 
   const handleLogoutConfirm = async () => {
     setShowLogoutConfirm(false);
@@ -160,6 +162,13 @@ export default function SettingsScreen() {
                     title="Depot Management"
                     subtitle="Create, edit, and remove depots"
                     onPress={() => router.push('/(admin)/depots')}
+                  />
+                  <View style={styles.divider} />
+                  <SettingsItem
+                    icon="stats-chart"
+                    title="Data Dashboard"
+                    subtitle="Overview stats and data management"
+                    onPress={() => router.push('/(admin)/data-dashboard')}
                   />
                   <View style={styles.divider} />
                   <SettingsItem

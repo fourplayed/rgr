@@ -513,6 +513,9 @@ export default function HomeScreen() {
           ListHeaderComponent={listHeader}
           renderItem={renderActivityItem}
           contentContainerStyle={styles.listContent}
+          windowSize={3}
+          maxToRenderPerBatch={5}
+          removeClippedSubviews
           refreshControl={
             <RefreshControl
               refreshing={!!isRefetching}

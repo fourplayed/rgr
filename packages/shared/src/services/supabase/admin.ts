@@ -2,6 +2,12 @@ import { getSupabaseClient, getSupabaseConfig } from './client';
 import type { ServiceResult, PaginatedResult } from '../../types';
 import type { UserRole } from '../../types/enums';
 import type { AssetStatus } from '../../types/enums';
+import type { MaintenanceStatus } from '../../types/enums/MaintenanceEnums';
+import type { DefectStatus } from '../../types/enums/DefectEnums';
+import { getFleetStatistics } from './fleet';
+import { getMaintenanceStats } from './maintenance';
+import { getDefectReportStats } from './defectReports';
+import { getTotalScanCount } from './assets';
 import type {
   Profile,
   ProfileRow,
@@ -440,5 +446,385 @@ export async function adminCreateUser(input: CreateUserInput): Promise<
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to create user';
     return { success: false, data: null, error: message };
+  }
+}
+
+// ── Admin Data Dashboard ──
+
+export interface AdminDataStats {
+  totalAssets: number;
+  activeAssets: number;
+  totalMaintenance: number;
+  scheduledMaintenance: number;
+  totalDefects: number;
+  reportedDefects: number;
+  totalPhotos: number;
+  totalScans: number;
+}
+
+export async function getAdminDataStats(): Promise<ServiceResult<AdminDataStats>> {
+  try {
+    const supabase = getSupabaseClient();
+
+    const [fleetResult, maintResult, defectResult, scanResult, photoResult] = await Promise.all([
+      getFleetStatistics(),
+      getMaintenanceStats(),
+      getDefectReportStats(),
+      getTotalScanCount(),
+      supabase.from('photos').select('id', { count: 'exact', head: true }),
+    ]);
+
+    return {
+      success: true,
+      data: {
+        totalAssets: fleetResult.success ? fleetResult.data.totalAssets : 0,
+        activeAssets: fleetResult.success ? fleetResult.data.activeAssets : 0,
+        totalMaintenance: maintResult.success ? maintResult.data.total : 0,
+        scheduledMaintenance: maintResult.success ? maintResult.data.scheduled : 0,
+        totalDefects: defectResult.success ? defectResult.data.total : 0,
+        reportedDefects: defectResult.success ? defectResult.data.reported : 0,
+        totalPhotos: photoResult.count ?? 0,
+        totalScans: scanResult.success ? scanResult.data : 0,
+      },
+      error: null,
+    };
+  } catch (err) {
+    return { success: false, data: null, error: 'Failed to load admin stats' };
+  }
+}
+
+// ── Admin List Maintenance ──
+
+export interface AdminListMaintenanceParams {
+  page?: number;
+  pageSize?: number;
+  status?: MaintenanceStatus[];
+  search?: string;
+}
+
+export interface AdminMaintenanceListItem {
+  id: string;
+  assetId: string;
+  title: string;
+  description: string | null;
+  priority: string;
+  status: string;
+  maintenanceType: string | null;
+  scheduledDate: string | null;
+  dueDate: string | null;
+  createdAt: string;
+  reporterName: string | null;
+  assetNumber: string | null;
+}
+
+export async function adminListMaintenance(
+  params: AdminListMaintenanceParams = {}
+): Promise<ServiceResult<PaginatedResult<AdminMaintenanceListItem>>> {
+  const { page = 1, pageSize = 30, status, search } = params;
+
+  try {
+    const supabase = getSupabaseClient();
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    let query = supabase
+      .from('maintenance_records')
+      .select(
+        `
+        id, asset_id, title, description, priority, status, maintenance_type,
+        scheduled_date, due_date, created_at,
+        reporter:reported_by(full_name),
+        asset:asset_id(asset_number)
+      `,
+        { count: 'exact' }
+      );
+
+    if (status && status.length > 0) {
+      query = query.in('status', status);
+    }
+
+    if (search) {
+      const safeSearch = search.replace(/[%_\\,().]/g, (c) => `\\${c}`);
+      query = query.ilike('title', `%${safeSearch}%`);
+    }
+
+    query = query.order('created_at', { ascending: false }).range(from, to);
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      return { success: false, data: null, error: error.message };
+    }
+
+    const total = count ?? 0;
+    const items: AdminMaintenanceListItem[] = (data ?? []).map((row: any) => ({
+      id: row.id,
+      assetId: row.asset_id,
+      title: row.title,
+      description: row.description,
+      priority: row.priority,
+      status: row.status,
+      maintenanceType: row.maintenance_type,
+      scheduledDate: row.scheduled_date,
+      dueDate: row.due_date,
+      createdAt: row.created_at,
+      reporterName: row.reporter?.full_name ?? null,
+      assetNumber: row.asset?.asset_number ?? null,
+    }));
+
+    return {
+      success: true,
+      data: {
+        data: items,
+        total,
+        page,
+        pageSize,
+        totalPages: Math.ceil(total / pageSize),
+      },
+      error: null,
+    };
+  } catch (err) {
+    return { success: false, data: null, error: 'Failed to load maintenance records' };
+  }
+}
+
+// ── Admin List Defect Reports ──
+
+export interface AdminListDefectReportsParams {
+  page?: number;
+  pageSize?: number;
+  status?: DefectStatus[];
+  search?: string;
+}
+
+export interface AdminDefectListItem {
+  id: string;
+  assetId: string;
+  title: string;
+  description: string | null;
+  status: string;
+  maintenanceRecordId: string | null;
+  createdAt: string;
+  reporterName: string | null;
+  assetNumber: string | null;
+}
+
+export async function adminListDefectReports(
+  params: AdminListDefectReportsParams = {}
+): Promise<ServiceResult<PaginatedResult<AdminDefectListItem>>> {
+  const { page = 1, pageSize = 30, status, search } = params;
+
+  try {
+    const supabase = getSupabaseClient();
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    let query = supabase
+      .from('defect_reports')
+      .select(
+        `
+        id, asset_id, title, description, status, maintenance_record_id, created_at,
+        reporter:reported_by(full_name),
+        asset:asset_id(asset_number)
+      `,
+        { count: 'exact' }
+      );
+
+    if (status && status.length > 0) {
+      query = query.in('status', status);
+    }
+
+    if (search) {
+      const safeSearch = search.replace(/[%_\\,().]/g, (c) => `\\${c}`);
+      query = query.ilike('title', `%${safeSearch}%`);
+    }
+
+    query = query.order('created_at', { ascending: false }).range(from, to);
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      return { success: false, data: null, error: error.message };
+    }
+
+    const total = count ?? 0;
+    const items: AdminDefectListItem[] = (data ?? []).map((row: any) => ({
+      id: row.id,
+      assetId: row.asset_id,
+      title: row.title,
+      description: row.description,
+      status: row.status,
+      maintenanceRecordId: row.maintenance_record_id,
+      createdAt: row.created_at,
+      reporterName: row.reporter?.full_name ?? null,
+      assetNumber: row.asset?.asset_number ?? null,
+    }));
+
+    return {
+      success: true,
+      data: {
+        data: items,
+        total,
+        page,
+        pageSize,
+        totalPages: Math.ceil(total / pageSize),
+      },
+      error: null,
+    };
+  } catch (err) {
+    return { success: false, data: null, error: 'Failed to load defect reports' };
+  }
+}
+
+// ── Admin List Photos ──
+
+export interface AdminListPhotosParams {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+}
+
+export interface AdminPhotoListItem {
+  id: string;
+  storagePath: string;
+  thumbnailPath: string | null;
+  photoType: string;
+  createdAt: string;
+  assetId: string;
+  assetNumber: string | null;
+}
+
+export async function adminListPhotos(
+  params: AdminListPhotosParams = {}
+): Promise<ServiceResult<PaginatedResult<AdminPhotoListItem>>> {
+  const { page = 1, pageSize = 30, search } = params;
+
+  try {
+    const supabase = getSupabaseClient();
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    let query = supabase
+      .from('photos')
+      .select(
+        `
+        id, storage_path, thumbnail_path, photo_type, created_at, asset_id,
+        asset:asset_id(asset_number)
+      `,
+        { count: 'exact' }
+      );
+
+    if (search) {
+      const safeSearch = search.replace(/[%_\\,().]/g, (c) => `\\${c}`);
+      query = query.ilike('asset.asset_number' as any, `%${safeSearch}%`);
+    }
+
+    query = query.order('created_at', { ascending: false }).range(from, to);
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      return { success: false, data: null, error: error.message };
+    }
+
+    const total = count ?? 0;
+    const items: AdminPhotoListItem[] = (data ?? []).map((row: any) => ({
+      id: row.id,
+      storagePath: row.storage_path,
+      thumbnailPath: row.thumbnail_path,
+      photoType: row.photo_type,
+      createdAt: row.created_at,
+      assetId: row.asset_id,
+      assetNumber: row.asset?.asset_number ?? null,
+    }));
+
+    return {
+      success: true,
+      data: {
+        data: items,
+        total,
+        page,
+        pageSize,
+        totalPages: Math.ceil(total / pageSize),
+      },
+      error: null,
+    };
+  } catch (err) {
+    return { success: false, data: null, error: 'Failed to load photos' };
+  }
+}
+
+// ── Bulk Cancel Maintenance Tasks ──
+
+export async function bulkCancelMaintenanceTasks(
+  ids: string[]
+): Promise<ServiceResult<{ deleted: number; failed: string[] }>> {
+  if (ids.length === 0) {
+    return { success: true, data: { deleted: 0, failed: [] }, error: null };
+  }
+
+  try {
+    const supabase = getSupabaseClient();
+    const failed: string[] = [];
+    let deleted = 0;
+
+    const results = await Promise.allSettled(
+      ids.map(async (id) => {
+        const { error } = await supabase.rpc('cancel_maintenance_task', {
+          p_maintenance_id: id,
+        });
+        if (error) throw new Error(error.message);
+        return id;
+      })
+    );
+
+    for (let i = 0; i < results.length; i++) {
+      const result = results[i];
+      if (result && result.status === 'fulfilled') {
+        deleted++;
+      } else {
+        const id = ids[i];
+        if (id) failed.push(id);
+      }
+    }
+
+    return { success: true, data: { deleted, failed }, error: null };
+  } catch (err) {
+    return { success: false, data: null, error: 'Failed to cancel maintenance tasks' };
+  }
+}
+
+// ── Bulk Delete Defect Reports ──
+
+export async function bulkDeleteDefectReports(
+  ids: string[]
+): Promise<ServiceResult<{ deleted: number; failed: string[] }>> {
+  if (ids.length === 0) {
+    return { success: true, data: { deleted: 0, failed: [] }, error: null };
+  }
+
+  try {
+    const supabase = getSupabaseClient();
+
+    const { data, error } = await supabase
+      .from('defect_reports')
+      .delete()
+      .in('id', ids)
+      .select('id');
+
+    if (error) {
+      return { success: false, data: null, error: error.message };
+    }
+
+    const deletedIds = new Set((data ?? []).map((r: any) => r.id));
+    const failed = ids.filter((id) => !deletedIds.has(id));
+
+    return {
+      success: true,
+      data: { deleted: deletedIds.size, failed },
+      error: null,
+    };
+  } catch (err) {
+    return { success: false, data: null, error: 'Failed to delete defect reports' };
   }
 }

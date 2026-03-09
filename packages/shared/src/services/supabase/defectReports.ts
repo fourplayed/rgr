@@ -29,6 +29,8 @@ export interface ListDefectReportsParams {
   limit?: number;
   /** Composite cursor for keyset pagination — pass both values from the last item */
   cursor?: { createdAt: string; id: string };
+  /** Hide resolved reports where resolved_at is older than this many days */
+  staleCutoffDays?: number;
 }
 
 export interface DefectReportStats {
@@ -57,7 +59,7 @@ function isValidDefectTransition(from: DefectStatus, to: DefectStatus): boolean 
 export async function listDefectReports(
   params: ListDefectReportsParams = {}
 ): Promise<ServiceResult<{ data: DefectReportListItem[]; hasMore: boolean }>> {
-  const { status, assetId, limit = 20, cursor } = params;
+  const { status, assetId, limit = 20, cursor, staleCutoffDays } = params;
 
   const supabase = getSupabaseClient();
 
@@ -92,6 +94,12 @@ export async function listDefectReports(
     query = query.or(
       `created_at.lt.${cursor.createdAt},and(created_at.eq.${cursor.createdAt},id.lt.${cursor.id})`
     );
+  }
+
+  // Hide resolved reports older than the cutoff to reduce list clutter
+  if (staleCutoffDays !== undefined) {
+    const cutoff = new Date(Date.now() - staleCutoffDays * 24 * 60 * 60 * 1000).toISOString();
+    query = query.or(`status.neq.resolved,resolved_at.gt.${cutoff}`);
   }
 
   const { data, error } = await query;

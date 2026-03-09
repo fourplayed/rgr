@@ -30,6 +30,7 @@ const EVICT_COUNT = 50;
 // --- Store ---
 
 interface ConsoleState {
+  enabled: boolean;
   entries: ConsoleEntry[];
   isOpen: boolean;
   unreadCount: number;
@@ -38,6 +39,7 @@ interface ConsoleState {
   buttonY: number;
   heightOffset: number;
 
+  setEnabled: (enabled: boolean) => void;
   addEntry: (level: ConsoleLevel, namespace: ConsoleNamespace, message: string, data?: unknown) => void;
   clearEntries: () => void;
   toggleOpen: () => void;
@@ -48,6 +50,7 @@ interface ConsoleState {
 }
 
 export const useConsoleStore = create<ConsoleState>((set, get) => ({
+  enabled: false,
   entries: [],
   isOpen: false,
   unreadCount: 0,
@@ -55,6 +58,8 @@ export const useConsoleStore = create<ConsoleState>((set, get) => ({
   nextId: 1,
   buttonY: 0, // set by ConsoleButton on mount and drag
   heightOffset: 0,
+
+  setEnabled: (enabled) => set({ enabled, isOpen: enabled ? get().isOpen : false }),
 
   addEntry: (level, namespace, message, data) => {
     const { nextId, entries, isOpen } = get();
