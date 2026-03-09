@@ -147,7 +147,7 @@ export const UpdateMaintenanceInputSchema = z.object({
   dueDate: z.string().date().nullable().optional(),
   estimatedCost: z.number().min(0).nullable().optional(),
   actualCost: z.number().min(0).nullable().optional(),
-  partsUsed: z.any().nullable().optional(),
+  partsUsed: z.record(z.string(), z.unknown()).nullable().optional(),
   notes: z.string().nullable().optional(),
 });
 

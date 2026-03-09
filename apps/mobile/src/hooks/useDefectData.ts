@@ -1,4 +1,4 @@
-import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import {
   listDefectReports,
   getDefectReportById,
@@ -8,8 +8,11 @@ import {
   deleteDefectReport,
   getDefectReportStats,
   getAssetDefectReports,
+  queryFromService,
 } from '@rgr/shared';
-import type { DefectStatus, CreateDefectReportInput, UpdateDefectReportInput } from '@rgr/shared';
+import type { DefectStatus, UpdateDefectReportInput } from '@rgr/shared';
+import { useMutationFromService } from './useMutationFromService';
+import { assetKeys } from './useAssetData';
 /**
  * Defect report filter state
  */
@@ -94,17 +97,7 @@ export function useDefectReport(id: string | null) {
   return useQuery({
     queryKey: defectKeys.detail(id ?? ''),
     staleTime: 30_000,
-    queryFn: async () => {
-      if (!id) throw new Error('Defect report ID is required');
-
-      const result = await getDefectReportById(id);
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
-      return result.data;
-    },
+    queryFn: queryFromService(() => getDefectReportById(id!)),
     enabled: !!id,
   });
 }
@@ -135,17 +128,14 @@ export function useAssetDefectReports(assetId: string | null) {
  * Create defect report mutation
  */
 export function useCreateDefectReport() {
-  return useMutation({
-    mutationFn: async (input: CreateDefectReportInput) => {
-      const result = await createDefectReport(input);
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
-      return result.data;
-    },
-    // Global MutationCache.onSuccess handles cross-domain invalidation
+  return useMutationFromService({
+    serviceFn: createDefectReport,
+    invalidates: (data) => [
+      defectKeys.lists(),
+      defectKeys.stats(),
+      defectKeys.asset(data.assetId),
+      assetKeys.scanContext(data.assetId),
+    ],
   });
 }
 
@@ -153,10 +143,8 @@ export function useCreateDefectReport() {
  * Update defect report status mutation
  */
 export function useUpdateDefectReportStatus() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
+  return useMutationFromService({
+    serviceFn: ({
       id,
       status,
       extras,
@@ -164,20 +152,12 @@ export function useUpdateDefectReportStatus() {
       id: string;
       status: DefectStatus;
       extras?: { maintenanceRecordId?: string; dismissedReason?: string };
-    }) => {
-      const result = await updateDefectReportStatus(id, status, extras);
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
-      return result.data;
-    },
-    onSuccess: (data) => {
-      // Immediate refetch — user is viewing this record
-      queryClient.invalidateQueries({ queryKey: defectKeys.detail(data.id) });
-      // Global MutationCache.onSuccess handles cross-domain invalidation
-    },
+    }) => updateDefectReportStatus(id, status, extras),
+    invalidates: (data) => [
+      defectKeys.detail(data.id),
+      defectKeys.lists(),
+      defectKeys.stats(),
+    ],
   });
 }
 
@@ -185,12 +165,12 @@ export function useUpdateDefectReportStatus() {
  * Delete defect report mutation (hard-delete from DB)
  */
 export function useDeleteDefectReport() {
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const result = await deleteDefectReport(id);
-      if (!result.success) throw new Error(result.error);
-    },
-    // Global MutationCache.onSuccess handles all invalidation
+  return useMutationFromService({
+    serviceFn: deleteDefectReport,
+    invalidates: [
+      defectKeys.lists(),
+      defectKeys.stats(),
+    ],
   });
 }
 
@@ -198,22 +178,13 @@ export function useDeleteDefectReport() {
  * Update defect report mutation (general field updates)
  */
 export function useUpdateDefectReport() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, input }: { id: string; input: UpdateDefectReportInput }) => {
-      const result = await updateDefectReport(id, input);
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
-      return result.data;
-    },
-    onSuccess: (data) => {
-      // Immediate refetch — user is viewing this record
-      queryClient.invalidateQueries({ queryKey: defectKeys.detail(data.id) });
-    },
+  return useMutationFromService({
+    serviceFn: ({ id, input }: { id: string; input: UpdateDefectReportInput }) =>
+      updateDefectReport(id, input),
+    invalidates: (data) => [
+      defectKeys.detail(data.id),
+      defectKeys.lists(),
+    ],
   });
 }
 
@@ -223,15 +194,7 @@ export function useUpdateDefectReport() {
 export function useDefectReportStats() {
   return useQuery({
     queryKey: defectKeys.stats(),
-    queryFn: async () => {
-      const result = await getDefectReportStats();
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
-      return result.data;
-    },
+    queryFn: queryFromService(() => getDefectReportStats()),
     staleTime: 30_000,
   });
 }

@@ -82,7 +82,11 @@ export function delay(ms: number): Promise<void> {
 }
 
 /**
- * Retry a function with exponential backoff
+ * Retry a function with exponential backoff.
+ *
+ * @deprecated Use `withRetry()` instead. This function uses `maxRetries` (number of retries
+ * after the first attempt), while `withRetry()` uses `maxAttempts` (total attempts including
+ * the first). The inconsistent semantics can lead to off-by-one bugs.
  */
 export async function retry<T>(
   fn: () => Promise<T>,

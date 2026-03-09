@@ -14,7 +14,12 @@
  * console.log(result.data); // T (narrowed)
  * ```
  */
-export type ServiceResult<T> =
+/**
+ * For `ServiceResult<void>`, the success branch returns `data: undefined`.
+ * This is safe because `void` is assignable from `undefined` in TypeScript,
+ * and all void-returning services already set `data: undefined`.
+ */
+export type ServiceResult<T = void> =
   | { success: true; data: T; error: null }
   | { success: false; data: null; error: string };
 

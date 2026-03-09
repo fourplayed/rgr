@@ -107,6 +107,9 @@ interface AnalysisHistoryRow {
 
 /**
  * Fetch hazard alerts with joined photo, asset, and analysis data for review.
+ *
+ * NOTE: Uses 0-indexed `page` (matching its web consumer). Other list endpoints
+ * in this codebase use 1-indexed pagination — be aware of this difference.
  */
 export async function getHazardAlertsForReview(
   params: HazardReviewParams = {}

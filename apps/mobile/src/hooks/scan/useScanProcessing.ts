@@ -1,11 +1,12 @@
 import { useCallback } from 'react';
 import * as Haptics from 'expo-haptics';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, onlineManager } from '@tanstack/react-query';
 import { assetKeys, useCreateScanEvent, useUpdateAsset, useDeleteScanEvent } from '../useAssetData';
 import { useLocationStore } from '../../store/locationStore';
 import type { Asset } from '@rgr/shared';
 import { getAssetByQRCode, listAssets } from '@rgr/shared';
 import { logger } from '../../utils/logger';
+import { enqueueScan } from '../../utils/offlineScanQueue';
 import type { ScanFlowAction, MatchedDepot, AlertSheetState } from './useScanActionFlow';
 import type { Profile } from '@rgr/shared';
 
@@ -146,6 +147,47 @@ export function useScanProcessing(
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : 'Failed to scan QR code';
         logger.error(`Scan error: ${message}`);
+
+        // If offline and we have enough context, queue the scan for later replay
+        if (!onlineManager.isOnline() && user) {
+          const { lastLocation: loc, resolvedDepot: depot } =
+            useLocationStore.getState();
+          // We need at minimum the asset lookup to have succeeded (step 2 above).
+          // If the error happened during createScan (step 5), the asset was already found.
+          // Parse the assetId from the QR data to build the queued input.
+          const qrAssetId = qrData.startsWith('rgr://asset/')
+            ? qrData.slice('rgr://asset/'.length)
+            : null;
+
+          if (qrAssetId) {
+            try {
+              await enqueueScan({
+                assetId: qrAssetId,
+                scannedBy: user.id,
+                scanType: 'qr_scan',
+                latitude: loc?.latitude ?? null,
+                longitude: loc?.longitude ?? null,
+                accuracy: loc?.accuracy ?? null,
+                altitude: loc?.altitude ?? null,
+                heading: loc?.heading ?? null,
+                speed: loc?.speed ?? null,
+                locationDescription: depot ? depot.depot.name : null,
+              });
+              dispatch({ type: 'RESET' });
+              setAlertSheet({
+                visible: true,
+                type: 'info',
+                title: 'Scan Queued',
+                message: 'You are offline. This scan has been saved and will be submitted when connectivity is restored.',
+              });
+              resetScannerRef.current();
+              return;
+            } catch (queueError) {
+              logger.warn('Failed to enqueue offline scan:', queueError);
+            }
+          }
+        }
+
         dispatch({ type: 'RESET' });
         setAlertSheet({
           visible: true,

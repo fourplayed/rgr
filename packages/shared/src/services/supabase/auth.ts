@@ -145,6 +145,18 @@ export async function signInWithEmailSecure(
       return { success: false, data: null, error: 'Authentication failed' };
     }
 
+    // Validate response shape — the edge function returns raw JSON,
+    // so we verify required fields before casting to avoid runtime errors.
+    if (
+      typeof body.user.id !== 'string' ||
+      typeof body.user.email !== 'string' ||
+      typeof body.session.access_token !== 'string' ||
+      typeof body.session.refresh_token !== 'string'
+    ) {
+      recordFailure(credentials.email);
+      return { success: false, data: null, error: 'Invalid authentication response' };
+    }
+
     // Establish the session on the local Supabase client so that
     // subsequent queries (profile fetch, etc.) are authenticated.
     const supabase = getSupabaseClient();

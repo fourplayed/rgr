@@ -1,4 +1,4 @@
-import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import {
   listMaintenance,
   getMaintenanceById,
@@ -7,13 +7,16 @@ import {
   updateMaintenance,
   cancelMaintenanceTask,
   getMaintenanceStats,
+  queryFromService,
 } from '@rgr/shared';
 import type {
   MaintenanceStatus,
   MaintenancePriority,
-  CreateMaintenanceInput,
   UpdateMaintenanceInput,
 } from '@rgr/shared';
+import { useMutationFromService } from './useMutationFromService';
+import { assetKeys } from './useAssetData';
+import { defectKeys } from './useDefectData';
 
 /**
  * Maintenance filter state
@@ -101,17 +104,7 @@ export function useMaintenance(id: string | null) {
   return useQuery({
     queryKey: maintenanceKeys.detail(id ?? ''),
     staleTime: 30_000,
-    queryFn: async () => {
-      if (!id) throw new Error('Maintenance ID is required');
-
-      const result = await getMaintenanceById(id);
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
-      return result.data;
-    },
+    queryFn: queryFromService(() => getMaintenanceById(id!)),
     enabled: !!id,
   });
 }
@@ -120,17 +113,14 @@ export function useMaintenance(id: string | null) {
  * Create maintenance record mutation
  */
 export function useCreateMaintenance() {
-  return useMutation({
-    mutationFn: async (input: CreateMaintenanceInput) => {
-      const result = await createMaintenance(input);
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
-      return result.data;
-    },
-    // Global MutationCache.onSuccess handles cross-domain invalidation
+  return useMutationFromService({
+    serviceFn: createMaintenance,
+    invalidates: (data) => [
+      maintenanceKeys.lists(),
+      maintenanceKeys.stats(),
+      assetKeys.maintenance(data.assetId),
+      assetKeys.scanContext(data.assetId),
+    ],
   });
 }
 
@@ -138,10 +128,8 @@ export function useCreateMaintenance() {
  * Update maintenance status mutation
  */
 export function useUpdateMaintenanceStatus() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
+  return useMutationFromService({
+    serviceFn: ({
       id,
       status,
       extras,
@@ -149,20 +137,12 @@ export function useUpdateMaintenanceStatus() {
       id: string;
       status: MaintenanceStatus;
       extras?: { completedBy?: string };
-    }) => {
-      const result = await updateMaintenanceStatus(id, status, extras);
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
-      return result.data;
-    },
-    onSuccess: (data) => {
-      // Immediate refetch — user is viewing this record
-      queryClient.invalidateQueries({ queryKey: maintenanceKeys.detail(data.id) });
-      // Global MutationCache.onSuccess handles cross-domain invalidation
-    },
+    }) => updateMaintenanceStatus(id, status, extras),
+    invalidates: (data) => [
+      maintenanceKeys.detail(data.id),
+      maintenanceKeys.lists(),
+      maintenanceKeys.stats(),
+    ],
   });
 }
 
@@ -170,12 +150,13 @@ export function useUpdateMaintenanceStatus() {
  * Cancel (delete) maintenance task mutation — also deletes linked defects
  */
 export function useCancelMaintenanceTask() {
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const result = await cancelMaintenanceTask(id);
-      if (!result.success) throw new Error(result.error);
-    },
-    // Global MutationCache.onSuccess handles all invalidation
+  return useMutationFromService({
+    serviceFn: cancelMaintenanceTask,
+    invalidates: [
+      maintenanceKeys.lists(),
+      maintenanceKeys.stats(),
+      defectKeys.lists(),
+    ],
   });
 }
 
@@ -183,22 +164,13 @@ export function useCancelMaintenanceTask() {
  * Update maintenance record mutation
  */
 export function useUpdateMaintenance() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, input }: { id: string; input: UpdateMaintenanceInput }) => {
-      const result = await updateMaintenance(id, input);
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
-      return result.data;
-    },
-    onSuccess: (data) => {
-      // Immediate refetch — user is viewing this record
-      queryClient.invalidateQueries({ queryKey: maintenanceKeys.detail(data.id) });
-    },
+  return useMutationFromService({
+    serviceFn: ({ id, input }: { id: string; input: UpdateMaintenanceInput }) =>
+      updateMaintenance(id, input),
+    invalidates: (data) => [
+      maintenanceKeys.detail(data.id),
+      maintenanceKeys.lists(),
+    ],
   });
 }
 
@@ -208,15 +180,7 @@ export function useUpdateMaintenance() {
 export function useMaintenanceStats() {
   return useQuery({
     queryKey: maintenanceKeys.stats(),
-    queryFn: async () => {
-      const result = await getMaintenanceStats();
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
-      return result.data;
-    },
-    staleTime: 30000, // Cache for 30 seconds
+    queryFn: queryFromService(() => getMaintenanceStats()),
+    staleTime: 30_000,
   });
 }

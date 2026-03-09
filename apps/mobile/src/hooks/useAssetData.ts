@@ -1,4 +1,4 @@
-import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import {
   listAssets,
   getAsset,
@@ -13,14 +13,15 @@ import {
   getTotalScanCount,
   updateAsset,
   getAssetScanContext,
+  queryFromService,
 } from '@rgr/shared';
 import type {
   AssetStatus,
   AssetCategory,
   AssetSortField,
-  CreateScanEventInput,
   UpdateAssetInput,
 } from '@rgr/shared';
+import { useMutationFromService } from './useMutationFromService';
 
 /**
  * Query keys for asset-related data
@@ -188,17 +189,7 @@ export function useAsset(id: string | undefined) {
   return useQuery({
     queryKey: assetKeys.detail(id ?? ''),
     staleTime: 30_000,
-    queryFn: async () => {
-      if (!id) throw new Error('Asset ID is required');
-
-      const result = await getAsset(id);
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
-      return result.data;
-    },
+    queryFn: queryFromService(() => getAsset(id!)),
     enabled: !!id,
   });
 }
@@ -277,19 +268,9 @@ export function useAssetHazards(assetId: string | undefined) {
 export function useMyRecentScans(userId: string | undefined) {
   return useQuery({
     queryKey: assetKeys.myScans(userId ?? ''),
-    queryFn: async () => {
-      if (!userId) throw new Error('User ID is required');
-
-      const result = await getMyRecentScans(userId);
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
-      return result.data;
-    },
+    queryFn: queryFromService(() => getMyRecentScans(userId!)),
     enabled: !!userId,
-    staleTime: 30000, // Cache for 30 seconds
+    staleTime: 30_000,
   });
 }
 
@@ -299,16 +280,8 @@ export function useMyRecentScans(userId: string | undefined) {
 export function useRecentScans(limit: number = 10) {
   return useQuery({
     queryKey: assetKeys.recentScans(limit),
-    queryFn: async () => {
-      const result = await getRecentScans(limit);
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
-      return result.data;
-    },
-    staleTime: 30000, // Cache for 30 seconds
+    queryFn: queryFromService(() => getRecentScans(limit)),
+    staleTime: 30_000,
   });
 }
 
@@ -318,11 +291,7 @@ export function useRecentScans(limit: number = 10) {
 export function useTotalScanCount() {
   return useQuery({
     queryKey: assetKeys.totalScanCount(),
-    queryFn: async () => {
-      const result = await getTotalScanCount();
-      if (!result.success) throw new Error(result.error);
-      return result.data;
-    },
+    queryFn: queryFromService(() => getTotalScanCount()),
     // Full table COUNT(*) on scan_events is expensive on large tables.
     // 5 minutes is acceptable for a dashboard statistic.
     staleTime: 5 * 60 * 1000,
@@ -336,17 +305,15 @@ export function useTotalScanCount() {
  * Create scan event
  */
 export function useCreateScanEvent() {
-  return useMutation({
-    mutationFn: async (input: CreateScanEventInput) => {
-      const result = await createScanEvent(input);
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
-      return result.data;
-    },
-    // Global MutationCache.onSuccess handles cross-domain invalidation
+  return useMutationFromService({
+    serviceFn: createScanEvent,
+    invalidates: (data, vars) => [
+      assetKeys.scans(vars.assetId),
+      assetKeys.detail(vars.assetId),
+      assetKeys.recentScans(),
+      assetKeys.totalScanCount(),
+      assetKeys.scanContext(vars.assetId),
+    ],
   });
 }
 
@@ -388,23 +355,13 @@ export function useAssetCountsByStatus() {
  * Update asset
  */
 export function useUpdateAsset() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, input }: { id: string; input: UpdateAssetInput }) => {
-      const result = await updateAsset(id, input);
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
-      return result.data;
-    },
-    onSuccess: (data) => {
-      // Immediate refetch — user is viewing this record
-      queryClient.invalidateQueries({ queryKey: assetKeys.detail(data.id) });
-      // Global MutationCache.onSuccess handles cross-domain invalidation
-    },
+  return useMutationFromService({
+    serviceFn: ({ id, input }: { id: string; input: UpdateAssetInput }) =>
+      updateAsset(id, input),
+    invalidates: (data) => [
+      assetKeys.detail(data.id),
+      assetKeys.lists(),
+    ],
   });
 }
 
@@ -415,12 +372,7 @@ export function useUpdateAsset() {
 export function useAssetScanContext(assetId: string | undefined) {
   return useQuery({
     queryKey: assetKeys.scanContext(assetId ?? ''),
-    queryFn: async () => {
-      if (!assetId) throw new Error('Asset ID is required');
-      const result = await getAssetScanContext(assetId);
-      if (!result.success) throw new Error(result.error);
-      return result.data;
-    },
+    queryFn: queryFromService(() => getAssetScanContext(assetId!)),
     enabled: !!assetId,
     staleTime: 10_000, // Short stale time — context card should stay fresh
   });
@@ -431,14 +383,15 @@ export function useAssetScanContext(assetId: string | undefined) {
  * RLS limits this to the scanner's own recent scans (< 30s old).
  */
 export function useDeleteScanEvent() {
-  return useMutation({
-    mutationFn: async ({ scanEventId }: { scanEventId: string; assetId: string }) => {
-      const result = await deleteScanEvent(scanEventId);
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-      return result.data;
-    },
-    // Global MutationCache.onSuccess handles all invalidation
+  return useMutationFromService({
+    serviceFn: ({ scanEventId }: { scanEventId: string; assetId: string }) =>
+      deleteScanEvent(scanEventId),
+    invalidates: (_data, vars) => [
+      assetKeys.scans(vars.assetId),
+      assetKeys.detail(vars.assetId),
+      assetKeys.recentScans(),
+      assetKeys.totalScanCount(),
+      assetKeys.scanContext(vars.assetId),
+    ],
   });
 }

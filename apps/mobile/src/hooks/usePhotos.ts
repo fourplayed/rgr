@@ -9,9 +9,11 @@ import {
   bulkDeletePhotos,
   getSignedUrl,
   getSignedUrls,
+  queryFromService,
 } from '@rgr/shared';
 import type { UploadPhotoOptions, PhotoListItem } from '@rgr/shared';
 import { logger } from '../utils/logger';
+import { assetKeys } from './useAssetData';
 
 /** Supabase signed URLs expire at 60 min — use 45 min for a safe buffer. */
 const SIGNED_URL_STALE_TIME = 2_700_000;
@@ -33,19 +35,9 @@ export const photoKeys = {
 export function useAssetPhotos(assetId: string | undefined) {
   return useQuery({
     queryKey: photoKeys.asset(assetId ?? ''),
-    queryFn: async () => {
-      if (!assetId) throw new Error('Asset ID is required');
-
-      const result = await getAssetPhotos(assetId);
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
-      return result.data;
-    },
+    queryFn: queryFromService(() => getAssetPhotos(assetId!)),
     enabled: !!assetId,
-    staleTime: 60000, // Photos don't change frequently - cache for 60s
+    staleTime: 60_000,
   });
 }
 
@@ -55,17 +47,7 @@ export function useAssetPhotos(assetId: string | undefined) {
 export function useScanEventPhotos(scanEventId: string | null) {
   return useQuery({
     queryKey: photoKeys.scanEvent(scanEventId ?? ''),
-    queryFn: async () => {
-      if (!scanEventId) throw new Error('Scan event ID is required');
-
-      const result = await getPhotosByScanEventId(scanEventId);
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
-      return result.data;
-    },
+    queryFn: queryFromService(() => getPhotosByScanEventId(scanEventId!)),
     enabled: !!scanEventId,
     staleTime: 60_000,
   });
@@ -77,22 +59,9 @@ export function useScanEventPhotos(scanEventId: string | null) {
 export function usePhoto(photoId: string | undefined) {
   return useQuery({
     queryKey: photoKeys.detail(photoId ?? ''),
-    queryFn: async () => {
-      if (!photoId) throw new Error('Photo ID is required');
-
-      logger.info('Fetching photo', photoId);
-      const result = await getPhotoById(photoId);
-
-      if (!result.success) {
-        logger.error('Failed to fetch photo', result.error);
-        throw new Error(result.error);
-      }
-
-      logger.info('Photo fetched successfully', result.data?.id);
-      return result.data;
-    },
+    queryFn: queryFromService(() => getPhotoById(photoId!)),
     enabled: !!photoId,
-    staleTime: 60000, // Photos don't change frequently
+    staleTime: 60_000,
   });
 }
 
@@ -102,17 +71,7 @@ export function usePhoto(photoId: string | undefined) {
 export function useSignedUrl(storagePath: string | undefined) {
   return useQuery({
     queryKey: photoKeys.signedUrl(storagePath ?? ''),
-    queryFn: async () => {
-      if (!storagePath) throw new Error('Storage path is required');
-
-      const result = await getSignedUrl(storagePath);
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
-      return result.data;
-    },
+    queryFn: queryFromService(() => getSignedUrl(storagePath!)),
     enabled: !!storagePath,
     staleTime: SIGNED_URL_STALE_TIME,
   });
@@ -135,9 +94,8 @@ export function useUploadPhoto() {
       return result.data;
     },
     onSuccess: (_data, variables) => {
-      // Invalidate photo list for the asset
       queryClient.invalidateQueries({ queryKey: photoKeys.asset(variables.assetId) });
-      // Global MutationCache.onSuccess handles asset detail invalidation
+      queryClient.invalidateQueries({ queryKey: assetKeys.detail(variables.assetId) });
     },
   });
 }
@@ -159,11 +117,9 @@ export function useDeletePhoto() {
       return { photoId, assetId };
     },
     onSuccess: (data) => {
-      // Invalidate photo list for the asset
       queryClient.invalidateQueries({ queryKey: photoKeys.asset(data.assetId) });
-      // Remove the specific photo from cache
+      queryClient.invalidateQueries({ queryKey: assetKeys.detail(data.assetId) });
       queryClient.removeQueries({ queryKey: photoKeys.detail(data.photoId) });
-      // Global MutationCache.onSuccess handles asset detail invalidation
     },
   });
 }
@@ -185,13 +141,11 @@ export function useBulkDeletePhotos() {
       return { ...result.data, photoIds, assetId };
     },
     onSuccess: (data) => {
-      // Invalidate photo list for the asset
       queryClient.invalidateQueries({ queryKey: photoKeys.asset(data.assetId) });
-      // Remove each deleted photo from cache
+      queryClient.invalidateQueries({ queryKey: assetKeys.detail(data.assetId) });
       for (const photoId of data.photoIds) {
         queryClient.removeQueries({ queryKey: photoKeys.detail(photoId) });
       }
-      // Global MutationCache.onSuccess handles asset detail invalidation
     },
   });
 }

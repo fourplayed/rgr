@@ -185,6 +185,16 @@ export function useScanActionFlow({
     resetScanner();
   }, [resetScanner]);
 
+  // Track latest active-phase IDs via ref to prevent stale closure in undo handler.
+  // Without this, a rapid state transition between press and async execution could
+  // cause the undo to reference an outdated scan event ID.
+  const undoIdsRef = useRef<{ scanEventId: string; assetId: string } | null>(null);
+  if (state.phase === 'active') {
+    undoIdsRef.current = { scanEventId: state.lastScanEventId, assetId: state.scannedAsset.id };
+  } else if (state.phase === 'idle') {
+    undoIdsRef.current = null;
+  }
+
   // Wrap undo to extract narrow state slices — supports queued undo during confirming
   const handleUndoPress = useCallback(() => {
     if (state.phase === 'confirming') {
@@ -192,8 +202,10 @@ export function useScanActionFlow({
       return;
     }
     if (state.phase !== 'active') return;
-    scanProcessing.handleUndoPress(state.lastScanEventId, state.scannedAsset.id, resetScanner);
-  }, [state, scanProcessing, resetScanner, dispatch]);
+    const ids = undoIdsRef.current;
+    if (!ids) return;
+    scanProcessing.handleUndoPress(ids.scanEventId, ids.assetId, resetScanner);
+  }, [state.phase, scanProcessing, resetScanner, dispatch]);
 
   // Wrap triggerDebugScan to pass resetScanner
   const triggerDebugScan = useCallback(() => {

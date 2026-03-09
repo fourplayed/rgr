@@ -44,9 +44,13 @@ export function getDepotBadgeColors(
   return { bg: depot.color, text: isLight ? '#1E293B' : '#FFFFFF' };
 }
 
-/** Simple luminance check for hex colors */
+/** Simple luminance check for hex colors (supports 3-digit and 6-digit hex) */
 function isLightColor(hex: string): boolean {
-  const c = hex.replace('#', '');
+  let c = hex.replace('#', '');
+  // Expand 3-digit hex to 6-digit (e.g., "f0a" → "ff00aa")
+  if (c.length === 3) {
+    c = c.charAt(0) + c.charAt(0) + c.charAt(1) + c.charAt(1) + c.charAt(2) + c.charAt(2);
+  }
   const r = parseInt(c.substring(0, 2), 16);
   const g = parseInt(c.substring(2, 4), 16);
   const b = parseInt(c.substring(4, 6), 16);

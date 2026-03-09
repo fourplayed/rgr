@@ -83,15 +83,8 @@ export default function RootLayout() {
               if (isAuthenticated) handleSessionExpired();
             }
           },
-          onSuccess: () => {
-            // Global sync: after any successful mutation, mark all domain queries stale.
-            // refetchType: 'active' only refetches queries with mounted observers;
-            // unmounted queries stay stale until next access (zero network cost).
-            queryClient.invalidateQueries({ queryKey: ['defects'], refetchType: 'active' });
-            queryClient.invalidateQueries({ queryKey: ['maintenance'], refetchType: 'active' });
-            queryClient.invalidateQueries({ queryKey: ['assets'], refetchType: 'active' });
-            queryClient.invalidateQueries({ queryKey: ['scans'], refetchType: 'active' });
-          },
+          // Invalidation is handled per-mutation via useMutationFromService's
+          // declarative `invalidates` option. No global handler needed.
         }),
         defaultOptions: {
           queries: {

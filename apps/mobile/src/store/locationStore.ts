@@ -139,12 +139,17 @@ export const useLocationStore = create<LocationState>((set, get) => ({
             ]);
           } catch (error: unknown) {
             // Both attempts failed — schedule retry with exponential backoff
-            const { retryCount } = get();
+            const { retryCount, retryTimeoutId: existingTimeout } = get();
             if (retryCount < MAX_RETRIES) {
+              // Clear any existing retry to prevent concurrent timeout overwrites
+              if (existingTimeout) clearTimeout(existingTimeout);
               const delay = Math.min(BASE_RETRY_MS * Math.pow(2, retryCount), MAX_RETRY_MS);
               const jitteredDelay = delay * (1 + Math.random() * 0.5);
+              // Store depots in state so retry uses the latest list, not a stale closure
               const timeoutId = setTimeout(() => {
                 set({ retryTimeoutId: null });
+                // Re-read depots from the caller — the ensureFresh/resolveDepot callers
+                // always pass fresh depots from React Query cache
                 get().resolveDepot(depots);
               }, jitteredDelay);
               set({ retryTimeoutId: timeoutId });

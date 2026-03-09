@@ -14,8 +14,9 @@ export function escapeHtml(str: string): string {
 }
 
 /**
- * Validate that a string is a valid hex color (e.g., #fff, #aabbcc, #aabbccdd).
+ * Validate that a string is a valid hex color.
+ * Accepts: #rgb, #rrggbb, #rrggbbaa (3, 6, or 8 hex digits).
  */
 export function isValidHexColor(color: string): boolean {
-  return /^#[0-9a-fA-F]{3,8}$/.test(color);
+  return /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(color);
 }

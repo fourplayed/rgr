@@ -472,8 +472,11 @@ export default function HomeScreen() {
         <Text style={styles.sectionTitle}>Recent Activity</Text>
       </View>
     </>
+  // depots.length is used instead of the full depots array to prevent re-creation
+  // when the array reference changes but content hasn't. resolveDepot is a stable
+  // Zustand store function.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  ), [isRefetching, greeting, user, roleLabel, isResolvingDepot, resolvedDepot, depots, resolveDepot, statsCards]);
+  ), [isRefetching, greeting, user, roleLabel, isResolvingDepot, resolvedDepot, depots.length, statsCards]);
 
   // Early return must be after all hooks to maintain hook order
   if (!user) {

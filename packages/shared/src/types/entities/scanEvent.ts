@@ -83,7 +83,7 @@ export const CreateScanEventInputSchema = z.object({
   heading: z.number().min(0).max(360).nullable().optional(),
   speed: z.number().min(0).nullable().optional(),
   locationDescription: z.string().max(255).nullable().optional(),
-  deviceInfo: z.any().nullable().optional(),
+  deviceInfo: z.record(z.string(), z.unknown()).nullable().optional(),
   rawScanData: z.string().nullable().optional(),
 });
 

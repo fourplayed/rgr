@@ -1,6 +1,8 @@
-import { useMutation } from '@tanstack/react-query';
 import { acceptDefectReport } from '@rgr/shared';
 import type { CreateMaintenanceInput } from '@rgr/shared';
+import { useMutationFromService } from './useMutationFromService';
+import { defectKeys } from './useDefectData';
+import { maintenanceKeys } from './useMaintenanceData';
 
 /**
  * Accept a defect report by creating a linked maintenance task atomically.
@@ -8,22 +10,19 @@ import type { CreateMaintenanceInput } from '@rgr/shared';
  * preventing orphaned maintenance records if the defect status update fails.
  */
 export function useAcceptDefect() {
-  return useMutation({
-    mutationFn: async ({
+  return useMutationFromService({
+    serviceFn: ({
       defectReportId,
       maintenanceInput,
     }: {
       defectReportId: string;
       maintenanceInput: CreateMaintenanceInput;
-    }) => {
-      const result = await acceptDefectReport(defectReportId, maintenanceInput);
-
-      if (!result.success) {
-        throw new Error(result.error ?? 'Failed to accept defect report');
-      }
-
-      return result.data;
-    },
-    // Global MutationCache.onSuccess handles cross-domain invalidation
+    }) => acceptDefectReport(defectReportId, maintenanceInput),
+    invalidates: (_data, vars) => [
+      defectKeys.detail(vars.defectReportId),
+      defectKeys.lists(),
+      maintenanceKeys.lists(),
+      maintenanceKeys.stats(),
+    ],
   });
 }
