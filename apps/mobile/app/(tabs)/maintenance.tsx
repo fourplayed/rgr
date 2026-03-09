@@ -6,6 +6,7 @@ import {
   StyleSheet,
   SafeAreaView,
   TouchableOpacity,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -18,7 +19,7 @@ import type {
   CreateMaintenanceInput,
 } from '@rgr/shared';
 import { colors } from '../../src/theme/colors';
-import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
+import { spacing, fontSize, lineHeight, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
 import { ScreenHeader } from '../../src/components/common/ScreenHeader';
 import { SegmentedTabs } from '../../src/components/common/SegmentedTabs';
@@ -38,6 +39,7 @@ import { useMaintenanceList } from '../../src/hooks/useMaintenanceData';
 import { useDefectReportList } from '../../src/hooks/useDefectData';
 import { useAcceptDefect } from '../../src/hooks/useAcceptDefect';
 import { useModalTransition } from '../../src/hooks/useModalTransition';
+import { useTabFade } from '../../src/hooks/useTabFade';
 import { ModalShell } from '../../src/components/common/ModalShell';
 import { useUserPermissions } from '../../src/contexts/UserPermissionsContext';
 
@@ -66,6 +68,7 @@ export default function MaintenanceScreen() {
 
   // Tab state
   const [activeTab, setActiveTab] = useState<TabKey>('tasks');
+  const tabFade = useTabFade(activeTab);
 
   // Maintenance filter state
   const [statuses, setStatuses] = useState<MaintenanceStatus[]>(DEFAULT_STATUSES);
@@ -288,65 +291,67 @@ export default function MaintenanceScreen() {
         )}
 
         {/* Content */}
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <LoadingDots color={colors.textSecondary} size={12} />
-          </View>
-        ) : error ? (
-          <View style={styles.centerContent}>
-            <Text style={styles.errorText}>
-              Failed to load {activeTab === 'tasks' ? 'maintenance' : 'defects'}
-            </Text>
-            <TouchableOpacity
-              style={styles.retryButton}
-              onPress={() => refetch()}
-              accessibilityRole="button"
-              accessibilityLabel="Retry loading"
-            >
-              <Text style={styles.retryButtonText}>Retry</Text>
-            </TouchableOpacity>
-          </View>
-        ) : activeTab === 'tasks' ? (
-          <FlatList
-            data={maintenance}
-            renderItem={renderMaintenanceItem}
-            keyExtractor={maintenanceKeyExtractor}
-            getItemLayout={getMaintenanceItemLayout}
-            contentContainerStyle={
-              maintenance.length === 0 ? styles.emptyListContent : styles.listContent
-            }
-            ListEmptyComponent={renderMaintenanceEmpty}
-            removeClippedSubviews={true}
-            maxToRenderPerBatch={10}
-            windowSize={5}
-            onEndReached={() => {
-              if (hasNextMaintenancePage && !isFetchingNextMaintenancePage) {
-                fetchNextMaintenancePage();
+        <Animated.View style={[{ flex: 1 }, tabFade]}>
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <LoadingDots color={colors.textSecondary} size={12} />
+            </View>
+          ) : error ? (
+            <View style={styles.centerContent}>
+              <Text style={styles.errorText}>
+                Failed to load {activeTab === 'tasks' ? 'maintenance' : 'defects'}
+              </Text>
+              <TouchableOpacity
+                style={styles.retryButton}
+                onPress={() => refetch()}
+                accessibilityRole="button"
+                accessibilityLabel="Retry loading"
+              >
+                <Text style={styles.retryButtonText}>Retry</Text>
+              </TouchableOpacity>
+            </View>
+          ) : activeTab === 'tasks' ? (
+            <FlatList
+              data={maintenance}
+              renderItem={renderMaintenanceItem}
+              keyExtractor={maintenanceKeyExtractor}
+              getItemLayout={getMaintenanceItemLayout}
+              contentContainerStyle={
+                maintenance.length === 0 ? styles.emptyListContent : styles.listContent
               }
-            }}
-            onEndReachedThreshold={0.5}
-          />
-        ) : (
-          <FlatList
-            data={defects}
-            renderItem={renderDefectItem}
-            keyExtractor={defectKeyExtractor}
-            getItemLayout={getDefectItemLayout}
-            contentContainerStyle={
-              defects.length === 0 ? styles.emptyListContent : styles.listContent
-            }
-            ListEmptyComponent={renderDefectsEmpty}
-            removeClippedSubviews={true}
-            maxToRenderPerBatch={10}
-            windowSize={5}
-            onEndReached={() => {
-              if (hasNextDefectsPage && !isFetchingNextDefectsPage) {
-                fetchNextDefectsPage();
+              ListEmptyComponent={renderMaintenanceEmpty}
+              removeClippedSubviews={true}
+              maxToRenderPerBatch={10}
+              windowSize={5}
+              onEndReached={() => {
+                if (hasNextMaintenancePage && !isFetchingNextMaintenancePage) {
+                  fetchNextMaintenancePage();
+                }
+              }}
+              onEndReachedThreshold={0.5}
+            />
+          ) : (
+            <FlatList
+              data={defects}
+              renderItem={renderDefectItem}
+              keyExtractor={defectKeyExtractor}
+              getItemLayout={getDefectItemLayout}
+              contentContainerStyle={
+                defects.length === 0 ? styles.emptyListContent : styles.listContent
               }
-            }}
-            onEndReachedThreshold={0.5}
-          />
-        )}
+              ListEmptyComponent={renderDefectsEmpty}
+              removeClippedSubviews={true}
+              maxToRenderPerBatch={10}
+              windowSize={5}
+              onEndReached={() => {
+                if (hasNextDefectsPage && !isFetchingNextDefectsPage) {
+                  fetchNextDefectsPage();
+                }
+              }}
+              onEndReachedThreshold={0.5}
+            />
+          )}
+        </Animated.View>
 
         {/* Shared backdrop shell — persistent blur across modal transitions */}
         <ModalShell visible={modal.type !== 'none'} onClose={close} keepMounted={isTransitioning}>
@@ -451,7 +456,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.regular,
     color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: lineHeight.snug,
   },
   errorText: {
     fontSize: fontSize.base,

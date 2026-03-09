@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import type { ConsoleEntry, ConsoleLevel } from '../../store/consoleStore';
+import { fontSize, lineHeight, fontFamily as fonts } from '../../theme/spacing';
 
 const LEVEL_COLORS: Record<ConsoleLevel, string> = {
   info: '#00A8FF',
@@ -99,25 +100,25 @@ const styles = StyleSheet.create({
   },
   namespaceText: {
     color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 9,
-    fontFamily: 'Lato_700Bold',
+    fontSize: fontSize.micro,
+    fontFamily: fonts.bold,
     letterSpacing: 0.5,
   },
   timestamp: {
     color: 'rgba(255, 255, 255, 0.4)',
-    fontSize: 10,
-    fontFamily: 'Lato_400Regular',
+    fontSize: fontSize.xxs,
+    fontFamily: fonts.regular,
   },
   message: {
-    fontSize: 12,
-    fontFamily: 'Lato_400Regular',
-    lineHeight: 16,
+    fontSize: fontSize.xs,
+    fontFamily: fonts.regular,
+    lineHeight: 16, // compact console row
   },
   dataText: {
     color: 'rgba(255, 255, 255, 0.5)',
-    fontSize: 10,
-    fontFamily: 'Lato_400Regular',
+    fontSize: fontSize.xxs,
+    fontFamily: fonts.regular,
     marginTop: 4,
-    lineHeight: 14,
+    lineHeight: 14, // compact console data
   },
 });

@@ -123,6 +123,59 @@ function formatDate(dateStr: string): string {
   });
 }
 
+/**
+ * Send a push notification for an asset if one hasn't already been sent
+ * for this notification type + target date. Handles dedup, logging, and sending.
+ */
+async function sendNotificationIfNew(
+  serviceClient: ReturnType<typeof createClient>,
+  asset: {
+    id: string;
+    asset_number: string;
+    registration_number: string;
+    registration_expiry: string;
+  },
+  notificationType: string,
+  title: string,
+  body: string,
+): Promise<boolean> {
+  // Check dedup
+  const { data: existing } = await serviceClient
+    .from("notification_log")
+    .select("id")
+    .eq("asset_id", asset.id)
+    .eq("notification_type", notificationType)
+    .eq("target_date", asset.registration_expiry)
+    .maybeSingle();
+
+  if (existing) return false;
+
+  await serviceClient.from("notification_log").insert({
+    asset_id: asset.id,
+    notification_type: notificationType,
+    target_date: asset.registration_expiry,
+    status: "sending",
+  });
+
+  const pushResult = await sendNotification(title, body, {
+    assetId: asset.id,
+    type: notificationType,
+  });
+
+  await serviceClient
+    .from("notification_log")
+    .update({
+      status: pushResult.sent > 0 ? "sent" : "failed",
+      sent_at: pushResult.sent > 0 ? new Date().toISOString() : null,
+      error_message: pushResult.sent === 0 ? "No recipients received" : null,
+    })
+    .eq("asset_id", asset.id)
+    .eq("notification_type", notificationType)
+    .eq("target_date", asset.registration_expiry);
+
+  return pushResult.sent > 0;
+}
+
 // ---------------------------------------------------------------------------
 // Main handler
 // ---------------------------------------------------------------------------
@@ -224,45 +277,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
       .not("registration_number", "is", null);
 
     for (const asset of sevenDayAssets || []) {
-      // Check dedup
-      const { data: existing } = await serviceClient
-        .from("notification_log")
-        .select("id")
-        .eq("asset_id", asset.id)
-        .eq("notification_type", "rego_expiry_7d")
-        .eq("target_date", asset.registration_expiry)
-        .maybeSingle();
-
-      if (existing) continue; // Already sent
-
-      // Create notification log entry
-      await serviceClient.from("notification_log").insert({
-        asset_id: asset.id,
-        notification_type: "rego_expiry_7d",
-        target_date: asset.registration_expiry,
-        status: "sending",
-      });
-
-      // Send push
-      const pushResult = await sendNotification(
+      const sent = await sendNotificationIfNew(
+        serviceClient,
+        asset,
+        "rego_expiry_7d",
         "Registration Expiring Soon",
         `${asset.asset_number} (${asset.registration_number}) expires on ${formatDate(asset.registration_expiry)}`,
-        { assetId: asset.id, type: "rego_expiry_7d" },
       );
-
-      // Update log
-      await serviceClient
-        .from("notification_log")
-        .update({
-          status: pushResult.sent > 0 ? "sent" : "failed",
-          sent_at: pushResult.sent > 0 ? new Date().toISOString() : null,
-          error_message: pushResult.sent === 0 ? "No recipients received" : null,
-        })
-        .eq("asset_id", asset.id)
-        .eq("notification_type", "rego_expiry_7d")
-        .eq("target_date", asset.registration_expiry);
-
-      if (pushResult.sent > 0) notificationsSent++;
+      if (sent) notificationsSent++;
     }
 
     // ── 3. Send 2-day expiry notifications ──
@@ -275,41 +297,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
       .not("registration_number", "is", null);
 
     for (const asset of twoDayAssets || []) {
-      const { data: existing } = await serviceClient
-        .from("notification_log")
-        .select("id")
-        .eq("asset_id", asset.id)
-        .eq("notification_type", "rego_expiry_2d")
-        .eq("target_date", asset.registration_expiry)
-        .maybeSingle();
-
-      if (existing) continue;
-
-      await serviceClient.from("notification_log").insert({
-        asset_id: asset.id,
-        notification_type: "rego_expiry_2d",
-        target_date: asset.registration_expiry,
-        status: "sending",
-      });
-
-      const pushResult = await sendNotification(
+      const sent = await sendNotificationIfNew(
+        serviceClient,
+        asset,
+        "rego_expiry_2d",
         "Registration Expiring in 2 Days",
         `${asset.asset_number} (${asset.registration_number}) expires on ${formatDate(asset.registration_expiry)} — renew urgently!`,
-        { assetId: asset.id, type: "rego_expiry_2d" },
       );
-
-      await serviceClient
-        .from("notification_log")
-        .update({
-          status: pushResult.sent > 0 ? "sent" : "failed",
-          sent_at: pushResult.sent > 0 ? new Date().toISOString() : null,
-          error_message: pushResult.sent === 0 ? "No recipients received" : null,
-        })
-        .eq("asset_id", asset.id)
-        .eq("notification_type", "rego_expiry_2d")
-        .eq("target_date", asset.registration_expiry);
-
-      if (pushResult.sent > 0) notificationsSent++;
+      if (sent) notificationsSent++;
     }
 
     // ── 4. Send overdue notifications ──
@@ -321,41 +316,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
       .not("registration_number", "is", null);
 
     for (const asset of confirmedOverdue || []) {
-      const { data: existing } = await serviceClient
-        .from("notification_log")
-        .select("id")
-        .eq("asset_id", asset.id)
-        .eq("notification_type", "rego_overdue")
-        .eq("target_date", asset.registration_expiry)
-        .maybeSingle();
-
-      if (existing) continue;
-
-      await serviceClient.from("notification_log").insert({
-        asset_id: asset.id,
-        notification_type: "rego_overdue",
-        target_date: asset.registration_expiry,
-        status: "sending",
-      });
-
-      const pushResult = await sendNotification(
+      const sent = await sendNotificationIfNew(
+        serviceClient,
+        asset,
+        "rego_overdue",
         "Registration OVERDUE",
         `${asset.asset_number} (${asset.registration_number}) registration expired on ${formatDate(asset.registration_expiry)} and has NOT been renewed`,
-        { assetId: asset.id, type: "rego_overdue" },
       );
-
-      await serviceClient
-        .from("notification_log")
-        .update({
-          status: pushResult.sent > 0 ? "sent" : "failed",
-          sent_at: pushResult.sent > 0 ? new Date().toISOString() : null,
-          error_message: pushResult.sent === 0 ? "No recipients received" : null,
-        })
-        .eq("asset_id", asset.id)
-        .eq("notification_type", "rego_overdue")
-        .eq("target_date", asset.registration_expiry);
-
-      if (pushResult.sent > 0) notificationsSent++;
+      if (sent) notificationsSent++;
     }
 
     return new Response(

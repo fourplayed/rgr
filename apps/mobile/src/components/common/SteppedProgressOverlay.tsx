@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LoadingDots } from './LoadingDots';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
+import { CARD_SPRING, BACKDROP_IN } from '../../theme/animation';
 
 const STEP_INTERVAL = 600;
 const SUCCESS_DISMISS_DELAY = 1000;
@@ -59,17 +60,8 @@ export function SteppedProgressOverlay({
       setAllDone(false);
 
       Animated.parallel([
-        Animated.timing(backdropOpacity, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.spring(cardScale, {
-          toValue: 1,
-          friction: 8,
-          tension: 65,
-          useNativeDriver: true,
-        }),
+        Animated.timing(backdropOpacity, { toValue: 1, ...BACKDROP_IN }),
+        Animated.spring(cardScale, { toValue: 1, ...CARD_SPRING }),
       ]).start();
 
       setCompletedSteps(1);

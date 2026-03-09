@@ -15,6 +15,7 @@ import { useConsoleStore } from '../../store/consoleStore';
 import type { ConsoleEntry, ConsoleNamespace } from '../../store/consoleStore';
 import { ConsoleEntryRow, ROW_HEIGHT } from './ConsoleEntryRow';
 import { SHEET_SPRING } from '../../theme/animation';
+import { fontSize, fontFamily as fonts } from '../../theme/spacing';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -204,8 +205,8 @@ const styles = StyleSheet.create({
   },
   title: {
     color: '#D4FF00',
-    fontSize: 14,
-    fontFamily: 'Lato_700Bold',
+    fontSize: fontSize.sm,
+    fontFamily: fonts.bold,
     letterSpacing: 2,
   },
   headerActions: {
@@ -237,8 +238,8 @@ const styles = StyleSheet.create({
   },
   chipText: {
     color: 'rgba(255, 255, 255, 0.6)',
-    fontSize: 10,
-    fontFamily: 'Lato_700Bold',
+    fontSize: fontSize.xxs,
+    fontFamily: fonts.bold,
     letterSpacing: 0.5,
   },
   chipTextActive: {

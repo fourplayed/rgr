@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, fontFamily } from '../../theme/spacing';
+import { spacing, fontSize, fontFamily as fonts } from '../../theme/spacing';
 import { CONTENT_TOP_OFFSET } from '../../theme/layout';
 
 interface ScreenHeaderProps {
@@ -71,14 +71,14 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: fontSize.sm,
-    fontFamily: fontFamily.bold,
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   subtitle: {
     fontSize: fontSize.xs,
-    fontFamily: fontFamily.regular,
+    fontFamily: fonts.regular,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,

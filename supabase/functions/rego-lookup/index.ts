@@ -225,6 +225,13 @@ async function scrapeWaDot(registrationNumber: string): Promise<LookupResult> {
 // Rate limiting (reuse rate_limits table pattern)
 // ---------------------------------------------------------------------------
 
+/**
+ * Rate limit using the existing rate_limits table.
+ * Reuses the `failures` column as a generic request counter and
+ * `first_failure_at` as the window start. The naming is inherited from
+ * the auth-lockout origin of this table — semantically these are
+ * "request count" and "window start".
+ */
 async function checkRateLimit(
   serviceClient: ReturnType<typeof createClient>,
   key: string,
@@ -276,10 +283,27 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Verify auth: service_role or authenticated superuser
+    // Verify auth: service_role key or authenticated user JWT
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    const token = authHeader?.replace("Bearer ", "");
+    if (!token) {
       return errorResponse("Missing authorization header", 401);
+    }
+
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    if (token !== serviceRoleKey) {
+      // Not service_role — verify as user JWT
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+      const userClient = createClient(supabaseUrl, anonKey, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+      const { data: { user }, error: authError } =
+        await userClient.auth.getUser(token);
+      if (authError || !user) {
+        return errorResponse("Invalid or expired token", 401);
+      }
     }
 
     const serviceClient = getServiceClient();
@@ -336,7 +360,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     // Log the lookup attempt
     await serviceClient.from("rego_lookup_log").insert({
-      asset_id: assetId || "00000000-0000-0000-0000-000000000000",
+      asset_id: assetId || null,
       registration_number: registrationNumber.toUpperCase().trim(),
       status: result.status,
       expiry_date: result.expiryDate || null,

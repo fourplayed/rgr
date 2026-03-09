@@ -44,12 +44,16 @@ export async function upsertPushToken(
 }
 
 /**
- * Delete a push token by device ID for the current user.
+ * Delete a push token by user ID and device ID.
  */
-export async function deletePushToken(deviceId: string): Promise<ServiceResult<void>> {
+export async function deletePushToken(userId: string, deviceId: string): Promise<ServiceResult<void>> {
   const supabase = getSupabaseClient();
 
-  const { error } = await supabase.from('push_tokens').delete().eq('device_id', deviceId);
+  const { error } = await supabase
+    .from('push_tokens')
+    .delete()
+    .eq('user_id', userId)
+    .eq('device_id', deviceId);
 
   if (error) {
     return { success: false, data: null, error: `Failed to delete push token: ${error.message}` };

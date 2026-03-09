@@ -7,7 +7,7 @@
 import React, { useState } from 'react';
 import { X, Plus } from 'lucide-react';
 import { motion } from 'motion/react';
-import { AssetCategory, AssetCategoryLabels } from '@rgr/shared';
+import { AssetCategory, AssetCategoryLabels, getSupabaseClient } from '@rgr/shared';
 import { useCreateAsset, useDepots } from '@/hooks/useAssetData';
 import type { CreateAssetInput } from '@rgr/shared';
 
@@ -16,12 +16,13 @@ async function triggerWebRegoLookup(assetId: string, registrationNumber: string)
   try {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     if (!supabaseUrl || !registrationNumber) return;
-    // Use the anon key for auth — the edge function accepts authenticated users
-    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    const supabase = getSupabaseClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) return;
     await fetch(`${supabaseUrl}/functions/v1/rego-lookup`, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${supabaseAnonKey}`,
+        Authorization: `Bearer ${session.access_token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ registrationNumber, assetId }),

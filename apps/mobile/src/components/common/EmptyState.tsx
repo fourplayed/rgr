@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from './Button';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, fontFamily as fonts } from '../../theme/spacing';
+import { spacing, fontSize, lineHeight, fontFamily as fonts } from '../../theme/spacing';
 
 interface EmptyStateAction {
   label: string;
@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.regular,
     color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: lineHeight.snug,
   },
   actionContainer: {
     marginTop: spacing.base,

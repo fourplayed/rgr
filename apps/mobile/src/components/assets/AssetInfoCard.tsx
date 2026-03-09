@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   overdueBadgeText: {
-    fontSize: 9,
+    fontSize: fontSize.micro,
     fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',

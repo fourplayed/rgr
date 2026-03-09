@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { colors } from './colors';
-import { spacing, fontSize, borderRadius, fontFamily } from './spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from './spacing';
 
 /**
  * Shared form styles for sheet modals (CreateMaintenanceModal, EditProfileModal,
@@ -26,7 +26,7 @@ export const formStyles = StyleSheet.create({
 
   label: {
     fontSize: fontSize.sm,
-    fontFamily: fontFamily.bold,
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -45,7 +45,7 @@ export const formStyles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.base,
     fontSize: fontSize.base,
-    fontFamily: fontFamily.regular,
+    fontFamily: fonts.regular,
     color: colors.text,
   },
 
@@ -62,7 +62,7 @@ export const formStyles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     height: 48,
     fontSize: fontSize.base,
-    fontFamily: fontFamily.regular,
+    fontFamily: fonts.regular,
     color: colors.text,
   },
 
@@ -77,7 +77,7 @@ export const formStyles = StyleSheet.create({
 
   errorText: {
     fontSize: fontSize.sm,
-    fontFamily: fontFamily.regular,
+    fontFamily: fonts.regular,
     color: colors.error,
     marginBottom: spacing.md,
   },

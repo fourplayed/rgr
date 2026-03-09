@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useConsoleStore } from '../../store/consoleStore';
 import { colors } from '../../theme/colors';
+import { fontSize, fontFamily as fonts } from '../../theme/spacing';
 
 const BUTTON_SIZE = 44;
 const DRAG_THRESHOLD = 10;
@@ -139,7 +140,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     color: '#FFFFFF',
-    fontSize: 10,
-    fontFamily: 'Lato_700Bold',
+    fontSize: fontSize.xxs,
+    fontFamily: fonts.bold,
   },
 });

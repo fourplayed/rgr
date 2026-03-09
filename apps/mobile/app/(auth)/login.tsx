@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFonts, Lato_700Bold } from '@expo-google-fonts/lato';
+
 import Constants from 'expo-constants';
 import { useQueryClient } from '@tanstack/react-query';
 import { listDepots } from '@rgr/shared';
@@ -105,10 +105,6 @@ export default function LoginScreen() {
     return () => animation.stop();
   }, [tiltAnim]);
 
-  const [fontsLoaded] = useFonts({
-    Lato_700Bold,
-  });
-
   const isFormValid = email.trim().length > 0 && password.trim().length > 0;
 
   const handleLogin = async () => {
@@ -177,10 +173,6 @@ export default function LoginScreen() {
     setShowSaveModal(false);
     router.replace('/(tabs)');
   };
-
-  if (!fontsLoaded) {
-    return null;
-  }
 
   return (
     <View style={styles.container}>

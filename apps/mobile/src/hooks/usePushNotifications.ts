@@ -1,23 +1,38 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AppState, Platform } from 'react-native';
-import * as Notifications from 'expo-notifications';
-import * as Device from 'expo-device';
 import Constants from 'expo-constants';
+import { router } from 'expo-router';
 import { upsertPushToken } from '@rgr/shared';
 import { useAuthStore } from '../store/authStore';
 
 /**
- * Configure notification handler for foreground display.
- * Must be called at module level before any component renders.
+ * Lazily load native modules that may not exist in Expo Go.
+ * In dev client / production builds these will always resolve.
  */
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-    shouldShowInForeground: true,
-  }),
-});
+let Notifications: typeof import('expo-notifications') | null = null;
+let Device: typeof import('expo-device') | null = null;
+
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  Notifications = require('expo-notifications');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  Device = require('expo-device');
+
+  Notifications!.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+      shouldShowInForeground: true,
+    }),
+  });
+} catch {
+  if (__DEV__) {
+    console.warn(
+      '[Push] Native modules not available — push notifications disabled (Expo Go?)'
+    );
+  }
+}
 
 /**
  * Hook that manages Expo push notification registration and token syncing.
@@ -28,18 +43,17 @@ Notifications.setNotificationHandler({
  * 3. Upserts the token to the push_tokens table
  * 4. Listens for incoming notifications
  *
- * Re-registers on app foreground transitions.
+ * Re-registers on app foreground transitions to ensure token freshness.
+ * Gracefully no-ops in Expo Go where native modules aren't available.
  */
 export function usePushNotifications() {
   const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
-  const [permissionStatus, setPermissionStatus] =
-    useState<Notifications.PermissionStatus | null>(null);
+  const [permissionStatus, setPermissionStatus] = useState<string | null>(null);
   const user = useAuthStore((s) => s.user);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const registeredRef = useRef(false);
 
   useEffect(() => {
-    if (!isAuthenticated || !user) return;
+    if (!isAuthenticated || !user || !Notifications || !Device) return;
 
     registerForPushNotifications();
 
@@ -58,11 +72,12 @@ export function usePushNotifications() {
 
   // Set up notification listeners
   useEffect(() => {
+    if (!Notifications) return;
+
     // Notification received while app is in foreground
     const receivedSub = Notifications.addNotificationReceivedListener(
       (notification) => {
-        // Could log to dev console if needed
-        console.log('[Push] Received:', notification.request.content.title);
+        if (__DEV__) console.log('[Push] Received:', notification.request.content.title);
       }
     );
 
@@ -70,9 +85,9 @@ export function usePushNotifications() {
     const responseSub = Notifications.addNotificationResponseReceivedListener(
       (response) => {
         const data = response.notification.request.content.data;
+        if (__DEV__) console.log('[Push] Tapped:', data);
         if (data?.['assetId']) {
-          // Navigation to asset detail could be handled here via router
-          console.log('[Push] Tapped, navigate to asset:', data['assetId']);
+          router.push(`/(tabs)/assets/${data['assetId']}`);
         }
       }
     );
@@ -84,13 +99,25 @@ export function usePushNotifications() {
   }, []);
 
   async function registerForPushNotifications() {
+    if (!Notifications || !Device) return;
+
     // Only register on physical devices
     if (!Device.isDevice) {
-      console.log('[Push] Skipping — not a physical device');
+      if (__DEV__) console.log('[Push] Skipping — not a physical device');
       return;
     }
 
     try {
+      // Set up Android notification channel (required for Android 8+)
+      if (Platform.OS === 'android') {
+        await Notifications.setNotificationChannelAsync('default', {
+          name: 'Default',
+          importance: Notifications.AndroidImportance.HIGH,
+          sound: 'default',
+          vibrationPattern: [0, 250, 250, 250],
+        });
+      }
+
       // Check / request permissions
       const { status: existingStatus } =
         await Notifications.getPermissionsAsync();
@@ -104,7 +131,7 @@ export function usePushNotifications() {
       setPermissionStatus(finalStatus);
 
       if (finalStatus !== 'granted') {
-        console.log('[Push] Permission not granted');
+        if (__DEV__) console.log('[Push] Permission not granted');
         return;
       }
 
@@ -114,9 +141,11 @@ export function usePushNotifications() {
         Constants['easConfig']?.['projectId'];
 
       if (!projectId) {
-        console.warn(
-          '[Push] No EAS projectId found — set extra.eas.projectId in app.json'
-        );
+        if (__DEV__) {
+          console.warn(
+            '[Push] No EAS projectId found — set extra.eas.projectId in app.json'
+          );
+        }
         return;
       }
 
@@ -126,9 +155,20 @@ export function usePushNotifications() {
       const token = tokenData.data;
       setExpoPushToken(token);
 
-      // Upsert to database
-      if (user && !registeredRef.current) {
-        const deviceId = Device.modelId || Device.deviceName || 'unknown';
+      // Upsert to database — idempotent, safe to call on every foreground
+      if (user) {
+        let deviceId: string;
+        try {
+          const Application = await import('expo-application');
+          if (Platform.OS === 'ios') {
+            deviceId = (await Application.getIosIdForVendorAsync()) || 'unknown-ios';
+          } else {
+            deviceId = Application.getAndroidId() || 'unknown-android';
+          }
+        } catch {
+          // Fallback if expo-application isn't available
+          deviceId = Device.modelId || Device.deviceName || 'unknown';
+        }
         const platform = Platform.OS as 'ios' | 'android';
 
         await upsertPushToken({
@@ -137,8 +177,6 @@ export function usePushNotifications() {
           deviceId,
           platform,
         });
-
-        registeredRef.current = true;
       }
     } catch (err) {
       console.error('[Push] Registration error:', err);

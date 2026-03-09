@@ -178,6 +178,7 @@ export const CreateAssetInputSchema = z.object({
 });
 
 export const UpdateAssetInputSchema = CreateAssetInputSchema.partial().extend({
+  registrationNumber: z.string().min(1).max(20).nullable().optional(),
   qrCodeData: z.string().nullable().optional(),
   qrGeneratedAt: z.string().nullable().optional(),
 });

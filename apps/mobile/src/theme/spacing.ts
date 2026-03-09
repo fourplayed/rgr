@@ -33,6 +33,10 @@ export const borderRadius = {
  * Font sizes
  */
 export const fontSize = {
+  /** Badge/label text in compact UI */
+  micro: 9,
+  /** Small badge counts, console text */
+  xxs: 10,
   xs: 12,
   sm: 14,
   base: 16,
@@ -52,6 +56,8 @@ export const fontSize = {
  */
 export const lineHeight = {
   tight: 18,
+  /** Subtitle/body text slightly tighter than body (22) */
+  snug: 20,
   body: 22,
   relaxed: 26,
 } as const;

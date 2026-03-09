@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useState, useEffect } from 'react';
+import React, { memo, useCallback, useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   SafeAreaView,
   Platform,
   Linking,
+  Animated,
+  Dimensions,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,6 +21,9 @@ import { LoadingDots, AlertSheet, ConfirmSheet } from '../common';
 import { formatRelativeTime } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
+import { FULLSCREEN_SPRING, SHEET_EXIT } from '../../theme/animation';
+
+const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 const formatPhotoType = (type: string): string => {
   return type.charAt(0).toUpperCase() + type.slice(1).replace(/_/g, ' ');
@@ -32,6 +37,21 @@ interface PhotoDetailModalProps {
 }
 
 function PhotoDetailModalComponent({ visible, photoId, assetId, onClose }: PhotoDetailModalProps) {
+  const translateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+
+  useEffect(() => {
+    if (visible) {
+      translateY.setValue(SCREEN_HEIGHT);
+      Animated.spring(translateY, { toValue: 0, ...FULLSCREEN_SPRING }).start();
+    }
+  }, [visible, translateY]);
+
+  const handleAnimatedClose = useCallback(() => {
+    Animated.timing(translateY, { toValue: SCREEN_HEIGHT, ...SHEET_EXIT }).start(() => {
+      onClose();
+    });
+  }, [translateY, onClose]);
+
   const { data: photoData, isLoading, error } = usePhoto(photoId ?? undefined);
   const { data: thumbnailUrl } = useSignedUrl(photoData?.thumbnailPath ?? undefined);
   const { data: fullImageUrl, error: urlError } = useSignedUrl(photoData?.storagePath);
@@ -85,14 +105,15 @@ function PhotoDetailModalComponent({ visible, photoId, assetId, onClose }: Photo
   }, []);
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} animationType="none" onRequestClose={handleAnimatedClose}>
+      <Animated.View style={[{ flex: 1 }, { transform: [{ translateY }] }]}>
       <View style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity
               style={styles.headerButton}
-              onPress={onClose}
+              onPress={handleAnimatedClose}
               accessibilityRole="button"
               accessibilityLabel="Close photo details"
             >
@@ -269,6 +290,7 @@ function PhotoDetailModalComponent({ visible, photoId, assetId, onClose }: Photo
         message={alertSheet.message}
         onDismiss={() => setAlertSheet((prev) => ({ ...prev, visible: false }))}
       />
+      </Animated.View>
     </Modal>
   );
 }

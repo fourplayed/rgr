@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   TouchableOpacity,
   Modal,
+  Animated,
 } from 'react-native';
 import { LoadingDots } from '../../../src/components/common/LoadingDots';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -33,7 +34,7 @@ import {
 import { useAuthStore } from '../../../src/store/authStore';
 import { formatRelativeTime, hasRoleLevel, UserRole, formatAssetNumber } from '@rgr/shared';
 import { colors } from '../../../src/theme/colors';
-import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../../src/theme/spacing';
+import { spacing, fontSize, lineHeight, borderRadius, fontFamily as fonts } from '../../../src/theme/spacing';
 import { CONTENT_TOP_OFFSET } from '../../../src/theme/layout';
 import {
   getScanTypeIcon,
@@ -44,6 +45,7 @@ import { findDepotByLocationString, getDepotBadgeColors } from '@rgr/shared';
 import { useDepotLookup } from '../../../src/hooks/useDepots';
 import { useAcceptDefect } from '../../../src/hooks/useAcceptDefect';
 import { useModalTransition } from '../../../src/hooks/useModalTransition';
+import { useTabFade } from '../../../src/hooks/useTabFade';
 import { ModalShell } from '../../../src/components/common/ModalShell';
 
 type AssetModalState =
@@ -289,6 +291,7 @@ export default function AssetDetailScreen() {
   // Validate route params - handle array case from Expo Router
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const [activeTab, setActiveTab] = useState<AssetDetailTab>('activity');
+  const tabFade = useTabFade(activeTab);
   const [showQRModal, setShowQRModal] = useState(false);
   const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
   const [showPhotoDetail, setShowPhotoDetail] = useState(false);
@@ -497,7 +500,7 @@ export default function AssetDetailScreen() {
         <SegmentedTabs tabs={ASSET_DETAIL_TABS} activeTab={activeTab} onTabPress={setActiveTab} />
       </View>
 
-      <View style={styles.tabContentArea}>
+      <Animated.View style={[styles.tabContentArea, tabFade]}>
         {activeTab === 'activity' && (
           <ScrollView contentContainerStyle={styles.tabScrollContent}>
             {scansLoading ? (
@@ -555,7 +558,7 @@ export default function AssetDetailScreen() {
             )}
           </ScrollView>
         )}
-      </View>
+      </Animated.View>
 
       {/* QR Code Modal - Superuser Only */}
       <Modal
@@ -715,7 +718,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.regular,
     color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: lineHeight.snug,
   },
   activityList: {
     gap: spacing.sm,

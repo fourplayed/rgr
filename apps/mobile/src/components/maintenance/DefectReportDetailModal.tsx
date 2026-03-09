@@ -143,7 +143,8 @@ export function DefectReportDetailModal({
         <View style={styles.actionsContainer}>
           <Button
             onPress={handleDismissPress}
-            disabled={isScattering || isDeleting}
+            disabled={isScattering}
+            isLoading={isDeleting}
             flex
             variant="danger"
           >

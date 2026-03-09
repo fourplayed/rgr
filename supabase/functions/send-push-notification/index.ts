@@ -122,14 +122,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Verify service_role auth
+    // Verify service_role auth — exact match only
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.includes(Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!)) {
-      // Also accept if called internally via service_role JWT
-      const token = authHeader?.replace("Bearer ", "");
-      if (token !== Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) {
-        return errorResponse("Unauthorized — service_role required", 403);
-      }
+    const token = authHeader?.replace("Bearer ", "");
+    if (token !== Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) {
+      return errorResponse("Unauthorized — service_role required", 403);
     }
 
     const { title, body, data, targetRoles } = (await req.json()) as {
@@ -148,12 +145,38 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     const serviceClient = getServiceClient();
 
-    // Get push tokens for target roles (join profiles for role + is_active)
+    // Step 1: Get active user IDs for target roles
+    const { data: profileRows, error: profileError } = await serviceClient
+      .from("profiles")
+      .select("id")
+      .in("role", targetRoles)
+      .eq("is_active", true);
+
+    if (profileError) {
+      console.error("Error fetching profiles:", profileError);
+      return errorResponse(
+        `Failed to fetch profiles: ${profileError.message}`,
+        500,
+      );
+    }
+
+    if (!profileRows || profileRows.length === 0) {
+      return new Response(
+        JSON.stringify({ sent: 0, failed: 0, tokensRemoved: 0 }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    const userIds = profileRows.map((p: { id: string }) => p.id);
+
+    // Step 2: Get push tokens for those users
     const { data: tokenRows, error: tokenError } = await serviceClient
       .from("push_tokens")
-      .select("token, profiles!inner(role, is_active)")
-      .in("profiles.role", targetRoles)
-      .eq("profiles.is_active", true);
+      .select("token")
+      .in("user_id", userIds);
 
     if (tokenError) {
       console.error("Error fetching push tokens:", tokenError);
@@ -174,13 +197,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     }
 
     // Build Expo push messages
-    interface TokenRowWithProfile {
-      token: string;
-      profiles: { role: string; is_active: boolean };
-    }
-    const tokens = (tokenRows as unknown as TokenRowWithProfile[]).map(
-      (r) => r.token,
-    );
+    const tokens = tokenRows.map((r: { token: string }) => r.token);
     const messages: ExpoPushMessage[] = tokens.map((token) => ({
       to: token,
       title,

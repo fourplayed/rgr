@@ -99,7 +99,7 @@ export async function listDefectReports(
   // Hide resolved reports older than the cutoff to reduce list clutter
   if (staleCutoffDays !== undefined) {
     const cutoff = new Date(Date.now() - staleCutoffDays * 24 * 60 * 60 * 1000).toISOString();
-    query = query.or(`status.neq.resolved,resolved_at.gt.${cutoff}`);
+    query = query.or(`status.neq.resolved,resolved_at.is.null,resolved_at.gt.${cutoff}`);
   }
 
   const { data, error } = await query;

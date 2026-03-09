@@ -7,6 +7,7 @@ import {
   Modal,
   Linking,
   Animated,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -16,7 +17,10 @@ import type { PhotoType } from '@rgr/shared';
 import { usePhotoCapture } from '../../hooks/usePhotoCapture';
 import { LoadingDots } from '../common/LoadingDots';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius, shadows, fontFamily as fonts } from '../../theme/spacing';
+import { spacing, fontSize, lineHeight, borderRadius, shadows, fontFamily as fonts } from '../../theme/spacing';
+import { FULLSCREEN_SPRING, SHEET_EXIT } from '../../theme/animation';
+
+const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 interface CameraCaptureProps {
   visible: boolean;
@@ -71,6 +75,23 @@ function CameraCaptureComponent({
 
   const { takePhoto, startCapture, cancelCapture } = usePhotoCapture();
 
+  // Full-screen spring entrance
+  const slideY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+
+  useEffect(() => {
+    if (visible) {
+      slideY.setValue(SCREEN_HEIGHT);
+      Animated.spring(slideY, { toValue: 0, ...FULLSCREEN_SPRING }).start();
+    }
+  }, [visible, slideY]);
+
+  const handleAnimatedClose = useCallback(() => {
+    Animated.timing(slideY, { toValue: SCREEN_HEIGHT, ...SHEET_EXIT }).start(() => {
+      cancelCapture();
+      onClose();
+    });
+  }, [slideY, cancelCapture, onClose]);
+
   // Initialize capture state when modal opens
   useEffect(() => {
     if (visible) {
@@ -93,10 +114,7 @@ function CameraCaptureComponent({
     }
   }, [takePhoto, onPhotoCaptured]);
 
-  const handleClose = useCallback(() => {
-    cancelCapture();
-    onClose();
-  }, [cancelCapture, onClose]);
+  const handleClose = handleAnimatedClose;
 
   const [torchOn, setTorchOn] = useState(false);
 
@@ -126,10 +144,11 @@ function CameraCaptureComponent({
     return (
       <Modal
         visible={visible}
-        animationType="slide"
+        animationType="none"
         onRequestClose={handleClose}
         onDismiss={onDismiss}
       >
+        <Animated.View style={[{ flex: 1 }, { transform: [{ translateY: slideY }] }]}>
         <SafeAreaProvider>
           <View style={styles.container}>
             <SafeAreaView style={styles.centered}>
@@ -144,6 +163,7 @@ function CameraCaptureComponent({
             </SafeAreaView>
           </View>
         </SafeAreaProvider>
+        </Animated.View>
       </Modal>
     );
   }
@@ -154,10 +174,11 @@ function CameraCaptureComponent({
     return (
       <Modal
         visible={visible}
-        animationType="slide"
+        animationType="none"
         onRequestClose={handleClose}
         onDismiss={onDismiss}
       >
+        <Animated.View style={[{ flex: 1 }, { transform: [{ translateY: slideY }] }]}>
         <SafeAreaProvider>
           <View style={styles.container}>
             <SafeAreaView style={styles.centered}>
@@ -200,6 +221,7 @@ function CameraCaptureComponent({
             </SafeAreaView>
           </View>
         </SafeAreaProvider>
+        </Animated.View>
       </Modal>
     );
   }
@@ -207,10 +229,11 @@ function CameraCaptureComponent({
   return (
     <Modal
       visible={visible}
-      animationType="slide"
+      animationType="none"
       onRequestClose={handleClose}
       onDismiss={onDismiss}
     >
+      <Animated.View style={[{ flex: 1 }, { transform: [{ translateY: slideY }] }]}>
       <SafeAreaProvider>
         <View style={styles.container}>
           <CameraView ref={cameraRef} style={styles.camera} facing="back" enableTorch={torchOn}>
@@ -293,6 +316,7 @@ function CameraCaptureComponent({
           </CameraView>
         </View>
       </SafeAreaProvider>
+      </Animated.View>
     </Modal>
   );
 }
@@ -357,7 +381,7 @@ const styles = StyleSheet.create({
     color: colors.textInverse,
     opacity: 0.7,
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: lineHeight.snug,
     marginBottom: spacing.xl,
   },
   permissionButtonRow: {

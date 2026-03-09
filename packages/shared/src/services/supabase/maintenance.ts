@@ -140,7 +140,7 @@ export async function listMaintenance(
   // Hide completed tasks older than the cutoff to reduce list clutter
   if (staleCutoffDays !== undefined) {
     const cutoff = new Date(Date.now() - staleCutoffDays * 24 * 60 * 60 * 1000).toISOString();
-    query = query.or(`status.neq.completed,completed_at.gt.${cutoff}`);
+    query = query.or(`status.neq.completed,completed_at.is.null,completed_at.gt.${cutoff}`);
   }
 
   const { data, error } = await query;
