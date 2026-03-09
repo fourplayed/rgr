@@ -46,8 +46,6 @@ export function ConsolePanel() {
   const isOpen = useConsoleStore((s) => s.isOpen);
   const entries = useConsoleStore((s) => s.entries);
   const activeFilter = useConsoleStore((s) => s.activeFilter);
-  const buttonY = useConsoleStore((s) => s.buttonY);
-  const heightOffset = useConsoleStore((s) => s.heightOffset);
   const clearEntries = useConsoleStore((s) => s.clearEntries);
   const toggleOpen = useConsoleStore((s) => s.toggleOpen);
   const setFilter = useConsoleStore((s) => s.setFilter);

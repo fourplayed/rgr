@@ -25,7 +25,7 @@ interface DefectReportListItemProps {
 }
 
 function DefectReportListItemComponent({ defect, onPress }: DefectReportListItemProps) {
-  const { icon, color } = DEFECT_STATUS_CONFIG[defect.status] ?? DEFECT_STATUS_CONFIG.reported;
+  const { icon } = DEFECT_STATUS_CONFIG[defect.status] ?? DEFECT_STATUS_CONFIG.reported;
 
   return (
     <TouchableOpacity

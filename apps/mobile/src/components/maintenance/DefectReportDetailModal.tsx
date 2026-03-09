@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { formatRelativeTime, formatAssetNumber } from '@rgr/shared';
@@ -10,7 +10,7 @@ import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts, shadows } from '../../theme/spacing';
 import { sheetLayout } from '../../theme/sheetLayout';
 import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
-import { useDefectReport, useDeleteDefectReport } from '../../hooks/useDefectData';
+import { useDefectReport } from '../../hooks/useDefectData';
 import { useAsset } from '../../hooks/useAssetData';
 import { useMaintenance } from '../../hooks/useMaintenanceData';
 import { useScanEventPhotos, useSignedUrl } from '../../hooks/usePhotos';
@@ -52,7 +52,7 @@ export function DefectReportDetailModal({
   variant = 'full',
   onAcceptPress,
   onViewTaskPress,
-  onDismissConfirmed,
+  onDismissConfirmed: _onDismissConfirmed,
   onDismiss,
   inline,
   backdrop,
@@ -74,10 +74,8 @@ export function DefectReportDetailModal({
   } = useSignedUrl(defectPhoto?.thumbnailPath ?? defectPhoto?.storagePath ?? undefined);
 
   // Dismiss delete mutation
-  const { mutateAsync: deleteDefect } = useDeleteDefectReport();
-
   // Scatter exit animation
-  const { getStyle, scatter, reset, isScattering } = useScatterExit();
+  const { getStyle, reset, isScattering } = useScatterExit();
 
   // Reset scatter state when modal opens
   useEffect(() => {
@@ -106,33 +104,6 @@ export function DefectReportDetailModal({
     if (!defect?.maintenanceRecordId || !onViewTaskPress) return;
     onViewTaskPress(defect.maintenanceRecordId);
   }, [defect, onViewTaskPress]);
-
-  const handleDismiss = useCallback(() => {
-    if (!defectId) return;
-    Alert.alert(
-      'Dismiss Defect Report',
-      'Are you sure? This will permanently delete this defect report.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Dismiss',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteDefect(defectId);
-              scatter(7, () => onDismissConfirmed?.(defectId));
-            } catch (err: unknown) {
-              setAlertSheet({
-                visible: true,
-                title: 'Error',
-                message: err instanceof Error ? err.message : 'Failed to dismiss defect report',
-              });
-            }
-          },
-        },
-      ],
-    );
-  }, [defectId, deleteDefect, scatter, onDismissConfirmed]);
 
   const renderStatusActions = () => {
     if (!defect || !canMarkMaintenance) return null;

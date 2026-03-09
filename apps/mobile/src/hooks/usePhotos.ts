@@ -12,7 +12,6 @@ import {
   queryFromService,
 } from '@rgr/shared';
 import type { UploadPhotoOptions, PhotoListItem } from '@rgr/shared';
-import { logger } from '../utils/logger';
 import { assetKeys } from './useAssetData';
 
 /** Supabase signed URLs expire at 60 min — use 45 min for a safe buffer. */
