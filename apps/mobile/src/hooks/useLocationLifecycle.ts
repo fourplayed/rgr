@@ -15,6 +15,15 @@ export function useLocationLifecycle() {
   const depots = useMemo(() => depotsData ?? [], [depotsData]);
   const ensureFresh = useLocationStore((s) => s.ensureFresh);
 
+  // Auto-resolve on mount once depots are loaded (covers checkAuth path
+  // where root _layout.tsx doesn't trigger resolveDepot)
+  useEffect(() => {
+    if (depots.length > 0) {
+      ensureFresh(depots);
+    }
+  }, [depots, ensureFresh]);
+
+  // Refresh on foreground resume
   useEffect(() => {
     const sub = AppState.addEventListener('change', (next) => {
       if (next === 'active') ensureFresh(depots);

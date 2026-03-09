@@ -33,6 +33,7 @@ export function useConsoleStoreLogger() {
     let prevDepotId = useLocationStore.getState().resolvedDepot?.depot.id ?? null;
     let prevError = useLocationStore.getState().depotResolutionError;
     let prevRetryCount = useLocationStore.getState().retryCount;
+    let prevResolving = useLocationStore.getState().isResolvingDepot;
 
     const locationUnsub = useLocationStore.subscribe((state) => {
       const depotId = state.resolvedDepot?.depot.id ?? null;
@@ -49,6 +50,12 @@ export function useConsoleStoreLogger() {
         }
         prevDepotId = depotId;
       }
+
+      // Log when resolution finishes with no depot found (null → null blind spot)
+      if (prevResolving && !state.isResolvingDepot && !state.resolvedDepot && !state.depotResolutionError) {
+        consoleLog('debug', 'location', 'GPS resolved — no depot within geofence range');
+      }
+      prevResolving = state.isResolvingDepot;
 
       if (state.depotResolutionError && state.depotResolutionError !== prevError) {
         consoleLog('error', 'location', state.depotResolutionError);
