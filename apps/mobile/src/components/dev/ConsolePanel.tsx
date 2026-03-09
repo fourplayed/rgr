@@ -17,6 +17,7 @@ import { ConsoleEntryRow, ROW_HEIGHT } from './ConsoleEntryRow';
 import { SHEET_SPRING } from '../../theme/animation';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
+const SCREEN_WIDTH = Dimensions.get('window').width;
 
 const FILTERS: (ConsoleNamespace | null)[] = [
   null,
@@ -53,21 +54,22 @@ export function ConsolePanel() {
   const growPanel = useConsoleStore((s) => s.growPanel);
   const shrinkPanel = useConsoleStore((s) => s.shrinkPanel);
 
-  const panelHeight = Math.round(SCREEN_HEIGHT * 0.5) + heightOffset;
+  const panelWidth = SCREEN_WIDTH;
+  const panelHeight = Math.round(SCREEN_HEIGHT * 0.5);
 
-  const translateY = useRef(new Animated.Value(panelHeight)).current;
+  const translateX = useRef(new Animated.Value(-panelWidth)).current;
   const flatListRef = useRef<FlatList<ConsoleEntry>>(null);
   const userScrolledUp = useRef(false);
 
-  // Slide up/down animation
+  // Slide in/out from left
   useEffect(() => {
-    Animated.spring(translateY, {
-      toValue: isOpen ? 0 : panelHeight,
+    Animated.spring(translateX, {
+      toValue: isOpen ? 0 : -panelWidth,
       friction: SHEET_SPRING.friction,
       tension: SHEET_SPRING.tension,
       useNativeDriver: true,
     }).start();
-  }, [isOpen, translateY, panelHeight]);
+  }, [isOpen, translateX, panelWidth]);
 
   // Filter entries
   const filteredEntries = useMemo(() => {
@@ -117,10 +119,9 @@ export function ConsolePanel() {
       style={[
         styles.overlay,
         {
-          top: buttonY + 40,
+          top: insets.top,
           height: panelHeight,
-          paddingBottom: Math.max(insets.bottom - (SCREEN_HEIGHT - buttonY - panelHeight), 0),
-          transform: [{ translateY }],
+          transform: [{ translateX }],
         },
       ]}
     >
@@ -129,10 +130,10 @@ export function ConsolePanel() {
         <Text style={styles.title}>CONSOLE</Text>
         <View style={styles.headerActions}>
           <Pressable onPress={growPanel} hitSlop={8} style={styles.headerBtn}>
-            <Ionicons name="chevron-up" size={18} color="rgba(255,255,255,0.7)" />
+            <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.7)" />
           </Pressable>
           <Pressable onPress={shrinkPanel} hitSlop={8} style={styles.headerBtn}>
-            <Ionicons name="chevron-down" size={18} color="rgba(255,255,255,0.7)" />
+            <Ionicons name="chevron-back" size={18} color="rgba(255,255,255,0.7)" />
           </Pressable>
           <Pressable onPress={clearEntries} hitSlop={8} style={styles.headerBtn}>
             <Ionicons name="trash-outline" size={18} color="rgba(255,255,255,0.7)" />
@@ -191,8 +192,8 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: 'rgba(0, 0, 30, 0.85)',
     zIndex: 1000,
-    borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
+    borderBottomRightRadius: 16,
   },
   header: {
     flexDirection: 'row',

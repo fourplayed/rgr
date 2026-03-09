@@ -1,13 +1,15 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, TextInput, StyleSheet, ScrollView, Pressable, Platform } from 'react-native';
+import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import type { MaintenancePriority, CreateMaintenanceInput } from '@rgr/shared';
 import { MaintenancePriorityLabels } from '@rgr/shared';
 import { Button } from '../common/Button';
+import { FilterChip } from '../common/FilterChip';
 import { SheetHeader } from '../common/SheetHeader';
 import { SheetModal } from '../common/SheetModal';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts, shadows } from '../../theme/spacing';
 import { formStyles } from '../../theme/formStyles';
 import { sheetLayout } from '../../theme/sheetLayout';
 import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
@@ -64,21 +66,7 @@ export function CreateMaintenanceModal({
   const [priority, setPriority] = useState<MaintenancePriority>('medium');
   const [dueDate, setDueDate] = useState('');
 
-  // Compute date presets once at mount — dates only matter at open time
-  const datePresets = useMemo(() => {
-    const addDays = (days: number) => {
-      const d = new Date();
-      d.setDate(d.getDate() + days);
-      return d.toISOString().slice(0, 10);
-    };
-    return [
-      { label: 'Today', date: addDays(0) },
-      { label: 'Tomorrow', date: addDays(1) },
-      { label: 'Next Week', date: addDays(7) },
-      { label: 'Clear', date: '' },
-    ];
-  }, []);
-  const [notes, setNotes] = useState('');
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Reset form when modal opens, pre-filling from defect context if provided
@@ -88,10 +76,20 @@ export function CreateMaintenanceModal({
       setDescription(defaultDescription ?? '');
       setPriority(defaultPriority ?? 'medium');
       setDueDate('');
-      setNotes('');
+      setShowDatePicker(false);
       setError(null);
     }
   }, [visible, defaultTitle, defaultDescription, defaultPriority]);
+
+  const handleDateChange = useCallback(
+    (_event: DateTimePickerEvent, selectedDate?: Date) => {
+      if (Platform.OS === 'android') setShowDatePicker(false);
+      if (selectedDate) {
+        setDueDate(selectedDate.toISOString().slice(0, 10));
+      }
+    },
+    []
+  );
 
   const handleSubmit = useCallback(
     () =>
@@ -106,6 +104,11 @@ export function CreateMaintenanceModal({
           return;
         }
 
+        if (!dueDate.trim()) {
+          setError('Due date is required');
+          return;
+        }
+
         setError(null);
 
         const input: CreateMaintenanceInput = {
@@ -116,7 +119,7 @@ export function CreateMaintenanceModal({
           status: 'scheduled',
           reportedBy: user?.id || null,
           dueDate: dueDate.trim() || null,
-          notes: notes.trim() || null,
+          notes: null,
         };
 
         try {
@@ -141,7 +144,6 @@ export function CreateMaintenanceModal({
       description,
       priority,
       dueDate,
-      notes,
       assetId,
       user,
       createMaintenanceAsync,
@@ -180,11 +182,9 @@ export function CreateMaintenanceModal({
 
           {/* Asset (read-only if pre-selected) */}
           {assetId && assetNumber && (
-            <View style={formStyles.inputGroup}>
-              <Text style={formStyles.label}>Asset</Text>
-              <View style={styles.readOnlyField}>
-                <Text style={styles.readOnlyText}>{assetNumber}</Text>
-              </View>
+            <View style={[formStyles.inputGroup, styles.assetRow]}>
+              <Ionicons name="cube" size={22} color={colors.text} />
+              <Text style={styles.readOnlyText}>{assetNumber}</Text>
             </View>
           )}
 
@@ -207,73 +207,46 @@ export function CreateMaintenanceModal({
           <View style={formStyles.inputGroup}>
             <Text style={formStyles.label}>Priority</Text>
             <View style={styles.chipContainer}>
-              {PRIORITY_ORDER.map((p) => {
-                const isSelected = priority === p;
-                const selectedColor = colors.maintenancePriority[p];
-                return (
-                  <TouchableOpacity
-                    key={p}
-                    style={[
-                      styles.chip,
-                      {
-                        backgroundColor: isSelected ? selectedColor : colors.surface,
-                        borderColor: isSelected ? 'transparent' : colors.border,
-                      },
-                    ]}
-                    onPress={() => setPriority(p)}
-                    activeOpacity={0.7}
-                  >
-                    <Text
-                      style={[
-                        styles.chipText,
-                        {
-                          color: isSelected ? colors.textInverse : colors.text,
-                          fontFamily: isSelected ? fonts.bold : fonts.regular,
-                        },
-                      ]}
-                    >
-                      {MaintenancePriorityLabels[p]}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
+              {PRIORITY_ORDER.map((p) => (
+                <FilterChip
+                  key={p}
+                  label={MaintenancePriorityLabels[p]}
+                  isSelected={priority === p}
+                  onPress={() => setPriority(p)}
+                  selectedColor={colors.maintenancePriority[p]}
+                />
+              ))}
             </View>
           </View>
 
           {/* Due Date */}
           <View style={formStyles.inputGroup}>
-            <Text style={formStyles.label}>Due Date (optional)</Text>
-            <View style={styles.datePresets}>
-              {datePresets.map(({ label, date }) => {
-                const isSelected = date !== '' && dueDate === date;
-                return (
-                  <TouchableOpacity
-                    key={label}
-                    style={[styles.datePresetChip, isSelected && styles.datePresetChipActive]}
-                    onPress={() => setDueDate(date)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Set due date to ${label}`}
-                    accessibilityState={{ selected: isSelected }}
-                  >
-                    <Text
-                      style={[styles.datePresetText, isSelected && styles.datePresetTextActive]}
-                    >
-                      {label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-            {dueDate ? (
-              <Text style={styles.dateDisplay}>
-                {new Date(dueDate + 'T00:00:00').toLocaleDateString(undefined, {
-                  weekday: 'short',
-                  year: 'numeric',
-                  month: 'short',
-                  day: 'numeric',
-                })}
+            <Text style={formStyles.label}>Due Date *</Text>
+            <Pressable
+              style={styles.dateField}
+              onPress={() => setShowDatePicker((prev) => !prev)}
+              accessibilityRole="button"
+              accessibilityLabel="Select due date"
+            >
+              <Ionicons name="calendar-outline" size={18} color={dueDate ? colors.text : colors.textSecondary} />
+              <Text style={[styles.dateFieldText, !dueDate && styles.dateFieldPlaceholder]}>
+                {dueDate
+                  ? new Date(dueDate + 'T00:00:00').toLocaleDateString(undefined, {
+                      weekday: 'short', year: 'numeric', month: 'short', day: 'numeric',
+                    })
+                  : 'Tap to select date'}
               </Text>
-            ) : null}
+            </Pressable>
+            {showDatePicker && (
+              <DateTimePicker
+                value={dueDate ? new Date(dueDate + 'T00:00:00') : new Date()}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'inline' : 'default'}
+                minimumDate={new Date()}
+                onChange={handleDateChange}
+                accentColor={colors.primary}
+              />
+            )}
           </View>
 
           {/* Description */}
@@ -292,30 +265,11 @@ export function CreateMaintenanceModal({
             />
           </View>
 
-          {/* Notes */}
-          <View style={formStyles.inputGroup}>
-            <Text style={formStyles.label}>Notes (optional)</Text>
-            <TextInput
-              style={[formStyles.input, formStyles.textArea]}
-              value={notes}
-              onChangeText={setNotes}
-              placeholder="Additional notes"
-              placeholderTextColor={colors.textSecondary}
-              multiline
-              numberOfLines={2}
-              textAlignVertical="top"
-              accessibilityLabel="Maintenance notes"
-            />
-          </View>
-
           {error && <Text style={formStyles.errorText}>{error}</Text>}
 
-          <View style={[formStyles.buttonRow, { marginTop: spacing.lg }]}>
-            <Button variant="secondary" onPress={onClose} disabled={isLoading} flex>
-              Cancel
-            </Button>
-            <Button isLoading={isLoading} onPress={handleSubmit} flex>
-              Schedule Maintenance
+          <View style={{ marginTop: spacing.lg }}>
+            <Button isLoading={isLoading} onPress={handleSubmit} color={colors.success} style={styles.submitButton}>
+              Create Task
             </Button>
           </View>
         </ScrollView>
@@ -325,34 +279,16 @@ export function CreateMaintenanceModal({
 }
 
 const styles = StyleSheet.create({
-  readOnlyField: {
-    backgroundColor: colors.chrome,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.base,
-  },
   readOnlyText: {
-    fontSize: fontSize.base,
+    fontSize: fontSize.xl,
     fontFamily: fonts.bold,
-    color: colors.electricBlue,
+    color: colors.text,
     textTransform: 'uppercase',
   },
   chipContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
-  },
-  chip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.full,
-    borderWidth: 1,
-  },
-  chipText: {
-    fontSize: fontSize.sm,
-    textTransform: 'uppercase',
   },
   defectBanner: {
     flexDirection: 'row',
@@ -373,36 +309,33 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  datePresets: {
+  dateField: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    alignItems: 'center',
     gap: spacing.sm,
-  },
-  datePresetChip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.full,
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.base,
   },
-  datePresetChipActive: {
-    borderColor: colors.electricBlue,
-    backgroundColor: colors.electricBlue + '15',
-  },
-  datePresetText: {
-    fontSize: fontSize.sm,
-    fontFamily: fonts.bold,
-    color: colors.textSecondary,
-    textTransform: 'uppercase',
-  },
-  datePresetTextActive: {
-    color: colors.electricBlue,
-  },
-  dateDisplay: {
-    fontSize: fontSize.sm,
+  dateFieldText: {
+    flex: 1,
+    fontSize: fontSize.base,
     fontFamily: fonts.regular,
     color: colors.text,
-    marginTop: spacing.sm,
+  },
+  assetRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  dateFieldPlaceholder: {
+    color: colors.textSecondary,
+  },
+  submitButton: {
+    width: '100%',
+    ...shadows.lg,
   },
 });

@@ -14,7 +14,7 @@ import { useRouter } from 'expo-router';
 import { useIsFocused } from '@react-navigation/native';
 import { useRecentScans, useAssetCountsByStatus, useTotalScanCount } from '../../src/hooks/useAssetData';
 import { useRecentMaintenance } from '../../src/hooks/useMaintenanceData';
-import { useRecentDefectReports } from '../../src/hooks/useDefectData';
+import { useRecentDefectReports, useDefectReportStats } from '../../src/hooks/useDefectData';
 import { useAuthStore } from '../../src/store/authStore';
 import { useLocationStore } from '../../src/store/locationStore';
 import { formatRelativeTime, UserRoleLabels, formatAssetNumber } from '@rgr/shared';
@@ -136,7 +136,7 @@ const ActivityCard = memo(function ActivityCard({
     return (
       <Animated.View style={{ opacity: entranceOpacity }}>
         <TouchableOpacity
-          style={[styles.scanCard, { borderLeftColor: defectConfig.color }]}
+          style={[styles.scanCard, { borderLeftColor: colors.defectYellow }]}
           onPress={handlePress}
           activeOpacity={0.7}
           accessibilityRole="button"
@@ -144,7 +144,7 @@ const ActivityCard = memo(function ActivityCard({
         >
           <View style={styles.cardRow}>
             <View style={styles.cardIconContainer}>
-              <Ionicons name={defectConfig.icon} size={32} color={defectConfig.color} />
+              <Ionicons name={defectConfig.icon} size={32} color={colors.defectYellow} />
             </View>
             <View style={styles.cardBody}>
               <View style={styles.cardContentRow}>
@@ -288,8 +288,16 @@ export default function HomeScreen() {
     isRefetching: scanCountRefetching,
   } = useTotalScanCount();
 
-  const isLoading = scansLoading || maintenanceLoading || defectsLoading || statsLoading || scanCountLoading;
-  const isRefetching = scansRefetching || maintenanceRefetching || defectsRefetching || statsRefetching || scanCountRefetching;
+  // Defect report stats for dashboard card
+  const {
+    data: defectStats,
+    isLoading: defectStatsLoading,
+    refetch: refetchDefectStats,
+    isRefetching: defectStatsRefetching,
+  } = useDefectReportStats();
+
+  const isLoading = scansLoading || maintenanceLoading || defectsLoading || statsLoading || scanCountLoading || defectStatsLoading;
+  const isRefetching = scansRefetching || maintenanceRefetching || defectsRefetching || statsRefetching || scanCountRefetching || defectStatsRefetching;
 
   const handleRefresh = useCallback(() => {
     refetchScans();
@@ -297,7 +305,8 @@ export default function HomeScreen() {
     refetchDefects();
     refetchStats();
     refetchScanCount();
-  }, [refetchScans, refetchMaintenance, refetchDefects, refetchStats, refetchScanCount]);
+    refetchDefectStats();
+  }, [refetchScans, refetchMaintenance, refetchDefects, refetchStats, refetchScanCount, refetchDefectStats]);
 
   // Get time-based greeting (memoized — only changes on focus)
   const greeting = useMemo(() => {
@@ -357,18 +366,17 @@ export default function HomeScreen() {
     };
   }, [isFocused, greetingOpacity, usernameOpacity, geofenceOpacity]);
 
-  const totalAssets = assetStats?.total ?? 0;
   const servicedCount = assetStats?.serviced ?? 0;
   const outOfServiceCount = assetStats?.outOfService ?? 0;
 
   // Memoize stats cards to prevent recreation on every render
   // Note: Must be before any early returns to maintain hook order
   const statsCards = useMemo(() => [
-    { label: 'Total Assets', value: totalAssets, color: colors.electricBlue, icon: 'cube' as const, route: '/(tabs)/assets' as const },
+    { label: 'Total Scans', value: totalScanCount ?? 0, color: colors.electricBlue, icon: 'qr-code' as const, route: '/(tabs)/maintenance' as const },
     { label: 'Serviced', value: servicedCount, color: colors.status.active, icon: 'checkmark-circle' as const, route: '/(tabs)/assets' as const },
-    { label: 'Total Scans', value: totalScanCount ?? 0, color: colors.status.maintenance, icon: 'qr-code' as const, route: '/(tabs)/maintenance' as const },
+    { label: 'Reported Defects', value: defectStats?.reported ?? 0, color: colors.defectYellow, icon: 'warning' as const, route: '/(tabs)/maintenance' as const },
     { label: 'Out of Service', value: outOfServiceCount, color: colors.status.outOfService, icon: 'close-circle' as const, route: '/(tabs)/assets' as const },
-  ], [totalAssets, servicedCount, totalScanCount, outOfServiceCount]);
+  ], [totalScanCount, servicedCount, defectStats?.reported, outOfServiceCount]);
 
   // Merge scans, maintenance, and defects into a unified activity feed
   const recentActivity = useMemo<DashboardActivityItem[]>(() => {
@@ -633,8 +641,10 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: fontSize.sm,
-    fontFamily: fonts.bold,
+    fontFamily: fonts.regular,
     color: colors.text,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
     marginBottom: spacing.md,
   },
   statsGrid: {
@@ -657,18 +667,27 @@ const styles = StyleSheet.create({
   },
   statIcon: {
     marginRight: spacing.sm,
+    textShadowColor: 'rgba(0, 0, 0, 0.25)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   statValue: {
     fontSize: FONT_SIZE_STAT_VALUE,
     fontFamily: fonts.bold,
     marginBottom: spacing.xs,
     color: colors.textInverse,
+    textShadowColor: 'rgba(0, 0, 0, 0.25)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   statLabel: {
     fontSize: FONT_SIZE_STAT_LABEL,
     fontFamily: fonts.regular,
     color: colors.textInverse,
     textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.25)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
 
   // Activity Section

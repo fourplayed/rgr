@@ -33,9 +33,9 @@ export const colors = {
   // Maintenance priority
   maintenancePriority: {
     low: '#22C55E',
-    medium: '#F59E0B',
-    high: '#EF4444',
-    critical: '#DC2626',
+    medium: '#EBC500',
+    high: '#F59E0B',
+    critical: '#EF4444',
   } satisfies Record<MaintenancePriority, string>,
 
   // Hazard severity
@@ -78,7 +78,7 @@ export const colors = {
   textInverse: '#FFFFFF',
 
   // Feature-specific semantic colors
-  defectYellow: '#FACC15',
+  defectYellow: '#EBC500',
   categoryDolly: '#0E7490',
 
   // Semantic colors

@@ -7,7 +7,7 @@ import { LoadingDots, AlertSheet, SheetModal } from '../common';
 import { SheetHeader } from '../common/SheetHeader';
 import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts, shadows } from '../../theme/spacing';
 import { sheetLayout } from '../../theme/sheetLayout';
 import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 import { useDefectReport, useDeleteDefectReport } from '../../hooks/useDefectData';
@@ -143,18 +143,11 @@ export function DefectReportDetailModal({
       return (
         <View style={styles.actionsContainer}>
           <Button
-            variant="danger"
-            onPress={handleDismiss}
-            disabled={isScattering}
-            flex
-          >
-            Dismiss
-          </Button>
-          <Button
             onPress={handleAccept}
             disabled={!onAcceptPress || isScattering}
             flex
             color={colors.success}
+            style={styles.submitButton}
           >
             Create Task
           </Button>
@@ -210,14 +203,21 @@ export function DefectReportDetailModal({
           >
             {/* Asset info + reporter */}
             <Animated.View style={getStyle(0)}>
-              {asset?.assetNumber && (
-                <Text style={styles.assetNumberText}>{formatAssetNumber(asset.assetNumber)}</Text>
-              )}
-              {defect.reporterName && (
-                <Text style={styles.reporterText}>
-                  {formatRelativeTime(defect.createdAt)} by {defect.reporterName}
-                </Text>
-              )}
+              <View style={styles.assetRow}>
+                <View style={styles.assetIdGroup}>
+                  {asset?.assetNumber && (
+                    <>
+                      <Ionicons name="cube" size={22} color={colors.text} />
+                      <Text style={styles.assetNumberText}>{formatAssetNumber(asset.assetNumber)}</Text>
+                    </>
+                  )}
+                </View>
+                {defect.reporterName && (
+                  <Text style={styles.reporterText} numberOfLines={1}>
+                    {formatRelativeTime(defect.createdAt)} by {defect.reporterName}
+                  </Text>
+                )}
+              </View>
             </Animated.View>
 
             {/* Description */}
@@ -225,7 +225,7 @@ export function DefectReportDetailModal({
               <Animated.View style={getStyle(1)}>
                 <View style={styles.sectionGroup}>
                   <Text style={styles.detailLabel}>Description</Text>
-                  <Text style={styles.detailValue}>{defect.description}</Text>
+                  <Text style={[styles.detailValue, { fontFamily: fonts.regular }]}>{defect.description}</Text>
                 </View>
               </Animated.View>
             )}
@@ -346,6 +346,16 @@ const styles = StyleSheet.create({
     padding: spacing['3xl'],
     alignItems: 'center',
   },
+  assetRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  assetIdGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
   assetNumberText: {
     fontSize: fontSize.xl,
     fontFamily: fonts.bold,
@@ -377,8 +387,8 @@ const styles = StyleSheet.create({
   },
   detailRow: {},
   detailLabel: {
-    fontSize: fontSize.xs,
-    fontFamily: fonts.regular,
+    fontSize: fontSize.sm,
+    fontFamily: fonts.bold,
     color: colors.textSecondary,
     textTransform: 'uppercase',
     marginBottom: 2,
@@ -433,6 +443,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     gap: spacing.sm,
+  },
+  submitButton: {
+    ...shadows.lg,
   },
   defectPhotoErrorText: {
     fontSize: fontSize.xs,

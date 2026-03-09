@@ -152,6 +152,7 @@ const variantStyles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
+    ...shadows.sm,
   },
   danger: {
     backgroundColor: colors.error,
@@ -161,7 +162,7 @@ const variantStyles = StyleSheet.create({
 
 const textStyles = StyleSheet.create({
   primary: {
-    fontSize: fontSize.lg,
+    fontSize: fontSize.base,
     fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
@@ -176,9 +177,12 @@ const textStyles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   danger: {
-    fontSize: fontSize.lg,
+    fontSize: fontSize.base,
     fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
+    textShadowColor: 'rgba(0, 0, 0, 0.25)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
 });
