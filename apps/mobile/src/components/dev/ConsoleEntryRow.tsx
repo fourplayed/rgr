@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import type { ConsoleEntry, ConsoleLevel } from '../../store/consoleStore';
-import { fontSize, lineHeight, fontFamily as fonts } from '../../theme/spacing';
+import { fontSize, fontFamily as fonts } from '../../theme/spacing';
 
 const LEVEL_COLORS: Record<ConsoleLevel, string> = {
   info: '#00A8FF',

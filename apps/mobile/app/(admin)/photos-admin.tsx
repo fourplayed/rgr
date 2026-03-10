@@ -11,7 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { formatAssetNumber } from '@rgr/shared';
-import type { AdminPhotoListItem } from '@rgr/shared';
+import type { AdminPhotoListItem, PhotoType } from '@rgr/shared';
 import {
   useAdminPhotoList,
   useAdminBulkDeletePhotos,
@@ -69,7 +69,7 @@ export default function PhotosAdminScreen() {
   const { data, isLoading, error, refetch } = useAdminPhotoList(queryParams);
   const bulkDeleteMutation = useAdminBulkDeletePhotos();
 
-  const photos = data?.data ?? [];
+  const photos = useMemo(() => data?.data ?? [], [data?.data]);
   const totalPages = data?.totalPages ?? 1;
 
   const enterSelectionMode = useCallback((photoId?: string) => {
@@ -149,7 +149,7 @@ export default function PhotosAdminScreen() {
         id: item.id,
         storagePath: item.storagePath,
         thumbnailPath: item.thumbnailPath,
-        photoType: item.photoType as any,
+        photoType: item.photoType as PhotoType,
         createdAt: item.createdAt,
         primaryCategory: null,
         confidence: null,

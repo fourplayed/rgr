@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import type { AdminDataStats } from '@rgr/shared';
 import { useAdminDataStats } from '../../src/hooks/useAdminDataStats';
 import { useCountUp } from '../../src/hooks/useCountUp';
 import { SheetHeader } from '../../src/components/common/SheetHeader';
@@ -14,44 +15,52 @@ function CountUpValue({ value, style }: { value: number; style: object }) {
   return <Text style={style}>{display}</Text>;
 }
 
-const STAT_CARDS = [
+const STAT_CARDS: ReadonlyArray<{
+  key: string;
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  color: string;
+  route: string;
+  getValue: (s: AdminDataStats) => number;
+  getSubtitle: (s: AdminDataStats) => string;
+}> = [
   {
     key: 'assets',
     label: 'Assets',
-    icon: 'cube' as const,
+    icon: 'cube',
     color: colors.electricBlue,
-    route: '/(admin)/asset-admin' as const,
-    getValue: (s: { totalAssets: number }) => s.totalAssets,
-    getSubtitle: (s: { activeAssets: number }) => `${s.activeAssets} active`,
+    route: '/(admin)/asset-admin',
+    getValue: (s) => s.totalAssets,
+    getSubtitle: (s) => `${s.activeAssets} active`,
   },
   {
     key: 'maintenance',
     label: 'Maintenance',
-    icon: 'construct' as const,
+    icon: 'construct',
     color: colors.info,
-    route: '/(admin)/maintenance-admin' as const,
-    getValue: (s: { totalMaintenance: number }) => s.totalMaintenance,
-    getSubtitle: (s: { scheduledMaintenance: number }) => `${s.scheduledMaintenance} scheduled`,
+    route: '/(admin)/maintenance-admin',
+    getValue: (s) => s.totalMaintenance,
+    getSubtitle: (s) => `${s.scheduledMaintenance} scheduled`,
   },
   {
     key: 'defects',
     label: 'Defects',
-    icon: 'warning' as const,
+    icon: 'warning',
     color: colors.defectYellow,
-    route: '/(admin)/defects-admin' as const,
-    getValue: (s: { totalDefects: number }) => s.totalDefects,
-    getSubtitle: (s: { reportedDefects: number }) => `${s.reportedDefects} reported`,
+    route: '/(admin)/defects-admin',
+    getValue: (s) => s.totalDefects,
+    getSubtitle: (s) => `${s.reportedDefects} reported`,
   },
   {
     key: 'photos',
     label: 'Photos',
-    icon: 'camera' as const,
+    icon: 'camera',
     color: colors.textSecondary,
-    route: '/(admin)/photos-admin' as const,
-    getValue: (s: { totalPhotos: number }) => s.totalPhotos,
+    route: '/(admin)/photos-admin',
+    getValue: (s) => s.totalPhotos,
     getSubtitle: () => 'total uploaded',
   },
-] as const;
+];
 
 export default function DataDashboardScreen() {
   const router = useRouter();
@@ -86,18 +95,18 @@ export default function DataDashboardScreen() {
                   onPress={() => router.push(card.route)}
                   activeOpacity={0.8}
                   accessibilityRole="button"
-                  accessibilityLabel={`${card.label}: ${stats ? card.getValue(stats as any) : 0}. Tap to manage.`}
+                  accessibilityLabel={`${card.label}: ${stats ? card.getValue(stats) : 0}. Tap to manage.`}
                 >
                   <View style={styles.statRow}>
                     <Ionicons name={card.icon} size={32} color="#FFFFFF" style={styles.statIcon} />
                     <CountUpValue
-                      value={stats ? card.getValue(stats as any) : 0}
+                      value={stats ? card.getValue(stats) : 0}
                       style={styles.statValue}
                     />
                   </View>
                   <Text style={styles.statLabel}>{card.label}</Text>
                   <Text style={styles.statSubtitle}>
-                    {stats ? card.getSubtitle(stats as any) : ''}
+                    {stats ? card.getSubtitle(stats) : ''}
                   </Text>
                 </TouchableOpacity>
               ))}

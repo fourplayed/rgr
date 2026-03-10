@@ -12,7 +12,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import {
   MaintenanceStatus,
-  MaintenanceStatusLabels,
   formatAssetNumber,
   formatRelativeTime,
 } from '@rgr/shared';
@@ -106,7 +105,7 @@ export default function MaintenanceAdminScreen() {
   const renderItem = useCallback(
     ({ item }: { item: AdminMaintenanceListItem }) => {
       const isSelected = selectedIds.has(item.id);
-      const { icon, color } = getMaintenanceVisualConfig(
+      const { color } = getMaintenanceVisualConfig(
         item.status as MaintenanceStatus,
         item.dueDate
       );

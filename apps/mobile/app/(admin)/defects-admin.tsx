@@ -12,7 +12,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import {
   DefectStatus,
-  DefectStatusLabels,
   formatAssetNumber,
   formatRelativeTime,
 } from '@rgr/shared';

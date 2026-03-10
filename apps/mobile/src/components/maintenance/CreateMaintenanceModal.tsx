@@ -78,7 +78,6 @@ export function CreateMaintenanceModal({
   const [showAssetPicker, setShowAssetPicker] = useState(false);
 
   const effectiveAssetId = assetId ?? selectedAssetId ?? undefined;
-  const effectiveAssetNumber = assetNumber ?? selectedAssetNumber ?? undefined;
 
   // Fetch assets for picker (always called to satisfy hook rules; cached by React Query)
   const assetSearchFilters = assetSearch
