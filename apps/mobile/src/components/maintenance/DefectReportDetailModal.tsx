@@ -44,10 +44,6 @@ interface DefectReportDetailModalProps {
   onViewTaskPress?: (maintenanceId: string) => void;
   /** Called after dismiss is confirmed, deleted, and scatter animation completes. */
   onDismissConfirmed?: (defectId: string) => void;
-  /** @deprecated No longer needed — gorhom uses portal rendering. */
-  inline?: boolean;
-  /** @deprecated Use noBackdrop instead. */
-  backdrop?: boolean;
   /** Render without backdrop (parent provides persistent backdrop for chaining). */
   noBackdrop?: boolean;
   /** Fires after exit animation completes. */
@@ -62,8 +58,6 @@ export function DefectReportDetailModal({
   onAcceptPress,
   onViewTaskPress,
   onDismissConfirmed,
-  inline: _inline,
-  backdrop,
   noBackdrop,
   onExitComplete,
 }: DefectReportDetailModalProps) {
@@ -201,7 +195,7 @@ export function DefectReportDetailModal({
       visible={visible}
       onClose={onClose}
       onExitComplete={onExitComplete}
-      noBackdrop={noBackdrop ?? (backdrop === false)}
+      noBackdrop={noBackdrop}
     >
       <View style={sheetLayout.containerTall}>
         <SheetHeader

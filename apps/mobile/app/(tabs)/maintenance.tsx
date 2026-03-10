@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   TouchableOpacity,
   Animated,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -40,7 +41,7 @@ import { useDefectReportList } from '../../src/hooks/useDefectData';
 import { useAcceptDefect } from '../../src/hooks/useAcceptDefect';
 import { useModalTransition } from '../../src/hooks/useModalTransition';
 import { useTabFade } from '../../src/hooks/useTabFade';
-import { ModalShell } from '../../src/components/common/ModalShell';
+import { BlurView } from 'expo-blur';
 import { useUserPermissions } from '../../src/contexts/UserPermissionsContext';
 
 type ModalState =
@@ -94,6 +95,18 @@ export default function MaintenanceScreen() {
 
   // Modal state machine — only one modal visible at a time
   const { modal, closeModal: close, transitionTo, isTransitioning, handleExitComplete } = useModalTransition<ModalState>({ type: 'none' });
+
+  // Persistent backdrop — stays visible during A→B modal transitions
+  const backdropOpacity = useRef(new Animated.Value(0)).current;
+  const showBackdrop = modal.type !== 'none' || isTransitioning;
+
+  useEffect(() => {
+    Animated.timing(backdropOpacity, {
+      toValue: showBackdrop ? 1 : 0,
+      duration: showBackdrop ? 250 : 200,
+      useNativeDriver: true,
+    }).start();
+  }, [showBackdrop, backdropOpacity]);
 
   // Accept defect hook (moved up from DefectReportDetailModal)
   const { mutateAsync: acceptDefect } = useAcceptDefect();
@@ -353,41 +366,55 @@ export default function MaintenanceScreen() {
           )}
         </Animated.View>
 
-        {/* Shared backdrop shell — persistent blur across modal transitions */}
-        <ModalShell visible={modal.type !== 'none'} onClose={close} keepMounted={isTransitioning}>
-          <DefectReportDetailModal
-            visible={modal.type === 'defectDetail'}
-            defectId={modal.type === 'defectDetail' ? modal.defectId : null}
-            onClose={close}
-            onAcceptPress={handleAcceptPress}
-            onViewTaskPress={handleViewTaskPress}
-            onDismissConfirmed={handleDismissConfirmed}
-            inline backdrop={false} onExitComplete={handleExitComplete}
+        {/* Persistent backdrop — stays visible during A→B modal transitions */}
+        <Animated.View
+          style={[StyleSheet.absoluteFill, styles.modalBackdrop, { opacity: backdropOpacity }]}
+          pointerEvents={showBackdrop ? 'auto' : 'none'}
+        >
+          {Platform.OS === 'ios' && (
+            <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFillObject} />
+          )}
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={close}
+            accessibilityRole="button"
+            accessibilityLabel="Close"
           />
+        </Animated.View>
 
-          <CreateMaintenanceModal
-            visible={modal.type === 'acceptDefect' || modal.type === 'createMaintenance'}
-            onClose={close}
-            inline backdrop={false} onExitComplete={handleExitComplete}
-            {...(modal.type === 'acceptDefect' ? {
-              assetId: modal.assetId,
-              assetNumber: modal.assetNumber,
-              defectReportId: modal.defectId,
-              defaultTitle: modal.title,
-              defaultDescription: modal.description ?? undefined,
-              defaultPriority: 'high' as const,
-              onExternalSubmit: handleAcceptSubmit,
-            } : {})}
-          />
+        {/* Chained modals — gorhom portal rendering (no wrapper needed) */}
+        <DefectReportDetailModal
+          visible={modal.type === 'defectDetail'}
+          defectId={modal.type === 'defectDetail' ? modal.defectId : null}
+          onClose={close}
+          onAcceptPress={handleAcceptPress}
+          onViewTaskPress={handleViewTaskPress}
+          onDismissConfirmed={handleDismissConfirmed}
+          noBackdrop onExitComplete={handleExitComplete}
+        />
 
-          <MaintenanceDetailModal
-            visible={modal.type === 'maintenanceDetail'}
-            maintenanceId={modal.type === 'maintenanceDetail' ? modal.maintenanceId : null}
-            onClose={close}
-            inline backdrop={false} onExitComplete={handleExitComplete}
-          />
+        <CreateMaintenanceModal
+          visible={modal.type === 'acceptDefect' || modal.type === 'createMaintenance'}
+          onClose={close}
+          noBackdrop onExitComplete={handleExitComplete}
+          {...(modal.type === 'acceptDefect' ? {
+            assetId: modal.assetId,
+            assetNumber: modal.assetNumber,
+            defectReportId: modal.defectId,
+            defaultTitle: modal.title,
+            defaultDescription: modal.description ?? undefined,
+            defaultPriority: 'high' as const,
+            onExternalSubmit: handleAcceptSubmit,
+          } : {})}
+        />
 
-        </ModalShell>
+        <MaintenanceDetailModal
+          visible={modal.type === 'maintenanceDetail'}
+          maintenanceId={modal.type === 'maintenanceDetail' ? modal.maintenanceId : null}
+          onClose={close}
+          noBackdrop onExitComplete={handleExitComplete}
+        />
       </SafeAreaView>
     </View>
   );
@@ -476,5 +503,9 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
+  },
+  modalBackdrop: {
+    backgroundColor: 'rgba(0,0,30,0.3)',
+    zIndex: 10,
   },
 });

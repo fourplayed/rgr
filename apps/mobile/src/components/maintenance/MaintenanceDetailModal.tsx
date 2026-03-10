@@ -48,10 +48,6 @@ interface MaintenanceDetailModalProps {
   onClose: () => void;
   /** 'compact' hides timeline, notes, defect photo, and asset nav link. Default 'full'. */
   variant?: 'full' | 'compact';
-  /** @deprecated No longer needed — gorhom uses portal rendering. */
-  inline?: boolean;
-  /** @deprecated Use noBackdrop instead. */
-  backdrop?: boolean;
   /** Render without backdrop (parent provides persistent backdrop for chaining). */
   noBackdrop?: boolean;
   /** Fires after exit animation completes. */
@@ -63,8 +59,6 @@ export function MaintenanceDetailModal({
   maintenanceId,
   onClose,
   variant = 'full',
-  inline: _inline,
-  backdrop,
   noBackdrop,
   onExitComplete,
 }: MaintenanceDetailModalProps) {
@@ -492,7 +486,7 @@ export function MaintenanceDetailModal({
       visible={visible}
       onClose={onClose}
       onExitComplete={onExitComplete}
-      noBackdrop={noBackdrop ?? (backdrop === false)}
+      noBackdrop={noBackdrop}
       keyboardAware={isEditing}
     >
       <View style={sheetLayout.containerTall}>

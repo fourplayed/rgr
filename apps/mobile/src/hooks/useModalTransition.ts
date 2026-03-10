@@ -3,16 +3,22 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 /**
  * Manages modal state transitions with callback-driven sequencing.
  *
- * - `transitionTo(B)`: closes current modal, waits for exit animation, then opens B
- * - `handleExitComplete`: wire to the active SheetModal's `onExitComplete`
+ * Designed for @gorhom/bottom-sheet's BottomSheetModal lifecycle:
+ * - `transitionTo(B)`: closes current modal A, waits for gorhom's onDismiss, then opens B
+ * - `handleExitComplete`: wire to SheetModal's `onExitComplete` (fires after gorhom dismiss)
  * - `isTransitioning`: true while waiting for the old modal to exit
  *
- * Safety: 500ms timeout prevents permanent stuck state if onExitComplete never fires.
+ * Dismiss-source discrimination:
+ * - Code-driven dismiss (A→B transition): `isTransitioningRef` is true → advance to B
+ * - User swipe dismiss: `isTransitioningRef` is false → close modal entirely
+ *
+ * Safety: 1500ms timeout prevents permanent stuck state if onDismiss never fires.
  */
 export function useModalTransition<T extends { type: string }>(initial: T) {
   const [modal, setModal] = useState<T>(initial);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const pendingRef = useRef<T | null>(null);
+  const isTransitioningRef = useRef(false);
   const generationRef = useRef(0);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -21,6 +27,7 @@ export function useModalTransition<T extends { type: string }>(initial: T) {
     return () => {
       if (timeoutRef.current != null) clearTimeout(timeoutRef.current);
       pendingRef.current = null;
+      isTransitioningRef.current = false;
     };
   }, []);
 
@@ -35,6 +42,7 @@ export function useModalTransition<T extends { type: string }>(initial: T) {
     clearSafetyTimeout();
     const next = pendingRef.current;
     pendingRef.current = null;
+    isTransitioningRef.current = false;
     setIsTransitioning(false);
     if (next) {
       setModal(next);
@@ -44,6 +52,7 @@ export function useModalTransition<T extends { type: string }>(initial: T) {
   const closeModal = useCallback(() => {
     clearSafetyTimeout();
     pendingRef.current = null;
+    isTransitioningRef.current = false;
     setIsTransitioning(false);
     setModal(initial);
   }, [initial, clearSafetyTimeout]);
@@ -61,25 +70,34 @@ export function useModalTransition<T extends { type: string }>(initial: T) {
 
       // Something is open — close it and wait for exit callback
       pendingRef.current = next;
+      isTransitioningRef.current = true;
       setIsTransitioning(true);
       setModal(initial);
 
-      // Safety timeout: force-mount if onExitComplete doesn't fire
+      // Safety timeout: force-mount if onDismiss doesn't fire
       const gen = generationRef.current;
       timeoutRef.current = setTimeout(() => {
         timeoutRef.current = null;
         if (generationRef.current === gen) {
+          if (__DEV__) {
+            console.warn('[useModalTransition] Safety timeout fired — onExitComplete did not fire within 1500ms');
+          }
           mountPending();
         }
-      }, 500);
+      }, 1500);
     },
     [initial, modal.type, clearSafetyTimeout, mountPending]
   );
 
   const handleExitComplete = useCallback(() => {
-    if (!pendingRef.current) return;
-    mountPending();
-  }, [mountPending]);
+    if (isTransitioningRef.current && pendingRef.current) {
+      // Code-driven dismiss (A→B transition) — advance to B
+      mountPending();
+    } else if (!isTransitioningRef.current) {
+      // User swiped to dismiss — close entirely
+      closeModal();
+    }
+  }, [mountPending, closeModal]);
 
   return {
     modal,

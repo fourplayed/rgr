@@ -41,10 +41,6 @@ interface CreateMaintenanceModalProps {
   /** When provided, the modal collects form data but delegates creation to this callback.
    *  Used by the atomic accept-defect flow to wrap both operations in a transaction. */
   onExternalSubmit?: (input: CreateMaintenanceInput) => Promise<void>;
-  /** @deprecated No longer needed — gorhom uses portal rendering. */
-  inline?: boolean;
-  /** @deprecated Use noBackdrop instead. */
-  backdrop?: boolean;
   /** Render without backdrop (parent provides persistent backdrop for chaining). */
   noBackdrop?: boolean;
   /** Fires after exit animation completes. */
@@ -64,8 +60,6 @@ export function CreateMaintenanceModal({
   defaultPriority,
   onCreated,
   onExternalSubmit,
-  inline: _inline,
-  backdrop,
   noBackdrop,
   onExitComplete,
 }: CreateMaintenanceModalProps) {
@@ -200,7 +194,7 @@ export function CreateMaintenanceModal({
       onClose={onClose}
       keyboardAware
       onExitComplete={onExitComplete}
-      noBackdrop={noBackdrop ?? (backdrop === false)}
+      noBackdrop={noBackdrop}
       preventDismissWhileBusy={isPending}
     >
       <View style={sheetLayout.containerTall}>

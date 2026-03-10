@@ -19,7 +19,6 @@ export { SteppedProgressOverlay } from './SteppedProgressOverlay';
 export { SegmentedTabs } from './SegmentedTabs';
 export { SheetHeader } from './SheetHeader';
 export { SheetModal } from './SheetModal';
-export { ModalShell } from './ModalShell';
 export { EmptyState } from './EmptyState';
 export { PressableCard } from './PressableCard';
 export { FilterChip } from './FilterChip';
