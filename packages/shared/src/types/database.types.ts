@@ -1172,6 +1172,12 @@ export type Database = {
         Args: { p_maintenance_id: string };
         Returns: undefined;
       };
+      hard_delete_assets: {
+        Args: { p_ids: string[] };
+        Returns: {
+          deleted_id: string;
+        }[];
+      };
       get_asset_counts_by_status: {
         Args: never;
         Returns: {

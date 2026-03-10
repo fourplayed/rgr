@@ -4,6 +4,7 @@ import {
   deleteAsset,
   bulkUpdateAssetStatus,
   bulkSoftDeleteAssets,
+  hardDeleteAssets,
   getAssetRelatedCounts,
 } from '@rgr/shared';
 import type { AssetStatus, CreateAssetInput } from '@rgr/shared';
@@ -54,6 +55,13 @@ export function useBulkUpdateStatus() {
 export function useBulkDeleteAssets() {
   return useMutationFromService({
     serviceFn: (ids: string[]) => bulkSoftDeleteAssets(ids),
+    invalidates: [assetKeys.lists(), assetKeys.countsByStatus()],
+  });
+}
+
+export function useHardDeleteAssets() {
+  return useMutationFromService({
+    serviceFn: (ids: string[]) => hardDeleteAssets(ids),
     invalidates: [assetKeys.lists(), assetKeys.countsByStatus()],
   });
 }

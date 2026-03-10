@@ -248,7 +248,7 @@ export async function deleteDepot(id: string): Promise<ServiceResult<void>> {
 
 // ── Asset Administration ──
 
-export { softDeleteAsset as deleteAsset, bulkSoftDeleteAssets } from './assets';
+export { softDeleteAsset as deleteAsset, bulkSoftDeleteAssets, hardDeleteAssets } from './assets';
 
 export async function getAssetRelatedCounts(
   id: string

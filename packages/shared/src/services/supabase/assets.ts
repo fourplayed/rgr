@@ -964,6 +964,40 @@ export async function listServicedAssets(
   return { success: true, data: assets, error: null };
 }
 
+// ── Hard Delete ──
+
+/**
+ * Permanently delete assets via the hard_delete_assets RPC.
+ * CASCADE removes all child records; photos/freight/hazards are SET NULL.
+ * Audit log entries are written server-side before deletion.
+ */
+export async function hardDeleteAssets(
+  ids: string[]
+): Promise<ServiceResult<{ deleted: number; failed: string[] }>> {
+  if (ids.length === 0) {
+    return { success: true, data: { deleted: 0, failed: [] }, error: null };
+  }
+
+  const supabase = getSupabaseClient();
+
+  const { data, error } = await supabase.rpc('hard_delete_assets', { p_ids: ids });
+
+  if (error) {
+    return { success: false, data: null, error: `Failed to hard delete assets: ${error.message}` };
+  }
+
+  const deletedIds = new Set(
+    ((data ?? []) as Array<{ deleted_id: string }>).map((r) => r.deleted_id)
+  );
+  const failed = ids.filter((id) => !deletedIds.has(id));
+
+  return {
+    success: true,
+    data: { deleted: deletedIds.size, failed },
+    error: null,
+  };
+}
+
 // ── Helpers ──
 
 /**

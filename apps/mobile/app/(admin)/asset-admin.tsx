@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -23,6 +23,7 @@ import {
   useDeleteAsset,
   useBulkUpdateStatus,
   useBulkDeleteAssets,
+  useHardDeleteAssets,
   useAssetRelatedCounts,
 } from '../../src/hooks/useAdminAssets';
 import { SheetHeader } from '../../src/components/common/SheetHeader';
@@ -41,6 +42,7 @@ export default function AssetAdminScreen() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [deleteTarget, setDeleteTarget] = useState<AssetWithRelations | null>(null);
   const [bulkDeleteIds, setBulkDeleteIds] = useState<string[]>([]);
+  const [hardDeleteIds, setHardDeleteIds] = useState<string[]>([]);
   const [showStatusPicker, setShowStatusPicker] = useState(false);
 
   const searchTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -55,12 +57,13 @@ export default function AssetAdminScreen() {
     pageSize: 50,
   });
 
-  const assets = data?.data ?? [];
+  const assets = useMemo(() => data?.data ?? [], [data?.data]);
 
   const depotLookup = useDepotLookup();
 
   const deleteMutation = useDeleteAsset();
   const bulkDeleteMutation = useBulkDeleteAssets();
+  const hardDeleteMutation = useHardDeleteAssets();
   const bulkStatusMutation = useBulkUpdateStatus();
   const { data: relatedCounts } = useAssetRelatedCounts(deleteTarget?.id ?? null);
 
@@ -77,6 +80,14 @@ export default function AssetAdminScreen() {
   }, []);
 
   const clearSelection = useCallback(() => setSelectedIds(new Set()), []);
+
+  const toggleSelectAll = useCallback(() => {
+    if (selectedIds.size === assets.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(assets.map((a) => a.id)));
+    }
+  }, [assets, selectedIds.size]);
 
   const handleDelete = useCallback(() => {
     if (!deleteTarget) return;
@@ -104,6 +115,19 @@ export default function AssetAdminScreen() {
       },
     });
   }, [bulkDeleteIds, bulkDeleteMutation, clearSelection]);
+
+  const handleHardDelete = useCallback(() => {
+    if (hardDeleteIds.length === 0) return;
+    hardDeleteMutation.mutate(hardDeleteIds, {
+      onSuccess: () => {
+        setHardDeleteIds([]);
+        clearSelection();
+      },
+      onError: () => {
+        setHardDeleteIds([]);
+      },
+    });
+  }, [hardDeleteIds, hardDeleteMutation, clearSelection]);
 
   const handleBulkStatus = useCallback(
     (status: string) => {
@@ -211,6 +235,7 @@ export default function AssetAdminScreen() {
   );
 
   const hasSelection = selectedIds.size > 0;
+  const allSelected = assets.length > 0 && selectedIds.size === assets.length;
 
   return (
     <View style={styles.container}>
@@ -256,6 +281,25 @@ export default function AssetAdminScreen() {
           </View>
         </View>
 
+        {/* Select All bar */}
+        {hasSelection && assets.length > 0 && (
+          <View style={styles.selectAllBar}>
+            <TouchableOpacity onPress={toggleSelectAll} style={styles.selectAllButton}>
+              <Ionicons
+                name={allSelected ? 'checkbox' : 'square-outline'}
+                size={20}
+                color={colors.electricBlue}
+              />
+              <Text style={styles.selectAllText}>
+                {allSelected ? 'Deselect All' : 'Select All'}
+              </Text>
+            </TouchableOpacity>
+            <Text style={styles.selectedCountText}>
+              {selectedIds.size} of {assets.length} selected
+            </Text>
+          </View>
+        )}
+
         {/* Toolbar */}
         {hasSelection && (
           <View style={styles.toolbar}>
@@ -274,6 +318,16 @@ export default function AssetAdminScreen() {
               <Ionicons name="trash-outline" size={18} color={colors.error} />
               <Text style={[styles.toolbarButtonText, { color: colors.error }]}>
                 Delete{selectedIds.size > 1 ? ` (${selectedIds.size})` : ''}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.toolbarButton, styles.toolbarButtonDanger]}
+              onPress={() => setHardDeleteIds(Array.from(selectedIds))}
+            >
+              <Ionicons name="trash" size={18} color={colors.error} />
+              <Text style={[styles.toolbarButtonText, { color: colors.error }]}>
+                Hard Delete
               </Text>
             </TouchableOpacity>
 
@@ -355,6 +409,18 @@ export default function AssetAdminScreen() {
           isLoading={bulkDeleteMutation.isPending}
         />
 
+        {/* Hard Delete Confirm */}
+        <ConfirmSheet
+          visible={hardDeleteIds.length > 0}
+          type="danger"
+          title={`Permanently Delete ${hardDeleteIds.length} Asset(s)?`}
+          message={`This will permanently remove ${hardDeleteIds.length} asset(s) and ALL related scan events, maintenance records, and defect reports. This cannot be undone.`}
+          confirmLabel="Delete Forever"
+          onConfirm={handleHardDelete}
+          onCancel={() => setHardDeleteIds([])}
+          isLoading={hardDeleteMutation.isPending}
+        />
+
         {/* Status Picker Sheet */}
         <SheetModal visible={showStatusPicker} onClose={() => setShowStatusPicker(false)}>
           <View style={styles.statusPickerSheet}>
@@ -416,6 +482,32 @@ const styles = StyleSheet.create({
     fontSize: fontSize.base,
     fontFamily: fonts.regular,
     color: colors.text,
+  },
+  selectAllBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.base,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    backgroundColor: colors.background,
+  },
+  selectAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  selectAllText: {
+    fontSize: fontSize.sm,
+    fontFamily: fonts.bold,
+    color: colors.electricBlue,
+    textTransform: 'uppercase',
+  },
+  selectedCountText: {
+    fontSize: fontSize.sm,
+    fontFamily: fonts.regular,
+    color: colors.textSecondary,
   },
   toolbar: {
     flexDirection: 'row',
