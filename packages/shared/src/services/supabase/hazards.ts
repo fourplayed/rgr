@@ -337,41 +337,41 @@ export async function getAnalysisHistory(
 // ── Submit Analysis Feedback ──
 
 /**
- * Submit feedback on hazard detection accuracy.
- * Only updates hazard_alerts review_outcome — the freight_analysis.learning_weight
- * column does not exist in the database (removed as dead code).
+ * Submit feedback on hazard detection accuracy via a single RPC call.
+ * Replaces N sequential UPDATEs with an atomic batch operation.
+ * Hazard type normalization is handled server-side by the RPC.
  */
 export async function submitAnalysisFeedback(
   input: SubmitAnalysisFeedbackInput
-): Promise<ServiceResult<void>> {
-  const supabase = getSupabaseClient();
-
-  for (const fb of input.hazardFeedback) {
-    const dbHazardType = fb.hazardType.toLowerCase().replace(/ /g, '_');
-    const reviewOutcome: ReviewOutcome = fb.wasAccurate ? 'confirmed' : 'false_positive';
-
-    const { error } = await supabase
-      .from('hazard_alerts')
-      .update({
-        review_outcome: reviewOutcome,
-        manager_review_at: new Date().toISOString(),
-        manager_review_by: input.reviewerId,
-        review_notes: input.reviewNotes || null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('freight_analysis_id', input.analysisId)
-      .eq('hazard_type', dbHazardType);
-
-    if (error) {
-      return {
-        success: false,
-        data: null,
-        error: `Failed to update hazard feedback: ${error.message}`,
-      };
-    }
+): Promise<ServiceResult<{ updatedCount: number }>> {
+  if (input.hazardFeedback.length === 0) {
+    return { success: true, data: { updatedCount: 0 }, error: null };
   }
 
-  return { success: true, data: undefined, error: null };
+  const supabase = getSupabaseClient();
+
+  const hazardTypes = input.hazardFeedback.map((fb) => fb.hazardType);
+  const outcomes: ReviewOutcome[] = input.hazardFeedback.map((fb) =>
+    fb.wasAccurate ? 'confirmed' : 'false_positive'
+  );
+
+  const { data, error } = await supabase.rpc('submit_hazard_feedback', {
+    p_analysis_id: input.analysisId,
+    p_reviewer_id: input.reviewerId,
+    p_hazard_types: hazardTypes,
+    p_outcomes: outcomes,
+    ...(input.reviewNotes ? { p_review_notes: input.reviewNotes } : {}),
+  });
+
+  if (error) {
+    return {
+      success: false,
+      data: null,
+      error: `Failed to submit hazard feedback: ${error.message}`,
+    };
+  }
+
+  return { success: true, data: { updatedCount: data as number }, error: null };
 }
 
 // ── Helpers ──

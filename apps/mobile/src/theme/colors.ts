@@ -34,7 +34,6 @@ export const colors = {
   maintenancePriority: {
     low: '#22C55E',
     medium: '#EBC500',
-    high: '#F59E0B',
     critical: '#EF4444',
   } satisfies Record<MaintenancePriority, string>,
 

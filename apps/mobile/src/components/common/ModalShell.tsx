@@ -34,23 +34,21 @@ export function ModalShell({
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const [mounted, setMounted] = useState(false);
   const wasVisible = useRef(false);
+  const generationRef = useRef(0);
 
-  // Mount + fade in
+  // Single effect handles both fade-in and fade-out, using a generation
+  // counter to discard stale animation callbacks on rapid toggling.
   useEffect(() => {
+    const gen = ++generationRef.current;
     if (visible) {
       wasVisible.current = true;
       setMounted(true);
       backdropOpacity.setValue(0);
       Animated.timing(backdropOpacity, { toValue: 1, ...BACKDROP_IN }).start();
-    }
-  }, [visible, backdropOpacity]);
-
-  // Fade out + unmount (only when both visible=false AND keepMounted=false)
-  useEffect(() => {
-    if (!visible && !keepMounted && wasVisible.current) {
+    } else if (!keepMounted && wasVisible.current) {
       wasVisible.current = false;
       Animated.timing(backdropOpacity, { toValue: 0, ...BACKDROP_OUT }).start(({ finished }) => {
-        if (finished) {
+        if (finished && gen === generationRef.current) {
           setMounted(false);
         }
       });

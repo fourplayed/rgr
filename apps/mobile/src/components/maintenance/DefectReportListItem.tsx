@@ -12,7 +12,7 @@ export const DEFECT_STATUS_CONFIG: Record<
   { icon: keyof typeof Ionicons.glyphMap; color: string }
 > = {
   reported: { icon: 'warning', color: colors.defectYellow },
-  accepted: { icon: 'construct', color: colors.info },
+  task_created: { icon: 'construct', color: colors.info },
   resolved: { icon: 'checkmark-circle', color: colors.success },
   dismissed: { icon: 'close-circle', color: colors.textSecondary },
 };
@@ -28,7 +28,7 @@ function DefectReportListItemComponent({ defect, onPress }: DefectReportListItem
   const { icon, color } = DEFECT_STATUS_CONFIG[defect.status] ?? DEFECT_STATUS_CONFIG.reported;
   const handlePress = useCallback(() => { onPress(defect); }, [onPress, defect]);
   const containerStyle = useMemo(
-    () => [cardStyles.container, { borderLeftColor: color }],
+    () => [cardStyles.container, { borderColor: color, borderWidth: 0.5, backgroundColor: color + '08' }],
     [color]
   );
 
@@ -42,7 +42,7 @@ function DefectReportListItemComponent({ defect, onPress }: DefectReportListItem
     >
       <View style={cardStyles.cardRow}>
         <View style={cardStyles.cardIconContainer}>
-          <Ionicons name={icon} size={31} color={color} />
+          <Ionicons name={icon} size={32} color={color} />
         </View>
         <View style={cardStyles.cardBody}>
           <View style={cardStyles.cardContentRow}>
@@ -50,10 +50,7 @@ function DefectReportListItemComponent({ defect, onPress }: DefectReportListItem
               {defect.assetNumber ? formatAssetNumber(defect.assetNumber) : 'Unknown Asset'}
             </Text>
             <View style={cardStyles.cardBadges}>
-              <DefectStatusBadge
-                status={defect.status}
-                {...(defect.status === 'accepted' ? { label: 'Task Created' } : {})}
-              />
+              <DefectStatusBadge status={defect.status} />
             </View>
           </View>
           <View style={cardStyles.cardFooter}>

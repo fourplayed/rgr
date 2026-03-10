@@ -186,26 +186,31 @@ export function useBatchSignedUrls(storagePaths: string[]) {
 export function usePrefetchImages(photos: PhotoListItem[] | undefined) {
   const queryClient = useQueryClient();
 
-  // Use stable dependency - photo IDs string, not array reference
-  const photoIds = useMemo(() => photos?.map((p) => p.id).join(',') ?? '', [photos]);
-
-  useEffect(() => {
-    if (!photos?.length) return;
-
-    // Collect first 6 thumbnail paths for batch prefetch
-    const paths = photos
+  // Derive paths in useMemo so the effect reads stable data, not a stale closure
+  const prefetchPaths = useMemo(() => {
+    if (!photos?.length) return [];
+    return photos
       .slice(0, 6)
       .map((photo) => photo.thumbnailPath ?? photo.storagePath)
       .filter((p): p is string => !!p);
+  }, [photos]);
 
-    if (paths.length === 0) return;
+  // Stable string key for the dependency array — avoids re-firing on
+  // referentially different arrays with identical content
+  const pathsKey = useMemo(
+    () => prefetchPaths.slice().sort().join('\0'),
+    [prefetchPaths]
+  );
 
-    const pathsKey = paths.slice().sort().join(',');
+  useEffect(() => {
+    if (!prefetchPaths.length) return;
+
+    const sortedKey = prefetchPaths.slice().sort().join(',');
 
     queryClient.prefetchQuery({
-      queryKey: [...photoKeys.all, 'signedUrls', pathsKey],
+      queryKey: [...photoKeys.all, 'signedUrls', sortedKey],
       queryFn: async () => {
-        const result = await getSignedUrls(paths);
+        const result = await getSignedUrls(prefetchPaths);
         if (!result.success) throw new Error(result.error ?? 'Failed');
 
         // Seed individual cache entries
@@ -217,7 +222,7 @@ export function usePrefetchImages(photos: PhotoListItem[] | undefined) {
       },
       staleTime: SIGNED_URL_STALE_TIME,
     });
-    // Using photoIds as stable dependency to avoid re-running on array reference changes
+    // pathsKey provides stable identity — prefetchPaths is read directly (no split)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [photoIds, queryClient]);
+  }, [pathsKey, queryClient]);
 }

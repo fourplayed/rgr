@@ -16,6 +16,7 @@ import { useMaintenance } from '../../hooks/useMaintenanceData';
 import { useScanEventPhotos, useSignedUrl } from '../../hooks/usePhotos';
 import { useUserPermissions } from '../../contexts/UserPermissionsContext';
 import { useScatterExit } from '../../hooks/useScatterExit';
+import { DEFECT_STATUS_CONFIG } from './DefectReportListItem';
 
 interface DefectReportDetailModalProps {
   visible: boolean;
@@ -163,17 +164,17 @@ export function DefectReportDetailModal({
       );
     }
 
-    if (status === 'accepted' || status === 'resolved') {
+    if (status === 'task_created' || status === 'resolved') {
       return (
         <View style={styles.actionsContainer}>
           <View style={styles.closedStatus}>
             <Ionicons
-              name={status === 'accepted' ? 'construct' : 'checkmark-circle'}
+              name={DEFECT_STATUS_CONFIG[status]?.icon ?? 'checkmark-circle'}
               size={20}
-              color={status === 'accepted' ? colors.info : colors.success}
+              color={DEFECT_STATUS_CONFIG[status]?.color ?? colors.textSecondary}
             />
             <Text style={styles.closedStatusText}>
-              {status === 'accepted' ? 'Maintenance Task Created' : 'Resolved'}
+              {status === 'task_created' ? 'Maintenance Task Created' : 'Resolved'}
             </Text>
           </View>
         </View>

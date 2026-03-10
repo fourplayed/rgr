@@ -22,6 +22,8 @@ interface SheetHeaderProps {
   headerAction?: HeaderAction | undefined;
   /** Override close button icon (e.g. 'arrow-back' for stacked screens). Default: 'close'. */
   closeIcon?: keyof typeof Ionicons.glyphMap;
+  /** Optional content rendered below the header row, still within the colored background. */
+  children?: React.ReactNode;
 }
 
 export function SheetHeader({
@@ -34,48 +36,55 @@ export function SheetHeader({
   titleStyle,
   headerAction,
   closeIcon = 'close',
+  children,
 }: SheetHeaderProps) {
   return (
     <View style={[styles.header, { backgroundColor }]}>
-      <Ionicons name={icon} size={30} color={colors.textInverse} />
-      <Text style={[styles.title, titleStyle]} numberOfLines={titleNumberOfLines}>
-        {title}
-      </Text>
-      {headerAction && (
+      <View style={styles.headerRow}>
+        <Ionicons name={icon} size={30} color={colors.textInverse} />
+        <Text style={[styles.title, titleStyle]} numberOfLines={titleNumberOfLines}>
+          {title}
+        </Text>
+        {headerAction && (
+          <TouchableOpacity
+            onPress={headerAction.onPress}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={headerAction.accessibilityLabel}
+            style={styles.actionButton}
+          >
+            <Ionicons name={headerAction.icon} size={22} color={colors.textInverse} />
+          </TouchableOpacity>
+        )}
         <TouchableOpacity
-          onPress={headerAction.onPress}
+          onPress={onClose}
+          disabled={disabled}
           activeOpacity={0.7}
           accessibilityRole="button"
-          accessibilityLabel={headerAction.accessibilityLabel}
-          style={styles.actionButton}
+          accessibilityLabel="Close"
+          style={styles.closeButton}
         >
-          <Ionicons name={headerAction.icon} size={22} color={colors.textInverse} />
+          <Ionicons name={closeIcon} size={26} color={colors.textInverse} />
         </TouchableOpacity>
-      )}
-      <TouchableOpacity
-        onPress={onClose}
-        disabled={disabled}
-        activeOpacity={0.7}
-        accessibilityRole="button"
-        accessibilityLabel="Close"
-        style={styles.closeButton}
-      >
-        <Ionicons name={closeIcon} size={26} color={colors.textInverse} />
-      </TouchableOpacity>
+      </View>
+      {children}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.base,
+    paddingTop: spacing.base,
+    paddingBottom: spacing.base,
     paddingHorizontal: spacing.lg,
-    gap: spacing.sm,
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
     ...shadows.sm,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
   },
   title: {
     flex: 1,

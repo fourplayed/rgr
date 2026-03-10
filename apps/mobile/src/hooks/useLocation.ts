@@ -110,8 +110,16 @@ export function useLocation(): UseLocationResult {
         }
       }
 
-      // Check permission first
-      if (!hasPermission) {
+      // Re-check permission status directly from the native API to avoid
+      // stale state if permissions changed since mount
+      let currentStatus: string;
+      try {
+        ({ status: currentStatus } = await Location.getForegroundPermissionsAsync());
+      } catch {
+        // Native bridge failure — assume not granted to be safe
+        currentStatus = 'undetermined';
+      }
+      if (currentStatus !== 'granted') {
         const granted = await requestPermission();
         if (!granted) {
           if (isMountedRef.current) {
@@ -168,7 +176,7 @@ export function useLocation(): UseLocationResult {
       }
       return null;
     }
-  }, [hasPermission, requestPermission]);
+  }, [requestPermission]);
 
   return {
     location,

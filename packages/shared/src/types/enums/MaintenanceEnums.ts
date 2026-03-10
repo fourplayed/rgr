@@ -25,25 +25,22 @@ export const MaintenanceStatusLabels: Record<MaintenanceStatus, string> = {
 export const MaintenancePriority = {
   LOW: 'low',
   MEDIUM: 'medium',
-  HIGH: 'high',
   CRITICAL: 'critical',
 } as const;
 
 export type MaintenancePriority = (typeof MaintenancePriority)[keyof typeof MaintenancePriority];
 
-export const MaintenancePrioritySchema = z.enum(['low', 'medium', 'high', 'critical']);
+export const MaintenancePrioritySchema = z.enum(['low', 'medium', 'critical']);
 
 export const MaintenancePriorityLabels: Record<MaintenancePriority, string> = {
   low: 'Low',
   medium: 'Medium',
-  high: 'High',
   critical: 'Critical',
 };
 
 export const MaintenancePriorityColors: Record<MaintenancePriority, string> = {
   low: '#6b7280',
   medium: '#3b82f6',
-  high: '#e8a020',
   critical: '#d43050',
 };
 

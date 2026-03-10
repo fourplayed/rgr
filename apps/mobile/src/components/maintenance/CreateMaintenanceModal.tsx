@@ -41,7 +41,7 @@ interface CreateMaintenanceModalProps {
   onExitComplete?: () => void;
 }
 
-const PRIORITY_ORDER: MaintenancePriority[] = ['low', 'medium', 'high', 'critical'];
+const PRIORITY_ORDER: MaintenancePriority[] = ['low', 'medium', 'critical'];
 
 export function CreateMaintenanceModal({
   visible,

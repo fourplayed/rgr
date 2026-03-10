@@ -1,10 +1,10 @@
 import React, { useCallback, useRef, useEffect, memo } from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
+import { View, Text, StyleSheet, Animated, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import type { PhotoType } from '@rgr/shared';
-import { usePhotoCapture } from '../../hooks/usePhotoCapture';
+import { usePhotoCapture, type UploadStep } from '../../hooks/usePhotoCapture';
 import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 import { SheetModal } from '../common/SheetModal';
 import { SheetHeader } from '../common/SheetHeader';
@@ -39,6 +39,7 @@ function PhotoReviewSheetComponent({
     confirmAndUpload,
     retakePhoto,
     cancelCapture,
+    uploadStep,
   } = usePhotoCapture();
 
   const bottomPad = useSheetBottomPadding();
@@ -52,6 +53,8 @@ function PhotoReviewSheetComponent({
     const success = await confirmAndUpload(photoType);
     if (success) {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      // Brief pause so user sees the "complete" state before sheet closes
+      await new Promise(resolve => setTimeout(resolve, 700));
       onConfirmed();
     } else {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -84,7 +87,7 @@ function PhotoReviewSheetComponent({
     <SheetModal visible={visible} onClose={handleClose} onDismiss={onDismiss} inline={!!inline}>
       <View style={styles.container}>
         <SheetHeader
-          icon="checkmark"
+          icon="checkmark-circle"
           title="Review Photo"
           onClose={handleClose}
           backgroundColor={colors.success}
@@ -98,6 +101,7 @@ function PhotoReviewSheetComponent({
               style={styles.photo}
               contentFit="contain"
             />
+            {uploadStep && <UploadProgressOverlay step={uploadStep} />}
           </View>
         )}
 
@@ -123,10 +127,10 @@ function PhotoReviewSheetComponent({
         <View style={[styles.buttonRow, { paddingBottom: bottomPad }]}>
           <Animated.View style={[styles.flexOne, { opacity: retakeOpacity }]}>
             <Button
-              variant="danger"
               onPress={handleRetake}
               disabled={isUploading}
               flex
+              color={colors.electricBlue}
             >
               Recapture
             </Button>
@@ -146,6 +150,115 @@ function PhotoReviewSheetComponent({
 }
 
 export const PhotoReviewSheet = memo(PhotoReviewSheetComponent);
+
+// ── Upload progress overlay ──────────────────────────────────────────────────
+
+const UPLOAD_STEPS = [
+  { key: 'validating', label: 'Validating photo' },
+  { key: 'thumbnail', label: 'Generating thumbnail' },
+  { key: 'uploading', label: 'Uploading to cloud' },
+] as const;
+
+const STEP_KEYS = UPLOAD_STEPS.map(s => s.key);
+
+function UploadProgressOverlay({ step }: { step: NonNullable<UploadStep> }) {
+  const opacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(opacity, {
+      toValue: 1,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  }, [opacity]);
+
+  const currentIndex = step === 'complete' ? STEP_KEYS.length : STEP_KEYS.indexOf(step);
+
+  return (
+    <Animated.View style={[overlayStyles.container, { opacity }]}>
+      <View style={overlayStyles.card}>
+        {UPLOAD_STEPS.map((s, i) => {
+          const isComplete = step === 'complete' || i < currentIndex;
+          const isCurrent = step !== 'complete' && i === currentIndex;
+
+          return (
+            <View key={s.key} style={overlayStyles.row}>
+              {isComplete ? (
+                <Ionicons name="checkmark-circle" size={22} color={colors.success} />
+              ) : isCurrent ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Ionicons name="ellipse-outline" size={22} color="rgba(255,255,255,0.3)" />
+              )}
+              <Text
+                style={[
+                  overlayStyles.label,
+                  isComplete && overlayStyles.labelComplete,
+                  isCurrent && overlayStyles.labelCurrent,
+                ]}
+              >
+                {s.label}
+              </Text>
+            </View>
+          );
+        })}
+        {step === 'complete' && (
+          <View style={overlayStyles.doneRow}>
+            <Ionicons name="checkmark-circle" size={18} color={colors.success} />
+            <Text style={overlayStyles.doneText}>Photo saved</Text>
+          </View>
+        )}
+      </View>
+    </Animated.View>
+  );
+}
+
+const overlayStyles = StyleSheet.create({
+  container: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    borderRadius: borderRadius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  card: {
+    gap: spacing.md,
+    paddingHorizontal: spacing.xl,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    height: 28,
+  },
+  label: {
+    fontSize: fontSize.sm,
+    fontFamily: fonts.regular,
+    color: 'rgba(255, 255, 255, 0.4)',
+  },
+  labelComplete: {
+    color: colors.success,
+    fontFamily: fonts.bold,
+  },
+  labelCurrent: {
+    color: '#FFFFFF',
+    fontFamily: fonts.bold,
+  },
+  doneRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+    paddingTop: spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  doneText: {
+    fontSize: fontSize.sm,
+    fontFamily: fonts.bold,
+    color: colors.success,
+  },
+});
 
 const styles = StyleSheet.create({
   container: {

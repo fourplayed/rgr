@@ -47,7 +47,7 @@ function MaintenanceListItemComponent({ maintenance, onPress }: MaintenanceListI
   const { icon, color } = getMaintenanceVisualConfig(maintenance.status, maintenance.dueDate);
   const handlePress = useCallback(() => { onPress(maintenance); }, [onPress, maintenance]);
   const containerStyle = useMemo(
-    () => [cardStyles.container, { borderLeftColor: color }],
+    () => [cardStyles.container, { borderColor: color, borderWidth: 0.5, backgroundColor: color + '08' }],
     [color]
   );
 
@@ -61,7 +61,7 @@ function MaintenanceListItemComponent({ maintenance, onPress }: MaintenanceListI
     >
       <View style={cardStyles.cardRow}>
         <View style={cardStyles.cardIconContainer}>
-          <Ionicons name={icon} size={31} color={color} />
+          <Ionicons name={icon} size={32} color={color} />
         </View>
         <View style={cardStyles.cardBody}>
           <View style={cardStyles.cardContentRow}>

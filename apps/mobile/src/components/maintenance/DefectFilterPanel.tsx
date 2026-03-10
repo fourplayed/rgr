@@ -15,11 +15,11 @@ interface DefectFilterPanelProps {
   onToggleExpanded: () => void;
 }
 
-const STATUS_ORDER: DefectStatus[] = ['reported', 'accepted', 'resolved'];
+const STATUS_ORDER: DefectStatus[] = ['reported', 'task_created', 'resolved'];
 
 const DEFECT_STATUS_COLORS: Record<DefectStatus, string> = {
   reported: colors.defectYellow,
-  accepted: colors.info,
+  task_created: colors.info,
   resolved: colors.success,
   dismissed: colors.textSecondary,
 };

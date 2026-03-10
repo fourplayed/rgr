@@ -172,13 +172,20 @@ export default function RootLayout() {
         const wasOffline = !onlineManager.isOnline();
         setOnline(!!state.isConnected);
         if (wasOffline && state.isConnected) {
-          replayQueue().catch(() => {
-            // Non-fatal: queue stays for next reconnect
-          });
+          replayQueue()
+            .then(({ replayed }) => {
+              if (replayed > 0) {
+                queryClient.invalidateQueries({ queryKey: ['scans'] });
+                queryClient.invalidateQueries({ queryKey: ['assets', 'list'] });
+              }
+            })
+            .catch(() => {
+              // Non-fatal: queue stays for next reconnect
+            });
         }
       });
     });
-  }, []);
+  }, [queryClient]);
 
   // Proactively refresh auth session when app returns to foreground.
   // iOS suspends the JS thread when backgrounded, which stops Supabase JS's

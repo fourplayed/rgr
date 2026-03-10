@@ -1,4 +1,4 @@
-import React, { memo, useState, useCallback } from 'react';
+import React, { memo, useState, useCallback, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { AuditLogWithUser } from '@rgr/shared';
@@ -81,6 +81,11 @@ function AuditLogItemInner({ item }: AuditLogItemProps) {
   const icon = (actionKey ? ACTION_ICONS[actionKey] : undefined) ?? 'document-outline';
   const iconColor = (actionKey ? ACTION_COLORS[actionKey] : undefined) ?? colors.textSecondary;
 
+  const containerStyle = useMemo(
+    () => [styles.container, { borderColor: iconColor, borderWidth: 0.5, backgroundColor: iconColor + '08' }],
+    [iconColor]
+  );
+
   const description = item.tableName ? `${item.action} on ${item.tableName}` : item.action;
 
   const hasDetails =
@@ -89,7 +94,7 @@ function AuditLogItemInner({ item }: AuditLogItemProps) {
 
   return (
     <TouchableOpacity
-      style={styles.container}
+      style={containerStyle}
       onPress={hasDetails ? toggleExpand : undefined}
       activeOpacity={hasDetails ? 0.7 : 1}
       disabled={!hasDetails}

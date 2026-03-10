@@ -172,7 +172,7 @@ export default function AssetListScreen() {
 
         <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
-          <Ionicons name="search-outline" size={20} color={colors.textSecondary} />
+          <Ionicons name="search" size={20} color={colors.textSecondary} />
           <TextInput
             style={[styles.searchInput, !searchInput && styles.searchInputPlaceholder]}
             placeholder="Search by Asset ID, Sub-Type, Location..."

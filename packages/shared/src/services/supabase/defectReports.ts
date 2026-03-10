@@ -36,7 +36,7 @@ export interface ListDefectReportsParams {
 export interface DefectReportStats {
   total: number;
   reported: number;
-  accepted: number;
+  taskCreated: number;
   resolved: number;
   dismissed: number;
 }
@@ -44,8 +44,8 @@ export interface DefectReportStats {
 // ── Status Transition Validation ──
 
 const VALID_DEFECT_TRANSITIONS: Record<DefectStatus, DefectStatus[]> = {
-  reported: ['accepted', 'dismissed'],
-  accepted: ['resolved', 'dismissed'],
+  reported: ['task_created', 'dismissed'],
+  task_created: ['resolved', 'dismissed'],
   resolved: [],
   dismissed: [],
 };
@@ -245,7 +245,7 @@ export async function updateDefectReportStatus(
 
   const updates: Record<string, unknown> = { status: newStatus };
 
-  if (newStatus === 'accepted') {
+  if (newStatus === 'task_created') {
     updates['accepted_at'] = new Date().toISOString();
     if (extras?.maintenanceRecordId) {
       updates['maintenance_record_id'] = extras.maintenanceRecordId;
@@ -419,14 +419,20 @@ export async function getDefectReportStats(): Promise<ServiceResult<DefectReport
     return { success: false, data: null, error: `Failed to fetch defect stats: ${error.message}` };
   }
 
-  const stats = data as unknown as DefectReportStats;
+  const stats = data as unknown as {
+    total: number;
+    reported: number;
+    task_created: number;
+    resolved: number;
+    dismissed: number;
+  };
 
   return {
     success: true,
     data: {
       total: stats.total ?? 0,
       reported: stats.reported ?? 0,
-      accepted: stats.accepted ?? 0,
+      taskCreated: stats.task_created ?? 0,
       resolved: stats.resolved ?? 0,
       dismissed: stats.dismissed ?? 0,
     },

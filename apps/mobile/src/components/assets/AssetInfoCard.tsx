@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { AssetWithRelations } from '@rgr/shared';
-import type { AssetStatus } from '@rgr/shared';
 import { formatDate, AssetStatusColors, getDepotBadgeColors, formatAssetNumber } from '@rgr/shared';
 import { useDepotLookup } from '../../hooks/useDepots';
 import { StatusBadge } from '../common/StatusBadge';
@@ -11,11 +10,7 @@ import { CollapsibleSection } from '../common/CollapsibleSection';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 
-const STATUS_ICONS: Record<AssetStatus, keyof typeof Ionicons.glyphMap> = {
-  serviced: 'checkmark-circle',
-  maintenance: 'construct',
-  out_of_service: 'close-circle',
-};
+import { ASSET_STATUS_ICONS } from './AssetListItem';
 
 interface AssetInfoCardProps {
   asset: AssetWithRelations;
@@ -59,9 +54,9 @@ export function AssetInfoCard({ asset, nextServiceDate, assessment, onPress }: A
   const isDotPending = asset.dotLookupStatus === 'pending';
 
   const cardContent = (
-    <View style={[styles.card, { borderLeftWidth: 4, borderLeftColor: statusColor }]}>
+    <View style={[styles.card, { borderLeftWidth: 4, borderColor: statusColor, borderWidth: 0.5, backgroundColor: statusColor + '08' }]}>
       <View style={styles.header}>
-        <Ionicons name={STATUS_ICONS[asset.status]} size={36} color={statusColor} />
+        <Ionicons name={ASSET_STATUS_ICONS[asset.status]} size={36} color={statusColor} />
         <View style={styles.assetColumn}>
           <Text style={styles.assetNumber}>{formatAssetNumber(asset.assetNumber)}</Text>
           <Text style={styles.categoryText}>

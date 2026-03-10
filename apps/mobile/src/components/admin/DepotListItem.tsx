@@ -17,7 +17,7 @@ function DepotListItemInner({ depot, onPress, onLongPress }: DepotListItemProps)
   const handleLongPress = useCallback(() => { onLongPress?.(depot); }, [onLongPress, depot]);
   const borderColor = depot.isActive ? colors.success : colors.textSecondary;
   const containerStyle = useMemo(
-    () => [styles.container, { borderLeftColor: borderColor }],
+    () => [styles.container, { borderColor, borderWidth: 0.5, backgroundColor: borderColor + '08' }],
     [borderColor]
   );
 

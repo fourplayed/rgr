@@ -92,7 +92,7 @@ const ActivityCard = memo(function ActivityCard({
     return (
       <Animated.View style={{ opacity: entranceOpacity }}>
         <TouchableOpacity
-          style={[styles.scanCard, { borderLeftColor: activityColor }]}
+          style={[styles.scanCard, { borderColor: activityColor, borderWidth: 0.5, backgroundColor: activityColor + '08' }]}
           onPress={handlePress}
           activeOpacity={0.7}
           accessibilityRole="button"
@@ -136,7 +136,7 @@ const ActivityCard = memo(function ActivityCard({
     return (
       <Animated.View style={{ opacity: entranceOpacity }}>
         <TouchableOpacity
-          style={[styles.scanCard, { borderLeftColor: colors.defectYellow }]}
+          style={[styles.scanCard, { borderColor: colors.defectYellow, borderWidth: 0.5, backgroundColor: colors.defectYellow + '08' }]}
           onPress={handlePress}
           activeOpacity={0.7}
           accessibilityRole="button"
@@ -174,7 +174,7 @@ const ActivityCard = memo(function ActivityCard({
   return (
     <Animated.View style={{ opacity: entranceOpacity }}>
       <TouchableOpacity
-        style={[styles.scanCard, { borderLeftColor: maintConfig.color }]}
+        style={[styles.scanCard, { borderColor: maintConfig.color, borderWidth: 0.5, backgroundColor: maintConfig.color + '08' }]}
         onPress={handlePress}
         activeOpacity={0.7}
         accessibilityRole="button"
@@ -211,7 +211,6 @@ export default function HomeScreen() {
   const user = useAuthStore(s => s.user);
   const resolvedDepot = useLocationStore(s => s.resolvedDepot);
   const isResolvingDepot = useLocationStore(s => s.isResolvingDepot);
-  const resolveDepot = useLocationStore(s => s.resolveDepot);
   const isFocused = useIsFocused();
   const { depots } = useDepotLookup();
 
@@ -437,17 +436,7 @@ export default function HomeScreen() {
               Your location is within the <Text style={styles.geofenceLocation}>{resolvedDepot.depot.name}</Text> geofence
             </Text>
           ) : (
-            <View style={styles.geofenceRow}>
-              <Text style={styles.geofenceText}>You are not within any depot geofence</Text>
-              <TouchableOpacity
-                onPress={() => resolveDepot(depots)}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                accessibilityLabel="Retry geofence detection"
-                accessibilityRole="button"
-              >
-                <Ionicons name="refresh-outline" size={14} color={colors.textSecondary} />
-              </TouchableOpacity>
-            </View>
+            <Text style={styles.geofenceText}>You are not within any depot geofence</Text>
           )}
         </Animated.View>
       </View>
@@ -481,8 +470,7 @@ export default function HomeScreen() {
       </View>
     </>
   // depots.length is used instead of the full depots array to prevent re-creation
-  // when the array reference changes but content hasn't. resolveDepot is a stable
-  // Zustand store function.
+  // when the array reference changes but content hasn't.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   ), [isRefetching, greeting, user, roleLabel, isResolvingDepot, resolvedDepot, depots.length, statsCards]);
 
@@ -620,11 +608,6 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: spacing.xs,
     marginLeft: 16,
-  },
-  geofenceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
   },
   geofenceText: {
     fontSize: fontSize.sm,

@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AppState, Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
-import { upsertPushToken } from '@rgr/shared';
+import { upsertPushToken, withRetry } from '@rgr/shared';
 import { useAuthStore } from '../store/authStore';
 
 /**
@@ -51,6 +51,7 @@ export function usePushNotifications() {
   const [permissionStatus, setPermissionStatus] = useState<string | null>(null);
   const user = useAuthStore((s) => s.user);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isRegisteringRef = useRef(false);
 
   useEffect(() => {
     if (!isAuthenticated || !user || !Notifications || !Device) return;
@@ -100,6 +101,9 @@ export function usePushNotifications() {
 
   async function registerForPushNotifications() {
     if (!Notifications || !Device) return;
+    // Prevent concurrent registration chains from stacking on rapid foreground transitions
+    if (isRegisteringRef.current) return;
+    isRegisteringRef.current = true;
 
     // Only register on physical devices
     if (!Device.isDevice) {
@@ -155,7 +159,8 @@ export function usePushNotifications() {
       const token = tokenData.data;
       setExpoPushToken(token);
 
-      // Upsert to database — idempotent, safe to call on every foreground
+      // Upsert to database — idempotent, safe to call on every foreground.
+      // Retry transient network failures (up to 3 attempts, 2s base backoff).
       if (user) {
         let deviceId: string;
         try {
@@ -171,15 +176,19 @@ export function usePushNotifications() {
         }
         const platform = Platform.OS as 'ios' | 'android';
 
-        await upsertPushToken({
-          userId: user.id,
-          token,
-          deviceId,
-          platform,
-        });
+        await withRetry(
+          () => upsertPushToken({ userId: user.id, token, deviceId, platform }),
+          {
+            maxAttempts: 3,
+            baseDelayMs: 2000,
+            maxDelayMs: 8000,
+          }
+        );
       }
     } catch (err) {
       console.error('[Push] Registration error:', err);
+    } finally {
+      isRegisteringRef.current = false;
     }
   }
 

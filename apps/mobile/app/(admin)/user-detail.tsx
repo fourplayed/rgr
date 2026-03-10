@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { UserRoleLabels } from '@rgr/shared';
 import type { UserRole } from '@rgr/shared';
-import { useUserList, useUpdateUserRole, useUpdateUserStatus } from '../../src/hooks/useAdminUsers';
+import { useUserDetail, useUpdateUserRole, useUpdateUserStatus } from '../../src/hooks/useAdminUsers';
 import { useAuthStore } from '../../src/store/authStore';
 import { UserRolePicker } from '../../src/components/admin/UserRolePicker';
 import { ConfirmSheet } from '../../src/components/common/ConfirmSheet';
@@ -24,11 +24,7 @@ export default function UserDetailScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
   const { user: currentUser } = useAuthStore();
 
-  const { data } = useUserList();
-  const profile = useMemo(
-    () => data?.data?.find((u) => u.id === userId) ?? null,
-    [data, userId]
-  );
+  const { data: profile, isLoading } = useUserDetail(userId ?? '');
 
   const [showRolePicker, setShowRolePicker] = useState(false);
   const [showStatusConfirm, setShowStatusConfirm] = useState(false);
@@ -56,7 +52,7 @@ export default function UserDetailScreen() {
     });
   }, [userId, profile, updateStatusMutation]);
 
-  if (!profile) {
+  if (isLoading || !profile) {
     return (
       <View style={styles.container}>
         <SheetHeader icon="person" title="User" onClose={() => router.back()} closeIcon="arrow-back" />

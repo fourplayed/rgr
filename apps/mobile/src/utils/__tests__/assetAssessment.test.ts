@@ -234,7 +234,7 @@ describe('buildAssetAssessment', () => {
       depots: [],
       defectReports: [
         makeDefect(),
-        makeDefect({ id: 'defect-2', status: 'accepted' }),
+        makeDefect({ id: 'defect-2', status: 'task_created' }),
       ],
       now: NOW,
     });

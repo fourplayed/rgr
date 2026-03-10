@@ -15,7 +15,7 @@ import { colors } from '../../theme/colors';
 import { cardStyles } from '../../theme/cardStyles';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 
-const ASSET_STATUS_ICONS: Record<AssetStatus, keyof typeof Ionicons.glyphMap> = {
+export const ASSET_STATUS_ICONS: Record<AssetStatus, keyof typeof Ionicons.glyphMap> = {
   serviced: 'checkmark-circle',
   maintenance: 'construct',
   out_of_service: 'close-circle',
@@ -47,7 +47,7 @@ function AssetListItemComponent({ asset, onPress, depotLookup }: AssetListItemPr
   const statusIcon = ASSET_STATUS_ICONS[asset.status] ?? 'ellipse-outline';
   const handlePress = useCallback(() => { onPress(asset); }, [onPress, asset]);
   const containerStyle = useMemo(
-    () => [cardStyles.container, { borderLeftColor: statusColor }],
+    () => [cardStyles.container, { borderColor: statusColor, borderWidth: 0.5, backgroundColor: statusColor + '08' }],
     [statusColor]
   );
 
@@ -61,7 +61,7 @@ function AssetListItemComponent({ asset, onPress, depotLookup }: AssetListItemPr
     >
       <View style={styles.cardRow}>
         <View style={styles.iconContainer}>
-          <Ionicons name={statusIcon} size={31} color={statusColor} />
+          <Ionicons name={statusIcon} size={32} color={statusColor} />
         </View>
         <View style={styles.cardBody}>
           <View style={styles.headerRow}>

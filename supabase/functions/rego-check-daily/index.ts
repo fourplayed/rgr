@@ -124,8 +124,29 @@ function formatDate(dateStr: string): string {
 }
 
 /**
+ * Process items in batches of N using Promise.allSettled.
+ */
+async function processBatch<T, R>(
+  items: T[],
+  fn: (item: T) => Promise<R>,
+  batchSize: number,
+): Promise<PromiseSettledResult<R>[]> {
+  const results: PromiseSettledResult<R>[] = [];
+  for (let i = 0; i < items.length; i += batchSize) {
+    const batch = items.slice(i, i + batchSize);
+    const batchResults = await Promise.allSettled(batch.map(fn));
+    results.push(...batchResults);
+  }
+  return results;
+}
+
+/**
  * Send a push notification for an asset if one hasn't already been sent
  * for this notification type + target date. Handles dedup, logging, and sending.
+ *
+ * Uses the existing UNIQUE(asset_id, notification_type, target_date) constraint
+ * for atomic dedup via upsert instead of SELECT-then-INSERT (TOCTOU safe).
+ * Excludes previously failed notifications so they can be retried.
  */
 async function sendNotificationIfNew(
   serviceClient: ReturnType<typeof createClient>,
@@ -139,16 +160,26 @@ async function sendNotificationIfNew(
   title: string,
   body: string,
 ): Promise<boolean> {
-  // Check dedup
+  // Check dedup — exclude failed notifications so they can be retried
   const { data: existing } = await serviceClient
     .from("notification_log")
-    .select("id")
+    .select("id, status")
     .eq("asset_id", asset.id)
     .eq("notification_type", notificationType)
     .eq("target_date", asset.registration_expiry)
+    .neq("status", "failed")
     .maybeSingle();
 
   if (existing) return false;
+
+  // Delete any previous failed entry so the upsert can create a fresh one
+  await serviceClient
+    .from("notification_log")
+    .delete()
+    .eq("asset_id", asset.id)
+    .eq("notification_type", notificationType)
+    .eq("target_date", asset.registration_expiry)
+    .eq("status", "failed");
 
   await serviceClient.from("notification_log").insert({
     asset_id: asset.id,
@@ -234,11 +265,19 @@ Deno.serve(async (req: Request): Promise<Response> => {
       .not("registration_number", "is", null)
       .limit(20);
 
-    // Process overdue lookups sequentially (avoid hammering DOT)
+    // Process overdue lookups sequentially (avoid hammering DOT).
+    // Deadline guard: leave 10s buffer for the notification phase.
     const MAX_LOOKUPS_PER_RUN = 5;
+    const LOOKUP_DEADLINE_MS = 50_000;
+    const lookupStart = Date.now();
     const overdueToCheck = (overdueAssets || []).slice(0, MAX_LOOKUPS_PER_RUN);
 
     for (const asset of overdueToCheck) {
+      if (Date.now() - lookupStart > LOOKUP_DEADLINE_MS) {
+        errors.push(`Stopped after ${checked} lookups — approaching execution time limit`);
+        break;
+      }
+
       checked++;
       try {
         const result = await lookupRego(
@@ -266,7 +305,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       }
     }
 
-    // ── 2. Send 7-day expiry notifications ──
+    // ── 2. Send 7-day expiry notifications (batched) ──
     // Assets expiring between today+7 and today+8 (within the 7-day window)
     const { data: sevenDayAssets } = await serviceClient
       .from("assets")
@@ -276,18 +315,24 @@ Deno.serve(async (req: Request): Promise<Response> => {
       .is("deleted_at", null)
       .not("registration_number", "is", null);
 
-    for (const asset of sevenDayAssets || []) {
-      const sent = await sendNotificationIfNew(
+    const NOTIFICATION_BATCH_SIZE = 5;
+
+    const sevenDayResults = await processBatch(
+      sevenDayAssets || [],
+      (asset) => sendNotificationIfNew(
         serviceClient,
         asset,
         "rego_expiry_7d",
         "Registration Expiring Soon",
         `${asset.asset_number} (${asset.registration_number}) expires on ${formatDate(asset.registration_expiry)}`,
-      );
-      if (sent) notificationsSent++;
+      ),
+      NOTIFICATION_BATCH_SIZE,
+    );
+    for (const r of sevenDayResults) {
+      if (r.status === "fulfilled" && r.value) notificationsSent++;
     }
 
-    // ── 3. Send 2-day expiry notifications ──
+    // ── 3. Send 2-day expiry notifications (batched) ──
     const { data: twoDayAssets } = await serviceClient
       .from("assets")
       .select("id, asset_number, registration_number, registration_expiry")
@@ -296,18 +341,22 @@ Deno.serve(async (req: Request): Promise<Response> => {
       .is("deleted_at", null)
       .not("registration_number", "is", null);
 
-    for (const asset of twoDayAssets || []) {
-      const sent = await sendNotificationIfNew(
+    const twoDayResults = await processBatch(
+      twoDayAssets || [],
+      (asset) => sendNotificationIfNew(
         serviceClient,
         asset,
         "rego_expiry_2d",
         "Registration Expiring in 2 Days",
         `${asset.asset_number} (${asset.registration_number}) expires on ${formatDate(asset.registration_expiry)} — renew urgently!`,
-      );
-      if (sent) notificationsSent++;
+      ),
+      NOTIFICATION_BATCH_SIZE,
+    );
+    for (const r of twoDayResults) {
+      if (r.status === "fulfilled" && r.value) notificationsSent++;
     }
 
-    // ── 4. Send overdue notifications ──
+    // ── 4. Send overdue notifications (batched) ──
     const { data: confirmedOverdue } = await serviceClient
       .from("assets")
       .select("id, asset_number, registration_number, registration_expiry")
@@ -315,15 +364,19 @@ Deno.serve(async (req: Request): Promise<Response> => {
       .is("deleted_at", null)
       .not("registration_number", "is", null);
 
-    for (const asset of confirmedOverdue || []) {
-      const sent = await sendNotificationIfNew(
+    const overdueResults = await processBatch(
+      confirmedOverdue || [],
+      (asset) => sendNotificationIfNew(
         serviceClient,
         asset,
         "rego_overdue",
         "Registration OVERDUE",
         `${asset.asset_number} (${asset.registration_number}) registration expired on ${formatDate(asset.registration_expiry)} and has NOT been renewed`,
-      );
-      if (sent) notificationsSent++;
+      ),
+      NOTIFICATION_BATCH_SIZE,
+    );
+    for (const r of overdueResults) {
+      if (r.status === "fulfilled" && r.value) notificationsSent++;
     }
 
     return new Response(

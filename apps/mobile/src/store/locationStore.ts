@@ -42,6 +42,10 @@ interface LocationState {
   clearResolvedDepot: () => void;
 }
 
+// Module-scoped depot cache for retry freshness — not in Zustand state
+// to avoid triggering re-renders on internal bookkeeping updates.
+let _lastDepots: Depot[] = [];
+
 export const useLocationStore = create<LocationState>((set, get) => ({
   resolvedDepot: null,
   isResolvingDepot: false,
@@ -57,6 +61,8 @@ export const useLocationStore = create<LocationState>((set, get) => ({
     if (get().isResolvingDepot) {
       return;
     }
+    // Cache depots at module scope so retries always use the latest
+    _lastDepots = depots;
 
     // Rate-limit: skip if successfully resolved within cooldown period
     const { lastResolvedAt, resolvedDepot } = get();
@@ -145,12 +151,13 @@ export const useLocationStore = create<LocationState>((set, get) => ({
               if (existingTimeout) clearTimeout(existingTimeout);
               const delay = Math.min(BASE_RETRY_MS * Math.pow(2, retryCount), MAX_RETRY_MS);
               const jitteredDelay = delay * (1 + Math.random() * 0.5);
-              // Store depots in state so retry uses the latest list, not a stale closure
               const timeoutId = setTimeout(() => {
                 set({ retryTimeoutId: null });
-                // Re-read depots from the caller — the ensureFresh/resolveDepot callers
-                // always pass fresh depots from React Query cache
-                get().resolveDepot(depots);
+                // Read from module-scoped cache — always the latest depots
+                // passed to any resolveDepot call, not the stale closure
+                if (_lastDepots.length > 0) {
+                  get().resolveDepot(_lastDepots);
+                }
               }, jitteredDelay);
               set({ retryTimeoutId: timeoutId });
             }

@@ -403,6 +403,40 @@ export async function softDeleteAsset(id: string): Promise<ServiceResult<void>> 
   return { success: true, data: undefined, error: null };
 }
 
+/**
+ * Bulk soft-delete assets by setting deleted_at + status to out_of_service.
+ * Returns count of deleted and IDs that failed (already deleted or not found).
+ */
+export async function bulkSoftDeleteAssets(
+  ids: string[]
+): Promise<ServiceResult<{ deleted: number; failed: string[] }>> {
+  if (ids.length === 0) {
+    return { success: true, data: { deleted: 0, failed: [] }, error: null };
+  }
+
+  const supabase = getSupabaseClient();
+
+  const { data, error } = await supabase
+    .from('assets')
+    .update({ deleted_at: new Date().toISOString(), status: 'out_of_service' })
+    .in('id', ids)
+    .is('deleted_at', null)
+    .select('id');
+
+  if (error) {
+    return { success: false, data: null, error: `Failed to bulk delete assets: ${error.message}` };
+  }
+
+  const deletedIds = new Set((data ?? []).map((r: { id: string }) => r.id));
+  const failed = ids.filter((id) => !deletedIds.has(id));
+
+  return {
+    success: true,
+    data: { deleted: deletedIds.size, failed },
+    error: null,
+  };
+}
+
 // ── Scan Events ──
 
 /**

@@ -9,6 +9,8 @@ import type { PhotoType } from '@rgr/shared';
 import { generateThumbnail } from '../utils/imageUtils';
 import { logger } from '../utils/logger';
 
+export type UploadStep = 'validating' | 'thumbnail' | 'uploading' | 'complete' | null;
+
 /**
  * Hook for managing photo capture workflow.
  * Handles taking photos, preview state, and upload.
@@ -43,6 +45,8 @@ export function usePhotoCapture() {
   const [isCapturing, setIsCapturing] = useState(false);
   // Guard against double-upload (same pattern as isCapturingRef)
   const isUploadingRef = useRef(false);
+  // Step-level progress for upload overlay
+  const [uploadStep, setUploadStep] = useState<UploadStep>(null);
   // Track thumbnail URI so we can clean up the file on retake/cancel
   const thumbnailUriRef = useRef<string | null>(null);
 
@@ -96,6 +100,7 @@ export function usePhotoCapture() {
     }
     setCapturedUri(null);
     setUploadError(null);
+    setUploadStep(null);
   }, [setCapturedUri, setUploadError]);
 
   /**
@@ -114,12 +119,14 @@ export function usePhotoCapture() {
         isUploadingRef.current = true;
         setIsUploading(true);
         setUploadError(null);
+        setUploadStep('validating');
 
         // Pre-check file existence and size before uploading
         const fileInfo = await FileSystem.getInfoAsync(capturedUri, { size: true });
         if (!fileInfo.exists) {
           setUploadError('Photo file not found. Please try taking the photo again.');
           setIsUploading(false);
+          setUploadStep(null);
           return false;
         }
         if (fileInfo.size !== undefined && fileInfo.size > MAX_PHOTO_SIZE_BYTES) {
@@ -127,8 +134,11 @@ export function usePhotoCapture() {
             `Photo is too large (max ${MAX_PHOTO_SIZE_BYTES / (1024 * 1024)}MB). Please retake the photo.`
           );
           setIsUploading(false);
+          setUploadStep(null);
           return false;
         }
+
+        setUploadStep('thumbnail');
 
         // Generate thumbnail before upload
         let thumbnailFileUri: string | undefined;
@@ -142,6 +152,8 @@ export function usePhotoCapture() {
             // Continue without thumbnail
           }
         }
+
+        setUploadStep('uploading');
 
         await uploadPhotoMutation({
           assetId,
@@ -158,12 +170,14 @@ export function usePhotoCapture() {
           ...(thumbnailFileUri && { thumbnailFileUri }),
         });
 
-        // Success - reset the capture state
+        // Success — show complete step, then reset capture state
+        setUploadStep('complete');
         reset();
         return true;
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : 'Failed to upload photo';
         setUploadError(message);
+        setUploadStep(null);
         return false;
       } finally {
         isUploadingRef.current = false;
@@ -196,6 +210,7 @@ export function usePhotoCapture() {
       FileSystem.deleteAsync(thumbnailUriRef.current, { idempotent: true }).catch(() => {});
       thumbnailUriRef.current = null;
     }
+    setUploadStep(null);
     reset();
   }, [reset]);
 
@@ -206,6 +221,7 @@ export function usePhotoCapture() {
     scanEventId,
     isUploading,
     uploadError,
+    uploadStep,
     isCapturing,
 
     // Actions

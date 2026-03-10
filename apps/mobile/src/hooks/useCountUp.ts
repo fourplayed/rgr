@@ -1,26 +1,33 @@
 import { useRef, useEffect, useState } from 'react';
 
 /**
- * Animates a number from 0 to `target` over `durationMs`.
+ * Animates a number from its current value to `target` over `durationMs`.
  * Returns the current displayed value as an integer.
+ *
+ * When the target changes, animates from the previous displayed value to the
+ * new target (showing the delta). When remounting with the same target,
+ * snaps immediately to avoid a 0→N flash on tab switches.
  */
 export function useCountUp(target: number, durationMs = 600): number {
-  const [display, setDisplay] = useState(0);
+  const [display, setDisplay] = useState(target);
   const rafRef = useRef<number | null>(null);
   const prevTarget = useRef(target);
+  const displayRef = useRef(target);
 
   useEffect(() => {
-    // Skip animation if target hasn't changed meaningfully
-    if (target === prevTarget.current && display === target) return;
+    // Skip animation if target hasn't changed
+    if (target === prevTarget.current) return;
+
+    const startValue = displayRef.current;
     prevTarget.current = target;
 
     if (target === 0) {
       setDisplay(0);
+      displayRef.current = 0;
       return;
     }
 
     const startTime = Date.now();
-    const startValue = 0;
 
     const animate = () => {
       const elapsed = Date.now() - startTime;
@@ -29,6 +36,7 @@ export function useCountUp(target: number, durationMs = 600): number {
       const eased = 1 - Math.pow(1 - progress, 3);
       const current = Math.round(startValue + (target - startValue) * eased);
       setDisplay(current);
+      displayRef.current = current;
 
       if (progress < 1) {
         rafRef.current = requestAnimationFrame(animate);

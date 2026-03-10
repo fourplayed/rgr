@@ -1,6 +1,13 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { listProfiles, adminUpdateProfile, adminCreateUser } from '@rgr/shared';
+import { useQuery } from '@tanstack/react-query';
+import {
+  listProfiles,
+  adminUpdateProfile,
+  adminCreateUser,
+  fetchProfile,
+  queryFromService,
+} from '@rgr/shared';
 import type { UserRole, CreateUserInput, ListProfilesParams } from '@rgr/shared';
+import { useMutationFromService } from './useMutationFromService';
 
 export const adminUserKeys = {
   all: ['admin-users'] as const,
@@ -22,47 +29,40 @@ export function useUserList(filters?: ListProfilesParams) {
   });
 }
 
-export function useUpdateUserRole() {
-  const queryClient = useQueryClient();
+export function useUserDetail(userId: string) {
+  return useQuery({
+    queryKey: adminUserKeys.detail(userId),
+    queryFn: queryFromService(() => fetchProfile(userId)),
+    enabled: !!userId,
+    staleTime: 60_000,
+  });
+}
 
-  return useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: UserRole }) => {
-      const result = await adminUpdateProfile(userId, { role });
-      if (!result.success) throw new Error(result.error);
-      return result.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: adminUserKeys.lists() });
-    },
+export function useUpdateUserRole() {
+  return useMutationFromService({
+    serviceFn: ({ userId, role }: { userId: string; role: UserRole }) =>
+      adminUpdateProfile(userId, { role }),
+    invalidates: (_data, { userId }) => [
+      adminUserKeys.lists(),
+      adminUserKeys.detail(userId),
+    ],
   });
 }
 
 export function useUpdateUserStatus() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ userId, isActive }: { userId: string; isActive: boolean }) => {
-      const result = await adminUpdateProfile(userId, { isActive });
-      if (!result.success) throw new Error(result.error);
-      return result.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: adminUserKeys.lists() });
-    },
+  return useMutationFromService({
+    serviceFn: ({ userId, isActive }: { userId: string; isActive: boolean }) =>
+      adminUpdateProfile(userId, { isActive }),
+    invalidates: (_data, { userId }) => [
+      adminUserKeys.lists(),
+      adminUserKeys.detail(userId),
+    ],
   });
 }
 
 export function useCreateUser() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (input: CreateUserInput) => {
-      const result = await adminCreateUser(input);
-      if (!result.success) throw new Error(result.error);
-      return result.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: adminUserKeys.lists() });
-    },
+  return useMutationFromService({
+    serviceFn: (input: CreateUserInput) => adminCreateUser(input),
+    invalidates: [adminUserKeys.lists()],
   });
 }

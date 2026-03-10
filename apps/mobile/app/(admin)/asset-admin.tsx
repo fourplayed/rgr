@@ -22,10 +22,12 @@ import { useDepotLookup } from '../../src/hooks/useDepots';
 import {
   useDeleteAsset,
   useBulkUpdateStatus,
+  useBulkDeleteAssets,
   useAssetRelatedCounts,
 } from '../../src/hooks/useAdminAssets';
 import { SheetHeader } from '../../src/components/common/SheetHeader';
 import { ConfirmSheet } from '../../src/components/common/ConfirmSheet';
+import { SheetModal } from '../../src/components/common/SheetModal';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
@@ -58,6 +60,7 @@ export default function AssetAdminScreen() {
   const depotLookup = useDepotLookup();
 
   const deleteMutation = useDeleteAsset();
+  const bulkDeleteMutation = useBulkDeleteAssets();
   const bulkStatusMutation = useBulkUpdateStatus();
   const { data: relatedCounts } = useAssetRelatedCounts(deleteTarget?.id ?? null);
 
@@ -89,17 +92,18 @@ export default function AssetAdminScreen() {
     });
   }, [deleteTarget, deleteMutation]);
 
-  const handleBulkDelete = useCallback(async () => {
+  const handleBulkDelete = useCallback(() => {
     if (bulkDeleteIds.length === 0) return;
-    const results = await Promise.allSettled(
-      bulkDeleteIds.map((id) => deleteMutation.mutateAsync(id))
-    );
-    const successCount = results.filter((r) => r.status === 'fulfilled').length;
-    setBulkDeleteIds([]);
-    if (successCount > 0) {
-      clearSelection();
-    }
-  }, [bulkDeleteIds, deleteMutation, clearSelection]);
+    bulkDeleteMutation.mutate(bulkDeleteIds, {
+      onSuccess: () => {
+        setBulkDeleteIds([]);
+        clearSelection();
+      },
+      onError: () => {
+        setBulkDeleteIds([]);
+      },
+    });
+  }, [bulkDeleteIds, bulkDeleteMutation, clearSelection]);
 
   const handleBulkStatus = useCallback(
     (status: string) => {
@@ -348,47 +352,38 @@ export default function AssetAdminScreen() {
           confirmLabel={`Delete ${bulkDeleteIds.length}`}
           onConfirm={handleBulkDelete}
           onCancel={() => setBulkDeleteIds([])}
-          isLoading={deleteMutation.isPending}
+          isLoading={bulkDeleteMutation.isPending}
         />
 
         {/* Status Picker Sheet */}
-        {showStatusPicker && (
-          <View style={StyleSheet.absoluteFill}>
+        <SheetModal visible={showStatusPicker} onClose={() => setShowStatusPicker(false)} inline>
+          <View style={styles.statusPickerSheet}>
+            <Text style={styles.statusPickerTitle}>Change Status</Text>
+            {STATUS_VALUES.map((status) => {
+              const color =
+                AssetStatusColors[status as keyof typeof AssetStatusColors] ||
+                colors.electricBlue;
+              return (
+                <TouchableOpacity
+                  key={status}
+                  style={styles.statusOption}
+                  onPress={() => handleBulkStatus(status)}
+                >
+                  <View style={[styles.statusDot, { backgroundColor: color }]} />
+                  <Text style={styles.statusOptionText}>
+                    {AssetStatusLabels[status as keyof typeof AssetStatusLabels] || status}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
             <TouchableOpacity
-              style={styles.statusPickerBackdrop}
-              activeOpacity={1}
+              style={styles.statusCancelButton}
               onPress={() => setShowStatusPicker(false)}
             >
-              <View style={styles.statusPickerSheet}>
-                <View style={styles.handle} />
-                <Text style={styles.statusPickerTitle}>Change Status</Text>
-                {STATUS_VALUES.map((status) => {
-                  const color =
-                    AssetStatusColors[status as keyof typeof AssetStatusColors] ||
-                    colors.electricBlue;
-                  return (
-                    <TouchableOpacity
-                      key={status}
-                      style={styles.statusOption}
-                      onPress={() => handleBulkStatus(status)}
-                    >
-                      <View style={[styles.statusDot, { backgroundColor: color }]} />
-                      <Text style={styles.statusOptionText}>
-                        {AssetStatusLabels[status as keyof typeof AssetStatusLabels] || status}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-                <TouchableOpacity
-                  style={styles.statusCancelButton}
-                  onPress={() => setShowStatusPicker(false)}
-                >
-                  <Text style={styles.statusCancelText}>Cancel</Text>
-                </TouchableOpacity>
-              </View>
+              <Text style={styles.statusCancelText}>Cancel</Text>
             </TouchableOpacity>
           </View>
-        )}
+        </SheetModal>
     </View>
   );
 }
@@ -596,25 +591,12 @@ const styles = StyleSheet.create({
   listContent: { paddingTop: spacing.sm, paddingBottom: spacing['2xl'], paddingHorizontal: spacing.lg },
   emptyListContent: { flex: 1 },
   // Status picker sheet
-  statusPickerBackdrop: {
-    flex: 1,
-    backgroundColor: colors.overlay,
-    justifyContent: 'flex-end',
-  },
   statusPickerSheet: {
     backgroundColor: colors.background,
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
+    paddingTop: spacing.lg,
     paddingBottom: spacing['2xl'],
-  },
-  handle: {
-    width: 40,
-    height: 4,
-    backgroundColor: colors.border,
-    borderRadius: borderRadius.full,
-    alignSelf: 'center',
-    marginTop: spacing.md,
-    marginBottom: spacing.lg,
   },
   statusPickerTitle: {
     fontSize: fontSize['2xl'],

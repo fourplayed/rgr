@@ -248,7 +248,7 @@ export async function deleteDepot(id: string): Promise<ServiceResult<void>> {
 
 // ── Asset Administration ──
 
-export { softDeleteAsset as deleteAsset } from './assets';
+export { softDeleteAsset as deleteAsset, bulkSoftDeleteAssets } from './assets';
 
 export async function getAssetRelatedCounts(
   id: string
@@ -493,6 +493,36 @@ export async function getAdminDataStats(): Promise<ServiceResult<AdminDataStats>
   }
 }
 
+// ── Join row types (must match the .select() strings below) ──
+
+interface MaintenanceJoinRow {
+  id: string;
+  title: string;
+  status: string;
+  due_date: string | null;
+  created_at: string;
+  reporter: { full_name: string } | null;
+  asset: { asset_number: string } | null;
+}
+
+interface DefectJoinRow {
+  id: string;
+  title: string;
+  status: string;
+  created_at: string;
+  reporter: { full_name: string } | null;
+  asset: { asset_number: string } | null;
+}
+
+interface PhotoJoinRow {
+  id: string;
+  storage_path: string;
+  thumbnail_path: string | null;
+  photo_type: string;
+  created_at: string;
+  asset: { asset_number: string } | null;
+}
+
 // ── Admin List Maintenance ──
 
 export interface AdminListMaintenanceParams {
@@ -504,13 +534,8 @@ export interface AdminListMaintenanceParams {
 
 export interface AdminMaintenanceListItem {
   id: string;
-  assetId: string;
   title: string;
-  description: string | null;
-  priority: string;
   status: string;
-  maintenanceType: string | null;
-  scheduledDate: string | null;
   dueDate: string | null;
   createdAt: string;
   reporterName: string | null;
@@ -531,8 +556,7 @@ export async function adminListMaintenance(
       .from('maintenance_records')
       .select(
         `
-        id, asset_id, title, description, priority, status, maintenance_type,
-        scheduled_date, due_date, created_at,
+        id, title, status, due_date, created_at,
         reporter:reported_by(full_name),
         asset:asset_id(asset_number)
       `,
@@ -557,15 +581,13 @@ export async function adminListMaintenance(
     }
 
     const total = count ?? 0;
-    const items: AdminMaintenanceListItem[] = (data ?? []).map((row: any) => ({
+    // Supabase SDK can't resolve the ambiguous profiles FK — reporter:reported_by
+    // hint works at runtime but generates a SelectQueryError at type level
+    const rows = (data ?? []) as unknown as MaintenanceJoinRow[];
+    const items: AdminMaintenanceListItem[] = rows.map((row) => ({
       id: row.id,
-      assetId: row.asset_id,
       title: row.title,
-      description: row.description,
-      priority: row.priority,
       status: row.status,
-      maintenanceType: row.maintenance_type,
-      scheduledDate: row.scheduled_date,
       dueDate: row.due_date,
       createdAt: row.created_at,
       reporterName: row.reporter?.full_name ?? null,
@@ -599,11 +621,8 @@ export interface AdminListDefectReportsParams {
 
 export interface AdminDefectListItem {
   id: string;
-  assetId: string;
   title: string;
-  description: string | null;
   status: string;
-  maintenanceRecordId: string | null;
   createdAt: string;
   reporterName: string | null;
   assetNumber: string | null;
@@ -623,7 +642,7 @@ export async function adminListDefectReports(
       .from('defect_reports')
       .select(
         `
-        id, asset_id, title, description, status, maintenance_record_id, created_at,
+        id, title, status, created_at,
         reporter:reported_by(full_name),
         asset:asset_id(asset_number)
       `,
@@ -648,13 +667,11 @@ export async function adminListDefectReports(
     }
 
     const total = count ?? 0;
-    const items: AdminDefectListItem[] = (data ?? []).map((row: any) => ({
+    const defectRows = (data ?? []) as unknown as DefectJoinRow[];
+    const items: AdminDefectListItem[] = defectRows.map((row) => ({
       id: row.id,
-      assetId: row.asset_id,
       title: row.title,
-      description: row.description,
       status: row.status,
-      maintenanceRecordId: row.maintenance_record_id,
       createdAt: row.created_at,
       reporterName: row.reporter?.full_name ?? null,
       assetNumber: row.asset?.asset_number ?? null,
@@ -690,7 +707,6 @@ export interface AdminPhotoListItem {
   thumbnailPath: string | null;
   photoType: string;
   createdAt: string;
-  assetId: string;
   assetNumber: string | null;
 }
 
@@ -708,7 +724,7 @@ export async function adminListPhotos(
       .from('photos')
       .select(
         `
-        id, storage_path, thumbnail_path, photo_type, created_at, asset_id,
+        id, storage_path, thumbnail_path, photo_type, created_at,
         asset:asset_id(asset_number)
       `,
         { count: 'exact' }
@@ -716,6 +732,9 @@ export async function adminListPhotos(
 
     if (search) {
       const safeSearch = search.replace(/[%_\\,().]/g, (c) => `\\${c}`);
+      // PostgREST filters on joined columns require a cast — the SDK doesn't
+      // type this path. This works for PostgREST v11+ embedded filters.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       query = query.ilike('asset.asset_number' as any, `%${safeSearch}%`);
     }
 
@@ -728,13 +747,13 @@ export async function adminListPhotos(
     }
 
     const total = count ?? 0;
-    const items: AdminPhotoListItem[] = (data ?? []).map((row: any) => ({
+    const photoRows = (data ?? []) as unknown as PhotoJoinRow[];
+    const items: AdminPhotoListItem[] = photoRows.map((row) => ({
       id: row.id,
       storagePath: row.storage_path,
       thumbnailPath: row.thumbnail_path,
       photoType: row.photo_type,
       createdAt: row.created_at,
-      assetId: row.asset_id,
       assetNumber: row.asset?.asset_number ?? null,
     }));
 
@@ -765,30 +784,25 @@ export async function bulkCancelMaintenanceTasks(
 
   try {
     const supabase = getSupabaseClient();
-    const failed: string[] = [];
-    let deleted = 0;
 
-    const results = await Promise.allSettled(
-      ids.map(async (id) => {
-        const { error } = await supabase.rpc('cancel_maintenance_task', {
-          p_maintenance_id: id,
-        });
-        if (error) throw new Error(error.message);
-        return id;
-      })
-    );
+    const { data, error } = await supabase.rpc('bulk_cancel_maintenance_tasks', {
+      p_ids: ids,
+    });
 
-    for (let i = 0; i < results.length; i++) {
-      const result = results[i];
-      if (result && result.status === 'fulfilled') {
-        deleted++;
-      } else {
-        const id = ids[i];
-        if (id) failed.push(id);
-      }
+    if (error) {
+      return { success: false, data: null, error: `Failed to cancel: ${error.message}` };
     }
 
-    return { success: true, data: { deleted, failed }, error: null };
+    const cancelledIds = new Set(
+      ((data ?? []) as Array<{ cancelled_id: string }>).map((r) => r.cancelled_id)
+    );
+    const failed = ids.filter((id) => !cancelledIds.has(id));
+
+    return {
+      success: true,
+      data: { deleted: cancelledIds.size, failed },
+      error: null,
+    };
   } catch (err) {
     return { success: false, data: null, error: 'Failed to cancel maintenance tasks' };
   }
@@ -816,7 +830,7 @@ export async function bulkDeleteDefectReports(
       return { success: false, data: null, error: error.message };
     }
 
-    const deletedIds = new Set((data ?? []).map((r: any) => r.id));
+    const deletedIds = new Set((data ?? []).map((r: { id: string }) => r.id));
     const failed = ids.filter((id) => !deletedIds.has(id));
 
     return {

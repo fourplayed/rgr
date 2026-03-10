@@ -155,7 +155,7 @@ export function buildAssetAssessment({
 
   // ── Categorize defects and maintenance ──
   const openDefects = defectReports.filter(
-    (d) => d.status === 'reported' || d.status === 'accepted'
+    (d) => d.status === 'reported' || d.status === 'task_created'
   );
 
   const overdue = maintenance.filter(

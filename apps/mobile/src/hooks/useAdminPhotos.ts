@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
   adminListPhotos,
   bulkDeletePhotos,
@@ -6,6 +6,7 @@ import {
 } from '@rgr/shared';
 import type { AdminListPhotosParams } from '@rgr/shared';
 import { photoKeys } from './usePhotos';
+import { useMutationFromService } from './useMutationFromService';
 
 export const adminPhotoKeys = {
   all: ['admin-photos'] as const,
@@ -23,17 +24,8 @@ export function useAdminPhotoList(params: AdminListPhotosParams = {}) {
 }
 
 export function useAdminBulkDeletePhotos() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (photoIds: string[]) => {
-      const result = await bulkDeletePhotos(photoIds);
-      if (!result.success) throw new Error(result.error);
-      return result.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: adminPhotoKeys.all });
-      queryClient.invalidateQueries({ queryKey: photoKeys.all });
-    },
+  return useMutationFromService({
+    serviceFn: (photoIds: string[]) => bulkDeletePhotos(photoIds),
+    invalidates: [adminPhotoKeys.all, photoKeys.all],
   });
 }

@@ -18,7 +18,7 @@ interface MaintenanceFilterPanelProps {
 }
 
 const STATUS_ORDER: MaintenanceStatus[] = ['scheduled', 'completed'];
-const PRIORITY_ORDER: MaintenancePriority[] = ['low', 'medium', 'high', 'critical'];
+const PRIORITY_ORDER: MaintenancePriority[] = ['low', 'medium', 'critical'];
 
 export const MaintenanceFilterPanel = memo(function MaintenanceFilterPanel({
   statuses,

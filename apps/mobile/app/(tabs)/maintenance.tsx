@@ -230,7 +230,7 @@ export default function MaintenanceScreen() {
 
   const renderDefectsEmpty = () => (
     <EmptyState
-      icon="shield-checkmark-outline"
+      icon="warning-outline"
       title="No defect reports"
       subtitle="Defects are reported during scanning when issues are found"
     />

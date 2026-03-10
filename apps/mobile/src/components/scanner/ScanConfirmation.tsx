@@ -337,7 +337,7 @@ function OpenItemsSection({
           {openDefects.map((defect) => (
             <TouchableOpacity
               key={defect.id}
-              style={[cardStyles.containerInline, { borderLeftColor: colors.defectYellow }]}
+              style={[cardStyles.containerInline, { borderColor: colors.defectYellow, borderWidth: 0.5, backgroundColor: colors.defectYellow + '08' }]}
               onPress={() => onDefectPress?.(defect.id)}
               activeOpacity={0.7}
               accessibilityRole="button"
@@ -359,7 +359,6 @@ function OpenItemsSection({
                       <DefectStatusBadge
                         status={defect.status}
                         color={colors.defectYellow}
-                        {...(defect.status === 'accepted' ? { label: 'Task Created' } : {})}
                       />
                     </View>
                   </View>
@@ -377,7 +376,7 @@ function OpenItemsSection({
           {activeTasks.map((task) => (
             <TouchableOpacity
               key={task.id}
-              style={[cardStyles.containerInline, { borderLeftColor: colors.warning }]}
+              style={[cardStyles.containerInline, { borderColor: colors.warning, borderWidth: 0.5, backgroundColor: colors.warning + '08' }]}
               onPress={() => onTaskPress?.(task.id)}
               activeOpacity={0.7}
               accessibilityRole="button"

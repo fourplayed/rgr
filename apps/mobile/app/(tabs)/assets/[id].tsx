@@ -34,7 +34,7 @@ import {
 import { useAuthStore } from '../../../src/store/authStore';
 import { formatRelativeTime, hasRoleLevel, UserRole, formatAssetNumber } from '@rgr/shared';
 import { colors } from '../../../src/theme/colors';
-import { spacing, fontSize, lineHeight, borderRadius, fontFamily as fonts } from '../../../src/theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../../src/theme/spacing';
 import { CONTENT_TOP_OFFSET } from '../../../src/theme/layout';
 import {
   getScanTypeIcon,
@@ -47,6 +47,7 @@ import { useAcceptDefect } from '../../../src/hooks/useAcceptDefect';
 import { useModalTransition } from '../../../src/hooks/useModalTransition';
 import { useTabFade } from '../../../src/hooks/useTabFade';
 import { ModalShell } from '../../../src/components/common/ModalShell';
+import { EmptyState } from '../../../src/components/common/EmptyState';
 
 type AssetModalState =
   | { type: 'none' }
@@ -138,10 +139,10 @@ const ActivityCard = React.memo(function ActivityCard({
   })();
 
   const cardContent = (
-    <View style={[cardStyles.containerInline, { borderLeftColor: activityColor }]}>
+    <View style={[cardStyles.containerInline, { borderColor: activityColor, borderWidth: 0.5, backgroundColor: activityColor + '08' }]}>
       <View style={cardStyles.cardRow}>
         <View style={cardStyles.cardIconContainer}>
-          <Ionicons name={activityIcon} size={31} color={activityColor} />
+          <Ionicons name={activityIcon} size={32} color={activityColor} />
         </View>
         <View style={cardStyles.cardBody}>
           <View style={cardStyles.cardContentRow}>
@@ -245,7 +246,7 @@ const MaintenanceCard = React.memo(function MaintenanceCard({
 
   return (
     <TouchableOpacity
-      style={[cardStyles.containerInline, { borderLeftColor: statusColor }]}
+      style={[cardStyles.containerInline, { borderColor: statusColor, borderWidth: 0.5, backgroundColor: statusColor + '08' }]}
       onPress={() => onPress(item)}
       activeOpacity={0.7}
       accessibilityRole="button"
@@ -253,7 +254,7 @@ const MaintenanceCard = React.memo(function MaintenanceCard({
     >
       <View style={cardStyles.cardRow}>
         <View style={cardStyles.cardIconContainer}>
-          <Ionicons name={maintIcon} size={31} color={statusColor} />
+          <Ionicons name={maintIcon} size={32} color={statusColor} />
         </View>
         <View style={cardStyles.cardBody}>
           <View style={cardStyles.cardContentRow}>
@@ -506,13 +507,7 @@ export default function AssetDetailScreen() {
             {scansLoading ? (
               <LoadingDots color={colors.textSecondary} size={6} />
             ) : recentActivity.length === 0 ? (
-              <View style={styles.emptyState}>
-                <View style={styles.emptyIconContainer}>
-                  <Ionicons name="time" size={64} color={colors.textSecondary} />
-                </View>
-                <Text style={styles.emptyTitle}>No activity recorded</Text>
-                <Text style={styles.emptySubtext}>Scans and maintenance will appear here</Text>
-              </View>
+              <EmptyState icon="time-outline" title="No activity recorded" subtitle="Scans and maintenance will appear here" />
             ) : (
               <View style={styles.activityList}>
                 {recentActivity.map((item) => (
@@ -538,13 +533,7 @@ export default function AssetDetailScreen() {
         {activeTab === 'maintenance' && (
           <ScrollView contentContainerStyle={styles.tabScrollContent}>
             {maintenance.length === 0 ? (
-              <View style={styles.emptyState}>
-                <View style={styles.emptyIconContainer}>
-                  <Ionicons name="construct" size={64} color={colors.textSecondary} />
-                </View>
-                <Text style={styles.emptyTitle}>No maintenance records</Text>
-                <Text style={styles.emptySubtext}>Scheduled tasks will appear here</Text>
-              </View>
+              <EmptyState icon="construct-outline" title="No maintenance records" subtitle="Scheduled tasks will appear here" />
             ) : (
               <View style={styles.maintenanceList}>
                 {maintenance.map((item) => (
@@ -691,34 +680,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingHorizontal: spacing['3xl'],
-    paddingVertical: spacing['2xl'],
-  },
-  emptyIconContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: colors.surfaceSubtle,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-  },
-  emptyTitle: {
-    fontSize: fontSize.xl,
-    fontFamily: fonts.bold,
-    color: colors.text,
-    marginBottom: spacing.sm,
-    textAlign: 'center',
-  },
-  emptySubtext: {
-    fontSize: fontSize.sm,
-    fontFamily: fonts.regular,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: lineHeight.snug,
   },
   activityList: {
     gap: spacing.sm,

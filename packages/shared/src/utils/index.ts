@@ -74,42 +74,6 @@ export function formatRelativeTime(date: string | Date): string {
   return formatDate(d);
 }
 
-/**
- * Delay execution
- */
-export function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-/**
- * Retry a function with exponential backoff.
- *
- * @deprecated Use `withRetry()` instead. This function uses `maxRetries` (number of retries
- * after the first attempt), while `withRetry()` uses `maxAttempts` (total attempts including
- * the first). The inconsistent semantics can lead to off-by-one bugs.
- */
-export async function retry<T>(
-  fn: () => Promise<T>,
-  maxRetries: number = 3,
-  baseDelayMs: number = 1000
-): Promise<T> {
-  let lastError: Error | undefined;
-
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    try {
-      return await fn();
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
-
-      if (attempt < maxRetries - 1) {
-        const delayMs = baseDelayMs * Math.pow(2, attempt);
-        await delay(delayMs);
-      }
-    }
-  }
-
-  throw lastError;
-}
 
 /**
  * Debounce a function. Returns a debounced version with a `.cancel()` method.
@@ -184,14 +148,3 @@ export function camelToSnake(str: string): string {
   return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
 }
 
-/**
- * Generate a random ID
- */
-export function generateId(length: number = 8): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
-  for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
-}

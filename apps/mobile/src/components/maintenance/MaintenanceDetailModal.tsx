@@ -30,7 +30,7 @@ import { MaintenanceStatusBadge } from './MaintenanceStatusBadge';
 import { MaintenancePriorityBadge } from './MaintenancePriorityBadge';
 import { MAINTENANCE_STATUS_CONFIG } from './MaintenanceListItem';
 
-const PRIORITY_ORDER: MaintenancePriority[] = ['low', 'medium', 'high', 'critical'];
+const PRIORITY_ORDER: MaintenancePriority[] = ['low', 'medium', 'critical'];
 
 interface MaintenanceDetailModalProps {
   visible: boolean;
