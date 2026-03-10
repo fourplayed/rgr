@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, Switch, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Switch, StyleSheet } from 'react-native';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 import { sheetLayout } from '../../theme/sheetLayout';
@@ -51,7 +52,7 @@ export function NotificationsModal({ visible, onClose }: NotificationsModalProps
       <View style={sheetLayout.container}>
         <SheetHeader icon="notifications" title="Notifications" onClose={onClose} />
 
-        <ScrollView
+        <BottomSheetScrollView
           style={sheetLayout.scroll}
           contentContainerStyle={[sheetLayout.scrollContent, { paddingBottom: sheetBottomPadding }]}
           bounces={true}
@@ -103,8 +104,10 @@ export function NotificationsModal({ visible, onClose }: NotificationsModalProps
               disabled={isPushDisabled}
             />
           </View>
-          <Button onPress={onClose} style={{ alignSelf: 'stretch' }}>Done</Button>
-        </ScrollView>
+          <Button onPress={onClose} style={{ alignSelf: 'stretch' }}>
+            Done
+          </Button>
+        </BottomSheetScrollView>
       </View>
     </SheetModal>
   );

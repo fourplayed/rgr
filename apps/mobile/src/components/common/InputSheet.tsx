@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, StyleSheet, Keyboard } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Keyboard } from 'react-native';
 import type { KeyboardTypeOptions } from 'react-native';
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { colors } from '../../theme/colors';
 import {
   spacing,
@@ -40,17 +41,11 @@ export function InputSheet({
   defaultValue = '',
 }: InputSheetProps) {
   const [value, setValue] = useState(defaultValue);
-  const inputRef = useRef<TextInput>(null);
 
   // Reset value when modal opens with new default
   useEffect(() => {
     if (visible) {
       setValue(defaultValue);
-      // Focus input after modal animation completes
-      const timerId = setTimeout(() => {
-        inputRef.current?.focus();
-      }, 300);
-      return () => clearTimeout(timerId);
     }
   }, [visible, defaultValue]);
 
@@ -70,8 +65,7 @@ export function InputSheet({
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.message}>{message}</Text>
 
-        <TextInput
-          ref={inputRef}
+        <BottomSheetTextInput
           style={styles.input}
           value={value}
           onChangeText={setValue}

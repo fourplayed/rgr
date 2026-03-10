@@ -40,12 +40,7 @@ export function useLocationLifecycle() {
   // Auto-persist GPS-resolved depot to profile when user has no assigned depot.
   // Fire-and-forget — does not block UX. Runs once per session (ref guard).
   useEffect(() => {
-    if (
-      hasAutoAssignedRef.current ||
-      !resolvedDepot ||
-      !user ||
-      user.depot !== null
-    ) return;
+    if (hasAutoAssignedRef.current || !resolvedDepot || !user || user.depot !== null) return;
 
     hasAutoAssignedRef.current = true;
 

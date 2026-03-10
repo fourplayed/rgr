@@ -30,8 +30,7 @@ export function useCreateDepot() {
 
 export function useUpdateDepot() {
   return useMutationFromService({
-    serviceFn: ({ id, input }: { id: string; input: UpdateDepotInput }) =>
-      updateDepot(id, input),
+    serviceFn: ({ id, input }: { id: string; input: UpdateDepotInput }) => updateDepot(id, input),
     invalidates: [adminDepotKeys.list(), depotKeys.list()],
   });
 }

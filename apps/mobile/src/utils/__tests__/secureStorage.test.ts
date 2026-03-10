@@ -27,12 +27,9 @@ describe('secureStorage', () => {
 
     expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
       'rgr_session',
-      JSON.stringify(validSession),
+      JSON.stringify(validSession)
     );
-    expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
-      'rgr_auto_login_enabled',
-      'true',
-    );
+    expect(SecureStore.setItemAsync).toHaveBeenCalledWith('rgr_auto_login_enabled', 'true');
   });
 
   it('getSession returns stored session', async () => {
@@ -53,10 +50,7 @@ describe('secureStorage', () => {
   });
 
   it('getSession returns null when type guard fails (missing access_token)', async () => {
-    await SecureStore.setItemAsync(
-      'rgr_session',
-      JSON.stringify({ refresh_token: 'ref_xyz' }),
-    );
+    await SecureStore.setItemAsync('rgr_session', JSON.stringify({ refresh_token: 'ref_xyz' }));
     const result = await getSession();
     expect(result).toBeNull();
   });
@@ -101,26 +95,19 @@ describe('secureStorage', () => {
   it('setAutoLoginEnabled(true) sets flag only', async () => {
     await setAutoLoginEnabled(true);
 
-    expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
-      'rgr_auto_login_enabled',
-      'true',
-    );
+    expect(SecureStore.setItemAsync).toHaveBeenCalledWith('rgr_auto_login_enabled', 'true');
     // Session should not have been set
     expect(await getSession()).toBeNull();
   });
 
   it('saveSession handles SecureStore throw (keychain locked)', async () => {
-    jest
-      .mocked(SecureStore.setItemAsync)
-      .mockRejectedValueOnce(new Error('Keychain locked'));
+    jest.mocked(SecureStore.setItemAsync).mockRejectedValueOnce(new Error('Keychain locked'));
 
     await expect(saveSession(validSession)).rejects.toThrow('Keychain locked');
   });
 
   it('getSession handles SecureStore throw gracefully', async () => {
-    jest
-      .mocked(SecureStore.getItemAsync)
-      .mockRejectedValueOnce(new Error('Keychain unavailable'));
+    jest.mocked(SecureStore.getItemAsync).mockRejectedValueOnce(new Error('Keychain unavailable'));
 
     // getItemAsync is outside the try/catch in getSession, so the
     // rejection propagates rather than being caught.

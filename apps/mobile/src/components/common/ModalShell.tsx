@@ -1,11 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import {
-  View,
-  Modal,
-  TouchableOpacity,
-  StyleSheet,
-  Animated,
-} from 'react-native';
+import { View, Modal, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { BACKDROP_IN, BACKDROP_OUT } from '../../theme/animation';
@@ -25,12 +19,7 @@ interface ModalShellProps {
  * Child SheetModals should use `inline backdrop={false}` to delegate
  * backdrop rendering to this shell.
  */
-export function ModalShell({
-  visible,
-  onClose,
-  children,
-  keepMounted = false,
-}: ModalShellProps) {
+export function ModalShell({ visible, onClose, children, keepMounted = false }: ModalShellProps) {
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const [mounted, setMounted] = useState(false);
   const wasVisible = useRef(false);

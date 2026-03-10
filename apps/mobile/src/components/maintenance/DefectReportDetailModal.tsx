@@ -1,5 +1,13 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Animated,
+  Alert,
+} from 'react-native';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { formatRelativeTime, formatAssetNumber } from '@rgr/shared';
@@ -36,12 +44,12 @@ interface DefectReportDetailModalProps {
   onViewTaskPress?: (maintenanceId: string) => void;
   /** Called after dismiss is confirmed, deleted, and scatter animation completes. */
   onDismissConfirmed?: (defectId: string) => void;
-  /** Called after the modal's dismiss animation completes. */
-  onDismiss?: () => void;
-  /** Render inline (no native Modal) — use when already inside a Modal. */
+  /** @deprecated No longer needed — gorhom uses portal rendering. */
   inline?: boolean;
-  /** When false, skip backdrop (ModalShell provides it). */
+  /** @deprecated Use noBackdrop instead. */
   backdrop?: boolean;
+  /** Render without backdrop (parent provides persistent backdrop for chaining). */
+  noBackdrop?: boolean;
   /** Fires after exit animation completes. */
   onExitComplete?: () => void;
 }
@@ -54,9 +62,9 @@ export function DefectReportDetailModal({
   onAcceptPress,
   onViewTaskPress,
   onDismissConfirmed,
-  onDismiss,
-  inline,
+  inline: _inline,
   backdrop,
+  noBackdrop,
   onExitComplete,
 }: DefectReportDetailModalProps) {
   const { canMarkMaintenance } = useUserPermissions();
@@ -126,11 +134,15 @@ export function DefectReportDetailModal({
                 onDismissConfirmed?.(defect.id);
               });
             } catch {
-              setAlertSheet({ visible: true, title: 'Error', message: 'Failed to dismiss defect report. Please try again.' });
+              setAlertSheet({
+                visible: true,
+                title: 'Error',
+                message: 'Failed to dismiss defect report. Please try again.',
+              });
             }
           },
         },
-      ],
+      ]
     );
   }, [defect, deleteDefect, scatter, onDismissConfirmed]);
 
@@ -185,7 +197,12 @@ export function DefectReportDetailModal({
   };
 
   return (
-    <SheetModal visible={visible} onClose={onClose} onDismiss={onDismiss} inline={!!inline} backdrop={backdrop} onExitComplete={onExitComplete}>
+    <SheetModal
+      visible={visible}
+      onClose={onClose}
+      onExitComplete={onExitComplete}
+      noBackdrop={noBackdrop ?? (backdrop === false)}
+    >
       <View style={sheetLayout.containerTall}>
         <SheetHeader
           icon="warning"
@@ -204,9 +221,12 @@ export function DefectReportDetailModal({
             <LoadingDots color={colors.textSecondary} size={10} />
           </View>
         ) : (
-          <ScrollView
+          <BottomSheetScrollView
             style={sheetLayout.scroll}
-            contentContainerStyle={[sheetLayout.scrollContent, { paddingTop: spacing.lg, paddingBottom: sheetBottomPadding, gap: spacing.md }]}
+            contentContainerStyle={[
+              sheetLayout.scrollContent,
+              { paddingTop: spacing.lg, paddingBottom: sheetBottomPadding, gap: spacing.md },
+            ]}
             bounces={true}
             showsVerticalScrollIndicator={false}
           >
@@ -217,7 +237,9 @@ export function DefectReportDetailModal({
                   {asset?.assetNumber && (
                     <>
                       <Ionicons name="cube" size={22} color={colors.text} />
-                      <Text style={styles.assetNumberText}>{formatAssetNumber(asset.assetNumber)}</Text>
+                      <Text style={styles.assetNumberText}>
+                        {formatAssetNumber(asset.assetNumber)}
+                      </Text>
                     </>
                   )}
                 </View>
@@ -236,7 +258,9 @@ export function DefectReportDetailModal({
               <Animated.View style={getStyle(1)}>
                 <View style={styles.sectionGroup}>
                   <Text style={styles.detailLabel}>Description</Text>
-                  <Text style={[styles.detailValue, { fontFamily: fonts.regular }]}>{defect.description}</Text>
+                  <Text style={[styles.detailValue, { fontFamily: fonts.regular }]}>
+                    {defect.description}
+                  </Text>
                 </View>
               </Animated.View>
             )}
@@ -333,10 +357,8 @@ export function DefectReportDetailModal({
             )}
 
             {/* Status Actions */}
-            <Animated.View style={getStyle(6)}>
-              {renderStatusActions()}
-            </Animated.View>
-          </ScrollView>
+            <Animated.View style={getStyle(6)}>{renderStatusActions()}</Animated.View>
+          </BottomSheetScrollView>
         )}
       </View>
 

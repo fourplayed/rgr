@@ -141,7 +141,12 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
   return (
     <View style={styles.container}>
       {/* ── Header bar ── */}
-      <SheetHeader icon="checkmark-circle" title="Asset Found" onClose={props.onUndoPress} backgroundColor={colors.success} />
+      <SheetHeader
+        icon="checkmark-circle"
+        title="Asset Found"
+        onClose={props.onUndoPress}
+        backgroundColor={colors.success}
+      />
 
       {/* ── Scrollable content ── */}
       <ScrollView
@@ -337,7 +342,14 @@ function OpenItemsSection({
           {openDefects.map((defect) => (
             <TouchableOpacity
               key={defect.id}
-              style={[cardStyles.containerInline, { borderColor: colors.defectYellow, borderWidth: 0.5, backgroundColor: colors.defectYellow + '08' }]}
+              style={[
+                cardStyles.containerInline,
+                {
+                  borderColor: colors.defectYellow,
+                  borderWidth: 0.5,
+                  backgroundColor: colors.defectYellow + '08',
+                },
+              ]}
               onPress={() => onDefectPress?.(defect.id)}
               activeOpacity={0.7}
               accessibilityRole="button"
@@ -356,10 +368,7 @@ function OpenItemsSection({
                       Defect Report
                     </Text>
                     <View style={cardStyles.cardBadges}>
-                      <DefectStatusBadge
-                        status={defect.status}
-                        color={colors.defectYellow}
-                      />
+                      <DefectStatusBadge status={defect.status} color={colors.defectYellow} />
                     </View>
                   </View>
                   <View style={cardStyles.cardFooter}>
@@ -376,7 +385,14 @@ function OpenItemsSection({
           {activeTasks.map((task) => (
             <TouchableOpacity
               key={task.id}
-              style={[cardStyles.containerInline, { borderColor: colors.warning, borderWidth: 0.5, backgroundColor: colors.warning + '08' }]}
+              style={[
+                cardStyles.containerInline,
+                {
+                  borderColor: colors.warning,
+                  borderWidth: 0.5,
+                  backgroundColor: colors.warning + '08',
+                },
+              ]}
               onPress={() => onTaskPress?.(task.id)}
               activeOpacity={0.7}
               accessibilityRole="button"

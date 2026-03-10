@@ -63,6 +63,15 @@ const mockSupabase = {
 
 vi.mock('@rgr/shared', () => ({
   getSupabaseClient: () => mockSupabase,
+  createPhotoRecord: () => Promise.resolve({ success: true, data: { id: 'photo-123' } }),
+  listServicedAssets: () =>
+    Promise.resolve({
+      success: true,
+      data: [
+        { id: 'asset-1', assetNumber: 'TL001', category: 'trailer', subtype: 'flattop' },
+        { id: 'asset-2', assetNumber: 'TL002', category: 'trailer', subtype: 'dropdeck' },
+      ],
+    }),
 }));
 
 let mockAuthUser: { id: string } | null = { id: 'user-123' };

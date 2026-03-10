@@ -3,11 +3,10 @@ import {
   View,
   Text,
   TouchableOpacity,
-  TextInput,
   StyleSheet,
-  ScrollView,
   Animated,
 } from 'react-native';
+import { BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
@@ -22,7 +21,7 @@ interface DefectReportSheetProps {
   isSubmitting: boolean;
   onSubmit: (notes: string, wantsPhoto: boolean) => void;
   onCancel: () => void;
-  onDismiss?: () => void;
+  onExitComplete?: () => void;
   /** When false, hides the "Add Photo of Defect" checkbox. Default true. */
   showPhotoOption?: boolean;
 }
@@ -32,7 +31,7 @@ function DefectReportSheetComponent({
   isSubmitting,
   onSubmit,
   onCancel,
-  onDismiss,
+  onExitComplete,
   showPhotoOption = true,
 }: DefectReportSheetProps) {
   const sheetBottomPadding = useSheetBottomPadding();
@@ -70,7 +69,7 @@ function DefectReportSheetComponent({
   }, [canSubmit, submitOpacity]);
 
   return (
-    <SheetModal visible={visible} onClose={handleCancel} onDismiss={onDismiss} keyboardAware>
+    <SheetModal visible={visible} onClose={handleCancel} onExitComplete={onExitComplete} keyboardAware>
       <View style={sheetLayout.container}>
         <SheetHeader
           icon="warning"
@@ -84,9 +83,12 @@ function DefectReportSheetComponent({
           }}
         />
 
-        <ScrollView
+        <BottomSheetScrollView
           style={sheetLayout.scroll}
-          contentContainerStyle={[sheetLayout.scrollContent, { paddingTop: spacing.lg, paddingBottom: sheetBottomPadding }]}
+          contentContainerStyle={[
+            sheetLayout.scrollContent,
+            { paddingTop: spacing.lg, paddingBottom: sheetBottomPadding },
+          ]}
           bounces={true}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
@@ -94,8 +96,11 @@ function DefectReportSheetComponent({
           {/* Notes Input */}
           <View style={styles.inputSection}>
             <Text style={styles.inputLabel}>Describe the defect</Text>
-            <TextInput
-              style={[styles.textInput, notes ? { fontFamily: fonts.regular } : { fontFamily: fonts.italic }]}
+            <BottomSheetTextInput
+              style={[
+                styles.textInput,
+                notes ? { fontFamily: fonts.regular } : { fontFamily: fonts.italic },
+              ]}
               placeholder="Enter details about the defect, damage, or issue..."
               placeholderTextColor={colors.textSecondary}
               value={notes}
@@ -145,7 +150,7 @@ function DefectReportSheetComponent({
               {wantsPhoto ? 'Capture & Submit' : 'Submit'}
             </Button>
           </Animated.View>
-        </ScrollView>
+        </BottomSheetScrollView>
       </View>
     </SheetModal>
   );

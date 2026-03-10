@@ -42,10 +42,7 @@ export function useUpdateUserRole() {
   return useMutationFromService({
     serviceFn: ({ userId, role }: { userId: string; role: UserRole }) =>
       adminUpdateProfile(userId, { role }),
-    invalidates: (_data, { userId }) => [
-      adminUserKeys.lists(),
-      adminUserKeys.detail(userId),
-    ],
+    invalidates: (_data, { userId }) => [adminUserKeys.lists(), adminUserKeys.detail(userId)],
   });
 }
 
@@ -53,10 +50,7 @@ export function useUpdateUserStatus() {
   return useMutationFromService({
     serviceFn: ({ userId, isActive }: { userId: string; isActive: boolean }) =>
       adminUpdateProfile(userId, { isActive }),
-    invalidates: (_data, { userId }) => [
-      adminUserKeys.lists(),
-      adminUserKeys.detail(userId),
-    ],
+    invalidates: (_data, { userId }) => [adminUserKeys.lists(), adminUserKeys.detail(userId)],
   });
 }
 

@@ -56,10 +56,14 @@ export function useRealtimeInvalidation() {
 
     const maintenanceChannel = supabase
       .channel('mobile-maintenance-updates')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'maintenance_records' }, () => {
-        queryClient.invalidateQueries({ queryKey: ['maintenance'], refetchType: 'active' });
-        queryClient.invalidateQueries({ queryKey: ['assets'], refetchType: 'active' });
-      })
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'maintenance_records' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['maintenance'], refetchType: 'active' });
+          queryClient.invalidateQueries({ queryKey: ['assets'], refetchType: 'active' });
+        }
+      )
       .subscribe();
 
     return () => {

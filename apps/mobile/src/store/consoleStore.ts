@@ -40,7 +40,12 @@ interface ConsoleState {
   heightOffset: number;
 
   setEnabled: (enabled: boolean) => void;
-  addEntry: (level: ConsoleLevel, namespace: ConsoleNamespace, message: string, data?: unknown) => void;
+  addEntry: (
+    level: ConsoleLevel,
+    namespace: ConsoleNamespace,
+    message: string,
+    data?: unknown
+  ) => void;
   clearEntries: () => void;
   toggleOpen: () => void;
   setFilter: (filter: ConsoleNamespace | null) => void;
@@ -109,7 +114,7 @@ export function consoleLog(
   level: ConsoleLevel,
   namespace: ConsoleNamespace,
   message: string,
-  data?: unknown,
+  data?: unknown
 ): void {
   useConsoleStore.getState().addEntry(level, namespace, message, data);
 }

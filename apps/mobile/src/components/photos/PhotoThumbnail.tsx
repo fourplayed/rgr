@@ -26,7 +26,12 @@ function PhotoThumbnailComponent({ photo, size, onPress, resolvedUrl }: PhotoThu
     [size, isDefect]
   );
   const placeholderStyle = useMemo(
-    () => [styles.container, styles.placeholder, { width: size, height: size }, isDefect && styles.defectBorder],
+    () => [
+      styles.container,
+      styles.placeholder,
+      { width: size, height: size },
+      isDefect && styles.defectBorder,
+    ],
     [size, isDefect]
   );
 

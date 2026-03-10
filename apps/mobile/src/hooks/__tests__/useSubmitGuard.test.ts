@@ -17,13 +17,18 @@ describe('useSubmitGuard', () => {
   it('second concurrent call is ignored', async () => {
     let resolve: () => void;
     const slowFn = jest.fn(
-      () => new Promise<void>((r) => { resolve = r; })
+      () =>
+        new Promise<void>((r) => {
+          resolve = r;
+        })
     );
     const { result } = renderHook(() => useSubmitGuard());
 
     let firstDone = false;
     await act(async () => {
-      const p1 = result.current(slowFn).then(() => { firstDone = true; });
+      const p1 = result.current(slowFn).then(() => {
+        firstDone = true;
+      });
       // Second call while first is still pending
       await result.current(slowFn);
       // Resolve the first

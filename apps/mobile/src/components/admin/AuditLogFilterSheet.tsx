@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 import { BottomSheet } from '../common/BottomSheet';
@@ -96,7 +97,7 @@ export function AuditLogFilterSheet({
 
   return (
     <BottomSheet visible={visible} onDismiss={onClose}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <BottomSheetScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>Filters</Text>
 
         {/* Action Type */}
@@ -128,7 +129,7 @@ export function AuditLogFilterSheet({
         <View style={styles.section}>
           <Text style={styles.label}>Date Range</Text>
           <View style={styles.dateRow}>
-            <TextInput
+            <BottomSheetTextInput
               style={[styles.dateInput, dateError ? styles.dateInputError : undefined]}
               value={startDate}
               onChangeText={handleStartDateChange}
@@ -138,7 +139,7 @@ export function AuditLogFilterSheet({
               accessibilityLabel="Start date"
             />
             <Text style={styles.dateSeparator}>to</Text>
-            <TextInput
+            <BottomSheetTextInput
               style={[styles.dateInput, dateError ? styles.dateInputError : undefined]}
               value={endDate}
               onChangeText={handleEndDateChange}
@@ -160,7 +161,7 @@ export function AuditLogFilterSheet({
             Apply
           </Button>
         </View>
-      </ScrollView>
+      </BottomSheetScrollView>
     </BottomSheet>
   );
 }

@@ -32,4 +32,11 @@ export const sheetLayout = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 20, // spacing.lg
   },
+  /** Gorhom handle indicator — single source of truth for sheet handles */
+  handle: {
+    width: 40,
+    height: 4,
+    backgroundColor: colors.border,
+    borderRadius: borderRadius.full,
+  },
 });

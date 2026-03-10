@@ -1,9 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import {
-  adminListMaintenance,
-  bulkCancelMaintenanceTasks,
-  queryFromService,
-} from '@rgr/shared';
+import { adminListMaintenance, bulkCancelMaintenanceTasks, queryFromService } from '@rgr/shared';
 import type { AdminListMaintenanceParams } from '@rgr/shared';
 import { useMutationFromService } from './useMutationFromService';
 import { maintenanceKeys } from './useMaintenanceData';
@@ -12,8 +8,7 @@ import { defectKeys } from './useDefectData';
 export const adminMaintenanceKeys = {
   all: ['admin-maintenance'] as const,
   lists: () => [...adminMaintenanceKeys.all, 'list'] as const,
-  list: (params: AdminListMaintenanceParams) =>
-    [...adminMaintenanceKeys.lists(), params] as const,
+  list: (params: AdminListMaintenanceParams) => [...adminMaintenanceKeys.lists(), params] as const,
 };
 
 export function useAdminMaintenanceList(params: AdminListMaintenanceParams = {}) {

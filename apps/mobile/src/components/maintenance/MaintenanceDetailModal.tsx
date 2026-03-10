@@ -1,5 +1,15 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView, Animated, Pressable, Platform, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Animated,
+  Pressable,
+  Platform,
+  Alert,
+} from 'react-native';
+import { BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -38,10 +48,12 @@ interface MaintenanceDetailModalProps {
   onClose: () => void;
   /** 'compact' hides timeline, notes, defect photo, and asset nav link. Default 'full'. */
   variant?: 'full' | 'compact';
-  /** Render inline (no native Modal) — use when already inside a Modal. */
+  /** @deprecated No longer needed — gorhom uses portal rendering. */
   inline?: boolean;
-  /** When false, skip backdrop (ModalShell provides it). */
+  /** @deprecated Use noBackdrop instead. */
   backdrop?: boolean;
+  /** Render without backdrop (parent provides persistent backdrop for chaining). */
+  noBackdrop?: boolean;
   /** Fires after exit animation completes. */
   onExitComplete?: () => void;
 }
@@ -51,8 +63,9 @@ export function MaintenanceDetailModal({
   maintenanceId,
   onClose,
   variant = 'full',
-  inline,
+  inline: _inline,
   backdrop,
+  noBackdrop,
   onExitComplete,
 }: MaintenanceDetailModalProps) {
   const router = useRouter();
@@ -152,17 +165,22 @@ export function MaintenanceDetailModal({
         message: err instanceof Error ? err.message : 'Failed to save changes',
       });
     }
-  }, [maintenanceId, maintenance, editTitle, editDescription, editPriority, editDueDate, updateMaintenance]);
+  }, [
+    maintenanceId,
+    maintenance,
+    editTitle,
+    editDescription,
+    editPriority,
+    editDueDate,
+    updateMaintenance,
+  ]);
 
-  const handleDateChange = useCallback(
-    (_event: DateTimePickerEvent, selectedDate?: Date) => {
-      if (Platform.OS === 'android') setShowDatePicker(false);
-      if (selectedDate) {
-        setEditDueDate(selectedDate.toISOString().slice(0, 10));
-      }
-    },
-    [],
-  );
+  const handleDateChange = useCallback((_event: DateTimePickerEvent, selectedDate?: Date) => {
+    if (Platform.OS === 'android') setShowDatePicker(false);
+    if (selectedDate) {
+      setEditDueDate(selectedDate.toISOString().slice(0, 10));
+    }
+  }, []);
 
   // Header action: pencil → enter edit mode (only for scheduled tasks by permitted users)
   const headerAction = useMemo(() => {
@@ -221,7 +239,7 @@ export function MaintenanceDetailModal({
             }
           },
         },
-      ],
+      ]
     );
   }, [maintenanceId, cancelTask, onClose, scatter]);
 
@@ -337,7 +355,7 @@ export function MaintenanceDetailModal({
       return (
         <View style={formStyles.inputGroup}>
           <Text style={formStyles.label}>Title</Text>
-          <TextInput
+          <BottomSheetTextInput
             style={formStyles.input}
             value={editTitle}
             onChangeText={setEditTitle}
@@ -366,7 +384,7 @@ export function MaintenanceDetailModal({
       return (
         <View style={formStyles.inputGroup}>
           <Text style={formStyles.label}>Description</Text>
-          <TextInput
+          <BottomSheetTextInput
             style={[formStyles.input, formStyles.textArea]}
             value={editDescription}
             onChangeText={setEditDescription}
@@ -429,11 +447,18 @@ export function MaintenanceDetailModal({
             accessibilityRole="button"
             accessibilityLabel="Select due date"
           >
-            <Ionicons name="calendar-outline" size={18} color={editDueDate ? colors.text : colors.textSecondary} />
+            <Ionicons
+              name="calendar-outline"
+              size={18}
+              color={editDueDate ? colors.text : colors.textSecondary}
+            />
             <Text style={[styles.dateFieldText, !editDueDate && styles.dateFieldPlaceholder]}>
               {editDueDate
                 ? new Date(editDueDate + 'T00:00:00').toLocaleDateString(undefined, {
-                    weekday: 'short', year: 'numeric', month: 'short', day: 'numeric',
+                    weekday: 'short',
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
                   })
                 : 'Tap to select date'}
             </Text>
@@ -463,7 +488,13 @@ export function MaintenanceDetailModal({
   };
 
   return (
-    <SheetModal visible={visible} onClose={onClose} inline={!!inline} backdrop={backdrop} onExitComplete={onExitComplete}>
+    <SheetModal
+      visible={visible}
+      onClose={onClose}
+      onExitComplete={onExitComplete}
+      noBackdrop={noBackdrop ?? (backdrop === false)}
+      keyboardAware={isEditing}
+    >
       <View style={sheetLayout.containerTall}>
         <SheetHeader
           icon="construct"
@@ -478,215 +509,220 @@ export function MaintenanceDetailModal({
             <LoadingDots color={colors.textSecondary} size={10} />
           </View>
         ) : (
-          <ScrollView
+          <BottomSheetScrollView
             style={sheetLayout.scroll}
-            contentContainerStyle={[sheetLayout.scrollContent, { paddingTop: spacing.lg, paddingBottom: sheetBottomPadding, gap: spacing.md }]}
+            contentContainerStyle={[
+              sheetLayout.scrollContent,
+              { paddingTop: spacing.lg, paddingBottom: sheetBottomPadding, gap: spacing.md },
+            ]}
             bounces={true}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps={isEditing ? 'handled' : undefined}
           >
-              {/* Info Row: Asset Number + View Asset */}
-              <Animated.View style={getStyle(0)}>
-                <View style={styles.infoRow}>
-                  {asset?.assetNumber && (
-                    <Text style={styles.assetNumberText}>{formatAssetNumber(asset.assetNumber)}</Text>
-                  )}
-                  {variant === 'full' && !isEditing && (
-                    <TouchableOpacity
-                      style={styles.assetLink}
-                      onPress={handleNavigateToAsset}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={styles.assetLinkText}>View Asset</Text>
-                      <Ionicons name="chevron-forward" size={16} color={colors.electricBlue} />
-                    </TouchableOpacity>
-                  )}
+            {/* Info Row: Asset Number + View Asset */}
+            <Animated.View style={getStyle(0)}>
+              <View style={styles.infoRow}>
+                {asset?.assetNumber && (
+                  <Text style={styles.assetNumberText}>{formatAssetNumber(asset.assetNumber)}</Text>
+                )}
+                {variant === 'full' && !isEditing && (
+                  <TouchableOpacity
+                    style={styles.assetLink}
+                    onPress={handleNavigateToAsset}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.assetLinkText}>View Asset</Text>
+                    <Ionicons name="chevron-forward" size={16} color={colors.electricBlue} />
+                  </TouchableOpacity>
+                )}
+              </View>
+            </Animated.View>
+
+            {/* Status & Priority Badges (hidden in edit mode) */}
+            {!isEditing && (
+              <Animated.View style={getStyle(1)}>
+                <View style={styles.badgeRow}>
+                  <MaintenanceStatusBadge status={maintenance.status} />
+                  <MaintenancePriorityBadge priority={maintenance.priority} />
                 </View>
               </Animated.View>
+            )}
 
-              {/* Status & Priority Badges (hidden in edit mode) */}
-              {!isEditing && (
-                <Animated.View style={getStyle(1)}>
-                  <View style={styles.badgeRow}>
-                    <MaintenanceStatusBadge status={maintenance.status} />
-                    <MaintenancePriorityBadge priority={maintenance.priority} />
+            {/* Details Section */}
+            <Animated.View style={getStyle(2)}>
+              {isEditing ? (
+                <View style={styles.sectionGroup}>
+                  <Text style={styles.sectionTitle}>Edit Details</Text>
+                  <View style={styles.sectionCard}>
+                    {renderTitleSection()}
+                    {renderDescriptionSection()}
+                    {renderPrioritySection()}
+                    {renderDueDateSection()}
                   </View>
-                </Animated.View>
-              )}
+                </View>
+              ) : (
+                <View style={styles.sectionGroup}>
+                  <Text style={styles.sectionTitle}>Details</Text>
+                  <View style={styles.sectionCard}>
+                    {renderTitleSection()}
+                    {renderDescriptionSection()}
 
-              {/* Details Section */}
-              <Animated.View style={getStyle(2)}>
-                {isEditing ? (
-                  <View style={styles.sectionGroup}>
-                    <Text style={styles.sectionTitle}>Edit Details</Text>
-                    <View style={styles.sectionCard}>
-                      {renderTitleSection()}
-                      {renderDescriptionSection()}
-                      {renderPrioritySection()}
-                      {renderDueDateSection()}
-                    </View>
-                  </View>
-                ) : (
-                  <View style={styles.sectionGroup}>
-                    <Text style={styles.sectionTitle}>Details</Text>
-                    <View style={styles.sectionCard}>
-                      {renderTitleSection()}
-                      {renderDescriptionSection()}
-
-                      {maintenance.maintenanceType && (
-                        <View style={styles.detailRow}>
-                          <Text style={styles.detailLabel}>Type</Text>
-                          <Text style={styles.detailValue}>
-                            {maintenance.maintenanceType.replace(/_/g, ' ')}
-                          </Text>
-                        </View>
-                      )}
-
-                      {maintenance.scheduledDate && (
-                        <View style={styles.detailRow}>
-                          <Text style={styles.detailLabel}>Scheduled Date</Text>
-                          <Text style={styles.detailValue}>{maintenance.scheduledDate}</Text>
-                        </View>
-                      )}
-
-                      {renderDueDateSection()}
-
-                      {maintenance.reporterName && (
-                        <View style={styles.detailRow}>
-                          <Text style={styles.detailLabel}>Reported By</Text>
-                          <Text style={styles.detailValue}>{maintenance.reporterName}</Text>
-                        </View>
-                      )}
-
-                      {maintenance.assigneeName && (
-                        <View style={styles.detailRow}>
-                          <Text style={styles.detailLabel}>Assigned To</Text>
-                          <Text style={styles.detailValue}>{maintenance.assigneeName}</Text>
-                        </View>
-                      )}
-                    </View>
-                  </View>
-                )}
-              </Animated.View>
-
-              {/* Defect Photo Section (hidden in compact mode and edit mode) */}
-              {variant === 'full' && defectPhoto && !isEditing && (
-                <Animated.View style={getStyle(3)}>
-                  <View style={styles.sectionGroup}>
-                    <Text style={styles.sectionTitle}>Defect Photo</Text>
-                    <View style={styles.sectionCard}>
-                      {isPhotoLoading ? (
-                        <View style={styles.defectPhotoPlaceholder}>
-                          <LoadingDots color={colors.textSecondary} size={8} />
-                        </View>
-                      ) : photoError || !defectPhotoUrl ? (
-                        <View style={styles.defectPhotoPlaceholder}>
-                          <Ionicons name="image-outline" size={28} color={colors.textSecondary} />
-                          <Text style={styles.defectPhotoErrorText}>Photo unavailable</Text>
-                        </View>
-                      ) : (
-                        <View
-                          style={styles.defectPhotoContainer}
-                          accessible
-                          accessibilityRole="image"
-                          accessibilityLabel="Defect photo for this maintenance record"
-                        >
-                          <Image
-                            source={{ uri: defectPhotoUrl }}
-                            style={styles.defectPhoto}
-                            contentFit="cover"
-                            transition={200}
-                            cachePolicy="memory-disk"
-                          />
-                        </View>
-                      )}
-                    </View>
-                  </View>
-                </Animated.View>
-              )}
-
-              {/* Timestamps Section (hidden in compact mode and edit mode) */}
-              {variant === 'full' && !isEditing && (
-                <Animated.View style={getStyle(4)}>
-                  <View style={styles.sectionGroup}>
-                    <Text style={styles.sectionTitle}>Timeline</Text>
-                    <View style={styles.sectionCard}>
+                    {maintenance.maintenanceType && (
                       <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Created</Text>
+                        <Text style={styles.detailLabel}>Type</Text>
                         <Text style={styles.detailValue}>
-                          {formatRelativeTime(maintenance.createdAt)}
+                          {maintenance.maintenanceType.replace(/_/g, ' ')}
                         </Text>
                       </View>
+                    )}
 
-                      {maintenance.completedAt && (
-                        <View style={styles.detailRow}>
-                          <Text style={styles.detailLabel}>Completed</Text>
-                          <Text style={styles.detailValue}>
-                            {formatRelativeTime(maintenance.completedAt)}
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-                  </View>
-                </Animated.View>
-              )}
-
-              {/* Notes Section (hidden in compact mode and edit mode) */}
-              {variant === 'full' && !isEditing && (
-                <Animated.View style={getStyle(5)}>
-                  <View style={styles.sectionGroup}>
-                    <View style={styles.sectionCard}>
-                      <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>Notes</Text>
-                        {canMarkMaintenance &&
-                          !editingNotes &&
-                          maintenance.status !== 'completed' &&
-                          maintenance.status !== 'cancelled' && (
-                            <TouchableOpacity
-                              onPress={handleEditNotes}
-                              style={styles.iconButton}
-                              accessibilityRole="button"
-                              accessibilityLabel="Edit notes"
-                              accessibilityHint="Double tap to edit maintenance notes"
-                            >
-                              <Ionicons name="pencil" size={18} color={colors.electricBlue} />
-                            </TouchableOpacity>
-                          )}
+                    {maintenance.scheduledDate && (
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Scheduled Date</Text>
+                        <Text style={styles.detailValue}>{maintenance.scheduledDate}</Text>
                       </View>
+                    )}
 
-                      {editingNotes ? (
-                        <View style={styles.notesEdit}>
-                          <TextInput
-                            style={styles.notesInput}
-                            value={notes}
-                            onChangeText={setNotes}
-                            placeholder="Add notes..."
-                            placeholderTextColor={colors.textSecondary}
-                            multiline
-                            numberOfLines={4}
-                            textAlignVertical="top"
-                          />
-                          <View style={styles.notesButtonRow}>
-                            <Button variant="secondary" onPress={() => setEditingNotes(false)}>
-                              Cancel
-                            </Button>
-                            <Button onPress={handleSaveNotes} disabled={updateMutation.isPending} isLoading={updateMutation.isPending}>
-                              Save
-                            </Button>
-                          </View>
-                        </View>
-                      ) : (
-                        <Text style={styles.notesText}>{maintenance.notes || 'No notes'}</Text>
-                      )}
-                    </View>
+                    {renderDueDateSection()}
+
+                    {maintenance.reporterName && (
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Reported By</Text>
+                        <Text style={styles.detailValue}>{maintenance.reporterName}</Text>
+                      </View>
+                    )}
+
+                    {maintenance.assigneeName && (
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Assigned To</Text>
+                        <Text style={styles.detailValue}>{maintenance.assigneeName}</Text>
+                      </View>
+                    )}
                   </View>
-                </Animated.View>
+                </View>
               )}
-              {/* Status Actions */}
-              <Animated.View style={getStyle(6)}>
-                {renderStatusActions()}
+            </Animated.View>
+
+            {/* Defect Photo Section (hidden in compact mode and edit mode) */}
+            {variant === 'full' && defectPhoto && !isEditing && (
+              <Animated.View style={getStyle(3)}>
+                <View style={styles.sectionGroup}>
+                  <Text style={styles.sectionTitle}>Defect Photo</Text>
+                  <View style={styles.sectionCard}>
+                    {isPhotoLoading ? (
+                      <View style={styles.defectPhotoPlaceholder}>
+                        <LoadingDots color={colors.textSecondary} size={8} />
+                      </View>
+                    ) : photoError || !defectPhotoUrl ? (
+                      <View style={styles.defectPhotoPlaceholder}>
+                        <Ionicons name="image-outline" size={28} color={colors.textSecondary} />
+                        <Text style={styles.defectPhotoErrorText}>Photo unavailable</Text>
+                      </View>
+                    ) : (
+                      <View
+                        style={styles.defectPhotoContainer}
+                        accessible
+                        accessibilityRole="image"
+                        accessibilityLabel="Defect photo for this maintenance record"
+                      >
+                        <Image
+                          source={{ uri: defectPhotoUrl }}
+                          style={styles.defectPhoto}
+                          contentFit="cover"
+                          transition={200}
+                          cachePolicy="memory-disk"
+                        />
+                      </View>
+                    )}
+                  </View>
+                </View>
               </Animated.View>
-          </ScrollView>
+            )}
+
+            {/* Timestamps Section (hidden in compact mode and edit mode) */}
+            {variant === 'full' && !isEditing && (
+              <Animated.View style={getStyle(4)}>
+                <View style={styles.sectionGroup}>
+                  <Text style={styles.sectionTitle}>Timeline</Text>
+                  <View style={styles.sectionCard}>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Created</Text>
+                      <Text style={styles.detailValue}>
+                        {formatRelativeTime(maintenance.createdAt)}
+                      </Text>
+                    </View>
+
+                    {maintenance.completedAt && (
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Completed</Text>
+                        <Text style={styles.detailValue}>
+                          {formatRelativeTime(maintenance.completedAt)}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              </Animated.View>
+            )}
+
+            {/* Notes Section (hidden in compact mode and edit mode) */}
+            {variant === 'full' && !isEditing && (
+              <Animated.View style={getStyle(5)}>
+                <View style={styles.sectionGroup}>
+                  <View style={styles.sectionCard}>
+                    <View style={styles.sectionHeader}>
+                      <Text style={styles.sectionTitle}>Notes</Text>
+                      {canMarkMaintenance &&
+                        !editingNotes &&
+                        maintenance.status !== 'completed' &&
+                        maintenance.status !== 'cancelled' && (
+                          <TouchableOpacity
+                            onPress={handleEditNotes}
+                            style={styles.iconButton}
+                            accessibilityRole="button"
+                            accessibilityLabel="Edit notes"
+                            accessibilityHint="Double tap to edit maintenance notes"
+                          >
+                            <Ionicons name="pencil" size={18} color={colors.electricBlue} />
+                          </TouchableOpacity>
+                        )}
+                    </View>
+
+                    {editingNotes ? (
+                      <View style={styles.notesEdit}>
+                        <BottomSheetTextInput
+                          style={styles.notesInput}
+                          value={notes}
+                          onChangeText={setNotes}
+                          placeholder="Add notes..."
+                          placeholderTextColor={colors.textSecondary}
+                          multiline
+                          numberOfLines={4}
+                          textAlignVertical="top"
+                        />
+                        <View style={styles.notesButtonRow}>
+                          <Button variant="secondary" onPress={() => setEditingNotes(false)}>
+                            Cancel
+                          </Button>
+                          <Button
+                            onPress={handleSaveNotes}
+                            disabled={updateMutation.isPending}
+                            isLoading={updateMutation.isPending}
+                          >
+                            Save
+                          </Button>
+                        </View>
+                      </View>
+                    ) : (
+                      <Text style={styles.notesText}>{maintenance.notes || 'No notes'}</Text>
+                    )}
+                  </View>
+                </View>
+              </Animated.View>
+            )}
+            {/* Status Actions */}
+            <Animated.View style={getStyle(6)}>{renderStatusActions()}</Animated.View>
+          </BottomSheetScrollView>
         )}
       </View>
 

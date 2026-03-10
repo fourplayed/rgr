@@ -1,162 +1,105 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useCallback } from 'react';
+import { Platform, StyleSheet } from 'react-native';
 import {
-  View,
-  Modal,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  Animated,
-  Dimensions,
-  type ViewStyle,
-  type StyleProp,
-} from 'react-native';
-import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+  BottomSheetModal,
+  BottomSheetBackdrop,
+  type BottomSheetBackdropProps,
+} from '@gorhom/bottom-sheet';
 import { BlurView } from 'expo-blur';
+import * as Haptics from 'expo-haptics';
 import { colors } from '../../theme/colors';
-import { spacing, borderRadius } from '../../theme/spacing';
-import { SHEET_SPRING, SHEET_EXIT, BACKDROP_IN, BACKDROP_OUT } from '../../theme/animation';
-
-const SCREEN_HEIGHT = Dimensions.get('window').height;
+import { borderRadius } from '../../theme/spacing';
 
 interface BottomSheetProps {
   visible: boolean;
   onDismiss: () => void;
   children: React.ReactNode;
-  /** Maximum height as percentage string (e.g. '85%') or number */
-  maxHeight?: ViewStyle['maxHeight'];
-  /** Additional styles for the sheet container */
-  style?: StyleProp<ViewStyle>;
-  /** Wrap in KeyboardAvoidingView for sheets with text inputs */
+  /** Wrap in keyboard-aware mode for sheets with text inputs */
   keyboardAware?: boolean;
 }
 
 /**
- * Standard bottom sheet wrapper with backdrop dismiss and spring entrance.
+ * Standard bottom sheet wrapper using @gorhom/bottom-sheet.
  *
- * Modal tiers:
- * - **Simple sheets** (Alert, Confirm, Input, Tutorial, SaveCredentials):
- *   No maxHeight, content determines height. paddingHorizontal: spacing.lg.
- * - **Form sheets** (CreateMaintenance, DepotForm, DefectReport, Settings):
- *   maxHeight: '85%'. paddingHorizontal: spacing.lg.
- * - **Detail sheets** (DefectReportDetail, MaintenanceDetail):
- *   maxHeight: '90%'. paddingHorizontal: spacing.base (denser content).
+ * - Simple content sheets: dynamic sizing (content determines height)
+ * - Backdrop: BlurView on iOS, opaque overlay on Android
+ * - Swipe-to-dismiss enabled (simple sheets only — no form data to lose)
+ * - Haptic feedback on dismiss
  */
 export function BottomSheet({
   visible,
   onDismiss,
   children,
-  maxHeight,
-  style,
   keyboardAware = false,
 }: BottomSheetProps) {
-  const insets = useSafeAreaInsets();
-  const translateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
-  const backdropOpacity = useRef(new Animated.Value(0)).current;
-  const entranceAnimRef = useRef<Animated.CompositeAnimation | null>(null);
+  const ref = useRef<BottomSheetModal>(null);
+  const isPresentedRef = useRef(false);
 
   useEffect(() => {
-    if (visible) {
-      translateY.setValue(SCREEN_HEIGHT);
-      backdropOpacity.setValue(0);
-      const anim = Animated.parallel([
-        Animated.spring(translateY, { toValue: 0, ...SHEET_SPRING }),
-        Animated.timing(backdropOpacity, { toValue: 1, ...BACKDROP_IN }),
-      ]);
-      entranceAnimRef.current = anim;
-      anim.start(() => {
-        entranceAnimRef.current = null;
-      });
+    if (visible && !isPresentedRef.current) {
+      ref.current?.present();
+      isPresentedRef.current = true;
+    } else if (!visible && isPresentedRef.current) {
+      ref.current?.dismiss();
+      isPresentedRef.current = false;
     }
+  }, [visible]);
 
+  // Cleanup on unmount — prevent orphaned portals
+  useEffect(() => {
     return () => {
-      entranceAnimRef.current?.stop();
-      entranceAnimRef.current = null;
+      ref.current?.dismiss();
     };
-  }, [visible, translateY, backdropOpacity]);
+  }, []);
 
-  const handleDismiss = () => {
-    entranceAnimRef.current?.stop();
-    entranceAnimRef.current = null;
-    Animated.parallel([
-      Animated.timing(translateY, { toValue: SCREEN_HEIGHT, ...SHEET_EXIT }),
-      Animated.timing(backdropOpacity, { toValue: 0, ...BACKDROP_OUT }),
-    ]).start(() => {
-      onDismiss();
-    });
-  };
+  const handleDismiss = useCallback(() => {
+    isPresentedRef.current = false;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onDismiss();
+  }, [onDismiss]);
 
-  const content = (
-    <View style={styles.backdrop}>
-      <TouchableOpacity
-        style={styles.backdropTouchable}
-        activeOpacity={1}
-        onPress={handleDismiss}
-        accessibilityRole="button"
-        accessibilityLabel="Close"
-      />
-
-      <Animated.View
-        style={[
-          styles.sheet,
-          { paddingBottom: Math.max(insets.bottom, spacing['2xl']) },
-          maxHeight != null && { maxHeight },
-          style,
-          { transform: [{ translateY }] },
-        ]}
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        pressBehavior="close"
       >
-        <View style={styles.handle} />
-        {children}
-      </Animated.View>
-    </View>
+        {Platform.OS === 'ios' ? (
+          <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFillObject} />
+        ) : null}
+      </BottomSheetBackdrop>
+    ),
+    []
   );
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      statusBarTranslucent
-      onRequestClose={handleDismiss}
+    <BottomSheetModal
+      ref={ref}
+      enableDynamicSizing
+      enablePanDownToClose
+      onDismiss={handleDismiss}
+      backdropComponent={renderBackdrop}
+      backgroundStyle={styles.background}
+      handleIndicatorStyle={styles.handle}
+      {...(keyboardAware ? {
+        keyboardBehavior: 'interactive' as const,
+        keyboardBlurBehavior: 'restore' as const,
+        android_keyboardInputMode: 'adjustResize' as const,
+      } : {})}
+      animationConfigs={{
+        damping: 18,
+        stiffness: 65,
+      }}
     >
-      {visible && (
-        <SafeAreaProvider>
-          <Animated.View
-            style={[StyleSheet.absoluteFillObject, styles.blur, { opacity: backdropOpacity }]}
-          >
-            <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFillObject} />
-          </Animated.View>
-          {keyboardAware ? (
-            <KeyboardAvoidingView
-              style={styles.keyboardView}
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            >
-              {content}
-            </KeyboardAvoidingView>
-          ) : (
-            content
-          )}
-        </SafeAreaProvider>
-      )}
-    </Modal>
+      {children}
+    </BottomSheetModal>
   );
 }
 
 const styles = StyleSheet.create({
-  keyboardView: {
-    flex: 1,
-  },
-  blur: {
-    backgroundColor: 'rgba(0,0,30,0.3)',
-  },
-  backdrop: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  backdropTouchable: {
-    flex: 1,
-  },
-  sheet: {
+  background: {
     backgroundColor: colors.background,
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
@@ -166,8 +109,5 @@ const styles = StyleSheet.create({
     height: 4,
     backgroundColor: colors.border,
     borderRadius: borderRadius.full,
-    alignSelf: 'center',
-    marginTop: spacing.md,
-    marginBottom: spacing.lg,
   },
 });

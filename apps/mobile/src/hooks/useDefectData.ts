@@ -154,11 +154,7 @@ export function useUpdateDefectReportStatus() {
       status: DefectStatus;
       extras?: { maintenanceRecordId?: string; dismissedReason?: string };
     }) => updateDefectReportStatus(id, status, extras),
-    invalidates: (data) => [
-      defectKeys.detail(data.id),
-      defectKeys.lists(),
-      defectKeys.stats(),
-    ],
+    invalidates: (data) => [defectKeys.detail(data.id), defectKeys.lists(), defectKeys.stats()],
   });
 }
 
@@ -168,10 +164,7 @@ export function useUpdateDefectReportStatus() {
 export function useDeleteDefectReport() {
   return useMutationFromService({
     serviceFn: deleteDefectReport,
-    invalidates: [
-      defectKeys.lists(),
-      defectKeys.stats(),
-    ],
+    invalidates: [defectKeys.lists(), defectKeys.stats()],
   });
 }
 
@@ -182,10 +175,7 @@ export function useUpdateDefectReport() {
   return useMutationFromService({
     serviceFn: ({ id, input }: { id: string; input: UpdateDefectReportInput }) =>
       updateDefectReport(id, input),
-    invalidates: (data) => [
-      defectKeys.detail(data.id),
-      defectKeys.lists(),
-    ],
+    invalidates: (data) => [defectKeys.detail(data.id), defectKeys.lists()],
   });
 }
 

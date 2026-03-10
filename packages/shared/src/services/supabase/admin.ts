@@ -552,16 +552,14 @@ export async function adminListMaintenance(
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
-    let query = supabase
-      .from('maintenance_records')
-      .select(
-        `
+    let query = supabase.from('maintenance_records').select(
+      `
         id, title, status, due_date, created_at,
         reporter:reported_by(full_name),
         asset:asset_id(asset_number)
       `,
-        { count: 'exact' }
-      );
+      { count: 'exact' }
+    );
 
     if (status && status.length > 0) {
       query = query.in('status', status);
@@ -638,16 +636,14 @@ export async function adminListDefectReports(
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
-    let query = supabase
-      .from('defect_reports')
-      .select(
-        `
+    let query = supabase.from('defect_reports').select(
+      `
         id, title, status, created_at,
         reporter:reported_by(full_name),
         asset:asset_id(asset_number)
       `,
-        { count: 'exact' }
-      );
+      { count: 'exact' }
+    );
 
     if (status && status.length > 0) {
       query = query.in('status', status);
@@ -720,15 +716,13 @@ export async function adminListPhotos(
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
-    let query = supabase
-      .from('photos')
-      .select(
-        `
+    let query = supabase.from('photos').select(
+      `
         id, storage_path, thumbnail_path, photo_type, created_at,
         asset:asset_id(asset_number)
       `,
-        { count: 'exact' }
-      );
+      { count: 'exact' }
+    );
 
     if (search) {
       const safeSearch = search.replace(/[%_\\,().]/g, (c) => `\\${c}`);

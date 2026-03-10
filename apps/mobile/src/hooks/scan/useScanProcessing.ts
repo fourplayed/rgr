@@ -168,8 +168,7 @@ export function useScanProcessing(
 
         // If offline and we have enough context, queue the scan for later replay
         if (!onlineManager.isOnline() && user) {
-          const { lastLocation: loc, resolvedDepot: depot } =
-            useLocationStore.getState();
+          const { lastLocation: loc, resolvedDepot: depot } = useLocationStore.getState();
           // We need at minimum the asset lookup to have succeeded (step 2 above).
           // If the error happened during createScan (step 5), the asset was already found.
           // Parse the assetId from the QR data to build the queued input.
@@ -196,7 +195,8 @@ export function useScanProcessing(
                 visible: true,
                 type: 'info',
                 title: 'Scan Queued',
-                message: 'You are offline. This scan has been saved and will be submitted when connectivity is restored.',
+                message:
+                  'You are offline. This scan has been saved and will be submitted when connectivity is restored.',
               });
               resetScannerRef.current();
               return;

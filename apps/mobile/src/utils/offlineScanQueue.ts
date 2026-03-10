@@ -125,10 +125,14 @@ export async function replayQueue(): Promise<{ replayed: number; failed: number 
         failed++;
         const retries = (entry.retryCount ?? 0) + 1;
         if (retries >= MAX_RETRIES) {
-          logger.warn(`Discarding scan ${entry.id} after ${MAX_RETRIES} failed attempts: ${result.error}`);
+          logger.warn(
+            `Discarding scan ${entry.id} after ${MAX_RETRIES} failed attempts: ${result.error}`
+          );
           queue = queue.slice(1);
         } else {
-          logger.warn(`Failed to replay scan ${entry.id} (attempt ${retries}/${MAX_RETRIES}): ${result.error}`);
+          logger.warn(
+            `Failed to replay scan ${entry.id} (attempt ${retries}/${MAX_RETRIES}): ${result.error}`
+          );
           // Move to back of queue to avoid head-of-line blocking
           queue = [...queue.slice(1), { ...entry, retryCount: retries }];
         }

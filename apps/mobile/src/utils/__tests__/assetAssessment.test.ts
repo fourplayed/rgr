@@ -56,7 +56,7 @@ const makeAsset = (overrides?: Partial<AssetWithRelations>): AssetWithRelations 
   }) satisfies AssetWithRelations;
 
 const makeMaintenance = (
-  overrides?: Partial<MaintenanceRecordWithNames>,
+  overrides?: Partial<MaintenanceRecordWithNames>
 ): MaintenanceRecordWithNames =>
   ({
     id: 'maint-1',
@@ -232,10 +232,7 @@ describe('buildAssetAssessment', () => {
       photos: [],
       scans: [],
       depots: [],
-      defectReports: [
-        makeDefect(),
-        makeDefect({ id: 'defect-2', status: 'task_created' }),
-      ],
+      defectReports: [makeDefect(), makeDefect({ id: 'defect-2', status: 'task_created' })],
       now: NOW,
     });
     expect(result).toContain('2 open defect reports');

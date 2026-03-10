@@ -60,7 +60,7 @@ export function useScatterExit() {
         }
       });
     },
-    [items],
+    [items]
   );
 
   const getStyle = useCallback(
@@ -71,7 +71,7 @@ export function useScatterExit() {
         transform: [{ translateX: item.translateX }],
       };
     },
-    [items],
+    [items]
   );
 
   return { scatter, reset, getStyle, isScattering };

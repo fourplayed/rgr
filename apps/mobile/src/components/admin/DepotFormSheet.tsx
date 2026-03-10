@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, ScrollView, TextInput, Switch, StyleSheet } from 'react-native';
+import { View, Text, Switch, StyleSheet } from 'react-native';
+import { BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import type { Depot, CreateDepotInput, UpdateDepotInput } from '@rgr/shared';
 import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
@@ -101,16 +102,19 @@ export function DepotFormSheet({
           onClose={onClose}
         />
 
-        <ScrollView
+        <BottomSheetScrollView
           style={sheetLayout.scroll}
-          contentContainerStyle={[sheetLayout.scrollContent, { paddingTop: spacing.lg, paddingBottom: sheetBottomPadding }]}
+          contentContainerStyle={[
+            sheetLayout.scrollContent,
+            { paddingTop: spacing.lg, paddingBottom: sheetBottomPadding },
+          ]}
           bounces={true}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.inputGroup}>
             <Text style={formStyles.label}>Name *</Text>
-            <TextInput
+            <BottomSheetTextInput
               style={formStyles.inputFixed}
               value={name}
               onChangeText={setName}
@@ -124,7 +128,7 @@ export function DepotFormSheet({
 
           <View style={styles.inputGroup}>
             <Text style={formStyles.label}>Code *</Text>
-            <TextInput
+            <BottomSheetTextInput
               style={formStyles.inputFixed}
               value={code}
               onChangeText={setCode}
@@ -138,7 +142,7 @@ export function DepotFormSheet({
 
           <View style={styles.inputGroup}>
             <Text style={formStyles.label}>Address</Text>
-            <TextInput
+            <BottomSheetTextInput
               style={formStyles.inputFixed}
               value={address}
               onChangeText={setAddress}
@@ -170,7 +174,7 @@ export function DepotFormSheet({
               {isEdit ? 'Save' : 'Create'}
             </Button>
           </View>
-        </ScrollView>
+        </BottomSheetScrollView>
       </View>
     </SheetModal>
   );

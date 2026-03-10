@@ -66,7 +66,14 @@ export const CreateDepotInputSchema = z.object({
   address: z.string().nullable().optional(),
   latitude: z.number().min(-90).max(90).nullable().optional(),
   longitude: z.number().min(-180).max(180).nullable().optional(),
-  color: z.string().regex(/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, 'Must be a valid hex color (e.g., #fff or #aabbcc)').nullable().optional(),
+  color: z
+    .string()
+    .regex(
+      /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/,
+      'Must be a valid hex color (e.g., #fff or #aabbcc)'
+    )
+    .nullable()
+    .optional(),
   isActive: z.boolean().optional(),
 });
 

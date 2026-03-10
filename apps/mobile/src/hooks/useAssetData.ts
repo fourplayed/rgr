@@ -15,12 +15,7 @@ import {
   getAssetScanContext,
   queryFromService,
 } from '@rgr/shared';
-import type {
-  AssetStatus,
-  AssetCategory,
-  AssetSortField,
-  UpdateAssetInput,
-} from '@rgr/shared';
+import type { AssetStatus, AssetCategory, AssetSortField, UpdateAssetInput } from '@rgr/shared';
 import { useMutationFromService } from './useMutationFromService';
 
 /**
@@ -356,12 +351,8 @@ export function useAssetCountsByStatus() {
  */
 export function useUpdateAsset() {
   return useMutationFromService({
-    serviceFn: ({ id, input }: { id: string; input: UpdateAssetInput }) =>
-      updateAsset(id, input),
-    invalidates: (data) => [
-      assetKeys.detail(data.id),
-      assetKeys.lists(),
-    ],
+    serviceFn: ({ id, input }: { id: string; input: UpdateAssetInput }) => updateAsset(id, input),
+    invalidates: (data) => [assetKeys.detail(data.id), assetKeys.lists()],
   });
 }
 

@@ -356,7 +356,7 @@ export default function AssetAdminScreen() {
         />
 
         {/* Status Picker Sheet */}
-        <SheetModal visible={showStatusPicker} onClose={() => setShowStatusPicker(false)} inline>
+        <SheetModal visible={showStatusPicker} onClose={() => setShowStatusPicker(false)}>
           <View style={styles.statusPickerSheet}>
             <Text style={styles.statusPickerTitle}>Change Status</Text>
             {STATUS_VALUES.map((status) => {

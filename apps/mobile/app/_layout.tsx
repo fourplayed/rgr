@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AppState, View, StyleSheet, Text } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { LoadingDots } from '../src/components/common/LoadingDots';
 import { StatusBar } from 'expo-status-bar';
 import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-router';
@@ -255,43 +257,47 @@ export default function RootLayout() {
   }
 
   return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <RealtimeSubscriber />
-        <UserPermissionsProvider userRole={user?.role ?? null}>
-          <StatusBar style="dark" />
-          <View style={styles.container}>
-            <OfflineBanner />
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="(auth)" />
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen
-                name="settings"
-                options={{
-                  presentation: 'modal',
-                  animation: 'slide_from_bottom',
-                }}
-              />
-              <Stack.Screen
-                name="audit-log"
-                options={{
-                  presentation: 'modal',
-                  animation: 'slide_from_bottom',
-                }}
-              />
-              <Stack.Screen
-                name="(admin)"
-                options={{
-                  presentation: 'modal',
-                  animation: 'slide_from_bottom',
-                }}
-              />
-            </Stack>
-          </View>
-        </UserPermissionsProvider>
-        <DevConsole />
-      </QueryClientProvider>
-    </ErrorBoundary>
+    <GestureHandlerRootView style={styles.flex}>
+      <ErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <RealtimeSubscriber />
+          <UserPermissionsProvider userRole={user?.role ?? null}>
+            <BottomSheetModalProvider>
+              <StatusBar style="dark" />
+              <View style={styles.container}>
+                <OfflineBanner />
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="(auth)" />
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen
+                    name="settings"
+                    options={{
+                      presentation: 'modal',
+                      animation: 'slide_from_bottom',
+                    }}
+                  />
+                  <Stack.Screen
+                    name="audit-log"
+                    options={{
+                      presentation: 'modal',
+                      animation: 'slide_from_bottom',
+                    }}
+                  />
+                  <Stack.Screen
+                    name="(admin)"
+                    options={{
+                      presentation: 'modal',
+                      animation: 'slide_from_bottom',
+                    }}
+                  />
+                </Stack>
+              </View>
+            </BottomSheetModalProvider>
+          </UserPermissionsProvider>
+          <DevConsole />
+        </QueryClientProvider>
+      </ErrorBoundary>
+    </GestureHandlerRootView>
   );
 }
 
@@ -306,6 +312,9 @@ function RealtimeSubscriber() {
 }
 
 const styles = StyleSheet.create({
+  flex: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     backgroundColor: colors.chrome,

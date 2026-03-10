@@ -43,7 +43,7 @@ export function useConsoleStoreLogger() {
           consoleLog(
             'info',
             'location',
-            `Depot resolved: ${state.resolvedDepot.depot.name} (${state.resolvedDepot.distanceKm.toFixed(1)} km)`,
+            `Depot resolved: ${state.resolvedDepot.depot.name} (${state.resolvedDepot.distanceKm.toFixed(1)} km)`
           );
         } else if (prevDepotId) {
           consoleLog('debug', 'location', 'Depot cleared');
@@ -52,7 +52,12 @@ export function useConsoleStoreLogger() {
       }
 
       // Log when resolution finishes with no depot found (null → null blind spot)
-      if (prevResolving && !state.isResolvingDepot && !state.resolvedDepot && !state.depotResolutionError) {
+      if (
+        prevResolving &&
+        !state.isResolvingDepot &&
+        !state.resolvedDepot &&
+        !state.depotResolutionError
+      ) {
         consoleLog('debug', 'location', 'GPS resolved — no depot within geofence range');
       }
       prevResolving = state.isResolvingDepot;

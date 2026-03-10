@@ -45,9 +45,14 @@ interface MaintenanceListItemProps {
 
 function MaintenanceListItemComponent({ maintenance, onPress }: MaintenanceListItemProps) {
   const { icon, color } = getMaintenanceVisualConfig(maintenance.status, maintenance.dueDate);
-  const handlePress = useCallback(() => { onPress(maintenance); }, [onPress, maintenance]);
+  const handlePress = useCallback(() => {
+    onPress(maintenance);
+  }, [onPress, maintenance]);
   const containerStyle = useMemo(
-    () => [cardStyles.container, { borderColor: color, borderWidth: 0.5, backgroundColor: color + '08' }],
+    () => [
+      cardStyles.container,
+      { borderColor: color, borderWidth: 0.5, backgroundColor: color + '08' },
+    ],
     [color]
   );
 

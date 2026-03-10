@@ -74,7 +74,6 @@ export function formatRelativeTime(date: string | Date): string {
   return formatDate(d);
 }
 
-
 /**
  * Debounce a function. Returns a debounced version with a `.cancel()` method.
  */
@@ -147,4 +146,3 @@ export function snakeToCamel(str: string): string {
 export function camelToSnake(str: string): string {
   return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
 }
-

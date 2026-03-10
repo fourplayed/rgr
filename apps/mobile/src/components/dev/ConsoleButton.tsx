@@ -1,12 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import {
-  Animated,
-  Dimensions,
-  PanResponder,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Animated, Dimensions, PanResponder, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -46,8 +39,7 @@ export function ConsoleButton() {
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (_, gesture) =>
-        Math.abs(gesture.dy) > DRAG_THRESHOLD,
+      onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dy) > DRAG_THRESHOLD,
 
       onPanResponderGrant: () => {
         isDragging.current = false;
@@ -77,7 +69,7 @@ export function ConsoleButton() {
           toggleOpen();
         }
       },
-    }),
+    })
   ).current;
 
   return (
@@ -92,18 +84,12 @@ export function ConsoleButton() {
         isOpen && styles.buttonOpen,
       ]}
     >
-      <Ionicons
-        name="terminal-outline"
-        size={22}
-        color={isOpen ? '#000030' : colors.devConsole}
-      />
+      <Ionicons name="terminal-outline" size={22} color={isOpen ? '#000030' : colors.devConsole} />
 
       {/* Unread badge */}
       {!isOpen && unreadCount > 0 && (
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>
-            {unreadCount > 99 ? '99+' : unreadCount}
-          </Text>
+          <Text style={styles.badgeText}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
         </View>
       )}
     </Animated.View>

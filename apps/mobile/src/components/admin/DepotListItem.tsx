@@ -13,11 +13,18 @@ interface DepotListItemProps {
 }
 
 function DepotListItemInner({ depot, onPress, onLongPress }: DepotListItemProps) {
-  const handlePress = useCallback(() => { onPress(depot); }, [onPress, depot]);
-  const handleLongPress = useCallback(() => { onLongPress?.(depot); }, [onLongPress, depot]);
+  const handlePress = useCallback(() => {
+    onPress(depot);
+  }, [onPress, depot]);
+  const handleLongPress = useCallback(() => {
+    onLongPress?.(depot);
+  }, [onLongPress, depot]);
   const borderColor = depot.isActive ? colors.success : colors.textSecondary;
   const containerStyle = useMemo(
-    () => [styles.container, { borderColor, borderWidth: 0.5, backgroundColor: borderColor + '08' }],
+    () => [
+      styles.container,
+      { borderColor, borderWidth: 0.5, backgroundColor: borderColor + '08' },
+    ],
     [borderColor]
   );
 

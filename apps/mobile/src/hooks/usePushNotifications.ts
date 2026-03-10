@@ -28,9 +28,7 @@ try {
   });
 } catch {
   if (__DEV__) {
-    console.warn(
-      '[Push] Native modules not available — push notifications disabled (Expo Go?)'
-    );
+    console.warn('[Push] Native modules not available — push notifications disabled (Expo Go?)');
   }
 }
 
@@ -76,22 +74,18 @@ export function usePushNotifications() {
     if (!Notifications) return;
 
     // Notification received while app is in foreground
-    const receivedSub = Notifications.addNotificationReceivedListener(
-      (notification) => {
-        if (__DEV__) console.log('[Push] Received:', notification.request.content.title);
-      }
-    );
+    const receivedSub = Notifications.addNotificationReceivedListener((notification) => {
+      if (__DEV__) console.log('[Push] Received:', notification.request.content.title);
+    });
 
     // User tapped on a notification
-    const responseSub = Notifications.addNotificationResponseReceivedListener(
-      (response) => {
-        const data = response.notification.request.content.data;
-        if (__DEV__) console.log('[Push] Tapped:', data);
-        if (data?.['assetId']) {
-          router.push(`/(tabs)/assets/${data['assetId']}`);
-        }
+    const responseSub = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data;
+      if (__DEV__) console.log('[Push] Tapped:', data);
+      if (data?.['assetId']) {
+        router.push(`/(tabs)/assets/${data['assetId']}`);
       }
-    );
+    });
 
     return () => {
       receivedSub.remove();
@@ -123,8 +117,7 @@ export function usePushNotifications() {
       }
 
       // Check / request permissions
-      const { status: existingStatus } =
-        await Notifications.getPermissionsAsync();
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
 
       if (existingStatus !== 'granted') {
@@ -146,9 +139,7 @@ export function usePushNotifications() {
 
       if (!projectId) {
         if (__DEV__) {
-          console.warn(
-            '[Push] No EAS projectId found — set extra.eas.projectId in app.json'
-          );
+          console.warn('[Push] No EAS projectId found — set extra.eas.projectId in app.json');
         }
         return;
       }
@@ -176,14 +167,11 @@ export function usePushNotifications() {
         }
         const platform = Platform.OS as 'ios' | 'android';
 
-        await withRetry(
-          () => upsertPushToken({ userId: user.id, token, deviceId, platform }),
-          {
-            maxAttempts: 3,
-            baseDelayMs: 2000,
-            maxDelayMs: 8000,
-          }
-        );
+        await withRetry(() => upsertPushToken({ userId: user.id, token, deviceId, platform }), {
+          maxAttempts: 3,
+          baseDelayMs: 2000,
+          maxDelayMs: 8000,
+        });
       }
     } catch (err) {
       console.error('[Push] Registration error:', err);

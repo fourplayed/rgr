@@ -1,9 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import {
-  adminListPhotos,
-  bulkDeletePhotos,
-  queryFromService,
-} from '@rgr/shared';
+import { adminListPhotos, bulkDeletePhotos, queryFromService } from '@rgr/shared';
 import type { AdminListPhotosParams } from '@rgr/shared';
 import { photoKeys } from './usePhotos';
 import { useMutationFromService } from './useMutationFromService';
@@ -11,8 +7,7 @@ import { useMutationFromService } from './useMutationFromService';
 export const adminPhotoKeys = {
   all: ['admin-photos'] as const,
   lists: () => [...adminPhotoKeys.all, 'list'] as const,
-  list: (params: AdminListPhotosParams) =>
-    [...adminPhotoKeys.lists(), params] as const,
+  list: (params: AdminListPhotosParams) => [...adminPhotoKeys.lists(), params] as const,
 };
 
 export function useAdminPhotoList(params: AdminListPhotosParams = {}) {

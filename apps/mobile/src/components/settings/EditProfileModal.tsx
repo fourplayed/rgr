@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TextInput, ScrollView } from 'react-native';
+import { View, Text } from 'react-native';
+import { BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
 import { SheetModal } from '../common/SheetModal';
@@ -67,16 +68,19 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
       <View style={sheetLayout.container}>
         <SheetHeader icon="person" title="Edit Profile" onClose={onClose} />
 
-        <ScrollView
+        <BottomSheetScrollView
           style={sheetLayout.scroll}
-          contentContainerStyle={[sheetLayout.scrollContent, { paddingTop: spacing.lg, paddingBottom: sheetBottomPadding }]}
+          contentContainerStyle={[
+            sheetLayout.scrollContent,
+            { paddingTop: spacing.lg, paddingBottom: sheetBottomPadding },
+          ]}
           bounces={true}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
           <View style={formStyles.inputGroup}>
             <Text style={formStyles.label}>Full Name</Text>
-            <TextInput
+            <BottomSheetTextInput
               style={formStyles.input}
               value={fullName}
               onChangeText={setFullName}
@@ -90,7 +94,7 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
 
           <View style={formStyles.inputGroup}>
             <Text style={formStyles.label}>Phone (optional)</Text>
-            <TextInput
+            <BottomSheetTextInput
               style={formStyles.input}
               value={phone}
               onChangeText={setPhone}
@@ -113,7 +117,7 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
               Save
             </Button>
           </View>
-        </ScrollView>
+        </BottomSheetScrollView>
       </View>
     </SheetModal>
   );

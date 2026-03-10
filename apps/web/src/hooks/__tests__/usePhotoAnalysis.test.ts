@@ -39,9 +39,12 @@ const mockSupabase = {
   from: vi.fn(),
 };
 
+const mockCreatePhotoRecord = vi.fn();
+
 vi.mock('@rgr/shared', () => ({
   getSupabase: () => mockSupabase,
   getSupabaseClient: () => mockSupabase,
+  createPhotoRecord: (...args: unknown[]) => mockCreatePhotoRecord(...args),
 }));
 
 let mockAuthUser: { id: string } | null = { id: 'user-123' };
@@ -121,15 +124,9 @@ beforeEach(() => {
     }),
   });
 
-  mockSupabase.from.mockReturnValue({
-    insert: vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        single: vi.fn().mockResolvedValue({
-          data: { id: 'photo-123' },
-          error: null,
-        }),
-      }),
-    }),
+  mockCreatePhotoRecord.mockResolvedValue({
+    success: true,
+    data: { id: 'photo-123' },
   });
 
   mockSupabaseFunctions.invoke.mockResolvedValue({
@@ -320,7 +317,12 @@ describe('usePhotoAnalysis', () => {
         await result.current.actions.analyzePhoto(file);
       });
 
-      expect(mockSupabase.from).toHaveBeenCalledWith('photos');
+      expect(mockCreatePhotoRecord).toHaveBeenCalledWith(
+        expect.objectContaining({
+          photoType: 'freight',
+          uploadedBy: 'user-123',
+        })
+      );
     });
 
     it('should invoke analyze-freight edge function', async () => {
@@ -482,15 +484,9 @@ describe('usePhotoAnalysis', () => {
     });
 
     it('should handle photo record creation error', async () => {
-      mockSupabase.from.mockReturnValue({
-        insert: vi.fn().mockReturnValue({
-          select: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: null,
-              error: { message: 'Insert failed' },
-            }),
-          }),
-        }),
+      mockCreatePhotoRecord.mockResolvedValue({
+        success: false,
+        error: 'Insert failed',
       });
 
       const { result } = renderHook(() => usePhotoAnalysis());
@@ -681,16 +677,6 @@ describe('usePhotoAnalysis', () => {
 
   describe('Asset ID Parameter', () => {
     it('should pass assetId to photo record when provided', async () => {
-      const mockInsert = vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({
-            data: { id: 'photo-123' },
-            error: null,
-          }),
-        }),
-      });
-      mockSupabase.from.mockReturnValue({ insert: mockInsert });
-
       const { result } = renderHook(() => usePhotoAnalysis());
       const file = createMockFile();
 
@@ -698,24 +684,14 @@ describe('usePhotoAnalysis', () => {
         await result.current.actions.analyzePhoto(file, 'asset-789');
       });
 
-      expect(mockInsert).toHaveBeenCalledWith(
+      expect(mockCreatePhotoRecord).toHaveBeenCalledWith(
         expect.objectContaining({
-          asset_id: 'asset-789',
+          assetId: 'asset-789',
         })
       );
     });
 
     it('should pass null assetId when not provided', async () => {
-      const mockInsert = vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({
-            data: { id: 'photo-123' },
-            error: null,
-          }),
-        }),
-      });
-      mockSupabase.from.mockReturnValue({ insert: mockInsert });
-
       const { result } = renderHook(() => usePhotoAnalysis());
       const file = createMockFile();
 
@@ -723,9 +699,9 @@ describe('usePhotoAnalysis', () => {
         await result.current.actions.analyzePhoto(file);
       });
 
-      expect(mockInsert).toHaveBeenCalledWith(
+      expect(mockCreatePhotoRecord).toHaveBeenCalledWith(
         expect.objectContaining({
-          asset_id: null,
+          assetId: null,
         })
       );
     });

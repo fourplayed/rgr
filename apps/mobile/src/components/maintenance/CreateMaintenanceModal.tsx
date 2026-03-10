@@ -1,5 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TextInput, StyleSheet, ScrollView, Pressable, Platform, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  Platform,
+  TouchableOpacity,
+} from 'react-native';
+import { BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import type { MaintenancePriority, CreateMaintenanceInput } from '@rgr/shared';
@@ -33,10 +41,12 @@ interface CreateMaintenanceModalProps {
   /** When provided, the modal collects form data but delegates creation to this callback.
    *  Used by the atomic accept-defect flow to wrap both operations in a transaction. */
   onExternalSubmit?: (input: CreateMaintenanceInput) => Promise<void>;
-  /** Render inline (no native Modal) — use when already inside a Modal. */
+  /** @deprecated No longer needed — gorhom uses portal rendering. */
   inline?: boolean;
-  /** When false, skip backdrop (ModalShell provides it). */
+  /** @deprecated Use noBackdrop instead. */
   backdrop?: boolean;
+  /** Render without backdrop (parent provides persistent backdrop for chaining). */
+  noBackdrop?: boolean;
   /** Fires after exit animation completes. */
   onExitComplete?: () => void;
 }
@@ -54,8 +64,9 @@ export function CreateMaintenanceModal({
   defaultPriority,
   onCreated,
   onExternalSubmit,
-  inline,
+  inline: _inline,
   backdrop,
+  noBackdrop,
   onExitComplete,
 }: CreateMaintenanceModalProps) {
   const sheetBottomPadding = useSheetBottomPadding();
@@ -80,9 +91,7 @@ export function CreateMaintenanceModal({
   const effectiveAssetId = assetId ?? selectedAssetId ?? undefined;
 
   // Fetch assets for picker (always called to satisfy hook rules; cached by React Query)
-  const assetSearchFilters = assetSearch
-    ? { search: assetSearch, pageSize: 20 }
-    : { pageSize: 20 };
+  const assetSearchFilters = assetSearch ? { search: assetSearch, pageSize: 20 } : { pageSize: 20 };
   const { data: assetListData, isLoading: assetsLoading } = useAssetList(assetSearchFilters);
   const assetResults = assetListData?.data ?? [];
 
@@ -114,15 +123,12 @@ export function CreateMaintenanceModal({
     }
   }, [visible, defaultTitle, defaultDescription, defaultPriority]);
 
-  const handleDateChange = useCallback(
-    (_event: DateTimePickerEvent, selectedDate?: Date) => {
-      if (Platform.OS === 'android') setShowDatePicker(false);
-      if (selectedDate) {
-        setDueDate(selectedDate.toISOString().slice(0, 10));
-      }
-    },
-    []
-  );
+  const handleDateChange = useCallback((_event: DateTimePickerEvent, selectedDate?: Date) => {
+    if (Platform.OS === 'android') setShowDatePicker(false);
+    if (selectedDate) {
+      setDueDate(selectedDate.toISOString().slice(0, 10));
+    }
+  }, []);
 
   const handleSubmit = useCallback(
     () =>
@@ -189,7 +195,14 @@ export function CreateMaintenanceModal({
   const isLoading = isPending;
 
   return (
-    <SheetModal visible={visible} onClose={onClose} keyboardAware inline={!!inline} backdrop={backdrop} onExitComplete={onExitComplete}>
+    <SheetModal
+      visible={visible}
+      onClose={onClose}
+      keyboardAware
+      onExitComplete={onExitComplete}
+      noBackdrop={noBackdrop ?? (backdrop === false)}
+      preventDismissWhileBusy={isPending}
+    >
       <View style={sheetLayout.containerTall}>
         <SheetHeader
           icon="construct"
@@ -198,9 +211,12 @@ export function CreateMaintenanceModal({
           backgroundColor={colors.warning}
         />
 
-        <ScrollView
+        <BottomSheetScrollView
           style={sheetLayout.scroll}
-          contentContainerStyle={[sheetLayout.scrollContent, { paddingTop: spacing.base, paddingBottom: sheetBottomPadding }]}
+          contentContainerStyle={[
+            sheetLayout.scrollContent,
+            { paddingTop: spacing.base, paddingBottom: sheetBottomPadding },
+          ]}
           bounces={true}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
@@ -226,7 +242,9 @@ export function CreateMaintenanceModal({
               // User-selected — show with clear option
               <View style={styles.assetSelected}>
                 <Ionicons name="cube" size={20} color={colors.text} />
-                <Text style={styles.assetSelectedText}>{formatAssetNumber(selectedAssetNumber)}</Text>
+                <Text style={styles.assetSelectedText}>
+                  {formatAssetNumber(selectedAssetNumber)}
+                </Text>
                 <TouchableOpacity
                   onPress={handleClearAsset}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -246,11 +264,15 @@ export function CreateMaintenanceModal({
                 >
                   <Ionicons name="cube-outline" size={18} color={colors.textSecondary} />
                   <Text style={styles.assetPickerPlaceholder}>Tap to select asset</Text>
-                  <Ionicons name={showAssetPicker ? 'chevron-up' : 'chevron-down'} size={16} color={colors.textSecondary} />
+                  <Ionicons
+                    name={showAssetPicker ? 'chevron-up' : 'chevron-down'}
+                    size={16}
+                    color={colors.textSecondary}
+                  />
                 </Pressable>
                 {showAssetPicker && (
                   <View style={styles.assetPickerDropdown}>
-                    <TextInput
+                    <BottomSheetTextInput
                       style={styles.assetSearchInput}
                       value={assetSearch}
                       onChangeText={setAssetSearch}
@@ -274,7 +296,9 @@ export function CreateMaintenanceModal({
                           activeOpacity={0.7}
                         >
                           <Ionicons name="cube" size={16} color={colors.text} />
-                          <Text style={styles.assetPickerItemText}>{formatAssetNumber(asset.assetNumber)}</Text>
+                          <Text style={styles.assetPickerItemText}>
+                            {formatAssetNumber(asset.assetNumber)}
+                          </Text>
                           <Text style={styles.assetPickerItemSub}>{asset.category}</Text>
                         </TouchableOpacity>
                       ))
@@ -288,7 +312,7 @@ export function CreateMaintenanceModal({
           {/* Title */}
           <View style={formStyles.inputGroup}>
             <Text style={formStyles.label}>Title *</Text>
-            <TextInput
+            <BottomSheetTextInput
               style={formStyles.input}
               value={title}
               onChangeText={setTitle}
@@ -325,11 +349,18 @@ export function CreateMaintenanceModal({
               accessibilityRole="button"
               accessibilityLabel="Select due date"
             >
-              <Ionicons name="calendar-outline" size={18} color={dueDate ? colors.text : colors.textSecondary} />
+              <Ionicons
+                name="calendar-outline"
+                size={18}
+                color={dueDate ? colors.text : colors.textSecondary}
+              />
               <Text style={[styles.dateFieldText, !dueDate && styles.dateFieldPlaceholder]}>
                 {dueDate
                   ? new Date(dueDate + 'T00:00:00').toLocaleDateString(undefined, {
-                      weekday: 'short', year: 'numeric', month: 'short', day: 'numeric',
+                      weekday: 'short',
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
                     })
                   : 'Tap to select date'}
               </Text>
@@ -349,7 +380,7 @@ export function CreateMaintenanceModal({
           {/* Description */}
           <View style={formStyles.inputGroup}>
             <Text style={formStyles.label}>Description (optional)</Text>
-            <TextInput
+            <BottomSheetTextInput
               style={[formStyles.input, formStyles.textArea]}
               value={description}
               onChangeText={setDescription}
@@ -365,11 +396,16 @@ export function CreateMaintenanceModal({
           {error && <Text style={formStyles.errorText}>{error}</Text>}
 
           <View style={{ marginTop: spacing.lg }}>
-            <Button isLoading={isLoading} onPress={handleSubmit} color={colors.success} style={styles.submitButton}>
+            <Button
+              isLoading={isLoading}
+              onPress={handleSubmit}
+              color={colors.success}
+              style={styles.submitButton}
+            >
               Create Task
             </Button>
           </View>
-        </ScrollView>
+        </BottomSheetScrollView>
       </View>
     </SheetModal>
   );

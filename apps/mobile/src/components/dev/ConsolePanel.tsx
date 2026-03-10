@@ -87,13 +87,18 @@ export function ConsolePanel() {
   }, [filteredEntries.length, isOpen]);
 
   const handleScroll = useCallback(
-    (event: { nativeEvent: { contentOffset: { y: number }; contentSize: { height: number }; layoutMeasurement: { height: number } } }) => {
+    (event: {
+      nativeEvent: {
+        contentOffset: { y: number };
+        contentSize: { height: number };
+        layoutMeasurement: { height: number };
+      };
+    }) => {
       const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
-      const distanceFromBottom =
-        contentSize.height - layoutMeasurement.height - contentOffset.y;
+      const distanceFromBottom = contentSize.height - layoutMeasurement.height - contentOffset.y;
       userScrolledUp.current = distanceFromBottom > ROW_HEIGHT * 2;
     },
-    [],
+    []
   );
 
   const getItemLayout = useCallback(
@@ -102,12 +107,12 @@ export function ConsolePanel() {
       offset: ROW_HEIGHT * index,
       index,
     }),
-    [],
+    []
   );
 
   const renderItem = useCallback(
     ({ item }: { item: ConsoleEntry }) => <ConsoleEntryRow entry={item} />,
-    [],
+    []
   );
 
   const keyExtractor = useCallback((item: ConsoleEntry) => String(item.id), []);

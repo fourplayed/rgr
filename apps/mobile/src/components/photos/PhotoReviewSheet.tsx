@@ -18,9 +18,7 @@ interface PhotoReviewSheetProps {
   onClose: () => void;
   onConfirmed: () => void;
   onRetake: () => void;
-  onDismiss?: () => void;
-  /** Render inline (no native Modal) — use when already inside a Modal. */
-  inline?: boolean;
+  onExitComplete?: () => void;
 }
 
 function PhotoReviewSheetComponent({
@@ -29,8 +27,7 @@ function PhotoReviewSheetComponent({
   onClose,
   onConfirmed,
   onRetake,
-  onDismiss,
-  inline,
+  onExitComplete,
 }: PhotoReviewSheetProps) {
   const {
     capturedUri,
@@ -54,7 +51,7 @@ function PhotoReviewSheetComponent({
     if (success) {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       // Brief pause so user sees the "complete" state before sheet closes
-      await new Promise(resolve => setTimeout(resolve, 700));
+      await new Promise((resolve) => setTimeout(resolve, 700));
       onConfirmed();
     } else {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -84,7 +81,7 @@ function PhotoReviewSheetComponent({
   const displayUri = stableUri.current;
 
   return (
-    <SheetModal visible={visible} onClose={handleClose} onDismiss={onDismiss} inline={!!inline}>
+    <SheetModal visible={visible} onClose={handleClose} onExitComplete={onExitComplete}>
       <View style={styles.container}>
         <SheetHeader
           icon="checkmark-circle"
@@ -96,11 +93,7 @@ function PhotoReviewSheetComponent({
         <Text style={styles.capturedLabel}>Captured Photo</Text>
         {displayUri && (
           <View style={styles.photoContainer}>
-            <Image
-              source={{ uri: displayUri }}
-              style={styles.photo}
-              contentFit="contain"
-            />
+            <Image source={{ uri: displayUri }} style={styles.photo} contentFit="contain" />
             {uploadStep && <UploadProgressOverlay step={uploadStep} />}
           </View>
         )}
@@ -126,21 +119,11 @@ function PhotoReviewSheetComponent({
 
         <View style={[styles.buttonRow, { paddingBottom: bottomPad }]}>
           <Animated.View style={[styles.flexOne, { opacity: retakeOpacity }]}>
-            <Button
-              onPress={handleRetake}
-              disabled={isUploading}
-              flex
-              color={colors.electricBlue}
-            >
+            <Button onPress={handleRetake} disabled={isUploading} flex color={colors.electricBlue}>
               Recapture
             </Button>
           </Animated.View>
-          <Button
-            onPress={handleConfirm}
-            isLoading={isUploading}
-            flex
-            color={colors.success}
-          >
+          <Button onPress={handleConfirm} isLoading={isUploading} flex color={colors.success}>
             Use Photo
           </Button>
         </View>
@@ -159,7 +142,7 @@ const UPLOAD_STEPS = [
   { key: 'uploading', label: 'Uploading to cloud' },
 ] as const;
 
-const STEP_KEYS = UPLOAD_STEPS.map(s => s.key);
+const STEP_KEYS = UPLOAD_STEPS.map((s) => s.key);
 
 function UploadProgressOverlay({ step }: { step: NonNullable<UploadStep> }) {
   const opacity = useRef(new Animated.Value(0)).current;

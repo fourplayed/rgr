@@ -82,7 +82,10 @@ function AuditLogItemInner({ item }: AuditLogItemProps) {
   const iconColor = (actionKey ? ACTION_COLORS[actionKey] : undefined) ?? colors.textSecondary;
 
   const containerStyle = useMemo(
-    () => [styles.container, { borderColor: iconColor, borderWidth: 0.5, backgroundColor: iconColor + '08' }],
+    () => [
+      styles.container,
+      { borderColor: iconColor, borderWidth: 0.5, backgroundColor: iconColor + '08' },
+    ],
     [iconColor]
   );
 

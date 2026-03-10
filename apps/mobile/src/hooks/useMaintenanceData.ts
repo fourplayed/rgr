@@ -9,11 +9,7 @@ import {
   getMaintenanceStats,
   queryFromService,
 } from '@rgr/shared';
-import type {
-  MaintenanceStatus,
-  MaintenancePriority,
-  UpdateMaintenanceInput,
-} from '@rgr/shared';
+import type { MaintenanceStatus, MaintenancePriority, UpdateMaintenanceInput } from '@rgr/shared';
 import { useMutationFromService } from './useMutationFromService';
 import { assetKeys } from './useAssetData';
 import { defectKeys } from './useDefectData';
@@ -153,11 +149,7 @@ export function useUpdateMaintenanceStatus() {
 export function useCancelMaintenanceTask() {
   return useMutationFromService({
     serviceFn: cancelMaintenanceTask,
-    invalidates: [
-      maintenanceKeys.lists(),
-      maintenanceKeys.stats(),
-      defectKeys.lists(),
-    ],
+    invalidates: [maintenanceKeys.lists(), maintenanceKeys.stats(), defectKeys.lists()],
   });
 }
 
@@ -168,10 +160,7 @@ export function useUpdateMaintenance() {
   return useMutationFromService({
     serviceFn: ({ id, input }: { id: string; input: UpdateMaintenanceInput }) =>
       updateMaintenance(id, input),
-    invalidates: (data) => [
-      maintenanceKeys.detail(data.id),
-      maintenanceKeys.lists(),
-    ],
+    invalidates: (data) => [maintenanceKeys.detail(data.id), maintenanceKeys.lists()],
   });
 }
 

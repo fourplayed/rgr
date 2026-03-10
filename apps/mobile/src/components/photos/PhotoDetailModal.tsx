@@ -107,189 +107,191 @@ function PhotoDetailModalComponent({ visible, photoId, assetId, onClose }: Photo
   return (
     <Modal visible={visible} animationType="none" onRequestClose={handleAnimatedClose}>
       <Animated.View style={[{ flex: 1 }, { transform: [{ translateY }] }]}>
-      <View style={styles.container}>
-        <SafeAreaView style={styles.safeArea}>
-          {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity
-              style={styles.headerButton}
-              onPress={handleAnimatedClose}
-              accessibilityRole="button"
-              accessibilityLabel="Close photo details"
-            >
-              <Ionicons name="close" size={28} color={colors.text} />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Photo Details</Text>
-            {canAccessAdmin ? (
+        <View style={styles.container}>
+          <SafeAreaView style={styles.safeArea}>
+            {/* Header */}
+            <View style={styles.header}>
               <TouchableOpacity
                 style={styles.headerButton}
-                onPress={handleDelete}
-                disabled={isDeleting || isLoading}
+                onPress={handleAnimatedClose}
                 accessibilityRole="button"
-                accessibilityLabel="Delete photo"
-                accessibilityHint="Double tap to delete this photo"
+                accessibilityLabel="Close photo details"
               >
-                {isDeleting ? (
-                  <LoadingDots color={colors.textInverse} size={6} />
-                ) : (
-                  <Ionicons name="trash-outline" size={24} color={colors.error} />
-                )}
+                <Ionicons name="close" size={28} color={colors.text} />
               </TouchableOpacity>
-            ) : (
-              <View style={styles.headerButton} />
-            )}
-          </View>
-
-          {isLoading ? (
-            <View style={styles.loadingContainer}>
-              <LoadingDots color={colors.textSecondary} size={12} />
+              <Text style={styles.headerTitle}>Photo Details</Text>
+              {canAccessAdmin ? (
+                <TouchableOpacity
+                  style={styles.headerButton}
+                  onPress={handleDelete}
+                  disabled={isDeleting || isLoading}
+                  accessibilityRole="button"
+                  accessibilityLabel="Delete photo"
+                  accessibilityHint="Double tap to delete this photo"
+                >
+                  {isDeleting ? (
+                    <LoadingDots color={colors.textInverse} size={6} />
+                  ) : (
+                    <Ionicons name="trash-outline" size={24} color={colors.error} />
+                  )}
+                </TouchableOpacity>
+              ) : (
+                <View style={styles.headerButton} />
+              )}
             </View>
-          ) : photoData ? (
-            <ScrollView
-              style={styles.content}
-              contentContainerStyle={styles.contentContainer}
-              showsVerticalScrollIndicator={false}
-            >
-              {/* Photo with progressive loading */}
-              <View style={styles.imageContainer}>
-                {thumbnailUrl && !isFullImageLoaded && (
-                  <Image
-                    source={{ uri: thumbnailUrl }}
-                    style={[styles.image, StyleSheet.absoluteFill]}
-                    contentFit="contain"
-                    blurRadius={2}
-                  />
-                )}
-                {fullImageUrl ? (
-                  <Image
-                    source={{ uri: fullImageUrl }}
-                    style={[styles.image, { opacity: isFullImageLoaded ? 1 : 0 }]}
-                    contentFit="contain"
-                    transition={300}
-                    onLoadEnd={() => setIsFullImageLoaded(true)}
-                  />
-                ) : !thumbnailUrl ? (
-                  <View style={styles.imagePlaceholder}>
-                    <LoadingDots color={colors.textSecondary} size={8} />
-                    <Text style={styles.imageLoadingText}>
-                      {urlError ? 'Failed to load image' : 'Loading image...'}
-                    </Text>
-                  </View>
-                ) : null}
-              </View>
 
-              {/* Photo metadata */}
-              <View style={styles.metadataSection}>
-                <View style={styles.metadataRow}>
-                  <View style={styles.metadataItem}>
-                    <Text style={styles.metadataLabel}>Type</Text>
-                    <Text style={styles.metadataValue}>{formatPhotoType(photoData.photoType)}</Text>
-                  </View>
-                  <View style={styles.metadataItem}>
-                    <Text style={styles.metadataLabel}>Captured</Text>
-                    <Text style={styles.metadataValueSmall}>
-                      {formatRelativeTime(photoData.createdAt)}
-                    </Text>
-                  </View>
+            {isLoading ? (
+              <View style={styles.loadingContainer}>
+                <LoadingDots color={colors.textSecondary} size={12} />
+              </View>
+            ) : photoData ? (
+              <ScrollView
+                style={styles.content}
+                contentContainerStyle={styles.contentContainer}
+                showsVerticalScrollIndicator={false}
+              >
+                {/* Photo with progressive loading */}
+                <View style={styles.imageContainer}>
+                  {thumbnailUrl && !isFullImageLoaded && (
+                    <Image
+                      source={{ uri: thumbnailUrl }}
+                      style={[styles.image, StyleSheet.absoluteFill]}
+                      contentFit="contain"
+                      blurRadius={2}
+                    />
+                  )}
+                  {fullImageUrl ? (
+                    <Image
+                      source={{ uri: fullImageUrl }}
+                      style={[styles.image, { opacity: isFullImageLoaded ? 1 : 0 }]}
+                      contentFit="contain"
+                      transition={300}
+                      onLoadEnd={() => setIsFullImageLoaded(true)}
+                    />
+                  ) : !thumbnailUrl ? (
+                    <View style={styles.imagePlaceholder}>
+                      <LoadingDots color={colors.textSecondary} size={8} />
+                      <Text style={styles.imageLoadingText}>
+                        {urlError ? 'Failed to load image' : 'Loading image...'}
+                      </Text>
+                    </View>
+                  ) : null}
                 </View>
 
-                {(photoData.width || photoData.fileSize) && (
+                {/* Photo metadata */}
+                <View style={styles.metadataSection}>
                   <View style={styles.metadataRow}>
-                    {photoData.width && photoData.height && (
-                      <View style={styles.metadataItem}>
-                        <Text style={styles.metadataLabel}>Resolution</Text>
-                        <Text style={styles.metadataValue}>
-                          {photoData.width} × {photoData.height}
-                        </Text>
-                      </View>
-                    )}
-                    {photoData.fileSize && (
-                      <View style={styles.metadataItem}>
-                        <Text style={styles.metadataLabel}>Size</Text>
-                        <Text style={styles.metadataValue}>
-                          {(photoData.fileSize / 1024 / 1024).toFixed(2)} MB
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                )}
-
-                {/* GPS Location */}
-                {photoData.latitude != null && photoData.longitude != null && (
-                  <TouchableOpacity
-                    onPress={openInMaps}
-                    style={styles.metadataRow}
-                    accessibilityRole="link"
-                    accessibilityLabel="Open location in maps"
-                    accessibilityHint="Double tap to open this location in your maps app"
-                  >
                     <View style={styles.metadataItem}>
-                      <Text style={styles.metadataLabel}>Location</Text>
-                      <View style={styles.locationValue}>
-                        <Text style={styles.metadataValueLink}>
-                          {photoData.latitude.toFixed(5)}, {photoData.longitude.toFixed(5)}
-                        </Text>
-                        <Ionicons name="open-outline" size={14} color={colors.electricBlue} />
-                      </View>
+                      <Text style={styles.metadataLabel}>Type</Text>
+                      <Text style={styles.metadataValue}>
+                        {formatPhotoType(photoData.photoType)}
+                      </Text>
                     </View>
-                  </TouchableOpacity>
-                )}
+                    <View style={styles.metadataItem}>
+                      <Text style={styles.metadataLabel}>Captured</Text>
+                      <Text style={styles.metadataValueSmall}>
+                        {formatRelativeTime(photoData.createdAt)}
+                      </Text>
+                    </View>
+                  </View>
 
-                {/* Analysis status */}
-                <View style={styles.analysisStatus}>
-                  {photoData.isAnalyzed ? (
-                    <View style={styles.statusBadge}>
-                      <Ionicons name="checkmark-circle" size={16} color={colors.success} />
-                      <Text style={styles.statusText}>Analyzed</Text>
-                    </View>
-                  ) : (
-                    <View style={styles.statusBadge}>
-                      <Ionicons name="hourglass-outline" size={16} color={colors.warning} />
-                      <Text style={styles.statusTextPending}>Pending Analysis</Text>
+                  {(photoData.width || photoData.fileSize) && (
+                    <View style={styles.metadataRow}>
+                      {photoData.width && photoData.height && (
+                        <View style={styles.metadataItem}>
+                          <Text style={styles.metadataLabel}>Resolution</Text>
+                          <Text style={styles.metadataValue}>
+                            {photoData.width} × {photoData.height}
+                          </Text>
+                        </View>
+                      )}
+                      {photoData.fileSize && (
+                        <View style={styles.metadataItem}>
+                          <Text style={styles.metadataLabel}>Size</Text>
+                          <Text style={styles.metadataValue}>
+                            {(photoData.fileSize / 1024 / 1024).toFixed(2)} MB
+                          </Text>
+                        </View>
+                      )}
                     </View>
                   )}
+
+                  {/* GPS Location */}
+                  {photoData.latitude != null && photoData.longitude != null && (
+                    <TouchableOpacity
+                      onPress={openInMaps}
+                      style={styles.metadataRow}
+                      accessibilityRole="link"
+                      accessibilityLabel="Open location in maps"
+                      accessibilityHint="Double tap to open this location in your maps app"
+                    >
+                      <View style={styles.metadataItem}>
+                        <Text style={styles.metadataLabel}>Location</Text>
+                        <View style={styles.locationValue}>
+                          <Text style={styles.metadataValueLink}>
+                            {photoData.latitude.toFixed(5)}, {photoData.longitude.toFixed(5)}
+                          </Text>
+                          <Ionicons name="open-outline" size={14} color={colors.electricBlue} />
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  )}
+
+                  {/* Analysis status */}
+                  <View style={styles.analysisStatus}>
+                    {photoData.isAnalyzed ? (
+                      <View style={styles.statusBadge}>
+                        <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+                        <Text style={styles.statusText}>Analyzed</Text>
+                      </View>
+                    ) : (
+                      <View style={styles.statusBadge}>
+                        <Ionicons name="hourglass-outline" size={16} color={colors.warning} />
+                        <Text style={styles.statusTextPending}>Pending Analysis</Text>
+                      </View>
+                    )}
+                  </View>
                 </View>
+
+                {/* Freight Analysis */}
+                {photoData.freightAnalysis && (
+                  <FreightAnalysisCard
+                    analysis={photoData.freightAnalysis}
+                    hazards={photoData.hazardAlerts}
+                  />
+                )}
+              </ScrollView>
+            ) : (
+              <View style={styles.errorContainer}>
+                <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
+                <Text style={styles.errorText}>{error?.message || 'Photo not found'}</Text>
+                <Text style={styles.errorSubtext}>
+                  The photo may have been deleted or is unavailable.
+                </Text>
               </View>
+            )}
+          </SafeAreaView>
+        </View>
 
-              {/* Freight Analysis */}
-              {photoData.freightAnalysis && (
-                <FreightAnalysisCard
-                  analysis={photoData.freightAnalysis}
-                  hazards={photoData.hazardAlerts}
-                />
-              )}
-            </ScrollView>
-          ) : (
-            <View style={styles.errorContainer}>
-              <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
-              <Text style={styles.errorText}>{error?.message || 'Photo not found'}</Text>
-              <Text style={styles.errorSubtext}>
-                The photo may have been deleted or is unavailable.
-              </Text>
-            </View>
-          )}
-        </SafeAreaView>
-      </View>
+        <ConfirmSheet
+          visible={showDeleteConfirm}
+          type="danger"
+          title="Delete Photo"
+          message="Are you sure you want to delete this photo? This action cannot be undone."
+          confirmLabel="Delete"
+          cancelLabel="Cancel"
+          onConfirm={handleConfirmDelete}
+          onCancel={handleCancelDelete}
+          isLoading={isDeleting}
+        />
 
-      <ConfirmSheet
-        visible={showDeleteConfirm}
-        type="danger"
-        title="Delete Photo"
-        message="Are you sure you want to delete this photo? This action cannot be undone."
-        confirmLabel="Delete"
-        cancelLabel="Cancel"
-        onConfirm={handleConfirmDelete}
-        onCancel={handleCancelDelete}
-        isLoading={isDeleting}
-      />
-
-      <AlertSheet
-        visible={alertSheet.visible}
-        type="error"
-        title={alertSheet.title}
-        message={alertSheet.message}
-        onDismiss={() => setAlertSheet((prev) => ({ ...prev, visible: false }))}
-      />
+        <AlertSheet
+          visible={alertSheet.visible}
+          type="error"
+          title={alertSheet.title}
+          message={alertSheet.message}
+          onDismiss={() => setAlertSheet((prev) => ({ ...prev, visible: false }))}
+        />
       </Animated.View>
     </Modal>
   );

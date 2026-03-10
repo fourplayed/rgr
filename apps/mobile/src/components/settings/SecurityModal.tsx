@@ -3,11 +3,10 @@ import {
   View,
   Text,
   TouchableOpacity,
-  TextInput,
   Switch,
   StyleSheet,
-  ScrollView,
 } from 'react-native';
+import { BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { LoadingDots } from '../common/LoadingDots';
 import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
@@ -197,7 +196,7 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
       <View style={sheetLayout.container}>
         <SheetHeader icon="shield-checkmark" title="Security" onClose={onClose} />
 
-        <ScrollView
+        <BottomSheetScrollView
           style={sheetLayout.scroll}
           contentContainerStyle={[sheetLayout.scrollContent, { paddingBottom: sheetBottomPadding }]}
           bounces={true}
@@ -249,7 +248,7 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
                     <View style={styles.inputGroup}>
                       <Text style={styles.label}>Current Password</Text>
                       <View style={styles.passwordInputWrapper}>
-                        <TextInput
+                        <BottomSheetTextInput
                           style={styles.passwordInput}
                           value={currentPassword}
                           onChangeText={setCurrentPassword}
@@ -276,7 +275,7 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
                     <View style={styles.inputGroup}>
                       <Text style={styles.label}>New Password</Text>
                       <View style={styles.passwordInputWrapper}>
-                        <TextInput
+                        <BottomSheetTextInput
                           style={styles.passwordInput}
                           value={newPassword}
                           onChangeText={setNewPassword}
@@ -319,7 +318,7 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
                     <View style={styles.inputGroup}>
                       <Text style={styles.label}>Confirm New Password</Text>
                       <View style={styles.passwordInputWrapper}>
-                        <TextInput
+                        <BottomSheetTextInput
                           style={styles.passwordInput}
                           value={confirmPassword}
                           onChangeText={setConfirmPassword}
@@ -381,7 +380,7 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
               </View>
             )}
           </View>
-        </ScrollView>
+        </BottomSheetScrollView>
       </View>
     </SheetModal>
   );

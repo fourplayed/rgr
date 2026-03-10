@@ -26,9 +26,14 @@ interface DefectReportListItemProps {
 
 function DefectReportListItemComponent({ defect, onPress }: DefectReportListItemProps) {
   const { icon, color } = DEFECT_STATUS_CONFIG[defect.status] ?? DEFECT_STATUS_CONFIG.reported;
-  const handlePress = useCallback(() => { onPress(defect); }, [onPress, defect]);
+  const handlePress = useCallback(() => {
+    onPress(defect);
+  }, [onPress, defect]);
   const containerStyle = useMemo(
-    () => [cardStyles.container, { borderColor: color, borderWidth: 0.5, backgroundColor: color + '08' }],
+    () => [
+      cardStyles.container,
+      { borderColor: color, borderWidth: 0.5, backgroundColor: color + '08' },
+    ],
     [color]
   );
 

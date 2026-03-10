@@ -17,7 +17,9 @@ async function triggerWebRegoLookup(assetId: string, registrationNumber: string)
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     if (!supabaseUrl || !registrationNumber) return;
     const supabase = getSupabaseClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     if (!session?.access_token) return;
     await fetch(`${supabaseUrl}/functions/v1/rego-lookup`, {
       method: 'POST',

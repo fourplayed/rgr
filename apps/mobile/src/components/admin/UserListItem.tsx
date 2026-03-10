@@ -15,10 +15,15 @@ interface UserListItemProps {
 }
 
 function UserListItemInner({ user, onPress }: UserListItemProps) {
-  const handlePress = useCallback(() => { onPress(user); }, [onPress, user]);
+  const handlePress = useCallback(() => {
+    onPress(user);
+  }, [onPress, user]);
   const borderColor = getUserRoleColor(user.role) ?? colors.border;
   const containerStyle = useMemo(
-    () => [styles.container, { borderColor, borderWidth: 0.5, backgroundColor: borderColor + '08' }],
+    () => [
+      styles.container,
+      { borderColor, borderWidth: 0.5, backgroundColor: borderColor + '08' },
+    ],
     [borderColor]
   );
 

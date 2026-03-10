@@ -1,200 +1,131 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useCallback } from 'react';
+import { Platform, StyleSheet } from 'react-native';
 import {
-  View,
-  Modal,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  Animated,
-  useWindowDimensions,
-} from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+  BottomSheetModal,
+  BottomSheetBackdrop,
+  BottomSheetScrollView,
+  BottomSheetFlatList,
+  BottomSheetTextInput,
+  type BottomSheetBackdropProps,
+} from '@gorhom/bottom-sheet';
 import { BlurView } from 'expo-blur';
-import { SHEET_SPRING, SHEET_EXIT, BACKDROP_IN, BACKDROP_OUT } from '../../theme/animation';
+import * as Haptics from 'expo-haptics';
+import { colors } from '../../theme/colors';
+import { borderRadius } from '../../theme/spacing';
 
 interface SheetModalProps {
   visible: boolean;
   onClose: () => void;
   children: React.ReactNode;
-  /** Wrap content in KeyboardAvoidingView */
-  keyboardAware?: boolean | undefined;
-  /** @deprecated Use onExitComplete instead */
-  onDismiss?: (() => void) | undefined;
-  /** When false, skip backdrop render + animation (ModalShell provides it). Default true. */
-  backdrop?: boolean | undefined;
-  /** Fires after exit animation completes */
+  /** Enable keyboard-aware behavior for form sheets */
+  keyboardAware?: boolean;
+  /** Fires after dismiss animation completes */
   onExitComplete?: (() => void) | undefined;
-  /** Render as absolute overlay instead of native Modal (for use inside ModalShell). */
-  inline?: boolean | undefined;
+  /** Disable swipe-to-dismiss when mutations are in-flight */
+  preventDismissWhileBusy?: boolean | undefined;
+  /** Render without backdrop (parent provides persistent backdrop for chaining) */
+  noBackdrop?: boolean | undefined;
 }
 
+/**
+ * Sheet modal adapter using @gorhom/bottom-sheet.
+ *
+ * - Data modals: fixed snap point at 90% (prevents layout jank on async content load)
+ * - Form modals: `preventDismissWhileBusy` disables swipe when mutations are pending
+ * - `onExitComplete` fires after dismiss animation (wired to gorhom's `onDismiss`)
+ * - Re-exports gorhom scrollable components for consumer use
+ */
 export function SheetModal({
   visible,
   onClose,
   children,
   keyboardAware = false,
-  onDismiss,
-  backdrop = true,
   onExitComplete,
-  inline = false,
+  preventDismissWhileBusy = false,
+  noBackdrop = false,
 }: SheetModalProps) {
-  const { height: screenHeight } = useWindowDimensions();
-  const translateY = useRef(new Animated.Value(screenHeight)).current;
-  const backdropOpacity = useRef(new Animated.Value(0)).current;
-  const [mounted, setMounted] = useState(false);
-  const wasVisible = useRef(false);
-  const exitAnimRef = useRef<Animated.CompositeAnimation | null>(null);
-
-  const Wrapper = keyboardAware ? KeyboardAvoidingView : View;
-  const wrapperProps = keyboardAware
-    ? { behavior: Platform.OS === 'ios' ? ('padding' as const) : ('height' as const) }
-    : {};
-
-  // Entrance animation
-  useEffect(() => {
-    if (visible) {
-      // Cancel any in-flight exit
-      exitAnimRef.current?.stop();
-      exitAnimRef.current = null;
-
-      wasVisible.current = true;
-      setMounted(true);
-      translateY.setValue(screenHeight);
-      backdropOpacity.setValue(0);
-
-      const anims: Animated.CompositeAnimation[] = [
-        Animated.spring(translateY, { toValue: 0, ...SHEET_SPRING }),
-      ];
-      if (backdrop) {
-        anims.push(Animated.timing(backdropOpacity, { toValue: 1, ...BACKDROP_IN }));
-      }
-      Animated.parallel(anims).start();
-    }
-  }, [visible, screenHeight, translateY, backdropOpacity, backdrop]);
-
-  // Exit animation (triggered by visible going true→false)
-  const runExit = useCallback(() => {
-    if (!wasVisible.current) return;
-    wasVisible.current = false;
-
-    const anims: Animated.CompositeAnimation[] = [
-      Animated.timing(translateY, { toValue: screenHeight, ...SHEET_EXIT }),
-    ];
-    if (backdrop) {
-      anims.push(Animated.timing(backdropOpacity, { toValue: 0, ...BACKDROP_OUT }));
-    }
-    const anim = Animated.parallel(anims);
-    exitAnimRef.current = anim;
-    anim.start(({ finished }) => {
-      exitAnimRef.current = null;
-      if (finished) {
-        setMounted(false);
-        onExitComplete?.();
-        onDismiss?.();
-      }
-    });
-  }, [screenHeight, translateY, backdropOpacity, backdrop, onExitComplete, onDismiss]);
+  const ref = useRef<BottomSheetModal>(null);
+  const isPresentedRef = useRef(false);
 
   useEffect(() => {
-    if (!visible && wasVisible.current) {
-      runExit();
+    if (visible && !isPresentedRef.current) {
+      ref.current?.present();
+      isPresentedRef.current = true;
+    } else if (!visible && isPresentedRef.current) {
+      ref.current?.dismiss();
+      isPresentedRef.current = false;
     }
-  }, [visible, runExit]);
+  }, [visible]);
 
-  // Cleanup on unmount
+  // Cleanup on unmount — prevent orphaned portals
   useEffect(() => {
     return () => {
-      exitAnimRef.current?.stop();
-      exitAnimRef.current = null;
+      ref.current?.dismiss();
     };
   }, []);
 
-  const sheetContent = (
-    <Animated.View
-      style={[styles.sheetWrapper, { transform: [{ translateY }] }]}
-      pointerEvents="box-none"
-    >
-      {children}
-    </Animated.View>
+  const handleDismiss = useCallback(() => {
+    isPresentedRef.current = false;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onClose();
+    onExitComplete?.();
+  }, [onClose, onExitComplete]);
+
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        pressBehavior={preventDismissWhileBusy ? 'none' : 'close'}
+      >
+        {Platform.OS === 'ios' ? (
+          <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFillObject} />
+        ) : null}
+      </BottomSheetBackdrop>
+    ),
+    [preventDismissWhileBusy]
   );
 
-  // Inline mode: absolute overlay (no native Modal)
-  if (inline) {
-    if (!mounted && !visible) return null;
-    return (
-      <View style={[StyleSheet.absoluteFill, styles.inlineRoot]} pointerEvents="box-none">
-        {backdrop && (
-          <Animated.View style={[StyleSheet.absoluteFillObject, { opacity: backdropOpacity }]}>
-            <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFillObject} />
-          </Animated.View>
-        )}
-        <Wrapper style={styles.container} {...wrapperProps}>
-          {(backdrop || !inline) && (
-            <TouchableOpacity
-              style={styles.backdropTouchable}
-              activeOpacity={1}
-              onPress={onClose}
-              accessibilityRole="button"
-              accessibilityLabel="Close"
-            />
-          )}
-          {sheetContent}
-        </Wrapper>
-      </View>
-    );
-  }
-
-  // Standard mode: native Modal with deferred unmount
   return (
-    <Modal
-      visible={mounted || visible}
-      transparent
-      animationType="none"
-      statusBarTranslucent
-      onRequestClose={onClose}
+    <BottomSheetModal
+      ref={ref}
+      snapPoints={SNAP_POINTS}
+      enablePanDownToClose={!preventDismissWhileBusy}
+      onDismiss={handleDismiss}
+      {...(!noBackdrop ? { backdropComponent: renderBackdrop } : {})}
+      backgroundStyle={styles.background}
+      handleIndicatorStyle={styles.handle}
+      {...(keyboardAware ? {
+        keyboardBehavior: 'interactive' as const,
+        keyboardBlurBehavior: 'restore' as const,
+        android_keyboardInputMode: 'adjustResize' as const,
+      } : {})}
+      animationConfigs={{
+        damping: 18,
+        stiffness: 65,
+      }}
     >
-      {(mounted || visible) && (
-        <SafeAreaProvider>
-          {backdrop && (
-            <Animated.View
-              style={[StyleSheet.absoluteFillObject, styles.blur, { opacity: backdropOpacity }]}
-            >
-              <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFillObject} />
-            </Animated.View>
-          )}
-          <Wrapper style={styles.container} {...wrapperProps}>
-            <TouchableOpacity
-              style={styles.backdropTouchable}
-              activeOpacity={1}
-              onPress={onClose}
-              accessibilityRole="button"
-              accessibilityLabel="Close"
-            />
-            {sheetContent}
-          </Wrapper>
-        </SafeAreaProvider>
-      )}
-    </Modal>
+      {children}
+    </BottomSheetModal>
   );
 }
 
+const SNAP_POINTS = ['90%'];
+
 const styles = StyleSheet.create({
-  blur: {
-    backgroundColor: 'rgba(0,0,30,0.3)',
+  background: {
+    backgroundColor: colors.chrome,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
   },
-  container: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  backdropTouchable: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  sheetWrapper: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  inlineRoot: {
-    zIndex: 9999,
+  handle: {
+    width: 40,
+    height: 4,
+    backgroundColor: colors.border,
+    borderRadius: borderRadius.full,
   },
 });
+
+// Re-export gorhom scrollable components so consumers import from this adapter
+export { BottomSheetScrollView, BottomSheetFlatList, BottomSheetTextInput };

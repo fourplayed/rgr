@@ -16,8 +16,7 @@ export async function triggerRegoLookup(assetId: string): Promise<void> {
     if (!session) return;
 
     const supabaseUrl =
-      Constants.expoConfig?.extra?.['supabaseUrl'] ||
-      process.env['EXPO_PUBLIC_SUPABASE_URL'];
+      Constants.expoConfig?.extra?.['supabaseUrl'] || process.env['EXPO_PUBLIC_SUPABASE_URL'];
 
     if (!supabaseUrl) return;
 

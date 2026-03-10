@@ -17,7 +17,14 @@ import type { PhotoType } from '@rgr/shared';
 import { usePhotoCapture } from '../../hooks/usePhotoCapture';
 import { LoadingDots } from '../common/LoadingDots';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, lineHeight, borderRadius, shadows, fontFamily as fonts } from '../../theme/spacing';
+import {
+  spacing,
+  fontSize,
+  lineHeight,
+  borderRadius,
+  shadows,
+  fontFamily as fonts,
+} from '../../theme/spacing';
 import { FULLSCREEN_SPRING, SHEET_EXIT } from '../../theme/animation';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
@@ -149,20 +156,20 @@ function CameraCaptureComponent({
         onDismiss={onDismiss}
       >
         <Animated.View style={[{ flex: 1 }, { transform: [{ translateY: slideY }] }]}>
-        <SafeAreaProvider>
-          <View style={styles.container}>
-            <SafeAreaView style={styles.centered}>
-              <Ionicons
-                name="camera-outline"
-                size={48}
-                color={colors.electricBlue}
-                style={styles.checkingIcon}
-              />
-              <Text style={styles.messageText}>Checking Camera...</Text>
-              <LoadingDots color={colors.textSecondary} size={8} />
-            </SafeAreaView>
-          </View>
-        </SafeAreaProvider>
+          <SafeAreaProvider>
+            <View style={styles.container}>
+              <SafeAreaView style={styles.centered}>
+                <Ionicons
+                  name="camera-outline"
+                  size={48}
+                  color={colors.electricBlue}
+                  style={styles.checkingIcon}
+                />
+                <Text style={styles.messageText}>Checking Camera...</Text>
+                <LoadingDots color={colors.textSecondary} size={8} />
+              </SafeAreaView>
+            </View>
+          </SafeAreaProvider>
         </Animated.View>
       </Modal>
     );
@@ -179,48 +186,48 @@ function CameraCaptureComponent({
         onDismiss={onDismiss}
       >
         <Animated.View style={[{ flex: 1 }, { transform: [{ translateY: slideY }] }]}>
-        <SafeAreaProvider>
-          <View style={styles.container}>
-            <SafeAreaView style={styles.centered}>
-              <View style={styles.permissionCard}>
-                <Ionicons
-                  name="ban-outline"
-                  size={48}
-                  color={colors.error}
-                  style={styles.permissionIcon}
-                />
-                <Text style={styles.permissionTitle}>Camera Access Required</Text>
-                <Text style={styles.permissionBody}>
-                  {permanentlyDenied
-                    ? 'Camera permission was denied. Please enable it in your device Settings to capture photos.'
-                    : 'Camera permission is needed to capture photos. Enable it in your device Settings.'}
-                </Text>
-                <View style={styles.permissionButtonRow}>
-                  <TouchableOpacity
-                    style={styles.permissionCancelButton}
-                    onPress={handleClose}
-                    accessibilityRole="button"
-                    accessibilityLabel="Cancel"
-                  >
-                    <Text style={styles.permissionCancelButtonText}>Cancel</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.permissionGrantButton}
-                    onPress={permanentlyDenied ? () => Linking.openSettings() : requestPermission}
-                    accessibilityRole="button"
-                    accessibilityLabel={
-                      permanentlyDenied ? 'Open device settings' : 'Grant camera permission'
-                    }
-                  >
-                    <Text style={styles.permissionGrantButtonText}>
-                      {permanentlyDenied ? 'Open Settings' : 'Grant'}
-                    </Text>
-                  </TouchableOpacity>
+          <SafeAreaProvider>
+            <View style={styles.container}>
+              <SafeAreaView style={styles.centered}>
+                <View style={styles.permissionCard}>
+                  <Ionicons
+                    name="ban-outline"
+                    size={48}
+                    color={colors.error}
+                    style={styles.permissionIcon}
+                  />
+                  <Text style={styles.permissionTitle}>Camera Access Required</Text>
+                  <Text style={styles.permissionBody}>
+                    {permanentlyDenied
+                      ? 'Camera permission was denied. Please enable it in your device Settings to capture photos.'
+                      : 'Camera permission is needed to capture photos. Enable it in your device Settings.'}
+                  </Text>
+                  <View style={styles.permissionButtonRow}>
+                    <TouchableOpacity
+                      style={styles.permissionCancelButton}
+                      onPress={handleClose}
+                      accessibilityRole="button"
+                      accessibilityLabel="Cancel"
+                    >
+                      <Text style={styles.permissionCancelButtonText}>Cancel</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.permissionGrantButton}
+                      onPress={permanentlyDenied ? () => Linking.openSettings() : requestPermission}
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        permanentlyDenied ? 'Open device settings' : 'Grant camera permission'
+                      }
+                    >
+                      <Text style={styles.permissionGrantButtonText}>
+                        {permanentlyDenied ? 'Open Settings' : 'Grant'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
-              </View>
-            </SafeAreaView>
-          </View>
-        </SafeAreaProvider>
+              </SafeAreaView>
+            </View>
+          </SafeAreaProvider>
         </Animated.View>
       </Modal>
     );
@@ -234,88 +241,64 @@ function CameraCaptureComponent({
       onDismiss={onDismiss}
     >
       <Animated.View style={[{ flex: 1 }, { transform: [{ translateY: slideY }] }]}>
-      <SafeAreaProvider>
-        <View style={styles.container}>
-          <CameraView ref={cameraRef} style={styles.camera} facing="back" enableTorch={torchOn}>
-            <SafeAreaView style={styles.cameraOverlay}>
-              <View style={styles.topBar}>
-                <TouchableOpacity
-                  style={styles.topBarButton}
-                  onPress={() => setTorchOn((v) => !v)}
-                  accessibilityRole="button"
-                  accessibilityLabel={torchOn ? 'Turn off torch' : 'Turn on torch'}
-                >
-                  <Ionicons
-                    name={torchOn ? 'flashlight' : 'flashlight-outline'}
-                    size={22}
-                    color={torchOn ? colors.warning : colors.textInverse}
-                  />
-                </TouchableOpacity>
-                <View style={styles.topBarTitleCenter}>
-                  <Text style={styles.topBarTitleText}>Capture Photo</Text>
-                  <Text style={styles.topBarSubtitleText}>{getGuideText(photoType)}</Text>
-                </View>
-                <TouchableOpacity
-                  style={styles.topBarButton}
-                  onPress={handleClose}
-                  accessibilityRole="button"
-                  accessibilityLabel="Close camera"
-                >
-                  <Ionicons name="close" size={24} color={colors.textInverse} />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.cameraGuide}>
-                <Animated.View style={[styles.guideFrame, { opacity: guideOpacity }]}>
-                  <View
-                    style={[
-                      styles.guideCorner,
-                      styles.guideTopLeft,
-                                          ]}
-                  />
-                  <View
-                    style={[
-                      styles.guideCorner,
-                      styles.guideTopRight,
-                                          ]}
-                  />
-                  <View
-                    style={[
-                      styles.guideCorner,
-                      styles.guideBottomLeft,
-                                          ]}
-                  />
-                  <View
-                    style={[
-                      styles.guideCorner,
-                      styles.guideBottomRight,
-                                          ]}
-                  />
-                </Animated.View>
-              </View>
-
-              <View style={styles.cameraCaptureBand}>
-                <View style={styles.captureContainer}>
+        <SafeAreaProvider>
+          <View style={styles.container}>
+            <CameraView ref={cameraRef} style={styles.camera} facing="back" enableTorch={torchOn}>
+              <SafeAreaView style={styles.cameraOverlay}>
+                <View style={styles.topBar}>
                   <TouchableOpacity
-                    style={styles.captureButton}
-                    onPress={handleCapture}
-                    activeOpacity={0.7}
+                    style={styles.topBarButton}
+                    onPress={() => setTorchOn((v) => !v)}
                     accessibilityRole="button"
-                    accessibilityLabel="Take photo"
-                    accessibilityHint="Double tap to capture a photo"
+                    accessibilityLabel={torchOn ? 'Turn off torch' : 'Turn on torch'}
                   >
-                    <View
-                      style={[
-                        styles.captureButtonInner,
-                                              ]}
+                    <Ionicons
+                      name={torchOn ? 'flashlight' : 'flashlight-outline'}
+                      size={22}
+                      color={torchOn ? colors.warning : colors.textInverse}
                     />
                   </TouchableOpacity>
+                  <View style={styles.topBarTitleCenter}>
+                    <Text style={styles.topBarTitleText}>Capture Photo</Text>
+                    <Text style={styles.topBarSubtitleText}>{getGuideText(photoType)}</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.topBarButton}
+                    onPress={handleClose}
+                    accessibilityRole="button"
+                    accessibilityLabel="Close camera"
+                  >
+                    <Ionicons name="close" size={24} color={colors.textInverse} />
+                  </TouchableOpacity>
                 </View>
-              </View>
-            </SafeAreaView>
-          </CameraView>
-        </View>
-      </SafeAreaProvider>
+
+                <View style={styles.cameraGuide}>
+                  <Animated.View style={[styles.guideFrame, { opacity: guideOpacity }]}>
+                    <View style={[styles.guideCorner, styles.guideTopLeft]} />
+                    <View style={[styles.guideCorner, styles.guideTopRight]} />
+                    <View style={[styles.guideCorner, styles.guideBottomLeft]} />
+                    <View style={[styles.guideCorner, styles.guideBottomRight]} />
+                  </Animated.View>
+                </View>
+
+                <View style={styles.cameraCaptureBand}>
+                  <View style={styles.captureContainer}>
+                    <TouchableOpacity
+                      style={styles.captureButton}
+                      onPress={handleCapture}
+                      activeOpacity={0.7}
+                      accessibilityRole="button"
+                      accessibilityLabel="Take photo"
+                      accessibilityHint="Double tap to capture a photo"
+                    >
+                      <View style={[styles.captureButtonInner]} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </SafeAreaView>
+            </CameraView>
+          </View>
+        </SafeAreaProvider>
       </Animated.View>
     </Modal>
   );

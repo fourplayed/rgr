@@ -123,10 +123,7 @@ export const useLocationStore = create<LocationState>((set, get) => ({
               accuracy: Location.Accuracy.High,
             }),
             new Promise<never>((_, reject) =>
-              setTimeout(
-                () => reject(new Error('Location request timed out')),
-                LOCATION_TIMEOUT_MS
-              )
+              setTimeout(() => reject(new Error('Location request timed out')), LOCATION_TIMEOUT_MS)
             ),
           ]);
         } catch {
@@ -225,8 +222,7 @@ export const useLocationStore = create<LocationState>((set, get) => ({
     const { lastResolvedAt, isResolvingDepot, permissionDenied } = get();
     if (isResolvingDepot || permissionDenied) return;
 
-    const isStale =
-      !lastResolvedAt || Date.now() - lastResolvedAt.getTime() > STALE_THRESHOLD_MS;
+    const isStale = !lastResolvedAt || Date.now() - lastResolvedAt.getTime() > STALE_THRESHOLD_MS;
 
     if (isStale) {
       get().resolveDepot(depots);
@@ -260,8 +256,14 @@ export const useLocationStore = create<LocationState>((set, get) => ({
 export function waitForLocationResolution(timeoutMs = 15_000): Promise<boolean> {
   return new Promise((resolve) => {
     const current = useLocationStore.getState();
-    if (current.lastLocation) { resolve(true); return; }
-    if (!current.isResolvingDepot) { resolve(false); return; }
+    if (current.lastLocation) {
+      resolve(true);
+      return;
+    }
+    if (!current.isResolvingDepot) {
+      resolve(false);
+      return;
+    }
 
     let settled = false;
     const timeout = setTimeout(() => {

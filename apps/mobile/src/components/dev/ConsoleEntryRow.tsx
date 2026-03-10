@@ -31,10 +31,7 @@ function ConsoleEntryRowInner({ entry }: Props) {
   const hasData = entry.data !== undefined;
 
   return (
-    <Pressable
-      onPress={hasData ? () => setExpanded((v) => !v) : undefined}
-      style={styles.row}
-    >
+    <Pressable onPress={hasData ? () => setExpanded((v) => !v) : undefined} style={styles.row}>
       {/* Level color stripe */}
       <View style={[styles.stripe, { backgroundColor: color }]} />
 
@@ -42,9 +39,7 @@ function ConsoleEntryRowInner({ entry }: Props) {
         <View style={styles.headerRow}>
           {/* Namespace pill */}
           <View style={styles.namespacePill}>
-            <Text style={styles.namespaceText}>
-              {entry.namespace.toUpperCase()}
-            </Text>
+            <Text style={styles.namespaceText}>{entry.namespace.toUpperCase()}</Text>
           </View>
 
           {/* Timestamp */}

@@ -17,10 +17,7 @@ describe('useMutationFromService', () => {
     const { wrapper } = createWrapper();
     const serviceFn = jest.fn().mockResolvedValue({ success: true, data: { id: '1' } });
 
-    const { result } = renderHook(
-      () => useMutationFromService({ serviceFn }),
-      { wrapper },
-    );
+    const { result } = renderHook(() => useMutationFromService({ serviceFn }), { wrapper });
 
     result.current.mutate('input');
 
@@ -32,10 +29,7 @@ describe('useMutationFromService', () => {
     const { wrapper } = createWrapper();
     const serviceFn = jest.fn().mockResolvedValue({ success: false, error: 'boom' });
 
-    const { result } = renderHook(
-      () => useMutationFromService({ serviceFn }),
-      { wrapper },
-    );
+    const { result } = renderHook(() => useMutationFromService({ serviceFn }), { wrapper });
 
     result.current.mutate('input');
 
@@ -52,9 +46,12 @@ describe('useMutationFromService', () => {
       () =>
         useMutationFromService({
           serviceFn,
-          invalidates: [['assets', 'list'], ['scans', 'recent']],
+          invalidates: [
+            ['assets', 'list'],
+            ['scans', 'recent'],
+          ],
         }),
-      { wrapper },
+      { wrapper }
     );
 
     result.current.mutate('input');
@@ -67,9 +64,7 @@ describe('useMutationFromService', () => {
   it('calls invalidateQueries for computed keys from function', async () => {
     const { wrapper, queryClient } = createWrapper();
     const spy = jest.spyOn(queryClient, 'invalidateQueries');
-    const serviceFn = jest
-      .fn()
-      .mockResolvedValue({ success: true, data: { assetId: 'a1' } });
+    const serviceFn = jest.fn().mockResolvedValue({ success: true, data: { assetId: 'a1' } });
 
     const { result } = renderHook(
       () =>
@@ -80,7 +75,7 @@ describe('useMutationFromService', () => {
             ['defects', 'list'],
           ],
         }),
-      { wrapper },
+      { wrapper }
     );
 
     result.current.mutate('input');
@@ -92,9 +87,7 @@ describe('useMutationFromService', () => {
 
   it('calls custom onSuccess after invalidation', async () => {
     const { wrapper } = createWrapper();
-    const serviceFn = jest
-      .fn()
-      .mockResolvedValue({ success: true, data: { id: '42' } });
+    const serviceFn = jest.fn().mockResolvedValue({ success: true, data: { id: '42' } });
     const onSuccess = jest.fn();
 
     const { result } = renderHook(
@@ -104,7 +97,7 @@ describe('useMutationFromService', () => {
           invalidates: [['some', 'key']],
           onSuccess,
         }),
-      { wrapper },
+      { wrapper }
     );
 
     result.current.mutate('input');

@@ -31,10 +31,7 @@ export function useMutationFromService<TInput, TData>({
       return result.data;
     },
     onSuccess: (data, variables) => {
-      const keys =
-        typeof invalidates === 'function'
-          ? invalidates(data, variables)
-          : invalidates;
+      const keys = typeof invalidates === 'function' ? invalidates(data, variables) : invalidates;
 
       if (keys) {
         for (const key of keys) {

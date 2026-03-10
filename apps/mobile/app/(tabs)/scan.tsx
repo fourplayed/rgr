@@ -356,14 +356,12 @@ export default function ScanScreen() {
           onAcceptPress={handleAcceptPress}
           onDismissConfirmed={handleDismissConfirmed}
           variant="compact"
-          inline
         />
         <MaintenanceDetailModal
           visible={contextMaintenanceId !== null}
           maintenanceId={contextMaintenanceId}
           onClose={() => setContextMaintenanceId(null)}
           variant="compact"
-          inline
         />
         {/* Create maintenance from defect accept */}
         {acceptDefectContext && (
@@ -377,7 +375,6 @@ export default function ScanScreen() {
             defaultDescription={acceptDefectContext.description ?? undefined}
             defaultPriority="high"
             onExternalSubmit={handleAcceptSubmit}
-            inline
           />
         )}
 
@@ -388,8 +385,7 @@ export default function ScanScreen() {
           onClose={handleReviewClose}
           onConfirmed={handleReviewConfirmed}
           onRetake={handleReviewRetake}
-          onDismiss={handleSheetDismiss}
-          inline
+          onExitComplete={handleSheetDismiss}
         />
 
         {/* Success flash — inside Modal so it renders above the dark backdrop */}
@@ -431,7 +427,7 @@ export default function ScanScreen() {
         isSubmitting={isSubmittingDefect}
         onSubmit={flowDefectSubmit}
         onCancel={handleDefectCancel}
-        onDismiss={handleSheetDismiss}
+        onExitComplete={handleSheetDismiss}
         showPhotoOption={true}
       />
 

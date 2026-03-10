@@ -45,9 +45,14 @@ function AssetListItemComponent({ asset, onPress, depotLookup }: AssetListItemPr
     : null;
 
   const statusIcon = ASSET_STATUS_ICONS[asset.status] ?? 'ellipse-outline';
-  const handlePress = useCallback(() => { onPress(asset); }, [onPress, asset]);
+  const handlePress = useCallback(() => {
+    onPress(asset);
+  }, [onPress, asset]);
   const containerStyle = useMemo(
-    () => [cardStyles.container, { borderColor: statusColor, borderWidth: 0.5, backgroundColor: statusColor + '08' }],
+    () => [
+      cardStyles.container,
+      { borderColor: statusColor, borderWidth: 0.5, backgroundColor: statusColor + '08' },
+    ],
     [statusColor]
   );
 

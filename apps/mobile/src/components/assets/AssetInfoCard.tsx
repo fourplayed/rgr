@@ -54,7 +54,17 @@ export function AssetInfoCard({ asset, nextServiceDate, assessment, onPress }: A
   const isDotPending = asset.dotLookupStatus === 'pending';
 
   const cardContent = (
-    <View style={[styles.card, { borderLeftWidth: 4, borderColor: statusColor, borderWidth: 0.5, backgroundColor: statusColor + '08' }]}>
+    <View
+      style={[
+        styles.card,
+        {
+          borderLeftWidth: 4,
+          borderColor: statusColor,
+          borderWidth: 0.5,
+          backgroundColor: statusColor + '08',
+        },
+      ]}
+    >
       <View style={styles.header}>
         <Ionicons name={ASSET_STATUS_ICONS[asset.status]} size={36} color={statusColor} />
         <View style={styles.assetColumn}>
@@ -79,9 +89,7 @@ export function AssetInfoCard({ asset, nextServiceDate, assessment, onPress }: A
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Registration Expiry</Text>
             <View style={styles.expiryValueRow}>
-              {isDotPending && (
-                <ActivityIndicator size="small" color={colors.textSecondary} />
-              )}
+              {isDotPending && <ActivityIndicator size="small" color={colors.textSecondary} />}
               {asset.registrationOverdue && (
                 <View style={styles.overdueBadge}>
                   <Text style={styles.overdueBadgeText}>OVERDUE</Text>

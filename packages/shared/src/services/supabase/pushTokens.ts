@@ -46,7 +46,10 @@ export async function upsertPushToken(
 /**
  * Delete a push token by user ID and device ID.
  */
-export async function deletePushToken(userId: string, deviceId: string): Promise<ServiceResult<void>> {
+export async function deletePushToken(
+  userId: string,
+  deviceId: string
+): Promise<ServiceResult<void>> {
   const supabase = getSupabaseClient();
 
   const { error } = await supabase
@@ -105,9 +108,7 @@ export async function getPushTokensForRole(role: string): Promise<ServiceResult<
     };
   }
 
-  const tokens = (tokenRows || []).map((row) =>
-    mapRowToPushToken(row as unknown as PushTokenRow)
-  );
+  const tokens = (tokenRows || []).map((row) => mapRowToPushToken(row as unknown as PushTokenRow));
 
   return { success: true, data: tokens, error: null };
 }
