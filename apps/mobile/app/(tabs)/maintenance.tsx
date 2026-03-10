@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,6 @@ import {
   SafeAreaView,
   TouchableOpacity,
   Animated,
-  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -41,7 +40,8 @@ import { useDefectReportList } from '../../src/hooks/useDefectData';
 import { useAcceptDefect } from '../../src/hooks/useAcceptDefect';
 import { useModalTransition } from '../../src/hooks/useModalTransition';
 import { useTabFade } from '../../src/hooks/useTabFade';
-import { BlurView } from 'expo-blur';
+import { usePersistentBackdrop } from '../../src/hooks/usePersistentBackdrop';
+import { PersistentBackdrop } from '../../src/components/common/PersistentBackdrop';
 import { useUserPermissions } from '../../src/contexts/UserPermissionsContext';
 
 type ModalState =
@@ -97,16 +97,9 @@ export default function MaintenanceScreen() {
   const { modal, closeModal: close, transitionTo, isTransitioning, handleExitComplete } = useModalTransition<ModalState>({ type: 'none' });
 
   // Persistent backdrop — stays visible during A→B modal transitions
-  const backdropOpacity = useRef(new Animated.Value(0)).current;
-  const showBackdrop = modal.type !== 'none' || isTransitioning;
-
-  useEffect(() => {
-    Animated.timing(backdropOpacity, {
-      toValue: showBackdrop ? 1 : 0,
-      duration: showBackdrop ? 250 : 200,
-      useNativeDriver: true,
-    }).start();
-  }, [showBackdrop, backdropOpacity]);
+  const { backdropOpacity, showBackdrop, mounted: backdropMounted } = usePersistentBackdrop(
+    modal.type !== 'none' || isTransitioning
+  );
 
   // Accept defect hook (moved up from DefectReportDetailModal)
   const { mutateAsync: acceptDefect } = useAcceptDefect();
@@ -367,21 +360,12 @@ export default function MaintenanceScreen() {
         </Animated.View>
 
         {/* Persistent backdrop — stays visible during A→B modal transitions */}
-        <Animated.View
-          style={[StyleSheet.absoluteFill, styles.modalBackdrop, { opacity: backdropOpacity }]}
-          pointerEvents={showBackdrop ? 'auto' : 'none'}
-        >
-          {Platform.OS === 'ios' && (
-            <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFillObject} />
-          )}
-          <TouchableOpacity
-            style={StyleSheet.absoluteFill}
-            activeOpacity={1}
-            onPress={close}
-            accessibilityRole="button"
-            accessibilityLabel="Close"
-          />
-        </Animated.View>
+        <PersistentBackdrop
+          opacity={backdropOpacity}
+          showBackdrop={showBackdrop}
+          mounted={backdropMounted}
+          onPress={close}
+        />
 
         {/* Chained modals — gorhom portal rendering (no wrapper needed) */}
         <DefectReportDetailModal
@@ -503,9 +487,5 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
-  },
-  modalBackdrop: {
-    backgroundColor: 'rgba(0,0,30,0.3)',
-    zIndex: 10,
   },
 });

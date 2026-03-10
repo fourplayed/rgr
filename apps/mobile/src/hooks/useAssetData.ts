@@ -129,10 +129,14 @@ export function useAssetList(filters?: {
   categories?: AssetCategory[];
   depotIds?: string[];
   search?: string;
+  enabled?: boolean;
 }) {
+  // Exclude `enabled` from query key to preserve cache identity
+  const { enabled, ...queryFilters } = filters ?? {};
   return useQuery({
-    queryKey: assetKeys.list(filters),
+    queryKey: assetKeys.list(Object.keys(queryFilters).length > 0 ? queryFilters : undefined),
     staleTime: 30_000,
+    enabled: enabled ?? true,
     queryFn: async () => {
       const params: {
         page: number;

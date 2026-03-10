@@ -84,8 +84,10 @@ export function CreateMaintenanceModal({
 
   const effectiveAssetId = assetId ?? selectedAssetId ?? undefined;
 
-  // Fetch assets for picker (always called to satisfy hook rules; cached by React Query)
-  const assetSearchFilters = assetSearch ? { search: assetSearch, pageSize: 20 } : { pageSize: 20 };
+  // Fetch assets for picker (disabled when modal is hidden to avoid unnecessary query observer work)
+  const assetSearchFilters = assetSearch
+    ? { search: assetSearch, pageSize: 20, enabled: visible }
+    : { pageSize: 20, enabled: visible };
   const { data: assetListData, isLoading: assetsLoading } = useAssetList(assetSearchFilters);
   const assetResults = assetListData?.data ?? [];
 

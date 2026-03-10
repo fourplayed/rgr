@@ -9,6 +9,7 @@ import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { colors } from '../../theme/colors';
 import { borderRadius } from '../../theme/spacing';
+import { GORHOM_SPRING } from '../../theme/animation';
 
 interface BottomSheetProps {
   visible: boolean;
@@ -83,20 +84,21 @@ export function BottomSheet({
       backdropComponent={renderBackdrop}
       backgroundStyle={styles.background}
       handleIndicatorStyle={styles.handle}
-      {...(keyboardAware ? {
-        keyboardBehavior: 'interactive' as const,
-        keyboardBlurBehavior: 'restore' as const,
-        android_keyboardInputMode: 'adjustResize' as const,
-      } : {})}
-      animationConfigs={{
-        damping: 18,
-        stiffness: 65,
-      }}
+      {...(keyboardAware ? KEYBOARD_AWARE_PROPS : EMPTY_OBJ)}
+      animationConfigs={GORHOM_SPRING}
     >
       {children}
     </BottomSheetModal>
   );
 }
+
+const KEYBOARD_AWARE_PROPS = {
+  keyboardBehavior: 'interactive' as const,
+  keyboardBlurBehavior: 'restore' as const,
+  android_keyboardInputMode: 'adjustResize' as const,
+} as const;
+
+const EMPTY_OBJ = {} as const;
 
 const styles = StyleSheet.create({
   background: {

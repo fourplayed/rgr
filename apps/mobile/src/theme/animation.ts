@@ -16,3 +16,6 @@ export const TAB_FADE = { duration: 150, useNativeDriver: true } as const;
 
 /** Full-screen modal slide (stiffer/faster than bottom sheet) */
 export const FULLSCREEN_SPRING = { friction: 10, tension: 70, useNativeDriver: true } as const;
+
+/** gorhom/bottom-sheet spring config (damping/stiffness, not friction/tension) */
+export const GORHOM_SPRING = { damping: 18, stiffness: 65 } as const;

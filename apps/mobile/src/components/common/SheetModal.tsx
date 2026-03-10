@@ -12,6 +12,7 @@ import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { colors } from '../../theme/colors';
 import { borderRadius } from '../../theme/spacing';
+import { GORHOM_SPRING } from '../../theme/animation';
 
 interface SheetModalProps {
   visible: boolean;
@@ -71,20 +72,23 @@ export function SheetModal({
     onExitComplete?.();
   }, [onClose, onExitComplete]);
 
+  const preventDismissRef = useRef(preventDismissWhileBusy);
+  preventDismissRef.current = preventDismissWhileBusy;
+
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
       <BottomSheetBackdrop
         {...props}
         disappearsOnIndex={-1}
         appearsOnIndex={0}
-        pressBehavior={preventDismissWhileBusy ? 'none' : 'close'}
+        pressBehavior={preventDismissRef.current ? 'none' : 'close'}
       >
         {Platform.OS === 'ios' ? (
           <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFillObject} />
         ) : null}
       </BottomSheetBackdrop>
     ),
-    [preventDismissWhileBusy]
+    [] // stable — reads ref at invocation time
   );
 
   return (
@@ -96,15 +100,8 @@ export function SheetModal({
       {...(!noBackdrop ? { backdropComponent: renderBackdrop } : {})}
       backgroundStyle={styles.background}
       handleIndicatorStyle={styles.handle}
-      {...(keyboardAware ? {
-        keyboardBehavior: 'interactive' as const,
-        keyboardBlurBehavior: 'restore' as const,
-        android_keyboardInputMode: 'adjustResize' as const,
-      } : {})}
-      animationConfigs={{
-        damping: 18,
-        stiffness: 65,
-      }}
+      {...(keyboardAware ? KEYBOARD_AWARE_PROPS : EMPTY_OBJ)}
+      animationConfigs={GORHOM_SPRING}
     >
       {children}
     </BottomSheetModal>
@@ -112,6 +109,14 @@ export function SheetModal({
 }
 
 const SNAP_POINTS = ['90%'];
+
+const KEYBOARD_AWARE_PROPS = {
+  keyboardBehavior: 'interactive' as const,
+  keyboardBlurBehavior: 'restore' as const,
+  android_keyboardInputMode: 'adjustResize' as const,
+} as const;
+
+const EMPTY_OBJ = {} as const;
 
 const styles = StyleSheet.create({
   background: {
