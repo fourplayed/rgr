@@ -14,11 +14,16 @@ import { LoadingDots } from '../../../src/components/common/LoadingDots';
 import { RefreshLoadingDots } from '../../../src/components/common/RefreshLoadingDots';
 import { ScreenHeader } from '../../../src/components/common/ScreenHeader';
 import { EmptyState } from '../../../src/components/common/EmptyState';
+import { PersistentBackdrop } from '../../../src/components/common/PersistentBackdrop';
+import { CreateAssetModal } from '../../../src/components/assets/CreateAssetModal';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import type { AssetStatus, AssetCategory, AssetWithRelations } from '@rgr/shared';
 import { useInfiniteAssetList, useDepots } from '../../../src/hooks/useAssetData';
 import { useDepotLookup } from '../../../src/hooks/useDepots';
 import { useDebounce } from '../../../src/hooks/useDebounce';
+import { useUserPermissions } from '../../../src/contexts/UserPermissionsContext';
+import { useModalTransition } from '../../../src/hooks/useModalTransition';
+import { usePersistentBackdrop } from '../../../src/hooks/usePersistentBackdrop';
 import { AssetListItem } from '../../../src/components/assets/AssetListItem';
 import { AssetFilterPanel } from '../../../src/components/assets/AssetFilterPanel';
 import { colors } from '../../../src/theme/colors';
@@ -55,6 +60,19 @@ export default function AssetListScreen() {
     subtypes: [],
     depotIds: [],
   });
+
+  // Modal + permission state
+  type ModalState = { type: 'none' } | { type: 'createAsset' };
+
+  const { canAccessAdmin } = useUserPermissions();
+  const { modal, closeModal, transitionTo, isTransitioning, handleExitComplete } =
+    useModalTransition<ModalState>({ type: 'none' });
+  const { backdropOpacity, showBackdrop, mounted: backdropMounted } =
+    usePersistentBackdrop(modal.type !== 'none' || isTransitioning);
+
+  const handleOpenCreate = useCallback(() => {
+    transitionTo({ type: 'createAsset' });
+  }, [transitionTo]);
 
   // Apply status filter from route params (e.g. navigating from dashboard stat card)
   useEffect(() => {
@@ -168,6 +186,20 @@ export default function AssetListScreen() {
         <ScreenHeader
           title="Fleet Assets"
           compact
+          rightAction={canAccessAdmin ? (
+            <TouchableOpacity
+              style={styles.addLink}
+              onPress={handleOpenCreate}
+              activeOpacity={0.6}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel="Create new asset"
+              accessibilityHint="Double tap to add a new fleet asset"
+            >
+              <Ionicons name="add-circle-outline" size={16} color={colors.electricBlue} />
+              <Text style={styles.addLinkText}>New Asset</Text>
+            </TouchableOpacity>
+          ) : undefined}
         />
 
         <View style={styles.searchContainer}>
@@ -252,6 +284,19 @@ export default function AssetListScreen() {
         />
       )}
       </SafeAreaView>
+
+      <PersistentBackdrop
+        opacity={backdropOpacity}
+        showBackdrop={showBackdrop}
+        mounted={backdropMounted}
+        onPress={closeModal}
+      />
+      <CreateAssetModal
+        visible={modal.type === 'createAsset'}
+        onClose={closeModal}
+        noBackdrop
+        onExitComplete={handleExitComplete}
+      />
     </View>
   );
 }
@@ -312,5 +357,15 @@ const styles = StyleSheet.create({
     fontSize: fontSize.base,
     fontFamily: fonts.bold,
     color: colors.textInverse,
+  },
+  addLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  addLinkText: {
+    fontSize: fontSize.sm,
+    fontFamily: fonts.bold,
+    color: colors.electricBlue,
   },
 });

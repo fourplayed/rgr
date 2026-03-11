@@ -51,7 +51,7 @@ function AssetListItemComponent({ asset, onPress, depotLookup }: AssetListItemPr
   const containerStyle = useMemo(
     () => [
       cardStyles.container,
-      { borderColor: statusColor, borderWidth: 0.5, backgroundColor: statusColor + '08' },
+      { borderLeftColor: statusColor, backgroundColor: statusColor + '08' },
     ],
     [statusColor]
   );

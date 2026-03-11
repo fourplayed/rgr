@@ -3,9 +3,10 @@ import { spacing } from '../theme/spacing';
 
 /**
  * Returns bottom padding for sheet modal scroll content.
- * Matches the BottomSheet formula: Math.max(insets.bottom, spacing['2xl']).
+ * Uses insets.bottom + extra buffer so content clears the home indicator
+ * on devices with dynamic-sizing sheets.
  */
 export function useSheetBottomPadding(): number {
   const insets = useSafeAreaInsets();
-  return Math.max(insets.bottom, spacing['2xl']);
+  return Math.max(insets.bottom * 2.5 + spacing.lg, spacing['3xl']);
 }

@@ -5,7 +5,7 @@ import { useAssetDefectReports } from './useDefectData';
 import { useDepots } from './useDepots';
 import { buildAssetAssessment } from '../utils/assetAssessment';
 import type { Asset, AssetWithRelations } from '@rgr/shared';
-import type { MatchedDepot } from './scan/useScanActionFlow';
+import type { MatchedDepot } from './scan/scanFlowMachine';
 
 /**
  * Compute a natural-language assessment for an asset.

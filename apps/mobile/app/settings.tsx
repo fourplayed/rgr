@@ -166,7 +166,7 @@ export default function SettingsScreen() {
                   <View style={styles.divider} />
                   <TouchableOpacity
                     style={styles.settingsItem}
-                    onPress={() => setConsoleEnabled(v => !v)}
+                    onPress={() => setConsoleEnabled(!consoleEnabled)}
                     accessibilityRole="checkbox"
                     accessibilityState={{ checked: consoleEnabled }}
                     accessibilityLabel="Enable Console"

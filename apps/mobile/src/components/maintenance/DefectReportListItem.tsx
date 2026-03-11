@@ -1,21 +1,10 @@
 import React, { memo, useCallback, useMemo } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import type { DefectReportListItem as DefectReportListItemType, DefectStatus } from '@rgr/shared';
+import type { DefectReportListItem as DefectReportListItemType } from '@rgr/shared';
 import { formatRelativeTime, formatAssetNumber } from '@rgr/shared';
-import { colors } from '../../theme/colors';
-import { DefectStatusBadge } from './DefectStatusBadge';
+import { DefectStatusBadge, DEFECT_STATUS_CONFIG } from './DefectStatusBadge';
 import { cardStyles } from './maintenance.styles';
-
-export const DEFECT_STATUS_CONFIG: Record<
-  DefectStatus,
-  { icon: keyof typeof Ionicons.glyphMap; color: string }
-> = {
-  reported: { icon: 'warning', color: colors.defectYellow },
-  task_created: { icon: 'construct', color: colors.info },
-  resolved: { icon: 'checkmark-circle', color: colors.success },
-  dismissed: { icon: 'close-circle', color: colors.textSecondary },
-};
 
 export const DEFECT_ITEM_HEIGHT = 72;
 
@@ -32,7 +21,7 @@ function DefectReportListItemComponent({ defect, onPress }: DefectReportListItem
   const containerStyle = useMemo(
     () => [
       cardStyles.container,
-      { borderColor: color, borderWidth: 0.5, backgroundColor: color + '08' },
+      { borderLeftColor: color, backgroundColor: color + '08' },
     ],
     [color]
   );

@@ -93,7 +93,7 @@ const ActivityCard = memo(function ActivityCard({
     return (
       <Animated.View style={{ opacity: entranceOpacity }}>
         <TouchableOpacity
-          style={[styles.scanCard, { borderColor: activityColor, borderWidth: 0.5, backgroundColor: activityColor + '08' }]}
+          style={[styles.scanCard, { borderLeftColor: activityColor, backgroundColor: activityColor + '08' }]}
           onPress={handlePress}
           activeOpacity={0.7}
           accessibilityRole="button"
@@ -137,7 +137,7 @@ const ActivityCard = memo(function ActivityCard({
     return (
       <Animated.View style={{ opacity: entranceOpacity }}>
         <TouchableOpacity
-          style={[styles.scanCard, { borderColor: colors.defectYellow, borderWidth: 0.5, backgroundColor: colors.defectYellow + '08' }]}
+          style={[styles.scanCard, { borderLeftColor: colors.defectYellow, backgroundColor: colors.defectYellow + '08' }]}
           onPress={handlePress}
           activeOpacity={0.7}
           accessibilityRole="button"
@@ -175,7 +175,7 @@ const ActivityCard = memo(function ActivityCard({
   return (
     <Animated.View style={{ opacity: entranceOpacity }}>
       <TouchableOpacity
-        style={[styles.scanCard, { borderColor: maintConfig.color, borderWidth: 0.5, backgroundColor: maintConfig.color + '08' }]}
+        style={[styles.scanCard, { borderLeftColor: maintConfig.color, backgroundColor: maintConfig.color + '08' }]}
         onPress={handlePress}
         activeOpacity={0.7}
         accessibilityRole="button"
@@ -701,8 +701,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     padding: spacing.md,
     borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderWidth: 0,
     borderLeftWidth: 4,
     marginBottom: spacing.sm,
   },

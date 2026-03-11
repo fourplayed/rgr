@@ -6,7 +6,6 @@ import {
   StyleSheet,
   SafeAreaView,
   TouchableOpacity,
-  Modal,
   Animated,
 } from 'react-native';
 import { LoadingDots } from '../../../src/components/common/LoadingDots';
@@ -49,6 +48,7 @@ import { useTabFade } from '../../../src/hooks/useTabFade';
 import { usePersistentBackdrop } from '../../../src/hooks/usePersistentBackdrop';
 import { PersistentBackdrop } from '../../../src/components/common/PersistentBackdrop';
 import { EmptyState } from '../../../src/components/common/EmptyState';
+import { BottomSheet } from '../../../src/components/common/BottomSheet';
 
 type AssetModalState =
   | { type: 'none' }
@@ -555,41 +555,24 @@ export default function AssetDetailScreen() {
         )}
       </Animated.View>
 
-      {/* QR Code Modal - Superuser Only */}
-      <Modal
-        visible={showQRModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowQRModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Asset QR Code</Text>
-              <TouchableOpacity
-                onPress={() => setShowQRModal(false)}
-                style={styles.modalCloseButton}
-                accessibilityRole="button"
-                accessibilityLabel="Close QR code modal"
-              >
-                <Ionicons name="close" size={24} color={colors.text} />
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.modalAssetNumber}>{formatAssetNumber(asset.assetNumber)}</Text>
-            <View style={styles.qrContainer}>
-              {asset.qrCodeData && (
-                <QRCode
-                  value={asset.qrCodeData}
-                  size={200}
-                  color={colors.text}
-                  backgroundColor={colors.background}
-                />
-              )}
-            </View>
-            <Text style={styles.qrDataText}>{asset.qrCodeData}</Text>
+      {/* QR Code Sheet - Superuser Only */}
+      <BottomSheet visible={showQRModal} onDismiss={() => setShowQRModal(false)}>
+        <View style={styles.qrSheetContent}>
+          <Text style={styles.qrSheetTitle}>Asset QR Code</Text>
+          <Text style={styles.modalAssetNumber}>{formatAssetNumber(asset.assetNumber)}</Text>
+          <View style={styles.qrContainer}>
+            {asset.qrCodeData && (
+              <QRCode
+                value={asset.qrCodeData}
+                size={200}
+                color={colors.text}
+                backgroundColor={colors.background}
+              />
+            )}
           </View>
+          <Text style={styles.qrDataText}>{asset.qrCodeData}</Text>
         </View>
-      </Modal>
+      </BottomSheet>
 
       {/* Photo Detail Modal */}
       <PhotoDetailModal
@@ -695,36 +678,18 @@ const styles = StyleSheet.create({
   activityList: {
     gap: spacing.sm,
   },
-  // QR Code Modal
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'center',
+  // QR Code Sheet
+  qrSheetContent: {
     alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: colors.background,
-    borderRadius: borderRadius.lg,
     padding: spacing.xl,
-    width: '85%',
-    maxWidth: 320,
-    alignItems: 'center',
+    paddingBottom: spacing.xl + spacing.base,
   },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-    marginBottom: spacing.md,
-  },
-  modalTitle: {
+  qrSheetTitle: {
     fontSize: fontSize.lg,
     fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
-  },
-  modalCloseButton: {
-    padding: spacing.xs,
+    marginBottom: spacing.md,
   },
   modalAssetNumber: {
     fontSize: fontSize.xl,

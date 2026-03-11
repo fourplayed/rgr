@@ -84,31 +84,26 @@ function CameraOverlayComponent({
       </View>
 
       {/* ── Footer: location prompt + debug scan ── */}
-      {(!hasLocationPermission || onDebugScan) && (
+      {!hasLocationPermission && (
         <View style={styles.footerTray}>
-          {!hasLocationPermission && (
-            <TouchableOpacity
-              style={[styles.scannerButtonBase, styles.buttonPrimary]}
-              onPress={onRequestLocationPermission}
-              accessibilityRole="button"
-              accessibilityLabel="Enable location"
-              accessibilityHint="Double tap to grant location permission for scan tracking"
-            >
-              <Text style={[styles.scannerButtonText, styles.buttonPrimaryText]}>
-                Enable Location
-              </Text>
-            </TouchableOpacity>
-          )}
-          {onDebugScan && (
-            <Button
-              onPress={onDebugScan}
-              color="#CCFF00"
-              textColor="#000000"
-              style={!hasLocationPermission ? { marginTop: 8 } : undefined}
-            >
-              Debug Scan
-            </Button>
-          )}
+          <TouchableOpacity
+            style={[styles.scannerButtonBase, styles.buttonPrimary]}
+            onPress={onRequestLocationPermission}
+            accessibilityRole="button"
+            accessibilityLabel="Enable location"
+            accessibilityHint="Double tap to grant location permission for scan tracking"
+          >
+            <Text style={[styles.scannerButtonText, styles.buttonPrimaryText]}>
+              Enable Location
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      {onDebugScan && (
+        <View style={styles.debugButtonContainer}>
+          <Button onPress={onDebugScan} color={colors.electricBlue}>
+            Debug Scan
+          </Button>
         </View>
       )}
     </SafeAreaView>

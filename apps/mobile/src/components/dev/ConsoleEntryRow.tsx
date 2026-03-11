@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import type { ConsoleEntry, ConsoleLevel } from '../../store/consoleStore';
-import { fontSize, fontFamily as fonts } from '../../theme/spacing';
+import { colors } from '../../theme/colors';
+import { borderRadius, fontSize, fontFamily as fonts, spacing } from '../../theme/spacing';
 
 const LEVEL_COLORS: Record<ConsoleLevel, string> = {
-  info: '#00A8FF',
-  warn: '#F59E0B',
-  error: '#EF4444',
-  debug: '#94A3B8',
+  info: colors.electricBlue,
+  warn: colors.warning,
+  error: colors.error,
+  debug: colors.textDisabled,
 };
 
 function formatTime(timestamp: number): string {
@@ -71,15 +72,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     minHeight: ROW_HEIGHT,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+    borderBottomColor: 'rgba(255, 255, 255, 0.06)',
   },
   stripe: {
-    width: 4,
+    width: 3,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm - 2,
   },
   headerRow: {
     flexDirection: 'row',
@@ -87,33 +88,33 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   namespacePill: {
-    backgroundColor: 'rgba(255, 255, 255, 0.10)',
-    borderRadius: 4,
-    paddingHorizontal: 5,
+    backgroundColor: 'rgba(0, 168, 255, 0.15)',
+    borderRadius: borderRadius.sm,
+    paddingHorizontal: spacing.xs + 1,
     paddingVertical: 1,
-    marginRight: 6,
+    marginRight: spacing.sm - 2,
   },
   namespaceText: {
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: 'rgba(0, 168, 255, 0.80)',
     fontSize: fontSize.micro,
     fontFamily: fonts.bold,
     letterSpacing: 0.5,
   },
   timestamp: {
-    color: 'rgba(255, 255, 255, 0.4)',
+    color: 'rgba(255, 255, 255, 0.35)',
     fontSize: fontSize.xxs,
     fontFamily: fonts.regular,
   },
   message: {
     fontSize: fontSize.xs,
     fontFamily: fonts.regular,
-    lineHeight: 16, // compact console row
+    lineHeight: 16,
   },
   dataText: {
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: 'rgba(255, 255, 255, 0.45)',
     fontSize: fontSize.xxs,
     fontFamily: fonts.regular,
-    marginTop: 4,
-    lineHeight: 14, // compact console data
+    marginTop: spacing.xs,
+    lineHeight: 14,
   },
 });

@@ -7,7 +7,8 @@ import type { Asset } from '@rgr/shared';
 import { getAssetByQRCode, listAssets } from '@rgr/shared';
 import { logger } from '../../utils/logger';
 import { enqueueScan } from '../../utils/offlineScanQueue';
-import type { ScanFlowAction, MatchedDepot, AlertSheetState } from './useScanActionFlow';
+import type { ScanFlowAction, MatchedDepot } from './scanFlowMachine';
+import type { AlertSheetState } from './useScanFlow';
 import type { Profile } from '@rgr/shared';
 
 export function useScanProcessing(

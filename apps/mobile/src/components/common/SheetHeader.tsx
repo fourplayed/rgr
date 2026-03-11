@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, type TextStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius, shadows, fontFamily as fonts } from '../../theme/spacing';
+import { spacing, fontSize, shadows, fontFamily as fonts } from '../../theme/spacing';
 
 interface HeaderAction {
   icon: keyof typeof Ionicons.glyphMap;
@@ -77,8 +77,6 @@ const styles = StyleSheet.create({
     paddingTop: spacing.base,
     paddingBottom: spacing.base,
     paddingHorizontal: spacing.lg,
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
     ...shadows.sm,
   },
   headerRow: {

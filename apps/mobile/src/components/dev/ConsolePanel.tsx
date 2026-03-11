@@ -3,22 +3,24 @@ import {
   Animated,
   Dimensions,
   FlatList,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useConsoleStore } from '../../store/consoleStore';
 import type { ConsoleEntry, ConsoleNamespace } from '../../store/consoleStore';
 import { ConsoleEntryRow, ROW_HEIGHT } from './ConsoleEntryRow';
 import { SHEET_SPRING } from '../../theme/animation';
-import { fontSize, fontFamily as fonts } from '../../theme/spacing';
+import { colors } from '../../theme/colors';
+import { borderRadius, fontSize, fontFamily as fonts, spacing } from '../../theme/spacing';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
-const SCREEN_WIDTH = Dimensions.get('window').width;
 
 const FILTERS: (ConsoleNamespace | null)[] = [
   null,
@@ -52,23 +54,23 @@ export function ConsolePanel() {
   const setFilter = useConsoleStore((s) => s.setFilter);
   const growPanel = useConsoleStore((s) => s.growPanel);
   const shrinkPanel = useConsoleStore((s) => s.shrinkPanel);
+  const heightOffset = useConsoleStore((s) => s.heightOffset);
 
-  const panelWidth = SCREEN_WIDTH;
-  const panelHeight = Math.round(SCREEN_HEIGHT * 0.5);
+  const panelHeight = Math.round(SCREEN_HEIGHT * 0.45) + heightOffset;
 
-  const translateX = useRef(new Animated.Value(-panelWidth)).current;
+  const translateY = useRef(new Animated.Value(panelHeight)).current;
   const flatListRef = useRef<FlatList<ConsoleEntry>>(null);
   const userScrolledUp = useRef(false);
 
-  // Slide in/out from left
+  // Slide up/down from bottom
   useEffect(() => {
-    Animated.spring(translateX, {
-      toValue: isOpen ? 0 : -panelWidth,
+    Animated.spring(translateY, {
+      toValue: isOpen ? 0 : panelHeight,
       friction: SHEET_SPRING.friction,
       tension: SHEET_SPRING.tension,
       useNativeDriver: true,
     }).start();
-  }, [isOpen, translateX, panelWidth]);
+  }, [isOpen, translateY, panelHeight]);
 
   // Filter entries
   const filteredEntries = useMemo(() => {
@@ -117,32 +119,45 @@ export function ConsolePanel() {
 
   const keyExtractor = useCallback((item: ConsoleEntry) => String(item.id), []);
 
+  const useBlur = Platform.OS === 'ios';
+
   return (
     <Animated.View
       pointerEvents={isOpen ? 'auto' : 'none'}
       style={[
         styles.overlay,
         {
-          top: insets.top,
           height: panelHeight,
-          transform: [{ translateX }],
+          transform: [{ translateY }],
         },
       ]}
     >
+      {/* Background: BlurView on iOS, semi-transparent navy on Android */}
+      {useBlur ? (
+        <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />
+      ) : (
+        <View style={[StyleSheet.absoluteFill, styles.androidBg]} />
+      )}
+
+      {/* Drag handle indicator */}
+      <View style={styles.handleRow}>
+        <View style={styles.handle} />
+      </View>
+
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>CONSOLE</Text>
         <View style={styles.headerActions}>
-          <Pressable onPress={growPanel} hitSlop={8} style={styles.headerBtn}>
-            <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.7)" />
+          <Pressable onPress={growPanel} hitSlop={spacing.sm} style={styles.headerBtn}>
+            <Ionicons name="chevron-up" size={18} color="rgba(255,255,255,0.7)" />
           </Pressable>
-          <Pressable onPress={shrinkPanel} hitSlop={8} style={styles.headerBtn}>
-            <Ionicons name="chevron-back" size={18} color="rgba(255,255,255,0.7)" />
+          <Pressable onPress={shrinkPanel} hitSlop={spacing.sm} style={styles.headerBtn}>
+            <Ionicons name="chevron-down" size={18} color="rgba(255,255,255,0.7)" />
           </Pressable>
-          <Pressable onPress={clearEntries} hitSlop={8} style={styles.headerBtn}>
+          <Pressable onPress={clearEntries} hitSlop={spacing.sm} style={styles.headerBtn}>
             <Ionicons name="trash-outline" size={18} color="rgba(255,255,255,0.7)" />
           </Pressable>
-          <Pressable onPress={toggleOpen} hitSlop={8} style={styles.headerBtn}>
+          <Pressable onPress={toggleOpen} hitSlop={spacing.sm} style={styles.headerBtn}>
             <Ionicons name="close" size={20} color="rgba(255,255,255,0.7)" />
           </Pressable>
         </View>
@@ -192,24 +207,39 @@ export function ConsolePanel() {
 const styles = StyleSheet.create({
   overlay: {
     position: 'absolute',
+    bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0, 0, 30, 0.85)',
     zIndex: 1000,
-    borderTopRightRadius: 16,
-    borderBottomRightRadius: 16,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
+    overflow: 'hidden',
+  },
+  androidBg: {
+    backgroundColor: 'rgba(0, 0, 30, 0.92)',
+  },
+  handleRow: {
+    alignItems: 'center',
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xs,
+  },
+  handle: {
+    width: 36,
+    height: 4,
+    borderRadius: borderRadius.sm,
+    backgroundColor: 'rgba(255, 255, 255, 0.20)',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: spacing.base,
+    paddingBottom: spacing.sm,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255, 255, 255, 0.12)',
+    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
   },
   title: {
-    color: '#D4FF00',
+    color: colors.electricBlue,
     fontSize: fontSize.sm,
     fontFamily: fonts.bold,
     letterSpacing: 2,
@@ -217,10 +247,10 @@ const styles = StyleSheet.create({
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: spacing.md,
   },
   headerBtn: {
-    padding: 4,
+    padding: spacing.xs,
   },
   filterRow: {
     maxHeight: 36,
@@ -228,32 +258,32 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255, 255, 255, 0.08)',
   },
   filterContent: {
-    paddingHorizontal: 12,
+    paddingHorizontal: spacing.md,
     alignItems: 'center',
-    gap: 6,
+    gap: spacing.sm - 2,
   },
   chip: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.10)',
   },
   chipActive: {
-    backgroundColor: '#D4FF00',
+    backgroundColor: colors.electricBlue,
   },
   chipText: {
-    color: 'rgba(255, 255, 255, 0.6)',
+    color: 'rgba(255, 255, 255, 0.50)',
     fontSize: fontSize.xxs,
     fontFamily: fonts.bold,
     letterSpacing: 0.5,
   },
   chipTextActive: {
-    color: '#000030',
+    color: colors.navy,
   },
   list: {
     flex: 1,
   },
   listContent: {
-    paddingBottom: 20,
+    paddingBottom: spacing.lg,
   },
 });

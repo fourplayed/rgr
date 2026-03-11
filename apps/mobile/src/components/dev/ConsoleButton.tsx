@@ -1,13 +1,14 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, Dimensions, PanResponder, StyleSheet, Text, View } from 'react-native';
+import { Animated, Dimensions, PanResponder, Platform, StyleSheet, Text, View } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useConsoleStore } from '../../store/consoleStore';
 import { colors } from '../../theme/colors';
-import { fontSize, fontFamily as fonts } from '../../theme/spacing';
+import { borderRadius, fontSize, fontFamily as fonts, spacing } from '../../theme/spacing';
 
-const BUTTON_SIZE = 44;
+const BUTTON_SIZE = 40;
 const DRAG_THRESHOLD = 10;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
@@ -18,8 +19,8 @@ export function ConsoleButton() {
   const isOpen = useConsoleStore((s) => s.isOpen);
   const unreadCount = useConsoleStore((s) => s.unreadCount);
 
-  // Start vertically centered
-  const initialTop = (SCREEN_HEIGHT - BUTTON_SIZE) / 2;
+  // Start positioned bottom-right, above the tab bar (~90px from bottom)
+  const initialTop = SCREEN_HEIGHT - 90 - BUTTON_SIZE;
   const pan = useRef(new Animated.Value(initialTop)).current;
   const currentTop = useRef(initialTop);
   const isDragging = useRef(false);
@@ -50,8 +51,8 @@ export function ConsoleButton() {
           isDragging.current = true;
         }
         if (isDragging.current) {
-          const minTop = insets.top + 8;
-          const maxTop = SCREEN_HEIGHT - insets.bottom - BUTTON_SIZE - 8;
+          const minTop = insets.top + spacing.sm;
+          const maxTop = SCREEN_HEIGHT - insets.bottom - BUTTON_SIZE - spacing.sm;
           const nextTop = Math.max(minTop, Math.min(maxTop, currentTop.current + gesture.dy));
           pan.setValue(nextTop);
         }
@@ -59,8 +60,8 @@ export function ConsoleButton() {
 
       onPanResponderRelease: (_, gesture) => {
         if (isDragging.current) {
-          const minTop = insets.top + 8;
-          const maxTop = SCREEN_HEIGHT - insets.bottom - BUTTON_SIZE - 8;
+          const minTop = insets.top + spacing.sm;
+          const maxTop = SCREEN_HEIGHT - insets.bottom - BUTTON_SIZE - spacing.sm;
           const clamped = Math.max(minTop, Math.min(maxTop, currentTop.current + gesture.dy));
           commitPosition(clamped);
         } else {
@@ -72,19 +73,27 @@ export function ConsoleButton() {
     })
   ).current;
 
+  const iconColor = isOpen ? colors.navy : colors.electricBlue;
+  const useBlur = Platform.OS === 'ios';
+
   return (
     <Animated.View
       {...panResponder.panHandlers}
       style={[
         styles.button,
         {
-          left: insets.left + 8,
+          right: insets.right + spacing.base,
           top: pan,
         },
         isOpen && styles.buttonOpen,
       ]}
     >
-      <Ionicons name="terminal-outline" size={22} color={isOpen ? '#000030' : colors.devConsole} />
+      {/* Frosted glass background on iOS, solid fallback on Android */}
+      {useBlur && !isOpen ? (
+        <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
+      ) : null}
+
+      <Ionicons name="terminal-outline" size={20} color={iconColor} />
 
       {/* Unread badge */}
       {!isOpen && unreadCount > 0 && (
@@ -103,29 +112,31 @@ const styles = StyleSheet.create({
     width: BUTTON_SIZE,
     height: BUTTON_SIZE,
     borderRadius: BUTTON_SIZE / 2,
-    backgroundColor: 'rgba(0, 0, 30, 0.75)',
+    backgroundColor: 'rgba(0, 0, 30, 0.65)',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: colors.devConsole,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 168, 255, 0.30)',
   },
   buttonOpen: {
-    backgroundColor: colors.devConsole,
+    backgroundColor: colors.electricBlue,
+    borderColor: colors.electricBlue,
   },
   badge: {
     position: 'absolute',
-    top: -4,
-    right: -4,
+    top: -spacing.xs,
+    right: -spacing.xs,
     minWidth: 18,
     height: 18,
-    borderRadius: 9,
-    backgroundColor: '#EF4444',
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.error,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: spacing.xs,
   },
   badgeText: {
-    color: '#FFFFFF',
+    color: colors.textInverse,
     fontSize: fontSize.xxs,
     fontFamily: fonts.bold,
   },

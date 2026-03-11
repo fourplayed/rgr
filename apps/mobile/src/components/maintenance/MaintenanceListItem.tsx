@@ -51,7 +51,7 @@ function MaintenanceListItemComponent({ maintenance, onPress }: MaintenanceListI
   const containerStyle = useMemo(
     () => [
       cardStyles.container,
-      { borderColor: color, borderWidth: 0.5, backgroundColor: color + '08' },
+      { borderLeftColor: color, backgroundColor: color + '08' },
     ],
     [color]
   );

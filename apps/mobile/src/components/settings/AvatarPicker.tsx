@@ -1,9 +1,11 @@
 import React from 'react';
-import { View, Text, Modal, TouchableOpacity, StyleSheet, Pressable } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 import { useAvatarStore, AVATAR_OPTIONS } from '../../store/avatarStore';
+import { BottomSheet } from '../common/BottomSheet';
+import { SheetHeader } from '../common/SheetHeader';
 
 interface AvatarPickerProps {
   visible: boolean;
@@ -19,125 +21,52 @@ export function AvatarPicker({ visible, onClose }: AvatarPickerProps) {
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable
-        style={styles.overlay}
-        onPress={onClose}
-        accessibilityRole="button"
-        accessibilityLabel="Close"
-      >
-        {/* Semi-transparent backdrop matching app's overlay */}
-        <View style={styles.backdropTint} />
+    <BottomSheet visible={visible} onDismiss={onClose}>
+      <View style={styles.content}>
+        <SheetHeader icon="person-circle-outline" title="Choose Avatar" onClose={onClose} />
 
-        <Pressable style={styles.containerWrapper} onPress={(e) => e.stopPropagation()}>
-          <View style={styles.container}>
-            {/* Handle bar */}
-            <View style={styles.handle} />
-
-            <View style={styles.header}>
-              <Text style={styles.title}>Choose Avatar</Text>
+        <View style={styles.grid}>
+          {AVATAR_OPTIONS.map((avatar) => {
+            const isSelected = selectedAvatarId === avatar.id;
+            return (
               <TouchableOpacity
-                onPress={onClose}
-                style={styles.closeButton}
+                key={avatar.id}
+                style={[styles.avatarOption, isSelected && styles.avatarOptionSelected]}
+                onPress={() => handleSelectAvatar(avatar.id)}
                 accessibilityRole="button"
-                accessibilityLabel="Close"
+                accessibilityLabel={`Select ${avatar.label} avatar`}
+                accessibilityState={{ selected: isSelected }}
               >
-                <Ionicons name="close" size={24} color={colors.text} />
+                <View style={[styles.avatarCircle, isSelected && styles.avatarCircleSelected]}>
+                  <Ionicons
+                    name={avatar.icon}
+                    size={28}
+                    color={isSelected ? colors.textInverse : colors.backgroundDark}
+                  />
+                </View>
+                <Text style={[styles.avatarLabel, isSelected && styles.avatarLabelSelected]}>
+                  {avatar.label}
+                </Text>
               </TouchableOpacity>
-            </View>
-
-            <View style={styles.grid}>
-              {AVATAR_OPTIONS.map((avatar) => {
-                const isSelected = selectedAvatarId === avatar.id;
-                return (
-                  <TouchableOpacity
-                    key={avatar.id}
-                    style={[styles.avatarOption, isSelected && styles.avatarOptionSelected]}
-                    onPress={() => handleSelectAvatar(avatar.id)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Select ${avatar.label} avatar`}
-                    accessibilityState={{ selected: isSelected }}
-                  >
-                    <View style={[styles.avatarCircle, isSelected && styles.avatarCircleSelected]}>
-                      <Ionicons
-                        name={avatar.icon}
-                        size={28}
-                        color={isSelected ? colors.textInverse : colors.backgroundDark}
-                      />
-                    </View>
-                    <Text style={[styles.avatarLabel, isSelected && styles.avatarLabelSelected]}>
-                      {avatar.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-        </Pressable>
-      </Pressable>
-    </Modal>
+            );
+          })}
+        </View>
+      </View>
+    </BottomSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  content: {
     padding: spacing.base,
-  },
-  backdropTint: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: colors.overlay,
-  },
-  containerWrapper: {
-    width: '100%',
-    maxWidth: 360,
-    shadowColor: colors.navy,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 0,
-    elevation: 10,
-  },
-  container: {
-    backgroundColor: colors.background,
-    borderRadius: borderRadius.lg,
-    padding: spacing.base,
-    borderWidth: 2,
-    borderColor: colors.border,
-  },
-  handle: {
-    width: 40,
-    height: 4,
-    backgroundColor: colors.border,
-    borderRadius: borderRadius.full,
-    alignSelf: 'center',
-    marginBottom: spacing.md,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.base,
-  },
-  title: {
-    fontSize: fontSize.lg,
-    fontFamily: fonts.bold,
-    color: colors.text,
-  },
-  closeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingBottom: spacing.xl,
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     gap: spacing.sm,
+    marginTop: spacing.md,
   },
   avatarOption: {
     width: '23%',

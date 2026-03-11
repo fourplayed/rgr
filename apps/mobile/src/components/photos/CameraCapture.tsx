@@ -38,6 +38,9 @@ interface CameraCaptureProps {
   latitude?: number | null;
   longitude?: number | null;
   onClose: () => void;
+  /** Called with the captured photo URI (parent dispatches CAMERA_CAPTURED) */
+  onCapturedUri?: (uri: string) => void;
+  /** @deprecated Use onCapturedUri instead — kept for backward compat during migration */
   onPhotoCaptured?: () => void;
   onDismiss?: () => void;
 }
@@ -61,6 +64,7 @@ function CameraCaptureComponent({
   latitude,
   longitude,
   onClose,
+  onCapturedUri,
   onPhotoCaptured,
   onDismiss,
 }: CameraCaptureProps) {
@@ -86,10 +90,11 @@ function CameraCaptureComponent({
   const slideY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
 
   useEffect(() => {
-    if (visible) {
-      slideY.setValue(SCREEN_HEIGHT);
-      Animated.spring(slideY, { toValue: 0, ...FULLSCREEN_SPRING }).start();
-    }
+    if (!visible) return;
+    slideY.setValue(SCREEN_HEIGHT);
+    const anim = Animated.spring(slideY, { toValue: 0, ...FULLSCREEN_SPRING });
+    anim.start();
+    return () => anim.stop();
   }, [visible, slideY]);
 
   const handleAnimatedClose = useCallback(() => {
@@ -117,17 +122,31 @@ function CameraCaptureComponent({
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const uri = await takePhoto(cameraRef);
     if (uri) {
-      onPhotoCaptured?.();
+      // Slide camera down before signaling parent (mirrors handleAnimatedClose)
+      Animated.timing(slideY, { toValue: SCREEN_HEIGHT, ...SHEET_EXIT }).start(() => {
+        if (onCapturedUri) {
+          onCapturedUri(uri);
+        } else {
+          onPhotoCaptured?.();
+        }
+      });
     }
-  }, [takePhoto, onPhotoCaptured]);
+  }, [takePhoto, onCapturedUri, onPhotoCaptured, slideY]);
 
   const handleClose = handleAnimatedClose;
 
   const [torchOn, setTorchOn] = useState(false);
 
-  // Pulse guide corners
+  // Pulse guide corners — only while the camera Modal is visible.
+  // Stopping the loop when invisible is critical: Animated.loop holds an
+  // InteractionManager handle that blocks runAfterInteractions in other
+  // components (e.g. SheetModal deferring present() after camera closes).
   const guideOpacity = useRef(new Animated.Value(1)).current;
   useEffect(() => {
+    if (!visible) {
+      guideOpacity.setValue(1);
+      return;
+    }
     const animation = Animated.loop(
       Animated.sequence([
         Animated.timing(guideOpacity, {
@@ -144,7 +163,7 @@ function CameraCaptureComponent({
     );
     animation.start();
     return () => animation.stop();
-  }, [guideOpacity]);
+  }, [visible, guideOpacity]);
 
   // Permission checking state
   if (!permission) {

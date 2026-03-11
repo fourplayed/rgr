@@ -5,25 +5,34 @@ import { borderRadius } from './spacing';
 /**
  * Shared structural styles for sheet modals.
  *
- * - `container`     — 85% max height, for form sheets
- * - `containerTall` — 90% max height, for detail views
- * - `scroll`        — flex settings for the ScrollView itself
- * - `scrollContent` — horizontal padding only (paddingTop and gap vary per modal)
+ * Background color and rounded corners are owned by gorhom's backgroundStyle
+ * — never add backgroundColor or borderRadius to these containers.
+ *
+ * - `container`        — flex fill for full sheets (90% snap point)
+ * - `containerTall`    — alias for container (kept for consumer compatibility)
+ * - `containerCompact` — content-sized for dynamic-sizing sheets (no flex: 1)
+ * - `scroll`           — flex settings for the BottomSheetScrollView
+ * - `scrollContent`    — horizontal padding (paddingTop/gap vary per modal)
  *
  * paddingBottom is dynamic (safe area) — apply via useSheetBottomPadding().
  */
 export const sheetLayout = StyleSheet.create({
   container: {
-    backgroundColor: colors.chrome,
+    flex: 1,
+    overflow: 'hidden',
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
-    maxHeight: '85%',
   },
   containerTall: {
-    backgroundColor: colors.chrome,
+    flex: 1,
+    overflow: 'hidden',
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
-    maxHeight: '90%',
+  },
+  containerCompact: {
+    overflow: 'hidden',
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
   },
   scroll: {
     flexGrow: 1,
@@ -31,12 +40,5 @@ export const sheetLayout = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20, // spacing.lg
-  },
-  /** Gorhom handle indicator — single source of truth for sheet handles */
-  handle: {
-    width: 40,
-    height: 4,
-    backgroundColor: colors.border,
-    borderRadius: borderRadius.full,
   },
 });

@@ -129,6 +129,10 @@ export const styles = StyleSheet.create({
     marginHorizontal: spacing.lg,
     marginBottom: spacing['2xl'],
   },
+  debugButtonContainer: {
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing['2xl'],
+  },
 
   // ── Scanner button system ──────────────────────────────
   scannerButtonBase: {

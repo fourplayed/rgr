@@ -1,15 +1,15 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
-  ScrollView,
   LayoutAnimation,
   Platform,
   UIManager,
   Animated,
 } from 'react-native';
+import { BottomSheetScrollView } from '../common/SheetModal';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import type { Asset, AssetWithRelations, AssetScanContext } from '@rgr/shared';
@@ -24,7 +24,10 @@ import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, shadows, fontFamily as fonts } from '../../theme/spacing';
 import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 import { useTabFade } from '../../hooks/useTabFade';
-import type { MatchedDepot } from '../../hooks/scan/useScanActionFlow';
+import type { MatchedDepot, ConfirmAction } from '../../hooks/scan/scanFlowMachine';
+
+// Re-export for any consumers that still import from here
+export type { ConfirmAction } from '../../hooks/scan/scanFlowMachine';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -36,8 +39,6 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 type ScanTab = 'actions' | 'openItems';
 
 // ── Types ────────────────────────────────────────────────────────────────────
-
-export type ConfirmAction = 'photo' | 'defect' | 'maintenance' | null;
 
 type ScanConfirmationProps =
   | {
@@ -90,6 +91,14 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
   // Single-select action state (radio behavior)
   const [selectedAction, setSelectedAction] = useState<ConfirmAction>(null);
   const [activeTab, setActiveTab] = useState<ScanTab>('actions');
+
+  // Reset selection when a new scan starts (component stays mounted via displayAsset ref)
+  useEffect(() => {
+    if (isCreating) {
+      setSelectedAction(null);
+      setActiveTab('actions');
+    }
+  }, [isCreating]);
   const tabFade = useTabFade(activeTab);
 
   // Show tabs only for mechanics with existing open items
@@ -149,7 +158,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
       />
 
       {/* ── Scrollable content ── */}
-      <ScrollView
+      <BottomSheetScrollView
         style={styles.scrollView}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: sheetBottomPadding }]}
         showsVerticalScrollIndicator={false}
@@ -279,7 +288,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
         >
           {buttonLabel}
         </Button>
-      </ScrollView>
+      </BottomSheetScrollView>
     </View>
   );
 }
@@ -345,8 +354,7 @@ function OpenItemsSection({
               style={[
                 cardStyles.containerInline,
                 {
-                  borderColor: colors.defectYellow,
-                  borderWidth: 0.5,
+                  borderLeftColor: colors.defectYellow,
                   backgroundColor: colors.defectYellow + '08',
                 },
               ]}
@@ -388,8 +396,7 @@ function OpenItemsSection({
               style={[
                 cardStyles.containerInline,
                 {
-                  borderColor: colors.warning,
-                  borderWidth: 0.5,
+                  borderLeftColor: colors.warning,
                   backgroundColor: colors.warning + '08',
                 },
               ]}
@@ -484,6 +491,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.chrome,
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
+    overflow: 'hidden',
   },
 
   // Scrollable content

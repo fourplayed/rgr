@@ -1,13 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Animated,
-  Alert,
-} from 'react-native';
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, Alert } from 'react-native';
+import { BottomSheetScrollView } from '../common/SheetModal';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { formatRelativeTime, formatAssetNumber } from '@rgr/shared';
@@ -24,7 +17,7 @@ import { useMaintenance } from '../../hooks/useMaintenanceData';
 import { useScanEventPhotos, useSignedUrl } from '../../hooks/usePhotos';
 import { useUserPermissions } from '../../contexts/UserPermissionsContext';
 import { useScatterExit } from '../../hooks/useScatterExit';
-import { DEFECT_STATUS_CONFIG } from './DefectReportListItem';
+import { DEFECT_STATUS_CONFIG } from './DefectStatusBadge';
 
 interface DefectReportDetailModalProps {
   visible: boolean;
@@ -196,8 +189,9 @@ export function DefectReportDetailModal({
       onClose={onClose}
       onExitComplete={onExitComplete}
       noBackdrop={noBackdrop}
+      compact
     >
-      <View style={sheetLayout.containerTall}>
+      <View style={sheetLayout.containerCompact}>
         <SheetHeader
           icon="warning"
           title="Defect Report"

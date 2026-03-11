@@ -53,37 +53,39 @@ export function UserProfileHeader() {
   return (
     <View style={[styles.wrapper, { marginTop: insets.top + HEADER_STATUS_BAR_GAP }]}>
       <View style={styles.accentLine} />
-      <LinearGradient
-        colors={HEADER_GRADIENT_COLORS}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={styles.gradient}
-      >
-        <View style={styles.container}>
-          <View style={{ width: LOGO_WIDTH }} />
-          <View style={styles.actions}>
-            {isDetailPage && (
+      <View style={styles.gradientShadow}>
+        <LinearGradient
+          colors={HEADER_GRADIENT_COLORS}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={styles.gradient}
+        >
+          <View style={styles.container}>
+            <View style={{ width: LOGO_WIDTH }} />
+            <View style={styles.actions}>
+              {isDetailPage && (
+                <TouchableOpacity
+                  onPress={handleBack}
+                  style={styles.actionButton}
+                  accessibilityRole="button"
+                  accessibilityLabel="Go back"
+                >
+                  <Ionicons name="arrow-back" size={24} color={colors.textInverse} />
+                </TouchableOpacity>
+              )}
               <TouchableOpacity
-                onPress={handleBack}
+                onPress={handleSettings}
                 style={styles.actionButton}
                 accessibilityRole="button"
-                accessibilityLabel="Go back"
+                accessibilityLabel="Settings"
+                accessibilityHint="Open settings screen"
               >
-                <Ionicons name="arrow-back" size={24} color={colors.textInverse} />
+                <Ionicons name="settings-outline" size={24} color={colors.textInverse} />
               </TouchableOpacity>
-            )}
-            <TouchableOpacity
-              onPress={handleSettings}
-              style={styles.actionButton}
-              accessibilityRole="button"
-              accessibilityLabel="Settings"
-              accessibilityHint="Open settings screen"
-            >
-              <Ionicons name="settings-outline" size={24} color={colors.textInverse} />
-            </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </LinearGradient>
+        </LinearGradient>
+      </View>
       <Image source={require('../../assets/logo.png')} style={styles.logo} resizeMode="contain" />
       <ConfirmSheet
         visible={showLogoutConfirm}
@@ -109,16 +111,20 @@ const styles = StyleSheet.create({
     marginBottom: HEADER_ACCENT_LINE_GAP,
     zIndex: 1,
   },
-  gradient: {
+  gradientShadow: {
     width: '100%',
     height: HEADER_GRADIENT_HEIGHT,
-    overflow: 'visible',
-    justifyContent: 'center',
+    backgroundColor: colors.primary,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
     shadowRadius: 4,
     elevation: 16,
+  },
+  gradient: {
+    flex: 1,
+    overflow: 'visible',
+    justifyContent: 'center',
   },
   container: {
     flexDirection: 'row',

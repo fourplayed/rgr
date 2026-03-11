@@ -1,16 +1,9 @@
 import React, { useState, useEffect, useRef, memo } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Animated,
-} from 'react-native';
-import { BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, Keyboard, type TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
-import { SheetModal } from '../common/SheetModal';
+import { SheetModal, BottomSheetScrollView, BottomSheetTextInput } from '../common/SheetModal';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 import { sheetLayout } from '../../theme/sheetLayout';
@@ -24,6 +17,8 @@ interface DefectReportSheetProps {
   onExitComplete?: () => void;
   /** When false, hides the "Add Photo of Defect" checkbox. Default true. */
   showPhotoOption?: boolean;
+  /** Render without backdrop (parent provides persistent backdrop). */
+  noBackdrop?: boolean;
 }
 
 function DefectReportSheetComponent({
@@ -33,44 +28,69 @@ function DefectReportSheetComponent({
   onCancel,
   onExitComplete,
   showPhotoOption = true,
+  noBackdrop = false,
 }: DefectReportSheetProps) {
   const sheetBottomPadding = useSheetBottomPadding();
-  const [notes, setNotes] = useState('');
+  const [charCount, setCharCount] = useState(0);
   const [wantsPhoto, setWantsPhoto] = useState(false);
+  const wasVisibleRef = useRef(false);
+  const inputRef = useRef<TextInput>(null);
+  const notesRef = useRef('');
 
-  // Reset state when modal opens (clean slate for new report)
+  // Reset state and focus input on fresh open (false→true edge)
   useEffect(() => {
-    if (visible) {
-      setNotes('');
+    if (visible && !wasVisibleRef.current) {
+      notesRef.current = '';
+      setCharCount(0);
       setWantsPhoto(false);
+      inputRef.current?.clear();
+      // Delay focus until gorhom spring animation settles (~350ms)
+      const timer = setTimeout(() => inputRef.current?.focus(), 400);
+      wasVisibleRef.current = visible;
+      return () => clearTimeout(timer);
     }
+    wasVisibleRef.current = visible;
   }, [visible]);
 
+  const handleChangeText = (text: string) => {
+    notesRef.current = text;
+    setCharCount(text.length);
+  };
+
   const handleSubmit = () => {
-    onSubmit(notes.trim(), wantsPhoto);
+    Keyboard.dismiss();
+    onSubmit(notesRef.current.trim(), wantsPhoto);
   };
 
   const handleCancel = () => {
-    setNotes('');
+    notesRef.current = '';
+    setCharCount(0);
     setWantsPhoto(false);
     onCancel();
   };
 
-  const canSubmit = notes.trim().length > 0;
+  const canSubmit = notesRef.current.trim().length > 0;
 
   // Fade submit button in/out instead of showing it disabled
   const submitOpacity = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.timing(submitOpacity, {
-      toValue: canSubmit ? 1 : 0,
+      toValue: canSubmit ? 1 : 0.4,
       duration: 200,
       useNativeDriver: true,
     }).start();
   }, [canSubmit, submitOpacity]);
 
   return (
-    <SheetModal visible={visible} onClose={handleCancel} onExitComplete={onExitComplete} keyboardAware>
-      <View style={sheetLayout.container}>
+    <SheetModal
+      visible={visible}
+      onClose={handleCancel}
+      onExitComplete={onExitComplete}
+      noBackdrop={noBackdrop}
+      keyboardAware
+      snapPoint="55%"
+    >
+      <View style={sheetLayout.containerTall}>
         <SheetHeader
           icon="warning"
           title="Report Defect"
@@ -97,22 +117,18 @@ function DefectReportSheetComponent({
           <View style={styles.inputSection}>
             <Text style={styles.inputLabel}>Describe the defect</Text>
             <BottomSheetTextInput
-              style={[
-                styles.textInput,
-                notes ? { fontFamily: fonts.regular } : { fontFamily: fonts.italic },
-              ]}
+              ref={inputRef}
+              style={styles.textInput}
               placeholder="Enter details about the defect, damage, or issue..."
               placeholderTextColor={colors.textSecondary}
-              value={notes}
-              onChangeText={setNotes}
+              onChangeText={handleChangeText}
               multiline
               numberOfLines={4}
               maxLength={2000}
               textAlignVertical="top"
-              autoFocus
             />
             <Text style={styles.charCount}>
-              {notes.length > 0 ? `${notes.length}/2000` : 'Required'}
+              {charCount > 0 ? `${charCount}/2000` : 'Required'}
             </Text>
           </View>
 
@@ -122,7 +138,7 @@ function DefectReportSheetComponent({
               style={styles.photoOption}
               onPress={() => setWantsPhoto(!wantsPhoto)}
               activeOpacity={0.7}
-              accessibilityRole="radio"
+              accessibilityRole="checkbox"
               accessibilityLabel="Capture Photo"
               accessibilityState={{ checked: wantsPhoto }}
             >
@@ -134,7 +150,7 @@ function DefectReportSheetComponent({
                 </Text>
               </View>
               <Ionicons
-                name={wantsPhoto ? 'radio-button-on' : 'radio-button-off'}
+                name={wantsPhoto ? 'checkbox' : 'square-outline'}
                 size={26}
                 color={colors.electricBlue}
               />
@@ -178,9 +194,10 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     padding: spacing.base,
     fontSize: fontSize.base,
-    fontFamily: fonts.italic,
+    fontFamily: fonts.regular,
     color: colors.text,
     minHeight: 120,
+    maxHeight: 200,
   },
   charCount: {
     fontSize: fontSize.xs,

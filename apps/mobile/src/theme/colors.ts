@@ -115,8 +115,8 @@ export const colors = {
   overlayLight: 'rgba(0, 0, 0, 0.3)',
   overlayCard: 'rgba(0, 0, 30, 0.5)',
 
-  // Dev console (dev-only, neon yellow-green)
-  devConsole: '#D4FF00',
+  // Dev console (dev-only, matches electricBlue)
+  devConsole: '#00A8FF',
 } as const;
 
 export type ColorKey = keyof typeof colors;

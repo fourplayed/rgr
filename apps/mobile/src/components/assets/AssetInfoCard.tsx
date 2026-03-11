@@ -59,8 +59,7 @@ export function AssetInfoCard({ asset, nextServiceDate, assessment, onPress }: A
         styles.card,
         {
           borderLeftWidth: 4,
-          borderColor: statusColor,
-          borderWidth: 0.5,
+          borderLeftColor: statusColor,
           backgroundColor: statusColor + '08',
         },
       ]}
@@ -145,8 +144,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     borderRadius: borderRadius.lg,
     padding: spacing.base,
-    borderWidth: 1,
-    borderColor: colors.border,
     gap: spacing.md,
   },
   header: {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Keyboard } from 'react-native';
 import type { KeyboardTypeOptions } from 'react-native';
-import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
+import { BottomSheetTextInput } from './SheetModal';
 import { colors } from '../../theme/colors';
 import {
   spacing,

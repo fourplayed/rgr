@@ -1,9 +1,19 @@
 import React, { memo } from 'react';
+import type { Ionicons } from '@expo/vector-icons';
 import type { DefectStatus } from '@rgr/shared';
 import { DefectStatusLabels } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { Badge } from '../common/StatusBadge';
-import { DEFECT_STATUS_CONFIG } from './DefectReportListItem';
+
+export const DEFECT_STATUS_CONFIG: Record<
+  DefectStatus,
+  { icon: keyof typeof Ionicons.glyphMap; color: string }
+> = {
+  reported: { icon: 'warning', color: colors.defectYellow },
+  task_created: { icon: 'construct', color: colors.info },
+  resolved: { icon: 'checkmark-circle', color: colors.success },
+  dismissed: { icon: 'close-circle', color: colors.textSecondary },
+};
 
 interface DefectStatusBadgeProps {
   status: DefectStatus;

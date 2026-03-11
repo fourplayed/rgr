@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text } from 'react-native';
-import { BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
-import { SheetModal } from '../common/SheetModal';
+import { SheetModal, BottomSheetScrollView, BottomSheetTextInput } from '../common/SheetModal';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { formStyles } from '../../theme/formStyles';
