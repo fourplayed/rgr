@@ -19,6 +19,8 @@ interface PhotoReviewSheetProps {
   onConfirmed: () => void;
   onRetake: () => void;
   onExitComplete?: () => void;
+  /** Render without backdrop (parent provides persistent backdrop). */
+  noBackdrop?: boolean;
 }
 
 function PhotoReviewSheetComponent({
@@ -28,6 +30,7 @@ function PhotoReviewSheetComponent({
   onConfirmed,
   onRetake,
   onExitComplete,
+  noBackdrop = false,
 }: PhotoReviewSheetProps) {
   const {
     capturedUri,
@@ -81,7 +84,7 @@ function PhotoReviewSheetComponent({
   const displayUri = stableUri.current;
 
   return (
-    <SheetModal visible={visible} onClose={handleClose} onExitComplete={onExitComplete}>
+    <SheetModal visible={visible} onClose={handleClose} onExitComplete={onExitComplete} noBackdrop={noBackdrop} snapPoint="90%">
       <View style={styles.container}>
         <SheetHeader
           icon="checkmark-circle"
@@ -245,13 +248,9 @@ const overlayStyles = StyleSheet.create({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.chrome,
+    overflow: 'hidden',
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
   },
   photoContainer: {
     aspectRatio: 3 / 4,

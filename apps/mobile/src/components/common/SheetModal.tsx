@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useCallback } from 'react';
-import { Platform, StyleSheet } from 'react-native';
+import { InteractionManager, Platform, StyleSheet, Dimensions } from 'react-native';
 import {
   BottomSheetModal,
   BottomSheetBackdrop,
@@ -14,6 +14,11 @@ import { colors } from '../../theme/colors';
 import { borderRadius } from '../../theme/spacing';
 import { GORHOM_SPRING } from '../../theme/animation';
 
+const MAX_DYNAMIC_HEIGHT = Dimensions.get('window').height;
+
+/** Null handle removes the ~20px handle area above sheet content. */
+const NullHandle = () => null;
+
 interface SheetModalProps {
   visible: boolean;
   onClose: () => void;
@@ -26,6 +31,15 @@ interface SheetModalProps {
   preventDismissWhileBusy?: boolean | undefined;
   /** Render without backdrop (parent provides persistent backdrop for chaining) */
   noBackdrop?: boolean | undefined;
+  /** Compact sheets use dynamic sizing (content determines height).
+   *  Default false = fixed 90% snap for data/form modals.
+   *
+   *  **Do not use on sheets containing `BottomSheetTextInput`.**
+   *  Dynamic sizing + text input creates a layout measurement feedback loop
+   *  (each keystroke triggers re-measurement → disrupts native input state). */
+  compact?: boolean | undefined;
+  /** Fixed snap point override (e.g. '55%'). Ignored when `compact` is true. */
+  snapPoint?: string | undefined;
 }
 
 /**
@@ -44,29 +58,70 @@ export function SheetModal({
   onExitComplete,
   preventDismissWhileBusy = false,
   noBackdrop = false,
+  compact = false,
+  snapPoint,
 }: SheetModalProps) {
   const ref = useRef<BottomSheetModal>(null);
   const isPresentedRef = useRef(false);
+  // Track programmatic dismiss so handleDismiss can distinguish it from user swipe/tap.
+  const programmaticDismissRef = useRef(false);
 
   useEffect(() => {
     if (visible && !isPresentedRef.current) {
-      ref.current?.present();
-      isPresentedRef.current = true;
+      // Defer present() by one interaction frame so any overlapping native Modal
+      // dismiss (e.g. camera → photo review) completes first on iOS.
+      // Safety: if InteractionManager is blocked (e.g. by a lingering animation
+      // handle), fall back after 300ms so the sheet is never silently lost.
+      let cancelled = false;
+      let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
+
+      const doPresent = () => {
+        if (cancelled || isPresentedRef.current) return;
+        if (fallbackTimer) {
+          clearTimeout(fallbackTimer);
+          fallbackTimer = null;
+        }
+        ref.current?.present();
+        isPresentedRef.current = true;
+      };
+
+      const handle = InteractionManager.runAfterInteractions(doPresent);
+      fallbackTimer = setTimeout(doPresent, 300);
+
+      return () => {
+        cancelled = true;
+        handle.cancel();
+        if (fallbackTimer) {
+          clearTimeout(fallbackTimer);
+          fallbackTimer = null;
+        }
+      };
     } else if (!visible && isPresentedRef.current) {
+      programmaticDismissRef.current = true;
       ref.current?.dismiss();
       isPresentedRef.current = false;
     }
   }, [visible]);
 
-  // Cleanup on unmount — prevent orphaned portals
+  // Cleanup on unmount — prevent orphaned portals.
+  // Mark as programmatic so handleDismiss doesn't call onClose.
   useEffect(() => {
     return () => {
+      programmaticDismissRef.current = true;
       ref.current?.dismiss();
     };
   }, []);
 
   const handleDismiss = useCallback(() => {
     isPresentedRef.current = false;
+    if (programmaticDismissRef.current) {
+      // Dismiss was triggered by visible→false — skip onClose (state machine
+      // already knows) and only fire the exit-complete signal.
+      programmaticDismissRef.current = false;
+      onExitComplete?.();
+      return;
+    }
+    // User-initiated dismiss (swipe / backdrop tap)
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onClose();
     onExitComplete?.();
@@ -94,12 +149,14 @@ export function SheetModal({
   return (
     <BottomSheetModal
       ref={ref}
-      snapPoints={SNAP_POINTS}
+      {...(compact
+        ? { enableDynamicSizing: true, maxDynamicContentSize: MAX_DYNAMIC_HEIGHT }
+        : { snapPoints: snapPoint ? [snapPoint] : SNAP_POINTS, enableDynamicSizing: false })}
       enablePanDownToClose={!preventDismissWhileBusy}
       onDismiss={handleDismiss}
       {...(!noBackdrop ? { backdropComponent: renderBackdrop } : {})}
       backgroundStyle={styles.background}
-      handleIndicatorStyle={styles.handle}
+      handleComponent={NullHandle}
       {...(keyboardAware ? KEYBOARD_AWARE_PROPS : EMPTY_OBJ)}
       animationConfigs={GORHOM_SPRING}
     >
@@ -123,12 +180,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.chrome,
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
-  },
-  handle: {
-    width: 40,
-    height: 4,
-    backgroundColor: colors.border,
-    borderRadius: borderRadius.full,
   },
 });
 

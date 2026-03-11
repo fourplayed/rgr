@@ -1,20 +1,15 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import {
-  View,
-  Modal,
-  Animated,
-  StyleSheet,
-  useWindowDimensions,
-} from 'react-native';
+import React, { useEffect, useRef, useCallback } from 'react';
+import { View } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { BlurView } from 'expo-blur';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useUserPermissions } from '../../src/contexts/UserPermissionsContext';
-import { useScanActionFlow } from '../../src/hooks/scan/useScanActionFlow';
+import { useScanFlow } from '../../src/hooks/scan/useScanFlow';
+import type { ScanContextModal } from '../../src/hooks/scan/useScanFlow';
 import { useAssetAssessment } from '../../src/hooks/useAssetAssessment';
+import { usePersistentBackdrop } from '../../src/hooks/usePersistentBackdrop';
+import { PersistentBackdrop } from '../../src/components/common/PersistentBackdrop';
 import { PermissionScreen, CameraOverlay, ScanConfirmation, ScanSuccessFlash } from '../../src/components/scanner';
-import type { ConfirmAction } from '../../src/components/scanner/ScanConfirmation';
+import { SheetModal } from '../../src/components/common/SheetModal';
 import { DefectReportSheet } from '../../src/components/scanner/DefectReportSheet';
 import { CameraCapture, PhotoReviewSheet } from '../../src/components/photos';
 import { CreateMaintenanceModal, DefectReportDetailModal, MaintenanceDetailModal } from '../../src/components/maintenance';
@@ -24,248 +19,88 @@ import { AlertSheet, ErrorBoundary } from '../../src/components/common';
 import { styles } from '../../src/components/scanner/scan.styles';
 
 export default function ScanScreen() {
-  const permissions = useUserPermissions();
-  const { canMarkMaintenance } = permissions;
+  const { canMarkMaintenance } = useUserPermissions();
   const [permission, requestPermission] = useCameraPermissions();
 
-  // ── Single-action confirm flow ref (passed into flow hook so cancel clears it) ──
-  const confirmedActionRef = useRef<ConfirmAction>(null);
+  // ── Unified scan flow ──
+  const flow = useScanFlow({ canMarkMaintenance });
 
-  // ── Unified scan flow hook ──
+  // ── Persistent backdrop (blur + fade) ──
+  const backdrop = usePersistentBackdrop(flow.showOverlay || flow.isCompleting);
 
-  const flow = useScanActionFlow({ canMarkMaintenance, confirmedActionRef });
+  // ── Asset assessment ──
+  const assessment = useAssetAssessment(flow.scannedAsset, flow.matchedDepot);
 
-  // ── Destructure stable handlers from flow (avoids object reference instability) ──
+  // ── Preserve asset during exit animation ──
+  const lastAssetRef = useRef(flow.scannedAsset);
+  if (flow.scannedAsset) lastAssetRef.current = flow.scannedAsset;
+  const displayAsset = flow.scannedAsset ?? lastAssetRef.current;
 
-  const {
-    scannedAsset,
-    matchedDepot,
-    isCreatingScan,
-    refetchContext,
-    handleDonePress,
-    handlePhotoPress,
-    handleDefectPress,
-    handleTaskPress,
-    photoCompleted,
-    defectCompleted,
-    maintenanceCompleted,
-    buttonsDisabled,
-    showCard,
-    handleBarCodeScanned,
-    hasLocationPermission,
-    requestLocationPermission,
-    scanStatus,
-    handleUndoPress,
-    activeSheet,
-    pendingSheet,
-    lastScanEventId,
-    effectiveLocation,
-    handleCameraClose,
-    handlePhotoCaptured,
-    handleReviewConfirmed,
-    handleReviewRetake,
-    handleReviewClose,
-    handleSheetDismiss,
-    handleCloseSheet,
-    isSubmittingDefect,
-    handleDefectCancel,
-    handleDefectSubmit: flowDefectSubmit,
-    alertSheet,
-    setAlertSheet,
-    triggerDebugScan,
-    activePhotoType,
-  } = flow;
-
-  // ── Bottom sheet animation state ──
-  const { height: SCREEN_HEIGHT } = useWindowDimensions();
-  const sheetTranslateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
-  const [isPanelMounted, setIsPanelMounted] = useState(false);
-  const lastAssetRef = useRef(scannedAsset);
-
-  // Preserve asset content during exit animation
-  if (scannedAsset) {
-    lastAssetRef.current = scannedAsset;
+  // ── Force CameraView remount after CameraCapture modal closes ──
+  // iOS only allows one AVCaptureSession; CameraCapture steals it.
+  // Incrementing the key forces a fresh session on the scan tab's CameraView.
+  const cameraKey = useRef(0);
+  const wasCameraOpenRef = useRef(false);
+  if (flow.cameraOpen && !wasCameraOpenRef.current) {
+    wasCameraOpenRef.current = true;
+  } else if (!flow.cameraOpen && wasCameraOpenRef.current) {
+    wasCameraOpenRef.current = false;
+    cameraKey.current++;
   }
 
-  // ── Success flash state ──
-  const [successFlash, setSuccessFlash] = useState<{
-    assetNumber: string;
-    depotName: string | null;
-    photoCompleted: boolean;
-    defectCompleted: boolean;
-    maintenanceCompleted: boolean;
-  } | null>(null);
-
-  // Unmount Modal after success flash is dismissed (card already slid out)
-  useEffect(() => {
-    if (!successFlash && !showCard && isPanelMounted) {
-      setIsPanelMounted(false);
-    }
-  }, [successFlash, showCard, isPanelMounted]);
-
-  // ── Context detail modal state ──
-  const [contextDefectId, setContextDefectId] = useState<string | null>(null);
-  const [contextMaintenanceId, setContextMaintenanceId] = useState<string | null>(null);
-
-  // ── Accept defect → create maintenance task flow ──
-  const { mutateAsync: acceptDefect } = useAcceptDefect();
-  const [acceptDefectContext, setAcceptDefectContext] = useState<{
-    defectId: string;
-    assetId: string;
-    assetNumber?: string;
-    title: string;
-    description?: string | null;
-  } | null>(null);
-
-  // Fade confirmation card when a context modal overlays it
-  const confirmOpacity = useRef(new Animated.Value(1)).current;
-  const contextModalOpen = contextDefectId !== null || contextMaintenanceId !== null || acceptDefectContext !== null;
-
-  useEffect(() => {
-    Animated.timing(confirmOpacity, {
-      toValue: contextModalOpen ? 0 : 1,
-      duration: 200,
-      useNativeDriver: true,
-    }).start();
-  }, [contextModalOpen, confirmOpacity]);
-
-  // ── Asset assessment (lazy-loaded when asset is scanned) ──
-  const assessment = useAssetAssessment(scannedAsset, matchedDepot);
-
-  // ── Permission Requests ──
-
+  // ── Permission requests (once) ──
   const hasRequestedPermissions = useRef(false);
-
   useEffect(() => {
     if (hasRequestedPermissions.current) return;
     hasRequestedPermissions.current = true;
+    if (!permission?.granted) requestPermission();
+    if (!flow.hasLocationPermission) flow.requestLocationPermission();
+  }, [permission?.granted, flow.hasLocationPermission, flow.requestLocationPermission, requestPermission]);
 
-    if (!permission?.granted) {
-      requestPermission();
-    }
-    if (!hasLocationPermission) {
-      requestLocationPermission();
-    }
-  }, [permission?.granted, hasLocationPermission, requestLocationPermission, requestPermission]);
+  // ── Accept defect → create maintenance ──
+  const { mutateAsync: acceptDefect } = useAcceptDefect();
 
-  // ── Sheet slide animation ──
-  useEffect(() => {
-    if (showCard) {
-      sheetTranslateY.setValue(SCREEN_HEIGHT);
-      setIsPanelMounted(true);
-
-      // Delay animation to next frame so Modal is rendered first
-      requestAnimationFrame(() => {
-        Animated.spring(sheetTranslateY, {
-          toValue: 0,
-          friction: 8,
-          tension: 65,
-          useNativeDriver: true,
-        }).start();
-      });
-    } else {
-      Animated.spring(sheetTranslateY, {
-        toValue: SCREEN_HEIGHT,
-        friction: 9,
-        tension: 50,
-        useNativeDriver: true,
-      }).start(({ finished }) => {
-        if (finished && !successFlash) {
-          setIsPanelMounted(false);
-        }
-      });
-    }
-  }, [showCard, sheetTranslateY, SCREEN_HEIGHT, successFlash]);
-
-  // ── Single-action confirm flow ──
-
-  const prevActiveSheetRef = useRef(activeSheet);
-
-  const finishConfirmFlow = useCallback(() => {
-    if (scannedAsset) {
-      setSuccessFlash({
-        assetNumber: scannedAsset.assetNumber,
-        depotName: matchedDepot?.depot.name ?? null,
-        photoCompleted,
-        defectCompleted,
-        maintenanceCompleted,
-      });
-    }
-    setContextDefectId(null);
-    setContextMaintenanceId(null);
-    setAcceptDefectContext(null);
-    confirmedActionRef.current = null;
-    handleDonePress();
-  }, [handleDonePress, scannedAsset, matchedDepot, photoCompleted, defectCompleted, maintenanceCompleted]);
-
-  // When a sheet closes after a confirmed action, go to success flash
-  // Skip when pendingSheet exists — another sheet is about to open via RESOLVE_PENDING
-  useEffect(() => {
-    const wasOpen = prevActiveSheetRef.current !== null;
-    const nowClosed = activeSheet === null;
-    prevActiveSheetRef.current = activeSheet;
-    if (wasOpen && nowClosed && !pendingSheet && confirmedActionRef.current !== null) {
-      finishConfirmFlow();
-    }
-  }, [activeSheet, pendingSheet, finishConfirmFlow]);
-
-  const handleConfirm = useCallback((action: ConfirmAction) => {
-    if (action === null) {
-      finishConfirmFlow();
-      return;
-    }
-    confirmedActionRef.current = action;
-    if (action === 'photo') handlePhotoPress();
-    else if (action === 'defect') handleDefectPress();
-    else if (action === 'maintenance') handleTaskPress();
-  }, [finishConfirmFlow, handlePhotoPress, handleDefectPress, handleTaskPress]);
-
-  const handleUndoPressWithReset = useCallback(() => {
-    setContextDefectId(null);
-    setContextMaintenanceId(null);
-    setAcceptDefectContext(null);
-    confirmedActionRef.current = null;
-    handleUndoPress();
-  }, [handleUndoPress]);
-
-  // ── Task created callback (refresh scan context + mark completed) ──
-  const { markMaintenanceCompleted } = flow;
-
-  const handleTaskCreated = useCallback(() => {
-    refetchContext();
-    markMaintenanceCompleted();
-  }, [refetchContext, markMaintenanceCompleted]);
-
-  // ── Accept defect handlers ──
-  const handleAcceptPress = useCallback((context: {
-    defectId: string;
-    assetId: string;
-    assetNumber?: string;
-    title: string;
-    description?: string | null;
+  const handleAcceptPress = useCallback((ctx: {
+    defectId: string; assetId: string; assetNumber?: string;
+    title: string; description?: string | null;
   }) => {
-    setContextDefectId(null);
-    setAcceptDefectContext(context);
-  }, []);
+    flow.openAcceptDefect({ type: 'acceptDefect', ...ctx });
+  }, [flow.openAcceptDefect]);
+
+  const acceptCtx = flow.contextModal.type === 'acceptDefect' ? flow.contextModal : null;
 
   const handleAcceptSubmit = useCallback(async (input: CreateMaintenanceInput) => {
-    if (!acceptDefectContext) return;
+    if (!acceptCtx) return;
     await acceptDefect({
-      defectReportId: acceptDefectContext.defectId,
+      defectReportId: acceptCtx.defectId,
       maintenanceInput: input,
     });
-    setAcceptDefectContext(null);
-    refetchContext();
-  }, [acceptDefectContext, acceptDefect, refetchContext]);
+    flow.closeContextModal();
+    flow.refetchContext();
+  }, [acceptCtx, acceptDefect, flow.closeContextModal, flow.refetchContext]);
 
-  // ── Dismiss defect flow (confirmation + delete handled inside DefectReportDetailModal) ──
   const handleDismissConfirmed = useCallback(() => {
-    setContextDefectId(null);
-    refetchContext();
-  }, [refetchContext]);
+    flow.closeContextModal();
+    flow.refetchContext();
+  }, [flow.closeContextModal, flow.refetchContext]);
 
-  // ── Render ──
+  // ── Maintenance created callback ──
+  const handleTaskCreated = useCallback(() => {
+    flow.refetchContext();
+    flow.handleMaintenanceCreated();
+  }, [flow.refetchContext, flow.handleMaintenanceCreated]);
 
+  // ── Defect cancel (user closed without submitting) ──
+  const handleDefectCancel = useCallback(() => {
+    flow.handleSheetDismissed();
+  }, [flow.handleSheetDismissed]);
+
+  // ── Backdrop press ──
+  const handleBackdropPress = useCallback(() => {
+    // Don't allow backdrop dismiss of confirmation card
+  }, []);
+
+  // ── Permission gate ──
   if (!permission || !permission.granted) {
     return (
       <PermissionScreen
@@ -276,184 +111,194 @@ export default function ScanScreen() {
     );
   }
 
-  // Determine variant
   const variant = canMarkMaintenance ? 'mechanic' : 'driver';
-
-  // Use lastAssetRef during exit animation so content doesn't vanish mid-slide
-  const displayAsset = scannedAsset ?? lastAssetRef.current;
+  const contextModalOpen = flow.contextModal.type !== 'closed';
+  const anyOverlay = contextModalOpen || flow.activeSheet !== null;
 
   return (
     <View style={styles.container}>
-      {/* Camera always rendered underneath */}
+      {/* Camera viewfinder (always rendered, keyed to recover after CameraCapture steals session) */}
       <CameraView
+        key={cameraKey.current}
         style={styles.camera}
         facing="back"
-        onBarcodeScanned={showCard ? undefined : handleBarCodeScanned}
-        barcodeScannerSettings={{
-          barcodeTypes: ['qr'],
-        }}
+        onBarcodeScanned={flow.showOverlay ? undefined : flow.handleBarCodeScanned}
+        barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
       >
-        {!showCard && (
+        {!flow.showOverlay && (
           <CameraOverlay
-            hasLocationPermission={hasLocationPermission}
-            onRequestLocationPermission={requestLocationPermission}
-            scanStatus={scanStatus}
-            onDebugScan={triggerDebugScan}
+            hasLocationPermission={flow.hasLocationPermission}
+            onRequestLocationPermission={flow.requestLocationPermission}
+            scanStatus={flow.scanStatus}
+            onDebugScan={flow.triggerDebugScan}
           />
         )}
       </CameraView>
 
-      {/* Blur backdrop + confirmation bottom sheet (Modal for z-index above tab header) */}
-      <Modal visible={isPanelMounted} transparent animationType="none" statusBarTranslucent>
-        <SafeAreaProvider>
-        <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFillObject} />
-        {displayAsset && (
-          <Animated.View
-            style={[
-              styles.confirmSheet,
-              { transform: [{ translateY: sheetTranslateY }], opacity: confirmOpacity },
-            ]}
-            pointerEvents={contextModalOpen ? 'none' : 'auto'}
-          >
-            {variant === 'mechanic' ? (
-              <ScanConfirmation
-                variant="mechanic"
-                asset={displayAsset}
-                matchedDepot={matchedDepot}
-                isCreating={isCreatingScan}
-                onConfirm={handleConfirm}
-                onUndoPress={handleUndoPressWithReset}
-                photoCompleted={photoCompleted}
-                defectCompleted={defectCompleted}
-                maintenanceCompleted={maintenanceCompleted}
-                disabled={buttonsDisabled}
-                assessment={assessment}
-                scanContext={flow.scanContext}
-                onDefectPress={(id) => setContextDefectId(id)}
-                onTaskPress={(id) => setContextMaintenanceId(id)}
-              />
-            ) : (
-              <ScanConfirmation
-                variant="driver"
-                asset={displayAsset}
-                matchedDepot={matchedDepot}
-                isCreating={isCreatingScan}
-                onConfirm={handleConfirm}
-                onUndoPress={handleUndoPressWithReset}
-                photoCompleted={photoCompleted}
-                disabled={buttonsDisabled}
-                assessment={assessment}
-              />
-            )}
-          </Animated.View>
-        )}
+      {/* Persistent blur backdrop */}
+      <PersistentBackdrop
+        opacity={backdrop.backdropOpacity}
+        showBackdrop={backdrop.showBackdrop}
+        mounted={backdrop.mounted}
+        onPress={handleBackdropPress}
+      />
 
-        {/* Context modals — rendered inline (no nested native Modal) to avoid iOS stacking issues */}
-        <DefectReportDetailModal
-          visible={contextDefectId !== null}
-          defectId={contextDefectId}
-          onClose={() => setContextDefectId(null)}
-          onAcceptPress={handleAcceptPress}
-          onDismissConfirmed={handleDismissConfirmed}
-          variant="compact"
-        />
-        <MaintenanceDetailModal
-          visible={contextMaintenanceId !== null}
-          maintenanceId={contextMaintenanceId}
-          onClose={() => setContextMaintenanceId(null)}
-          variant="compact"
-        />
-        {/* Create maintenance from defect accept */}
-        {acceptDefectContext && (
-          <CreateMaintenanceModal
-            visible
-            onClose={() => setAcceptDefectContext(null)}
-            assetId={acceptDefectContext.assetId}
-            assetNumber={acceptDefectContext.assetNumber}
-            defectReportId={acceptDefectContext.defectId}
-            defaultTitle={acceptDefectContext.title}
-            defaultDescription={acceptDefectContext.description ?? undefined}
-            defaultPriority="high"
-            onExternalSubmit={handleAcceptSubmit}
-          />
-        )}
+      {/* Confirmation card (gorhom SheetModal, no backdrop — PersistentBackdrop handles it).
+         Unmount during camera to prevent stale gorhom provider stack entries — iOS native
+         Modals freeze the underlying display link, so the dismiss animation never completes
+         and the provider retains a stale entry that blocks future present() calls. */}
+      {displayAsset && !flow.cameraOpen && (
+        <SheetModal
+          visible={flow.showCard}
+          onClose={flow.handleUndoPress}
+          noBackdrop
+          compact
+          preventDismissWhileBusy={flow.isCreatingScan}
+        >
+          {variant === 'mechanic' ? (
+            <ScanConfirmation
+              variant="mechanic"
+              asset={displayAsset}
+              matchedDepot={flow.matchedDepot}
+              isCreating={flow.isCreatingScan}
+              onConfirm={flow.handleConfirmAction}
+              onUndoPress={flow.handleUndoPress}
+              photoCompleted={flow.photoCompleted}
+              defectCompleted={flow.defectCompleted}
+              maintenanceCompleted={flow.maintenanceCompleted}
+              disabled={flow.buttonsDisabled}
+              assessment={assessment}
+              scanContext={flow.scanContext}
+              onDefectPress={flow.openDefectDetail}
+              onTaskPress={flow.openMaintenanceDetail}
+            />
+          ) : (
+            <ScanConfirmation
+              variant="driver"
+              asset={displayAsset}
+              matchedDepot={flow.matchedDepot}
+              isCreating={flow.isCreatingScan}
+              onConfirm={flow.handleConfirmAction}
+              onUndoPress={flow.handleUndoPress}
+              photoCompleted={flow.photoCompleted}
+              disabled={flow.buttonsDisabled}
+              assessment={assessment}
+            />
+          )}
+        </SheetModal>
+      )}
 
-        {/* Photo Review — rendered inline to avoid iOS stacked-Modal layout issues */}
+      {/* Sub-sheets (noBackdrop — PersistentBackdrop handles it) */}
+      <DefectReportSheet
+        visible={flow.activeSheet === 'defect'}
+        isSubmitting={flow.isSubmittingDefect}
+        onSubmit={flow.handleDefectSubmit}
+        onCancel={handleDefectCancel}
+        onExitComplete={flow.handleSheetExitComplete}
+        showPhotoOption={true}
+        noBackdrop
+      />
+
+      {/* Conditionally mount so the BottomSheetModal registers fresh each time.
+         After a native Camera Modal, gorhom's present() is silently dropped on
+         a previously-registered modal. Fresh mount = fresh registration = works. */}
+      {flow.activeSheet === 'review' && (
         <PhotoReviewSheet
-          visible={activeSheet === 'review'}
-          photoType={activePhotoType}
-          onClose={handleReviewClose}
-          onConfirmed={handleReviewConfirmed}
-          onRetake={handleReviewRetake}
-          onExitComplete={handleSheetDismiss}
+          visible
+          photoType={flow.activePhotoType}
+          onClose={flow.handleSheetDismissed}
+          onConfirmed={flow.handlePhotoFlowComplete}
+          onRetake={flow.handleReviewRetake}
+          onExitComplete={flow.handleSheetExitComplete}
+          noBackdrop
         />
+      )}
 
-        {/* Success flash — inside Modal so it renders above the dark backdrop */}
-        <ScanSuccessFlash
-          visible={successFlash !== null}
-          assetNumber={successFlash?.assetNumber ?? ''}
-          depotName={successFlash?.depotName ?? null}
-          photoCompleted={successFlash?.photoCompleted ?? false}
-          defectCompleted={successFlash?.defectCompleted ?? false}
-          maintenanceCompleted={successFlash?.maintenanceCompleted ?? false}
-          onDismiss={() => setSuccessFlash(null)}
+      {flow.scannedAsset && (
+        <CreateMaintenanceModal
+          visible={flow.activeSheet === 'createTask'}
+          onClose={flow.handleSheetDismissed}
+          assetId={flow.scannedAsset.id}
+          assetNumber={flow.scannedAsset.assetNumber}
+          onCreated={handleTaskCreated}
+          noBackdrop
+          onExitComplete={flow.handleSheetExitComplete}
         />
-        </SafeAreaProvider>
-      </Modal>
+      )}
 
-      {/* ── Sheet modals (controlled by activeSheet enum) ── */}
+      {/* Context modals (orthogonal to scan flow) */}
+      <DefectReportDetailModal
+        visible={flow.contextModal.type === 'defectDetail'}
+        defectId={flow.contextModal.type === 'defectDetail' ? flow.contextModal.defectId : null}
+        onClose={flow.closeContextModal}
+        onAcceptPress={handleAcceptPress}
+        onDismissConfirmed={handleDismissConfirmed}
+        variant="compact"
+        noBackdrop
+        onExitComplete={flow.handleContextExitComplete}
+      />
+      <MaintenanceDetailModal
+        visible={flow.contextModal.type === 'maintenanceDetail'}
+        maintenanceId={flow.contextModal.type === 'maintenanceDetail' ? flow.contextModal.maintenanceId : null}
+        onClose={flow.closeContextModal}
+        variant="compact"
+        noBackdrop
+        onExitComplete={flow.handleContextExitComplete}
+      />
+      {acceptCtx && (
+        <CreateMaintenanceModal
+          visible
+          onClose={flow.closeContextModal}
+          assetId={acceptCtx.assetId}
+          assetNumber={acceptCtx.assetNumber}
+          defectReportId={acceptCtx.defectId}
+          defaultTitle={acceptCtx.title}
+          defaultDescription={acceptCtx.description ?? undefined}
+          defaultPriority="high"
+          onExternalSubmit={handleAcceptSubmit}
+          noBackdrop
+          onExitComplete={flow.handleContextExitComplete}
+        />
+      )}
 
-      {/* Camera */}
-      {scannedAsset && (
+      {/* Camera (native Modal — required for tab bar coverage) */}
+      {flow.scannedAsset && (
         <ErrorBoundary>
           <CameraCapture
-            visible={activeSheet === 'camera'}
-            assetId={scannedAsset.id}
-            photoType={activePhotoType}
-            scanEventId={lastScanEventId}
-            locationDescription={matchedDepot?.depot.name ?? null}
-            latitude={effectiveLocation?.latitude ?? null}
-            longitude={effectiveLocation?.longitude ?? null}
-            onClose={handleCameraClose}
-            onPhotoCaptured={handlePhotoCaptured}
-            onDismiss={handleSheetDismiss}
+            visible={flow.cameraOpen}
+            assetId={flow.scannedAsset.id}
+            photoType={flow.activePhotoType}
+            scanEventId={flow.lastScanEventId}
+            locationDescription={flow.matchedDepot?.depot.name ?? null}
+            latitude={flow.effectiveLocation?.latitude ?? null}
+            longitude={flow.effectiveLocation?.longitude ?? null}
+            onClose={flow.handleCameraCancelled}
+            onCapturedUri={flow.handleCameraCaptured}
           />
         </ErrorBoundary>
       )}
 
-      {/* Defect Report (no photo option in new flow) */}
-      <DefectReportSheet
-        visible={activeSheet === 'defect'}
-        isSubmitting={isSubmittingDefect}
-        onSubmit={flowDefectSubmit}
-        onCancel={handleDefectCancel}
-        onExitComplete={handleSheetDismiss}
-        showPhotoOption={true}
+      {/* Success flash */}
+      <ScanSuccessFlash
+        visible={flow.isCompleting}
+        assetNumber={flow.completionSummary?.assetNumber ?? ''}
+        depotName={flow.completionSummary?.depotName ?? null}
+        photoCompleted={flow.completionSummary?.photoCompleted ?? false}
+        defectCompleted={flow.completionSummary?.defectCompleted ?? false}
+        maintenanceCompleted={flow.completionSummary?.maintenanceCompleted ?? false}
+        onDismiss={flow.handleCompletionDismiss}
       />
-
-      {/* Create Maintenance Task */}
-      {scannedAsset && (
-        <CreateMaintenanceModal
-          visible={activeSheet === 'createTask'}
-          onClose={handleCloseSheet}
-          assetId={scannedAsset.id}
-          assetNumber={scannedAsset.assetNumber}
-          onCreated={handleTaskCreated}
-          showBeginOption={canMarkMaintenance}
-        />
-      )}
 
       {/* Alert Sheet for errors */}
       <AlertSheet
-        visible={alertSheet.visible}
-        type={alertSheet.type}
-        title={alertSheet.title}
-        message={alertSheet.message}
-        onDismiss={() => setAlertSheet(prev => ({ ...prev, visible: false }))}
-        actionLabel={alertSheet.actionLabel}
-        onAction={alertSheet.onAction}
+        visible={flow.alertSheet.visible}
+        type={flow.alertSheet.type}
+        title={flow.alertSheet.title}
+        message={flow.alertSheet.message}
+        onDismiss={() => flow.setAlertSheet(prev => ({ ...prev, visible: false }))}
+        actionLabel={flow.alertSheet.actionLabel}
+        onAction={flow.alertSheet.onAction}
       />
-
     </View>
   );
 }
