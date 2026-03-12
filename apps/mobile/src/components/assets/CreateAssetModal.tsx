@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Pressable } from 'react-native';
-import { BottomSheetScrollView, BottomSheetTextInput } from '../common/SheetModal';
+import { View, StyleSheet, TouchableOpacity, Pressable } from 'react-native';
+import { BottomSheetScrollView } from '../common/SheetModal';
+import { AppTextInput } from '../common/AppTextInput';
 import { Ionicons } from '@expo/vector-icons';
 import type { AssetCategory as AssetCategoryType, TrailerSubtype, CreateAssetInput } from '@rgr/shared';
 import { AssetCategory, AssetCategoryLabels, TrailerSubtypes } from '@rgr/shared';
@@ -18,6 +19,7 @@ import { useCreateAsset } from '../../hooks/useAdminAssets';
 import { useDepots } from '../../hooks/useAssetData';
 import { useSubmitGuard } from '../../hooks/useSubmitGuard';
 import { triggerRegoLookup } from '../../utils/regoLookup';
+import { AppText } from '../common';
 
 interface CreateAssetModalProps {
   visible: boolean;
@@ -170,13 +172,12 @@ export function CreateAssetModal({
         >
           {/* Asset Number */}
           <View style={formStyles.inputGroup}>
-            <Text style={formStyles.label}>Asset Number *</Text>
-            <BottomSheetTextInput
+            <AppText style={formStyles.label}>Asset Number *</AppText>
+            <AppTextInput
               style={formStyles.input}
               value={assetNumber}
               onChangeText={setAssetNumber}
               placeholder="e.g., TR-001"
-              placeholderTextColor={colors.textSecondary}
               autoCapitalize="characters"
               maxLength={50}
               accessibilityLabel="Asset number"
@@ -185,7 +186,7 @@ export function CreateAssetModal({
 
           {/* Category */}
           <View style={formStyles.inputGroup}>
-            <Text style={formStyles.label}>Category *</Text>
+            <AppText style={formStyles.label}>Category *</AppText>
             <View style={styles.chipContainer}>
               {CATEGORY_ORDER.map((cat) => (
                 <FilterChip
@@ -202,7 +203,7 @@ export function CreateAssetModal({
           {/* Subtype (trailer only) */}
           {category === AssetCategory.TRAILER && (
             <View style={formStyles.inputGroup}>
-              <Text style={formStyles.label}>Subtype</Text>
+              <AppText style={formStyles.label}>Subtype</AppText>
               <View style={styles.chipContainer}>
                 {TrailerSubtypes.map((st) => (
                   <FilterChip
@@ -219,13 +220,12 @@ export function CreateAssetModal({
 
           {/* Registration Number */}
           <View style={formStyles.inputGroup}>
-            <Text style={formStyles.label}>Registration Number *</Text>
-            <BottomSheetTextInput
+            <AppText style={formStyles.label}>Registration Number *</AppText>
+            <AppTextInput
               style={formStyles.input}
               value={registrationNumber}
               onChangeText={setRegistrationNumber}
               placeholder="e.g., 1ABC234"
-              placeholderTextColor={colors.textSecondary}
               autoCapitalize="characters"
               maxLength={20}
               accessibilityLabel="Registration number"
@@ -235,26 +235,24 @@ export function CreateAssetModal({
           {/* Make / Model (side by side) */}
           <View style={styles.row}>
             <View style={[formStyles.inputGroup, styles.halfField]}>
-              <Text style={formStyles.label}>Make</Text>
-              <BottomSheetTextInput
+              <AppText style={formStyles.label}>Make</AppText>
+              <AppTextInput
                 style={formStyles.input}
                 value={make}
                 onChangeText={setMake}
                 placeholder="e.g., Vawdrey"
-                placeholderTextColor={colors.textSecondary}
                 autoCapitalize="words"
                 maxLength={100}
                 accessibilityLabel="Make"
               />
             </View>
             <View style={[formStyles.inputGroup, styles.halfField]}>
-              <Text style={formStyles.label}>Model</Text>
-              <BottomSheetTextInput
+              <AppText style={formStyles.label}>Model</AppText>
+              <AppTextInput
                 style={formStyles.input}
                 value={model}
                 onChangeText={setModel}
                 placeholder="e.g., VB-S3"
-                placeholderTextColor={colors.textSecondary}
                 autoCapitalize="words"
                 maxLength={100}
                 accessibilityLabel="Model"
@@ -264,13 +262,12 @@ export function CreateAssetModal({
 
           {/* Year */}
           <View style={formStyles.inputGroup}>
-            <Text style={formStyles.label}>Year</Text>
-            <BottomSheetTextInput
+            <AppText style={formStyles.label}>Year</AppText>
+            <AppTextInput
               style={formStyles.input}
               value={year}
               onChangeText={setYear}
               placeholder="e.g., 2024"
-              placeholderTextColor={colors.textSecondary}
               keyboardType="number-pad"
               maxLength={4}
               accessibilityLabel="Year manufactured"
@@ -279,11 +276,11 @@ export function CreateAssetModal({
 
           {/* Depot */}
           <View style={formStyles.inputGroup}>
-            <Text style={formStyles.label}>Depot</Text>
+            <AppText style={formStyles.label}>Depot</AppText>
             {selectedDepotId && selectedDepotName ? (
               <View style={styles.depotSelected}>
                 <Ionicons name="business" size={20} color={colors.text} />
-                <Text style={styles.depotSelectedText}>{selectedDepotName}</Text>
+                <AppText style={styles.depotSelectedText}>{selectedDepotName}</AppText>
                 <TouchableOpacity
                   onPress={handleClearDepot}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -301,7 +298,7 @@ export function CreateAssetModal({
                   accessibilityLabel="Select a depot"
                 >
                   <Ionicons name="business-outline" size={18} color={colors.textSecondary} />
-                  <Text style={styles.depotPickerPlaceholder}>Tap to select depot</Text>
+                  <AppText style={styles.depotPickerPlaceholder}>Tap to select depot</AppText>
                   <Ionicons
                     name={showDepotPicker ? 'chevron-up' : 'chevron-down'}
                     size={16}
@@ -315,7 +312,7 @@ export function CreateAssetModal({
                         <LoadingDots color={colors.textSecondary} size={6} />
                       </View>
                     ) : depots.length === 0 ? (
-                      <Text style={styles.depotPickerEmpty}>No depots found</Text>
+                      <AppText style={styles.depotPickerEmpty}>No depots found</AppText>
                     ) : (
                       depots.filter((d) => d.isActive).map((depot) => (
                         <TouchableOpacity
@@ -325,8 +322,8 @@ export function CreateAssetModal({
                           activeOpacity={0.7}
                         >
                           <Ionicons name="business" size={16} color={colors.text} />
-                          <Text style={styles.depotPickerItemText}>{depot.name}</Text>
-                          <Text style={styles.depotPickerItemSub}>{depot.code}</Text>
+                          <AppText style={styles.depotPickerItemText}>{depot.name}</AppText>
+                          <AppText style={styles.depotPickerItemSub}>{depot.code}</AppText>
                         </TouchableOpacity>
                       ))
                     )}
@@ -338,13 +335,12 @@ export function CreateAssetModal({
 
           {/* Notes */}
           <View style={formStyles.inputGroup}>
-            <Text style={formStyles.label}>Notes</Text>
-            <BottomSheetTextInput
+            <AppText style={formStyles.label}>Notes</AppText>
+            <AppTextInput
               style={[formStyles.input, formStyles.textArea]}
               value={notes}
               onChangeText={setNotes}
               placeholder="Any additional notes about this asset"
-              placeholderTextColor={colors.textSecondary}
               multiline
               numberOfLines={3}
               textAlignVertical="top"
@@ -352,7 +348,7 @@ export function CreateAssetModal({
             />
           </View>
 
-          {error && <Text style={formStyles.errorText}>{error}</Text>}
+          {error && <AppText style={formStyles.errorText}>{error}</AppText>}
 
           <View style={{ marginTop: spacing.lg }}>
             <Button

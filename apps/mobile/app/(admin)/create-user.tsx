@@ -1,14 +1,12 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
-  Text,
   ScrollView,
   TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  StyleSheet,
-} from 'react-native';
+  StyleSheet} from 'react-native';
 import { useRouter } from 'expo-router';
 import { UserRoleLabels } from '@rgr/shared';
 import type { UserRole } from '@rgr/shared';
@@ -19,6 +17,7 @@ import { SheetHeader } from '../../src/components/common/SheetHeader';
 import { CreateUserOverlay } from '../../src/components/admin/CreateUserOverlay';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
+import { AppText } from '../../src/components/common';
 
 const ROLES: UserRole[] = ['driver', 'mechanic', 'manager', 'superuser'];
 
@@ -96,7 +95,7 @@ export default function CreateUserScreen() {
             <View style={styles.card}>
               {/* Email */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Email *</Text>
+                <AppText style={styles.label}>Email *</AppText>
                 <TextInput
                   style={styles.input}
                   value={email}
@@ -111,7 +110,7 @@ export default function CreateUserScreen() {
 
               {/* Password */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Password *</Text>
+                <AppText style={styles.label}>Password *</AppText>
                 <TextInput
                   style={styles.input}
                   value={password}
@@ -124,7 +123,7 @@ export default function CreateUserScreen() {
 
               {/* Full Name */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Full Name *</Text>
+                <AppText style={styles.label}>Full Name *</AppText>
                 <TextInput
                   style={styles.input}
                   value={fullName}
@@ -138,7 +137,7 @@ export default function CreateUserScreen() {
 
               {/* Role Picker */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Role *</Text>
+                <AppText style={styles.label}>Role *</AppText>
                 <View style={styles.chipContainer}>
                   {ROLES.map((r) => {
                     const isSelected = role === r;
@@ -158,7 +157,7 @@ export default function CreateUserScreen() {
                         onPress={() => setRole(r)}
                         activeOpacity={0.7}
                       >
-                        <Text
+                        <AppText
                           style={[
                             styles.roleChipText,
                             {
@@ -168,7 +167,7 @@ export default function CreateUserScreen() {
                           ]}
                         >
                           {UserRoleLabels[r]}
-                        </Text>
+                        </AppText>
                       </TouchableOpacity>
                     );
                   })}
@@ -177,7 +176,7 @@ export default function CreateUserScreen() {
 
               {/* Phone */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Phone</Text>
+                <AppText style={styles.label}>Phone</AppText>
                 <TextInput
                   style={styles.input}
                   value={phone}
@@ -191,7 +190,7 @@ export default function CreateUserScreen() {
 
               {/* Depot Picker */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Depot</Text>
+                <AppText style={styles.label}>Depot</AppText>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -205,14 +204,14 @@ export default function CreateUserScreen() {
                     onPress={() => setSelectedDepot(null)}
                     activeOpacity={0.7}
                   >
-                    <Text
+                    <AppText
                       style={[
                         styles.depotChipText,
                         !selectedDepot && styles.depotChipTextSelected,
                       ]}
                     >
                       None
-                    </Text>
+                    </AppText>
                   </TouchableOpacity>
                   {depots.map((depot) => {
                     const isSelected = selectedDepot === depot.code;
@@ -226,14 +225,14 @@ export default function CreateUserScreen() {
                         onPress={() => setSelectedDepot(depot.code)}
                         activeOpacity={0.7}
                       >
-                        <Text
+                        <AppText
                           style={[
                             styles.depotChipText,
                             isSelected && styles.depotChipTextSelected,
                           ]}
                         >
                           {depot.code.toUpperCase()}
-                        </Text>
+                        </AppText>
                       </TouchableOpacity>
                     );
                   })}
@@ -241,7 +240,7 @@ export default function CreateUserScreen() {
               </View>
 
               {error && (
-                <Text style={styles.errorText}>{error}</Text>
+                <AppText style={styles.errorText}>{error}</AppText>
               )}
 
               {/* Buttons */}
@@ -251,7 +250,7 @@ export default function CreateUserScreen() {
                   onPress={() => router.back()}
                   disabled={createMutation.isPending}
                 >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                  <AppText style={styles.cancelButtonText}>Cancel</AppText>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -266,7 +265,7 @@ export default function CreateUserScreen() {
                   {createMutation.isPending ? (
                     <LoadingDots color={colors.textInverse} size={8} />
                   ) : (
-                    <Text style={styles.saveButtonText}>Create User</Text>
+                    <AppText style={styles.saveButtonText}>Create User</AppText>
                   )}
                 </TouchableOpacity>
               </View>

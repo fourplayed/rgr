@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
   Switch,
-  TextInput,
-} from 'react-native';
+  TextInput} from 'react-native';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
 import { SheetHeader } from '../../src/components/common/SheetHeader';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,6 +22,7 @@ import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
 import { getSession as getStoredSession } from '../../src/utils/secureStorage';
 import type { Profile } from '@rgr/shared';
+import { AppText } from '../../src/components/common';
 
 const SUPABASE_URL = Constants.expoConfig?.extra?.['supabaseUrl'] || process.env['EXPO_PUBLIC_SUPABASE_URL'] || 'Unknown';
 const LOCAL_STORAGE_NAME = 'AsyncStorage (SecureStore)';
@@ -60,8 +59,8 @@ function formatFixAge(timestamp: number): string {
 function DebugRow({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.debugRow}>
-      <Text style={styles.debugLabel}>{label}</Text>
-      <Text style={styles.debugValue}>{value}</Text>
+      <AppText style={styles.debugLabel}>{label}</AppText>
+      <AppText style={styles.debugValue}>{value}</AppText>
     </View>
   );
 }
@@ -81,12 +80,12 @@ function DebugStatusRow({
       style={styles.debugRow}
       accessibilityLabel={`${label}: ${displayLabel}`}
     >
-      <Text style={styles.debugLabel}>{label}</Text>
+      <AppText style={styles.debugLabel}>{label}</AppText>
       <View style={styles.debugStatusRow}>
         <View
           style={[styles.statusDot, { backgroundColor: getBooleanColor(status) }]}
         />
-        <Text style={styles.debugValue}>{displayLabel}</Text>
+        <AppText style={styles.debugValue}>{displayLabel}</AppText>
       </View>
     </View>
   );
@@ -163,10 +162,10 @@ function SimulatedLocationCard() {
 
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Simulated Location</Text>
+      <AppText style={styles.sectionTitle}>Simulated Location</AppText>
       <View style={styles.card}>
         <View style={styles.debugRow}>
-          <Text style={styles.debugLabel}>Enabled</Text>
+          <AppText style={styles.debugLabel}>Enabled</AppText>
           <Switch
             value={overrideEnabled}
             onValueChange={handleToggle}
@@ -175,7 +174,7 @@ function SimulatedLocationCard() {
         </View>
         <View style={styles.debugDivider} />
         <View style={styles.debugRow}>
-          <Text style={styles.debugLabel}>Latitude</Text>
+          <AppText style={styles.debugLabel}>Latitude</AppText>
           <TextInput
             style={styles.simInput}
             value={latText}
@@ -189,7 +188,7 @@ function SimulatedLocationCard() {
         </View>
         <View style={styles.debugDivider} />
         <View style={styles.debugRow}>
-          <Text style={styles.debugLabel}>Longitude</Text>
+          <AppText style={styles.debugLabel}>Longitude</AppText>
           <TextInput
             style={styles.simInput}
             value={lonText}
@@ -424,12 +423,12 @@ export default function DebugScreen() {
             style={[styles.healthBanner, { backgroundColor: healthColors[health.level] }]}
             accessibilityLabel={`System status: ${health.message}`}
           >
-            <Text style={styles.healthBannerText}>{health.message}</Text>
+            <AppText style={styles.healthBannerText}>{health.message}</AppText>
           </View>
 
           {/* 2. Network */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Network</Text>
+            <AppText style={styles.sectionTitle}>Network</AppText>
             <View style={styles.card}>
               <DebugStatusRow
                 label="Connected"
@@ -445,7 +444,7 @@ export default function DebugScreen() {
 
           {/* 3. Location & Depot */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Location & Depot</Text>
+            <AppText style={styles.sectionTitle}>Location & Depot</AppText>
             <View style={styles.card}>
               <DebugStatusRow
                 label="Location Permission"
@@ -483,10 +482,10 @@ export default function DebugScreen() {
                 <>
                   <View style={styles.debugDivider} />
                   <View style={styles.debugRow}>
-                    <Text style={styles.debugLabel}>Resolution Error</Text>
-                    <Text style={[styles.debugValue, { color: colors.error }]}>
+                    <AppText style={styles.debugLabel}>Resolution Error</AppText>
+                    <AppText style={[styles.debugValue, { color: colors.error }]}>
                       {depotResolutionError}
-                    </Text>
+                    </AppText>
                   </View>
                 </>
               )}
@@ -498,7 +497,7 @@ export default function DebugScreen() {
 
           {/* 4. Auth */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Auth</Text>
+            <AppText style={styles.sectionTitle}>Auth</AppText>
             <View style={styles.card}>
               <DebugStatusRow
                 label="Authenticated"
@@ -513,10 +512,10 @@ export default function DebugScreen() {
                 <>
                   <View style={styles.debugDivider} />
                   <View style={styles.debugRow}>
-                    <Text style={styles.debugLabel}>Auth Error</Text>
-                    <Text style={[styles.debugValue, { color: colors.error }]}>
+                    <AppText style={styles.debugLabel}>Auth Error</AppText>
+                    <AppText style={[styles.debugValue, { color: colors.error }]}>
                       {authError}
-                    </Text>
+                    </AppText>
                   </View>
                 </>
               )}
@@ -525,47 +524,47 @@ export default function DebugScreen() {
 
           {/* 5. Sync (existing card, unchanged) */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Sync</Text>
+            <AppText style={styles.sectionTitle}>Sync</AppText>
             <View style={styles.card}>
               {/* Connection Status */}
               <View style={styles.debugRow}>
-                <Text style={styles.debugLabel}>Local Storage</Text>
+                <AppText style={styles.debugLabel}>Local Storage</AppText>
                 <View style={styles.debugStatusRow}>
                   <View style={[styles.statusDot, { backgroundColor: getStatusColor(debugInfo.localConnectionStatus) }]} />
-                  <Text style={styles.debugValue}>{debugInfo.localConnectionStatus}</Text>
+                  <AppText style={styles.debugValue}>{debugInfo.localConnectionStatus}</AppText>
                 </View>
               </View>
               <View style={styles.debugDivider} />
 
               <View style={styles.debugRow}>
-                <Text style={styles.debugLabel}>Remote Database</Text>
+                <AppText style={styles.debugLabel}>Remote Database</AppText>
                 <View style={styles.debugStatusRow}>
                   <View style={[styles.statusDot, { backgroundColor: getStatusColor(debugInfo.remoteConnectionStatus) }]} />
-                  <Text style={styles.debugValue}>{debugInfo.remoteConnectionStatus}</Text>
+                  <AppText style={styles.debugValue}>{debugInfo.remoteConnectionStatus}</AppText>
                 </View>
               </View>
               <View style={styles.debugDivider} />
 
               <View style={styles.debugRow}>
-                <Text style={styles.debugLabel}>Sync Status</Text>
+                <AppText style={styles.debugLabel}>Sync Status</AppText>
                 <View style={styles.debugStatusRow}>
                   <View style={[styles.statusDot, { backgroundColor: getStatusColor(debugInfo.syncStatus) }]} />
-                  <Text style={styles.debugValue}>{debugInfo.syncStatus}</Text>
+                  <AppText style={styles.debugValue}>{debugInfo.syncStatus}</AppText>
                 </View>
               </View>
               <View style={styles.debugDivider} />
 
               <View style={styles.debugRow}>
-                <Text style={styles.debugLabel}>Session Token</Text>
-                <Text style={styles.debugValue}>{debugInfo.storedSessionExists ? 'Stored' : 'None'}</Text>
+                <AppText style={styles.debugLabel}>Session Token</AppText>
+                <AppText style={styles.debugValue}>{debugInfo.storedSessionExists ? 'Stored' : 'None'}</AppText>
               </View>
               <View style={styles.debugDivider} />
 
               {debugInfo.lastSyncTime && (
                 <>
                   <View style={styles.debugRow}>
-                    <Text style={styles.debugLabel}>Last Checked</Text>
-                    <Text style={styles.debugValue}>{debugInfo.lastSyncTime}</Text>
+                    <AppText style={styles.debugLabel}>Last Checked</AppText>
+                    <AppText style={styles.debugValue}>{debugInfo.lastSyncTime}</AppText>
                   </View>
                   <View style={styles.debugDivider} />
                 </>
@@ -573,40 +572,40 @@ export default function DebugScreen() {
 
               {/* Local Profile Data */}
               <View style={styles.debugDataSection}>
-                <Text style={styles.debugSubtitle}>Local Profile</Text>
+                <AppText style={styles.debugSubtitle}>Local Profile</AppText>
                 <View style={styles.debugDataBox}>
-                  <Text style={styles.debugDataTextBold}>Storage: {LOCAL_STORAGE_NAME}</Text>
+                  <AppText style={styles.debugDataTextBold}>Storage: {LOCAL_STORAGE_NAME}</AppText>
                   {debugInfo.localProfile ? (
                     <>
-                      <Text style={styles.debugDataText}>ID: {debugInfo.localProfile.id}</Text>
-                      <Text style={styles.debugDataText}>Name: {debugInfo.localProfile.fullName}</Text>
-                      <Text style={styles.debugDataText}>Email: {debugInfo.localProfile.email}</Text>
-                      <Text style={styles.debugDataText}>Role: {debugInfo.localProfile.role}</Text>
-                      <Text style={styles.debugDataText}>Depot: {debugInfo.localProfile.depot || 'None'}</Text>
-                      <Text style={styles.debugDataText}>Updated: {debugInfo.localProfile.updatedAt}</Text>
+                      <AppText style={styles.debugDataText}>ID: {debugInfo.localProfile.id}</AppText>
+                      <AppText style={styles.debugDataText}>Name: {debugInfo.localProfile.fullName}</AppText>
+                      <AppText style={styles.debugDataText}>Email: {debugInfo.localProfile.email}</AppText>
+                      <AppText style={styles.debugDataText}>Role: {debugInfo.localProfile.role}</AppText>
+                      <AppText style={styles.debugDataText}>Depot: {debugInfo.localProfile.depot || 'None'}</AppText>
+                      <AppText style={styles.debugDataText}>Updated: {debugInfo.localProfile.updatedAt}</AppText>
                     </>
                   ) : (
-                    <Text style={styles.debugDataText}>No local data</Text>
+                    <AppText style={styles.debugDataText}>No local data</AppText>
                   )}
                 </View>
               </View>
 
               {/* Remote Profile Data */}
               <View style={styles.debugDataSection}>
-                <Text style={styles.debugSubtitle}>Remote Profile</Text>
+                <AppText style={styles.debugSubtitle}>Remote Profile</AppText>
                 <View style={styles.debugDataBox}>
-                  <Text style={styles.debugDataTextBold} numberOfLines={1}>Database: {SUPABASE_URL}</Text>
+                  <AppText style={styles.debugDataTextBold} numberOfLines={1}>Database: {SUPABASE_URL}</AppText>
                   {debugInfo.remoteProfile ? (
                     <>
-                      <Text style={styles.debugDataText}>ID: {debugInfo.remoteProfile.id}</Text>
-                      <Text style={styles.debugDataText}>Name: {debugInfo.remoteProfile.fullName}</Text>
-                      <Text style={styles.debugDataText}>Email: {debugInfo.remoteProfile.email}</Text>
-                      <Text style={styles.debugDataText}>Role: {debugInfo.remoteProfile.role}</Text>
-                      <Text style={styles.debugDataText}>Depot: {debugInfo.remoteProfile.depot || 'None'}</Text>
-                      <Text style={styles.debugDataText}>Updated: {debugInfo.remoteProfile.updatedAt}</Text>
+                      <AppText style={styles.debugDataText}>ID: {debugInfo.remoteProfile.id}</AppText>
+                      <AppText style={styles.debugDataText}>Name: {debugInfo.remoteProfile.fullName}</AppText>
+                      <AppText style={styles.debugDataText}>Email: {debugInfo.remoteProfile.email}</AppText>
+                      <AppText style={styles.debugDataText}>Role: {debugInfo.remoteProfile.role}</AppText>
+                      <AppText style={styles.debugDataText}>Depot: {debugInfo.remoteProfile.depot || 'None'}</AppText>
+                      <AppText style={styles.debugDataText}>Updated: {debugInfo.remoteProfile.updatedAt}</AppText>
                     </>
                   ) : (
-                    <Text style={styles.debugDataText}>No remote data</Text>
+                    <AppText style={styles.debugDataText}>No remote data</AppText>
                   )}
                 </View>
               </View>
@@ -626,7 +625,7 @@ export default function DebugScreen() {
                 ) : (
                   <>
                     <Ionicons name="sync" size={20} color={colors.textInverse} />
-                    <Text style={styles.syncButtonText}>Sync Now</Text>
+                    <AppText style={styles.syncButtonText}>Sync Now</AppText>
                   </>
                 )}
               </TouchableOpacity>
@@ -635,7 +634,7 @@ export default function DebugScreen() {
 
           {/* 6. App Info */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>App</Text>
+            <AppText style={styles.sectionTitle}>App</AppText>
             <View style={styles.card}>
               <DebugRow label="App Name" value={Constants.expoConfig?.name ?? 'Unknown'} />
               <View style={styles.debugDivider} />
@@ -662,9 +661,9 @@ export default function DebugScreen() {
               size={20}
               color={colors.textInverse}
             />
-            <Text style={styles.copyButtonText}>
+            <AppText style={styles.copyButtonText}>
               {copied ? 'Copied!' : 'Copy Diagnostics'}
-            </Text>
+            </AppText>
           </TouchableOpacity>
         </ScrollView>
       </View>

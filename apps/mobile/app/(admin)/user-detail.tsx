@@ -1,11 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import {
   View,
-  Text,
   ScrollView,
   TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+  StyleSheet} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { UserRoleLabels } from '@rgr/shared';
@@ -18,6 +16,7 @@ import { LoadingDots } from '../../src/components/common/LoadingDots';
 import { SheetHeader } from '../../src/components/common/SheetHeader';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
+import { AppText } from '../../src/components/common';
 
 export default function UserDetailScreen() {
   const router = useRouter();
@@ -85,13 +84,13 @@ export default function UserDetailScreen() {
           <View style={styles.card}>
             <View style={styles.profileHeader}>
               <View style={styles.profileInfo}>
-                <Text style={styles.profileName}>{profile.fullName}</Text>
-                <Text style={styles.profileEmail}>{profile.email}</Text>
+                <AppText style={styles.profileName}>{profile.fullName}</AppText>
+                <AppText style={styles.profileEmail}>{profile.email}</AppText>
               </View>
               <View style={[styles.roleBadge, { backgroundColor: roleColor }]}>
-                <Text style={styles.roleBadgeText}>
+                <AppText style={styles.roleBadgeText}>
                   {UserRoleLabels[profile.role]}
-                </Text>
+                </AppText>
               </View>
             </View>
 
@@ -99,42 +98,42 @@ export default function UserDetailScreen() {
 
             {/* Details */}
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Status</Text>
-              <Text
+              <AppText style={styles.detailLabel}>Status</AppText>
+              <AppText
                 style={[
                   styles.detailValue,
                   { color: profile.isActive ? colors.success : colors.error },
                 ]}
               >
                 {profile.isActive ? 'Active' : 'Inactive'}
-              </Text>
+              </AppText>
             </View>
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Depot</Text>
-              <Text style={styles.detailValue}>{profile.depot || 'Not assigned'}</Text>
+              <AppText style={styles.detailLabel}>Depot</AppText>
+              <AppText style={styles.detailValue}>{profile.depot || 'Not assigned'}</AppText>
             </View>
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Phone</Text>
-              <Text style={styles.detailValue}>{profile.phone || 'Not set'}</Text>
+              <AppText style={styles.detailLabel}>Phone</AppText>
+              <AppText style={styles.detailValue}>{profile.phone || 'Not set'}</AppText>
             </View>
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Employee ID</Text>
-              <Text style={styles.detailValue}>{profile.employeeId || 'Not set'}</Text>
+              <AppText style={styles.detailLabel}>Employee ID</AppText>
+              <AppText style={styles.detailValue}>{profile.employeeId || 'Not set'}</AppText>
             </View>
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Last Login</Text>
-              <Text style={styles.detailValue}>{formatDate(profile.lastLoginAt)}</Text>
+              <AppText style={styles.detailLabel}>Last Login</AppText>
+              <AppText style={styles.detailValue}>{formatDate(profile.lastLoginAt)}</AppText>
             </View>
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Created</Text>
-              <Text style={styles.detailValue}>{formatDate(profile.createdAt)}</Text>
+              <AppText style={styles.detailLabel}>Created</AppText>
+              <AppText style={styles.detailValue}>{formatDate(profile.createdAt)}</AppText>
             </View>
           </View>
 
           {/* Actions - hidden for self */}
           {!isSelf && (
             <View style={styles.actionsSection}>
-              <Text style={styles.sectionTitle}>Actions</Text>
+              <AppText style={styles.sectionTitle}>Actions</AppText>
               <View style={styles.card}>
                 <TouchableOpacity
                   style={styles.actionButton}
@@ -146,10 +145,10 @@ export default function UserDetailScreen() {
                   <View style={styles.actionContent}>
                     <Ionicons name="shield-outline" size={24} color={colors.textSecondary} />
                     <View style={styles.actionText}>
-                      <Text style={styles.actionTitle}>Change Role</Text>
-                      <Text style={styles.actionSubtitle}>
+                      <AppText style={styles.actionTitle}>Change Role</AppText>
+                      <AppText style={styles.actionSubtitle}>
                         Current: {UserRoleLabels[profile.role]}
-                      </Text>
+                      </AppText>
                     </View>
                   </View>
                   {updateRoleMutation.isPending ? (
@@ -177,14 +176,14 @@ export default function UserDetailScreen() {
                       color={profile.isActive ? colors.error : colors.success}
                     />
                     <View style={styles.actionText}>
-                      <Text style={styles.actionTitle}>
+                      <AppText style={styles.actionTitle}>
                         {profile.isActive ? 'Deactivate User' : 'Activate User'}
-                      </Text>
-                      <Text style={styles.actionSubtitle}>
+                      </AppText>
+                      <AppText style={styles.actionSubtitle}>
                         {profile.isActive
                           ? 'Prevent user from logging in'
                           : 'Allow user to log in again'}
-                      </Text>
+                      </AppText>
                     </View>
                   </View>
                   {updateStatusMutation.isPending ? (
@@ -199,9 +198,9 @@ export default function UserDetailScreen() {
               </View>
 
               {(updateRoleMutation.isError || updateStatusMutation.isError) && (
-                <Text style={styles.errorText}>
+                <AppText style={styles.errorText}>
                   {updateRoleMutation.error?.message || updateStatusMutation.error?.message}
-                </Text>
+                </AppText>
               )}
             </View>
           )}
@@ -209,9 +208,9 @@ export default function UserDetailScreen() {
           {isSelf && (
             <View style={styles.selfNote}>
               <Ionicons name="information-circle-outline" size={20} color={colors.textSecondary} />
-              <Text style={styles.selfNoteText}>
+              <AppText style={styles.selfNoteText}>
                 You cannot modify your own role or status
-              </Text>
+              </AppText>
             </View>
           )}
         </ScrollView>

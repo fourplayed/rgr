@@ -1,14 +1,12 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
-  Text,
   FlatList,
   TextInput,
   StyleSheet,
   RefreshControl,
   TouchableOpacity,
-  SafeAreaView,
-} from 'react-native';
+  SafeAreaView} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LoadingDots } from '../../../src/components/common/LoadingDots';
 import { RefreshLoadingDots } from '../../../src/components/common/RefreshLoadingDots';
@@ -28,6 +26,7 @@ import { AssetListItem } from '../../../src/components/assets/AssetListItem';
 import { AssetFilterPanel } from '../../../src/components/assets/AssetFilterPanel';
 import { colors } from '../../../src/theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../../src/theme/spacing';
+import { AppText } from '../../../src/components/common';
 
 /**
  * Fixed height for FlatList optimization (getItemLayout)
@@ -197,7 +196,7 @@ export default function AssetListScreen() {
               accessibilityHint="Double tap to add a new fleet asset"
             >
               <Ionicons name="add-circle-outline" size={16} color={colors.electricBlue} />
-              <Text style={styles.addLinkText}>New Asset</Text>
+              <AppText style={styles.addLinkText}>New Asset</AppText>
             </TouchableOpacity>
           ) : undefined}
         />
@@ -240,7 +239,7 @@ export default function AssetListScreen() {
         </View>
       ) : error ? (
         <View style={styles.centerContent}>
-          <Text style={styles.errorText}>Failed to load assets</Text>
+          <AppText style={styles.errorText}>Failed to load assets</AppText>
           <TouchableOpacity
             style={styles.retryButton}
             onPress={() => refetch()}
@@ -248,7 +247,7 @@ export default function AssetListScreen() {
             accessibilityLabel="Retry loading assets"
             accessibilityHint="Double tap to try loading the asset list again"
           >
-            <Text style={styles.retryButtonText}>Retry</Text>
+            <AppText style={styles.retryButtonText}>Retry</AppText>
           </TouchableOpacity>
         </View>
       ) : (

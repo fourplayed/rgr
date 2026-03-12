@@ -7,9 +7,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+  View} from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,6 +17,7 @@ import { ConsoleEntryRow, ROW_HEIGHT } from './ConsoleEntryRow';
 import { SHEET_SPRING } from '../../theme/animation';
 import { colors } from '../../theme/colors';
 import { borderRadius, fontSize, fontFamily as fonts, spacing } from '../../theme/spacing';
+import { AppText } from '../common';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
@@ -146,7 +145,7 @@ export function ConsolePanel() {
 
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>CONSOLE</Text>
+        <AppText style={styles.title}>CONSOLE</AppText>
         <View style={styles.headerActions}>
           <Pressable onPress={growPanel} hitSlop={spacing.sm} style={styles.headerBtn}>
             <Ionicons name="chevron-up" size={18} color="rgba(255,255,255,0.7)" />
@@ -178,9 +177,9 @@ export function ConsolePanel() {
               onPress={() => setFilter(f)}
               style={[styles.chip, isActive && styles.chipActive]}
             >
-              <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
+              <AppText style={[styles.chipText, isActive && styles.chipTextActive]}>
                 {FILTER_LABELS[String(f)]}
-              </Text>
+              </AppText>
             </Pressable>
           );
         })}

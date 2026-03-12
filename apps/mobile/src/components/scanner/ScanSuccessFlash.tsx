@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useMemo } from 'react';
-import { Text, StyleSheet, Animated, TouchableWithoutFeedback } from 'react-native';
+import { StyleSheet, Animated, TouchableWithoutFeedback } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { fontSize, spacing, fontFamily as fonts } from '../../theme/spacing';
+import { AppText } from '../common';
 
 const FADE_DURATION = 200;
 const STAGGER_DELAY = 80;
@@ -223,7 +224,7 @@ export function ScanSuccessFlash({
           ]}
         >
           <Ionicons name="checkmark-circle" size={64} color="#fff" />
-          <Text style={styles.assetNumber}>{assetNumber}</Text>
+          <AppText style={styles.assetNumber}>{assetNumber}</AppText>
         </Animated.View>
 
         <Animated.View style={styles.checklist}>
@@ -237,7 +238,7 @@ export function ScanSuccessFlash({
                 <Animated.View style={{ transform: [{ scale: checkScale }] }}>
                   <Ionicons name="checkmark-circle" size={22} color="#fff" />
                 </Animated.View>
-                <Text style={styles.checkText}>{label}</Text>
+                <AppText style={styles.checkText}>{label}</AppText>
               </Animated.View>
             );
           })}

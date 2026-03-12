@@ -1,9 +1,10 @@
 import React, { memo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { FreightAnalysis, HazardAlert, HazardSeverity } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
+import { AppText } from '../common';
 
 interface FreightAnalysisCardProps {
   analysis: FreightAnalysis;
@@ -25,22 +26,22 @@ function FreightAnalysisCardComponent({ analysis, hazards }: FreightAnalysisCard
     <View style={styles.container}>
       <View style={styles.header}>
         <Ionicons name="analytics" size={20} color={colors.electricBlue} />
-        <Text style={styles.headerTitle}>Freight Analysis</Text>
+        <AppText style={styles.headerTitle}>Freight Analysis</AppText>
       </View>
 
       {/* Primary category */}
       {analysis.primaryCategory && (
         <View style={styles.categorySection}>
-          <Text style={styles.categoryLabel}>Category</Text>
+          <AppText style={styles.categoryLabel}>Category</AppText>
           <View style={styles.categoryRow}>
-            <Text style={styles.categoryValue}>{analysis.primaryCategory.replace(/_/g, ' ')}</Text>
+            <AppText style={styles.categoryValue}>{analysis.primaryCategory.replace(/_/g, ' ')}</AppText>
             {confidencePercent !== null && (
               <View style={styles.confidenceBadge}>
-                <Text style={styles.confidenceText}>{confidencePercent}%</Text>
+                <AppText style={styles.confidenceText}>{confidencePercent}%</AppText>
               </View>
             )}
           </View>
-          {analysis.description && <Text style={styles.description}>{analysis.description}</Text>}
+          {analysis.description && <AppText style={styles.description}>{analysis.description}</AppText>}
         </View>
       )}
 
@@ -49,24 +50,24 @@ function FreightAnalysisCardComponent({ analysis, hazards }: FreightAnalysisCard
         {analysis.estimatedWeightKg != null && (
           <View style={styles.statItem}>
             <Ionicons name="scale-outline" size={18} color={colors.textSecondary} />
-            <Text style={styles.statValue}>{analysis.estimatedWeightKg.toLocaleString()} kg</Text>
-            <Text style={styles.statLabel}>Est. Weight</Text>
+            <AppText style={styles.statValue}>{analysis.estimatedWeightKg.toLocaleString()} kg</AppText>
+            <AppText style={styles.statLabel}>Est. Weight</AppText>
           </View>
         )}
 
         {loadScore !== null && (
           <View style={styles.statItem}>
             <Ionicons name="layers-outline" size={18} color={colors.textSecondary} />
-            <Text style={styles.statValue}>{loadScore}%</Text>
-            <Text style={styles.statLabel}>Load Score</Text>
+            <AppText style={styles.statValue}>{loadScore}%</AppText>
+            <AppText style={styles.statLabel}>Load Score</AppText>
           </View>
         )}
 
         {analysis.restraintCount != null && (
           <View style={styles.statItem}>
             <Ionicons name="link-outline" size={18} color={colors.textSecondary} />
-            <Text style={styles.statValue}>{analysis.restraintCount}</Text>
-            <Text style={styles.statLabel}>Restraints</Text>
+            <AppText style={styles.statValue}>{analysis.restraintCount}</AppText>
+            <AppText style={styles.statLabel}>Restraints</AppText>
           </View>
         )}
       </View>
@@ -76,9 +77,9 @@ function FreightAnalysisCardComponent({ analysis, hazards }: FreightAnalysisCard
         <View style={styles.hazardSection}>
           <View style={styles.hazardHeader}>
             <Ionicons name="warning" size={18} color={getSeverityColor(analysis.maxSeverity)} />
-            <Text style={styles.hazardTitle}>
+            <AppText style={styles.hazardTitle}>
               {hazards.length} Hazard{hazards.length !== 1 ? 's' : ''} Detected
-            </Text>
+            </AppText>
           </View>
 
           {hazards.slice(0, 3).map((hazard) => (
@@ -90,15 +91,15 @@ function FreightAnalysisCardComponent({ analysis, hazards }: FreightAnalysisCard
                 ]}
               />
               <View style={styles.hazardContent}>
-                <Text style={styles.hazardType}>{hazard.hazardType.replace(/_/g, ' ')}</Text>
-                <Text style={styles.hazardDescription} numberOfLines={2}>
+                <AppText style={styles.hazardType}>{hazard.hazardType.replace(/_/g, ' ')}</AppText>
+                <AppText style={styles.hazardDescription} numberOfLines={2}>
                   {hazard.description}
-                </Text>
+                </AppText>
               </View>
             </View>
           ))}
 
-          {hazards.length > 3 && <Text style={styles.moreHazards}>+{hazards.length - 3} more</Text>}
+          {hazards.length > 3 && <AppText style={styles.moreHazards}>+{hazards.length - 3} more</AppText>}
         </View>
       )}
 
@@ -108,13 +109,13 @@ function FreightAnalysisCardComponent({ analysis, hazards }: FreightAnalysisCard
           {analysis.blockedFromDeparture && (
             <View style={[styles.statusBadge, styles.blockedBadge]}>
               <Ionicons name="hand-left" size={14} color={colors.textInverse} />
-              <Text style={styles.blockedText}>Departure Blocked</Text>
+              <AppText style={styles.blockedText}>Departure Blocked</AppText>
             </View>
           )}
           {analysis.requiresAcknowledgment && !analysis.blockedFromDeparture && (
             <View style={[styles.statusBadge, styles.acknowledgeBadge]}>
               <Ionicons name="alert-circle" size={14} color={colors.textInverse} />
-              <Text style={styles.acknowledgeText}>Acknowledgment Required</Text>
+              <AppText style={styles.acknowledgeText}>Acknowledgment Required</AppText>
             </View>
           )}
         </View>

@@ -3,16 +3,15 @@ import {
   View,
   Pressable,
   Animated,
-  Text,
   StyleSheet,
   type ViewStyle,
-  type StyleProp,
-} from 'react-native';
+  type StyleProp} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LoadingDots } from './LoadingDots';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, shadows, fontFamily as fonts } from '../../theme/spacing';
+import { AppText } from './AppText';
 
 type ButtonVariant = 'primary' | 'secondary' | 'danger';
 
@@ -87,10 +86,10 @@ export function Button({
   ) : icon ? (
     <View style={styles.iconRow}>
       <Ionicons name={icon} size={18} color={resolvedColor} />
-      <Text style={[textStyle, textColorOverride, disabledTextOverride]}>{children}</Text>
+      <AppText style={[textStyle, textColorOverride, disabledTextOverride]}>{children}</AppText>
     </View>
   ) : (
-    <Text style={[textStyle, textColorOverride, disabledTextOverride]}>{children}</Text>
+    <AppText style={[textStyle, textColorOverride, disabledTextOverride]}>{children}</AppText>
   );
 
   return (

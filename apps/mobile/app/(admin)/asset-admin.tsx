@@ -1,12 +1,10 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
-  Text,
   FlatList,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+  StyleSheet} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import {
@@ -32,6 +30,7 @@ import { SheetModal } from '../../src/components/common/SheetModal';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
+import { AppText } from '../../src/components/common';
 
 const STATUS_VALUES: string[] = [AssetStatus.SERVICED, AssetStatus.MAINTENANCE, AssetStatus.OUT_OF_SERVICE];
 
@@ -193,26 +192,26 @@ export default function AssetAdminScreen() {
           </View>
           <View style={styles.assetInfo}>
             <View style={styles.assetHeaderRow}>
-              <Text style={styles.assetNumber}>{formatAssetNumber(item.assetNumber)}</Text>
+              <AppText style={styles.assetNumber}>{formatAssetNumber(item.assetNumber)}</AppText>
               <View style={styles.badgeRow}>
                 {item.depotName && depotBadgeColors && (
                   <View style={[styles.depotBadge, { backgroundColor: depotBadgeColors.bg }]}>
-                    <Text style={[styles.depotBadgeText, { color: depotBadgeColors.text }]}>
+                    <AppText style={[styles.depotBadgeText, { color: depotBadgeColors.text }]}>
                       {item.depotName}
-                    </Text>
+                    </AppText>
                   </View>
                 )}
                 <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
-                  <Text style={styles.statusBadgeText}>
+                  <AppText style={styles.statusBadgeText}>
                     {AssetStatusLabels[item.status as keyof typeof AssetStatusLabels] || item.status}
-                  </Text>
+                  </AppText>
                 </View>
               </View>
             </View>
             <View style={styles.assetFooterRow}>
-              <Text style={styles.assetSubtext} numberOfLines={1}>
+              <AppText style={styles.assetSubtext} numberOfLines={1}>
                 {item.subtype || item.category}
-              </Text>
+              </AppText>
             </View>
           </View>
         </TouchableOpacity>
@@ -227,8 +226,8 @@ export default function AssetAdminScreen() {
         <View style={styles.iconContainer}>
           <Ionicons name="cube-outline" size={64} color={colors.textSecondary} />
         </View>
-        <Text style={styles.emptyText}>No assets found</Text>
-        <Text style={styles.emptySubtext}>Try adjusting your search</Text>
+        <AppText style={styles.emptyText}>No assets found</AppText>
+        <AppText style={styles.emptySubtext}>Try adjusting your search</AppText>
       </View>
     ),
     []
@@ -290,13 +289,13 @@ export default function AssetAdminScreen() {
                 size={20}
                 color={colors.electricBlue}
               />
-              <Text style={styles.selectAllText}>
+              <AppText style={styles.selectAllText}>
                 {allSelected ? 'Deselect All' : 'Select All'}
-              </Text>
+              </AppText>
             </TouchableOpacity>
-            <Text style={styles.selectedCountText}>
+            <AppText style={styles.selectedCountText}>
               {selectedIds.size} of {assets.length} selected
-            </Text>
+            </AppText>
           </View>
         )}
 
@@ -316,9 +315,9 @@ export default function AssetAdminScreen() {
               }}
             >
               <Ionicons name="trash-outline" size={18} color={colors.error} />
-              <Text style={[styles.toolbarButtonText, { color: colors.error }]}>
+              <AppText style={[styles.toolbarButtonText, { color: colors.error }]}>
                 Delete{selectedIds.size > 1 ? ` (${selectedIds.size})` : ''}
-              </Text>
+              </AppText>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -326,9 +325,9 @@ export default function AssetAdminScreen() {
               onPress={() => setHardDeleteIds(Array.from(selectedIds))}
             >
               <Ionicons name="trash" size={18} color={colors.error} />
-              <Text style={[styles.toolbarButtonText, { color: colors.error }]}>
+              <AppText style={[styles.toolbarButtonText, { color: colors.error }]}>
                 Hard Delete
-              </Text>
+              </AppText>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -336,9 +335,9 @@ export default function AssetAdminScreen() {
               onPress={() => setShowStatusPicker(true)}
             >
               <Ionicons name="swap-horizontal-outline" size={18} color={colors.electricBlue} />
-              <Text style={[styles.toolbarButtonText, { color: colors.electricBlue }]}>
+              <AppText style={[styles.toolbarButtonText, { color: colors.electricBlue }]}>
                 Change Status
-              </Text>
+              </AppText>
             </TouchableOpacity>
           </View>
         )}
@@ -346,9 +345,9 @@ export default function AssetAdminScreen() {
         {/* Bulk status result */}
         {bulkStatusMutation.isSuccess && bulkStatusMutation.data && (
           <View style={styles.resultBanner}>
-            <Text style={styles.resultText}>
+            <AppText style={styles.resultText}>
               Updated {bulkStatusMutation.data.updated} of {bulkStatusMutation.data.total} assets
-            </Text>
+            </AppText>
           </View>
         )}
 
@@ -359,9 +358,9 @@ export default function AssetAdminScreen() {
           </View>
         ) : error ? (
           <View style={styles.centerContent}>
-            <Text style={styles.errorText}>Failed to load assets</Text>
+            <AppText style={styles.errorText}>Failed to load assets</AppText>
             <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
-              <Text style={styles.retryButtonText}>Retry</Text>
+              <AppText style={styles.retryButtonText}>Retry</AppText>
             </TouchableOpacity>
           </View>
         ) : (
@@ -424,7 +423,7 @@ export default function AssetAdminScreen() {
         {/* Status Picker Sheet */}
         <SheetModal visible={showStatusPicker} onClose={() => setShowStatusPicker(false)}>
           <View style={styles.statusPickerSheet}>
-            <Text style={styles.statusPickerTitle}>Change Status</Text>
+            <AppText style={styles.statusPickerTitle}>Change Status</AppText>
             {STATUS_VALUES.map((status) => {
               const color =
                 AssetStatusColors[status as keyof typeof AssetStatusColors] ||
@@ -436,9 +435,9 @@ export default function AssetAdminScreen() {
                   onPress={() => handleBulkStatus(status)}
                 >
                   <View style={[styles.statusDot, { backgroundColor: color }]} />
-                  <Text style={styles.statusOptionText}>
+                  <AppText style={styles.statusOptionText}>
                     {AssetStatusLabels[status as keyof typeof AssetStatusLabels] || status}
-                  </Text>
+                  </AppText>
                 </TouchableOpacity>
               );
             })}
@@ -446,7 +445,7 @@ export default function AssetAdminScreen() {
               style={styles.statusCancelButton}
               onPress={() => setShowStatusPicker(false)}
             >
-              <Text style={styles.statusCancelText}>Cancel</Text>
+              <AppText style={styles.statusCancelText}>Cancel</AppText>
             </TouchableOpacity>
           </View>
         </SheetModal>

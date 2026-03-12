@@ -1,14 +1,12 @@
 import React, { useRef, useEffect, useCallback, useMemo, memo } from 'react';
 import {
   View,
-  Text,
   FlatList,
   StyleSheet,
   SafeAreaView,
   RefreshControl,
   TouchableOpacity,
-  Animated,
-} from 'react-native';
+  Animated} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useIsFocused } from '@react-navigation/native';
@@ -48,6 +46,7 @@ import { usePersistentBackdrop } from '../../src/hooks/usePersistentBackdrop';
 import { PersistentBackdrop } from '../../src/components/common/PersistentBackdrop';
 import { useCountUp } from '../../src/hooks/useCountUp';
 import { useStaggeredEntrance } from '../../src/hooks/useStaggeredEntrance';
+import { AppText } from '../../src/components/common';
 
 // Dashboard font sizes — now use global tokens (display: 28, hero: 35)
 const FONT_SIZE_USERNAME = fontSize.display;
@@ -68,7 +67,7 @@ type DashboardActivityItem =
 /** Renders a count-up animated number for stat cards */
 function CountUpValue({ value, style }: { value: number; style: object }) {
   const display = useCountUp(value);
-  return <Text style={style}>{display}</Text>;
+  return <AppText style={style}>{display}</AppText>;
 }
 
 const ActivityCard = memo(function ActivityCard({
@@ -108,24 +107,24 @@ const ActivityCard = memo(function ActivityCard({
               </View>
               <View style={styles.cardBody}>
                 <View style={styles.cardContentRow}>
-                  <Text style={styles.cardTitle} numberOfLines={1}>
+                  <AppText style={styles.cardTitle} numberOfLines={1}>
                     {item.data.assetNumber ? formatAssetNumber(item.data.assetNumber) : 'Unknown Asset'}
-                  </Text>
+                  </AppText>
                   <View style={styles.cardBadges}>
                     {matchedDepot && badgeColors && (
                       <View style={[styles.depotLocationBadge, { backgroundColor: badgeColors.bg }]}>
-                        <Text style={[styles.depotLocationText, { color: badgeColors.text }]}>{matchedDepot.name}</Text>
+                        <AppText style={[styles.depotLocationText, { color: badgeColors.text }]}>{matchedDepot.name}</AppText>
                       </View>
                     )}
                   </View>
                 </View>
                 <View style={styles.scanFooter}>
-                  <Text style={styles.cardSecondaryText}>
+                  <AppText style={styles.cardSecondaryText}>
                     {formatScanTypeLabel(item.data.scanType)}
-                  </Text>
-                  <Text style={styles.scanTime}>
+                  </AppText>
+                  <AppText style={styles.scanTime}>
                     {formatRelativeTime(item.data.createdAt)}
-                  </Text>
+                  </AppText>
                 </View>
               </View>
             </View>
@@ -154,18 +153,18 @@ const ActivityCard = memo(function ActivityCard({
               </View>
               <View style={styles.cardBody}>
                 <View style={styles.cardContentRow}>
-                  <Text style={styles.cardTitle} numberOfLines={1}>
+                  <AppText style={styles.cardTitle} numberOfLines={1}>
                     {item.data.assetNumber ? formatAssetNumber(item.data.assetNumber) : 'Unknown Asset'}
-                  </Text>
+                  </AppText>
                   <View style={styles.cardBadges}>
                     <DefectStatusBadge status={item.data.status} />
                   </View>
                 </View>
                 <View style={styles.scanFooter}>
-                  <Text style={styles.cardSecondaryText}>Defect Report</Text>
-                  <Text style={styles.scanTime}>
+                  <AppText style={styles.cardSecondaryText}>Defect Report</AppText>
+                  <AppText style={styles.scanTime}>
                     {formatRelativeTime(item.data.createdAt)}
-                  </Text>
+                  </AppText>
                 </View>
               </View>
             </View>
@@ -195,18 +194,18 @@ const ActivityCard = memo(function ActivityCard({
             </View>
             <View style={styles.cardBody}>
               <View style={styles.cardContentRow}>
-                <Text style={styles.cardTitle} numberOfLines={1}>
+                <AppText style={styles.cardTitle} numberOfLines={1}>
                   {item.data.assetNumber ? formatAssetNumber(item.data.assetNumber) : 'Unknown Asset'}
-                </Text>
+                </AppText>
                 <View style={styles.cardBadges}>
                   <MaintenanceStatusBadge status={item.data.status} />
                 </View>
               </View>
               <View style={styles.scanFooter}>
-                <Text style={styles.cardSecondaryText}>{item.data.title}</Text>
-                <Text style={styles.scanTime}>
+                <AppText style={styles.cardSecondaryText}>{item.data.title}</AppText>
+                <AppText style={styles.scanTime}>
                   {formatRelativeTime(item.data.createdAt)}
-                </Text>
+                </AppText>
               </View>
             </View>
           </View>
@@ -447,18 +446,18 @@ export default function HomeScreen() {
           {isResolvingDepot ? (
             <LoadingDots color={colors.textSecondary} size={6} />
           ) : resolvedDepot ? (
-            <Text style={styles.geofenceText}>
-              Your location is within the <Text style={styles.geofenceLocation}>{resolvedDepot.depot.name}</Text> geofence
-            </Text>
+            <AppText style={styles.geofenceText}>
+              Your location is within the <AppText style={styles.geofenceLocation}>{resolvedDepot.depot.name}</AppText> geofence
+            </AppText>
           ) : (
-            <Text style={styles.geofenceText}>You are not within any depot geofence</Text>
+            <AppText style={styles.geofenceText}>You are not within any depot geofence</AppText>
           )}
         </Animated.View>
       </View>
 
       {/* Stats Cards Grid */}
       <View style={styles.statsSection}>
-        <Text style={styles.sectionTitle}>Asset Overview</Text>
+        <AppText style={styles.sectionTitle}>Asset Overview</AppText>
         <View style={styles.statsGrid}>
           {statsCards.map((stat) => (
             <TouchableOpacity
@@ -473,7 +472,7 @@ export default function HomeScreen() {
                 <Ionicons name={stat.icon} size={32} color="#FFFFFF" style={styles.statIcon} />
                 <CountUpValue value={stat.value} style={styles.statValue} />
               </View>
-              <Text style={styles.statLabel}>{stat.label}</Text>
+              <AppText style={styles.statLabel}>{stat.label}</AppText>
             </TouchableOpacity>
           ))}
         </View>
@@ -481,7 +480,7 @@ export default function HomeScreen() {
 
       {/* Recent Activity Header */}
       <View style={styles.activityHeader}>
-        <Text style={styles.sectionTitle}>Recent Activity</Text>
+        <AppText style={styles.sectionTitle}>Recent Activity</AppText>
       </View>
     </>
   // depots.length is used instead of the full depots array to prevent re-creation

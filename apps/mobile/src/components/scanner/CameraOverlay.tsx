@@ -1,9 +1,10 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, SafeAreaView, TouchableOpacity, Animated } from 'react-native';
+import { View, SafeAreaView, TouchableOpacity, Animated } from 'react-native';
 import { LoadingDots } from '../common/LoadingDots';
 import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
 import { styles } from './scan.styles';
+import { AppText } from '../common';
 
 interface CameraOverlayProps {
   hasLocationPermission: boolean;
@@ -52,8 +53,8 @@ function CameraOverlayComponent({
       {/* ── Top Bar ──────────────────────────────── */}
       <View style={styles.topBar}>
         <View style={styles.topBarTitleCenter}>
-          <Text style={styles.topBarTitleText}>Scan QR Code</Text>
-          <Text style={styles.topBarSubtitleText}>Point camera at asset QR code</Text>
+          <AppText style={styles.topBarTitleText}>Scan QR Code</AppText>
+          <AppText style={styles.topBarSubtitleText}>Point camera at asset QR code</AppText>
         </View>
       </View>
 
@@ -78,7 +79,7 @@ function CameraOverlayComponent({
         {scanStatus ? (
           <View style={styles.scanStatusPill}>
             <LoadingDots color={colors.textInverse} size={6} />
-            <Text style={styles.scanStatusText}>{scanStatus}</Text>
+            <AppText style={styles.scanStatusText}>{scanStatus}</AppText>
           </View>
         ) : null}
       </View>
@@ -93,9 +94,9 @@ function CameraOverlayComponent({
             accessibilityLabel="Enable location"
             accessibilityHint="Double tap to grant location permission for scan tracking"
           >
-            <Text style={[styles.scannerButtonText, styles.buttonPrimaryText]}>
+            <AppText style={[styles.scannerButtonText, styles.buttonPrimaryText]}>
               Enable Location
-            </Text>
+            </AppText>
           </TouchableOpacity>
         </View>
       )}

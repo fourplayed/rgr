@@ -1,11 +1,9 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   View,
-  Text,
   FlatList,
   TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+  StyleSheet} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import type { AuditLogWithUser } from '@rgr/shared';
@@ -20,6 +18,7 @@ import { SheetHeader } from '../src/components/common/SheetHeader';
 import { useUserPermissions } from '../src/contexts/UserPermissionsContext';
 import { colors } from '../src/theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../src/theme/spacing';
+import { AppText } from '../src/components/common';
 
 export default function AuditLogScreen() {
   const router = useRouter();
@@ -86,8 +85,8 @@ export default function AuditLogScreen() {
             color={colors.textSecondary}
           />
         </View>
-        <Text style={styles.emptyText}>No audit logs</Text>
-        <Text style={styles.emptySubtext}>Activity will appear here</Text>
+        <AppText style={styles.emptyText}>No audit logs</AppText>
+        <AppText style={styles.emptySubtext}>Activity will appear here</AppText>
       </View>
     ),
     []
@@ -118,9 +117,9 @@ export default function AuditLogScreen() {
           </View>
         ) : error ? (
           <View style={styles.centerContent}>
-            <Text style={styles.errorText}>Failed to load audit logs</Text>
+            <AppText style={styles.errorText}>Failed to load audit logs</AppText>
             <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
-              <Text style={styles.retryButtonText}>Retry</Text>
+              <AppText style={styles.retryButtonText}>Retry</AppText>
             </TouchableOpacity>
           </View>
         ) : (

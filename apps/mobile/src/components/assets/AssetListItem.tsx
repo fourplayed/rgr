@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useMemo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { AssetWithRelations, AssetStatus } from '@rgr/shared';
 import {
@@ -14,6 +14,7 @@ import { StatusBadge } from '../common/StatusBadge';
 import { colors } from '../../theme/colors';
 import { cardStyles } from '../../theme/cardStyles';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
+import { AppText } from '../common';
 
 export const ASSET_STATUS_ICONS: Record<AssetStatus, keyof typeof Ionicons.glyphMap> = {
   serviced: 'checkmark-circle',
@@ -70,15 +71,15 @@ function AssetListItemComponent({ asset, onPress, depotLookup }: AssetListItemPr
         </View>
         <View style={styles.cardBody}>
           <View style={styles.headerRow}>
-            <Text style={styles.assetNumber} numberOfLines={1}>
+            <AppText style={styles.assetNumber} numberOfLines={1}>
               {formatAssetNumber(asset.assetNumber)}
-            </Text>
+            </AppText>
             <StatusBadge status={asset.status} size="small" />
           </View>
           <View style={styles.footerRow}>
-            <Text style={styles.subtypeLabel}>
+            <AppText style={styles.subtypeLabel}>
               {asset.subtype ? asset.subtype : asset.category === 'dolly' ? 'Dolly' : 'Trailer'}
-            </Text>
+            </AppText>
             {asset.depotName && depotBadgeColors && (
               <DepotBadge
                 label={asset.depotName}

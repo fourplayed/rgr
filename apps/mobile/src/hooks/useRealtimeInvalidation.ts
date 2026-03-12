@@ -4,6 +4,26 @@ import { getSupabaseClient } from '@rgr/shared';
 import { useAuthStore } from '../store/authStore';
 
 /**
+ * Module-scoped set of query key prefixes currently suppressed.
+ * When a local optimistic mutation fires, it calls `suppressRealtimeFor()`
+ * to prevent the incoming realtime event from racing with onSettled.
+ */
+const suppressedKeys = new Set<string>();
+
+/**
+ * Temporarily suppress realtime invalidation for a query key prefix.
+ * Use in optimistic mutation `onMutate` to prevent the realtime handler
+ * from overwriting optimistic state before onSettled fires.
+ *
+ * @param keyPrefix - The first segment of the query key (e.g. 'maintenance', 'defects')
+ * @param durationMs - How long to suppress (default 3000ms)
+ */
+export function suppressRealtimeFor(keyPrefix: string, durationMs = 3000): void {
+  suppressedKeys.add(keyPrefix);
+  setTimeout(() => suppressedKeys.delete(keyPrefix), durationMs);
+}
+
+/**
  * Subscribe to Supabase Realtime changes and invalidate React Query caches.
  *
  * Mirrors the web's useFleetRealtime pattern for the mobile app.
@@ -16,7 +36,7 @@ import { useAuthStore } from '../store/authStore';
  *
  * Only active when the user is authenticated.
  */
-export function useRealtimeInvalidation() {
+export function useRealtimeInvalidation(): void {
   const queryClient = useQueryClient();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
@@ -31,28 +51,47 @@ export function useRealtimeInvalidation() {
       return;
     }
 
+    function invalidateIfNotSuppressed(keyPrefix: string, queryKey: readonly unknown[]) {
+      if (suppressedKeys.has(keyPrefix)) return;
+      queryClient.invalidateQueries({ queryKey: queryKey as unknown[], refetchType: 'active' });
+    }
+
     const scanChannel = supabase
       .channel('mobile-scan-updates')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'scan_events' }, () => {
-        queryClient.invalidateQueries({ queryKey: ['scans'], refetchType: 'active' });
-        queryClient.invalidateQueries({ queryKey: ['assets'], refetchType: 'active' });
+        invalidateIfNotSuppressed('scans', ['scans']);
+        invalidateIfNotSuppressed('assets', ['assets']);
       })
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          queryClient.invalidateQueries({ queryKey: ['scans'], refetchType: 'active' });
+          queryClient.invalidateQueries({ queryKey: ['assets'], refetchType: 'active' });
+        }
+      });
 
     const assetChannel = supabase
       .channel('mobile-asset-updates')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'assets' }, () => {
-        queryClient.invalidateQueries({ queryKey: ['assets'], refetchType: 'active' });
+        invalidateIfNotSuppressed('assets', ['assets']);
       })
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          queryClient.invalidateQueries({ queryKey: ['assets'], refetchType: 'active' });
+        }
+      });
 
     const defectChannel = supabase
       .channel('mobile-defect-updates')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'defect_reports' }, () => {
-        queryClient.invalidateQueries({ queryKey: ['defects'], refetchType: 'active' });
-        queryClient.invalidateQueries({ queryKey: ['assets'], refetchType: 'active' });
+        invalidateIfNotSuppressed('defects', ['defects']);
+        invalidateIfNotSuppressed('assets', ['assets']);
       })
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          queryClient.invalidateQueries({ queryKey: ['defects'], refetchType: 'active' });
+          queryClient.invalidateQueries({ queryKey: ['assets'], refetchType: 'active' });
+        }
+      });
 
     const maintenanceChannel = supabase
       .channel('mobile-maintenance-updates')
@@ -60,11 +99,16 @@ export function useRealtimeInvalidation() {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'maintenance_records' },
         () => {
+          invalidateIfNotSuppressed('maintenance', ['maintenance']);
+          invalidateIfNotSuppressed('assets', ['assets']);
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
           queryClient.invalidateQueries({ queryKey: ['maintenance'], refetchType: 'active' });
           queryClient.invalidateQueries({ queryKey: ['assets'], refetchType: 'active' });
         }
-      )
-      .subscribe();
+      });
 
     return () => {
       scanChannel.unsubscribe();

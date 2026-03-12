@@ -1,13 +1,11 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
-  Text,
   ScrollView,
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  StyleSheet,
-} from 'react-native';
+  StyleSheet} from 'react-native';
 import { useRouter } from 'expo-router';
 import {
   AssetCategoryLabels,
@@ -24,6 +22,7 @@ import { Button } from '../../src/components/common/Button';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, shadows, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
 import { formStyles } from '../../src/theme/formStyles';
+import { AppText } from '../../src/components/common';
 
 const CATEGORIES: AssetCategoryType[] = ['trailer', 'dolly'];
 const ASSET_NUMBER_REGEX = /^[A-Z]{2}\d{3,}$/;
@@ -131,7 +130,7 @@ export default function CreateAssetScreen() {
           >
             {/* Asset Number */}
             <View style={formStyles.inputGroup}>
-              <Text style={formStyles.label}>Asset Number *</Text>
+              <AppText style={formStyles.label}>Asset Number *</AppText>
               <TextInput
                 style={formStyles.input}
                 value={assetNumber}
@@ -143,15 +142,15 @@ export default function CreateAssetScreen() {
                 maxLength={20}
               />
               {assetNumber.trim().length > 0 && !isAssetNumberValid && (
-                <Text style={styles.hintText}>
+                <AppText style={styles.hintText}>
                   Format: 2 letters + 3+ digits (e.g. TL001)
-                </Text>
+                </AppText>
               )}
             </View>
 
             {/* Category */}
             <View style={formStyles.inputGroup}>
-              <Text style={formStyles.label}>Category *</Text>
+              <AppText style={formStyles.label}>Category *</AppText>
               <View style={styles.chipRow}>
                 {CATEGORIES.map((c) => (
                   <FilterChip
@@ -171,7 +170,7 @@ export default function CreateAssetScreen() {
             {/* Subtype — only for Trailer */}
             {category === 'trailer' && (
               <View style={formStyles.inputGroup}>
-                <Text style={formStyles.label}>Subtype</Text>
+                <AppText style={formStyles.label}>Subtype</AppText>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -198,7 +197,7 @@ export default function CreateAssetScreen() {
 
             {/* Make */}
             <View style={formStyles.inputGroup}>
-              <Text style={formStyles.label}>Make</Text>
+              <AppText style={formStyles.label}>Make</AppText>
               <TextInput
                 style={formStyles.input}
                 value={make}
@@ -211,7 +210,7 @@ export default function CreateAssetScreen() {
 
             {/* Model */}
             <View style={formStyles.inputGroup}>
-              <Text style={formStyles.label}>Model</Text>
+              <AppText style={formStyles.label}>Model</AppText>
               <TextInput
                 style={formStyles.input}
                 value={model}
@@ -224,7 +223,7 @@ export default function CreateAssetScreen() {
 
             {/* Year */}
             <View style={formStyles.inputGroup}>
-              <Text style={formStyles.label}>Year</Text>
+              <AppText style={formStyles.label}>Year</AppText>
               <TextInput
                 style={formStyles.input}
                 value={year}
@@ -238,7 +237,7 @@ export default function CreateAssetScreen() {
 
             {/* VIN */}
             <View style={formStyles.inputGroup}>
-              <Text style={formStyles.label}>VIN</Text>
+              <AppText style={formStyles.label}>VIN</AppText>
               <TextInput
                 style={formStyles.input}
                 value={vin}
@@ -253,7 +252,7 @@ export default function CreateAssetScreen() {
 
             {/* Registration No. */}
             <View style={formStyles.inputGroup}>
-              <Text style={formStyles.label}>Registration No. *</Text>
+              <AppText style={formStyles.label}>Registration No. *</AppText>
               <TextInput
                 style={formStyles.input}
                 value={registrationNumber}
@@ -268,7 +267,7 @@ export default function CreateAssetScreen() {
 
             {/* Registration Expiry */}
             <View style={formStyles.inputGroup}>
-              <Text style={formStyles.label}>Registration Expiry</Text>
+              <AppText style={formStyles.label}>Registration Expiry</AppText>
               <TextInput
                 style={formStyles.input}
                 value={registrationExpiry}
@@ -278,15 +277,15 @@ export default function CreateAssetScreen() {
                 maxLength={10}
               />
               {registrationExpiry.trim().length > 0 && !isExpiryFormatValid && (
-                <Text style={styles.hintText}>
+                <AppText style={styles.hintText}>
                   Format: YYYY-MM-DD (e.g. 2026-06-30)
-                </Text>
+                </AppText>
               )}
             </View>
 
             {/* Depot */}
             <View style={formStyles.inputGroup}>
-              <Text style={formStyles.label}>Depot</Text>
+              <AppText style={formStyles.label}>Depot</AppText>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -312,7 +311,7 @@ export default function CreateAssetScreen() {
 
             {/* Description */}
             <View style={formStyles.inputGroup}>
-              <Text style={formStyles.label}>Description</Text>
+              <AppText style={formStyles.label}>Description</AppText>
               <TextInput
                 style={[formStyles.input, formStyles.textArea]}
                 value={description}
@@ -326,7 +325,7 @@ export default function CreateAssetScreen() {
 
             {/* Notes */}
             <View style={formStyles.inputGroup}>
-              <Text style={formStyles.label}>Notes</Text>
+              <AppText style={formStyles.label}>Notes</AppText>
               <TextInput
                 style={[formStyles.input, formStyles.textArea]}
                 value={notes}
@@ -339,7 +338,7 @@ export default function CreateAssetScreen() {
             </View>
 
             {error && (
-              <Text style={formStyles.errorText}>{error}</Text>
+              <AppText style={formStyles.errorText}>{error}</AppText>
             )}
 
             {/* Buttons */}

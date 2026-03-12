@@ -1,11 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import {
   View,
-  Text,
   FlatList,
   TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+  StyleSheet} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import type { Depot, CreateDepotInput, UpdateDepotInput } from '@rgr/shared';
@@ -22,6 +20,7 @@ import { ConfirmSheet } from '../../src/components/common/ConfirmSheet';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
+import { AppText } from '../../src/components/common';
 
 export default function DepotsScreen() {
   const router = useRouter();
@@ -105,8 +104,8 @@ export default function DepotsScreen() {
         <View style={styles.iconContainer}>
           <Ionicons name="business-outline" size={64} color={colors.textSecondary} />
         </View>
-        <Text style={styles.emptyText}>No depots</Text>
-        <Text style={styles.emptySubtext}>Tap + to create one</Text>
+        <AppText style={styles.emptyText}>No depots</AppText>
+        <AppText style={styles.emptySubtext}>Tap + to create one</AppText>
       </View>
     ),
     []
@@ -132,9 +131,9 @@ export default function DepotsScreen() {
           </View>
         ) : error ? (
           <View style={styles.centerContent}>
-            <Text style={styles.errorText}>Failed to load depots</Text>
+            <AppText style={styles.errorText}>Failed to load depots</AppText>
             <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
-              <Text style={styles.retryButtonText}>Retry</Text>
+              <AppText style={styles.retryButtonText}>Retry</AppText>
             </TouchableOpacity>
           </View>
         ) : (

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { AssetWithRelations } from '@rgr/shared';
 import { formatDate, AssetStatusColors, getDepotBadgeColors, formatAssetNumber } from '@rgr/shared';
@@ -11,6 +11,7 @@ import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 
 import { ASSET_STATUS_ICONS } from './AssetListItem';
+import { AppText } from '../common';
 
 interface AssetInfoCardProps {
   asset: AssetWithRelations;
@@ -67,10 +68,10 @@ export function AssetInfoCard({ asset, nextServiceDate, assessment, onPress }: A
       <View style={styles.header}>
         <Ionicons name={ASSET_STATUS_ICONS[asset.status]} size={36} color={statusColor} />
         <View style={styles.assetColumn}>
-          <Text style={styles.assetNumber}>{formatAssetNumber(asset.assetNumber)}</Text>
-          <Text style={styles.categoryText}>
+          <AppText style={styles.assetNumber}>{formatAssetNumber(asset.assetNumber)}</AppText>
+          <AppText style={styles.categoryText}>
             {asset.subtype ? asset.subtype : asset.category === 'dolly' ? 'Dolly' : 'Trailer'}
-          </Text>
+          </AppText>
         </View>
         <View style={styles.badgeColumn}>
           <StatusBadge status={asset.status} size="small" />
@@ -80,23 +81,23 @@ export function AssetInfoCard({ asset, nextServiceDate, assessment, onPress }: A
         </View>
       </View>
 
-      {assessment ? <Text style={styles.assessmentText}>{assessment}</Text> : null}
+      {assessment ? <AppText style={styles.assessmentText}>{assessment}</AppText> : null}
 
       <CollapsibleSection title="Details" variant="flat" defaultExpanded={false}>
         <View style={styles.infoGrid}>
           <InfoRow label="Registration" value={asset.registrationNumber || 'Unknown'} />
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Registration Expiry</Text>
+            <AppText style={styles.infoLabel}>Registration Expiry</AppText>
             <View style={styles.expiryValueRow}>
               {isDotPending && <ActivityIndicator size="small" color={colors.textSecondary} />}
               {asset.registrationOverdue && (
                 <View style={styles.overdueBadge}>
-                  <Text style={styles.overdueBadgeText}>OVERDUE</Text>
+                  <AppText style={styles.overdueBadgeText}>OVERDUE</AppText>
                 </View>
               )}
-              <Text style={[styles.infoValue, { color: expiryColor }]}>
+              <AppText style={[styles.infoValue, { color: expiryColor }]}>
                 {asset.registrationExpiry ? formatDate(asset.registrationExpiry) : 'Unknown'}
-              </Text>
+              </AppText>
             </View>
           </View>
           <InfoRow
@@ -133,8 +134,8 @@ export function AssetInfoCard({ asset, nextServiceDate, assessment, onPress }: A
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.infoRow}>
-      <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={styles.infoValue}>{value}</Text>
+      <AppText style={styles.infoLabel}>{label}</AppText>
+      <AppText style={styles.infoValue}>{value}</AppText>
     </View>
   );
 }

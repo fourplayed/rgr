@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, Modal, TouchableOpacity, StyleSheet, Animated } from 'react-native';
+import { View, Modal, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LoadingDots } from './LoadingDots';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 import { CARD_SPRING, BACKDROP_IN } from '../../theme/animation';
+import { AppText } from './AppText';
 
 const STEP_INTERVAL = 600;
 const SUCCESS_DISMISS_DELAY = 1000;
@@ -122,18 +123,18 @@ export function SteppedProgressOverlay({
           {allDone ? (
             <View style={styles.successContainer}>
               <Ionicons name="checkmark-circle" size={48} color={colors.success} />
-              <Text style={styles.successText}>{successMessage}</Text>
+              <AppText style={styles.successText}>{successMessage}</AppText>
             </View>
           ) : (
             <>
-              <Text style={styles.title}>{title}</Text>
+              <AppText style={styles.title}>{title}</AppText>
               <View style={styles.stepList}>
                 {steps.map((label, index) => {
                   const status = getStepStatus(index);
                   return (
                     <View key={label} style={styles.stepRow}>
                       <StepIcon status={status} />
-                      <Text
+                      <AppText
                         style={[
                           styles.stepLabel,
                           status === 'complete' && styles.stepLabelComplete,
@@ -141,15 +142,15 @@ export function SteppedProgressOverlay({
                         ]}
                       >
                         {label}
-                      </Text>
+                      </AppText>
                     </View>
                   );
                 })}
               </View>
-              {failed && error && <Text style={styles.errorText}>{error}</Text>}
+              {failed && error && <AppText style={styles.errorText}>{error}</AppText>}
               {failed && (
                 <TouchableOpacity style={styles.dismissButton} onPress={onDismiss}>
-                  <Text style={styles.dismissButtonText}>Dismiss</Text>
+                  <AppText style={styles.dismissButtonText}>Dismiss</AppText>
                 </TouchableOpacity>
               )}
             </>

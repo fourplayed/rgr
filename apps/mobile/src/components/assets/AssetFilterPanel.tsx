@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useCallback, useMemo, memo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, LayoutAnimation } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Animated, LayoutAnimation } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { AssetStatus, AssetCategory, Depot } from '@rgr/shared';
 import {
@@ -13,6 +13,7 @@ import { spacing, fontSize, borderRadius, shadows, fontFamily as fonts } from '.
 import { DEPOT_ORDER, getDepotColor, getDepotTextColor } from '../../utils/depotDisplay';
 import { FilterChip } from '../common/FilterChip';
 import '../../utils/enableLayoutAnimation';
+import { AppText } from '../common';
 
 // Category-specific colors for Asset Type filter chips
 const CATEGORY_COLORS: Record<AssetCategory, string> = {
@@ -158,10 +159,10 @@ export const AssetFilterPanel = memo(function AssetFilterPanel({
       {/* Header - Uncontained */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Text style={styles.headerLabel}>Filters</Text>
+          <AppText style={styles.headerLabel}>Filters</AppText>
           {activeFilterCount > 0 && !isExpanded && (
             <View style={styles.countBadge}>
-              <Text style={styles.countBadgeText}>{activeFilterCount}</Text>
+              <AppText style={styles.countBadgeText}>{activeFilterCount}</AppText>
             </View>
           )}
         </View>
@@ -185,7 +186,7 @@ export const AssetFilterPanel = memo(function AssetFilterPanel({
         <View style={styles.container}>
           {/* Asset Type Section */}
           <View style={styles.filterSection}>
-            <Text style={styles.sectionLabel}>Asset Type</Text>
+            <AppText style={styles.sectionLabel}>Asset Type</AppText>
             <View style={styles.chipsContainer}>
               {(Object.keys(AssetCategoryLabels) as AssetCategory[]).map((category) => (
                 <FilterChip
@@ -202,7 +203,7 @@ export const AssetFilterPanel = memo(function AssetFilterPanel({
           {/* Sub-Type Section (show when Asset Type selected) */}
           {availableSubtypes.length > 0 && (
             <View style={styles.filterSection}>
-              <Text style={styles.sectionLabel}>Sub-Type</Text>
+              <AppText style={styles.sectionLabel}>Sub-Type</AppText>
               <View style={styles.chipsContainer}>
                 {availableSubtypes.map((subtype) => (
                   <FilterChip
@@ -218,7 +219,7 @@ export const AssetFilterPanel = memo(function AssetFilterPanel({
 
           {/* Location Section */}
           <View style={styles.filterSection}>
-            <Text style={styles.sectionLabel}>Location</Text>
+            <AppText style={styles.sectionLabel}>Location</AppText>
             <View style={styles.chipsContainer}>
               {sortedDepots.map((depot) => {
                 const isSelected = depotIds.includes(depot.id);
@@ -239,7 +240,7 @@ export const AssetFilterPanel = memo(function AssetFilterPanel({
                     accessibilityLabel={`Filter by ${depot.name}`}
                     accessibilityState={{ selected: isSelected }}
                   >
-                    <Text
+                    <AppText
                       style={[
                         styles.chipText,
                         {
@@ -248,7 +249,7 @@ export const AssetFilterPanel = memo(function AssetFilterPanel({
                       ]}
                     >
                       {depot.name}
-                    </Text>
+                    </AppText>
                   </TouchableOpacity>
                 );
               })}
@@ -257,7 +258,7 @@ export const AssetFilterPanel = memo(function AssetFilterPanel({
 
           {/* Service Status Section */}
           <View style={styles.filterSectionLast}>
-            <Text style={styles.sectionLabel}>Service Status</Text>
+            <AppText style={styles.sectionLabel}>Service Status</AppText>
             <View style={styles.chipsContainer}>
               {(Object.keys(AssetStatusLabels) as AssetStatus[]).map((status) => (
                 <FilterChip

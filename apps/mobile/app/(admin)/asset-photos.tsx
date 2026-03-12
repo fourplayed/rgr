@@ -1,12 +1,10 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
-  Text,
   FlatList,
   TouchableOpacity,
   StyleSheet,
-  useWindowDimensions,
-} from 'react-native';
+  useWindowDimensions} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { formatAssetNumber } from '@rgr/shared';
@@ -20,6 +18,7 @@ import { LoadingDots } from '../../src/components/common/LoadingDots';
 import { SheetHeader } from '../../src/components/common/SheetHeader';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
+import { AppText } from '../../src/components/common';
 
 const NUM_COLUMNS = 3;
 const THUMBNAIL_GAP = spacing.sm;
@@ -191,10 +190,10 @@ export default function AssetPhotosScreen() {
         <View style={styles.iconContainer}>
           <Ionicons name="camera-outline" size={64} color={colors.textSecondary} />
         </View>
-        <Text style={styles.emptyText}>No photos</Text>
-        <Text style={styles.emptySubtext}>
+        <AppText style={styles.emptyText}>No photos</AppText>
+        <AppText style={styles.emptySubtext}>
           No photos have been uploaded for this asset
-        </Text>
+        </AppText>
       </View>
     ),
     []
@@ -231,13 +230,13 @@ export default function AssetPhotosScreen() {
                 size={20}
                 color={colors.electricBlue}
               />
-              <Text style={styles.selectAllText}>
+              <AppText style={styles.selectAllText}>
                 {allSelected ? 'Deselect All' : 'Select All'}
-              </Text>
+              </AppText>
             </TouchableOpacity>
-            <Text style={styles.selectedCountText}>
+            <AppText style={styles.selectedCountText}>
               {selectedIds.size} selected
-            </Text>
+            </AppText>
           </View>
         )}
 
@@ -248,9 +247,9 @@ export default function AssetPhotosScreen() {
           </View>
         ) : error ? (
           <View style={styles.centerContent}>
-            <Text style={styles.errorText}>Failed to load photos</Text>
+            <AppText style={styles.errorText}>Failed to load photos</AppText>
             <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
-              <Text style={styles.retryButtonText}>Retry</Text>
+              <AppText style={styles.retryButtonText}>Retry</AppText>
             </TouchableOpacity>
           </View>
         ) : (
@@ -283,9 +282,9 @@ export default function AssetPhotosScreen() {
               ) : (
                 <>
                   <Ionicons name="trash-outline" size={20} color={colors.textInverse} />
-                  <Text style={styles.deleteButtonText}>
+                  <AppText style={styles.deleteButtonText}>
                     Delete Selected ({selectedIds.size})
-                  </Text>
+                  </AppText>
                 </>
               )}
             </TouchableOpacity>
@@ -293,7 +292,7 @@ export default function AssetPhotosScreen() {
               style={styles.clearButton}
               onPress={() => setSelectedIds(new Set())}
             >
-              <Text style={styles.clearButtonText}>Clear</Text>
+              <AppText style={styles.clearButtonText}>Clear</AppText>
             </TouchableOpacity>
           </View>
         )}

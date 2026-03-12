@@ -1,13 +1,11 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
-  Text,
   FlatList,
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  ScrollView,
-} from 'react-native';
+  ScrollView} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import {
@@ -30,6 +28,7 @@ import {
 } from '../../src/components/maintenance';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
+import { AppText } from '../../src/components/common';
 
 const STATUS_FILTERS: { value: MaintenanceStatus; label: string }[] = [
   { value: MaintenanceStatus.SCHEDULED, label: 'Scheduled' },
@@ -129,20 +128,20 @@ export default function MaintenanceAdminScreen() {
           </View>
           <View style={styles.itemInfo}>
             <View style={styles.itemHeaderRow}>
-              <Text style={styles.itemAssetNumber} numberOfLines={1}>
+              <AppText style={styles.itemAssetNumber} numberOfLines={1}>
                 {item.assetNumber
                   ? formatAssetNumber(item.assetNumber)
                   : 'Unknown Asset'}
-              </Text>
+              </AppText>
               <MaintenanceStatusBadge status={item.status as MaintenanceStatus} />
             </View>
-            <Text style={styles.itemTitle} numberOfLines={1}>
+            <AppText style={styles.itemTitle} numberOfLines={1}>
               {item.title}
-            </Text>
-            <Text style={styles.itemTime}>
+            </AppText>
+            <AppText style={styles.itemTime}>
               {formatRelativeTime(item.createdAt)}
               {item.reporterName ? ` · ${item.reporterName}` : ''}
-            </Text>
+            </AppText>
           </View>
         </TouchableOpacity>
       );
@@ -158,8 +157,8 @@ export default function MaintenanceAdminScreen() {
         <View style={styles.iconContainer}>
           <Ionicons name="construct-outline" size={64} color={colors.textSecondary} />
         </View>
-        <Text style={styles.emptyText}>No maintenance tasks</Text>
-        <Text style={styles.emptySubtext}>Try adjusting your filters</Text>
+        <AppText style={styles.emptyText}>No maintenance tasks</AppText>
+        <AppText style={styles.emptySubtext}>Try adjusting your filters</AppText>
       </View>
     ),
     []
@@ -229,9 +228,9 @@ export default function MaintenanceAdminScreen() {
               onPress={() => setShowDeleteConfirm(true)}
             >
               <Ionicons name="trash-outline" size={18} color={colors.error} />
-              <Text style={[styles.toolbarButtonText, { color: colors.error }]}>
+              <AppText style={[styles.toolbarButtonText, { color: colors.error }]}>
                 Cancel{selectedIds.size > 1 ? ` (${selectedIds.size})` : ''}
-              </Text>
+              </AppText>
             </TouchableOpacity>
           </View>
         )}
@@ -243,9 +242,9 @@ export default function MaintenanceAdminScreen() {
           </View>
         ) : error ? (
           <View style={styles.centerContent}>
-            <Text style={styles.errorText}>Failed to load tasks</Text>
+            <AppText style={styles.errorText}>Failed to load tasks</AppText>
             <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
-              <Text style={styles.retryButtonText}>Retry</Text>
+              <AppText style={styles.retryButtonText}>Retry</AppText>
             </TouchableOpacity>
           </View>
         ) : (
@@ -275,9 +274,9 @@ export default function MaintenanceAdminScreen() {
                     color={page <= 1 ? colors.textSecondary : colors.text}
                   />
                 </TouchableOpacity>
-                <Text style={styles.pageText}>
+                <AppText style={styles.pageText}>
                   {page} / {totalPages}
-                </Text>
+                </AppText>
                 <TouchableOpacity
                   onPress={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page >= totalPages}

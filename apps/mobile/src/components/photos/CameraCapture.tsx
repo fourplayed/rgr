@@ -1,14 +1,12 @@
 import React, { useRef, useCallback, useEffect, useState, memo } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   Modal,
   Linking,
   Animated,
-  Dimensions,
-} from 'react-native';
+  Dimensions} from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,6 +24,7 @@ import {
   fontFamily as fonts,
 } from '../../theme/spacing';
 import { FULLSCREEN_SPRING, SHEET_EXIT } from '../../theme/animation';
+import { AppText } from '../common';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
@@ -184,7 +183,7 @@ function CameraCaptureComponent({
                   color={colors.electricBlue}
                   style={styles.checkingIcon}
                 />
-                <Text style={styles.messageText}>Checking Camera...</Text>
+                <AppText style={styles.messageText}>Checking Camera...</AppText>
                 <LoadingDots color={colors.textSecondary} size={8} />
               </SafeAreaView>
             </View>
@@ -215,12 +214,12 @@ function CameraCaptureComponent({
                     color={colors.error}
                     style={styles.permissionIcon}
                   />
-                  <Text style={styles.permissionTitle}>Camera Access Required</Text>
-                  <Text style={styles.permissionBody}>
+                  <AppText style={styles.permissionTitle}>Camera Access Required</AppText>
+                  <AppText style={styles.permissionBody}>
                     {permanentlyDenied
                       ? 'Camera permission was denied. Please enable it in your device Settings to capture photos.'
                       : 'Camera permission is needed to capture photos. Enable it in your device Settings.'}
-                  </Text>
+                  </AppText>
                   <View style={styles.permissionButtonRow}>
                     <TouchableOpacity
                       style={styles.permissionCancelButton}
@@ -228,7 +227,7 @@ function CameraCaptureComponent({
                       accessibilityRole="button"
                       accessibilityLabel="Cancel"
                     >
-                      <Text style={styles.permissionCancelButtonText}>Cancel</Text>
+                      <AppText style={styles.permissionCancelButtonText}>Cancel</AppText>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.permissionGrantButton}
@@ -238,9 +237,9 @@ function CameraCaptureComponent({
                         permanentlyDenied ? 'Open device settings' : 'Grant camera permission'
                       }
                     >
-                      <Text style={styles.permissionGrantButtonText}>
+                      <AppText style={styles.permissionGrantButtonText}>
                         {permanentlyDenied ? 'Open Settings' : 'Grant'}
-                      </Text>
+                      </AppText>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -278,8 +277,8 @@ function CameraCaptureComponent({
                     />
                   </TouchableOpacity>
                   <View style={styles.topBarTitleCenter}>
-                    <Text style={styles.topBarTitleText}>Capture Photo</Text>
-                    <Text style={styles.topBarSubtitleText}>{getGuideText(photoType)}</Text>
+                    <AppText style={styles.topBarTitleText}>Capture Photo</AppText>
+                    <AppText style={styles.topBarSubtitleText}>{getGuideText(photoType)}</AppText>
                   </View>
                   <TouchableOpacity
                     style={styles.topBarButton}

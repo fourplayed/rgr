@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { UserRole, UserRoleLabels, UserRoleDescriptions } from '@rgr/shared';
 import { BottomSheet } from '../common/BottomSheet';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 import { getUserRoleColor } from '../../utils/getUserRoleColor';
+import { AppText } from '../common';
 
 const ROLES: UserRole[] = ['driver', 'mechanic', 'manager', 'superuser'];
 
@@ -20,7 +21,7 @@ export function UserRolePicker({ visible, currentRole, onSelect, onCancel }: Use
   return (
     <BottomSheet visible={visible} onDismiss={onCancel}>
       <View style={styles.content}>
-        <Text style={styles.title}>Change Role</Text>
+        <AppText style={styles.title}>Change Role</AppText>
 
         {ROLES.map((role) => {
           const isSelected = role === currentRole;
@@ -38,10 +39,10 @@ export function UserRolePicker({ visible, currentRole, onSelect, onCancel }: Use
             >
               <View style={styles.optionHeader}>
                 <View style={[styles.roleDot, { backgroundColor: roleColor }]} />
-                <Text style={styles.roleLabel}>{UserRoleLabels[role]}</Text>
+                <AppText style={styles.roleLabel}>{UserRoleLabels[role]}</AppText>
                 {isSelected && <Ionicons name="checkmark-circle" size={20} color={roleColor} />}
               </View>
-              <Text style={styles.roleDescription}>{UserRoleDescriptions[role]}</Text>
+              <AppText style={styles.roleDescription}>{UserRoleDescriptions[role]}</AppText>
             </TouchableOpacity>
           );
         })}
@@ -52,7 +53,7 @@ export function UserRolePicker({ visible, currentRole, onSelect, onCancel }: Use
           accessibilityRole="button"
           accessibilityLabel="Cancel"
         >
-          <Text style={styles.cancelButtonText}>Cancel</Text>
+          <AppText style={styles.cancelButtonText}>Cancel</AppText>
         </TouchableOpacity>
       </View>
     </BottomSheet>

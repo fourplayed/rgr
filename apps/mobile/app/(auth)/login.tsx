@@ -1,15 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
-  Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
   Animated,
-  Easing,
-} from 'react-native';
+  Easing} from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -23,7 +21,7 @@ import { SaveCredentialsModal } from '../../src/components/auth/SaveCredentialsM
 import { isAutoLoginEnabled } from '../../src/utils/secureStorage';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, fontWeight, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
-import { LoadingDots, AlertSheet } from '../../src/components/common';
+import { AppText, LoadingDots, AlertSheet } from '../../src/components/common';
 import { logger } from '../../src/utils/logger';
 
 const APP_VERSION = Constants.expoConfig?.version || '1.0.0';
@@ -260,7 +258,7 @@ export default function LoginScreen() {
 
         <View style={styles.form}>
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email</Text>
+            <AppText style={styles.label}>Email</AppText>
             <TextInput
               style={[styles.input, !email && { fontStyle: 'italic' }]}
               placeholder="Enter your email address"
@@ -277,7 +275,7 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Password</Text>
+            <AppText style={styles.label}>Password</AppText>
             <TextInput
               style={[styles.input, !password && { fontStyle: 'italic' }]}
               placeholder="Enter your password"
@@ -303,14 +301,14 @@ export default function LoginScreen() {
             {isLoading ? (
               <LoadingDots color={colors.textInverse} />
             ) : (
-              <Text style={styles.buttonText}>Sign In</Text>
+              <AppText style={styles.buttonText}>Sign In</AppText>
             )}
           </TouchableOpacity>
         </View>
       </Animated.View>
     </KeyboardAvoidingView>
 
-    <Text style={styles.versionText}>v{APP_VERSION} ({BUILD_NUMBER})</Text>
+    <AppText style={styles.versionText}>v{APP_VERSION} ({BUILD_NUMBER})</AppText>
 
     <SaveCredentialsModal
       visible={showSaveModal}

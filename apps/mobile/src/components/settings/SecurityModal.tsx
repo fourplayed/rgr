@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, TouchableOpacity, Switch, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, Switch, StyleSheet } from 'react-native';
 import { LoadingDots } from '../common/LoadingDots';
 import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
-import { SheetModal, BottomSheetScrollView, BottomSheetTextInput } from '../common/SheetModal';
+import { SheetModal, BottomSheetScrollView } from '../common/SheetModal';
+import { AppTextInput } from '../common/AppTextInput';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
@@ -13,6 +14,7 @@ import { isAutoLoginEnabled, setAutoLoginEnabled } from '../../utils/secureStora
 import { updatePassword, verifyCurrentPassword } from '@rgr/shared';
 import { useAuthStore } from '../../store/authStore';
 import { useSubmitGuard } from '../../hooks/useSubmitGuard';
+import { AppText } from '../common';
 
 interface SecurityModalProps {
   visible: boolean;
@@ -52,7 +54,7 @@ function ValidationRow({ label, isValid }: ValidationRowProps) {
         size={16}
         color={isValid ? colors.success : colors.textSecondary}
       />
-      <Text style={[styles.validationText, isValid && styles.validationTextValid]}>{label}</Text>
+      <AppText style={[styles.validationText, isValid && styles.validationTextValid]}>{label}</AppText>
     </View>
   );
 }
@@ -199,10 +201,10 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
           <View style={styles.section}>
             <View style={styles.toggleRow}>
               <View style={styles.toggleContent}>
-                <Text style={styles.toggleTitle}>Stay Signed In</Text>
-                <Text style={styles.toggleSubtitle}>
+                <AppText style={styles.toggleTitle}>Stay Signed In</AppText>
+                <AppText style={styles.toggleSubtitle}>
                   Automatically log in when you open the app
-                </Text>
+                </AppText>
               </View>
               {autoLoginLoading ? (
                 <LoadingDots size={8} />
@@ -219,7 +221,7 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
 
           {/* Change Password */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Password</Text>
+            <AppText style={styles.sectionTitle}>Password</AppText>
 
             {!showPasswordForm ? (
               <TouchableOpacity
@@ -227,26 +229,25 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
                 onPress={() => setShowPasswordForm(true)}
               >
                 <Ionicons name="key-outline" size={20} color={colors.electricBlue} />
-                <Text style={styles.changePasswordText}>Change Password</Text>
+                <AppText style={styles.changePasswordText}>Change Password</AppText>
               </TouchableOpacity>
             ) : (
               <View style={styles.passwordForm}>
                 {success ? (
                   <View style={styles.successMessage}>
                     <Ionicons name="checkmark-circle" size={48} color={colors.success} />
-                    <Text style={styles.successText}>Password updated successfully!</Text>
+                    <AppText style={styles.successText}>Password updated successfully!</AppText>
                   </View>
                 ) : (
                   <>
                     <View style={styles.inputGroup}>
-                      <Text style={styles.label}>Current Password</Text>
+                      <AppText style={styles.label}>Current Password</AppText>
                       <View style={styles.passwordInputWrapper}>
-                        <BottomSheetTextInput
+                        <AppTextInput
                           style={styles.passwordInput}
                           value={currentPassword}
                           onChangeText={setCurrentPassword}
                           placeholder="Enter current password"
-                          placeholderTextColor={colors.textSecondary}
                           secureTextEntry={!showCurrentPassword}
                           autoCapitalize="none"
                           autoCorrect={false}
@@ -266,14 +267,13 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
                     </View>
 
                     <View style={styles.inputGroup}>
-                      <Text style={styles.label}>New Password</Text>
+                      <AppText style={styles.label}>New Password</AppText>
                       <View style={styles.passwordInputWrapper}>
-                        <BottomSheetTextInput
+                        <AppTextInput
                           style={styles.passwordInput}
                           value={newPassword}
                           onChangeText={setNewPassword}
                           placeholder="Enter new password"
-                          placeholderTextColor={colors.textSecondary}
                           secureTextEntry={!showNewPassword}
                           autoCapitalize="none"
                           autoCorrect={false}
@@ -309,14 +309,13 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
                     </View>
 
                     <View style={styles.inputGroup}>
-                      <Text style={styles.label}>Confirm New Password</Text>
+                      <AppText style={styles.label}>Confirm New Password</AppText>
                       <View style={styles.passwordInputWrapper}>
-                        <BottomSheetTextInput
+                        <AppTextInput
                           style={styles.passwordInput}
                           value={confirmPassword}
                           onChangeText={setConfirmPassword}
                           placeholder="Confirm new password"
-                          placeholderTextColor={colors.textSecondary}
                           secureTextEntry={!showConfirmPassword}
                           autoCapitalize="none"
                           autoCorrect={false}
@@ -340,19 +339,19 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
                             size={16}
                             color={passwordsMatch ? colors.success : colors.error}
                           />
-                          <Text
+                          <AppText
                             style={[
                               styles.matchText,
                               passwordsMatch ? styles.matchTextValid : styles.matchTextInvalid,
                             ]}
                           >
                             {passwordsMatch ? 'Passwords match' : 'Passwords do not match'}
-                          </Text>
+                          </AppText>
                         </View>
                       )}
                     </View>
 
-                    {error && <Text style={styles.errorText}>{error}</Text>}
+                    {error && <AppText style={styles.errorText}>{error}</AppText>}
 
                     <View style={styles.passwordButtonRow}>
                       <Button

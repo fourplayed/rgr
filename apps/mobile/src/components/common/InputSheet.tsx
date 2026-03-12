@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Keyboard } from 'react-native';
+import { View, StyleSheet, Keyboard } from 'react-native';
 import type { KeyboardTypeOptions } from 'react-native';
-import { BottomSheetTextInput } from './SheetModal';
+import { AppTextInput } from './AppTextInput';
 import { colors } from '../../theme/colors';
 import {
   spacing,
@@ -12,6 +12,7 @@ import {
 } from '../../theme/spacing';
 import { Button } from './Button';
 import { BottomSheet } from './BottomSheet';
+import { AppText } from './AppText';
 
 interface InputSheetProps {
   visible: boolean;
@@ -62,15 +63,14 @@ export function InputSheet({
   return (
     <BottomSheet visible={visible} onDismiss={handleCancel} keyboardAware>
       <View style={styles.content}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.message}>{message}</Text>
+        <AppText style={styles.title}>{title}</AppText>
+        <AppText style={styles.message}>{message}</AppText>
 
-        <BottomSheetTextInput
+        <AppTextInput
           style={styles.input}
           value={value}
           onChangeText={setValue}
           placeholder={placeholder}
-          placeholderTextColor={colors.textSecondary}
           keyboardType={keyboardType}
           editable={!isLoading}
           returnKeyType="done"

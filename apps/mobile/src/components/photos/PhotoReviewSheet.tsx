@@ -1,16 +1,18 @@
 import React, { useCallback, useRef, useEffect, memo } from 'react';
-import { View, Text, StyleSheet, Animated, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Animated, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import type { PhotoType } from '@rgr/shared';
 import { usePhotoCapture, type UploadStep } from '../../hooks/usePhotoCapture';
 import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
-import { SheetModal } from '../common/SheetModal';
+import { SheetModal, BottomSheetScrollView } from '../common/SheetModal';
 import { SheetHeader } from '../common/SheetHeader';
+import { sheetLayout } from '../../theme/sheetLayout';
 import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
+import { AppText } from '../common';
 
 interface PhotoReviewSheetProps {
   visible: boolean;
@@ -84,52 +86,58 @@ function PhotoReviewSheetComponent({
   const displayUri = stableUri.current;
 
   return (
-    <SheetModal visible={visible} onClose={handleClose} onExitComplete={onExitComplete} noBackdrop={noBackdrop} snapPoint="90%">
-      <View style={styles.container}>
+    <SheetModal visible={visible} onClose={handleClose} onExitComplete={onExitComplete} noBackdrop={noBackdrop} snapPoint="77%">
+      <View style={sheetLayout.container}>
         <SheetHeader
-          icon="checkmark-circle"
+          icon="camera"
           title="Review Photo"
           onClose={handleClose}
-          backgroundColor={colors.success}
+          backgroundColor={colors.electricBlue}
         />
 
-        <Text style={styles.capturedLabel}>Captured Photo</Text>
-        {displayUri && (
-          <View style={styles.photoContainer}>
-            <Image source={{ uri: displayUri }} style={styles.photo} contentFit="contain" />
-            {uploadStep && <UploadProgressOverlay step={uploadStep} />}
-          </View>
-        )}
+        <BottomSheetScrollView
+          style={sheetLayout.scroll}
+          contentContainerStyle={[sheetLayout.scrollContent, { paddingTop: spacing.md, paddingBottom: bottomPad }]}
+          bounces={false}
+          showsVerticalScrollIndicator={false}
+        >
+          {displayUri && (
+            <View style={styles.photoContainer}>
+              <Image source={{ uri: displayUri}} style={styles.photo} contentFit="contain" />
+              {uploadStep && <UploadProgressOverlay step={uploadStep} />}
+            </View>
+          )}
 
-        {isDamage && (
-          <View style={styles.photoTypeRow}>
-            <Ionicons name="warning" size={18} color={colors.defectYellow} />
-            <Text style={styles.photoTypeText}>Defect Photo</Text>
-          </View>
-        )}
+          {isDamage && (
+            <View style={styles.photoTypeRow}>
+              <Ionicons name="warning" size={18} color={colors.defectYellow} />
+              <AppText style={styles.photoTypeText}>Defect Photo</AppText>
+            </View>
+          )}
 
-        {uploadError && (
-          <View style={styles.errorContainer}>
-            <View style={styles.errorRow}>
-              <Ionicons name="alert-circle" size={18} color={colors.error} />
-              <View>
-                <Text style={styles.errorTitle}>Upload Failed</Text>
-                <Text style={styles.errorText}>{uploadError}</Text>
+          {uploadError && (
+            <View style={styles.errorContainer}>
+              <View style={styles.errorRow}>
+                <Ionicons name="alert-circle" size={18} color={colors.error} />
+                <View>
+                  <AppText style={styles.errorTitle}>Upload Failed</AppText>
+                  <AppText style={styles.errorText}>{uploadError}</AppText>
+                </View>
               </View>
             </View>
-          </View>
-        )}
+          )}
 
-        <View style={[styles.buttonRow, { paddingBottom: bottomPad }]}>
-          <Animated.View style={[styles.flexOne, { opacity: retakeOpacity }]}>
-            <Button onPress={handleRetake} disabled={isUploading} flex color={colors.electricBlue}>
-              Recapture
+          <View style={styles.buttonRow}>
+            <Animated.View style={[styles.flexOne, { opacity: retakeOpacity }]}>
+              <Button onPress={handleRetake} disabled={isUploading} flex color={colors.electricBlue}>
+                Recapture
+              </Button>
+            </Animated.View>
+            <Button onPress={handleConfirm} isLoading={isUploading} flex color={colors.success}>
+              Use Photo
             </Button>
-          </Animated.View>
-          <Button onPress={handleConfirm} isLoading={isUploading} flex color={colors.success}>
-            Use Photo
-          </Button>
-        </View>
+          </View>
+        </BottomSheetScrollView>
       </View>
     </SheetModal>
   );
@@ -176,7 +184,7 @@ function UploadProgressOverlay({ step }: { step: NonNullable<UploadStep> }) {
               ) : (
                 <Ionicons name="ellipse-outline" size={22} color="rgba(255,255,255,0.3)" />
               )}
-              <Text
+              <AppText
                 style={[
                   overlayStyles.label,
                   isComplete && overlayStyles.labelComplete,
@@ -184,14 +192,14 @@ function UploadProgressOverlay({ step }: { step: NonNullable<UploadStep> }) {
                 ]}
               >
                 {s.label}
-              </Text>
+              </AppText>
             </View>
           );
         })}
         {step === 'complete' && (
           <View style={overlayStyles.doneRow}>
             <Ionicons name="checkmark-circle" size={18} color={colors.success} />
-            <Text style={overlayStyles.doneText}>Photo saved</Text>
+            <AppText style={overlayStyles.doneText}>Photo saved</AppText>
           </View>
         )}
       </View>
@@ -247,14 +255,8 @@ const overlayStyles = StyleSheet.create({
 });
 
 const styles = StyleSheet.create({
-  container: {
-    overflow: 'hidden',
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
-  },
   photoContainer: {
     aspectRatio: 3 / 4,
-    marginHorizontal: spacing.lg,
     marginTop: spacing.md,
     borderRadius: borderRadius.md,
     overflow: 'hidden',
@@ -263,20 +265,10 @@ const styles = StyleSheet.create({
   photo: {
     flex: 1,
   },
-  capturedLabel: {
-    fontSize: fontSize.sm,
-    fontFamily: fonts.bold,
-    color: colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    paddingHorizontal: spacing.lg,
-    marginTop: spacing.base,
-  },
-  photoTypeRow: {
+photoTypeRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    paddingHorizontal: spacing.lg,
     paddingVertical: spacing.base,
   },
   photoTypeText: {
@@ -290,14 +282,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
     alignSelf: 'stretch',
-    paddingHorizontal: spacing.lg,
     marginTop: spacing.lg,
   },
   flexOne: {
     flex: 1,
   },
   errorContainer: {
-    marginHorizontal: spacing.lg,
     marginBottom: spacing.md,
     padding: spacing.md,
     borderLeftWidth: 3,

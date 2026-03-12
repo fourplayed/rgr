@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useNetworkStatus } from '../../hooks/useNetworkStatus';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, fontFamily as fonts } from '../../theme/spacing';
+import { AppText } from './AppText';
 
 /**
  * OfflineBanner - Displays a warning banner when the device is offline
@@ -25,7 +26,7 @@ export function OfflineBanner() {
       accessibilityRole="alert"
       accessibilityLabel="You are offline. Recent data is shown. Scanning is unavailable."
     >
-      <Text style={styles.text}>Offline — recent data shown, scanning unavailable</Text>
+      <AppText style={styles.text}>Offline — recent data shown, scanning unavailable</AppText>
     </View>
   );
 }

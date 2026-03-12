@@ -1,13 +1,11 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   View,
-  Text,
   FlatList,
   StyleSheet,
   SafeAreaView,
   TouchableOpacity,
-  Animated,
-} from 'react-native';
+  Animated} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import type {
@@ -43,6 +41,7 @@ import { useTabFade } from '../../src/hooks/useTabFade';
 import { usePersistentBackdrop } from '../../src/hooks/usePersistentBackdrop';
 import { PersistentBackdrop } from '../../src/components/common/PersistentBackdrop';
 import { useUserPermissions } from '../../src/contexts/UserPermissionsContext';
+import { AppText } from '../../src/components/common';
 
 type ModalState =
   | { type: 'none' }
@@ -263,7 +262,7 @@ export default function MaintenanceScreen() {
               accessibilityHint="Double tap to schedule new maintenance"
             >
               <Ionicons name="add-circle-outline" size={16} color={colors.electricBlue} />
-              <Text style={styles.addLinkText}>New Task</Text>
+              <AppText style={styles.addLinkText}>New Task</AppText>
             </TouchableOpacity>
           ) : undefined}
         />
@@ -304,16 +303,16 @@ export default function MaintenanceScreen() {
             </View>
           ) : error ? (
             <View style={styles.centerContent}>
-              <Text style={styles.errorText}>
+              <AppText style={styles.errorText}>
                 Failed to load {activeTab === 'tasks' ? 'maintenance' : 'defects'}
-              </Text>
+              </AppText>
               <TouchableOpacity
                 style={styles.retryButton}
                 onPress={() => refetch()}
                 accessibilityRole="button"
                 accessibilityLabel="Retry loading"
               >
-                <Text style={styles.retryButtonText}>Retry</Text>
+                <AppText style={styles.retryButtonText}>Retry</AppText>
               </TouchableOpacity>
             </View>
           ) : activeTab === 'tasks' ? (

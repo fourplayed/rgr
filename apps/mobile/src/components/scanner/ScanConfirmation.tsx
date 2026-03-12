@@ -1,14 +1,12 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   View,
-  Text,
   TouchableOpacity,
   StyleSheet,
   LayoutAnimation,
   Platform,
   UIManager,
-  Animated,
-} from 'react-native';
+  Animated} from 'react-native';
 import { BottomSheetScrollView } from '../common/SheetModal';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
@@ -25,6 +23,7 @@ import { spacing, fontSize, borderRadius, shadows, fontFamily as fonts } from '.
 import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 import { useTabFade } from '../../hooks/useTabFade';
 import type { MatchedDepot, ConfirmAction } from '../../hooks/scan/scanFlowMachine';
+import { AppText } from '../common';
 
 // Re-export for any consumers that still import from here
 export type { ConfirmAction } from '../../hooks/scan/scanFlowMachine';
@@ -174,14 +173,14 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
         {matchedDepot && (
           <View style={styles.locationRow}>
             <Ionicons name="location" size={16} color={colors.success} />
-            <Text style={styles.locationText}>
-              Location updated to <Text style={styles.locationName}>{matchedDepot.depot.name}</Text>{' '}
+            <AppText style={styles.locationText}>
+              Location updated to <AppText style={styles.locationName}>{matchedDepot.depot.name}</AppText>{' '}
               (
               {matchedDepot.distanceKm < 1
                 ? `${Math.round(matchedDepot.distanceKm * 1000)}m away`
                 : `${matchedDepot.distanceKm.toFixed(1)}km away`}
               )
-            </Text>
+            </AppText>
           </View>
         )}
 
@@ -239,7 +238,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
           </>
         ) : (
           <>
-            <Text style={styles.checkboxSectionTitle}>Actions</Text>
+            <AppText style={styles.checkboxSectionTitle}>Actions</AppText>
             <View style={styles.checkboxList}>
               <CheckboxOption
                 icon="camera"
@@ -330,10 +329,10 @@ function OpenItemsSection({
           accessibilityRole="button"
           accessibilityLabel={`Open items, ${totalCount} total. ${expanded ? 'Collapse' : 'Expand'}`}
         >
-          <Text style={styles.checkboxSectionTitle}>Open Items</Text>
+          <AppText style={styles.checkboxSectionTitle}>Open Items</AppText>
           <View style={styles.openItemsHeaderRight}>
             <View style={styles.openItemsCountBadge}>
-              <Text style={styles.openItemsCountText}>{totalCount}</Text>
+              <AppText style={styles.openItemsCountText}>{totalCount}</AppText>
             </View>
             <Ionicons
               name={expanded ? 'chevron-up' : 'chevron-down'}
@@ -369,21 +368,21 @@ function OpenItemsSection({
                 </View>
                 <View style={cardStyles.cardBody}>
                   <View style={cardStyles.cardContentRow}>
-                    <Text
+                    <AppText
                       style={[cardStyles.cardTitle, { color: colors.defectYellow }]}
                       numberOfLines={1}
                     >
                       Defect Report
-                    </Text>
+                    </AppText>
                     <View style={cardStyles.cardBadges}>
                       <DefectStatusBadge status={defect.status} color={colors.defectYellow} />
                     </View>
                   </View>
                   <View style={cardStyles.cardFooter}>
-                    <Text style={cardStyles.cardSecondaryText} numberOfLines={1}>
+                    <AppText style={cardStyles.cardSecondaryText} numberOfLines={1}>
                       {defect.description ?? defect.title}
-                    </Text>
-                    <Text style={cardStyles.cardTime}>{formatRelativeTime(defect.createdAt)}</Text>
+                    </AppText>
+                    <AppText style={cardStyles.cardTime}>{formatRelativeTime(defect.createdAt)}</AppText>
                   </View>
                 </View>
               </View>
@@ -411,15 +410,15 @@ function OpenItemsSection({
                 </View>
                 <View style={cardStyles.cardBody}>
                   <View style={cardStyles.cardContentRow}>
-                    <Text style={cardStyles.cardTitle} numberOfLines={1}>
+                    <AppText style={cardStyles.cardTitle} numberOfLines={1}>
                       Maintenance Task
-                    </Text>
+                    </AppText>
                   </View>
                   <View style={cardStyles.cardFooter}>
-                    <Text style={cardStyles.cardSecondaryText} numberOfLines={1}>
+                    <AppText style={cardStyles.cardSecondaryText} numberOfLines={1}>
                       {task.title}
-                    </Text>
-                    <Text style={cardStyles.cardTime}>{formatRelativeTime(task.createdAt)}</Text>
+                    </AppText>
+                    <AppText style={cardStyles.cardTime}>{formatRelativeTime(task.createdAt)}</AppText>
                   </View>
                 </View>
               </View>
@@ -474,8 +473,8 @@ function CheckboxOption({
     >
       <Ionicons name={icon} size={32} color={accentColor} />
       <View style={styles.checkboxTextColumn}>
-        <Text style={[styles.checkboxLabel, { color: accentColor }]}>{label}</Text>
-        <Text style={styles.checkboxDescription}>{description}</Text>
+        <AppText style={[styles.checkboxLabel, { color: accentColor }]}>{label}</AppText>
+        <AppText style={styles.checkboxDescription}>{description}</AppText>
       </View>
       <Ionicons name={checkboxIcon} size={26} color={accentColor} />
     </TouchableOpacity>

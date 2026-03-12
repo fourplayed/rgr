@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
-import { Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { AppText } from '../common';
 import type { Depot } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
@@ -41,7 +42,7 @@ export const DepotFilterChips = memo(function DepotFilterChips({
             accessibilityLabel={depot.name}
             accessibilityState={{ selected: isSelected }}
           >
-            <Text
+            <AppText
               style={[
                 styles.chipText,
                 {
@@ -51,7 +52,7 @@ export const DepotFilterChips = memo(function DepotFilterChips({
               ]}
             >
               {depot.name}
-            </Text>
+            </AppText>
           </TouchableOpacity>
         );
       })}

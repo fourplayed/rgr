@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { AssetStatusColors, AssetStatusLabels } from '@rgr/shared';
 import type { AssetStatus } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
+import { AppText } from './AppText';
 
 type BadgeSize = 'small' | 'medium';
 type BadgeVariant = 'solid' | 'tinted';
@@ -29,9 +30,9 @@ export function Badge({ label, color, size = 'small', variant = 'solid' }: Badge
       accessibilityRole="text"
       accessibilityLabel={label}
     >
-      <Text style={[styles.label, { color: textColor }, size === 'small' && styles.labelSmall]}>
+      <AppText style={[styles.label, { color: textColor }, size === 'small' && styles.labelSmall]}>
         {label}
-      </Text>
+      </AppText>
     </View>
   );
 }

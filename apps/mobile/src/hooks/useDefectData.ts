@@ -1,4 +1,4 @@
-import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import {
   listDefectReports,
   getDefectReportById,
@@ -10,9 +10,18 @@ import {
   getAssetDefectReports,
   queryFromService,
 } from '@rgr/shared';
-import type { DefectStatus, UpdateDefectReportInput } from '@rgr/shared';
+import type {
+  DefectStatus,
+  UpdateDefectReportInput,
+  CreateDefectReportInput,
+  DefectReportListItem as DefectReportListItemType,
+} from '@rgr/shared';
 import { useMutationFromService } from './useMutationFromService';
 import { assetKeys } from './useAssetData';
+import { optimisticInfiniteInsert, rollback } from './optimisticCache';
+import { suppressRealtimeFor } from './useRealtimeInvalidation';
+import { OPTIMISTIC_UPDATES_ENABLED } from '../config/featureFlags';
+import { useAuthStore } from '../store/authStore';
 /**
  * Defect report filter state
  */
@@ -126,9 +135,33 @@ export function useAssetDefectReports(assetId: string | null) {
 }
 
 /**
- * Create defect report mutation
+ * Build a placeholder list item for optimistic insertion.
+ */
+function buildDefectPlaceholder(
+  input: CreateDefectReportInput,
+  currentUserName: string | null,
+): DefectReportListItemType {
+  return {
+    id: crypto.randomUUID(),
+    assetId: input.assetId,
+    title: input.title,
+    description: input.description ?? null,
+    status: 'reported',
+    maintenanceRecordId: null,
+    createdAt: new Date().toISOString(),
+    reporterName: currentUserName,
+    assetNumber: null,
+    assetCategory: null,
+  };
+}
+
+/**
+ * Create defect report mutation — with optimistic list insertion.
  */
 export function useCreateDefectReport() {
+  const queryClient = useQueryClient();
+  const userName = useAuthStore((s) => s.user?.fullName ?? null);
+
   return useMutationFromService({
     serviceFn: createDefectReport,
     invalidates: (data) => [
@@ -137,6 +170,20 @@ export function useCreateDefectReport() {
       defectKeys.asset(data.assetId),
       assetKeys.scanContext(data.assetId),
     ],
+    onMutate: async (input: CreateDefectReportInput) => {
+      if (!OPTIMISTIC_UPDATES_ENABLED) return undefined;
+      suppressRealtimeFor('defects');
+      const placeholder = buildDefectPlaceholder(input, userName);
+      const listSnapshot = await optimisticInfiniteInsert(
+        queryClient,
+        defectKeys.lists(),
+        placeholder,
+      );
+      return { listSnapshot };
+    },
+    onError: (_error, _vars, context) => {
+      if (context?.listSnapshot) rollback(queryClient, context.listSnapshot);
+    },
   });
 }
 

@@ -1,12 +1,10 @@
 import React, { memo, useMemo } from 'react';
 import {
   View,
-  Text,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  useWindowDimensions,
-} from 'react-native';
+  useWindowDimensions} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { PhotoThumbnail } from './PhotoThumbnail';
 import { LoadingDots } from '../common/LoadingDots';
@@ -14,6 +12,7 @@ import { useAssetPhotos, usePrefetchImages, useBatchSignedUrls } from '../../hoo
 import type { PhotoListItem } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
+import { AppText } from '../common';
 
 const NUM_COLUMNS = 3;
 const THUMBNAIL_GAP = spacing.sm;
@@ -69,7 +68,7 @@ function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto }: PhotoGalle
   if (error) {
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.errorText}>Failed to load photos</Text>
+        <AppText style={styles.errorText}>Failed to load photos</AppText>
       </View>
     );
   }
@@ -78,7 +77,7 @@ function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto }: PhotoGalle
 
   // No photos and no add button — simple empty state
   if (!hasPhotos && !onAddPhoto) {
-    return <Text style={styles.emptyText}>No photos uploaded</Text>;
+    return <AppText style={styles.emptyText}>No photos uploaded</AppText>;
   }
 
   // No photos but add button available — show just the add button without noisy section headers
@@ -94,7 +93,7 @@ function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto }: PhotoGalle
           accessibilityHint="Double tap to open camera and take a photo"
         >
           <Ionicons name="camera" size={32} color={colors.electricBlue} />
-          <Text style={styles.addButtonText}>Add Photo</Text>
+          <AppText style={styles.addButtonText}>Add Photo</AppText>
         </TouchableOpacity>
       </View>
     );
@@ -108,12 +107,12 @@ function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto }: PhotoGalle
     >
       {/* Freight Section */}
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>
-          FREIGHT <Text style={styles.sectionCount}>({freightPhotos.length})</Text>
-        </Text>
+        <AppText style={styles.sectionTitle}>
+          FREIGHT <AppText style={styles.sectionCount}>({freightPhotos.length})</AppText>
+        </AppText>
       </View>
       {freightPhotos.length === 0 && !onAddPhoto ? (
-        <Text style={styles.sectionEmptyText}>No freight photos</Text>
+        <AppText style={styles.sectionEmptyText}>No freight photos</AppText>
       ) : (
         <View style={styles.grid}>
           {onAddPhoto && (
@@ -126,7 +125,7 @@ function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto }: PhotoGalle
               accessibilityHint="Double tap to open camera and take a photo"
             >
               <Ionicons name="camera" size={32} color={colors.electricBlue} />
-              <Text style={styles.addButtonText}>Add Photo</Text>
+              <AppText style={styles.addButtonText}>Add Photo</AppText>
             </TouchableOpacity>
           )}
           {freightPhotos.map((photo) => (
@@ -143,12 +142,12 @@ function PhotoGalleryComponent({ assetId, onPhotoPress, onAddPhoto }: PhotoGalle
 
       {/* Defects Section */}
       <View style={[styles.sectionHeader, styles.defectSectionHeader]}>
-        <Text style={styles.defectSectionTitle}>
-          DEFECTS <Text style={styles.sectionCount}>({defectPhotos.length})</Text>
-        </Text>
+        <AppText style={styles.defectSectionTitle}>
+          DEFECTS <AppText style={styles.sectionCount}>({defectPhotos.length})</AppText>
+        </AppText>
       </View>
       {defectPhotos.length === 0 ? (
-        <Text style={styles.sectionEmptyText}>No defect photos</Text>
+        <AppText style={styles.sectionEmptyText}>No defect photos</AppText>
       ) : (
         <View style={styles.grid}>
           {defectPhotos.map((photo) => (

@@ -1,13 +1,11 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
-  Text,
   ScrollView,
   StyleSheet,
   SafeAreaView,
   TouchableOpacity,
-  Animated,
-} from 'react-native';
+  Animated} from 'react-native';
 import { LoadingDots } from '../../../src/components/common/LoadingDots';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -49,6 +47,7 @@ import { usePersistentBackdrop } from '../../../src/hooks/usePersistentBackdrop'
 import { PersistentBackdrop } from '../../../src/components/common/PersistentBackdrop';
 import { EmptyState } from '../../../src/components/common/EmptyState';
 import { BottomSheet } from '../../../src/components/common/BottomSheet';
+import { AppText } from '../../../src/components/common';
 
 type AssetModalState =
   | { type: 'none' }
@@ -103,9 +102,9 @@ const ActivityCard = React.memo(function ActivityCard({
       const badgeColors = getDepotBadgeColors(matchedDepot, colors.chrome, colors.text);
       depotBadge = (
         <View style={[activityCardStyles.locationBadge, { backgroundColor: badgeColors.bg }]}>
-          <Text style={[activityCardStyles.locationText, { color: badgeColors.text }]}>
+          <AppText style={[activityCardStyles.locationText, { color: badgeColors.text }]}>
             {matchedDepot.name}
-          </Text>
+          </AppText>
         </View>
       );
     }
@@ -147,9 +146,9 @@ const ActivityCard = React.memo(function ActivityCard({
         </View>
         <View style={cardStyles.cardBody}>
           <View style={cardStyles.cardContentRow}>
-            <Text style={cardStyles.cardTitle} numberOfLines={1}>
+            <AppText style={cardStyles.cardTitle} numberOfLines={1}>
               {titleText}
-            </Text>
+            </AppText>
             <View style={cardStyles.cardBadges}>
               {depotBadge}
               {item.type === 'photo' && item.data.hazardCount > 0 && (
@@ -162,9 +161,9 @@ const ActivityCard = React.memo(function ActivityCard({
                         : colors.warning,
                   },
                 ]}>
-                  <Text style={[activityCardStyles.locationText, { color: colors.textInverse }]}>
+                  <AppText style={[activityCardStyles.locationText, { color: colors.textInverse }]}>
                     {item.data.hazardCount} Hazard{item.data.hazardCount !== 1 ? 's' : ''}
-                  </Text>
+                  </AppText>
                 </View>
               )}
               {item.type === 'defect' && <DefectStatusBadge status={item.data.status} />}
@@ -179,8 +178,8 @@ const ActivityCard = React.memo(function ActivityCard({
             </View>
           </View>
           <View style={cardStyles.cardFooter}>
-            <Text style={cardStyles.cardSecondaryText}>{secondaryText}</Text>
-            <Text style={cardStyles.cardTime}>{formatRelativeTime(timeValue)}</Text>
+            <AppText style={cardStyles.cardSecondaryText}>{secondaryText}</AppText>
+            <AppText style={cardStyles.cardTime}>{formatRelativeTime(timeValue)}</AppText>
           </View>
         </View>
       </View>
@@ -259,18 +258,18 @@ const MaintenanceCard = React.memo(function MaintenanceCard({
         </View>
         <View style={cardStyles.cardBody}>
           <View style={cardStyles.cardContentRow}>
-            <Text style={cardStyles.cardTitle} numberOfLines={1}>
+            <AppText style={cardStyles.cardTitle} numberOfLines={1}>
               {item.title}
-            </Text>
+            </AppText>
             <View style={cardStyles.cardBadges}>
               <MaintenanceStatusBadge status={item.status} />
             </View>
           </View>
           <View style={cardStyles.cardFooter}>
-            <Text style={cardStyles.cardSecondaryText} numberOfLines={1}>
+            <AppText style={cardStyles.cardSecondaryText} numberOfLines={1}>
               {item.description || item.title}
-            </Text>
-            <Text style={cardStyles.cardTime}>{formatRelativeTime(item.createdAt)}</Text>
+            </AppText>
+            <AppText style={cardStyles.cardTime}>{formatRelativeTime(item.createdAt)}</AppText>
           </View>
         </View>
       </View>
@@ -447,14 +446,14 @@ export default function AssetDetailScreen() {
       <View style={styles.container}>
       <SafeAreaView style={styles.containerInner}>
         <View style={styles.centerContent}>
-          <Text style={styles.errorText}>Asset ID is required</Text>
+          <AppText style={styles.errorText}>Asset ID is required</AppText>
           <TouchableOpacity
             style={styles.retryButton}
             onPress={() => router.back()}
             accessibilityRole="button"
             accessibilityLabel="Go back"
           >
-            <Text style={styles.retryButtonText}>Go Back</Text>
+            <AppText style={styles.retryButtonText}>Go Back</AppText>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -479,14 +478,14 @@ export default function AssetDetailScreen() {
       <View style={styles.container}>
       <SafeAreaView style={styles.containerInner}>
         <View style={styles.centerContent}>
-          <Text style={styles.errorText}>Failed to load asset</Text>
+          <AppText style={styles.errorText}>Failed to load asset</AppText>
           <TouchableOpacity
             style={styles.retryButton}
             onPress={() => router.back()}
             accessibilityRole="button"
             accessibilityLabel="Go back"
           >
-            <Text style={styles.retryButtonText}>Go Back</Text>
+            <AppText style={styles.retryButtonText}>Go Back</AppText>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -558,8 +557,8 @@ export default function AssetDetailScreen() {
       {/* QR Code Sheet - Superuser Only */}
       <BottomSheet visible={showQRModal} onDismiss={() => setShowQRModal(false)}>
         <View style={styles.qrSheetContent}>
-          <Text style={styles.qrSheetTitle}>Asset QR Code</Text>
-          <Text style={styles.modalAssetNumber}>{formatAssetNumber(asset.assetNumber)}</Text>
+          <AppText style={styles.qrSheetTitle}>Asset QR Code</AppText>
+          <AppText style={styles.modalAssetNumber}>{formatAssetNumber(asset.assetNumber)}</AppText>
           <View style={styles.qrContainer}>
             {asset.qrCodeData && (
               <QRCode
@@ -570,7 +569,7 @@ export default function AssetDetailScreen() {
               />
             )}
           </View>
-          <Text style={styles.qrDataText}>{asset.qrCodeData}</Text>
+          <AppText style={styles.qrDataText}>{asset.qrCodeData}</AppText>
         </View>
       </BottomSheet>
 

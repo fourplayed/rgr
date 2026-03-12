@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
-} from 'react-native';
+  TouchableOpacity} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../src/store/authStore';
@@ -13,8 +11,7 @@ import { useUserPermissions } from '../src/contexts/UserPermissionsContext';
 import { UserRoleLabels } from '@rgr/shared';
 import { colors } from '../src/theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../src/theme/spacing';
-import {
-  ConfirmSheet,
+import { AppText, ConfirmSheet,
   Button,
   CollapsibleSection,
   PillBadge,
@@ -47,8 +44,8 @@ function SettingsItem({ icon, title, subtitle, onPress, showChevron = true }: Se
         <Ionicons name={icon} size={24} color={colors.electricBlue} />
       </View>
       <View style={styles.settingsItemContent}>
-        <Text style={styles.settingsItemTitle}>{title}</Text>
-        {subtitle && <Text style={styles.settingsItemSubtitle}>{subtitle}</Text>}
+        <AppText style={styles.settingsItemTitle}>{title}</AppText>
+        {subtitle && <AppText style={styles.settingsItemSubtitle}>{subtitle}</AppText>}
       </View>
       {showChevron && onPress && (
         <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
@@ -97,8 +94,8 @@ export default function SettingsScreen() {
             <View style={styles.card}>
               <View style={styles.profileHeader}>
                 <View style={styles.profileInfo}>
-                  <Text style={styles.profileName}>{user.fullName}</Text>
-                  <Text style={styles.profileEmail}>{user.email}</Text>
+                  <AppText style={styles.profileName}>{user.fullName}</AppText>
+                  <AppText style={styles.profileEmail}>{user.email}</AppText>
                 </View>
                 <PillBadge icon="person" label={roleLabel} color={roleColor} />
               </View>
@@ -175,8 +172,8 @@ export default function SettingsScreen() {
                       <Ionicons name="terminal" size={24} color={colors.electricBlue} />
                     </View>
                     <View style={styles.settingsItemContent}>
-                      <Text style={styles.settingsItemTitle}>Enable Console</Text>
-                      <Text style={styles.settingsItemSubtitle}>Diagnostics and sync tools</Text>
+                      <AppText style={styles.settingsItemTitle}>Enable Console</AppText>
+                      <AppText style={styles.settingsItemSubtitle}>Diagnostics and sync tools</AppText>
                     </View>
                     <Ionicons
                       name={consoleEnabled ? 'checkbox' : 'square-outline'}

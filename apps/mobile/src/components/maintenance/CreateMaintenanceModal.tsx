@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, Platform, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Pressable, Platform, TouchableOpacity } from 'react-native';
 import { BottomSheetScrollView } from '../common/SheetModal';
 import { AppTextInput } from '../common/AppTextInput';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
@@ -20,6 +20,7 @@ import { useAuthStore } from '../../store/authStore';
 import { useCreateMaintenance } from '../../hooks/useMaintenanceData';
 import { useAssetList } from '../../hooks/useAssetData';
 import { useSubmitGuard } from '../../hooks/useSubmitGuard';
+import { AppText } from '../common';
 
 interface CreateMaintenanceModalProps {
   visible: boolean;
@@ -217,26 +218,26 @@ export function CreateMaintenanceModal({
           {defectReportId && (
             <View style={styles.defectBanner}>
               <Ionicons name="warning" size={16} color={colors.warningText} />
-              <Text style={styles.defectBannerText}>From Defect Report</Text>
+              <AppText style={styles.defectBannerText}>From Defect Report</AppText>
             </View>
           )}
 
           {/* Asset selection */}
           <View style={formStyles.inputGroup}>
-            <Text style={formStyles.label}>Asset *</Text>
+            <AppText style={formStyles.label}>Asset *</AppText>
             {assetId && assetNumber ? (
               // Pre-selected (read-only) — from defect accept or asset detail
               <View style={styles.assetSelected}>
                 <Ionicons name="cube" size={20} color={colors.text} />
-                <Text style={styles.assetSelectedText}>{formatAssetNumber(assetNumber)}</Text>
+                <AppText style={styles.assetSelectedText}>{formatAssetNumber(assetNumber)}</AppText>
               </View>
             ) : selectedAssetId && selectedAssetNumber ? (
               // User-selected — show with clear option
               <View style={styles.assetSelected}>
                 <Ionicons name="cube" size={20} color={colors.text} />
-                <Text style={styles.assetSelectedText}>
+                <AppText style={styles.assetSelectedText}>
                   {formatAssetNumber(selectedAssetNumber)}
-                </Text>
+                </AppText>
                 <TouchableOpacity
                   onPress={handleClearAsset}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -255,7 +256,7 @@ export function CreateMaintenanceModal({
                   accessibilityLabel="Select an asset"
                 >
                   <Ionicons name="cube-outline" size={18} color={colors.textSecondary} />
-                  <Text style={styles.assetPickerPlaceholder}>Tap to select asset</Text>
+                  <AppText style={styles.assetPickerPlaceholder}>Tap to select asset</AppText>
                   <Ionicons
                     name={showAssetPicker ? 'chevron-up' : 'chevron-down'}
                     size={16}
@@ -277,7 +278,7 @@ export function CreateMaintenanceModal({
                         <LoadingDots color={colors.textSecondary} size={6} />
                       </View>
                     ) : assetResults.length === 0 ? (
-                      <Text style={styles.assetPickerEmpty}>No assets found</Text>
+                      <AppText style={styles.assetPickerEmpty}>No assets found</AppText>
                     ) : (
                       assetResults.map((asset) => (
                         <TouchableOpacity
@@ -287,10 +288,10 @@ export function CreateMaintenanceModal({
                           activeOpacity={0.7}
                         >
                           <Ionicons name="cube" size={16} color={colors.text} />
-                          <Text style={styles.assetPickerItemText}>
+                          <AppText style={styles.assetPickerItemText}>
                             {formatAssetNumber(asset.assetNumber)}
-                          </Text>
-                          <Text style={styles.assetPickerItemSub}>{asset.category}</Text>
+                          </AppText>
+                          <AppText style={styles.assetPickerItemSub}>{asset.category}</AppText>
                         </TouchableOpacity>
                       ))
                     )}
@@ -302,7 +303,7 @@ export function CreateMaintenanceModal({
 
           {/* Title */}
           <View style={formStyles.inputGroup}>
-            <Text style={formStyles.label}>Title *</Text>
+            <AppText style={formStyles.label}>Title *</AppText>
             <AppTextInput
               style={formStyles.input}
               value={title}
@@ -316,7 +317,7 @@ export function CreateMaintenanceModal({
 
           {/* Priority */}
           <View style={formStyles.inputGroup}>
-            <Text style={formStyles.label}>Priority</Text>
+            <AppText style={formStyles.label}>Priority</AppText>
             <View style={styles.chipContainer}>
               {PRIORITY_ORDER.map((p) => (
                 <FilterChip
@@ -332,7 +333,7 @@ export function CreateMaintenanceModal({
 
           {/* Due Date */}
           <View style={formStyles.inputGroup}>
-            <Text style={formStyles.label}>Due Date *</Text>
+            <AppText style={formStyles.label}>Due Date *</AppText>
             {Platform.OS === 'ios' ? (
               <DateTimePicker
                 value={dueDate ? new Date(dueDate + 'T00:00:00') : new Date()}
@@ -356,7 +357,7 @@ export function CreateMaintenanceModal({
                     size={18}
                     color={dueDate ? colors.text : colors.textSecondary}
                   />
-                  <Text style={[styles.dateFieldText, !dueDate && styles.dateFieldPlaceholder]}>
+                  <AppText style={[styles.dateFieldText, !dueDate && styles.dateFieldPlaceholder]}>
                     {dueDate
                       ? new Date(dueDate + 'T00:00:00').toLocaleDateString(undefined, {
                           weekday: 'short',
@@ -365,7 +366,7 @@ export function CreateMaintenanceModal({
                           day: 'numeric',
                         })
                       : 'Tap to select date'}
-                  </Text>
+                  </AppText>
                 </Pressable>
                 {showDatePicker && (
                   <DateTimePicker
@@ -383,7 +384,7 @@ export function CreateMaintenanceModal({
 
           {/* Description */}
           <View style={formStyles.inputGroup}>
-            <Text style={formStyles.label}>Description (optional)</Text>
+            <AppText style={formStyles.label}>Description (optional)</AppText>
             <AppTextInput
               key={formKey}
               style={[formStyles.input, formStyles.textArea]}
@@ -397,7 +398,7 @@ export function CreateMaintenanceModal({
             />
           </View>
 
-          {error && <Text style={formStyles.errorText}>{error}</Text>}
+          {error && <AppText style={formStyles.errorText}>{error}</AppText>}
 
           <View style={{ marginTop: spacing.lg }}>
             <Button

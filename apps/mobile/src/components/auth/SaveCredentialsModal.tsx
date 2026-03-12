@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Button } from '../common/Button';
 import { BottomSheet } from '../common/BottomSheet';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, lineHeight, fontFamily as fonts } from '../../theme/spacing';
+import { AppText } from '../common';
 
 interface SaveCredentialsModalProps {
   visible: boolean;
@@ -15,11 +16,11 @@ export function SaveCredentialsModal({ visible, onSave, onSkip }: SaveCredential
   return (
     <BottomSheet visible={visible} onDismiss={onSkip}>
       <View style={styles.content}>
-        <Text style={styles.title}>Save Login?</Text>
+        <AppText style={styles.title}>Save Login?</AppText>
 
-        <Text style={styles.description}>
+        <AppText style={styles.description}>
           Save your credentials for automatic login next time you open the app?
-        </Text>
+        </AppText>
 
         <View style={styles.buttonRow}>
           <Button

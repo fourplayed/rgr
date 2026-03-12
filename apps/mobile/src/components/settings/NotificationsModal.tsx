@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Switch, StyleSheet } from 'react-native';
+import { View, Switch, StyleSheet } from 'react-native';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 import { sheetLayout } from '../../theme/sheetLayout';
@@ -8,6 +8,7 @@ import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
 import { SheetModal, BottomSheetScrollView } from '../common/SheetModal';
 import { useSettingsStore } from '../../store/settingsStore';
+import { AppText } from '../common';
 
 interface NotificationsModalProps {
   visible: boolean;
@@ -26,8 +27,8 @@ function ToggleRow({ title, subtitle, value, onValueChange, disabled }: ToggleRo
   return (
     <View style={[styles.toggleRow, disabled && styles.toggleRowDisabled]}>
       <View style={styles.toggleContent}>
-        <Text style={[styles.toggleTitle, disabled && styles.toggleTitleDisabled]}>{title}</Text>
-        <Text style={styles.toggleSubtitle}>{subtitle}</Text>
+        <AppText style={[styles.toggleTitle, disabled && styles.toggleTitleDisabled]}>{title}</AppText>
+        <AppText style={styles.toggleSubtitle}>{subtitle}</AppText>
       </View>
       <Switch
         value={value}
@@ -57,13 +58,13 @@ export function NotificationsModal({ visible, onClose }: NotificationsModalProps
           bounces={true}
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.description}>Manage how you receive updates and alerts.</Text>
+          <AppText style={styles.description}>Manage how you receive updates and alerts.</AppText>
 
           <View style={styles.comingSoonBanner}>
-            <Text style={styles.comingSoonText}>
+            <AppText style={styles.comingSoonText}>
               Push notifications are not yet connected to a delivery service. These preferences are
               saved locally and will take effect once notifications are enabled.
-            </Text>
+            </AppText>
           </View>
 
           <View style={styles.toggleList}>

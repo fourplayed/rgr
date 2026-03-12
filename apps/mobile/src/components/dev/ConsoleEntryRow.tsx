@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import type { ConsoleEntry, ConsoleLevel } from '../../store/consoleStore';
 import { colors } from '../../theme/colors';
 import { borderRadius, fontSize, fontFamily as fonts, spacing } from '../../theme/spacing';
+import { AppText } from '../common';
 
 const LEVEL_COLORS: Record<ConsoleLevel, string> = {
   info: colors.electricBlue,
@@ -40,23 +41,23 @@ function ConsoleEntryRowInner({ entry }: Props) {
         <View style={styles.headerRow}>
           {/* Namespace pill */}
           <View style={styles.namespacePill}>
-            <Text style={styles.namespaceText}>{entry.namespace.toUpperCase()}</Text>
+            <AppText style={styles.namespaceText}>{entry.namespace.toUpperCase()}</AppText>
           </View>
 
           {/* Timestamp */}
-          <Text style={styles.timestamp}>{formatTime(entry.timestamp)}</Text>
+          <AppText style={styles.timestamp}>{formatTime(entry.timestamp)}</AppText>
         </View>
 
         {/* Message */}
-        <Text style={[styles.message, { color }]} numberOfLines={expanded ? undefined : 2}>
+        <AppText style={[styles.message, { color }]} numberOfLines={expanded ? undefined : 2}>
           {entry.message}
-        </Text>
+        </AppText>
 
         {/* Expanded data payload */}
         {expanded && hasData && (
-          <Text style={styles.dataText} selectable>
+          <AppText style={styles.dataText} selectable>
             {JSON.stringify(entry.data, null, 2)}
-          </Text>
+          </AppText>
         )}
       </View>
     </Pressable>

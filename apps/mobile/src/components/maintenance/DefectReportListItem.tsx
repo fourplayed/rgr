@@ -1,10 +1,11 @@
 import React, { memo, useCallback, useMemo } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { DefectReportListItem as DefectReportListItemType } from '@rgr/shared';
 import { formatRelativeTime, formatAssetNumber } from '@rgr/shared';
 import { DefectStatusBadge, DEFECT_STATUS_CONFIG } from './DefectStatusBadge';
 import { cardStyles } from './maintenance.styles';
+import { AppText } from '../common';
 
 export const DEFECT_ITEM_HEIGHT = 72;
 
@@ -40,18 +41,18 @@ function DefectReportListItemComponent({ defect, onPress }: DefectReportListItem
         </View>
         <View style={cardStyles.cardBody}>
           <View style={cardStyles.cardContentRow}>
-            <Text style={cardStyles.cardTitle} numberOfLines={1}>
+            <AppText style={cardStyles.cardTitle} numberOfLines={1}>
               {defect.assetNumber ? formatAssetNumber(defect.assetNumber) : 'Unknown Asset'}
-            </Text>
+            </AppText>
             <View style={cardStyles.cardBadges}>
               <DefectStatusBadge status={defect.status} />
             </View>
           </View>
           <View style={cardStyles.cardFooter}>
-            <Text style={cardStyles.cardSecondaryText} numberOfLines={1}>
+            <AppText style={cardStyles.cardSecondaryText} numberOfLines={1}>
               {defect.description || defect.title}
-            </Text>
-            <Text style={cardStyles.cardTime}>{formatRelativeTime(defect.createdAt)}</Text>
+            </AppText>
+            <AppText style={cardStyles.cardTime}>{formatRelativeTime(defect.createdAt)}</AppText>
           </View>
         </View>
       </View>

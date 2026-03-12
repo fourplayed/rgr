@@ -1,9 +1,10 @@
 import React from 'react';
-import { Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { AssetStatusColors, AssetStatusLabels } from '@rgr/shared';
 import type { AssetStatus } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
+import { AppText } from '../common';
 
 interface AssetStatusFilterChipsProps {
   selectedStatuses: AssetStatus[];
@@ -42,7 +43,7 @@ export const AssetStatusFilterChips = React.memo(function AssetStatusFilterChips
             }
             accessibilityState={{ selected: isSelected }}
           >
-            <Text style={[styles.label, isSelected && styles.labelSelected]}>{label}</Text>
+            <AppText style={[styles.label, isSelected && styles.labelSelected]}>{label}</AppText>
           </TouchableOpacity>
         );
       })}

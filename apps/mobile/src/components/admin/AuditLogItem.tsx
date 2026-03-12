@@ -1,10 +1,11 @@
 import React, { memo, useState, useCallback, useMemo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { AuditLogWithUser } from '@rgr/shared';
 import { formatRelativeTime } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
+import { AppText } from '../common';
 
 type AuditAction = 'INSERT' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'LOGOUT';
 
@@ -109,12 +110,12 @@ function AuditLogItemInner({ item }: AuditLogItemProps) {
           <Ionicons name={icon} size={20} color={iconColor} />
         </View>
         <View style={styles.content}>
-          <Text style={styles.description} numberOfLines={1}>
+          <AppText style={styles.description} numberOfLines={1}>
             {description}
-          </Text>
+          </AppText>
           <View style={styles.meta}>
-            <Text style={styles.userName}>{item.userName || 'System'}</Text>
-            <Text style={styles.timestamp}>{formatRelativeTime(item.createdAt)}</Text>
+            <AppText style={styles.userName}>{item.userName || 'System'}</AppText>
+            <AppText style={styles.timestamp}>{formatRelativeTime(item.createdAt)}</AppText>
           </View>
         </View>
         {hasDetails && (
@@ -130,17 +131,17 @@ function AuditLogItemInner({ item }: AuditLogItemProps) {
         <View style={styles.details}>
           {item.oldValues && Object.keys(item.oldValues).length > 0 && (
             <View style={styles.detailBlock}>
-              <Text style={styles.detailLabel}>Old Values</Text>
+              <AppText style={styles.detailLabel}>Old Values</AppText>
               <View style={styles.jsonBox}>
-                <Text style={styles.jsonText}>{safeStringify(item.oldValues)}</Text>
+                <AppText style={styles.jsonText}>{safeStringify(item.oldValues)}</AppText>
               </View>
             </View>
           )}
           {item.newValues && Object.keys(item.newValues).length > 0 && (
             <View style={styles.detailBlock}>
-              <Text style={styles.detailLabel}>New Values</Text>
+              <AppText style={styles.detailLabel}>New Values</AppText>
               <View style={styles.jsonBox}>
-                <Text style={styles.jsonText}>{safeStringify(item.newValues)}</Text>
+                <AppText style={styles.jsonText}>{safeStringify(item.newValues)}</AppText>
               </View>
             </View>
           )}

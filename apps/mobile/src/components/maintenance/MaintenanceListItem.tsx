@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useMemo } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type {
   MaintenanceListItem as MaintenanceListItemType,
@@ -9,12 +9,14 @@ import { formatRelativeTime, formatAssetNumber } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { MaintenanceStatusBadge } from './MaintenanceStatusBadge';
 import { cardStyles } from './maintenance.styles';
+import { AppText } from '../common';
 
 export const MAINTENANCE_STATUS_CONFIG: Record<
   MaintenanceStatus,
   { icon: keyof typeof Ionicons.glyphMap; color: string }
 > = {
   scheduled: { icon: 'construct', color: colors.maintenanceStatus.scheduled },
+  in_progress: { icon: 'time', color: colors.maintenanceStatus.in_progress },
   completed: { icon: 'checkmark-circle', color: colors.maintenanceStatus.completed },
   cancelled: { icon: 'close-circle', color: colors.maintenanceStatus.cancelled },
 };
@@ -70,20 +72,20 @@ function MaintenanceListItemComponent({ maintenance, onPress }: MaintenanceListI
         </View>
         <View style={cardStyles.cardBody}>
           <View style={cardStyles.cardContentRow}>
-            <Text style={cardStyles.cardTitle} numberOfLines={1}>
+            <AppText style={cardStyles.cardTitle} numberOfLines={1}>
               {maintenance.assetNumber
                 ? formatAssetNumber(maintenance.assetNumber)
                 : 'Unknown Asset'}
-            </Text>
+            </AppText>
             <View style={cardStyles.cardBadges}>
               <MaintenanceStatusBadge status={maintenance.status} />
             </View>
           </View>
           <View style={cardStyles.cardFooter}>
-            <Text style={cardStyles.cardSecondaryText} numberOfLines={1}>
+            <AppText style={cardStyles.cardSecondaryText} numberOfLines={1}>
               {maintenance.description || maintenance.title}
-            </Text>
-            <Text style={cardStyles.cardTime}>{formatRelativeTime(maintenance.createdAt)}</Text>
+            </AppText>
+            <AppText style={cardStyles.cardTime}>{formatRelativeTime(maintenance.createdAt)}</AppText>
           </View>
         </View>
       </View>

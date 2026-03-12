@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from './Button';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, lineHeight, fontFamily as fonts } from '../../theme/spacing';
+import { AppText } from './AppText';
 
 interface EmptyStateAction {
   label: string;
@@ -24,8 +25,8 @@ export function EmptyState({ icon, title, subtitle, action }: EmptyStateProps) {
       <View style={styles.iconContainer}>
         <Ionicons name={icon} size={64} color={colors.textSecondary} />
       </View>
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.subtitle}>{subtitle}</Text>
+      <AppText style={styles.title}>{title}</AppText>
+      <AppText style={styles.subtitle}>{subtitle}</AppText>
       {action && (
         <View style={styles.actionContainer}>
           <Button onPress={action.onPress} variant="secondary">

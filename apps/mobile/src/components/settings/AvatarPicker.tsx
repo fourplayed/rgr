@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 import { useAvatarStore, AVATAR_OPTIONS } from '../../store/avatarStore';
 import { BottomSheet } from '../common/BottomSheet';
 import { SheetHeader } from '../common/SheetHeader';
+import { AppText } from '../common';
 
 interface AvatarPickerProps {
   visible: boolean;
@@ -44,9 +45,9 @@ export function AvatarPicker({ visible, onClose }: AvatarPickerProps) {
                     color={isSelected ? colors.textInverse : colors.backgroundDark}
                   />
                 </View>
-                <Text style={[styles.avatarLabel, isSelected && styles.avatarLabelSelected]}>
+                <AppText style={[styles.avatarLabel, isSelected && styles.avatarLabelSelected]}>
                   {avatar.label}
-                </Text>
+                </AppText>
               </TouchableOpacity>
             );
           })}

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { AppState, View, StyleSheet, Text } from 'react-native';
+import { AppState, View, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { LoadingDots } from '../src/components/common/LoadingDots';
@@ -38,17 +38,6 @@ import { usePushNotifications } from '../src/hooks/usePushNotifications';
 import { replayQueue, clearQueue } from '../src/utils/offlineScanQueue';
 import { setUser as setErrorReportingUser } from '../src/utils/errorReporting';
 import { colors } from '../src/theme/colors';
-
-// Set default text style globally
-// DEPRECATION WARNING: Text.defaultProps is deprecated in React 18.3+ and will break in React 19.
-// Migration path: Use <AppText> from 'src/components/common/AppText' for new components.
-// This fallback remains for existing code compatibility during gradual migration.
-// See: https://react.dev/blog/2024/04/25/react-19-upgrade-guide#removed-proptypes-and-defaultprops
-const defaultTextStyle = { fontFamily: 'Lato_400Regular' };
-// @ts-expect-error - defaultProps is deprecated but functional in RN; temporary fallback
-Text.defaultProps = Text.defaultProps || {};
-// @ts-expect-error - Setting default font family on all Text components
-Text.defaultProps.style = defaultTextStyle;
 
 // Initialize Supabase client
 initializeMobileSupabase();

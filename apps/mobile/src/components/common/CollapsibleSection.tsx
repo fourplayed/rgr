@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, LayoutAnimation, Animated } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, LayoutAnimation, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, shadows, fontFamily as fonts } from '../../theme/spacing';
 import '../../utils/enableLayoutAnimation';
+import { AppText } from './AppText';
 
 interface CollapsibleSectionProps {
   title: string;
@@ -50,7 +51,7 @@ export function CollapsibleSection({
     <View style={isFlat ? styles.containerFlat : styles.container}>
       <View style={isFlat ? styles.headerFlat : styles.header}>
         <View style={styles.titleRow}>
-          <Text style={isFlat ? styles.titleFlat : styles.title}>{title}</Text>
+          <AppText style={isFlat ? styles.titleFlat : styles.title}>{title}</AppText>
           {badge}
         </View>
         <TouchableOpacity

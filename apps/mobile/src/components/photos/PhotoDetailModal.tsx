@@ -1,7 +1,6 @@
 import React, { memo, useCallback, useState, useEffect, useRef } from 'react';
 import {
   View,
-  Text,
   Modal,
   StyleSheet,
   TouchableOpacity,
@@ -10,14 +9,13 @@ import {
   Platform,
   Linking,
   Animated,
-  Dimensions,
-} from 'react-native';
+  Dimensions} from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { usePhoto, useDeletePhoto, useSignedUrl } from '../../hooks/usePhotos';
 import { useUserPermissions } from '../../contexts/UserPermissionsContext';
 import { FreightAnalysisCard } from './FreightAnalysisCard';
-import { LoadingDots, AlertSheet, ConfirmSheet } from '../common';
+import { AppText, LoadingDots, AlertSheet, ConfirmSheet } from '../common';
 import { formatRelativeTime } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
@@ -119,7 +117,7 @@ function PhotoDetailModalComponent({ visible, photoId, assetId, onClose }: Photo
               >
                 <Ionicons name="close" size={28} color={colors.text} />
               </TouchableOpacity>
-              <Text style={styles.headerTitle}>Photo Details</Text>
+              <AppText style={styles.headerTitle}>Photo Details</AppText>
               {canAccessAdmin ? (
                 <TouchableOpacity
                   style={styles.headerButton}
@@ -171,9 +169,9 @@ function PhotoDetailModalComponent({ visible, photoId, assetId, onClose }: Photo
                   ) : !thumbnailUrl ? (
                     <View style={styles.imagePlaceholder}>
                       <LoadingDots color={colors.textSecondary} size={8} />
-                      <Text style={styles.imageLoadingText}>
+                      <AppText style={styles.imageLoadingText}>
                         {urlError ? 'Failed to load image' : 'Loading image...'}
-                      </Text>
+                      </AppText>
                     </View>
                   ) : null}
                 </View>
@@ -182,16 +180,16 @@ function PhotoDetailModalComponent({ visible, photoId, assetId, onClose }: Photo
                 <View style={styles.metadataSection}>
                   <View style={styles.metadataRow}>
                     <View style={styles.metadataItem}>
-                      <Text style={styles.metadataLabel}>Type</Text>
-                      <Text style={styles.metadataValue}>
+                      <AppText style={styles.metadataLabel}>Type</AppText>
+                      <AppText style={styles.metadataValue}>
                         {formatPhotoType(photoData.photoType)}
-                      </Text>
+                      </AppText>
                     </View>
                     <View style={styles.metadataItem}>
-                      <Text style={styles.metadataLabel}>Captured</Text>
-                      <Text style={styles.metadataValueSmall}>
+                      <AppText style={styles.metadataLabel}>Captured</AppText>
+                      <AppText style={styles.metadataValueSmall}>
                         {formatRelativeTime(photoData.createdAt)}
-                      </Text>
+                      </AppText>
                     </View>
                   </View>
 
@@ -199,18 +197,18 @@ function PhotoDetailModalComponent({ visible, photoId, assetId, onClose }: Photo
                     <View style={styles.metadataRow}>
                       {photoData.width && photoData.height && (
                         <View style={styles.metadataItem}>
-                          <Text style={styles.metadataLabel}>Resolution</Text>
-                          <Text style={styles.metadataValue}>
+                          <AppText style={styles.metadataLabel}>Resolution</AppText>
+                          <AppText style={styles.metadataValue}>
                             {photoData.width} × {photoData.height}
-                          </Text>
+                          </AppText>
                         </View>
                       )}
                       {photoData.fileSize && (
                         <View style={styles.metadataItem}>
-                          <Text style={styles.metadataLabel}>Size</Text>
-                          <Text style={styles.metadataValue}>
+                          <AppText style={styles.metadataLabel}>Size</AppText>
+                          <AppText style={styles.metadataValue}>
                             {(photoData.fileSize / 1024 / 1024).toFixed(2)} MB
-                          </Text>
+                          </AppText>
                         </View>
                       )}
                     </View>
@@ -226,11 +224,11 @@ function PhotoDetailModalComponent({ visible, photoId, assetId, onClose }: Photo
                       accessibilityHint="Double tap to open this location in your maps app"
                     >
                       <View style={styles.metadataItem}>
-                        <Text style={styles.metadataLabel}>Location</Text>
+                        <AppText style={styles.metadataLabel}>Location</AppText>
                         <View style={styles.locationValue}>
-                          <Text style={styles.metadataValueLink}>
+                          <AppText style={styles.metadataValueLink}>
                             {photoData.latitude.toFixed(5)}, {photoData.longitude.toFixed(5)}
-                          </Text>
+                          </AppText>
                           <Ionicons name="open-outline" size={14} color={colors.electricBlue} />
                         </View>
                       </View>
@@ -242,12 +240,12 @@ function PhotoDetailModalComponent({ visible, photoId, assetId, onClose }: Photo
                     {photoData.isAnalyzed ? (
                       <View style={styles.statusBadge}>
                         <Ionicons name="checkmark-circle" size={16} color={colors.success} />
-                        <Text style={styles.statusText}>Analyzed</Text>
+                        <AppText style={styles.statusText}>Analyzed</AppText>
                       </View>
                     ) : (
                       <View style={styles.statusBadge}>
                         <Ionicons name="hourglass-outline" size={16} color={colors.warning} />
-                        <Text style={styles.statusTextPending}>Pending Analysis</Text>
+                        <AppText style={styles.statusTextPending}>Pending Analysis</AppText>
                       </View>
                     )}
                   </View>
@@ -264,10 +262,10 @@ function PhotoDetailModalComponent({ visible, photoId, assetId, onClose }: Photo
             ) : (
               <View style={styles.errorContainer}>
                 <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
-                <Text style={styles.errorText}>{error?.message || 'Photo not found'}</Text>
-                <Text style={styles.errorSubtext}>
+                <AppText style={styles.errorText}>{error?.message || 'Photo not found'}</AppText>
+                <AppText style={styles.errorSubtext}>
                   The photo may have been deleted or is unavailable.
-                </Text>
+                </AppText>
               </View>
             )}
           </SafeAreaView>

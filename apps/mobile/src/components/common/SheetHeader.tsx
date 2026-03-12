@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, type TextStyle } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, type TextStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, shadows, fontFamily as fonts } from '../../theme/spacing';
+import { AppText } from './AppText';
 
 interface HeaderAction {
   icon: keyof typeof Ionicons.glyphMap;
@@ -42,9 +43,9 @@ export function SheetHeader({
     <View style={[styles.header, { backgroundColor }]}>
       <View style={styles.headerRow}>
         <Ionicons name={icon} size={30} color={colors.textInverse} />
-        <Text style={[styles.title, titleStyle]} numberOfLines={titleNumberOfLines}>
+        <AppText style={[styles.title, titleStyle]} numberOfLines={titleNumberOfLines}>
           {title}
-        </Text>
+        </AppText>
         {headerAction && (
           <TouchableOpacity
             onPress={headerAction.onPress}

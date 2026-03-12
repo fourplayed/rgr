@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 import { BottomSheet } from '../common/BottomSheet';
-import { BottomSheetScrollView, BottomSheetTextInput } from '../common/SheetModal';
+import { BottomSheetScrollView } from '../common/SheetModal';
+import { AppTextInput } from '../common/AppTextInput';
 import { Button } from '../common/Button';
+import { AppText } from '../common';
 
 const ACTION_TYPES = ['INSERT', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT'] as const;
 
@@ -98,11 +100,11 @@ export function AuditLogFilterSheet({
   return (
     <BottomSheet visible={visible} onDismiss={onClose}>
       <BottomSheetScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Filters</Text>
+        <AppText style={styles.title}>Filters</AppText>
 
         {/* Action Type */}
         <View style={styles.section}>
-          <Text style={styles.label}>Action Type</Text>
+          <AppText style={styles.label}>Action Type</AppText>
           <View style={styles.chipContainer}>
             {ACTION_TYPES.map((type) => {
               const isSelected = action === type;
@@ -116,9 +118,9 @@ export function AuditLogFilterSheet({
                   accessibilityLabel={`Filter by ${type}`}
                   accessibilityState={{ selected: isSelected }}
                 >
-                  <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
+                  <AppText style={[styles.chipText, isSelected && styles.chipTextSelected]}>
                     {type}
-                  </Text>
+                  </AppText>
                 </TouchableOpacity>
               );
             })}
@@ -127,29 +129,27 @@ export function AuditLogFilterSheet({
 
         {/* Date Range */}
         <View style={styles.section}>
-          <Text style={styles.label}>Date Range</Text>
+          <AppText style={styles.label}>Date Range</AppText>
           <View style={styles.dateRow}>
-            <BottomSheetTextInput
+            <AppTextInput
               style={[styles.dateInput, dateError ? styles.dateInputError : undefined]}
               value={startDate}
               onChangeText={handleStartDateChange}
               placeholder="YYYY-MM-DD"
-              placeholderTextColor={colors.textSecondary}
               maxLength={10}
               accessibilityLabel="Start date"
             />
-            <Text style={styles.dateSeparator}>to</Text>
-            <BottomSheetTextInput
+            <AppText style={styles.dateSeparator}>to</AppText>
+            <AppTextInput
               style={[styles.dateInput, dateError ? styles.dateInputError : undefined]}
               value={endDate}
               onChangeText={handleEndDateChange}
               placeholder="YYYY-MM-DD"
-              placeholderTextColor={colors.textSecondary}
               maxLength={10}
               accessibilityLabel="End date"
             />
           </View>
-          {dateError ? <Text style={styles.dateErrorText}>{dateError}</Text> : null}
+          {dateError ? <AppText style={styles.dateErrorText}>{dateError}</AppText> : null}
         </View>
 
         {/* Buttons */}

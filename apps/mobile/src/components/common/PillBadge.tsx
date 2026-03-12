@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, type ViewStyle, type StyleProp } from 'react-native';
+import { View, StyleSheet, type ViewStyle, type StyleProp } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
+import { AppText } from './AppText';
 
 interface PillBadgeProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -38,7 +39,7 @@ export function PillBadge({
       accessibilityRole={accessibilityRole}
     >
       <Ionicons name={icon} size={iconSize} color={foreground} />
-      <Text style={[styles.label, textColor != null && { color: foreground }]}>{label}</Text>
+      <AppText style={[styles.label, textColor != null && { color: foreground }]}>{label}</AppText>
     </View>
   );
 }

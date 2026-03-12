@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
+import { AppText } from './AppText';
 
 interface DepotBadgeProps {
   label: string;
@@ -15,7 +16,7 @@ export function DepotBadge({ label, bgColor, textColor, showIcon = false }: Depo
   return (
     <View style={[styles.badge, { backgroundColor: bgColor }]}>
       {showIcon && <Ionicons name="location" size={12} color={textColor} />}
-      <Text style={[styles.text, { color: textColor }]}>{label}</Text>
+      <AppText style={[styles.text, { color: textColor }]}>{label}</AppText>
     </View>
   );
 }

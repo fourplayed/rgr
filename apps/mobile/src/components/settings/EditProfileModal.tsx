@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
-import { SheetModal, BottomSheetScrollView, BottomSheetTextInput } from '../common/SheetModal';
-import { colors } from '../../theme/colors';
+import { SheetModal, BottomSheetScrollView } from '../common/SheetModal';
+import { AppTextInput } from '../common/AppTextInput';
 import { spacing } from '../../theme/spacing';
 import { formStyles } from '../../theme/formStyles';
 import { sheetLayout } from '../../theme/sheetLayout';
 import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 import { useAuthStore } from '../../store/authStore';
 import { useSubmitGuard } from '../../hooks/useSubmitGuard';
+import { AppText } from '../common';
 
 interface EditProfileModalProps {
   visible: boolean;
@@ -78,13 +79,12 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
           keyboardShouldPersistTaps="handled"
         >
           <View style={formStyles.inputGroup}>
-            <Text style={formStyles.label}>Full Name</Text>
-            <BottomSheetTextInput
+            <AppText style={formStyles.label}>Full Name</AppText>
+            <AppTextInput
               style={formStyles.input}
               value={fullName}
               onChangeText={setFullName}
               placeholder="Enter your full name"
-              placeholderTextColor={colors.textSecondary}
               autoCapitalize="words"
               autoCorrect={false}
               accessibilityLabel="Full name"
@@ -92,20 +92,19 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
           </View>
 
           <View style={formStyles.inputGroup}>
-            <Text style={formStyles.label}>Phone (optional)</Text>
-            <BottomSheetTextInput
+            <AppText style={formStyles.label}>Phone (optional)</AppText>
+            <AppTextInput
               style={formStyles.input}
               value={phone}
               onChangeText={setPhone}
               placeholder="Enter your phone number"
-              placeholderTextColor={colors.textSecondary}
               keyboardType="phone-pad"
               autoCorrect={false}
               accessibilityLabel="Phone number"
             />
           </View>
 
-          {error && <Text style={formStyles.errorText}>{error}</Text>}
+          {error && <AppText style={formStyles.errorText}>{error}</AppText>}
 
           <View style={[formStyles.buttonRow, { marginTop: spacing.lg }]}>
             <Button variant="secondary" onPress={onClose} disabled={isLoading} flex>

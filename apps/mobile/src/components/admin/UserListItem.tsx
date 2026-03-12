@@ -1,11 +1,12 @@
 import React, { memo, useCallback, useMemo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import type { Profile } from '@rgr/shared';
 import { UserRoleLabels } from '@rgr/shared';
 import { Badge } from '../common/StatusBadge';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 import { getUserRoleColor } from '../../utils/getUserRoleColor';
+import { AppText } from '../common';
 
 export const USER_ITEM_HEIGHT = 88;
 
@@ -36,33 +37,33 @@ function UserListItemInner({ user, onPress }: UserListItemProps) {
       accessibilityLabel={`${user.fullName}, ${UserRoleLabels[user.role]}, ${user.isActive ? 'active' : 'inactive'}`}
     >
       <View style={styles.headerRow}>
-        <Text style={styles.name} numberOfLines={1}>
+        <AppText style={styles.name} numberOfLines={1}>
           {user.fullName}
-        </Text>
+        </AppText>
         <View style={styles.badges}>
           <Badge
             label={UserRoleLabels[user.role]}
             color={getUserRoleColor(user.role) ?? colors.backgroundDark}
             size="small"
           />
-          <Text
+          <AppText
             style={[
               styles.statusText,
               { color: user.isActive ? colors.success : colors.textSecondary },
             ]}
           >
             {user.isActive ? 'Active' : 'Inactive'}
-          </Text>
+          </AppText>
         </View>
       </View>
       <View style={styles.footerRow}>
-        <Text style={styles.email} numberOfLines={1}>
+        <AppText style={styles.email} numberOfLines={1}>
           {user.email}
-        </Text>
+        </AppText>
         {user.depot && (
-          <Text style={styles.depot} numberOfLines={1}>
+          <AppText style={styles.depot} numberOfLines={1}>
             {user.depot}
-          </Text>
+          </AppText>
         )}
       </View>
     </TouchableOpacity>

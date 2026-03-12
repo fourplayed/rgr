@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import type { AdminDataStats } from '@rgr/shared';
@@ -9,10 +9,11 @@ import { SheetHeader } from '../../src/components/common/SheetHeader';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
+import { AppText } from '../../src/components/common';
 
 function CountUpValue({ value, style }: { value: number; style: object }) {
   const display = useCountUp(value);
-  return <Text style={style}>{display}</Text>;
+  return <AppText style={style}>{display}</AppText>;
 }
 
 const STAT_CARDS: ReadonlyArray<{
@@ -76,9 +77,9 @@ export default function DataDashboardScreen() {
           </View>
         ) : error ? (
           <View style={styles.centerContent}>
-            <Text style={styles.errorText}>Failed to load stats</Text>
+            <AppText style={styles.errorText}>Failed to load stats</AppText>
             <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
-              <Text style={styles.retryButtonText}>Retry</Text>
+              <AppText style={styles.retryButtonText}>Retry</AppText>
             </TouchableOpacity>
           </View>
         ) : (
@@ -86,7 +87,7 @@ export default function DataDashboardScreen() {
             style={styles.scrollView}
             contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingTop: spacing.base, paddingBottom: spacing['3xl'] }}
           >
-            <Text style={styles.sectionTitle}>Overview</Text>
+            <AppText style={styles.sectionTitle}>Overview</AppText>
             <View style={styles.statsGrid}>
               {STAT_CARDS.map((card) => (
                 <TouchableOpacity
@@ -104,10 +105,10 @@ export default function DataDashboardScreen() {
                       style={styles.statValue}
                     />
                   </View>
-                  <Text style={styles.statLabel}>{card.label}</Text>
-                  <Text style={styles.statSubtitle}>
+                  <AppText style={styles.statLabel}>{card.label}</AppText>
+                  <AppText style={styles.statSubtitle}>
                     {stats ? card.getSubtitle(stats) : ''}
-                  </Text>
+                  </AppText>
                 </TouchableOpacity>
               ))}
             </View>
@@ -119,8 +120,8 @@ export default function DataDashboardScreen() {
                   <Ionicons name="qr-code" size={24} color={colors.electricBlue} />
                 </View>
                 <View style={styles.infoContent}>
-                  <Text style={styles.infoLabel}>Total Scans</Text>
-                  <Text style={styles.infoValue}>{stats?.totalScans ?? 0}</Text>
+                  <AppText style={styles.infoLabel}>Total Scans</AppText>
+                  <AppText style={styles.infoValue}>{stats?.totalScans ?? 0}</AppText>
                 </View>
               </View>
             </View>

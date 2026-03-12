@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, Switch, StyleSheet } from 'react-native';
+import { View, Switch, StyleSheet } from 'react-native';
 import type { Depot, CreateDepotInput, UpdateDepotInput } from '@rgr/shared';
 import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
-import { SheetModal, BottomSheetScrollView, BottomSheetTextInput } from '../common/SheetModal';
+import { SheetModal, BottomSheetScrollView } from '../common/SheetModal';
+import { AppTextInput } from '../common/AppTextInput';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, fontFamily as fonts } from '../../theme/spacing';
 import { formStyles } from '../../theme/formStyles';
 import { sheetLayout } from '../../theme/sheetLayout';
 import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 import { useSubmitGuard } from '../../hooks/useSubmitGuard';
+import { AppText } from '../common';
 
 interface DepotFormSheetProps {
   visible: boolean;
@@ -112,13 +114,12 @@ export function DepotFormSheet({
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.inputGroup}>
-            <Text style={formStyles.label}>Name *</Text>
-            <BottomSheetTextInput
+            <AppText style={formStyles.label}>Name *</AppText>
+            <AppTextInput
               style={formStyles.inputFixed}
               value={name}
               onChangeText={setName}
               placeholder="e.g., Melbourne Central"
-              placeholderTextColor={colors.textSecondary}
               autoCapitalize="words"
               maxLength={100}
               accessibilityLabel="Depot name"
@@ -126,13 +127,12 @@ export function DepotFormSheet({
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={formStyles.label}>Code *</Text>
-            <BottomSheetTextInput
+            <AppText style={formStyles.label}>Code *</AppText>
+            <AppTextInput
               style={formStyles.inputFixed}
               value={code}
               onChangeText={setCode}
               placeholder="e.g., MELB"
-              placeholderTextColor={colors.textSecondary}
               autoCapitalize="characters"
               maxLength={20}
               accessibilityLabel="Depot code"
@@ -140,20 +140,19 @@ export function DepotFormSheet({
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={formStyles.label}>Address</Text>
-            <BottomSheetTextInput
+            <AppText style={formStyles.label}>Address</AppText>
+            <AppTextInput
               style={formStyles.inputFixed}
               value={address}
               onChangeText={setAddress}
               placeholder="Optional"
-              placeholderTextColor={colors.textSecondary}
               autoCapitalize="words"
               accessibilityLabel="Depot address"
             />
           </View>
 
           <View style={styles.toggleRow}>
-            <Text style={formStyles.label}>Active</Text>
+            <AppText style={formStyles.label}>Active</AppText>
             <Switch
               value={isActive}
               onValueChange={setIsActive}
@@ -162,7 +161,7 @@ export function DepotFormSheet({
             />
           </View>
 
-          {error && <Text style={styles.errorText}>{error}</Text>}
+          {error && <AppText style={styles.errorText}>{error}</AppText>}
 
           <View style={formStyles.buttonRow}>
             <Button variant="secondary" onPress={onClose} disabled={isLoading} flex>

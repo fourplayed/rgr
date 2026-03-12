@@ -1,10 +1,10 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, Alert } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Animated, Alert } from 'react-native';
 import { BottomSheetScrollView } from '../common/SheetModal';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { formatRelativeTime, formatAssetNumber } from '@rgr/shared';
-import { LoadingDots, AlertSheet, SheetModal } from '../common';
+import { AppText, LoadingDots, AlertSheet, SheetModal } from '../common';
 import { SheetHeader } from '../common/SheetHeader';
 import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
@@ -29,9 +29,9 @@ interface DefectReportDetailModalProps {
   onAcceptPress?: (context: {
     defectId: string;
     assetId: string;
-    assetNumber?: string;
+    assetNumber: string | null;
     title: string;
-    description?: string | null;
+    description: string | null;
   }) => void;
   /** Called when user taps "View Task" on a linked maintenance record. */
   onViewTaskPress?: (maintenanceId: string) => void;
@@ -90,9 +90,9 @@ export function DefectReportDetailModal({
     onAcceptPress({
       defectId: defect.id,
       assetId: defect.assetId,
-      ...(asset?.assetNumber ? { assetNumber: asset.assetNumber } : {}),
+      assetNumber: asset?.assetNumber ?? null,
       title: defect.title,
-      description: defect.description,
+      description: defect.description ?? null,
     });
   }, [defect, asset, onAcceptPress]);
 
@@ -172,9 +172,9 @@ export function DefectReportDetailModal({
               size={20}
               color={DEFECT_STATUS_CONFIG[status]?.color ?? colors.textSecondary}
             />
-            <Text style={styles.closedStatusText}>
+            <AppText style={styles.closedStatusText}>
               {status === 'task_created' ? 'Maintenance Task Created' : 'Resolved'}
-            </Text>
+            </AppText>
           </View>
         </View>
       );
@@ -225,16 +225,16 @@ export function DefectReportDetailModal({
                   {asset?.assetNumber && (
                     <>
                       <Ionicons name="cube" size={22} color={colors.text} />
-                      <Text style={styles.assetNumberText}>
+                      <AppText style={styles.assetNumberText}>
                         {formatAssetNumber(asset.assetNumber)}
-                      </Text>
+                      </AppText>
                     </>
                   )}
                 </View>
                 {defect.reporterName && (
-                  <Text style={styles.reporterText} numberOfLines={1}>
+                  <AppText style={styles.reporterText} numberOfLines={1}>
                     {formatRelativeTime(defect.createdAt)} by {defect.reporterName}
-                  </Text>
+                  </AppText>
                 )}
               </View>
             </Animated.View>
@@ -245,10 +245,10 @@ export function DefectReportDetailModal({
             {defect.description && (
               <Animated.View style={getStyle(1)}>
                 <View style={styles.sectionGroup}>
-                  <Text style={styles.detailLabel}>Description</Text>
-                  <Text style={[styles.detailValue, { fontFamily: fonts.regular }]}>
+                  <AppText style={styles.detailLabel}>Description</AppText>
+                  <AppText style={[styles.detailValue, { fontFamily: fonts.regular }]}>
                     {defect.description}
-                  </Text>
+                  </AppText>
                 </View>
               </Animated.View>
             )}
@@ -257,7 +257,7 @@ export function DefectReportDetailModal({
             {variant === 'full' && defectPhoto && (
               <Animated.View style={getStyle(2)}>
                 <View style={styles.sectionGroup}>
-                  <Text style={styles.sectionTitle}>Defect Photo</Text>
+                  <AppText style={styles.sectionTitle}>Defect Photo</AppText>
                   {isPhotoLoading ? (
                     <View style={styles.defectPhotoPlaceholder}>
                       <LoadingDots color={colors.textSecondary} size={8} />
@@ -265,7 +265,7 @@ export function DefectReportDetailModal({
                   ) : photoError || !defectPhotoUrl ? (
                     <View style={styles.defectPhotoPlaceholder}>
                       <Ionicons name="image-outline" size={28} color={colors.textSecondary} />
-                      <Text style={styles.defectPhotoErrorText}>Photo unavailable</Text>
+                      <AppText style={styles.defectPhotoErrorText}>Photo unavailable</AppText>
                     </View>
                   ) : (
                     <View
@@ -291,16 +291,16 @@ export function DefectReportDetailModal({
             {variant === 'full' && defect.maintenanceRecordId && (
               <Animated.View style={getStyle(3)}>
                 <View style={styles.sectionGroup}>
-                  <Text style={styles.sectionTitle}>Linked Maintenance Task</Text>
+                  <AppText style={styles.sectionTitle}>Linked Maintenance Task</AppText>
                   {linkedMaintenance && (
-                    <Text style={styles.detailValue}>{linkedMaintenance.title}</Text>
+                    <AppText style={styles.detailValue}>{linkedMaintenance.title}</AppText>
                   )}
                   <TouchableOpacity
                     style={styles.linkedTaskLink}
                     onPress={handleViewLinkedTask}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.linkedTaskLinkText}>View Task</Text>
+                    <AppText style={styles.linkedTaskLinkText}>View Task</AppText>
                     <Ionicons name="chevron-forward" size={16} color={colors.electricBlue} />
                   </TouchableOpacity>
                 </View>
@@ -313,19 +313,19 @@ export function DefectReportDetailModal({
                 <View style={styles.sectionGroup}>
                   {defect.acceptedAt && (
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Accepted</Text>
-                      <Text style={styles.detailValue}>
+                      <AppText style={styles.detailLabel}>Accepted</AppText>
+                      <AppText style={styles.detailValue}>
                         {formatRelativeTime(defect.acceptedAt)}
-                      </Text>
+                      </AppText>
                     </View>
                   )}
 
                   {defect.resolvedAt && (
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Resolved</Text>
-                      <Text style={styles.detailValue}>
+                      <AppText style={styles.detailLabel}>Resolved</AppText>
+                      <AppText style={styles.detailValue}>
                         {formatRelativeTime(defect.resolvedAt)}
-                      </Text>
+                      </AppText>
                     </View>
                   )}
                 </View>
@@ -336,9 +336,9 @@ export function DefectReportDetailModal({
             {variant === 'full' && defect.notes && (
               <Animated.View style={getStyle(5)}>
                 <View style={styles.sectionGroup}>
-                  <Text style={styles.sectionTitle}>Notes</Text>
+                  <AppText style={styles.sectionTitle}>Notes</AppText>
                   <View style={styles.sectionCard}>
-                    <Text style={styles.detailValue}>{defect.notes}</Text>
+                    <AppText style={styles.detailValue}>{defect.notes}</AppText>
                   </View>
                 </View>
               </Animated.View>

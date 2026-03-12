@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, SafeAreaView, TouchableOpacity, Linking } from 'react-native';
+import { View, SafeAreaView, TouchableOpacity, Linking } from 'react-native';
 import { styles } from './scan.styles';
+import { AppText } from '../common';
 
 interface PermissionScreenProps {
   /** If true, permission status is still loading */
@@ -21,7 +22,7 @@ export function PermissionScreen({
       <View style={styles.container}>
         <SafeAreaView style={styles.containerInner}>
           <View style={styles.centerContent}>
-            <Text style={styles.messageText}>Checking camera permission...</Text>
+            <AppText style={styles.messageText}>Checking camera permission...</AppText>
           </View>
         </SafeAreaView>
       </View>
@@ -34,11 +35,11 @@ export function PermissionScreen({
     <View style={styles.container}>
       <SafeAreaView style={styles.containerInner}>
         <View style={styles.centerContent}>
-          <Text style={styles.messageText}>
+          <AppText style={styles.messageText}>
             {showOpenSettings
               ? 'Camera access was denied. You can enable it in your device settings.'
               : 'Camera permission is required to scan QR codes'}
-          </Text>
+          </AppText>
           <TouchableOpacity
             style={styles.button}
             onPress={showOpenSettings ? () => Linking.openSettings() : onRequestPermission}
@@ -50,9 +51,9 @@ export function PermissionScreen({
                 : 'Double tap to allow camera access for scanning QR codes'
             }
           >
-            <Text style={styles.buttonText}>
+            <AppText style={styles.buttonText}>
               {showOpenSettings ? 'Open Settings' : 'Grant Permission'}
-            </Text>
+            </AppText>
           </TouchableOpacity>
         </View>
       </SafeAreaView>

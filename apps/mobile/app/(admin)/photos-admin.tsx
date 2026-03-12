@@ -1,13 +1,11 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
-  Text,
   FlatList,
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  useWindowDimensions,
-} from 'react-native';
+  useWindowDimensions} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { formatAssetNumber } from '@rgr/shared';
@@ -23,6 +21,7 @@ import { AlertSheet } from '../../src/components/common/AlertSheet';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
+import { AppText } from '../../src/components/common';
 
 const NUM_COLUMNS = 3;
 const THUMBNAIL_GAP = spacing.sm;
@@ -181,9 +180,9 @@ export default function PhotosAdminScreen() {
           )}
           {item.assetNumber && (
             <View style={styles.assetLabel}>
-              <Text style={styles.assetLabelText} numberOfLines={1}>
+              <AppText style={styles.assetLabelText} numberOfLines={1}>
                 {formatAssetNumber(item.assetNumber)}
-              </Text>
+              </AppText>
             </View>
           )}
         </TouchableOpacity>
@@ -200,8 +199,8 @@ export default function PhotosAdminScreen() {
         <View style={styles.iconContainer}>
           <Ionicons name="camera-outline" size={64} color={colors.textSecondary} />
         </View>
-        <Text style={styles.emptyText}>No photos</Text>
-        <Text style={styles.emptySubtext}>Try adjusting your search</Text>
+        <AppText style={styles.emptyText}>No photos</AppText>
+        <AppText style={styles.emptySubtext}>Try adjusting your search</AppText>
       </View>
     ),
     []
@@ -259,13 +258,13 @@ export default function PhotosAdminScreen() {
                 size={20}
                 color={colors.electricBlue}
               />
-              <Text style={styles.selectAllText}>
+              <AppText style={styles.selectAllText}>
                 {allSelected ? 'Deselect All' : 'Select All'}
-              </Text>
+              </AppText>
             </TouchableOpacity>
-            <Text style={styles.selectedCountText}>
+            <AppText style={styles.selectedCountText}>
               {selectedIds.size} selected
-            </Text>
+            </AppText>
           </View>
         )}
 
@@ -276,9 +275,9 @@ export default function PhotosAdminScreen() {
           </View>
         ) : error ? (
           <View style={styles.centerContent}>
-            <Text style={styles.errorText}>Failed to load photos</Text>
+            <AppText style={styles.errorText}>Failed to load photos</AppText>
             <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
-              <Text style={styles.retryButtonText}>Retry</Text>
+              <AppText style={styles.retryButtonText}>Retry</AppText>
             </TouchableOpacity>
           </View>
         ) : (
@@ -310,9 +309,9 @@ export default function PhotosAdminScreen() {
                     color={page <= 1 ? colors.textSecondary : colors.text}
                   />
                 </TouchableOpacity>
-                <Text style={styles.pageText}>
+                <AppText style={styles.pageText}>
                   {page} / {totalPages}
-                </Text>
+                </AppText>
                 <TouchableOpacity
                   onPress={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page >= totalPages}
@@ -342,9 +341,9 @@ export default function PhotosAdminScreen() {
               ) : (
                 <>
                   <Ionicons name="trash-outline" size={20} color={colors.textInverse} />
-                  <Text style={styles.deleteButtonText}>
+                  <AppText style={styles.deleteButtonText}>
                     Delete Selected ({selectedIds.size})
-                  </Text>
+                  </AppText>
                 </>
               )}
             </TouchableOpacity>

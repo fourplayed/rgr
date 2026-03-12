@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, lineHeight, fontFamily as fonts } from '../../theme/spacing';
 import { BottomSheet } from './BottomSheet';
 import { Button } from './Button';
 import { IconCircle } from './IconCircle';
+import { AppText } from './AppText';
 
 export type AlertType = 'error' | 'warning' | 'info' | 'success';
 
@@ -46,8 +47,8 @@ export function AlertSheet({
           <IconCircle icon={config.icon} color={config.color} />
         </View>
 
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.message}>{message}</Text>
+        <AppText style={styles.title}>{title}</AppText>
+        <AppText style={styles.message}>{message}</AppText>
 
         <Button onPress={onDismiss} style={styles.fullWidth} accessibilityLabel={buttonLabel}>
           {buttonLabel}

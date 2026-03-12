@@ -1,4 +1,4 @@
-import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import {
   listMaintenance,
   getMaintenanceById,
@@ -9,10 +9,20 @@ import {
   getMaintenanceStats,
   queryFromService,
 } from '@rgr/shared';
-import type { MaintenanceStatus, MaintenancePriority, UpdateMaintenanceInput } from '@rgr/shared';
+import type {
+  MaintenanceStatus,
+  MaintenancePriority,
+  UpdateMaintenanceInput,
+  CreateMaintenanceInput,
+  MaintenanceListItem as MaintenanceListItemType,
+} from '@rgr/shared';
 import { useMutationFromService } from './useMutationFromService';
 import { assetKeys } from './useAssetData';
 import { defectKeys } from './useDefectData';
+import { optimisticInfiniteInsert, optimisticPatch, rollback, type OptimisticSnapshot } from './optimisticCache';
+import { suppressRealtimeFor } from './useRealtimeInvalidation';
+import { OPTIMISTIC_UPDATES_ENABLED } from '../config/featureFlags';
+import { useAuthStore } from '../store/authStore';
 
 /**
  * Maintenance filter state
@@ -107,9 +117,37 @@ export function useMaintenance(id: string | null) {
 }
 
 /**
- * Create maintenance record mutation
+ * Build a placeholder list item for optimistic insertion.
+ * Uses crypto.randomUUID() — the real ID arrives when onSettled invalidates.
+ */
+function buildMaintenancePlaceholder(
+  input: CreateMaintenanceInput,
+  currentUserName: string | null,
+): MaintenanceListItemType {
+  return {
+    id: crypto.randomUUID(),
+    assetId: input.assetId,
+    title: input.title,
+    description: input.description ?? null,
+    priority: input.priority ?? 'medium',
+    status: input.status ?? 'scheduled',
+    maintenanceType: input.maintenanceType ?? null,
+    scheduledDate: input.scheduledDate ?? null,
+    dueDate: input.dueDate ?? null,
+    createdAt: new Date().toISOString(),
+    reporterName: currentUserName,
+    assetNumber: null,
+    assetCategory: null,
+  };
+}
+
+/**
+ * Create maintenance record mutation — with optimistic list insertion.
  */
 export function useCreateMaintenance() {
+  const queryClient = useQueryClient();
+  const userName = useAuthStore((s) => s.user?.fullName ?? null);
+
   return useMutationFromService({
     serviceFn: createMaintenance,
     invalidates: (data) => [
@@ -118,13 +156,29 @@ export function useCreateMaintenance() {
       assetKeys.maintenance(data.assetId),
       assetKeys.scanContext(data.assetId),
     ],
+    onMutate: async (input: CreateMaintenanceInput) => {
+      if (!OPTIMISTIC_UPDATES_ENABLED) return undefined;
+      suppressRealtimeFor('maintenance');
+      const placeholder = buildMaintenancePlaceholder(input, userName);
+      const listSnapshot = await optimisticInfiniteInsert(
+        queryClient,
+        maintenanceKeys.lists(),
+        placeholder,
+      );
+      return { listSnapshot };
+    },
+    onError: (_error, _vars, context) => {
+      if (context?.listSnapshot) rollback(queryClient, context.listSnapshot);
+    },
   });
 }
 
 /**
- * Update maintenance status mutation
+ * Update maintenance status mutation — with optimistic detail patch.
  */
 export function useUpdateMaintenanceStatus() {
+  const queryClient = useQueryClient();
+
   return useMutationFromService({
     serviceFn: ({
       id,
@@ -140,6 +194,19 @@ export function useUpdateMaintenanceStatus() {
       maintenanceKeys.lists(),
       maintenanceKeys.stats(),
     ],
+    onMutate: async (vars: { id: string; status: MaintenanceStatus }) => {
+      if (!OPTIMISTIC_UPDATES_ENABLED) return undefined;
+      suppressRealtimeFor('maintenance');
+      const detailSnapshot = await optimisticPatch(
+        queryClient,
+        maintenanceKeys.detail(vars.id),
+        { status: vars.status },
+      );
+      return { detailSnapshot };
+    },
+    onError: (_error, _vars, context) => {
+      if (context?.detailSnapshot) rollback(queryClient, context.detailSnapshot);
+    },
   });
 }
 

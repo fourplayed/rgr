@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useCallback, memo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, LayoutAnimation } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Animated, LayoutAnimation } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { DefectStatus } from '@rgr/shared';
 import { DefectStatusLabels } from '@rgr/shared';
@@ -7,6 +7,7 @@ import { colors } from '../../theme/colors';
 import { spacing, fontSize, shadows, fontFamily as fonts } from '../../theme/spacing';
 import { FilterChip } from '../common/FilterChip';
 import '../../utils/enableLayoutAnimation';
+import { AppText } from '../common';
 
 interface DefectFilterPanelProps {
   statuses: DefectStatus[];
@@ -70,10 +71,10 @@ export const DefectFilterPanel = memo(function DefectFilterPanel({
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Text style={styles.headerLabel}>Filters</Text>
+          <AppText style={styles.headerLabel}>Filters</AppText>
           {activeFilterCount > 0 && !isExpanded && (
             <View style={styles.countBadge}>
-              <Text style={styles.countBadgeText}>{activeFilterCount}</Text>
+              <AppText style={styles.countBadgeText}>{activeFilterCount}</AppText>
             </View>
           )}
         </View>

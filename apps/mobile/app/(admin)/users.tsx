@@ -1,12 +1,10 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
-  Text,
   FlatList,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+  StyleSheet} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { UserRoleLabels } from '@rgr/shared';
@@ -17,6 +15,7 @@ import { LoadingDots } from '../../src/components/common/LoadingDots';
 import { SheetHeader } from '../../src/components/common/SheetHeader';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
+import { AppText } from '../../src/components/common';
 
 const ROLES: UserRole[] = ['driver', 'mechanic', 'manager', 'superuser'];
 
@@ -85,8 +84,8 @@ export default function UsersScreen() {
         <View style={styles.iconContainer}>
           <Ionicons name="people-outline" size={64} color={colors.textSecondary} />
         </View>
-        <Text style={styles.emptyText}>No users found</Text>
-        <Text style={styles.emptySubtext}>Try adjusting filters</Text>
+        <AppText style={styles.emptyText}>No users found</AppText>
+        <AppText style={styles.emptySubtext}>Try adjusting filters</AppText>
       </View>
     ),
     []
@@ -146,7 +145,7 @@ export default function UsersScreen() {
                 onPress={() => toggleRole(role)}
                 activeOpacity={0.7}
               >
-                <Text
+                <AppText
                   style={[
                     styles.chipText,
                     {
@@ -156,7 +155,7 @@ export default function UsersScreen() {
                   ]}
                 >
                   {UserRoleLabels[role]}
-                </Text>
+                </AppText>
               </TouchableOpacity>
             );
           })}
@@ -177,7 +176,7 @@ export default function UsersScreen() {
             }
             activeOpacity={0.7}
           >
-            <Text
+            <AppText
               style={[
                 styles.chipText,
                 {
@@ -193,7 +192,7 @@ export default function UsersScreen() {
               ]}
             >
               Active Only
-            </Text>
+            </AppText>
           </TouchableOpacity>
         </View>
 
@@ -204,9 +203,9 @@ export default function UsersScreen() {
           </View>
         ) : error ? (
           <View style={styles.centerContent}>
-            <Text style={styles.errorText}>Failed to load users</Text>
+            <AppText style={styles.errorText}>Failed to load users</AppText>
             <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
-              <Text style={styles.retryButtonText}>Retry</Text>
+              <AppText style={styles.retryButtonText}>Retry</AppText>
             </TouchableOpacity>
           </View>
         ) : (

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, Dimensions, PanResponder, Platform, StyleSheet, Text, View } from 'react-native';
+import { Animated, Dimensions, PanResponder, Platform, StyleSheet, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,6 +7,7 @@ import * as Haptics from 'expo-haptics';
 import { useConsoleStore } from '../../store/consoleStore';
 import { colors } from '../../theme/colors';
 import { borderRadius, fontSize, fontFamily as fonts, spacing } from '../../theme/spacing';
+import { AppText } from '../common';
 
 const BUTTON_SIZE = 40;
 const DRAG_THRESHOLD = 10;
@@ -98,7 +99,7 @@ export function ConsoleButton() {
       {/* Unread badge */}
       {!isOpen && unreadCount > 0 && (
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
+          <AppText style={styles.badgeText}>{unreadCount > 99 ? '99+' : unreadCount}</AppText>
         </View>
       )}
     </Animated.View>

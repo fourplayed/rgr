@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useCallback, memo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, LayoutAnimation } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Animated, LayoutAnimation } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { MaintenanceStatus, MaintenancePriority } from '@rgr/shared';
 import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '@rgr/shared';
@@ -7,6 +7,7 @@ import { colors } from '../../theme/colors';
 import { spacing, fontSize, shadows, fontFamily as fonts } from '../../theme/spacing';
 import { FilterChip } from '../common/FilterChip';
 import '../../utils/enableLayoutAnimation';
+import { AppText } from '../common';
 
 interface MaintenanceFilterPanelProps {
   statuses: MaintenanceStatus[];
@@ -80,10 +81,10 @@ export const MaintenanceFilterPanel = memo(function MaintenanceFilterPanel({
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Text style={styles.headerLabel}>Filters</Text>
+          <AppText style={styles.headerLabel}>Filters</AppText>
           {activeFilterCount > 0 && !isExpanded && (
             <View style={styles.countBadge}>
-              <Text style={styles.countBadgeText}>{activeFilterCount}</Text>
+              <AppText style={styles.countBadgeText}>{activeFilterCount}</AppText>
             </View>
           )}
         </View>
@@ -107,7 +108,7 @@ export const MaintenanceFilterPanel = memo(function MaintenanceFilterPanel({
         <View style={styles.container}>
           {/* Status Section */}
           <View style={styles.filterSection}>
-            <Text style={styles.sectionLabel}>Status</Text>
+            <AppText style={styles.sectionLabel}>Status</AppText>
             <View style={styles.chipsContainer}>
               {STATUS_ORDER.map((status) => (
                 <FilterChip
@@ -123,7 +124,7 @@ export const MaintenanceFilterPanel = memo(function MaintenanceFilterPanel({
 
           {/* Priority Section */}
           <View style={styles.filterSectionLast}>
-            <Text style={styles.sectionLabel}>Priority</Text>
+            <AppText style={styles.sectionLabel}>Priority</AppText>
             <View style={styles.chipsContainer}>
               {PRIORITY_ORDER.map((priority) => (
                 <FilterChip

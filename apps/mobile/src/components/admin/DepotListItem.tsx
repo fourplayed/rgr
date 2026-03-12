@@ -1,8 +1,9 @@
 import React, { memo, useCallback, useMemo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import type { Depot } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
+import { AppText } from '../common';
 
 export const DEPOT_ITEM_HEIGHT = 88;
 
@@ -38,24 +39,24 @@ function DepotListItemInner({ depot, onPress, onLongPress }: DepotListItemProps)
       accessibilityLabel={`${depot.name}, ${depot.isActive ? 'active' : 'inactive'}`}
     >
       <View style={styles.headerRow}>
-        <Text style={styles.name} numberOfLines={1}>
+        <AppText style={styles.name} numberOfLines={1}>
           {depot.name}
-        </Text>
-        <Text
+        </AppText>
+        <AppText
           style={[
             styles.statusText,
             { color: depot.isActive ? colors.success : colors.textSecondary },
           ]}
         >
           {depot.isActive ? 'Active' : 'Inactive'}
-        </Text>
+        </AppText>
       </View>
       <View style={styles.footerRow}>
-        <Text style={styles.code}>{depot.code.toUpperCase()}</Text>
+        <AppText style={styles.code}>{depot.code.toUpperCase()}</AppText>
         {depot.address && (
-          <Text style={styles.address} numberOfLines={1}>
+          <AppText style={styles.address} numberOfLines={1}>
             {depot.address}
-          </Text>
+          </AppText>
         )}
       </View>
     </TouchableOpacity>

@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef, memo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, Keyboard, type TextInput } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Animated, Keyboard, type TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
-import { SheetModal, BottomSheetScrollView, BottomSheetTextInput } from '../common/SheetModal';
+import { SheetModal, BottomSheetScrollView } from '../common/SheetModal';
+import { AppTextInput } from '../common/AppTextInput';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 import { sheetLayout } from '../../theme/sheetLayout';
 import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
+import { AppText } from '../common';
 
 interface DefectReportSheetProps {
   visible: boolean;
@@ -115,21 +117,20 @@ function DefectReportSheetComponent({
         >
           {/* Notes Input */}
           <View style={styles.inputSection}>
-            <Text style={styles.inputLabel}>Describe the defect</Text>
-            <BottomSheetTextInput
+            <AppText style={styles.inputLabel}>Describe the defect</AppText>
+            <AppTextInput
               ref={inputRef}
               style={styles.textInput}
               placeholder="Enter details about the defect, damage, or issue..."
-              placeholderTextColor={colors.textSecondary}
               onChangeText={handleChangeText}
               multiline
               numberOfLines={4}
               maxLength={2000}
               textAlignVertical="top"
             />
-            <Text style={styles.charCount}>
+            <AppText style={styles.charCount}>
               {charCount > 0 ? `${charCount}/2000` : 'Required'}
-            </Text>
+            </AppText>
           </View>
 
           {/* Photo Option (hidden when showPhotoOption is false) */}
@@ -144,10 +145,10 @@ function DefectReportSheetComponent({
             >
               <Ionicons name="camera" size={32} color={colors.electricBlue} />
               <View style={styles.photoOptionText}>
-                <Text style={styles.photoOptionLabel}>Capture Photo</Text>
-                <Text style={styles.photoOptionDescription}>
+                <AppText style={styles.photoOptionLabel}>Capture Photo</AppText>
+                <AppText style={styles.photoOptionDescription}>
                   Capture a photo of the defect to document the issue
-                </Text>
+                </AppText>
               </View>
               <Ionicons
                 name={wantsPhoto ? 'checkbox' : 'square-outline'}

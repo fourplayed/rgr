@@ -3,12 +3,11 @@ import {
   Animated,
   LayoutChangeEvent,
   StyleSheet,
-  Text,
   TouchableOpacity,
-  View,
-} from 'react-native';
+  View} from 'react-native';
 import { colors } from '../../theme/colors';
 import { borderRadius, fontSize, spacing, fontFamily as fonts } from '../../theme/spacing';
+import { AppText } from './AppText';
 
 const PADDING = spacing.xs; // 4 — breathing room between tray edge and pill
 
@@ -75,7 +74,7 @@ export function SegmentedTabs<T extends string>({
             accessibilityState={{ selected }}
             accessibilityLabel={`${tab.label} tab`}
           >
-            <Text style={[styles.tabText, selected && styles.tabTextActive]}>{tab.label}</Text>
+            <AppText style={[styles.tabText, selected && styles.tabTextActive]}>{tab.label}</AppText>
           </TouchableOpacity>
         );
       })}

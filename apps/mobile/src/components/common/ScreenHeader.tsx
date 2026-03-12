@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, fontFamily as fonts } from '../../theme/spacing';
 import { CONTENT_TOP_OFFSET } from '../../theme/layout';
+import { AppText } from './AppText';
 
 interface ScreenHeaderProps {
   title: string;
@@ -36,8 +37,8 @@ export function ScreenHeader({
             </TouchableOpacity>
           )}
           <View>
-            <Text style={styles.title}>{title}</Text>
-            {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+            <AppText style={styles.title}>{title}</AppText>
+            {subtitle && <AppText style={styles.subtitle}>{subtitle}</AppText>}
           </View>
         </View>
         {rightAction}

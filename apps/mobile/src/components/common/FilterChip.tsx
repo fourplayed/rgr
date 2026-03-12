@@ -1,8 +1,9 @@
 import React, { memo, useCallback } from 'react';
-import { Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { TouchableOpacity, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
+import { AppText } from './AppText';
 
 export interface FilterChipProps {
   label: string;
@@ -41,7 +42,7 @@ export const FilterChip = memo(function FilterChip({
       accessibilityLabel={`Filter by ${label}`}
       accessibilityState={{ selected: isSelected }}
     >
-      <Text style={[styles.chipText, { color: textColor }]}>{label}</Text>
+      <AppText style={[styles.chipText, { color: textColor }]}>{label}</AppText>
     </TouchableOpacity>
   );
 });
