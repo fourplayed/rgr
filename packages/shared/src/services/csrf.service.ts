@@ -78,11 +78,19 @@ export const csrfService = {
       const stored = localStorage.getItem(CSRF_STORAGE_KEY);
 
       if (stored) {
-        const parsed: CSRFToken = JSON.parse(stored);
+        const parsed: unknown = JSON.parse(stored);
 
-        // Check if token is still valid
-        if (Date.now() < parsed.expiresAt) {
-          return parsed.token;
+        if (
+          parsed != null &&
+          typeof parsed === 'object' &&
+          typeof (parsed as Record<string, unknown>)['token'] === 'string' &&
+          typeof (parsed as Record<string, unknown>)['expiresAt'] === 'number'
+        ) {
+          const csrfData = parsed as CSRFToken;
+          // Check if token is still valid
+          if (Date.now() < csrfData.expiresAt) {
+            return csrfData.token;
+          }
         }
       }
 

@@ -18,6 +18,15 @@ export type { RetryOptions } from './withRetry';
 export { escapeHtml, isValidHexColor } from './sanitize';
 
 /**
+ * SAFETY: Supabase SDK cannot resolve ambiguous FK joins at the type level.
+ * The select string is verified against the local interface by visual inspection.
+ * Centralizes the escape hatch for auditability.
+ */
+export function assertQueryResult<T>(data: unknown): T {
+  return data as T;
+}
+
+/**
  * Validate email format
  */
 export function validateEmail(email: string): boolean {
@@ -99,13 +108,13 @@ export function debounce<A extends unknown[]>(
 /**
  * Throttle a function
  */
-export function throttle<T extends (...args: unknown[]) => unknown>(
-  fn: T,
+export function throttle<A extends unknown[]>(
+  fn: (...args: A) => void,
   limitMs: number
-): (...args: Parameters<T>) => void {
+): (...args: A) => void {
   let lastRun = 0;
 
-  return (...args: Parameters<T>) => {
+  return (...args: A) => {
     const now = Date.now();
 
     if (now - lastRun >= limitMs) {

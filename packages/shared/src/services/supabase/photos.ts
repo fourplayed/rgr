@@ -10,6 +10,8 @@ import type {
 } from '../../types/entities';
 import type { PhotoType } from '../../types/enums/PhotoEnums';
 import { PhotoTypeSchema } from '../../types/enums/PhotoEnums';
+import type { HazardSeverity } from '../../types/enums/HazardEnums';
+import { HazardSeveritySchema } from '../../types/enums/HazardEnums';
 import { safeParseEnum } from '../../utils/safeParseEnum';
 import { SUPPORTED_IMAGE_TYPES } from '../../utils/constants';
 import type { FreightAnalysisRow } from '../../types/entities/freightAnalysis';
@@ -27,6 +29,7 @@ import {
   isValidUUID,
   isValidISOTimestamp,
 } from '../../utils/constants';
+import { assertQueryResult } from '../../utils';
 
 /**
  * Generate a unique ID for filenames.
@@ -56,7 +59,7 @@ export interface PhotoListItem {
   primaryCategory: string | null;
   confidence: number | null;
   hazardCount: number;
-  maxSeverity: string | null;
+  maxSeverity: HazardSeverity | null;
   requiresAcknowledgment: boolean;
   blockedFromDeparture: boolean;
 }
@@ -350,7 +353,7 @@ export async function getAssetPhotos(
       primaryCategory: analysis?.primary_category ?? null,
       confidence: analysis?.confidence ?? null,
       hazardCount: analysis?.hazard_count ?? 0,
-      maxSeverity: analysis?.max_severity ?? null,
+      maxSeverity: safeParseEnum(HazardSeveritySchema, analysis?.max_severity, null),
       requiresAcknowledgment: analysis?.requires_acknowledgment ?? false,
       blockedFromDeparture: analysis?.blocked_from_departure ?? false,
     };
@@ -409,7 +412,7 @@ export async function getPhotosByScanEventId(
       primaryCategory: analysis?.primary_category ?? null,
       confidence: analysis?.confidence ?? null,
       hazardCount: analysis?.hazard_count ?? 0,
-      maxSeverity: analysis?.max_severity ?? null,
+      maxSeverity: safeParseEnum(HazardSeveritySchema, analysis?.max_severity, null),
       requiresAcknowledgment: analysis?.requires_acknowledgment ?? false,
       blockedFromDeparture: analysis?.blocked_from_departure ?? false,
     };
@@ -479,7 +482,7 @@ export async function getPhotoById(photoId: string): Promise<ServiceResult<Photo
     freight_analysis: (Omit<FreightAnalysisRow, 'raw_response'> & { raw_response?: never }) | null;
   }
 
-  const row = photoResult.data as unknown as PhotoWithAnalysisRow;
+  const row = assertQueryResult<PhotoWithAnalysisRow>(photoResult.data);
   const { freight_analysis, ...photoRow } = row;
   const photo = mapRowToPhoto(photoRow as PhotoRow);
 

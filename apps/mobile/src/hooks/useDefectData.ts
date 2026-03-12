@@ -176,7 +176,7 @@ export function useCreateDefectReport() {
       const placeholder = buildDefectPlaceholder(input, userName);
       const listSnapshot = await optimisticInfiniteInsert(
         queryClient,
-        defectKeys.lists(),
+        defectKeys.list({}),
         placeholder,
       );
       return { listSnapshot };

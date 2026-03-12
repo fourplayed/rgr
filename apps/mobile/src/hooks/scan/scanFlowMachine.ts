@@ -28,7 +28,7 @@ export type ScanFlowState =
   | ({
       phase: 'confirming';
       isCreatingScan: boolean;
-      pendingUndo?: boolean;
+      pendingUndo?: boolean; // Never explicitly set to undefined — satisfies exactOptionalPropertyTypes
     } & ScanTarget)
   | ({
       phase: 'active';
@@ -261,6 +261,7 @@ export function scanFlowReducer(state: ScanFlowState, action: ScanFlowAction): S
         activeSheet: null,
         awaitingSheetExit: false,
         confirmedAction: null,
+        capturedPhotoUri: null,
       };
 
     // ── Compound actions (from mutation onSuccess) ──

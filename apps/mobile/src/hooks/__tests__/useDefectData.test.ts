@@ -1,4 +1,5 @@
 import { renderHook, waitFor } from '@testing-library/react-native';
+import { QueryClient } from '@tanstack/react-query';
 import { createWrapper } from './testUtils';
 import {
   defectKeys,
@@ -30,6 +31,20 @@ jest.mock('../useAssetData', () => ({
   assetKeys: {
     scanContext: (id: string) => ['assets', 'scanContext', id],
   },
+}));
+
+jest.mock('../useRealtimeInvalidation', () => ({
+  suppressRealtimeFor: jest.fn(),
+}));
+
+jest.mock('../../config/featureFlags', () => ({
+  OPTIMISTIC_UPDATES_ENABLED: true,
+}));
+
+jest.mock('../../store/authStore', () => ({
+  useAuthStore: jest.fn((selector: any) =>
+    selector({ user: { fullName: 'Test User' } })
+  ),
 }));
 
 const mockListDefectReports = listDefectReports as jest.MockedFunction<typeof listDefectReports>;
@@ -260,10 +275,95 @@ describe('useUpdateDefectReportStatus', () => {
   });
 });
 
-// ── Optimistic update scaffolds ──
+// ── Optimistic updates ──
 
 describe('optimistic: createDefectReport', () => {
-  it.todo('inserts placeholder into list cache before server response');
-  it.todo('rolls back cache on mutation error');
-  it.todo('cancels in-flight queries during onMutate');
+  // gcTime must be > 0 so pre-seeded cache survives until async onMutate reads it
+  const createOptimisticClient = () =>
+    new QueryClient({
+      defaultOptions: {
+        queries: { retry: false, gcTime: 60_000 },
+        mutations: { retry: false },
+      },
+    });
+
+  const seedListCache = (queryClient: any) => {
+    queryClient.setQueryData(defectKeys.list({}), {
+      pages: [{ data: [defectItem()], hasMore: false }],
+      pageParams: [undefined],
+    });
+  };
+
+  it('inserts placeholder into list cache before server response', async () => {
+    const { wrapper, queryClient } = createWrapper(createOptimisticClient());
+    seedListCache(queryClient);
+
+    // Mutation hangs so we can inspect cache mid-flight
+    let resolveMutation!: (value: any) => void;
+    mockCreateDefectReport.mockImplementation(
+      () => new Promise((resolve) => { resolveMutation = resolve; })
+    );
+
+    const { result } = renderHook(() => useCreateDefectReport(), { wrapper });
+
+    result.current.mutate({ assetId: 'asset-1', title: 'New defect' } as any);
+
+    // onMutate fires before mutationFn — placeholder should be prepended
+    await waitFor(() => {
+      const cache = queryClient.getQueryData(defectKeys.list({})) as any;
+      expect(cache?.pages[0]?.data).toHaveLength(2);
+    });
+
+    const cache = queryClient.getQueryData(defectKeys.list({})) as any;
+    expect(cache.pages[0].data[0].title).toBe('New defect');
+    expect(cache.pages[0].data[0].status).toBe('reported');
+    expect(cache.pages[0].data[1].id).toBe('dr-1');
+
+    // Cleanup: resolve and let mutation settle
+    resolveMutation({ success: true, data: { id: 'dr-new', assetId: 'asset-1' } });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+  });
+
+  it('rolls back cache on mutation error', async () => {
+    const { wrapper, queryClient } = createWrapper(createOptimisticClient());
+    seedListCache(queryClient);
+
+    mockCreateDefectReport.mockResolvedValue({
+      success: false,
+      data: null,
+      error: 'Network error',
+    } as any);
+
+    const { result } = renderHook(() => useCreateDefectReport(), { wrapper });
+
+    result.current.mutate({ assetId: 'asset-1', title: 'Will fail' } as any);
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    // Cache should be rolled back to original single item
+    const cache = queryClient.getQueryData(defectKeys.list({})) as any;
+    expect(cache.pages[0].data).toHaveLength(1);
+    expect(cache.pages[0].data[0].id).toBe('dr-1');
+  });
+
+  it('cancels in-flight queries during onMutate', async () => {
+    const { wrapper, queryClient } = createWrapper(createOptimisticClient());
+    seedListCache(queryClient);
+
+    const cancelSpy = jest.spyOn(queryClient, 'cancelQueries');
+    mockCreateDefectReport.mockResolvedValue({
+      success: true,
+      data: { id: 'dr-new', assetId: 'asset-1' },
+    } as any);
+
+    const { result } = renderHook(() => useCreateDefectReport(), { wrapper });
+
+    result.current.mutate({ assetId: 'asset-1', title: 'New defect' } as any);
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(cancelSpy).toHaveBeenCalledWith({
+      queryKey: defectKeys.list({}),
+    });
+  });
 });

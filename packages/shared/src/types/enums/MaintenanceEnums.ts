@@ -5,16 +5,25 @@ import { z } from 'zod';
  */
 export const MaintenanceStatus = {
   SCHEDULED: 'scheduled',
+  IN_PROGRESS: 'in_progress',
   COMPLETED: 'completed',
   CANCELLED: 'cancelled',
 } as const;
 
 export type MaintenanceStatus = (typeof MaintenanceStatus)[keyof typeof MaintenanceStatus];
 
-export const MaintenanceStatusSchema = z.enum(['scheduled', 'completed', 'cancelled']);
+export const MaintenanceStatusSchema = z.enum([
+  'scheduled',
+  'in_progress',
+  'completed',
+  'cancelled',
+]);
+
+export const MAINTENANCE_STATUSES = MaintenanceStatusSchema.options;
 
 export const MaintenanceStatusLabels: Record<MaintenanceStatus, string> = {
   scheduled: 'Scheduled',
+  in_progress: 'In Progress',
   completed: 'Completed',
   cancelled: 'Cancelled',
 };

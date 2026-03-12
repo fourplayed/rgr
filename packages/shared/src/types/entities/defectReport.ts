@@ -82,7 +82,9 @@ export interface CreateDefectReportInput {
 }
 
 /**
- * Input for updating a defect report
+ * Input for updating a defect report.
+ * `status` is intentionally excluded — status changes must go through
+ * `updateDefectReportStatus` for transition validation.
  */
 export interface UpdateDefectReportInput {
   title?: string;

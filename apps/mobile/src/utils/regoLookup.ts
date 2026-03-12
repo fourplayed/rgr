@@ -29,7 +29,7 @@ export async function triggerRegoLookup(assetId: string): Promise<void> {
 
     if (!asset?.registration_number) return;
 
-    await fetch(`${supabaseUrl}/functions/v1/rego-lookup`, {
+    const response = await fetch(`${supabaseUrl}/functions/v1/rego-lookup`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${session.access_token}`,
@@ -40,7 +40,10 @@ export async function triggerRegoLookup(assetId: string): Promise<void> {
         assetId,
       }),
     });
-  } catch (err) {
+    if (!response.ok && __DEV__) {
+      console.warn(`[RegoLookup] Edge function returned ${response.status}`);
+    }
+  } catch (err: unknown) {
     console.warn('[RegoLookup] Fire-and-forget failed:', err);
   }
 }

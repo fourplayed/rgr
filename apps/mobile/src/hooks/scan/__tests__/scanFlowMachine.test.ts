@@ -12,12 +12,14 @@ type CompletingState = Extract<ScanFlowState, { phase: 'completing' }>;
 
 // ── Test helpers ──
 
+// SAFETY: Test stub — only fields used by the machine are populated
 const makeAssetStub = (overrides = {}) => ({
   id: 'asset-1',
   assetNumber: 'T-001',
   ...overrides,
 });
 
+// SAFETY: Test stub — only fields used by the machine are populated
 const makeLocation = (overrides = {}) => ({
   latitude: -31.95,
   longitude: 115.86,
@@ -570,8 +572,7 @@ describe('scanFlowMachine', () => {
     });
 
     it('captures null depot when no match', () => {
-      const active = buildActiveState({ confirmedAction: 'photo', photoCompleted: true });
-      (active as any).matchedDepot = null;
+      const active = buildActiveState({ confirmedAction: 'photo', photoCompleted: true, matchedDepot: null });
       const result = scanFlowReducer(active, { type: 'FINISH' }) as CompletingState;
       expect(result.summary.depotName).toBeNull();
     });

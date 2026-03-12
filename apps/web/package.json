@@ -15,7 +15,7 @@
     "@rgr/shared": "*",
     "@rgr/ui": "*",
     "@tanstack/react-query": "^5.40.0",
-    "dompurify": "^3.3.1",
+    "dompurify": "^3.3.2",
     "html5-qrcode": "^2.3.8",
     "lucide-react": "^0.564.0",
     "mapbox-gl": "^3.18.1",

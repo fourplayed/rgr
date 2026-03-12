@@ -1,5 +1,9 @@
 import { getSupabaseClient } from './client';
 import type { ServiceResult } from '../../types';
+import type { AssetCategory, AssetStatus, ScanType } from '../../types/enums';
+import { AssetCategorySchema, AssetStatusSchema } from '../../types/enums/AssetEnums';
+import { ScanTypeSchema } from '../../types/enums/ScanEnums';
+import { safeParseEnum } from '../../utils/safeParseEnum';
 
 // ── Interfaces ──
 
@@ -16,8 +20,8 @@ export interface RecentScan {
   id: string;
   assetId: string;
   assetNumber: string;
-  assetCategory: string;
-  scanType: string;
+  assetCategory: AssetCategory;
+  scanType: ScanType;
   scannedAt: string;
   scannedBy: string | null;
   scannerName: string | null;
@@ -28,8 +32,8 @@ export interface RecentScan {
 export interface OutstandingAsset {
   id: string;
   assetNumber: string;
-  category: string;
-  status: string;
+  category: AssetCategory;
+  status: AssetStatus;
   lastScanDate: string | null;
   daysSinceLastScan: number | null;
   lastLocation?: {
@@ -41,9 +45,9 @@ export interface OutstandingAsset {
 export interface AssetLocation {
   id: string;
   assetNumber: string;
-  category: string;
+  category: AssetCategory;
   subtype: string | null;
-  status: string;
+  status: AssetStatus;
   latitude: number;
   longitude: number;
   accuracy: number | null;
@@ -87,7 +91,7 @@ export async function getFleetStatistics(): Promise<ServiceResult<FleetStatistic
 
   const { data, error } = await supabase.rpc('get_fleet_statistics');
 
-  if (!error && data) {
+  if (!error && data != null && typeof data === 'object') {
     const stats = data as {
       total_assets: number;
       serviced: number;
@@ -172,12 +176,12 @@ export async function getRecentDashboardScans(
     return { success: false, data: null, error: `Failed to fetch recent scans: ${error.message}` };
   }
 
-  const scans = (data || []).map((scan: DashboardScanRow) => ({
+  const scans: RecentScan[] = (data || []).map((scan: DashboardScanRow) => ({
     id: scan.id,
     assetId: scan.asset_id,
     assetNumber: scan.assets?.asset_number || 'Unknown',
-    assetCategory: scan.assets?.category || 'unknown',
-    scanType: scan.scan_type,
+    assetCategory: safeParseEnum(AssetCategorySchema, scan.assets?.category, 'trailer'),
+    scanType: safeParseEnum(ScanTypeSchema, scan.scan_type, 'qr_scan'),
     scannedAt: scan.created_at,
     scannedBy: scan.scanned_by,
     scannerName: scan.profiles?.full_name || null,
@@ -235,8 +239,8 @@ export async function getOutstandingAssets(
     return {
       id: asset.id,
       assetNumber: asset.asset_number,
-      category: asset.category,
-      status: asset.status,
+      category: safeParseEnum(AssetCategorySchema, asset.category, 'trailer'),
+      status: safeParseEnum(AssetStatusSchema, asset.status, 'serviced'),
       lastScanDate,
       daysSinceLastScan: daysSince,
       lastLocation:
@@ -293,17 +297,23 @@ export async function getAssetLocations(): Promise<ServiceResult<AssetLocation[]
     };
   }
 
-  const locations = (data || []).map((asset: AssetLocationRow) => ({
-    id: asset.id,
-    assetNumber: asset.asset_number,
-    category: asset.category,
-    subtype: asset.subtype,
-    status: asset.status,
-    latitude: asset.last_latitude!,
-    longitude: asset.last_longitude!,
-    accuracy: asset.last_location_accuracy,
-    lastUpdated: asset.last_location_updated_at || '',
-  }));
+  const locations: AssetLocation[] = [];
+  for (const asset of data || []) {
+    const row = asset as AssetLocationRow;
+    if (row.last_latitude != null && row.last_longitude != null) {
+      locations.push({
+        id: row.id,
+        assetNumber: row.asset_number,
+        category: safeParseEnum(AssetCategorySchema, row.category, 'trailer'),
+        subtype: row.subtype,
+        status: safeParseEnum(AssetStatusSchema, row.status, 'serviced'),
+        latitude: row.last_latitude,
+        longitude: row.last_longitude,
+        accuracy: row.last_location_accuracy,
+        lastUpdated: row.last_location_updated_at || '',
+      });
+    }
+  }
 
   return { success: true, data: locations, error: null };
 }

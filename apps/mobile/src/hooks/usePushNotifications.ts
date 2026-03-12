@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
@@ -51,49 +51,7 @@ export function usePushNotifications() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isRegisteringRef = useRef(false);
 
-  useEffect(() => {
-    if (!isAuthenticated || !user || !Notifications || !Device) return;
-
-    registerForPushNotifications();
-
-    // Re-register when app comes to foreground
-    const subscription = AppState.addEventListener('change', (nextState) => {
-      if (nextState === 'active' && isAuthenticated) {
-        registerForPushNotifications();
-      }
-    });
-
-    return () => {
-      subscription.remove();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, user?.id]);
-
-  // Set up notification listeners
-  useEffect(() => {
-    if (!Notifications) return;
-
-    // Notification received while app is in foreground
-    const receivedSub = Notifications.addNotificationReceivedListener((notification) => {
-      if (__DEV__) console.log('[Push] Received:', notification.request.content.title);
-    });
-
-    // User tapped on a notification
-    const responseSub = Notifications.addNotificationResponseReceivedListener((response) => {
-      const data = response.notification.request.content.data;
-      if (__DEV__) console.log('[Push] Tapped:', data);
-      if (data?.['assetId']) {
-        router.push(`/(tabs)/assets/${data['assetId']}`);
-      }
-    });
-
-    return () => {
-      receivedSub.remove();
-      responseSub.remove();
-    };
-  }, []);
-
-  async function registerForPushNotifications() {
+  const registerForPushNotifications = useCallback(async () => {
     if (!Notifications || !Device) return;
     // Prevent concurrent registration chains from stacking on rapid foreground transitions
     if (isRegisteringRef.current) return;
@@ -165,7 +123,12 @@ export function usePushNotifications() {
           // Fallback if expo-application isn't available
           deviceId = Device.modelId || Device.deviceName || 'unknown';
         }
-        const platform = Platform.OS as 'ios' | 'android';
+        const os = Platform.OS;
+        if (os !== 'ios' && os !== 'android') {
+          if (__DEV__) console.warn('[Push] Unsupported platform:', os);
+          return;
+        }
+        const platform = os;
 
         await withRetry(() => upsertPushToken({ userId: user.id, token, deviceId, platform }), {
           maxAttempts: 3,
@@ -173,12 +136,53 @@ export function usePushNotifications() {
           maxDelayMs: 8000,
         });
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('[Push] Registration error:', err);
     } finally {
       isRegisteringRef.current = false;
     }
-  }
+  }, [user]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !user || !Notifications || !Device) return;
+
+    registerForPushNotifications();
+
+    // Re-register when app comes to foreground
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active' && isAuthenticated) {
+        registerForPushNotifications();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [isAuthenticated, user, registerForPushNotifications]);
+
+  // Set up notification listeners
+  useEffect(() => {
+    if (!Notifications) return;
+
+    // Notification received while app is in foreground
+    const receivedSub = Notifications.addNotificationReceivedListener((notification) => {
+      if (__DEV__) console.log('[Push] Received:', notification.request.content.title);
+    });
+
+    // User tapped on a notification
+    const responseSub = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data;
+      if (__DEV__) console.log('[Push] Tapped:', data);
+      if (data?.['assetId']) {
+        router.push(`/(tabs)/assets/${data['assetId']}`);
+      }
+    });
+
+    return () => {
+      receivedSub.remove();
+      responseSub.remove();
+    };
+  }, []);
 
   return { expoPushToken, permissionStatus };
 }

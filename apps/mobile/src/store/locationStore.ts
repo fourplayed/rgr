@@ -103,6 +103,8 @@ export const useLocationStore = create<LocationState>((set, get) => ({
       let locationResult: Location.LocationObject;
 
       if (useSimulatedGPS && debugLocation) {
+        // SAFETY: Debug-only simulated GPS — LocationObject may have additional optional fields
+        // added by expo-location that we don't populate for simulation purposes.
         locationResult = {
           coords: {
             latitude: debugLocation.latitude,

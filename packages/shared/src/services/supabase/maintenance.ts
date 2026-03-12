@@ -28,6 +28,7 @@ import {
 import { AssetCategorySchema } from '../../types/enums/AssetEnums';
 import { safeParseEnum } from '../../utils/safeParseEnum';
 import { isValidUUID, isValidISOTimestamp } from '../../utils/constants';
+import { assertQueryResult } from '../../utils';
 
 // ── Types ──
 
@@ -76,7 +77,8 @@ export interface MaintenanceListItem {
 // ── Status Transition Validation ──
 
 const VALID_TRANSITIONS: Record<MaintenanceStatus, MaintenanceStatus[]> = {
-  scheduled: ['completed', 'cancelled'],
+  scheduled: ['in_progress', 'completed', 'cancelled'],
+  in_progress: ['completed', 'cancelled'],
   completed: [],
   cancelled: [],
 };
@@ -164,7 +166,7 @@ export async function listMaintenance(
     asset: { asset_number: string; category: string } | null;
   }
 
-  const rows = (data || []) as unknown as MaintenanceListRow[];
+  const rows = assertQueryResult<MaintenanceListRow[]>(data || []);
   const hasMore = rows.length > limit;
   const pageRows = hasMore ? rows.slice(0, limit) : rows;
 
@@ -222,11 +224,12 @@ export async function getMaintenanceById(
     return { success: false, data: null, error: 'Maintenance record not found' };
   }
 
-  const { reporter, assignee, completer, ...maintenanceRow } =
-    data as unknown as MaintenanceRowWithJoins & {
+  const { reporter, assignee, completer, ...maintenanceRow } = assertQueryResult<
+    MaintenanceRowWithJoins & {
       assignee: { full_name: string } | null;
       completer: { full_name: string } | null;
-    };
+    }
+  >(data);
   const record = mapRowToMaintenanceRecord(maintenanceRow as MaintenanceRecordRow);
 
   return {
@@ -439,6 +442,10 @@ export async function getMaintenanceStats(): Promise<ServiceResult<MaintenanceSt
       data: null,
       error: `Failed to fetch maintenance stats: ${error.message}`,
     };
+  }
+
+  if (data == null || typeof data !== 'object') {
+    return { success: false, data: null, error: 'Invalid maintenance stats response' };
   }
 
   // RPC returns JSON with snake_case keys — use bracket access for index signature

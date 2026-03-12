@@ -1,6 +1,7 @@
 import React from 'react';
 import { Animated, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
+import { BACKDROP_COLOR, BACKDROP_BLUR_INTENSITY, BACKDROP_BLUR_TINT } from '../../theme/backdrop';
 
 interface PersistentBackdropProps {
   opacity: Animated.Value;
@@ -30,7 +31,7 @@ export function PersistentBackdrop({
       pointerEvents={showBackdrop ? 'auto' : 'none'}
     >
       {Platform.OS === 'ios' && (
-        <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFillObject} />
+        <BlurView intensity={BACKDROP_BLUR_INTENSITY} tint={BACKDROP_BLUR_TINT} style={StyleSheet.absoluteFillObject} />
       )}
       <TouchableOpacity
         style={StyleSheet.absoluteFill}
@@ -45,7 +46,7 @@ export function PersistentBackdrop({
 
 const styles = StyleSheet.create({
   backdrop: {
-    backgroundColor: 'rgba(0,0,30,0.3)',
+    backgroundColor: BACKDROP_COLOR,
     zIndex: 10,
   },
 });

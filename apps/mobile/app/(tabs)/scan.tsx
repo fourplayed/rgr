@@ -26,7 +26,7 @@ export default function ScanScreen() {
   const flow = useScanFlow({ canMarkMaintenance });
 
   // ── Persistent backdrop (blur + fade) ──
-  const backdrop = usePersistentBackdrop(flow.showOverlay || flow.isCompleting);
+  const backdrop = usePersistentBackdrop(flow.showOverlay && !flow.isCompleting);
 
   // ── Asset assessment ──
   const assessment = useAssetAssessment(flow.scannedAsset, flow.matchedDepot);

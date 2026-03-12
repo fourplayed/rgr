@@ -20,6 +20,7 @@ import {
 import { AssetCategorySchema } from '../../types/enums/AssetEnums';
 import { safeParseEnum } from '../../utils/safeParseEnum';
 import { isValidUUID, isValidISOTimestamp } from '../../utils/constants';
+import { assertQueryResult } from '../../utils';
 
 // ── Types ──
 
@@ -120,7 +121,7 @@ export async function listDefectReports(
     asset: { asset_number: string; category: string } | null;
   }
 
-  const rows = (data || []) as unknown as DefectListRow[];
+  const rows = assertQueryResult<DefectListRow[]>(data || []);
   const hasMore = rows.length > limit;
   const pageRows = hasMore ? rows.slice(0, limit) : rows;
 
@@ -243,23 +244,30 @@ export async function updateDefectReportStatus(
     };
   }
 
-  const updates: Record<string, unknown> = { status: newStatus };
+  const updates: {
+    status: DefectStatus;
+    accepted_at?: string;
+    maintenance_record_id?: string;
+    resolved_at?: string;
+    dismissed_at?: string;
+    dismissed_reason?: string;
+  } = { status: newStatus };
 
   if (newStatus === 'task_created') {
-    updates['accepted_at'] = new Date().toISOString();
+    updates.accepted_at = new Date().toISOString();
     if (extras?.maintenanceRecordId) {
-      updates['maintenance_record_id'] = extras.maintenanceRecordId;
+      updates.maintenance_record_id = extras.maintenanceRecordId;
     }
   }
 
   if (newStatus === 'resolved') {
-    updates['resolved_at'] = new Date().toISOString();
+    updates.resolved_at = new Date().toISOString();
   }
 
   if (newStatus === 'dismissed') {
-    updates['dismissed_at'] = new Date().toISOString();
+    updates.dismissed_at = new Date().toISOString();
     if (extras?.dismissedReason) {
-      updates['dismissed_reason'] = extras.dismissedReason;
+      updates.dismissed_reason = extras.dismissedReason;
     }
   }
 
@@ -419,13 +427,17 @@ export async function getDefectReportStats(): Promise<ServiceResult<DefectReport
     return { success: false, data: null, error: `Failed to fetch defect stats: ${error.message}` };
   }
 
-  const stats = data as unknown as {
+  if (data == null || typeof data !== 'object') {
+    return { success: false, data: null, error: 'Invalid defect report stats response' };
+  }
+
+  const stats = assertQueryResult<{
     total: number;
     reported: number;
     task_created: number;
     resolved: number;
     dismissed: number;
-  };
+  }>(data);
 
   return {
     success: true,

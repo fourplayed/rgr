@@ -16,6 +16,16 @@ export interface QueuedScan {
   retryCount?: number;
 }
 
+function isQueuedScan(item: unknown): item is QueuedScan {
+  if (typeof item !== 'object' || item === null) return false;
+  const o = item as Record<string, unknown>;
+  return (
+    typeof o['id'] === 'string' &&
+    typeof o['queuedAt'] === 'string' &&
+    typeof o['input'] === 'object' && o['input'] !== null
+  );
+}
+
 /**
  * Read all queued scans from AsyncStorage.
  */
@@ -23,7 +33,9 @@ async function getQueue(): Promise<QueuedScan[]> {
   const raw = await AsyncStorage.getItem(QUEUE_KEY);
   if (!raw) return [];
   try {
-    return JSON.parse(raw) as QueuedScan[];
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(isQueuedScan);
   } catch {
     return [];
   }

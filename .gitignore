@@ -22,6 +22,9 @@ coverage/
 new-secrets.txt
 *.secrets.txt
 
+# MCP config (contains access tokens)
+.mcp.json
+
 # IDEs
 .vscode/
 .idea/

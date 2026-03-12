@@ -47,6 +47,7 @@ import {
 import { mapRowToMaintenanceRecord } from '../../types/entities/maintenanceRecord';
 import { mapRowToHazardAlert } from '../../types/entities/hazardAlert';
 import { mapRowToDepot } from '../../types/entities/depot';
+import { assertQueryResult } from '../../utils';
 
 // ── Join Result Types ──
 
@@ -294,9 +295,9 @@ export async function getAsset(id: string): Promise<ServiceResult<AssetWithRelat
     return { success: false, data: null, error: 'Asset not found' };
   }
 
-  const { depot, driver, scanner, photos, ...assetRow } = data as unknown as AssetRowWithJoins & {
-    photos: [{ count: number }];
-  };
+  const { depot, driver, scanner, photos, ...assetRow } = assertQueryResult<
+    AssetRowWithJoins & { photos: [{ count: number }] }
+  >(data);
   const asset = mapRowToAsset(assetRow as AssetRow);
 
   return {
@@ -692,7 +693,7 @@ export async function getAssetMaintenance(
     completer: { full_name: string } | null;
   }
 
-  const records = ((data || []) as unknown as MaintenanceJoinRow[]).map((row) => {
+  const records = (assertQueryResult<MaintenanceJoinRow[]>(data || [])).map((row) => {
     const { reporter, assignee, completer, ...maintenanceRow } = row;
     const record = mapRowToMaintenanceRecord(maintenanceRow as MaintenanceRecordRow);
     return {
@@ -857,6 +858,10 @@ export async function getAssetScanContext(
     return { success: false, data: null, error: `Failed to fetch scan context: ${error.message}` };
   }
 
+  if (data == null || typeof data !== 'object') {
+    return { success: false, data: null, error: 'Invalid scan context response' };
+  }
+
   const raw = data as {
     open_defect_count: number;
     active_task_count: number;
@@ -923,9 +928,9 @@ export async function deleteScanEvent(id: string): Promise<ServiceResult<void>> 
 export interface ServicedAssetOption {
   id: string;
   assetNumber: string;
-  category: string;
+  category: AssetCategory;
   subtype: string | null;
-  status: string;
+  status: AssetStatus;
 }
 
 /**
@@ -953,12 +958,12 @@ export async function listServicedAssets(
     };
   }
 
-  const assets = (data || []).map((row) => ({
+  const assets: ServicedAssetOption[] = (data || []).map((row) => ({
     id: row.id,
     assetNumber: row.asset_number,
-    category: row.category,
+    category: safeParseEnum(AssetCategorySchema, row.category, 'trailer'),
     subtype: row.subtype,
-    status: row.status,
+    status: safeParseEnum(AssetStatusSchema, row.status, 'serviced'),
   }));
 
   return { success: true, data: assets, error: null };

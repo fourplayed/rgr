@@ -1,4 +1,5 @@
 import { renderHook, waitFor } from '@testing-library/react-native';
+import { QueryClient } from '@tanstack/react-query';
 import { createWrapper } from './testUtils';
 
 jest.mock('@rgr/shared', () => ({
@@ -21,6 +22,20 @@ jest.mock('../useAssetData', () => ({
 
 jest.mock('../useDefectData', () => ({
   defectKeys: { lists: () => ['defects', 'list'] },
+}));
+
+jest.mock('../useRealtimeInvalidation', () => ({
+  suppressRealtimeFor: jest.fn(),
+}));
+
+jest.mock('../../config/featureFlags', () => ({
+  OPTIMISTIC_UPDATES_ENABLED: true,
+}));
+
+jest.mock('../../store/authStore', () => ({
+  useAuthStore: jest.fn((selector: any) =>
+    selector({ user: { fullName: 'Test User' } })
+  ),
 }));
 
 import {
@@ -230,15 +245,161 @@ describe('useUpdateMaintenanceStatus', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Optimistic update scaffolds (Phase 3)
+// Optimistic updates
 // ---------------------------------------------------------------------------
 describe('optimistic: createMaintenance', () => {
-  it.todo('inserts placeholder into list cache before server response');
-  it.todo('rolls back cache on mutation error');
-  it.todo('cancels in-flight queries during onMutate');
+  // gcTime must be > 0 so pre-seeded cache survives until async onMutate reads it
+  const createOptimisticClient = () =>
+    new QueryClient({
+      defaultOptions: {
+        queries: { retry: false, gcTime: 60_000 },
+        mutations: { retry: false },
+      },
+    });
+
+  const seedListCache = (queryClient: any) => {
+    queryClient.setQueryData(maintenanceKeys.list({}), {
+      pages: [{ data: [{ id: 'm1', title: 'Existing', createdAt: '2026-01-01T00:00:00Z' }], hasMore: false }],
+      pageParams: [undefined],
+    });
+  };
+
+  it('inserts placeholder into list cache before server response', async () => {
+    const { wrapper, queryClient } = createWrapper(createOptimisticClient());
+    seedListCache(queryClient);
+
+    // Mutation hangs so we can inspect cache mid-flight
+    let resolveMutation!: (value: any) => void;
+    mockCreateMaintenance.mockImplementation(
+      () => new Promise((resolve) => { resolveMutation = resolve; })
+    );
+
+    const { result } = renderHook(() => useCreateMaintenance(), { wrapper });
+
+    result.current.mutate({ assetId: 'a1', title: 'New task' } as any);
+
+    // onMutate fires before mutationFn — placeholder should be prepended
+    await waitFor(() => {
+      const cache = queryClient.getQueryData(maintenanceKeys.list({})) as any;
+      expect(cache?.pages[0]?.data).toHaveLength(2);
+    });
+
+    const cache = queryClient.getQueryData(maintenanceKeys.list({})) as any;
+    expect(cache.pages[0].data[0].title).toBe('New task');
+    expect(cache.pages[0].data[0].status).toBe('scheduled');
+    expect(cache.pages[0].data[1].id).toBe('m1');
+
+    // Cleanup: resolve and let mutation settle
+    resolveMutation({ success: true, data: { id: 'm-new', assetId: 'a1' } });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+  });
+
+  it('rolls back cache on mutation error', async () => {
+    const { wrapper, queryClient } = createWrapper(createOptimisticClient());
+    seedListCache(queryClient);
+
+    mockCreateMaintenance.mockResolvedValue({
+      success: false,
+      data: null,
+      error: 'Network error',
+    } as any);
+
+    const { result } = renderHook(() => useCreateMaintenance(), { wrapper });
+
+    result.current.mutate({ assetId: 'a1', title: 'Will fail' } as any);
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    // Cache should be rolled back to original single item
+    const cache = queryClient.getQueryData(maintenanceKeys.list({})) as any;
+    expect(cache.pages[0].data).toHaveLength(1);
+    expect(cache.pages[0].data[0].id).toBe('m1');
+  });
+
+  it('cancels in-flight queries during onMutate', async () => {
+    const { wrapper, queryClient } = createWrapper(createOptimisticClient());
+    seedListCache(queryClient);
+
+    const cancelSpy = jest.spyOn(queryClient, 'cancelQueries');
+    mockCreateMaintenance.mockResolvedValue({
+      success: true,
+      data: { id: 'm-new', assetId: 'a1' },
+    } as any);
+
+    const { result } = renderHook(() => useCreateMaintenance(), { wrapper });
+
+    result.current.mutate({ assetId: 'a1', title: 'New task' } as any);
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(cancelSpy).toHaveBeenCalledWith({
+      queryKey: maintenanceKeys.list({}),
+    });
+  });
 });
 
 describe('optimistic: updateMaintenanceStatus', () => {
-  it.todo('updates status in detail + list cache before server response');
-  it.todo('rolls back both caches on error');
+  const createOptimisticClient = () =>
+    new QueryClient({
+      defaultOptions: {
+        queries: { retry: false, gcTime: 60_000 },
+        mutations: { retry: false },
+      },
+    });
+
+  it('updates status in detail cache before server response', async () => {
+    const { wrapper, queryClient } = createWrapper(createOptimisticClient());
+
+    // Pre-seed detail cache
+    queryClient.setQueryData(maintenanceKeys.detail('m1'), {
+      id: 'm1',
+      status: 'scheduled',
+      title: 'Test task',
+    });
+
+    let resolveMutation!: (value: any) => void;
+    mockUpdateMaintenanceStatus.mockImplementation(
+      () => new Promise((resolve) => { resolveMutation = resolve; })
+    );
+
+    const { result } = renderHook(() => useUpdateMaintenanceStatus(), { wrapper });
+
+    result.current.mutate({ id: 'm1', status: 'completed' as any });
+
+    // onMutate patches the detail cache immediately
+    await waitFor(() => {
+      const detail = queryClient.getQueryData(maintenanceKeys.detail('m1')) as any;
+      expect(detail?.status).toBe('completed');
+    });
+
+    // Cleanup: resolve and let mutation settle
+    resolveMutation({ success: true, data: { id: 'm1', status: 'completed' } });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+  });
+
+  it('rolls back detail cache on error', async () => {
+    const { wrapper, queryClient } = createWrapper(createOptimisticClient());
+
+    queryClient.setQueryData(maintenanceKeys.detail('m1'), {
+      id: 'm1',
+      status: 'scheduled',
+      title: 'Test task',
+    });
+
+    mockUpdateMaintenanceStatus.mockResolvedValue({
+      success: false,
+      data: null,
+      error: 'Failed',
+    } as any);
+
+    const { result } = renderHook(() => useUpdateMaintenanceStatus(), { wrapper });
+
+    result.current.mutate({ id: 'm1', status: 'completed' as any });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    // Detail cache should be rolled back to 'scheduled'
+    const detail = queryClient.getQueryData(maintenanceKeys.detail('m1')) as any;
+    expect(detail.status).toBe('scheduled');
+  });
 });

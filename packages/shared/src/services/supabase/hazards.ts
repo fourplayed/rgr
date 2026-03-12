@@ -8,20 +8,20 @@ import { mapRowToHazardAlert } from '../../types/entities/hazardAlert';
 // ── Interfaces ──
 
 export interface HazardAlertForReview extends HazardAlert {
-  freightAnalysis?: {
+  freightAnalysis: {
     id: string;
     photoId: string;
     createdAt: string;
-  };
-  photo?: {
+  } | undefined;
+  photo: {
     id: string;
     storagePath: string;
     thumbnailPath: string;
-  };
-  asset?: {
+  } | undefined;
+  asset: {
     id: string;
     assetNumber: string;
-  };
+  } | undefined;
 }
 
 export interface HazardReviewParams {
@@ -210,6 +210,10 @@ export async function getHazardReviewStats(): Promise<ServiceResult<HazardReview
     return { success: false, data: null, error: `Failed to fetch review stats: ${error.message}` };
   }
 
+  if (data == null || typeof data !== 'object') {
+    return { success: false, data: null, error: 'Invalid hazard review stats response' };
+  }
+
   const rpc = data as {
     total_photos_analyzed: number;
     pending_reviews: number;
@@ -360,6 +364,7 @@ export async function submitAnalysisFeedback(
     p_reviewer_id: input.reviewerId,
     p_hazard_types: hazardTypes,
     p_outcomes: outcomes,
+    // NOTE: ternary form required for exactOptionalPropertyTypes
     ...(input.reviewNotes ? { p_review_notes: input.reviewNotes } : {}),
   });
 

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isValidHexColor } from '../../utils/sanitize';
 
 /**
  * Depot — camelCase application interface
@@ -68,10 +69,7 @@ export const CreateDepotInputSchema = z.object({
   longitude: z.number().min(-180).max(180).nullable().optional(),
   color: z
     .string()
-    .regex(
-      /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/,
-      'Must be a valid hex color (e.g., #fff or #aabbcc)'
-    )
+    .refine(isValidHexColor, 'Must be a valid hex color (e.g., #fff, #aabbcc, or #aabbccdd)')
     .nullable()
     .optional(),
   isActive: z.boolean().optional(),

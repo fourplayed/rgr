@@ -12,7 +12,7 @@ export interface OptimisticSnapshot<TCache> {
 /**
  * Standard page shape used by all infinite queries in this app.
  */
-interface InfinitePage<TItem> {
+export interface InfinitePage<TItem> {
   data: TItem[];
   hasMore: boolean;
 }

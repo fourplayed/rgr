@@ -50,16 +50,27 @@ export async function loadPersistedState(): Promise<void> {
     const raw = await storageAdapter.getItem(STORAGE_KEY);
     if (!raw) return;
 
-    const parsed: Record<string, RateLimitEntry> = JSON.parse(raw);
+    const parsed: unknown = JSON.parse(raw);
+    if (parsed == null || typeof parsed !== 'object') return;
     const now = Date.now();
 
-    for (const [key, entry] of Object.entries(parsed)) {
+    for (const [key, entry] of Object.entries(parsed as Record<string, unknown>)) {
+      if (
+        entry == null ||
+        typeof entry !== 'object' ||
+        typeof (entry as Record<string, unknown>)['failures'] !== 'number' ||
+        typeof (entry as Record<string, unknown>)['lockoutUntil'] !== 'number' ||
+        typeof (entry as Record<string, unknown>)['lockoutSeconds'] !== 'number'
+      ) {
+        continue; // skip malformed entries
+      }
+      const valid = entry as RateLimitEntry;
       // Prune entries whose lockout has expired and have max failures
       // (they would be allowed on next check anyway)
-      if (entry.failures >= MAX_ATTEMPTS && entry.lockoutUntil > 0 && now >= entry.lockoutUntil) {
+      if (valid.failures >= MAX_ATTEMPTS && valid.lockoutUntil > 0 && now >= valid.lockoutUntil) {
         continue; // skip expired lockouts
       }
-      rateLimitMap.set(key, entry);
+      rateLimitMap.set(key, valid);
     }
   } catch {
     // Corrupt JSON or storage error — start fresh

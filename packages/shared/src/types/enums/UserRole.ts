@@ -62,6 +62,8 @@ export function hasRoleLevel(userRole: UserRole, requiredRole: UserRole): boolea
   return UserRoleLevel[userRole] >= UserRoleLevel[requiredRole];
 }
 
+const isUserRole = (s: string): s is UserRole => UserRoleSchema.safeParse(s).success;
+
 /**
  * Get all roles at or below a given level
  */
@@ -69,7 +71,8 @@ export function getRolesAtOrBelow(role: UserRole): UserRole[] {
   const level = UserRoleLevel[role];
   return Object.entries(UserRoleLevel)
     .filter(([, lvl]) => lvl <= level)
-    .map(([r]) => r as UserRole);
+    .map(([r]) => r)
+    .filter(isUserRole);
 }
 
 /**
@@ -79,5 +82,6 @@ export function getRolesAtOrAbove(role: UserRole): UserRole[] {
   const level = UserRoleLevel[role];
   return Object.entries(UserRoleLevel)
     .filter(([, lvl]) => lvl >= level)
-    .map(([r]) => r as UserRole);
+    .map(([r]) => r)
+    .filter(isUserRole);
 }

@@ -1,5 +1,27 @@
 import type { Session, AuthError, User as AuthUser } from '@supabase/supabase-js';
+import { z } from 'zod';
 import { getSupabaseClient, getSupabaseConfig } from './client';
+import { assertQueryResult } from '../../utils';
+
+/** Schema for validating secure-auth Edge Function responses */
+const SecureAuthResponseSchema = z.object({
+  user: z.object({
+    id: z.string(),
+    email: z.string(),
+    aud: z.string().optional(),
+    role: z.string().optional(),
+    email_confirmed_at: z.string().nullable().optional(),
+    created_at: z.string().optional(),
+    updated_at: z.string().optional(),
+  }).passthrough(),
+  session: z.object({
+    access_token: z.string(),
+    refresh_token: z.string(),
+    expires_in: z.number().optional(),
+    token_type: z.string().optional(),
+    expires_at: z.number().optional(),
+  }).passthrough(),
+});
 
 // Singleton promise for deduplicating concurrent token refreshes
 let refreshPromise: Promise<{ data: { session: Session | null }; error: AuthError | null }> | null =
@@ -140,44 +162,35 @@ export async function signInWithEmailSecure(
       return { success: false, data: null, error: errorMessage };
     }
 
-    if (!body.user || !body.session) {
-      recordFailure(credentials.email);
-      return { success: false, data: null, error: 'Authentication failed' };
-    }
-
-    // Validate response shape — the edge function returns raw JSON,
-    // so we verify required fields before casting to avoid runtime errors.
-    if (
-      typeof body.user.id !== 'string' ||
-      typeof body.user.email !== 'string' ||
-      typeof body.session.access_token !== 'string' ||
-      typeof body.session.refresh_token !== 'string'
-    ) {
+    const parsed = SecureAuthResponseSchema.safeParse(body);
+    if (!parsed.success) {
       recordFailure(credentials.email);
       return { success: false, data: null, error: 'Invalid authentication response' };
     }
+
+    const { user: validatedUser, session: validatedSession } = parsed.data;
 
     // Establish the session on the local Supabase client so that
     // subsequent queries (profile fetch, etc.) are authenticated.
     const supabase = getSupabaseClient();
     await supabase.auth.setSession({
-      access_token: body.session.access_token,
-      refresh_token: body.session.refresh_token,
+      access_token: validatedSession.access_token,
+      refresh_token: validatedSession.refresh_token,
     });
 
     recordSuccess(credentials.email);
     return {
       success: true,
       data: {
-        user: body.user as AuthUser,
-        session: {
-          access_token: body.session.access_token,
-          refresh_token: body.session.refresh_token,
-          expires_at: body.session.expires_at,
-          expires_in: body.session.expires_in,
-          token_type: body.session.token_type,
-          user: body.user,
-        } as Session,
+        user: assertQueryResult<AuthUser>(validatedUser),
+        session: assertQueryResult<Session>({
+          access_token: validatedSession.access_token,
+          refresh_token: validatedSession.refresh_token,
+          expires_at: validatedSession.expires_at,
+          expires_in: validatedSession.expires_in,
+          token_type: validatedSession.token_type,
+          user: validatedUser,
+        }),
       },
       error: null,
     };
@@ -430,5 +443,9 @@ function mapAuthError(message: string): string {
     'Signup requires a valid password': 'Please provide a valid password',
   };
 
-  return errorMap[message] || message;
+  const mapped = errorMap[message];
+  if (!mapped) {
+    console.warn('[Auth] Unmapped error:', message);
+  }
+  return mapped || 'An authentication error occurred';
 }

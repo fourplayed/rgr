@@ -2,6 +2,7 @@ import { getSupabaseClient } from './client';
 import type { ServiceResult } from '../../types';
 import type { PushToken, PushTokenRow, CreatePushTokenInput } from '../../types/entities/pushToken';
 import { mapRowToPushToken, CreatePushTokenInputSchema } from '../../types/entities/pushToken';
+import { assertQueryResult } from '../../utils';
 
 /**
  * Upsert a push token by user_id + device_id.
@@ -40,7 +41,7 @@ export async function upsertPushToken(
     return { success: false, data: null, error: `Failed to upsert push token: ${error.message}` };
   }
 
-  return { success: true, data: mapRowToPushToken(data as unknown as PushTokenRow), error: null };
+  return { success: true, data: mapRowToPushToken(assertQueryResult<PushTokenRow>(data)), error: null };
 }
 
 /**
@@ -108,7 +109,7 @@ export async function getPushTokensForRole(role: string): Promise<ServiceResult<
     };
   }
 
-  const tokens = (tokenRows || []).map((row) => mapRowToPushToken(row as unknown as PushTokenRow));
+  const tokens = (tokenRows || []).map((row) => mapRowToPushToken(assertQueryResult<PushTokenRow>(row)));
 
   return { success: true, data: tokens, error: null };
 }

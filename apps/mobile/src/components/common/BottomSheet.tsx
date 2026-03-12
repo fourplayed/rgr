@@ -10,6 +10,7 @@ import * as Haptics from 'expo-haptics';
 import { colors } from '../../theme/colors';
 import { borderRadius } from '../../theme/spacing';
 import { GORHOM_SPRING } from '../../theme/animation';
+import { BACKDROP_BLUR_INTENSITY, BACKDROP_BLUR_TINT } from '../../theme/backdrop';
 
 interface BottomSheetProps {
   visible: boolean;
@@ -68,7 +69,7 @@ export function BottomSheet({
         pressBehavior="close"
       >
         {Platform.OS === 'ios' ? (
-          <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFillObject} />
+          <BlurView intensity={BACKDROP_BLUR_INTENSITY} tint={BACKDROP_BLUR_TINT} style={StyleSheet.absoluteFillObject} />
         ) : null}
       </BottomSheetBackdrop>
     ),

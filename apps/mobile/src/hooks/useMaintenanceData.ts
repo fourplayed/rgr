@@ -162,7 +162,7 @@ export function useCreateMaintenance() {
       const placeholder = buildMaintenancePlaceholder(input, userName);
       const listSnapshot = await optimisticInfiniteInsert(
         queryClient,
-        maintenanceKeys.lists(),
+        maintenanceKeys.list({}),
         placeholder,
       );
       return { listSnapshot };

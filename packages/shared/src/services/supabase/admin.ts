@@ -35,6 +35,10 @@ import {
 } from '../../types/entities/depot';
 import { mapRowToAuditLog } from '../../types/entities/auditLog';
 import { isValidUUID, isValidISOTimestamp } from '../../utils/constants';
+import { assertQueryResult } from '../../utils';
+import { safeParseEnum } from '../../utils/safeParseEnum';
+import { MaintenanceStatusSchema } from '../../types/enums/MaintenanceEnums';
+import { DefectStatusSchema } from '../../types/enums/DefectEnums';
 
 // ── List Profiles ──
 
@@ -442,6 +446,16 @@ export async function adminCreateUser(input: CreateUserInput): Promise<
       return { success: false, data: null, error: body.error || 'Failed to create user' };
     }
 
+    if (
+      typeof body?.user?.id !== 'string' ||
+      typeof body?.user?.email !== 'string' ||
+      typeof body?.profile?.id !== 'string' ||
+      typeof body?.profile?.role !== 'string' ||
+      typeof body?.profile?.fullName !== 'string'
+    ) {
+      return { success: false, data: null, error: 'Invalid response from create user service' };
+    }
+
     return { success: true, data: body, error: null };
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to create user';
@@ -535,7 +549,7 @@ export interface AdminListMaintenanceParams {
 export interface AdminMaintenanceListItem {
   id: string;
   title: string;
-  status: string;
+  status: MaintenanceStatus;
   dueDate: string | null;
   createdAt: string;
   reporterName: string | null;
@@ -581,11 +595,11 @@ export async function adminListMaintenance(
     const total = count ?? 0;
     // Supabase SDK can't resolve the ambiguous profiles FK — reporter:reported_by
     // hint works at runtime but generates a SelectQueryError at type level
-    const rows = (data ?? []) as unknown as MaintenanceJoinRow[];
+    const rows = assertQueryResult<MaintenanceJoinRow[]>(data ?? []);
     const items: AdminMaintenanceListItem[] = rows.map((row) => ({
       id: row.id,
       title: row.title,
-      status: row.status,
+      status: safeParseEnum(MaintenanceStatusSchema, row.status, 'scheduled'),
       dueDate: row.due_date,
       createdAt: row.created_at,
       reporterName: row.reporter?.full_name ?? null,
@@ -620,7 +634,7 @@ export interface AdminListDefectReportsParams {
 export interface AdminDefectListItem {
   id: string;
   title: string;
-  status: string;
+  status: DefectStatus;
   createdAt: string;
   reporterName: string | null;
   assetNumber: string | null;
@@ -663,11 +677,11 @@ export async function adminListDefectReports(
     }
 
     const total = count ?? 0;
-    const defectRows = (data ?? []) as unknown as DefectJoinRow[];
+    const defectRows = assertQueryResult<DefectJoinRow[]>(data ?? []);
     const items: AdminDefectListItem[] = defectRows.map((row) => ({
       id: row.id,
       title: row.title,
-      status: row.status,
+      status: safeParseEnum(DefectStatusSchema, row.status, 'reported'),
       createdAt: row.created_at,
       reporterName: row.reporter?.full_name ?? null,
       assetNumber: row.asset?.asset_number ?? null,
@@ -741,7 +755,7 @@ export async function adminListPhotos(
     }
 
     const total = count ?? 0;
-    const photoRows = (data ?? []) as unknown as PhotoJoinRow[];
+    const photoRows = assertQueryResult<PhotoJoinRow[]>(data ?? []);
     const items: AdminPhotoListItem[] = photoRows.map((row) => ({
       id: row.id,
       storagePath: row.storage_path,
