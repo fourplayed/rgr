@@ -61,8 +61,8 @@ export default function ScanScreen() {
   const { mutateAsync: acceptDefect } = useAcceptDefect();
 
   const handleAcceptPress = useCallback((ctx: {
-    defectId: string; assetId: string; assetNumber?: string;
-    title: string; description?: string | null;
+    defectId: string; assetId: string; assetNumber: string | null;
+    title: string; description: string | null;
   }) => {
     flow.openAcceptDefect({ type: 'acceptDefect', ...ctx });
   }, [flow.openAcceptDefect]);
@@ -252,9 +252,9 @@ export default function ScanScreen() {
           assetId={acceptCtx.assetId}
           assetNumber={acceptCtx.assetNumber}
           defectReportId={acceptCtx.defectId}
-          defaultTitle={acceptCtx.title}
-          defaultDescription={acceptCtx.description ?? undefined}
-          defaultPriority="high"
+          defaultTitle={acceptCtx.description ?? acceptCtx.title}
+          defaultDescription={undefined}
+          defaultPriority="medium"
           onExternalSubmit={handleAcceptSubmit}
           noBackdrop
           onExitComplete={flow.handleContextExitComplete}

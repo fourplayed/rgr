@@ -47,7 +47,7 @@ import { useUserPermissions } from '../../src/contexts/UserPermissionsContext';
 type ModalState =
   | { type: 'none' }
   | { type: 'defectDetail'; defectId: string }
-  | { type: 'acceptDefect'; defectId: string; assetId: string; assetNumber?: string; title: string; description?: string | null }
+  | { type: 'acceptDefect'; defectId: string; assetId: string; assetNumber: string | null; title: string; description: string | null }
   | { type: 'maintenanceDetail'; maintenanceId: string }
   | { type: 'createMaintenance' };
 
@@ -107,9 +107,9 @@ export default function MaintenanceScreen() {
   const handleAcceptPress = useCallback((context: {
     defectId: string;
     assetId: string;
-    assetNumber?: string;
+    assetNumber: string | null;
     title: string;
-    description?: string | null;
+    description: string | null;
   }) => {
     transitionTo({ type: 'acceptDefect', ...context });
   }, [transitionTo]);
@@ -386,9 +386,9 @@ export default function MaintenanceScreen() {
             assetId: modal.assetId,
             assetNumber: modal.assetNumber,
             defectReportId: modal.defectId,
-            defaultTitle: modal.title,
-            defaultDescription: modal.description ?? undefined,
-            defaultPriority: 'high' as const,
+            defaultTitle: modal.description ?? modal.title,
+            defaultDescription: undefined,
+            defaultPriority: 'medium' as const,
             onExternalSubmit: handleAcceptSubmit,
           } : {})}
         />

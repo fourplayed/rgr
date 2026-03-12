@@ -53,7 +53,7 @@ import { BottomSheet } from '../../../src/components/common/BottomSheet';
 type AssetModalState =
   | { type: 'none' }
   | { type: 'defectDetail'; defectId: string }
-  | { type: 'acceptDefect'; defectId: string; assetId: string; assetNumber?: string; title: string; description?: string | null }
+  | { type: 'acceptDefect'; defectId: string; assetId: string; assetNumber: string | null; title: string; description: string | null }
   | { type: 'maintenanceDetail'; maintenanceId: string };
 
 type ActivityItem =
@@ -140,7 +140,7 @@ const ActivityCard = React.memo(function ActivityCard({
   })();
 
   const cardContent = (
-    <View style={[cardStyles.containerInline, { borderColor: activityColor, borderWidth: 0.5, backgroundColor: activityColor + '08' }]}>
+    <View style={[cardStyles.containerInline, { borderColor: activityColor, backgroundColor: activityColor + '08' }]}>
       <View style={cardStyles.cardRow}>
         <View style={cardStyles.cardIconContainer}>
           <Ionicons name={activityIcon} size={32} color={activityColor} />
@@ -247,7 +247,7 @@ const MaintenanceCard = React.memo(function MaintenanceCard({
 
   return (
     <TouchableOpacity
-      style={[cardStyles.containerInline, { borderColor: statusColor, borderWidth: 0.5, backgroundColor: statusColor + '08' }]}
+      style={[cardStyles.containerInline, { borderColor: statusColor, backgroundColor: statusColor + '08' }]}
       onPress={() => onPress(item)}
       activeOpacity={0.7}
       accessibilityRole="button"
@@ -311,9 +311,9 @@ export default function AssetDetailScreen() {
   const handleAcceptPress = useCallback((context: {
     defectId: string;
     assetId: string;
-    assetNumber?: string;
+    assetNumber: string | null;
     title: string;
-    description?: string | null;
+    description: string | null;
   }) => {
     transitionTo({ type: 'acceptDefect', ...context });
   }, [transitionTo]);
@@ -609,9 +609,9 @@ export default function AssetDetailScreen() {
           assetId: modal.assetId,
           assetNumber: modal.assetNumber,
           defectReportId: modal.defectId,
-          defaultTitle: modal.title,
-          defaultDescription: modal.description ?? undefined,
-          defaultPriority: 'high' as const,
+          defaultTitle: modal.description ?? modal.title,
+          defaultDescription: undefined,
+          defaultPriority: 'medium' as const,
           onExternalSubmit: handleAcceptSubmit,
         } : {})}
       />

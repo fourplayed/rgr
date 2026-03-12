@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, Platform, TouchableOpacity } from 'react-native';
-import { BottomSheetScrollView, BottomSheetTextInput } from '../common/SheetModal';
+import { BottomSheetScrollView } from '../common/SheetModal';
+import { AppTextInput } from '../common/AppTextInput';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import type { MaintenancePriority, CreateMaintenanceInput } from '@rgr/shared';
@@ -62,7 +63,8 @@ export function CreateMaintenanceModal({
   const guard = useSubmitGuard();
 
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const descriptionRef = useRef('');
+  const [formKey, setFormKey] = useState(0);
   const [priority, setPriority] = useState<MaintenancePriority>('medium');
   const [dueDate, setDueDate] = useState('');
 
@@ -100,7 +102,8 @@ export function CreateMaintenanceModal({
   useEffect(() => {
     if (visible) {
       setTitle(defaultTitle ?? '');
-      setDescription(defaultDescription ?? '');
+      descriptionRef.current = defaultDescription ?? '';
+      setFormKey(k => k + 1);
       setPriority(defaultPriority ?? 'medium');
       setDueDate('');
       setShowDatePicker(false);
@@ -142,7 +145,7 @@ export function CreateMaintenanceModal({
         const input: CreateMaintenanceInput = {
           assetId: effectiveAssetId,
           title: title.trim(),
-          description: description.trim() || null,
+          description: descriptionRef.current.trim() || null,
           priority,
           status: 'scheduled',
           reportedBy: user?.id || null,
@@ -169,7 +172,6 @@ export function CreateMaintenanceModal({
     [
       guard,
       title,
-      description,
       priority,
       dueDate,
       effectiveAssetId,
@@ -191,6 +193,7 @@ export function CreateMaintenanceModal({
       onExitComplete={onExitComplete}
       noBackdrop={noBackdrop}
       preventDismissWhileBusy={isPending}
+      snapPoint="75%"
     >
       <View style={sheetLayout.containerTall}>
         <SheetHeader
@@ -261,12 +264,11 @@ export function CreateMaintenanceModal({
                 </Pressable>
                 {showAssetPicker && (
                   <View style={styles.assetPickerDropdown}>
-                    <BottomSheetTextInput
+                    <AppTextInput
                       style={styles.assetSearchInput}
                       value={assetSearch}
                       onChangeText={setAssetSearch}
                       placeholder="Search by asset number..."
-                      placeholderTextColor={colors.textSecondary}
                       autoCapitalize="none"
                       autoCorrect={false}
                     />
@@ -301,12 +303,11 @@ export function CreateMaintenanceModal({
           {/* Title */}
           <View style={formStyles.inputGroup}>
             <Text style={formStyles.label}>Title *</Text>
-            <BottomSheetTextInput
+            <AppTextInput
               style={formStyles.input}
               value={title}
               onChangeText={setTitle}
               placeholder="e.g., Brake inspection, Tire replacement"
-              placeholderTextColor={colors.textSecondary}
               autoCapitalize="sentences"
               maxLength={200}
               accessibilityLabel="Maintenance title"
@@ -332,49 +333,63 @@ export function CreateMaintenanceModal({
           {/* Due Date */}
           <View style={formStyles.inputGroup}>
             <Text style={formStyles.label}>Due Date *</Text>
-            <Pressable
-              style={styles.dateField}
-              onPress={() => setShowDatePicker((prev) => !prev)}
-              accessibilityRole="button"
-              accessibilityLabel="Select due date"
-            >
-              <Ionicons
-                name="calendar-outline"
-                size={18}
-                color={dueDate ? colors.text : colors.textSecondary}
-              />
-              <Text style={[styles.dateFieldText, !dueDate && styles.dateFieldPlaceholder]}>
-                {dueDate
-                  ? new Date(dueDate + 'T00:00:00').toLocaleDateString(undefined, {
-                      weekday: 'short',
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                    })
-                  : 'Tap to select date'}
-              </Text>
-            </Pressable>
-            {showDatePicker && (
+            {Platform.OS === 'ios' ? (
               <DateTimePicker
                 value={dueDate ? new Date(dueDate + 'T00:00:00') : new Date()}
                 mode="date"
-                display={Platform.OS === 'ios' ? 'inline' : 'default'}
+                display="compact"
                 minimumDate={new Date()}
                 onChange={handleDateChange}
-                accentColor={colors.primary}
+                accentColor={colors.electricBlue}
+                style={{ alignSelf: 'flex-start' }}
               />
+            ) : (
+              <>
+                <Pressable
+                  style={styles.dateField}
+                  onPress={() => setShowDatePicker((prev) => !prev)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Select due date"
+                >
+                  <Ionicons
+                    name="calendar-outline"
+                    size={18}
+                    color={dueDate ? colors.text : colors.textSecondary}
+                  />
+                  <Text style={[styles.dateFieldText, !dueDate && styles.dateFieldPlaceholder]}>
+                    {dueDate
+                      ? new Date(dueDate + 'T00:00:00').toLocaleDateString(undefined, {
+                          weekday: 'short',
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                        })
+                      : 'Tap to select date'}
+                  </Text>
+                </Pressable>
+                {showDatePicker && (
+                  <DateTimePicker
+                    value={dueDate ? new Date(dueDate + 'T00:00:00') : new Date()}
+                    mode="date"
+                    display="default"
+                    minimumDate={new Date()}
+                    onChange={handleDateChange}
+                    accentColor={colors.electricBlue}
+                  />
+                )}
+              </>
             )}
           </View>
 
           {/* Description */}
           <View style={formStyles.inputGroup}>
             <Text style={formStyles.label}>Description (optional)</Text>
-            <BottomSheetTextInput
+            <AppTextInput
+              key={formKey}
               style={[formStyles.input, formStyles.textArea]}
-              value={description}
-              onChangeText={setDescription}
+              defaultValue={descriptionRef.current}
+              onChangeText={(text) => { descriptionRef.current = text; }}
               placeholder="Describe the maintenance work needed"
-              placeholderTextColor={colors.textSecondary}
               multiline
               numberOfLines={3}
               textAlignVertical="top"

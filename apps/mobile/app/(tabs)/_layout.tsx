@@ -1,12 +1,16 @@
 import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
-import { View, TouchableOpacity, Animated, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, Animated, StyleSheet, Platform } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { UserProfileHeader } from '../../src/components/common/UserProfileHeader';
 import { useLocationLifecycle } from '../../src/hooks/useLocationLifecycle';
+import { usePersistentBackdrop } from '../../src/hooks/usePersistentBackdrop';
+import { useIsOverlayActive } from '../../src/store/overlayStore';
 import { colors } from '../../src/theme/colors';
+import { BACKDROP_COLOR, BACKDROP_BLUR_INTENSITY, BACKDROP_BLUR_TINT } from '../../src/theme/backdrop';
 
 const TAB_BAR_BACKGROUND = colors.brandTabBar;
 const TAB_ACTIVE_BACKGROUND = colors.brandTabActive;
@@ -48,12 +52,14 @@ function AnimatedTabBar({ state, navigation }: BottomTabBarProps) {
       translateX.setValue(toValue);
       isInitial.current = false;
     } else {
-      Animated.spring(translateX, {
+      const anim = Animated.spring(translateX, {
         toValue,
         friction: 8,
         tension: 80,
         useNativeDriver: true,
-      }).start();
+      });
+      anim.start();
+      return () => anim.stop();
     }
   }, [activeVisualIndex, tabWidth, translateX]);
 
@@ -163,6 +169,33 @@ function AnimatedTabBar({ state, navigation }: BottomTabBarProps) {
   );
 }
 
+// ── Blur overlay that covers content above the modal when sheets are open ────
+// Full-screen so the blur is visible over the camera's native preview layer
+// (UIVisualEffectView cannot blur AVCaptureVideoPreviewLayer directly).
+// The gorhom sheet portal renders above this in the view tree, so sheet
+// touches pass through naturally.
+function HeaderBlurOverlay() {
+  const isActive = useIsOverlayActive();
+  const { backdropOpacity, mounted } = usePersistentBackdrop(isActive, { syncOverlay: false });
+
+  if (!mounted) return null;
+
+  return (
+    <Animated.View
+      style={[tabStyles.headerBlurOverlay, { opacity: backdropOpacity }]}
+      pointerEvents={isActive ? 'box-only' : 'none'}
+      accessibilityElementsHidden={isActive}
+      importantForAccessibility={isActive ? 'no-hide-descendants' : 'auto'}
+    >
+      {Platform.OS === 'ios' ? (
+        <BlurView intensity={BACKDROP_BLUR_INTENSITY} tint={BACKDROP_BLUR_TINT} style={StyleSheet.absoluteFillObject} />
+      ) : (
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: BACKDROP_COLOR }]} />
+      )}
+    </Animated.View>
+  );
+}
+
 export default function TabsLayout() {
   useLocationLifecycle();
 
@@ -184,6 +217,7 @@ export default function TabsLayout() {
       <View style={tabStyles.profileOverlay}>
         <UserProfileHeader />
       </View>
+      <HeaderBlurOverlay />
     </View>
   );
 }
@@ -199,6 +233,15 @@ const tabStyles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 999,
+  },
+  headerBlurOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1000,
+    backgroundColor: BACKDROP_COLOR,
   },
   bar: {
     height: 70,

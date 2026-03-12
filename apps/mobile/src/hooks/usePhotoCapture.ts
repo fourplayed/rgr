@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CameraView } from 'expo-camera';
 import * as FileSystem from 'expo-file-system';
 import { usePhotoCaptureStore } from '../store/photoCaptureStore';
@@ -49,6 +49,13 @@ export function usePhotoCapture() {
   const [uploadStep, setUploadStep] = useState<UploadStep>(null);
   // Track thumbnail URI so we can clean up the file on retake/cancel
   const thumbnailUriRef = useRef<string | null>(null);
+
+  // Clean up thumbnail file on unmount (only if no upload is in progress)
+  useEffect(() => () => {
+    if (thumbnailUriRef.current && !isUploadingRef.current) {
+      FileSystem.deleteAsync(thumbnailUriRef.current, { idempotent: true }).catch(() => {});
+    }
+  }, []);
 
   /**
    * Take a photo using the provided camera ref.
@@ -155,7 +162,7 @@ export function usePhotoCapture() {
 
         setUploadStep('uploading');
 
-        await uploadPhotoMutation({
+        const uploadOptions: Parameters<typeof uploadPhotoMutation>[0] = {
           assetId,
           scanEventId,
           uploadedBy: user.id,
@@ -165,10 +172,12 @@ export function usePhotoCapture() {
           locationDescription,
           latitude,
           longitude,
-          ...(imageWidth != null && { width: imageWidth }),
-          ...(imageHeight != null && { height: imageHeight }),
-          ...(thumbnailFileUri && { thumbnailFileUri }),
-        });
+        };
+        if (imageWidth != null) uploadOptions.width = imageWidth;
+        if (imageHeight != null) uploadOptions.height = imageHeight;
+        if (thumbnailFileUri) uploadOptions.thumbnailFileUri = thumbnailFileUri;
+
+        await uploadPhotoMutation(uploadOptions);
 
         // Success — show complete step, then reset capture state
         setUploadStep('complete');

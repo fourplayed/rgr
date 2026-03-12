@@ -13,8 +13,16 @@ import { useCallback, useEffect, useRef, useState } from 'react';
  * - User swipe dismiss: `isTransitioningRef` is false → close modal entirely
  *
  * Safety: 1500ms timeout prevents permanent stuck state if onDismiss never fires.
+ *
+ * IMPORTANT: `initial` is captured by ref on first call — callers can pass inline
+ * objects (e.g. `{ type: 'none' }`) without causing callback cascade recreations.
  */
 export function useModalTransition<T extends { type: string }>(initial: T) {
+  // Stabilize `initial` by ref so inline `{ type: 'none' }` objects don't cause
+  // closeModal/transitionTo/handleExitComplete to recreate every render.
+  // The initial value never changes for a given hook instance.
+  const initialRef = useRef(initial);
+
   const [modal, setModal] = useState<T>(initial);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const pendingRef = useRef<T | null>(null);
@@ -54,15 +62,15 @@ export function useModalTransition<T extends { type: string }>(initial: T) {
     pendingRef.current = null;
     isTransitioningRef.current = false;
     setIsTransitioning(false);
-    setModal(initial);
-  }, [initial, clearSafetyTimeout]);
+    setModal(initialRef.current);
+  }, [clearSafetyTimeout]);
 
   const transitionTo = useCallback(
     (next: T) => {
       clearSafetyTimeout();
       generationRef.current += 1;
 
-      if (modal.type === initial.type) {
+      if (modal.type === initialRef.current.type) {
         // Nothing currently open — mount directly
         setModal(next);
         return;
@@ -72,7 +80,7 @@ export function useModalTransition<T extends { type: string }>(initial: T) {
       pendingRef.current = next;
       isTransitioningRef.current = true;
       setIsTransitioning(true);
-      setModal(initial);
+      setModal(initialRef.current);
 
       // Safety timeout: force-mount if onDismiss doesn't fire
       const gen = generationRef.current;
@@ -80,15 +88,13 @@ export function useModalTransition<T extends { type: string }>(initial: T) {
         timeoutRef.current = null;
         if (generationRef.current === gen) {
           if (__DEV__) {
-            console.warn(
-              '[useModalTransition] Safety timeout fired — onExitComplete did not fire within 1500ms'
-            );
+            console.warn('[useModalTransition] Safety timeout — onExitComplete not received within 1500ms');
           }
           mountPending();
         }
       }, 1500);
     },
-    [initial, modal.type, clearSafetyTimeout, mountPending]
+    [modal.type, clearSafetyTimeout, mountPending]
   );
 
   const handleExitComplete = useCallback(() => {

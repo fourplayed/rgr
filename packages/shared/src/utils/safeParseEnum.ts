@@ -27,6 +27,10 @@ export function safeParseEnum<T extends [string, ...string[]]>(
   value: unknown,
   fallback: T[number] | null
 ): T[number] | null {
+  // null/undefined with null fallback is an expected "absent value" pattern —
+  // skip the parse and warning entirely (e.g. analysis?.max_severity on photos
+  // without freight analysis).
+  if (value == null && fallback === null) return null;
   const result = schema.safeParse(value);
   if (result.success) return result.data;
   console.warn(`[safeParseEnum] Unknown value "${value}", falling back to "${fallback}"`);

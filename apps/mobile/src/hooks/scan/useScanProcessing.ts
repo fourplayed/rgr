@@ -15,7 +15,7 @@ export function useScanProcessing(
   dispatch: React.Dispatch<ScanFlowAction>,
   helpers: {
     user: Profile | null;
-    setAlertSheet: (state: AlertSheetState) => void;
+    setAlertSheet: React.Dispatch<React.SetStateAction<AlertSheetState>>;
     addDebugLog: (msg: string) => void;
     resetScannerRef: React.MutableRefObject<() => void>;
   }
@@ -201,7 +201,7 @@ export function useScanProcessing(
               });
               resetScannerRef.current();
               return;
-            } catch (queueError) {
+            } catch (queueError: unknown) {
               logger.warn('Failed to enqueue offline scan:', queueError);
             }
           }

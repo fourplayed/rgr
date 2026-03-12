@@ -5,7 +5,6 @@ import {
   BottomSheetBackdrop,
   BottomSheetScrollView,
   BottomSheetFlatList,
-  BottomSheetTextInput,
   type BottomSheetBackdropProps,
 } from '@gorhom/bottom-sheet';
 import { BlurView } from 'expo-blur';
@@ -13,6 +12,7 @@ import * as Haptics from 'expo-haptics';
 import { colors } from '../../theme/colors';
 import { borderRadius } from '../../theme/spacing';
 import { GORHOM_SPRING } from '../../theme/animation';
+import { BACKDROP_BLUR_INTENSITY, BACKDROP_BLUR_TINT } from '../../theme/backdrop';
 
 const MAX_DYNAMIC_HEIGHT = Dimensions.get('window').height;
 
@@ -63,8 +63,19 @@ export function SheetModal({
 }: SheetModalProps) {
   const ref = useRef<BottomSheetModal>(null);
   const isPresentedRef = useRef(false);
+  // Tracks whether present() was ever called during this mount cycle.
+  // Unlike isPresentedRef (cleared on dismiss), this stays true so handleDismiss
+  // can distinguish legitimate dismisses from gorhom's spurious onDismiss calls
+  // for never-presented modals during internal provider cleanup.
+  const wasPresentedRef = useRef(false);
   // Track programmatic dismiss so handleDismiss can distinguish it from user swipe/tap.
   const programmaticDismissRef = useRef(false);
+  // Guards against double-handling: once a dismiss is handled (by gorhom's onDismiss
+  // OR the fallback timer), subsequent calls are no-ops. Reset on next present().
+  const dismissHandledRef = useRef(false);
+  // Fallback timer for gorhom v5 bug: onDismiss sometimes doesn't fire for
+  // dynamically-sized (compact) sheets when content changes mid-dismiss animation.
+  const dismissFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (visible && !isPresentedRef.current) {
@@ -83,6 +94,8 @@ export function SheetModal({
         }
         ref.current?.present();
         isPresentedRef.current = true;
+        wasPresentedRef.current = true;
+        dismissHandledRef.current = false;
       };
 
       const handle = InteractionManager.runAfterInteractions(doPresent);
@@ -100,20 +113,54 @@ export function SheetModal({
       programmaticDismissRef.current = true;
       ref.current?.dismiss();
       isPresentedRef.current = false;
+      // gorhom v5 sometimes fails to fire onDismiss for dynamically-sized sheets
+      // when content changes during the dismiss animation (e.g. defectId→null causes
+      // content to shrink, triggering a re-layout that disrupts the dismiss callback).
+      // Fire handleDismiss ourselves after the animation should have completed.
+      dismissFallbackRef.current = setTimeout(() => {
+        dismissFallbackRef.current = null;
+        if (programmaticDismissRef.current && !dismissHandledRef.current) {
+          dismissHandledRef.current = true;
+          programmaticDismissRef.current = false;
+          onExitComplete?.();
+        }
+      }, 500);
     }
-  }, [visible]);
+  }, [visible, onExitComplete]);
 
   // Cleanup on unmount — prevent orphaned portals.
   // Mark as programmatic so handleDismiss doesn't call onClose.
   useEffect(() => {
     return () => {
+      if (dismissFallbackRef.current) {
+        clearTimeout(dismissFallbackRef.current);
+        dismissFallbackRef.current = null;
+      }
       programmaticDismissRef.current = true;
       ref.current?.dismiss();
     };
   }, []);
 
   const handleDismiss = useCallback(() => {
+    // Clear the dismiss fallback — gorhom fired onDismiss normally.
+    if (dismissFallbackRef.current) {
+      clearTimeout(dismissFallbackRef.current);
+      dismissFallbackRef.current = null;
+    }
     isPresentedRef.current = false;
+    if (!wasPresentedRef.current) {
+      // gorhom v5 fires onDismiss during internal provider cleanup for modals
+      // that were never present()ed. Skip all callbacks to prevent spurious
+      // onExitComplete cascades into useModalTransition.
+      programmaticDismissRef.current = false;
+      return;
+    }
+    if (dismissHandledRef.current) {
+      // Already handled by fallback timer — skip to prevent double-fire.
+      programmaticDismissRef.current = false;
+      return;
+    }
+    dismissHandledRef.current = true;
     if (programmaticDismissRef.current) {
       // Dismiss was triggered by visible→false — skip onClose (state machine
       // already knows) and only fire the exit-complete signal.
@@ -139,7 +186,7 @@ export function SheetModal({
         pressBehavior={preventDismissRef.current ? 'none' : 'close'}
       >
         {Platform.OS === 'ios' ? (
-          <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFillObject} />
+          <BlurView intensity={BACKDROP_BLUR_INTENSITY} tint={BACKDROP_BLUR_TINT} style={StyleSheet.absoluteFillObject} />
         ) : null}
       </BottomSheetBackdrop>
     ),
@@ -184,4 +231,4 @@ const styles = StyleSheet.create({
 });
 
 // Re-export gorhom scrollable components so consumers import from this adapter
-export { BottomSheetScrollView, BottomSheetFlatList, BottomSheetTextInput };
+export { BottomSheetScrollView, BottomSheetFlatList };

@@ -45,9 +45,9 @@ export type ScanContextModal =
       type: 'acceptDefect';
       defectId: string;
       assetId: string;
-      assetNumber?: string;
+      assetNumber: string | null;
       title: string;
-      description?: string | null;
+      description: string | null;
     };
 
 const CLOSED_MODAL: ScanContextModal = { type: 'closed' };
@@ -121,7 +121,7 @@ export interface UseScanFlowReturn {
   scanContext: AssetScanContext | null;
   isContextLoading: boolean;
   contextError: Error | null;
-  refetchContext: () => void;
+  refetchContext: () => void; // Returns Promise<QueryObserverResult> at runtime; typed as void since consumers don't await
 
   // Context modals
   contextModal: ScanContextModal;
@@ -191,7 +191,7 @@ export function useScanFlow({ canMarkMaintenance }: UseScanFlowOptions): UseScan
   const resetScannerRef = useRef<() => void>(() => {});
 
   // ── Sub-hooks ──
-  const scanProcessing = useScanProcessing(dispatch, {
+  const { processScan, triggerDebugScan: triggerDebugScanImpl, handleUndoPress: undoScanEvent, isDeletingScan } = useScanProcessing(dispatch, {
     user,
     setAlertSheet,
     addDebugLog,
@@ -224,7 +224,7 @@ export function useScanFlow({ canMarkMaintenance }: UseScanFlowOptions): UseScan
 
   // ── QR Scanner ──
   const { handleBarCodeScanned, resetScanner } = useQRScanner(
-    scanProcessing.processScan,
+    processScan,
     2000,
     handleInvalidQR
   );
@@ -261,6 +261,42 @@ export function useScanFlow({ canMarkMaintenance }: UseScanFlowOptions): UseScan
     undoIdsRef.current = null;
   }
 
+  // ── Derived state (above callbacks so deps can reference stable primitives) ──
+  const scannedAsset =
+    state.phase === 'confirming' || state.phase === 'active' ? state.scannedAsset : null;
+  const matchedDepot =
+    state.phase === 'confirming' || state.phase === 'active' ? state.matchedDepot : null;
+  const effectiveLocation =
+    state.phase === 'confirming' || state.phase === 'active' ? state.effectiveLocation : null;
+  const lastScanEventId = state.phase === 'active' ? state.lastScanEventId : null;
+  const activeSheet = state.phase === 'active' ? state.activeSheet : null;
+  const cameraOpen = state.phase === 'active' ? state.cameraOpen : false;
+  const isAwaitingSheetExit = state.phase === 'active' ? state.awaitingSheetExit : false;
+  const isCreatingScan = state.phase === 'confirming';
+  const scanStatus = state.phase === 'scanning' ? state.scanStatus : null;
+  // showOverlay: backdrop stays up during the entire confirming/active phase
+  const showOverlay = state.phase === 'confirming' || state.phase === 'active';
+  // showCard: confirmation card hides when camera, review sheet, pending review,
+  // or a sub-sheet exit animation is in progress (awaitingSheetExit).
+  // Presenting the confirmation card while a sub-sheet is still animating out
+  // causes a gorhom BottomSheetModal stack conflict — the exiting sheet's
+  // onDismiss callback can be suppressed, blocking SHEET_EXIT_COMPLETE.
+  const showCard =
+    state.phase === 'confirming' ||
+    (state.phase === 'active' &&
+      !state.cameraOpen &&
+      state.activeSheet !== 'review' &&
+      !state.capturedPhotoUri &&
+      !state.awaitingSheetExit);
+  const buttonsDisabled = state.phase !== 'active';
+  const photoCompleted = state.phase === 'active' ? state.photoCompleted : false;
+  const defectCompleted = state.phase === 'active' ? state.defectCompleted : false;
+  const maintenanceCompleted = state.phase === 'active' ? state.maintenanceCompleted : false;
+  const isCompleting = state.phase === 'completing';
+  const completionSummary = state.phase === 'completing' ? state.summary : null;
+  const activePhotoType: PhotoType =
+    state.phase === 'active' && state.defectCompleted ? 'defect' : 'freight';
+
   // ── Action handlers ──
 
   const handleConfirmAction = useCallback((action: ConfirmAction) => {
@@ -282,8 +318,8 @@ export function useScanFlow({ canMarkMaintenance }: UseScanFlowOptions): UseScan
     if (!ids) return;
     closeContextModal();
     dispatch({ type: 'UNDO' });
-    scanProcessing.handleUndoPress(ids.scanEventId, ids.assetId, resetScanner);
-  }, [state.phase, scanProcessing, resetScanner, closeContextModal]);
+    undoScanEvent(ids.scanEventId, ids.assetId, resetScanner);
+  }, [state.phase, undoScanEvent, resetScanner, closeContextModal]);
 
   const handleCameraCaptured = useCallback((uri: string) => {
     dispatch({ type: 'CAMERA_CAPTURED', uri });
@@ -297,12 +333,14 @@ export function useScanFlow({ canMarkMaintenance }: UseScanFlowOptions): UseScan
   // After CAMERA_CAPTURED, the native Modal must fully dismiss before a gorhom
   // SheetModal can present.  This effect detects the "captured photo pending review"
   // state and opens the review sheet after a brief delay.
-  const pendingReview =
-    state.phase === 'active' &&
-    !(state as any).cameraOpen &&
-    !!(state as any).capturedPhotoUri &&
-    (state as any).activeSheet === null &&
-    !(state as any).awaitingSheetExit;
+  let pendingReview = false;
+  if (state.phase === 'active') {
+    pendingReview =
+      !state.cameraOpen &&
+      !!state.capturedPhotoUri &&
+      state.activeSheet === null &&
+      !state.awaitingSheetExit;
+  }
 
   useEffect(() => {
     if (!pendingReview) return;
@@ -322,7 +360,7 @@ export function useScanFlow({ canMarkMaintenance }: UseScanFlowOptions): UseScan
 
   const handleDefectSubmit = useCallback(
     async (notes: string, wantsPhoto: boolean) => {
-      if (state.phase !== 'active') return;
+      if (state.phase !== 'active' || !scannedAsset || !lastScanEventId) return;
       if (!user) {
         setAlertSheet({
           visible: true,
@@ -335,11 +373,11 @@ export function useScanFlow({ canMarkMaintenance }: UseScanFlowOptions): UseScan
       addDebugLog('Submitting defect report...');
       try {
         await createDefectReport({
-          assetId: state.scannedAsset.id,
+          assetId: scannedAsset.id,
           reportedBy: user.id,
           title: 'Defect reported',
           description: notes,
-          scanEventId: state.lastScanEventId,
+          scanEventId: lastScanEventId,
         });
         addDebugLog('Defect report created');
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -355,7 +393,7 @@ export function useScanFlow({ canMarkMaintenance }: UseScanFlowOptions): UseScan
         });
       }
     },
-    [state, user, createDefectReport, addDebugLog, setAlertSheet]
+    [state.phase, scannedAsset?.id, lastScanEventId, user, createDefectReport, addDebugLog, setAlertSheet]
   );
 
   const handlePhotoFlowComplete = useCallback(() => {
@@ -378,8 +416,8 @@ export function useScanFlow({ canMarkMaintenance }: UseScanFlowOptions): UseScan
 
   // ── Debug scan ──
   const triggerDebugScan = useCallback(() => {
-    scanProcessing.triggerDebugScan(resetScanner);
-  }, [scanProcessing, resetScanner]);
+    triggerDebugScanImpl(resetScanner);
+  }, [triggerDebugScanImpl, resetScanner]);
 
   // ── Safety timeout: force SHEET_EXIT_COMPLETE if stuck ──
   const sheetExitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -406,7 +444,7 @@ export function useScanFlow({ canMarkMaintenance }: UseScanFlowOptions): UseScan
         sheetExitTimeoutRef.current = null;
       }
     };
-  }, [state.phase === 'active' && (state as any).awaitingSheetExit]);
+  }, [isAwaitingSheetExit]);
 
   // ── Safety timeout: auto-RESET if stuck in completing ──
   useEffect(() => {
@@ -429,11 +467,11 @@ export function useScanFlow({ canMarkMaintenance }: UseScanFlowOptions): UseScan
 
     const handler = () => {
       if (state.phase === 'active') {
-        if (state.cameraOpen) {
+        if (cameraOpen) {
           dispatch({ type: 'CAMERA_CANCELLED' });
           return true;
         }
-        if (state.activeSheet !== null) {
+        if (activeSheet !== null) {
           dispatch({ type: 'SHEET_DISMISSED' });
           return true;
         }
@@ -450,7 +488,7 @@ export function useScanFlow({ canMarkMaintenance }: UseScanFlowOptions): UseScan
 
     const sub = BackHandler.addEventListener('hardwareBackPress', handler);
     return () => sub.remove();
-  }, [state, handleUndoPress]);
+  }, [state.phase, cameraOpen, activeSheet, handleUndoPress]);
 
   // ── Scan context query (mechanic only) ──
   const scanContextAssetId =
@@ -459,41 +497,6 @@ export function useScanFlow({ canMarkMaintenance }: UseScanFlowOptions): UseScan
       : undefined;
 
   const scanContextQuery = useAssetScanContext(scanContextAssetId);
-
-  // ── Derived state ──
-  const scannedAsset =
-    state.phase === 'confirming' || state.phase === 'active' ? state.scannedAsset : null;
-  const matchedDepot =
-    state.phase === 'confirming' || state.phase === 'active' ? state.matchedDepot : null;
-  const effectiveLocation =
-    state.phase === 'confirming' || state.phase === 'active' ? state.effectiveLocation : null;
-  const lastScanEventId = state.phase === 'active' ? state.lastScanEventId : null;
-  const activeSheet = state.phase === 'active' ? state.activeSheet : null;
-  const cameraOpen = state.phase === 'active' ? state.cameraOpen : false;
-  const isCreatingScan = state.phase === 'confirming';
-  const scanStatus = state.phase === 'scanning' ? state.scanStatus : null;
-  // showOverlay: backdrop stays up during the entire confirming/active phase
-  const showOverlay = state.phase === 'confirming' || state.phase === 'active';
-  // showCard: confirmation card hides when camera, review sheet, pending review,
-  // or a sub-sheet exit animation is in progress (awaitingSheetExit).
-  // Presenting the confirmation card while a sub-sheet is still animating out
-  // causes a gorhom BottomSheetModal stack conflict — the exiting sheet's
-  // onDismiss callback can be suppressed, blocking SHEET_EXIT_COMPLETE.
-  const showCard =
-    state.phase === 'confirming' ||
-    (state.phase === 'active' &&
-      !state.cameraOpen &&
-      state.activeSheet !== 'review' &&
-      !state.capturedPhotoUri &&
-      !state.awaitingSheetExit);
-  const buttonsDisabled = state.phase !== 'active';
-  const photoCompleted = state.phase === 'active' ? state.photoCompleted : false;
-  const defectCompleted = state.phase === 'active' ? state.defectCompleted : false;
-  const maintenanceCompleted = state.phase === 'active' ? state.maintenanceCompleted : false;
-  const isCompleting = state.phase === 'completing';
-  const completionSummary = state.phase === 'completing' ? state.summary : null;
-  const activePhotoType: PhotoType =
-    state.phase === 'active' && state.defectCompleted ? 'defect' : 'freight';
 
   return {
     state,
@@ -520,7 +523,7 @@ export function useScanFlow({ canMarkMaintenance }: UseScanFlowOptions): UseScan
     handleConfirmAction,
     handleDonePress,
     handleUndoPress,
-    isDeletingScan: scanProcessing.isDeletingScan,
+    isDeletingScan,
 
     handleCameraCaptured,
     handleCameraCancelled,

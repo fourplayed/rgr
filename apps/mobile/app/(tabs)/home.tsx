@@ -57,7 +57,7 @@ const FONT_SIZE_STAT_LABEL = fontSize.sm;
 type HomeModalState =
   | { type: 'none' }
   | { type: 'defectDetail'; defectId: string }
-  | { type: 'acceptDefect'; defectId: string; assetId: string; assetNumber?: string; title: string; description?: string | null }
+  | { type: 'acceptDefect'; defectId: string; assetId: string; assetNumber: string | null; title: string; description: string | null }
   | { type: 'maintenanceDetail'; maintenanceId: string };
 
 type DashboardActivityItem =
@@ -93,37 +93,40 @@ const ActivityCard = memo(function ActivityCard({
     return (
       <Animated.View style={{ opacity: entranceOpacity }}>
         <TouchableOpacity
-          style={[styles.scanCard, { borderLeftColor: activityColor, backgroundColor: activityColor + '08' }]}
+          style={[styles.scanCard, { backgroundColor: activityColor + '08' }]}
           onPress={handlePress}
           activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel={`${formatScanTypeLabel(item.data.scanType)} scan for asset ${item.data.assetNumber ? formatAssetNumber(item.data.assetNumber) : 'Unknown'}`}
           accessibilityHint="Double tap to view asset details"
         >
-          <View style={styles.cardRow}>
-            <View style={styles.cardIconContainer}>
-              <Ionicons name={getScanTypeIcon(item.data.scanType)} size={32} color={activityColor} />
-            </View>
-            <View style={styles.cardBody}>
-              <View style={styles.cardContentRow}>
-                <Text style={styles.cardTitle} numberOfLines={1}>
-                  {item.data.assetNumber ? formatAssetNumber(item.data.assetNumber) : 'Unknown Asset'}
-                </Text>
-                <View style={styles.cardBadges}>
-                  {matchedDepot && badgeColors && (
-                    <View style={[styles.depotLocationBadge, { backgroundColor: badgeColors.bg }]}>
-                      <Text style={[styles.depotLocationText, { color: badgeColors.text }]}>{matchedDepot.name}</Text>
-                    </View>
-                  )}
-                </View>
+          <View style={[styles.cardAccent, { backgroundColor: activityColor }]} />
+          <View style={styles.cardInner}>
+            <View style={styles.cardRow}>
+              <View style={styles.cardIconContainer}>
+                <Ionicons name={getScanTypeIcon(item.data.scanType)} size={32} color={activityColor} />
               </View>
-              <View style={styles.scanFooter}>
-                <Text style={styles.cardSecondaryText}>
-                  {formatScanTypeLabel(item.data.scanType)}
-                </Text>
-                <Text style={styles.scanTime}>
-                  {formatRelativeTime(item.data.createdAt)}
-                </Text>
+              <View style={styles.cardBody}>
+                <View style={styles.cardContentRow}>
+                  <Text style={styles.cardTitle} numberOfLines={1}>
+                    {item.data.assetNumber ? formatAssetNumber(item.data.assetNumber) : 'Unknown Asset'}
+                  </Text>
+                  <View style={styles.cardBadges}>
+                    {matchedDepot && badgeColors && (
+                      <View style={[styles.depotLocationBadge, { backgroundColor: badgeColors.bg }]}>
+                        <Text style={[styles.depotLocationText, { color: badgeColors.text }]}>{matchedDepot.name}</Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+                <View style={styles.scanFooter}>
+                  <Text style={styles.cardSecondaryText}>
+                    {formatScanTypeLabel(item.data.scanType)}
+                  </Text>
+                  <Text style={styles.scanTime}>
+                    {formatRelativeTime(item.data.createdAt)}
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
@@ -137,30 +140,33 @@ const ActivityCard = memo(function ActivityCard({
     return (
       <Animated.View style={{ opacity: entranceOpacity }}>
         <TouchableOpacity
-          style={[styles.scanCard, { borderLeftColor: colors.defectYellow, backgroundColor: colors.defectYellow + '08' }]}
+          style={[styles.scanCard, { backgroundColor: colors.defectYellow + '08' }]}
           onPress={handlePress}
           activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel={`Defect report: ${item.data.title}`}
         >
-          <View style={styles.cardRow}>
-            <View style={styles.cardIconContainer}>
-              <Ionicons name={defectConfig.icon} size={32} color={colors.defectYellow} />
-            </View>
-            <View style={styles.cardBody}>
-              <View style={styles.cardContentRow}>
-                <Text style={styles.cardTitle} numberOfLines={1}>
-                  {item.data.assetNumber ? formatAssetNumber(item.data.assetNumber) : 'Unknown Asset'}
-                </Text>
-                <View style={styles.cardBadges}>
-                  <DefectStatusBadge status={item.data.status} />
-                </View>
+          <View style={[styles.cardAccent, { backgroundColor: colors.defectYellow }]} />
+          <View style={styles.cardInner}>
+            <View style={styles.cardRow}>
+              <View style={styles.cardIconContainer}>
+                <Ionicons name={defectConfig.icon} size={32} color={colors.defectYellow} />
               </View>
-              <View style={styles.scanFooter}>
-                <Text style={styles.cardSecondaryText}>Defect Report</Text>
-                <Text style={styles.scanTime}>
-                  {formatRelativeTime(item.data.createdAt)}
-                </Text>
+              <View style={styles.cardBody}>
+                <View style={styles.cardContentRow}>
+                  <Text style={styles.cardTitle} numberOfLines={1}>
+                    {item.data.assetNumber ? formatAssetNumber(item.data.assetNumber) : 'Unknown Asset'}
+                  </Text>
+                  <View style={styles.cardBadges}>
+                    <DefectStatusBadge status={item.data.status} />
+                  </View>
+                </View>
+                <View style={styles.scanFooter}>
+                  <Text style={styles.cardSecondaryText}>Defect Report</Text>
+                  <Text style={styles.scanTime}>
+                    {formatRelativeTime(item.data.createdAt)}
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
@@ -175,30 +181,33 @@ const ActivityCard = memo(function ActivityCard({
   return (
     <Animated.View style={{ opacity: entranceOpacity }}>
       <TouchableOpacity
-        style={[styles.scanCard, { borderLeftColor: maintConfig.color, backgroundColor: maintConfig.color + '08' }]}
+        style={[styles.scanCard, { backgroundColor: maintConfig.color + '08' }]}
         onPress={handlePress}
         activeOpacity={0.7}
         accessibilityRole="button"
         accessibilityLabel={`Maintenance ${item.data.title}, status ${item.data.status}`}
       >
-        <View style={styles.cardRow}>
-          <View style={styles.cardIconContainer}>
-            <Ionicons name={maintConfig.icon} size={32} color={maintConfig.color} />
-          </View>
-          <View style={styles.cardBody}>
-            <View style={styles.cardContentRow}>
-              <Text style={styles.cardTitle} numberOfLines={1}>
-                {item.data.assetNumber ? formatAssetNumber(item.data.assetNumber) : 'Unknown Asset'}
-              </Text>
-              <View style={styles.cardBadges}>
-                <MaintenanceStatusBadge status={item.data.status} />
-              </View>
+        <View style={[styles.cardAccent, { backgroundColor: maintConfig.color }]} />
+        <View style={styles.cardInner}>
+          <View style={styles.cardRow}>
+            <View style={styles.cardIconContainer}>
+              <Ionicons name={maintConfig.icon} size={32} color={maintConfig.color} />
             </View>
-            <View style={styles.scanFooter}>
-              <Text style={styles.cardSecondaryText}>{item.data.title}</Text>
-              <Text style={styles.scanTime}>
-                {formatRelativeTime(item.data.createdAt)}
-              </Text>
+            <View style={styles.cardBody}>
+              <View style={styles.cardContentRow}>
+                <Text style={styles.cardTitle} numberOfLines={1}>
+                  {item.data.assetNumber ? formatAssetNumber(item.data.assetNumber) : 'Unknown Asset'}
+                </Text>
+                <View style={styles.cardBadges}>
+                  <MaintenanceStatusBadge status={item.data.status} />
+                </View>
+              </View>
+              <View style={styles.scanFooter}>
+                <Text style={styles.cardSecondaryText}>{item.data.title}</Text>
+                <Text style={styles.scanTime}>
+                  {formatRelativeTime(item.data.createdAt)}
+                </Text>
+              </View>
             </View>
           </View>
         </View>
@@ -228,9 +237,9 @@ export default function HomeScreen() {
   const handleAcceptPress = useCallback((context: {
     defectId: string;
     assetId: string;
-    assetNumber?: string;
+    assetNumber: string | null;
     title: string;
-    description?: string | null;
+    description: string | null;
   }) => {
     transitionTo({ type: 'acceptDefect', ...context });
   }, [transitionTo]);
@@ -553,9 +562,9 @@ export default function HomeScreen() {
             assetId: modal.assetId,
             assetNumber: modal.assetNumber,
             defectReportId: modal.defectId,
-            defaultTitle: modal.title,
-            defaultDescription: modal.description ?? undefined,
-            defaultPriority: 'high' as const,
+            defaultTitle: modal.description ?? modal.title,
+            defaultDescription: undefined,
+            defaultPriority: 'medium' as const,
             onExternalSubmit: handleAcceptSubmit,
           } : {})}
         />
@@ -698,12 +707,17 @@ const styles = StyleSheet.create({
   },
   // Scan Cards
   scanCard: {
-    backgroundColor: colors.background,
-    padding: spacing.md,
+    flexDirection: 'row',
     borderRadius: borderRadius.md,
-    borderWidth: 0,
-    borderLeftWidth: 4,
+    overflow: 'hidden',
     marginBottom: spacing.sm,
+  },
+  cardAccent: {
+    width: 4,
+  },
+  cardInner: {
+    flex: 1,
+    padding: spacing.md,
   },
   cardRow: {
     flexDirection: 'row',
