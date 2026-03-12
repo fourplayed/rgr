@@ -76,6 +76,10 @@ export function SheetModal({
   // Fallback timer for gorhom v5 bug: onDismiss sometimes doesn't fire for
   // dynamically-sized (compact) sheets when content changes mid-dismiss animation.
   const dismissFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Stable ref for onExitComplete so the unmount cleanup always has the latest callback.
+  // Needed because the cleanup effect has [] deps and would otherwise capture a stale closure.
+  const onExitCompleteRef = useRef(onExitComplete);
+  onExitCompleteRef.current = onExitComplete;
 
   useEffect(() => {
     if (visible && !isPresentedRef.current) {
@@ -130,11 +134,18 @@ export function SheetModal({
 
   // Cleanup on unmount — prevent orphaned portals.
   // Mark as programmatic so handleDismiss doesn't call onClose.
+  // Also fire onExitComplete if the sheet was presented but dismiss wasn't handled —
+  // this covers conditionally-mounted sheets (e.g. PhotoReviewSheet) where React
+  // unmounts the component before gorhom can fire its onDismiss callback.
   useEffect(() => {
     return () => {
       if (dismissFallbackRef.current) {
         clearTimeout(dismissFallbackRef.current);
         dismissFallbackRef.current = null;
+      }
+      if (wasPresentedRef.current && !dismissHandledRef.current) {
+        dismissHandledRef.current = true;
+        onExitCompleteRef.current?.();
       }
       programmaticDismissRef.current = true;
       ref.current?.dismiss();
@@ -186,7 +197,11 @@ export function SheetModal({
         pressBehavior={preventDismissRef.current ? 'none' : 'close'}
       >
         {Platform.OS === 'ios' ? (
-          <BlurView intensity={BACKDROP_BLUR_INTENSITY} tint={BACKDROP_BLUR_TINT} style={StyleSheet.absoluteFillObject} />
+          <BlurView
+            intensity={BACKDROP_BLUR_INTENSITY}
+            tint={BACKDROP_BLUR_TINT}
+            style={StyleSheet.absoluteFillObject}
+          />
         ) : null}
       </BottomSheetBackdrop>
     ),
