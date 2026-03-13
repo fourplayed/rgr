@@ -5,7 +5,6 @@ import {
   ReviewOutcomeSchema,
 } from '../enums/HazardEnums';
 import type { HazardSeverity, HazardStatus, ReviewOutcome } from '../enums/HazardEnums';
-import type { Json } from '../database.types';
 import { safeParseEnum } from '../../utils/safeParseEnum';
 import type { AssertTypesMatch, MustBeTrue } from '../typeAssert';
 
@@ -26,7 +25,7 @@ export interface HazardAlert {
   evidencePoints: string[];
   recommendedActions: string[];
   locationInImage: string | null;
-  boundingBox: Json | null;
+  boundingBox: { x: number; y: number; width: number; height: number } | null;
   status: HazardStatus;
   acknowledgedBy: string | null;
   acknowledgedAt: string | null;
@@ -56,7 +55,7 @@ export interface HazardAlertRow {
   evidence_points: string[] | null;
   recommended_actions: string[] | null;
   location_in_image: string | null;
-  bounding_box: Json | null;
+  bounding_box: { x: number; y: number; width: number; height: number } | null;
   status: HazardStatus;
   acknowledged_by: string | null;
   acknowledged_at: string | null;

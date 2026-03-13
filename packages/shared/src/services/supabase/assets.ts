@@ -471,7 +471,7 @@ export async function getAssetScans(
   }
 
   const total = count ?? 0;
-  const scans = (data || []).map((row: ScanEventRowWithJoins) => {
+  const scans = ((data || []) as unknown as ScanEventRowWithJoins[]).map((row) => {
     const { profiles, assets, ...scanRow } = row;
     const scan = mapRowToScanEvent(scanRow as ScanEventRow);
     return {
@@ -513,13 +513,20 @@ export async function createScanEvent(
   const supabase = getSupabaseClient();
   const dbData = mapScanEventToInsert(parsed.data as CreateScanEventInput);
 
-  const { data, error } = await supabase.from('scan_events').insert(dbData).select().single();
+  // Cast needed: ScanEventInsertRow uses Record<string, unknown>|null for device_info,
+  // but the generated DB type expects the broader Json type. The mapper is the boundary.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await supabase
+    .from('scan_events')
+    .insert(dbData as any)
+    .select()
+    .single();
 
   if (error) {
     return { success: false, data: null, error: `Failed to create scan event: ${error.message}` };
   }
 
-  return { success: true, data: mapRowToScanEvent(data), error: null };
+  return { success: true, data: mapRowToScanEvent(data as unknown as ScanEventRow), error: null };
 }
 
 /**
@@ -597,7 +604,7 @@ export async function getRecentScans(
     return { success: false, data: null, error: `Failed to fetch recent scans: ${error.message}` };
   }
 
-  const scans = (data || []).map((row: ScanEventRowWithJoins) => {
+  const scans = ((data || []) as unknown as ScanEventRowWithJoins[]).map((row) => {
     const { profiles, assets, ...scanRow } = row;
     const scan = mapRowToScanEvent(scanRow as ScanEventRow);
     return {
@@ -638,7 +645,7 @@ export async function getMyRecentScans(
     return { success: false, data: null, error: `Failed to fetch recent scans: ${error.message}` };
   }
 
-  const scans = (data || []).map((row: ScanEventRowWithJoins) => {
+  const scans = ((data || []) as unknown as ScanEventRowWithJoins[]).map((row) => {
     const { profiles, assets, ...scanRow } = row;
     const scan = mapRowToScanEvent(scanRow as ScanEventRow);
     return {
@@ -743,7 +750,9 @@ export async function getAssetHazards(
   }
 
   const total = count ?? 0;
-  const alerts = (data || []).map((row: HazardAlertRow) => mapRowToHazardAlert(row));
+  const alerts = ((data || []) as unknown as HazardAlertRow[]).map((row) =>
+    mapRowToHazardAlert(row)
+  );
 
   return {
     success: true,

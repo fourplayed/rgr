@@ -505,7 +505,7 @@ export async function getPhotoById(photoId: string): Promise<ServiceResult<Photo
     } as FreightAnalysisRow);
 
     if (!alertsResult.error && alertsResult.data) {
-      hazardAlerts = alertsResult.data.map((alertRow: HazardAlertRow) =>
+      hazardAlerts = (alertsResult.data as unknown as HazardAlertRow[]).map((alertRow) =>
         mapRowToHazardAlert(alertRow)
       );
     }

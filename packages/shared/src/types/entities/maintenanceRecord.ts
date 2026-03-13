@@ -9,7 +9,6 @@ import type {
   MaintenancePriority,
   MaintenanceType,
 } from '../enums/MaintenanceEnums';
-import type { Json } from '../database.types';
 import { safeParseEnum } from '../../utils/safeParseEnum';
 import type { AssertTypesMatch, MustBeTrue } from '../typeAssert';
 
@@ -32,7 +31,7 @@ export interface MaintenanceRecord {
   dueDate: string | null;
   estimatedCost: number | null;
   actualCost: number | null;
-  partsUsed: Json | null;
+  partsUsed: Record<string, unknown> | null;
   hazardAlertId: string | null;
   scanEventId: string | null;
   notes: string | null;
@@ -59,7 +58,7 @@ export interface MaintenanceRecordRow {
   due_date: string | null;
   estimated_cost: number | null;
   actual_cost: number | null;
-  parts_used: Json | null;
+  parts_used: Record<string, unknown> | null;
   hazard_alert_id: string | null;
   scan_event_id: string | null;
   notes: string | null;
@@ -111,7 +110,7 @@ export interface UpdateMaintenanceInput {
   dueDate?: string | null | undefined;
   estimatedCost?: number | null | undefined;
   actualCost?: number | null | undefined;
-  partsUsed?: Json | null | undefined;
+  partsUsed?: Record<string, unknown> | null | undefined;
   notes?: string | null | undefined;
 }
 
@@ -236,9 +235,6 @@ export function mapMaintenanceToUpdate(input: UpdateMaintenanceInput): Maintenan
 type _CreateMaintenanceCheck = MustBeTrue<
   AssertTypesMatch<z.infer<typeof CreateMaintenanceInputSchema>, CreateMaintenanceInput>
 >;
-// CONCERN (Task 2): partsUsed uses z.record(z.string(), z.unknown()) in schema vs Json in interface.
-// These are structurally incompatible — Task 2 will replace Json with a Zod-compatible branded type.
 type _UpdateMaintenanceCheck = MustBeTrue<
-  // @ts-expect-error TS2344: Known Json/z.record mismatch — tracked in Task 2
   AssertTypesMatch<z.infer<typeof UpdateMaintenanceInputSchema>, UpdateMaintenanceInput>
 >;

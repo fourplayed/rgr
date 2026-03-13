@@ -2,7 +2,6 @@ import { z } from 'zod';
 import { ScanTypeSchema } from '../enums/ScanEnums';
 import type { ScanType } from '../enums/ScanEnums';
 import type { AssetCategory } from '../enums/AssetEnums';
-import type { Json } from '../database.types';
 import { safeParseEnum } from '../../utils/safeParseEnum';
 import type { AssertTypesMatch, MustBeTrue } from '../typeAssert';
 
@@ -21,7 +20,7 @@ export interface ScanEvent {
   heading: number | null;
   speed: number | null;
   locationDescription: string | null;
-  deviceInfo: Json | null;
+  deviceInfo: Record<string, unknown> | null;
   rawScanData: string | null;
   createdAt: string;
 }
@@ -41,7 +40,7 @@ export interface ScanEventRow {
   heading: number | null;
   speed: number | null;
   location_description: string | null;
-  device_info: Json | null;
+  device_info: Record<string, unknown> | null;
   raw_scan_data: string | null;
   created_at: string;
 }
@@ -69,7 +68,7 @@ export interface CreateScanEventInput {
   heading?: number | null | undefined;
   speed?: number | null | undefined;
   locationDescription?: string | null | undefined;
-  deviceInfo?: Json | null | undefined;
+  deviceInfo?: Record<string, unknown> | null | undefined;
   rawScanData?: string | null | undefined;
 }
 
@@ -129,9 +128,6 @@ export function mapScanEventToInsert(input: CreateScanEventInput): ScanEventInse
 }
 
 // Compile-time schema <-> interface drift detection
-// CONCERN (Task 2): deviceInfo uses z.record(z.string(), z.unknown()) in schema vs Json in interface.
-// These are structurally incompatible — Task 2 will replace Json with a Zod-compatible branded type.
 type _CreateScanEventCheck = MustBeTrue<
-  // @ts-expect-error TS2344: Known Json/z.record mismatch — tracked in Task 2
   AssertTypesMatch<z.infer<typeof CreateScanEventInputSchema>, CreateScanEventInput>
 >;

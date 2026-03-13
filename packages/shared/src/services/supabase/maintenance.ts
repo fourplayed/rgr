@@ -386,9 +386,12 @@ export async function updateMaintenance(
     return { success: false, data: null, error: 'No fields to update' };
   }
 
+  // Cast needed: MaintenanceUpdateRow uses Record<string, unknown>|null for parts_used,
+  // but the generated DB type expects the broader Json type. The mapper is the boundary.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await supabase
     .from('maintenance_records')
-    .update(dbData)
+    .update(dbData as any)
     .eq('id', id)
     .select()
     .single();
