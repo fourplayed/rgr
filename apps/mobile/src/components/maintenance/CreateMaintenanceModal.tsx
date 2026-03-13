@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, StyleSheet, Pressable, Platform, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { View, StyleSheet, Pressable, TouchableOpacity } from 'react-native';
 import { BottomSheetScrollView } from '../common/SheetModal';
 import { AppTextInput } from '../common/AppTextInput';
-import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
+import { DatePickerField } from '../common/DatePickerField';
 import type { MaintenancePriority, CreateMaintenanceInput } from '@rgr/shared';
 import { MaintenancePriorityLabels, formatAssetNumber } from '@rgr/shared';
 import { Button } from '../common/Button';
@@ -69,8 +69,9 @@ export function CreateMaintenanceModal({
   const [priority, setPriority] = useState<MaintenancePriority>('medium');
   const [dueDate, setDueDate] = useState('');
 
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [calendarExpanded, setCalendarExpanded] = useState(false);
+  const today = useMemo(() => new Date(), [visible]);
 
   // Asset selection state (used when no assetId prop is provided)
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
@@ -104,24 +105,17 @@ export function CreateMaintenanceModal({
     if (visible) {
       setTitle(defaultTitle ?? '');
       descriptionRef.current = defaultDescription ?? '';
-      setFormKey(k => k + 1);
+      setFormKey((k) => k + 1);
       setPriority(defaultPriority ?? 'medium');
       setDueDate('');
-      setShowDatePicker(false);
       setError(null);
+      setCalendarExpanded(false);
       setSelectedAssetId(null);
       setSelectedAssetNumber(null);
       setAssetSearch('');
       setShowAssetPicker(false);
     }
   }, [visible, defaultTitle, defaultDescription, defaultPriority]);
-
-  const handleDateChange = useCallback((_event: DateTimePickerEvent, selectedDate?: Date) => {
-    if (Platform.OS === 'android') setShowDatePicker(false);
-    if (selectedDate) {
-      setDueDate(selectedDate.toISOString().slice(0, 10));
-    }
-  }, []);
 
   const handleSubmit = useCallback(
     () =>
@@ -194,7 +188,7 @@ export function CreateMaintenanceModal({
       onExitComplete={onExitComplete}
       noBackdrop={noBackdrop}
       preventDismissWhileBusy={isPending}
-      snapPoint="75%"
+      snapPoint={calendarExpanded ? '90%' : '73%'}
     >
       <View style={sheetLayout.containerTall}>
         <SheetHeader
@@ -334,52 +328,12 @@ export function CreateMaintenanceModal({
           {/* Due Date */}
           <View style={formStyles.inputGroup}>
             <AppText style={formStyles.label}>Due Date *</AppText>
-            {Platform.OS === 'ios' ? (
-              <DateTimePicker
-                value={dueDate ? new Date(dueDate + 'T00:00:00') : new Date()}
-                mode="date"
-                display="compact"
-                minimumDate={new Date()}
-                onChange={handleDateChange}
-                accentColor={colors.electricBlue}
-                style={{ alignSelf: 'flex-start' }}
-              />
-            ) : (
-              <>
-                <Pressable
-                  style={styles.dateField}
-                  onPress={() => setShowDatePicker((prev) => !prev)}
-                  accessibilityRole="button"
-                  accessibilityLabel="Select due date"
-                >
-                  <Ionicons
-                    name="calendar-outline"
-                    size={18}
-                    color={dueDate ? colors.text : colors.textSecondary}
-                  />
-                  <AppText style={[styles.dateFieldText, !dueDate && styles.dateFieldPlaceholder]}>
-                    {dueDate
-                      ? new Date(dueDate + 'T00:00:00').toLocaleDateString(undefined, {
-                          weekday: 'short',
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                        })
-                      : 'Tap to select date'}
-                  </AppText>
-                </Pressable>
-                {showDatePicker && (
-                  <DateTimePicker
-                    value={dueDate ? new Date(dueDate + 'T00:00:00') : new Date()}
-                    mode="date"
-                    display="default"
-                    minimumDate={new Date()}
-                    onChange={handleDateChange}
-                    accentColor={colors.electricBlue}
-                  />
-                )}
-              </>
-            )}
+            <DatePickerField
+              value={dueDate}
+              onChange={setDueDate}
+              minimumDate={today}
+              onExpandedChange={setCalendarExpanded}
+            />
           </View>
 
           {/* Description */}
@@ -389,7 +343,9 @@ export function CreateMaintenanceModal({
               key={formKey}
               style={[formStyles.input, formStyles.textArea]}
               defaultValue={descriptionRef.current}
-              onChangeText={(text) => { descriptionRef.current = text; }}
+              onChangeText={(text) => {
+                descriptionRef.current = text;
+              }}
               placeholder="Describe the maintenance work needed"
               multiline
               numberOfLines={3}
@@ -527,26 +483,6 @@ const styles = StyleSheet.create({
     color: colors.warningText,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-  },
-  dateField: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.base,
-  },
-  dateFieldText: {
-    flex: 1,
-    fontSize: fontSize.base,
-    fontFamily: fonts.regular,
-    color: colors.text,
-  },
-  dateFieldPlaceholder: {
-    color: colors.textSecondary,
   },
   submitButton: {
     width: '100%',

@@ -277,7 +277,7 @@ export function DefectReportDetailModal({
                       <Image
                         source={{ uri: defectPhotoUrl }}
                         style={styles.defectPhoto}
-                        contentFit="cover"
+                        contentFit="contain"
                         transition={200}
                         cachePolicy="memory-disk"
                       />
@@ -458,6 +458,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     overflow: 'hidden',
     aspectRatio: 4 / 3,
+    backgroundColor: colors.surface,
   },
   defectPhoto: {
     flex: 1,

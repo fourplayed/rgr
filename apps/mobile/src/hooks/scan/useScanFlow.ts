@@ -154,7 +154,6 @@ interface UseScanFlowOptions {
 }
 
 const SHEET_EXIT_SAFETY_TIMEOUT = 1500;
-const COMPLETING_SAFETY_TIMEOUT = 5000;
 
 export function useScanFlow({ canMarkMaintenance }: UseScanFlowOptions): UseScanFlowReturn {
   const [state, dispatch] = useReducer(scanFlowReducer, initialScanFlowState);
@@ -455,21 +454,6 @@ export function useScanFlow({ canMarkMaintenance }: UseScanFlowOptions): UseScan
       }
     };
   }, [isAwaitingSheetExit]);
-
-  // ── Safety timeout: auto-RESET if stuck in completing ──
-  useEffect(() => {
-    if (state.phase !== 'completing') return;
-    const timer = setTimeout(() => {
-      if (__DEV__) {
-        console.warn(
-          '[useScanFlow] Safety timeout — stuck in completing phase for 5s, auto-resetting'
-        );
-      }
-      dispatch({ type: 'RESET' });
-      resetScanner();
-    }, COMPLETING_SAFETY_TIMEOUT);
-    return () => clearTimeout(timer);
-  }, [state.phase, resetScanner]);
 
   // ── BackHandler (Android) ──
   useEffect(() => {

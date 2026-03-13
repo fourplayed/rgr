@@ -151,7 +151,6 @@ export function ScanSuccessFlash({
     if (dismissingRef.current) return;
     dismissingRef.current = true;
 
-    // Cancel auto-dismiss if user tapped manually
     // Phase 1 — Scatter rows out (alternating left/right, staggered 80ms)
     const scatterRows = Animated.stagger(
       80,

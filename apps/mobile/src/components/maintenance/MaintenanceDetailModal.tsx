@@ -1,26 +1,30 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import {
-  View,
-  TouchableOpacity,
-  StyleSheet,
-  Animated,
-  Pressable,
-  Platform,
-  Alert} from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Animated, Alert } from 'react-native';
 import { BottomSheetScrollView } from '../common/SheetModal';
 import { AppTextInput } from '../common/AppTextInput';
-import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { DatePickerField } from '../common/DatePickerField';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import type { MaintenancePriority, UpdateMaintenanceInput } from '@rgr/shared';
-import { formatRelativeTime, formatAssetNumber, MaintenancePriorityLabels } from '@rgr/shared';
+import {
+  formatRelativeTime,
+  formatAssetNumber,
+  formatDate,
+  MaintenancePriorityLabels,
+} from '@rgr/shared';
 import { AppText, LoadingDots, AlertSheet, SheetModal } from '../common';
 import { SheetHeader } from '../common/SheetHeader';
 import { Button } from '../common/Button';
 import { FilterChip } from '../common/FilterChip';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
+import {
+  spacing,
+  fontSize,
+  borderRadius,
+  fontFamily as fonts,
+  shadows,
+  lineHeight,
+} from '../../theme/spacing';
 import { formStyles } from '../../theme/formStyles';
 import { sheetLayout } from '../../theme/sheetLayout';
 import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
@@ -35,6 +39,7 @@ import { useAuthStore } from '../../store/authStore';
 import { useScanEventPhotos, useSignedUrl } from '../../hooks/usePhotos';
 import { useUserPermissions } from '../../contexts/UserPermissionsContext';
 import { useScatterExit } from '../../hooks/useScatterExit';
+import { useStaggeredEntrances } from '../../hooks/useStaggeredEntrance';
 import { MaintenanceStatusBadge } from './MaintenanceStatusBadge';
 import { MaintenancePriorityBadge } from './MaintenancePriorityBadge';
 import { MAINTENANCE_STATUS_CONFIG } from './MaintenanceListItem';
@@ -61,7 +66,6 @@ export function MaintenanceDetailModal({
   noBackdrop,
   onExitComplete,
 }: MaintenanceDetailModalProps) {
-  const router = useRouter();
   const { canMarkMaintenance } = useUserPermissions();
   const sheetBottomPadding = useSheetBottomPadding();
   const user = useAuthStore((s) => s.user);
@@ -86,12 +90,20 @@ export function MaintenanceDetailModal({
   // Scatter exit animation
   const { getStyle, scatter, reset: resetScatter, isScattering } = useScatterExit();
 
+  const { getEntryStyle } = useStaggeredEntrances(!isLoading && !!maintenance ? 7 : 0);
+
+  // Compose scatter-exit (opacity + translateX) with entrance (opacity) via multiply
+  const getAnimatedStyle = (index: number) => ({
+    opacity: Animated.multiply(getStyle(index).opacity, getEntryStyle(index).opacity),
+    transform: getStyle(index).transform,
+  });
+
   useEffect(() => {
     if (visible) resetScatter();
   }, [visible, resetScatter]);
 
   const [editingNotes, setEditingNotes] = useState(false);
-  const [notes, setNotes] = useState('');
+  const notesRef = useRef('');
 
   // ── Edit mode state ──
   const [isEditing, setIsEditing] = useState(false);
@@ -99,16 +111,13 @@ export function MaintenanceDetailModal({
   const editDescriptionRef = useRef('');
   const [editPriority, setEditPriority] = useState<MaintenancePriority>('medium');
   const [editDueDate, setEditDueDate] = useState('');
-  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const canEdit = canMarkMaintenance && maintenance?.status === 'scheduled';
 
   // Reset all editing state when the modal switches to a different record or closes.
   useEffect(() => {
     setEditingNotes(false);
-    setNotes('');
     setIsEditing(false);
-    setShowDatePicker(false);
   }, [maintenanceId, visible]);
 
   const handleEnterEditMode = useCallback(() => {
@@ -117,13 +126,11 @@ export function MaintenanceDetailModal({
     editDescriptionRef.current = maintenance.description ?? '';
     setEditPriority(maintenance.priority);
     setEditDueDate(maintenance.dueDate ?? '');
-    setShowDatePicker(false);
     setIsEditing(true);
   }, [maintenance]);
 
   const handleCancelEdit = useCallback(() => {
     setIsEditing(false);
-    setShowDatePicker(false);
   }, []);
 
   const handleSaveEdit = useCallback(async () => {
@@ -143,14 +150,12 @@ export function MaintenanceDetailModal({
     // Nothing changed — just exit
     if (Object.keys(input).length === 0) {
       setIsEditing(false);
-      setShowDatePicker(false);
       return;
     }
 
     try {
       await updateMaintenance({ id: maintenanceId, input });
       setIsEditing(false);
-      setShowDatePicker(false);
     } catch (err: unknown) {
       setAlertSheet({
         visible: true,
@@ -158,21 +163,7 @@ export function MaintenanceDetailModal({
         message: err instanceof Error ? err.message : 'Failed to save changes',
       });
     }
-  }, [
-    maintenanceId,
-    maintenance,
-    editTitle,
-    editPriority,
-    editDueDate,
-    updateMaintenance,
-  ]);
-
-  const handleDateChange = useCallback((_event: DateTimePickerEvent, selectedDate?: Date) => {
-    if (Platform.OS === 'android') setShowDatePicker(false);
-    if (selectedDate) {
-      setEditDueDate(selectedDate.toISOString().slice(0, 10));
-    }
-  }, []);
+  }, [maintenanceId, maintenance, editTitle, editPriority, editDueDate, updateMaintenance]);
 
   // Header action: pencil → enter edit mode (only for scheduled tasks by permitted users)
   const headerAction = useMemo(() => {
@@ -241,7 +232,7 @@ export function MaintenanceDetailModal({
     try {
       await updateMaintenance({
         id: maintenanceId,
-        input: { notes },
+        input: { notes: notesRef.current },
       });
       setEditingNotes(false);
     } catch (err: unknown) {
@@ -251,19 +242,12 @@ export function MaintenanceDetailModal({
         message: err instanceof Error ? err.message : 'Failed to save notes',
       });
     }
-  }, [maintenanceId, notes, updateMaintenance]);
+  }, [maintenanceId, updateMaintenance]);
 
   const handleEditNotes = useCallback(() => {
-    setNotes(maintenance?.notes || '');
+    notesRef.current = maintenance?.notes || '';
     setEditingNotes(true);
   }, [maintenance]);
-
-  const handleNavigateToAsset = useCallback(() => {
-    if (maintenance?.assetId) {
-      onClose();
-      router.push(`/assets/${maintenance.assetId}`);
-    }
-  }, [maintenance, router, onClose]);
 
   const renderStatusActions = () => {
     if (!maintenance) return null;
@@ -287,6 +271,7 @@ export function MaintenanceDetailModal({
             disabled={updateMutation.isPending}
             isLoading={updateMutation.isPending}
             flex
+            style={styles.ctaButton}
           >
             Save
           </Button>
@@ -305,16 +290,16 @@ export function MaintenanceDetailModal({
             disabled={updateStatusMutation.isPending || cancelMutation.isPending || isScattering}
             flex
           >
-            Cancel
+            Dismiss
           </Button>
           <Button
             color={colors.success}
-            icon="checkmark"
             onPress={handleComplete}
             disabled={updateStatusMutation.isPending || cancelMutation.isPending || isScattering}
             flex
+            style={styles.ctaButton}
           >
-            Complete Task
+            Complete
           </Button>
         </View>
       );
@@ -378,7 +363,9 @@ export function MaintenanceDetailModal({
           <AppTextInput
             style={[formStyles.input, formStyles.textArea]}
             defaultValue={editDescriptionRef.current}
-            onChangeText={(text) => { editDescriptionRef.current = text; }}
+            onChangeText={(text) => {
+              editDescriptionRef.current = text;
+            }}
             placeholder="Describe the maintenance work needed"
             multiline
             numberOfLines={3}
@@ -431,52 +418,8 @@ export function MaintenanceDetailModal({
       return (
         <View style={formStyles.inputGroup}>
           <AppText style={formStyles.label}>Due Date</AppText>
-          {Platform.OS === 'ios' ? (
-            <DateTimePicker
-              value={editDueDate ? new Date(editDueDate + 'T00:00:00') : new Date()}
-              mode="date"
-              display="compact"
-              minimumDate={new Date()}
-              onChange={handleDateChange}
-              accentColor={colors.primary}
-              style={{ alignSelf: 'flex-start' }}
-            />
-          ) : (
-            <>
-              <Pressable
-                style={styles.dateField}
-                onPress={() => setShowDatePicker((prev) => !prev)}
-                accessibilityRole="button"
-                accessibilityLabel="Select due date"
-              >
-                <Ionicons
-                  name="calendar-outline"
-                  size={18}
-                  color={editDueDate ? colors.text : colors.textSecondary}
-                />
-                <AppText style={[styles.dateFieldText, !editDueDate && styles.dateFieldPlaceholder]}>
-                  {editDueDate
-                    ? new Date(editDueDate + 'T00:00:00').toLocaleDateString(undefined, {
-                        weekday: 'short',
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                      })
-                    : 'Tap to select date'}
-                </AppText>
-              </Pressable>
-              {showDatePicker && (
-                <DateTimePicker
-                  value={editDueDate ? new Date(editDueDate + 'T00:00:00') : new Date()}
-                  mode="date"
-                  display="default"
-                  minimumDate={new Date()}
-                  onChange={handleDateChange}
-                  accentColor={colors.primary}
-                />
-              )}
-            </>
-          )}
+          {/* Allow past dates: overdue tasks need date re-selection */}
+          <DatePickerField value={editDueDate} onChange={setEditDueDate} />
         </View>
       );
     }
@@ -486,7 +429,7 @@ export function MaintenanceDetailModal({
     return (
       <View style={styles.detailRow}>
         <AppText style={styles.detailLabel}>Due Date</AppText>
-        <AppText style={styles.detailValue}>{maintenance.dueDate}</AppText>
+        <AppText style={styles.detailValue}>{formatDate(maintenance.dueDate)}</AppText>
       </View>
     );
   };
@@ -497,15 +440,21 @@ export function MaintenanceDetailModal({
       onClose={onClose}
       onExitComplete={onExitComplete}
       noBackdrop={noBackdrop}
-      keyboardAware={isEditing}
+      keyboardAware={isEditing || editingNotes}
+      snapPoint={editingNotes || isEditing ? '80%' : ['60%', '85%']}
     >
-      <View style={sheetLayout.containerTall}>
+      <View style={sheetLayout.container}>
         <SheetHeader
           icon="construct"
-          title="Maintenance Task"
+          title="Scheduled Task"
           onClose={onClose}
-          backgroundColor={colors.warning}
+          backgroundColor={colors.maintenanceStatus.scheduled}
           headerAction={headerAction}
+          titleStyle={{
+            textShadowColor: 'rgba(0, 0, 0, 0.3)',
+            textShadowOffset: { width: 0, height: 1 },
+            textShadowRadius: 2,
+          }}
         />
 
         {isLoading || !maintenance ? (
@@ -523,38 +472,44 @@ export function MaintenanceDetailModal({
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps={isEditing ? 'handled' : undefined}
           >
-            {/* Info Row: Asset Number + View Asset */}
-            <Animated.View style={getStyle(0)}>
+            {/* Info Row: Asset Number + Badges */}
+            <Animated.View style={getAnimatedStyle(0)}>
               <View style={styles.infoRow}>
-                {asset?.assetNumber && (
-                  <AppText style={styles.assetNumberText}>{formatAssetNumber(asset.assetNumber)}</AppText>
-                )}
-                {variant === 'full' && !isEditing && (
-                  <TouchableOpacity
-                    style={styles.assetLink}
-                    onPress={handleNavigateToAsset}
-                    activeOpacity={0.7}
-                  >
-                    <AppText style={styles.assetLinkText}>View Asset</AppText>
-                    <Ionicons name="chevron-forward" size={16} color={colors.electricBlue} />
-                  </TouchableOpacity>
+                <View>
+                  <View style={styles.assetIdGroup}>
+                    {asset?.assetNumber && (
+                      <>
+                        <Ionicons name="cube" size={22} color={colors.text} />
+                        <AppText style={styles.assetNumberText}>
+                          {formatAssetNumber(asset.assetNumber)}
+                        </AppText>
+                      </>
+                    )}
+                  </View>
+                  {maintenance.reporterName && (
+                    <AppText style={styles.createdByText} numberOfLines={1}>
+                      {formatRelativeTime(maintenance.createdAt)} by {maintenance.reporterName}
+                    </AppText>
+                  )}
+                </View>
+                {!isEditing && (
+                  <View style={styles.badgeRow}>
+                    <View style={styles.badgeWrap}>
+                      <MaintenanceStatusBadge status={maintenance.status} />
+                    </View>
+                    <View style={styles.badgeWrap}>
+                      <MaintenancePriorityBadge priority={maintenance.priority} />
+                    </View>
+                  </View>
                 )}
               </View>
             </Animated.View>
 
-            {/* Status & Priority Badges (hidden in edit mode) */}
-            {!isEditing && (
-              <Animated.View style={getStyle(1)}>
-                <View style={styles.badgeRow}>
-                  <MaintenanceStatusBadge status={maintenance.status} />
-                  <MaintenancePriorityBadge priority={maintenance.priority} />
-                </View>
-              </Animated.View>
-            )}
+            <View style={styles.divider} />
 
-            {/* Details Section */}
-            <Animated.View style={getStyle(2)}>
-              {isEditing ? (
+            {/* Details */}
+            {isEditing ? (
+              <Animated.View style={getAnimatedStyle(2)}>
                 <View style={styles.sectionGroup}>
                   <AppText style={styles.sectionTitle}>Edit Details</AppText>
                   <View style={styles.sectionCard}>
@@ -564,52 +519,55 @@ export function MaintenanceDetailModal({
                     {renderDueDateSection()}
                   </View>
                 </View>
-              ) : (
-                <View style={styles.sectionGroup}>
-                  <AppText style={styles.sectionTitle}>Details</AppText>
-                  <View style={styles.sectionCard}>
+              </Animated.View>
+            ) : (
+              <>
+                <Animated.View style={getAnimatedStyle(1)}>
+                  <View style={styles.titleDueRow}>
                     {renderTitleSection()}
-                    {renderDescriptionSection()}
-
-                    {maintenance.maintenanceType && (
-                      <View style={styles.detailRow}>
-                        <AppText style={styles.detailLabel}>Type</AppText>
-                        <AppText style={styles.detailValue}>
-                          {maintenance.maintenanceType.replace(/_/g, ' ')}
-                        </AppText>
-                      </View>
-                    )}
-
-                    {maintenance.scheduledDate && (
-                      <View style={styles.detailRow}>
-                        <AppText style={styles.detailLabel}>Scheduled Date</AppText>
-                        <AppText style={styles.detailValue}>{maintenance.scheduledDate}</AppText>
-                      </View>
-                    )}
-
                     {renderDueDateSection()}
-
-                    {maintenance.reporterName && (
-                      <View style={styles.detailRow}>
-                        <AppText style={styles.detailLabel}>Reported By</AppText>
-                        <AppText style={styles.detailValue}>{maintenance.reporterName}</AppText>
-                      </View>
-                    )}
-
-                    {maintenance.assigneeName && (
-                      <View style={styles.detailRow}>
-                        <AppText style={styles.detailLabel}>Assigned To</AppText>
-                        <AppText style={styles.detailValue}>{maintenance.assigneeName}</AppText>
-                      </View>
-                    )}
                   </View>
-                </View>
-              )}
-            </Animated.View>
+                </Animated.View>
+                <Animated.View style={getAnimatedStyle(2)}>
+                  {renderDescriptionSection()}
+                </Animated.View>
+
+                {maintenance.maintenanceType && (
+                  <Animated.View style={getAnimatedStyle(2)}>
+                    <View style={styles.detailRow}>
+                      <AppText style={styles.detailLabel}>Type</AppText>
+                      <AppText style={styles.detailValue}>
+                        {maintenance.maintenanceType.replace(/_/g, ' ')}
+                      </AppText>
+                    </View>
+                  </Animated.View>
+                )}
+
+                {maintenance.scheduledDate && (
+                  <Animated.View style={getAnimatedStyle(2)}>
+                    <View style={styles.detailRow}>
+                      <AppText style={styles.detailLabel}>Scheduled Date</AppText>
+                      <AppText style={styles.detailValue}>
+                        {formatDate(maintenance.scheduledDate)}
+                      </AppText>
+                    </View>
+                  </Animated.View>
+                )}
+
+                {maintenance.assigneeName && (
+                  <Animated.View style={getAnimatedStyle(3)}>
+                    <View style={styles.detailRow}>
+                      <AppText style={styles.detailLabel}>Assigned To</AppText>
+                      <AppText style={styles.detailValue}>{maintenance.assigneeName}</AppText>
+                    </View>
+                  </Animated.View>
+                )}
+              </>
+            )}
 
             {/* Defect Photo Section (hidden in compact mode and edit mode) */}
             {variant === 'full' && defectPhoto && !isEditing && (
-              <Animated.View style={getStyle(3)}>
+              <Animated.View style={getAnimatedStyle(3)}>
                 <View style={styles.sectionGroup}>
                   <AppText style={styles.sectionTitle}>Defect Photo</AppText>
                   <View style={styles.sectionCard}>
@@ -643,62 +601,38 @@ export function MaintenanceDetailModal({
               </Animated.View>
             )}
 
-            {/* Timestamps Section (hidden in compact mode and edit mode) */}
-            {variant === 'full' && !isEditing && (
-              <Animated.View style={getStyle(4)}>
-                <View style={styles.sectionGroup}>
-                  <AppText style={styles.sectionTitle}>Timeline</AppText>
-                  <View style={styles.sectionCard}>
-                    <View style={styles.detailRow}>
-                      <AppText style={styles.detailLabel}>Created</AppText>
-                      <AppText style={styles.detailValue}>
-                        {formatRelativeTime(maintenance.createdAt)}
-                      </AppText>
-                    </View>
-
-                    {maintenance.completedAt && (
-                      <View style={styles.detailRow}>
-                        <AppText style={styles.detailLabel}>Completed</AppText>
-                        <AppText style={styles.detailValue}>
-                          {formatRelativeTime(maintenance.completedAt)}
-                        </AppText>
-                      </View>
-                    )}
-                  </View>
-                </View>
-              </Animated.View>
-            )}
-
             {/* Notes Section (hidden in compact mode and edit mode) */}
             {variant === 'full' && !isEditing && (
-              <Animated.View style={getStyle(5)}>
+              <Animated.View style={getAnimatedStyle(5)}>
                 <View style={styles.sectionGroup}>
-                  <View style={styles.sectionCard}>
-                    <View style={styles.sectionHeader}>
-                      <AppText style={styles.sectionTitle}>Notes</AppText>
-                      {canMarkMaintenance &&
-                        !editingNotes &&
-                        maintenance.status !== 'completed' &&
-                        maintenance.status !== 'cancelled' && (
-                          <TouchableOpacity
-                            onPress={handleEditNotes}
-                            style={styles.iconButton}
-                            accessibilityRole="button"
-                            accessibilityLabel="Edit notes"
-                            accessibilityHint="Double tap to edit maintenance notes"
-                          >
-                            <Ionicons name="pencil" size={18} color={colors.electricBlue} />
-                          </TouchableOpacity>
-                        )}
-                    </View>
-
+                  <View style={styles.notesHeader}>
+                    <AppText style={styles.sectionTitle}>Notes</AppText>
+                    {canMarkMaintenance &&
+                      !editingNotes &&
+                      maintenance.status !== 'completed' &&
+                      maintenance.status !== 'cancelled' && (
+                        <TouchableOpacity
+                          onPress={handleEditNotes}
+                          style={styles.iconButton}
+                          accessibilityRole="button"
+                          accessibilityLabel="Edit notes"
+                          accessibilityHint="Double tap to edit maintenance notes"
+                        >
+                          <Ionicons name="pencil" size={16} color={colors.electricBlue} />
+                        </TouchableOpacity>
+                      )}
+                  </View>
+                  <View style={[styles.sectionCard, editingNotes && styles.notesCardEditing]}>
                     {editingNotes ? (
-                      <View style={styles.notesEdit}>
+                      <>
                         <AppTextInput
                           style={styles.notesInput}
-                          value={notes}
-                          onChangeText={setNotes}
+                          defaultValue={notesRef.current}
+                          onChangeText={(text) => {
+                            notesRef.current = text;
+                          }}
                           placeholder="Add notes..."
+                          placeholderTextColor={colors.textDisabled}
                           multiline
                           numberOfLines={4}
                           textAlignVertical="top"
@@ -708,6 +642,7 @@ export function MaintenanceDetailModal({
                             Cancel
                           </Button>
                           <Button
+                            color={colors.electricBlue}
                             onPress={handleSaveNotes}
                             disabled={updateMutation.isPending}
                             isLoading={updateMutation.isPending}
@@ -715,16 +650,18 @@ export function MaintenanceDetailModal({
                             Save
                           </Button>
                         </View>
-                      </View>
+                      </>
                     ) : (
-                      <AppText style={styles.notesText}>{maintenance.notes || 'No notes'}</AppText>
+                      <AppText style={styles.notesText}>
+                        {maintenance.notes || 'No notes yet'}
+                      </AppText>
                     )}
                   </View>
                 </View>
               </Animated.View>
             )}
             {/* Status Actions */}
-            <Animated.View style={getStyle(6)}>{renderStatusActions()}</Animated.View>
+            <Animated.View style={getAnimatedStyle(6)}>{renderStatusActions()}</Animated.View>
           </BottomSheetScrollView>
         )}
       </View>
@@ -758,19 +695,8 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   badgeRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  assetLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     gap: spacing.xs,
-  },
-  assetLinkText: {
-    fontSize: fontSize.sm,
-    fontFamily: fonts.bold,
-    color: colors.electricBlue,
-    textTransform: 'uppercase',
   },
   sectionGroup: {
     gap: spacing.sm,
@@ -791,14 +717,14 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize.sm,
     fontFamily: fonts.bold,
-    color: colors.text,
+    color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   detailRow: {},
   detailLabel: {
     fontSize: fontSize.sm,
-    fontFamily: fonts.regular,
+    fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -814,45 +740,28 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: spacing.sm,
   },
-  dateField: {
+  notesHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.base,
-  },
-  dateFieldText: {
-    flex: 1,
-    fontSize: fontSize.base,
-    fontFamily: fonts.regular,
-    color: colors.text,
-  },
-  dateFieldPlaceholder: {
-    color: colors.textSecondary,
   },
   notesText: {
-    fontSize: fontSize.base,
-    fontFamily: fonts.bold,
-    color: colors.text,
+    fontSize: fontSize.sm,
+    fontFamily: fonts.regular,
+    color: colors.textSecondary,
+    lineHeight: lineHeight.body,
   },
-  notesEdit: {
-    marginTop: spacing.sm,
+  notesCardEditing: {
+    borderColor: colors.electricBlue,
+    borderLeftWidth: 3,
+    backgroundColor: 'rgba(0, 168, 255, 0.03)',
   },
   notesInput: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    fontSize: fontSize.base,
+    fontSize: fontSize.sm,
     fontFamily: fonts.regular,
     color: colors.text,
-    minHeight: 100,
+    minHeight: 96,
+    padding: 0,
   },
   notesButtonRow: {
     flexDirection: 'row',
@@ -907,5 +816,31 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 1,
+  },
+  ctaButton: {
+    ...shadows.lg,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.border,
+  },
+  titleDueRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  createdByText: {
+    fontSize: fontSize.sm,
+    fontFamily: fonts.regular,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
+  },
+  badgeWrap: {
+    alignSelf: 'flex-end',
+  },
+  assetIdGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
   },
 });

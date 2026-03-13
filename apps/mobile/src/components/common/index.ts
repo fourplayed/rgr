@@ -23,3 +23,5 @@ export { EmptyState } from './EmptyState';
 export { PressableCard } from './PressableCard';
 export { FilterChip } from './FilterChip';
 export { AppTextInput } from './AppTextInput';
+export { DatePickerField } from './DatePickerField';
+export type { DatePickerFieldProps } from './DatePickerField';

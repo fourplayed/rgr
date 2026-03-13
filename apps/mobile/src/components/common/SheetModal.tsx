@@ -38,8 +38,8 @@ interface SheetModalProps {
    *  Dynamic sizing + text input creates a layout measurement feedback loop
    *  (each keystroke triggers re-measurement → disrupts native input state). */
   compact?: boolean | undefined;
-  /** Fixed snap point override (e.g. '55%'). Ignored when `compact` is true. */
-  snapPoint?: string | undefined;
+  /** Fixed snap point override (e.g. '55%' or ['50%', '90%']). Ignored when `compact` is true. */
+  snapPoint?: string | string[] | undefined;
 }
 
 /**
@@ -224,7 +224,14 @@ export function SheetModal({
       ref={ref}
       {...(compact
         ? { enableDynamicSizing: true, maxDynamicContentSize: MAX_DYNAMIC_HEIGHT }
-        : { snapPoints: snapPoint ? [snapPoint] : SNAP_POINTS, enableDynamicSizing: false })}
+        : {
+            snapPoints: snapPoint
+              ? Array.isArray(snapPoint)
+                ? snapPoint
+                : [snapPoint]
+              : SNAP_POINTS,
+            enableDynamicSizing: false,
+          })}
       enablePanDownToClose={!preventDismissWhileBusy}
       onDismiss={handleDismiss}
       {...(!noBackdrop ? { backdropComponent: renderBackdrop } : {})}
