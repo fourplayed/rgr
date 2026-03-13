@@ -1,7 +1,6 @@
 import { getSupabaseClient, getSupabaseConfig } from './client';
 import type { ServiceResult, PaginatedResult } from '../../types';
-import type { UserRole } from '../../types/enums';
-import type { AssetStatus } from '../../types/enums';
+import type { UserRole, AssetStatus, PhotoType } from '../../types/enums';
 import type { MaintenanceStatus } from '../../types/enums/MaintenanceEnums';
 import type { DefectStatus } from '../../types/enums/DefectEnums';
 import { getFleetStatistics } from './fleet';
@@ -532,7 +531,7 @@ interface PhotoJoinRow {
   id: string;
   storage_path: string;
   thumbnail_path: string | null;
-  photo_type: string;
+  photo_type: PhotoType;
   created_at: string;
   asset: { asset_number: string } | null;
 }
@@ -715,7 +714,7 @@ export interface AdminPhotoListItem {
   id: string;
   storagePath: string;
   thumbnailPath: string | null;
-  photoType: string;
+  photoType: PhotoType;
   createdAt: string;
   assetNumber: string | null;
 }

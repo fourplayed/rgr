@@ -1,5 +1,6 @@
 import { getSupabaseClient } from './client';
 import type { ServiceResult } from '../../types';
+import type { UserRole } from '../../types/enums';
 import type { PushToken, PushTokenRow, CreatePushTokenInput } from '../../types/entities/pushToken';
 import { mapRowToPushToken, CreatePushTokenInputSchema } from '../../types/entities/pushToken';
 import { assertQueryResult } from '../../utils';
@@ -76,14 +77,14 @@ export async function deletePushToken(
  * not profiles directly (no FK for Supabase join).
  * Requires service_role access (used by edge functions).
  */
-export async function getPushTokensForRole(role: string): Promise<ServiceResult<PushToken[]>> {
+export async function getPushTokensForRole(role: UserRole): Promise<ServiceResult<PushToken[]>> {
   const supabase = getSupabaseClient();
 
   // Step 1: Get user IDs for the given role
   const { data: profileRows, error: profileError } = await supabase
     .from('profiles')
     .select('id')
-    .eq('role', role as 'driver' | 'mechanic' | 'manager' | 'superuser')
+    .eq('role', role)
     .eq('is_active', true);
 
   if (profileError) {

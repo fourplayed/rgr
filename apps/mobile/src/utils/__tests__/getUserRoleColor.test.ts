@@ -16,8 +16,4 @@ describe('getUserRoleColor', () => {
   it('returns purple for superuser', () => {
     expect(getUserRoleColor('superuser')).toBe('#A855F7');
   });
-
-  it('returns undefined for an unknown role', () => {
-    expect(getUserRoleColor('admin')).toBeUndefined();
-  });
 });
