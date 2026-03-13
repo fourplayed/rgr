@@ -9,6 +9,7 @@ import type {
   DefectReportListItem,
 } from '../../types/entities';
 import type { DefectStatus } from '../../types/enums';
+import { DefectStatusSchema } from '../../types/enums/DefectEnums';
 import type { MaintenancePriority, MaintenanceStatus } from '../../types/enums';
 import {
   mapRowToDefectReport,
@@ -234,7 +235,7 @@ export async function updateDefectReportStatus(
     return { success: false, data: null, error: 'Defect report not found' };
   }
 
-  const currentStatus = current.status as DefectStatus;
+  const currentStatus = safeParseEnum(DefectStatusSchema, current.status, 'reported');
 
   if (!isValidDefectTransition(currentStatus, newStatus)) {
     return {

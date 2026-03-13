@@ -313,7 +313,7 @@ export async function updateMaintenanceStatus(
     return { success: false, data: null, error: 'Maintenance record not found' };
   }
 
-  const currentStatus = current.status as MaintenanceStatus;
+  const currentStatus = safeParseEnum(MaintenanceStatusSchema, current.status, 'scheduled');
 
   if (!isValidTransition(currentStatus, newStatus)) {
     return {
