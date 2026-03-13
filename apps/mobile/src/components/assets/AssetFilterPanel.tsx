@@ -1,6 +1,8 @@
-import React, { useRef, useEffect, useCallback, useMemo, memo } from 'react';
-import { View, TouchableOpacity, StyleSheet, Animated, LayoutAnimation } from 'react-native';
+import React, { useCallback, useMemo, memo } from 'react';
+import { View, TouchableOpacity, ScrollView, TextInput, StyleSheet } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import type { AssetStatus, AssetCategory, Depot } from '@rgr/shared';
 import {
   AssetStatusLabels,
@@ -12,14 +14,23 @@ import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, shadows, fontFamily as fonts } from '../../theme/spacing';
 import { DEPOT_ORDER, getDepotColor, getDepotTextColor } from '../../utils/depotDisplay';
 import { FilterChip } from '../common/FilterChip';
-import '../../utils/enableLayoutAnimation';
 import { AppText } from '../common';
 
 // Category-specific colors for Asset Type filter chips
 const CATEGORY_COLORS: Record<AssetCategory, string> = {
   trailer: '#8B5CF6', // Violet
-  dolly: colors.categoryDolly, // Cyan (WCAG AA compliant with white text)
+  dolly: colors.categoryDolly, // Cyan
 };
+
+// Section accent colors (left border strip)
+const SECTION_ACCENTS = {
+  assetType: '#8B5CF6',
+  subType: colors.electricBlue,
+  location: colors.electricBlue,
+  status: colors.status.maintenance,
+};
+
+const SPRING_CONFIG = { damping: 22, stiffness: 220 };
 
 interface AssetFilterPanelProps {
   statuses: AssetStatus[];
@@ -33,6 +44,9 @@ interface AssetFilterPanelProps {
   onDepotChange: (depotIds: string[]) => void;
   isExpanded: boolean;
   onToggleExpanded: () => void;
+  searchValue: string;
+  onSearchChange: (text: string) => void;
+  onClearAll: () => void;
 }
 
 export const AssetFilterPanel = memo(function AssetFilterPanel({
@@ -47,21 +61,24 @@ export const AssetFilterPanel = memo(function AssetFilterPanel({
   onDepotChange,
   isExpanded,
   onToggleExpanded,
+  searchValue,
+  onSearchChange,
+  onClearAll,
 }: AssetFilterPanelProps) {
-  const rotateAnim = useRef(new Animated.Value(isExpanded ? 1 : 0)).current;
+  // ── Animations ──
+  const expandProgress = useSharedValue(isExpanded ? 1 : 0);
 
-  useEffect(() => {
-    const anim = Animated.timing(rotateAnim, {
-      toValue: isExpanded ? 1 : 0,
-      duration: 200,
-      useNativeDriver: true,
-    });
-    anim.start();
-    return () => anim.stop();
-  }, [isExpanded, rotateAnim]);
+  React.useEffect(() => {
+    expandProgress.value = withSpring(isExpanded ? 1 : 0, SPRING_CONFIG);
+  }, [isExpanded, expandProgress]);
 
+  const chevronStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${expandProgress.value * 180}deg` }],
+  }));
+
+  // ── Toggle callbacks ──
   const handleToggle = useCallback(() => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    Haptics.selectionAsync();
     onToggleExpanded();
   }, [onToggleExpanded]);
 
@@ -81,7 +98,6 @@ export const AssetFilterPanel = memo(function AssetFilterPanel({
       if (categories.includes(category)) {
         const newCategories = categories.filter((c) => c !== category);
         onCategoryChange(newCategories);
-        // Clear subtypes that belong to the deselected category
         const validSubtypes = new Set(
           newCategories.flatMap((c) => [...AssetSubtypesByCategory[c]])
         );
@@ -92,7 +108,6 @@ export const AssetFilterPanel = memo(function AssetFilterPanel({
       } else {
         const newCategories = [...categories, category];
         onCategoryChange(newCategories);
-        // Clear subtypes that don't belong to any selected category
         const validSubtypes = new Set(
           newCategories.flatMap((c) => [...AssetSubtypesByCategory[c]])
         );
@@ -127,7 +142,7 @@ export const AssetFilterPanel = memo(function AssetFilterPanel({
     [depotIds, onDepotChange]
   );
 
-  // Sort depots by display order (memoized to avoid re-sorting on every render)
+  // ── Derived data ──
   const sortedDepots = useMemo(
     () =>
       [...depots].sort((a, b) => {
@@ -140,137 +155,225 @@ export const AssetFilterPanel = memo(function AssetFilterPanel({
     [depots]
   );
 
-  // Count active filters
   const activeFilterCount = statuses.length + categories.length + subtypes.length + depotIds.length;
 
-  // Get available subtypes based on selected categories
   const selectedCategory = categories.length === 1 ? categories[0] : null;
   const availableSubtypes: readonly string[] = selectedCategory
     ? AssetSubtypesByCategory[selectedCategory]
     : [];
 
-  const chevronRotate = rotateAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '180deg'],
-  });
+  // Build active filter descriptors for the summary strip
+  const activeFilters = useMemo(() => {
+    const items: { key: string; label: string; color: string; onRemove: () => void }[] = [];
+
+    categories.forEach((c) =>
+      items.push({
+        key: `cat-${c}`,
+        label: AssetCategoryLabels[c],
+        color: CATEGORY_COLORS[c],
+        onRemove: () => toggleCategory(c),
+      })
+    );
+    subtypes.forEach((s) =>
+      items.push({
+        key: `sub-${s}`,
+        label: s,
+        color: colors.electricBlue,
+        onRemove: () => toggleSubtype(s),
+      })
+    );
+    depotIds.forEach((id) => {
+      const depot = depots.find((d) => d.id === id);
+      if (!depot) return;
+      items.push({
+        key: `dep-${id}`,
+        label: depot.name,
+        color: getDepotColor(depot),
+        onRemove: () => toggleDepot(id),
+      });
+    });
+    statuses.forEach((s) =>
+      items.push({
+        key: `stat-${s}`,
+        label: AssetStatusLabels[s],
+        color: AssetStatusColors[s],
+        onRemove: () => toggleStatus(s),
+      })
+    );
+
+    return items;
+  }, [
+    categories,
+    subtypes,
+    depotIds,
+    statuses,
+    depots,
+    toggleCategory,
+    toggleSubtype,
+    toggleDepot,
+    toggleStatus,
+  ]);
 
   return (
     <View style={styles.wrapper}>
-      {/* Header - Uncontained */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <AppText style={styles.headerLabel}>Filters</AppText>
-          {activeFilterCount > 0 && !isExpanded && (
-            <View style={styles.countBadge}>
-              <AppText style={styles.countBadgeText}>{activeFilterCount}</AppText>
-            </View>
-          )}
-        </View>
+      {/* ── Zone 1: Unified Search Row ── */}
+      <View style={styles.searchRow}>
+        <Ionicons name="search" size={18} color={colors.textSecondary} />
+        <TextInput
+          style={[styles.searchInput, !searchValue && styles.searchInputPlaceholder]}
+          placeholder="Search by Asset ID"
+          placeholderTextColor={colors.textDisabled}
+          value={searchValue}
+          onChangeText={onSearchChange}
+          autoCapitalize="none"
+          autoCorrect={false}
+          accessibilityRole="search"
+          accessibilityLabel="Search assets"
+        />
         <TouchableOpacity
-          style={styles.chevronButton}
+          style={[styles.filterToggle, isExpanded && styles.filterToggleActive]}
           onPress={handleToggle}
           activeOpacity={0.7}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           accessibilityRole="button"
           accessibilityLabel={`${isExpanded ? 'Collapse' : 'Expand'} asset filters`}
           accessibilityState={{ expanded: isExpanded }}
         >
-          <Animated.View style={{ transform: [{ rotate: chevronRotate }] }}>
-            <Ionicons name="chevron-down" size={20} color={colors.text} />
+          <Animated.View style={chevronStyle}>
+            <Ionicons
+              name="options"
+              size={18}
+              color={isExpanded ? colors.textInverse : colors.text}
+            />
           </Animated.View>
+          {activeFilterCount > 0 && !isExpanded && (
+            <View style={styles.countDot}>
+              <AppText style={styles.countDotText}>{activeFilterCount}</AppText>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
 
-      {/* Expandable Content */}
-      {isExpanded && (
-        <View style={styles.container}>
-          {/* Asset Type Section */}
-          <View style={styles.filterSection}>
-            <AppText style={styles.sectionLabel}>Asset Type</AppText>
-            <View style={styles.chipsContainer}>
-              {(Object.keys(AssetCategoryLabels) as AssetCategory[]).map((category) => (
-                <FilterChip
-                  key={category}
-                  label={AssetCategoryLabels[category]}
-                  isSelected={categories.includes(category)}
-                  onPress={() => toggleCategory(category)}
-                  selectedColor={CATEGORY_COLORS[category]}
-                />
-              ))}
-            </View>
-          </View>
+      {/* ── Zone 2: Active Filter Strip ── */}
+      {activeFilterCount > 0 && !isExpanded && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.activeStrip}
+          contentContainerStyle={styles.activeStripContent}
+        >
+          {activeFilters.map((f) => (
+            <FilterChip
+              key={f.key}
+              label={f.label}
+              isSelected
+              selectedColor={f.color}
+              onPress={f.onRemove}
+              onRemove={f.onRemove}
+              compact
+            />
+          ))}
+          <TouchableOpacity
+            style={styles.clearAllChip}
+            onPress={onClearAll}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Clear all filters"
+          >
+            <AppText style={styles.clearAllText}>Clear all</AppText>
+          </TouchableOpacity>
+        </ScrollView>
+      )}
 
-          {/* Sub-Type Section (show when Asset Type selected) */}
-          {availableSubtypes.length > 0 && (
-            <View style={styles.filterSection}>
-              <AppText style={styles.sectionLabel}>Sub-Type</AppText>
+      {/* ── Zone 3: Expanded Filter Panel ── */}
+      {isExpanded && (
+        <View style={styles.expandedPanel}>
+          {/* Asset Type */}
+          <View style={styles.filterSection}>
+            <View style={[styles.sectionAccent, { borderLeftColor: SECTION_ACCENTS.assetType }]}>
+              <AppText style={styles.sectionLabel}>Asset Type</AppText>
               <View style={styles.chipsContainer}>
-                {availableSubtypes.map((subtype) => (
+                {(Object.keys(AssetCategoryLabels) as AssetCategory[]).map((category) => (
                   <FilterChip
-                    key={subtype}
-                    label={subtype}
-                    isSelected={subtypes.includes(subtype)}
-                    onPress={() => toggleSubtype(subtype)}
+                    key={category}
+                    label={AssetCategoryLabels[category]}
+                    isSelected={categories.includes(category)}
+                    onPress={() => toggleCategory(category)}
+                    selectedColor={CATEGORY_COLORS[category]}
                   />
                 ))}
               </View>
             </View>
+          </View>
+
+          {/* Sub-Type (conditional) */}
+          {availableSubtypes.length > 0 && (
+            <View style={styles.filterSection}>
+              <View style={[styles.sectionAccent, { borderLeftColor: SECTION_ACCENTS.subType }]}>
+                <AppText style={styles.sectionLabel}>Sub-Type</AppText>
+                <View style={styles.chipsContainer}>
+                  {availableSubtypes.map((subtype) => (
+                    <FilterChip
+                      key={subtype}
+                      label={subtype}
+                      isSelected={subtypes.includes(subtype)}
+                      onPress={() => toggleSubtype(subtype)}
+                    />
+                  ))}
+                </View>
+              </View>
+            </View>
           )}
 
-          {/* Location Section */}
+          {/* Location */}
           <View style={styles.filterSection}>
-            <AppText style={styles.sectionLabel}>Location</AppText>
-            <View style={styles.chipsContainer}>
-              {sortedDepots.map((depot) => {
-                const isSelected = depotIds.includes(depot.id);
-                const chipColor = getDepotColor(depot);
-                return (
-                  <TouchableOpacity
+            <View style={[styles.sectionAccent, { borderLeftColor: SECTION_ACCENTS.location }]}>
+              <AppText style={styles.sectionLabel}>Location</AppText>
+              <View style={styles.chipsContainer}>
+                {sortedDepots.map((depot) => (
+                  <FilterChip
                     key={depot.id}
-                    style={[
-                      styles.chip,
-                      {
-                        backgroundColor: isSelected ? chipColor : colors.surface,
-                        borderColor: isSelected ? 'transparent' : colors.border,
-                      },
-                    ]}
+                    label={depot.name}
+                    isSelected={depotIds.includes(depot.id)}
                     onPress={() => toggleDepot(depot.id)}
-                    activeOpacity={0.7}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Filter by ${depot.name}`}
-                    accessibilityState={{ selected: isSelected }}
-                  >
-                    <AppText
-                      style={[
-                        styles.chipText,
-                        {
-                          color: isSelected ? getDepotTextColor(depot) : colors.text,
-                        },
-                      ]}
-                    >
-                      {depot.name}
-                    </AppText>
-                  </TouchableOpacity>
-                );
-              })}
+                    selectedColor={getDepotColor(depot)}
+                  />
+                ))}
+              </View>
             </View>
           </View>
 
-          {/* Service Status Section */}
+          {/* Service Status */}
           <View style={styles.filterSectionLast}>
-            <AppText style={styles.sectionLabel}>Service Status</AppText>
-            <View style={styles.chipsContainer}>
-              {(Object.keys(AssetStatusLabels) as AssetStatus[]).map((status) => (
-                <FilterChip
-                  key={status}
-                  label={AssetStatusLabels[status]}
-                  isSelected={statuses.includes(status)}
-                  onPress={() => toggleStatus(status)}
-                  selectedColor={AssetStatusColors[status]}
-                />
-              ))}
+            <View style={[styles.sectionAccent, { borderLeftColor: SECTION_ACCENTS.status }]}>
+              <AppText style={styles.sectionLabel}>Service Status</AppText>
+              <View style={styles.chipsContainer}>
+                {(Object.keys(AssetStatusLabels) as AssetStatus[]).map((status) => (
+                  <FilterChip
+                    key={status}
+                    label={AssetStatusLabels[status]}
+                    isSelected={statuses.includes(status)}
+                    onPress={() => toggleStatus(status)}
+                    selectedColor={AssetStatusColors[status]}
+                  />
+                ))}
+              </View>
             </View>
           </View>
+
+          {/* Clear all footer */}
+          {activeFilterCount > 0 && (
+            <TouchableOpacity
+              style={styles.clearAllFooter}
+              onPress={onClearAll}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Clear all filters"
+            >
+              <Ionicons name="close-circle-outline" size={14} color={colors.electricBlue} />
+              <AppText style={styles.clearAllFooterText}>Clear all filters</AppText>
+            </TouchableOpacity>
+          )}
         </View>
       )}
     </View>
@@ -280,56 +383,104 @@ export const AssetFilterPanel = memo(function AssetFilterPanel({
 const styles = StyleSheet.create({
   wrapper: {
     marginHorizontal: spacing.base,
+    marginTop: spacing.md,
     marginBottom: spacing.md,
   },
-  container: {
-    paddingTop: spacing.sm,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  chevronButton: {
-    backgroundColor: colors.background,
-    borderRadius: 14,
-    width: 28,
-    height: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...shadows.sm,
-  },
-  headerLeft: {
+
+  // ── Zone 1: Search Row ──
+  searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.md,
+    paddingLeft: spacing.base,
+    paddingRight: spacing.xs,
     gap: spacing.sm,
   },
-  headerLabel: {
-    fontSize: fontSize.sm,
-    fontFamily: fonts.bold,
+  searchInput: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    fontSize: fontSize.base,
+    fontFamily: fonts.regular,
     color: colors.text,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
   },
-  countBadge: {
-    backgroundColor: colors.electricBlue,
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
-    justifyContent: 'center',
+  searchInputPlaceholder: {
+    fontFamily: fonts.italic,
+  },
+  filterToggle: {
+    width: 36,
+    height: 36,
+    borderRadius: borderRadius.base,
     alignItems: 'center',
-    paddingHorizontal: 6,
+    justifyContent: 'center',
+    backgroundColor: colors.chrome,
   },
-  countBadgeText: {
-    fontSize: fontSize.xs,
+  filterToggleActive: {
+    backgroundColor: colors.electricBlue,
+  },
+  countDot: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    backgroundColor: colors.electricBlue,
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  countDotText: {
+    fontSize: fontSize.micro,
     fontFamily: fonts.bold,
     color: colors.textInverse,
   },
+
+  // ── Zone 2: Active Strip ──
+  activeStrip: {
+    marginTop: spacing.sm,
+  },
+  activeStripContent: {
+    gap: spacing.xs,
+    paddingRight: spacing.base,
+  },
+  clearAllChip: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: colors.electricBlue,
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+  },
+  clearAllText: {
+    fontSize: fontSize.xxs,
+    fontFamily: fonts.bold,
+    color: colors.electricBlue,
+    textTransform: 'uppercase',
+  },
+
+  // ── Zone 3: Expanded Panel ──
+  expandedPanel: {
+    marginTop: spacing.md,
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.base,
+    ...shadows.sm,
+  },
   filterSection: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.base,
   },
   filterSectionLast: {
     marginBottom: 0,
+  },
+  sectionAccent: {
+    borderLeftWidth: 2,
+    paddingLeft: spacing.md,
   },
   sectionLabel: {
     fontSize: fontSize.xs,
@@ -344,16 +495,20 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: spacing.xs,
   },
-  // Depot chips use inline rendering with custom text colors per-depot
-  chip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.full,
-    borderWidth: 1,
+  clearAllFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.base,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
   },
-  chipText: {
+  clearAllFooterText: {
     fontSize: fontSize.xs,
     fontFamily: fonts.bold,
+    color: colors.electricBlue,
     textTransform: 'uppercase',
   },
 });

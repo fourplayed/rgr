@@ -163,7 +163,7 @@ export function DepotFormSheet({
 
           {error && <AppText style={styles.errorText}>{error}</AppText>}
 
-          <View style={formStyles.buttonRow}>
+          <View style={[formStyles.buttonRow, { marginTop: spacing.lg }]}>
             <Button variant="secondary" onPress={onClose} disabled={isLoading} flex>
               Cancel
             </Button>

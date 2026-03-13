@@ -27,7 +27,9 @@ function ToggleRow({ title, subtitle, value, onValueChange, disabled }: ToggleRo
   return (
     <View style={[styles.toggleRow, disabled && styles.toggleRowDisabled]}>
       <View style={styles.toggleContent}>
-        <AppText style={[styles.toggleTitle, disabled && styles.toggleTitleDisabled]}>{title}</AppText>
+        <AppText style={[styles.toggleTitle, disabled && styles.toggleTitleDisabled]}>
+          {title}
+        </AppText>
         <AppText style={styles.toggleSubtitle}>{subtitle}</AppText>
       </View>
       <Switch
@@ -104,9 +106,11 @@ export function NotificationsModal({ visible, onClose }: NotificationsModalProps
               disabled={isPushDisabled}
             />
           </View>
-          <Button onPress={onClose} style={{ alignSelf: 'stretch' }}>
-            Done
-          </Button>
+          <View style={{ marginTop: spacing.lg }}>
+            <Button onPress={onClose} style={{ alignSelf: 'stretch' }}>
+              Done
+            </Button>
+          </View>
         </BottomSheetScrollView>
       </View>
     </SheetModal>

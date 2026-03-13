@@ -2,11 +2,11 @@ import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   FlatList,
-  TextInput,
   StyleSheet,
   RefreshControl,
   TouchableOpacity,
-  SafeAreaView} from 'react-native';
+  SafeAreaView,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LoadingDots } from '../../../src/components/common/LoadingDots';
 import { RefreshLoadingDots } from '../../../src/components/common/RefreshLoadingDots';
@@ -27,6 +27,13 @@ import { AssetFilterPanel } from '../../../src/components/assets/AssetFilterPane
 import { colors } from '../../../src/theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../../src/theme/spacing';
 import { AppText } from '../../../src/components/common';
+
+const EMPTY_FILTERS: AssetFilters = {
+  statuses: [],
+  categories: [],
+  subtypes: [],
+  depotIds: [],
+};
 
 /**
  * Fixed height for FlatList optimization (getItemLayout)
@@ -66,8 +73,11 @@ export default function AssetListScreen() {
   const { canAccessAdmin } = useUserPermissions();
   const { modal, closeModal, transitionTo, isTransitioning, handleExitComplete } =
     useModalTransition<ModalState>({ type: 'none' });
-  const { backdropOpacity, showBackdrop, mounted: backdropMounted } =
-    usePersistentBackdrop(modal.type !== 'none' || isTransitioning);
+  const {
+    backdropOpacity,
+    showBackdrop,
+    mounted: backdropMounted,
+  } = usePersistentBackdrop(modal.type !== 'none' || isTransitioning);
 
   const handleOpenCreate = useCallback(() => {
     transitionTo({ type: 'createAsset' });
@@ -76,7 +86,7 @@ export default function AssetListScreen() {
   // Apply status filter from route params (e.g. navigating from dashboard stat card)
   useEffect(() => {
     if (status && ['serviced', 'maintenance', 'out_of_service'].includes(status)) {
-      setFilters(prev => ({ ...prev, statuses: [status as AssetStatus] }));
+      setFilters((prev) => ({ ...prev, statuses: [status as AssetStatus] }));
       router.setParams({ status: undefined });
     }
   }, [status, router]);
@@ -158,9 +168,16 @@ export default function AssetListScreen() {
     setFilters((prev) => ({ ...prev, depotIds }));
   }, []);
 
-  const handleAssetPress = useCallback((asset: AssetWithRelations) => {
-    router.push(`/(tabs)/assets/${asset.id}`);
-  }, [router]);
+  const handleClearAll = useCallback(() => {
+    setFilters(EMPTY_FILTERS);
+  }, []);
+
+  const handleAssetPress = useCallback(
+    (asset: AssetWithRelations) => {
+      router.push(`/(tabs)/assets/${asset.id}`);
+    },
+    [router]
+  );
 
   // Memoized toggle callback
   const handleToggleExpanded = useCallback(() => {
@@ -168,16 +185,22 @@ export default function AssetListScreen() {
   }, []);
 
   // Memoized getItemLayout for FlatList optimization
-  const getItemLayout = useCallback((_: unknown, index: number) => ({
-    length: ASSET_ITEM_HEIGHT,
-    offset: ASSET_ITEM_HEIGHT * index,
-    index,
-  }), []);
+  const getItemLayout = useCallback(
+    (_: unknown, index: number) => ({
+      length: ASSET_ITEM_HEIGHT,
+      offset: ASSET_ITEM_HEIGHT * index,
+      index,
+    }),
+    []
+  );
 
   // Memoized renderItem for FlatList - critical for list performance
-  const renderAssetItem = useCallback(({ item }: { item: AssetWithRelations }) => (
-    <AssetListItem asset={item} onPress={handleAssetPress} depotLookup={depotLookup} />
-  ), [handleAssetPress, depotLookup]);
+  const renderAssetItem = useCallback(
+    ({ item }: { item: AssetWithRelations }) => (
+      <AssetListItem asset={item} onPress={handleAssetPress} depotLookup={depotLookup} />
+    ),
+    [handleAssetPress, depotLookup]
+  );
 
   return (
     <View style={styles.container}>
@@ -185,103 +208,90 @@ export default function AssetListScreen() {
         <ScreenHeader
           title="Fleet Assets"
           compact
-          rightAction={canAccessAdmin ? (
+          rightAction={
+            canAccessAdmin ? (
+              <TouchableOpacity
+                style={styles.addLink}
+                onPress={handleOpenCreate}
+                activeOpacity={0.6}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel="Create new asset"
+                accessibilityHint="Double tap to add a new fleet asset"
+              >
+                <Ionicons name="add-circle-outline" size={16} color={colors.electricBlue} />
+                <AppText style={styles.addLinkText}>New Asset</AppText>
+              </TouchableOpacity>
+            ) : undefined
+          }
+        />
+
+        <AssetFilterPanel
+          statuses={filters.statuses}
+          categories={filters.categories}
+          subtypes={filters.subtypes}
+          depotIds={filters.depotIds}
+          depots={depots}
+          onStatusChange={handleStatusChange}
+          onCategoryChange={handleCategoryChange}
+          onSubtypeChange={handleSubtypeChange}
+          onDepotChange={handleDepotChange}
+          isExpanded={isFilterExpanded}
+          onToggleExpanded={handleToggleExpanded}
+          searchValue={searchInput}
+          onSearchChange={setSearchInput}
+          onClearAll={handleClearAll}
+        />
+
+        {(isLoading || isDepotsLoading) && !isRefetching ? (
+          <View style={styles.centerContent}>
+            <LoadingDots color={colors.textSecondary} size={12} />
+          </View>
+        ) : error ? (
+          <View style={styles.centerContent}>
+            <AppText style={styles.errorText}>Failed to load assets</AppText>
             <TouchableOpacity
-              style={styles.addLink}
-              onPress={handleOpenCreate}
-              activeOpacity={0.6}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              style={styles.retryButton}
+              onPress={() => refetch()}
               accessibilityRole="button"
-              accessibilityLabel="Create new asset"
-              accessibilityHint="Double tap to add a new fleet asset"
+              accessibilityLabel="Retry loading assets"
+              accessibilityHint="Double tap to try loading the asset list again"
             >
-              <Ionicons name="add-circle-outline" size={16} color={colors.electricBlue} />
-              <AppText style={styles.addLinkText}>New Asset</AppText>
+              <AppText style={styles.retryButtonText}>Retry</AppText>
             </TouchableOpacity>
-          ) : undefined}
-        />
-
-        <View style={styles.searchContainer}>
-        <View style={styles.searchInputContainer}>
-          <Ionicons name="search" size={20} color={colors.textSecondary} />
-          <TextInput
-            style={[styles.searchInput, !searchInput && styles.searchInputPlaceholder]}
-            placeholder="Search by Asset ID, Sub-Type, Location..."
-            placeholderTextColor={colors.textSecondary}
-            value={searchInput}
-            onChangeText={setSearchInput}
-            autoCapitalize="none"
-            autoCorrect={false}
-            accessibilityRole="search"
-            accessibilityLabel="Search assets"
-            accessibilityHint="Search by Asset ID, Sub-Type, or Location"
+          </View>
+        ) : (
+          <FlatList
+            data={filteredAssets}
+            extraData={depotLookup}
+            keyExtractor={(item) => item.id}
+            renderItem={renderAssetItem}
+            contentContainerStyle={styles.listContent}
+            refreshControl={
+              <RefreshControl
+                refreshing={!!isRefetching}
+                onRefresh={refetch}
+                tintColor="transparent"
+              />
+            }
+            ListHeaderComponent={<RefreshLoadingDots isRefetching={!!isRefetching} />}
+            ListEmptyComponent={
+              <EmptyState
+                icon="cube-outline"
+                title="No assets found"
+                subtitle="Try adjusting your search or filters"
+              />
+            }
+            getItemLayout={getItemLayout}
+            onEndReached={handleEndReached}
+            onEndReachedThreshold={0.5}
+            removeClippedSubviews={true}
+            maxToRenderPerBatch={10}
+            windowSize={5}
+            initialNumToRender={10}
+            updateCellsBatchingPeriod={50}
           />
-        </View>
-      </View>
-
-      <AssetFilterPanel
-        statuses={filters.statuses}
-        categories={filters.categories}
-        subtypes={filters.subtypes}
-        depotIds={filters.depotIds}
-        depots={depots}
-        onStatusChange={handleStatusChange}
-        onCategoryChange={handleCategoryChange}
-        onSubtypeChange={handleSubtypeChange}
-        onDepotChange={handleDepotChange}
-        isExpanded={isFilterExpanded}
-        onToggleExpanded={handleToggleExpanded}
-      />
-
-      {(isLoading || isDepotsLoading) && !isRefetching ? (
-        <View style={styles.centerContent}>
-          <LoadingDots color={colors.textSecondary} size={12} />
-        </View>
-      ) : error ? (
-        <View style={styles.centerContent}>
-          <AppText style={styles.errorText}>Failed to load assets</AppText>
-          <TouchableOpacity
-            style={styles.retryButton}
-            onPress={() => refetch()}
-            accessibilityRole="button"
-            accessibilityLabel="Retry loading assets"
-            accessibilityHint="Double tap to try loading the asset list again"
-          >
-            <AppText style={styles.retryButtonText}>Retry</AppText>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <FlatList
-          data={filteredAssets}
-          extraData={depotLookup}
-          keyExtractor={(item) => item.id}
-          renderItem={renderAssetItem}
-          contentContainerStyle={styles.listContent}
-          refreshControl={
-            <RefreshControl
-              refreshing={!!isRefetching}
-              onRefresh={refetch}
-              tintColor="transparent"
-            />
-          }
-          ListHeaderComponent={<RefreshLoadingDots isRefetching={!!isRefetching} />}
-          ListEmptyComponent={
-            <EmptyState
-              icon="cube-outline"
-              title="No assets found"
-              subtitle="Try adjusting your search or filters"
-            />
-          }
-          getItemLayout={getItemLayout}
-          onEndReached={handleEndReached}
-          onEndReachedThreshold={0.5}
-          removeClippedSubviews={true}
-          maxToRenderPerBatch={10}
-          windowSize={5}
-          initialNumToRender={10}
-          updateCellsBatchingPeriod={50}
-        />
-      )}
+        )}
       </SafeAreaView>
 
       <PersistentBackdrop
@@ -307,30 +317,6 @@ const styles = StyleSheet.create({
   },
   containerInner: {
     flex: 1,
-  },
-  searchContainer: {
-    paddingHorizontal: spacing.base,
-    paddingVertical: spacing.md,
-  },
-  searchInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.base,
-    gap: spacing.sm,
-  },
-  searchInput: {
-    flex: 1,
-    paddingVertical: spacing.md,
-    fontSize: fontSize.base,
-    fontFamily: fonts.regular,
-    color: colors.text,
-  },
-  searchInputPlaceholder: {
-    fontFamily: fonts.italic,
   },
   listContent: {
     padding: spacing.base,

@@ -202,12 +202,12 @@ export function MaintenanceDetailModal({
   const handleCancelMaintenance = useCallback(() => {
     if (!maintenanceId) return;
     Alert.alert(
-      'Cancel Maintenance',
-      'Are you sure you want to cancel this maintenance task? This will permanently delete it and any linked defect reports.',
+      'Dismiss Maintenance',
+      'Are you sure you want to dismiss this maintenance task? This will permanently delete it and any linked defect reports.',
       [
         { text: 'No', style: 'cancel' },
         {
-          text: 'Yes, Cancel',
+          text: 'Dismiss',
           style: 'destructive',
           onPress: async () => {
             try {
@@ -217,7 +217,7 @@ export function MaintenanceDetailModal({
               setAlertSheet({
                 visible: true,
                 title: 'Error',
-                message: err instanceof Error ? err.message : 'Failed to cancel',
+                message: err instanceof Error ? err.message : 'Failed to dismiss',
               });
             }
           },
@@ -778,7 +778,6 @@ const styles = StyleSheet.create({
   actionsContainer: {
     flexDirection: 'row',
     gap: spacing.md,
-    marginTop: spacing.lg,
   },
   closedStatus: {
     flexDirection: 'row',

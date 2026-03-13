@@ -8,7 +8,14 @@ import { AppText, LoadingDots, AlertSheet, SheetModal } from '../common';
 import { SheetHeader } from '../common/SheetHeader';
 import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius, fontFamily as fonts, shadows } from '../../theme/spacing';
+import {
+  spacing,
+  fontSize,
+  borderRadius,
+  fontFamily as fonts,
+  shadows,
+  lineHeight,
+} from '../../theme/spacing';
 import { sheetLayout } from '../../theme/sheetLayout';
 import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 import { useDefectReport, useDeleteDefectReport } from '../../hooks/useDefectData';
@@ -17,7 +24,8 @@ import { useMaintenance } from '../../hooks/useMaintenanceData';
 import { useScanEventPhotos, useSignedUrl } from '../../hooks/usePhotos';
 import { useUserPermissions } from '../../contexts/UserPermissionsContext';
 import { useScatterExit } from '../../hooks/useScatterExit';
-import { DEFECT_STATUS_CONFIG } from './DefectStatusBadge';
+import { useStaggeredEntrances } from '../../hooks/useStaggeredEntrance';
+import { DefectStatusBadge, DEFECT_STATUS_CONFIG } from './DefectStatusBadge';
 
 interface DefectReportDetailModalProps {
   visible: boolean;
@@ -69,9 +77,17 @@ export function DefectReportDetailModal({
     error: photoError,
   } = useSignedUrl(defectPhoto?.thumbnailPath ?? defectPhoto?.storagePath ?? undefined);
 
-  // Dismiss delete mutation
   // Scatter exit animation
   const { scatter, getStyle, reset, isScattering } = useScatterExit();
+
+  // Staggered entrance animation
+  const { getEntryStyle } = useStaggeredEntrances(!isLoading && !!defect ? 7 : 0);
+
+  // Compose scatter-exit opacity with entrance opacity via multiply
+  const getAnimatedStyle = (index: number) => ({
+    opacity: Animated.multiply(getStyle(index).opacity, getEntryStyle(index).opacity),
+    transform: getStyle(index).transform,
+  });
 
   // Reset scatter state when modal opens
   useEffect(() => {
@@ -155,7 +171,7 @@ export function DefectReportDetailModal({
             disabled={!onAcceptPress || isScattering}
             flex
             color={colors.success}
-            style={styles.submitButton}
+            style={styles.ctaButton}
           >
             Create Task
           </Button>
@@ -189,9 +205,9 @@ export function DefectReportDetailModal({
       onClose={onClose}
       onExitComplete={onExitComplete}
       noBackdrop={noBackdrop}
-      compact
+      snapPoint={['75%', '92%']}
     >
-      <View style={sheetLayout.containerCompact}>
+      <View style={sheetLayout.container}>
         <SheetHeader
           icon="warning"
           title="Defect Report"
@@ -218,24 +234,31 @@ export function DefectReportDetailModal({
             bounces={true}
             showsVerticalScrollIndicator={false}
           >
-            {/* Asset info + reporter */}
-            <Animated.View style={getStyle(0)}>
-              <View style={styles.assetRow}>
-                <View style={styles.assetIdGroup}>
-                  {asset?.assetNumber && (
-                    <>
-                      <Ionicons name="cube" size={22} color={colors.text} />
-                      <AppText style={styles.assetNumberText}>
-                        {formatAssetNumber(asset.assetNumber)}
-                      </AppText>
-                    </>
+            {/* Info Row: Asset Number + Badge */}
+            <Animated.View style={getAnimatedStyle(0)}>
+              <View style={styles.infoRow}>
+                <View>
+                  <View style={styles.assetIdGroup}>
+                    {asset?.assetNumber && (
+                      <>
+                        <Ionicons name="cube" size={22} color={colors.text} />
+                        <AppText style={styles.assetNumberText}>
+                          {formatAssetNumber(asset.assetNumber)}
+                        </AppText>
+                      </>
+                    )}
+                  </View>
+                  {defect.reporterName && (
+                    <AppText style={styles.createdByText} numberOfLines={1}>
+                      {formatRelativeTime(defect.createdAt)} by {defect.reporterName}
+                    </AppText>
                   )}
                 </View>
-                {defect.reporterName && (
-                  <AppText style={styles.reporterText} numberOfLines={1}>
-                    {formatRelativeTime(defect.createdAt)} by {defect.reporterName}
-                  </AppText>
-                )}
+                <View style={styles.badgeRow}>
+                  <View style={styles.badgeWrap}>
+                    <DefectStatusBadge status={defect.status} />
+                  </View>
+                </View>
               </View>
             </Animated.View>
 
@@ -243,73 +266,75 @@ export function DefectReportDetailModal({
 
             {/* Description */}
             {defect.description && (
-              <Animated.View style={getStyle(1)}>
+              <Animated.View style={getAnimatedStyle(1)}>
                 <View style={styles.sectionGroup}>
                   <AppText style={styles.detailLabel}>Description</AppText>
-                  <AppText style={[styles.detailValue, { fontFamily: fonts.regular }]}>
-                    {defect.description}
-                  </AppText>
+                  <AppText style={styles.descriptionText}>{defect.description}</AppText>
                 </View>
               </Animated.View>
             )}
 
             {/* Defect Photo (hidden in compact mode) */}
             {variant === 'full' && defectPhoto && (
-              <Animated.View style={getStyle(2)}>
+              <Animated.View style={getAnimatedStyle(2)}>
                 <View style={styles.sectionGroup}>
                   <AppText style={styles.sectionTitle}>Defect Photo</AppText>
-                  {isPhotoLoading ? (
-                    <View style={styles.defectPhotoPlaceholder}>
-                      <LoadingDots color={colors.textSecondary} size={8} />
-                    </View>
-                  ) : photoError || !defectPhotoUrl ? (
-                    <View style={styles.defectPhotoPlaceholder}>
-                      <Ionicons name="image-outline" size={28} color={colors.textSecondary} />
-                      <AppText style={styles.defectPhotoErrorText}>Photo unavailable</AppText>
-                    </View>
-                  ) : (
-                    <View
-                      style={styles.defectPhotoContainer}
-                      accessible
-                      accessibilityRole="image"
-                      accessibilityLabel="Defect photo"
-                    >
-                      <Image
-                        source={{ uri: defectPhotoUrl }}
-                        style={styles.defectPhoto}
-                        contentFit="contain"
-                        transition={200}
-                        cachePolicy="memory-disk"
-                      />
-                    </View>
-                  )}
+                  <View style={styles.sectionCard}>
+                    {isPhotoLoading ? (
+                      <View style={styles.defectPhotoPlaceholder}>
+                        <LoadingDots color={colors.textSecondary} size={8} />
+                      </View>
+                    ) : photoError || !defectPhotoUrl ? (
+                      <View style={styles.defectPhotoPlaceholder}>
+                        <Ionicons name="image-outline" size={28} color={colors.textSecondary} />
+                        <AppText style={styles.defectPhotoErrorText}>Photo unavailable</AppText>
+                      </View>
+                    ) : (
+                      <View
+                        style={styles.defectPhotoContainer}
+                        accessible
+                        accessibilityRole="image"
+                        accessibilityLabel="Defect photo"
+                      >
+                        <Image
+                          source={{ uri: defectPhotoUrl }}
+                          style={styles.defectPhoto}
+                          contentFit="cover"
+                          transition={200}
+                          cachePolicy="memory-disk"
+                        />
+                      </View>
+                    )}
+                  </View>
                 </View>
               </Animated.View>
             )}
 
             {/* Linked Maintenance Task (hidden in compact mode) */}
             {variant === 'full' && defect.maintenanceRecordId && (
-              <Animated.View style={getStyle(3)}>
+              <Animated.View style={getAnimatedStyle(3)}>
                 <View style={styles.sectionGroup}>
                   <AppText style={styles.sectionTitle}>Linked Maintenance Task</AppText>
-                  {linkedMaintenance && (
-                    <AppText style={styles.detailValue}>{linkedMaintenance.title}</AppText>
-                  )}
-                  <TouchableOpacity
-                    style={styles.linkedTaskLink}
-                    onPress={handleViewLinkedTask}
-                    activeOpacity={0.7}
-                  >
-                    <AppText style={styles.linkedTaskLinkText}>View Task</AppText>
-                    <Ionicons name="chevron-forward" size={16} color={colors.electricBlue} />
-                  </TouchableOpacity>
+                  <View style={styles.sectionCard}>
+                    {linkedMaintenance && (
+                      <AppText style={styles.detailValue}>{linkedMaintenance.title}</AppText>
+                    )}
+                    <TouchableOpacity
+                      style={styles.linkedTaskLink}
+                      onPress={handleViewLinkedTask}
+                      activeOpacity={0.7}
+                    >
+                      <AppText style={styles.linkedTaskLinkText}>View Task</AppText>
+                      <Ionicons name="chevron-forward" size={16} color={colors.electricBlue} />
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </Animated.View>
             )}
 
             {/* Timeline (hidden in compact mode) */}
             {variant === 'full' && (defect.acceptedAt || defect.resolvedAt) && (
-              <Animated.View style={getStyle(4)}>
+              <Animated.View style={getAnimatedStyle(4)}>
                 <View style={styles.sectionGroup}>
                   {defect.acceptedAt && (
                     <View style={styles.detailRow}>
@@ -334,18 +359,18 @@ export function DefectReportDetailModal({
 
             {/* Notes (hidden in compact mode) */}
             {variant === 'full' && defect.notes && (
-              <Animated.View style={getStyle(5)}>
+              <Animated.View style={getAnimatedStyle(5)}>
                 <View style={styles.sectionGroup}>
                   <AppText style={styles.sectionTitle}>Notes</AppText>
                   <View style={styles.sectionCard}>
-                    <AppText style={styles.detailValue}>{defect.notes}</AppText>
+                    <AppText style={styles.notesText}>{defect.notes}</AppText>
                   </View>
                 </View>
               </Animated.View>
             )}
 
             {/* Status Actions */}
-            <Animated.View style={getStyle(6)}>{renderStatusActions()}</Animated.View>
+            <Animated.View style={getAnimatedStyle(6)}>{renderStatusActions()}</Animated.View>
           </BottomSheetScrollView>
         )}
       </View>
@@ -371,10 +396,10 @@ const styles = StyleSheet.create({
     padding: spacing['3xl'],
     alignItems: 'center',
   },
-  assetRow: {
+  infoRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
   },
   assetIdGroup: {
     flexDirection: 'row',
@@ -387,10 +412,18 @@ const styles = StyleSheet.create({
     color: colors.text,
     textTransform: 'uppercase',
   },
-  reporterText: {
+  createdByText: {
     fontSize: fontSize.sm,
     fontFamily: fonts.regular,
     color: colors.textSecondary,
+    marginTop: spacing.xs,
+  },
+  badgeRow: {
+    alignItems: 'flex-end',
+    gap: spacing.xs,
+  },
+  badgeWrap: {
+    alignSelf: 'flex-end',
   },
   sectionGroup: {
     gap: spacing.sm,
@@ -424,6 +457,11 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bold,
     color: colors.text,
   },
+  descriptionText: {
+    fontSize: fontSize.base,
+    fontFamily: fonts.regular,
+    color: colors.text,
+  },
   linkedTaskLink: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -438,7 +476,6 @@ const styles = StyleSheet.create({
   actionsContainer: {
     flexDirection: 'row',
     gap: spacing.md,
-    marginTop: spacing.lg,
   },
   closedStatus: {
     flexDirection: 'row',
@@ -458,7 +495,6 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     overflow: 'hidden',
     aspectRatio: 4 / 3,
-    backgroundColor: colors.surface,
   },
   defectPhoto: {
     flex: 1,
@@ -471,7 +507,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
   },
-  submitButton: {
+  ctaButton: {
     ...shadows.lg,
   },
   defectPhotoErrorText: {
@@ -480,5 +516,11 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 1,
+  },
+  notesText: {
+    fontSize: fontSize.sm,
+    fontFamily: fonts.regular,
+    color: colors.textSecondary,
+    lineHeight: lineHeight.body,
   },
 });
