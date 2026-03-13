@@ -191,7 +191,12 @@ export function useScanFlow({ canMarkMaintenance }: UseScanFlowOptions): UseScan
   const resetScannerRef = useRef<() => void>(() => {});
 
   // ── Sub-hooks ──
-  const { processScan, triggerDebugScan: triggerDebugScanImpl, handleUndoPress: undoScanEvent, isDeletingScan } = useScanProcessing(dispatch, {
+  const {
+    processScan,
+    triggerDebugScan: triggerDebugScanImpl,
+    handleUndoPress: undoScanEvent,
+    isDeletingScan,
+  } = useScanProcessing(dispatch, {
     user,
     setAlertSheet,
     addDebugLog,
@@ -223,11 +228,7 @@ export function useScanFlow({ canMarkMaintenance }: UseScanFlowOptions): UseScan
   }, []);
 
   // ── QR Scanner ──
-  const { handleBarCodeScanned, resetScanner } = useQRScanner(
-    processScan,
-    2000,
-    handleInvalidQR
-  );
+  const { handleBarCodeScanned, resetScanner } = useQRScanner(processScan, 2000, handleInvalidQR);
   resetScannerRef.current = resetScanner;
 
   // ── Context modals ──
@@ -384,6 +385,7 @@ export function useScanFlow({ canMarkMaintenance }: UseScanFlowOptions): UseScan
         dispatch({ type: 'DEFECT_SUBMITTED', wantsPhoto });
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : 'Failed to submit defect report';
+        if (__DEV__) console.error('[useScanFlow] handleDefectSubmit ERROR:', message, error);
         addDebugLog(`ERROR: ${message}`);
         setAlertSheet({
           visible: true,
@@ -393,7 +395,15 @@ export function useScanFlow({ canMarkMaintenance }: UseScanFlowOptions): UseScan
         });
       }
     },
-    [state.phase, scannedAsset?.id, lastScanEventId, user, createDefectReport, addDebugLog, setAlertSheet]
+    [
+      state.phase,
+      scannedAsset?.id,
+      lastScanEventId,
+      user,
+      createDefectReport,
+      addDebugLog,
+      setAlertSheet,
+    ]
   );
 
   const handlePhotoFlowComplete = useCallback(() => {

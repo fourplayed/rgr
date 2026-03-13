@@ -12,32 +12,34 @@ import { fontFamily as fonts } from '../../theme/spacing';
  * Controlled inputs derive emptiness from the `value` prop.
  * Uncontrolled inputs track emptiness via `onChangeText`.
  */
-export const AppTextInput = forwardRef<TextInput, TextInputProps>(
-  function AppTextInput({ style, value, onChangeText, placeholderTextColor, ...props }, ref) {
-    const [internalEmpty, setInternalEmpty] = useState(true);
-    const isEmpty = value !== undefined ? value.length === 0 : internalEmpty;
+export const AppTextInput = forwardRef<TextInput, TextInputProps>(function AppTextInput(
+  { style, value, defaultValue, onChangeText, placeholderTextColor, ...props },
+  ref
+) {
+  const [internalEmpty, setInternalEmpty] = useState(!defaultValue || defaultValue.length === 0);
+  const isEmpty = value !== undefined ? value.length === 0 : internalEmpty;
 
-    const handleChangeText = useCallback(
-      (text: string) => {
-        if (value === undefined) {
-          setInternalEmpty(text.length === 0);
-        }
-        onChangeText?.(text);
-      },
-      [value, onChangeText],
-    );
+  const handleChangeText = useCallback(
+    (text: string) => {
+      if (value === undefined) {
+        setInternalEmpty(text.length === 0);
+      }
+      onChangeText?.(text);
+    },
+    [value, onChangeText]
+  );
 
-    return (
-      <BottomSheetTextInput
-        ref={ref as React.ComponentProps<typeof BottomSheetTextInput>['ref']}
-        style={[style, isEmpty && ITALIC_STYLE]}
-        value={value}
-        onChangeText={handleChangeText}
-        placeholderTextColor={placeholderTextColor ?? colors.textSecondary}
-        {...props}
-      />
-    );
-  },
-);
+  return (
+    <BottomSheetTextInput
+      ref={ref as React.ComponentProps<typeof BottomSheetTextInput>['ref']}
+      style={[style, isEmpty && ITALIC_STYLE]}
+      value={value}
+      defaultValue={defaultValue}
+      onChangeText={handleChangeText}
+      placeholderTextColor={placeholderTextColor ?? colors.textSecondary}
+      {...props}
+    />
+  );
+});
 
 const ITALIC_STYLE = { fontFamily: fonts.italic } as const;

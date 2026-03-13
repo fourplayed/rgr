@@ -45,8 +45,6 @@ function PhotoReviewSheetComponent({
   } = usePhotoCapture();
 
   const bottomPad = useSheetBottomPadding();
-  const isDamage = photoType === 'defect';
-
   // Keep a stable URI for display during exit animation
   const stableUri = useRef(capturedUri);
   if (capturedUri) stableUri.current = capturedUri;
@@ -86,7 +84,13 @@ function PhotoReviewSheetComponent({
   const displayUri = stableUri.current;
 
   return (
-    <SheetModal visible={visible} onClose={handleClose} onExitComplete={onExitComplete} noBackdrop={noBackdrop} snapPoint="77%">
+    <SheetModal
+      visible={visible}
+      onClose={handleClose}
+      onExitComplete={onExitComplete}
+      noBackdrop={noBackdrop}
+      snapPoint="77%"
+    >
       <View style={sheetLayout.container}>
         <SheetHeader
           icon="camera"
@@ -97,21 +101,17 @@ function PhotoReviewSheetComponent({
 
         <BottomSheetScrollView
           style={sheetLayout.scroll}
-          contentContainerStyle={[sheetLayout.scrollContent, { paddingTop: spacing.md, paddingBottom: bottomPad }]}
+          contentContainerStyle={[
+            sheetLayout.scrollContent,
+            { paddingTop: spacing.md, paddingBottom: bottomPad },
+          ]}
           bounces={false}
           showsVerticalScrollIndicator={false}
         >
           {displayUri && (
             <View style={styles.photoContainer}>
-              <Image source={{ uri: displayUri}} style={styles.photo} contentFit="contain" />
+              <Image source={{ uri: displayUri }} style={styles.photo} contentFit="contain" />
               {uploadStep && <UploadProgressOverlay step={uploadStep} />}
-            </View>
-          )}
-
-          {isDamage && (
-            <View style={styles.photoTypeRow}>
-              <Ionicons name="warning" size={18} color={colors.defectYellow} />
-              <AppText style={styles.photoTypeText}>Defect Photo</AppText>
             </View>
           )}
 
@@ -129,7 +129,12 @@ function PhotoReviewSheetComponent({
 
           <View style={styles.buttonRow}>
             <Animated.View style={[styles.flexOne, { opacity: retakeOpacity }]}>
-              <Button onPress={handleRetake} disabled={isUploading} flex color={colors.electricBlue}>
+              <Button
+                onPress={handleRetake}
+                disabled={isUploading}
+                flex
+                color={colors.electricBlue}
+              >
                 Recapture
               </Button>
             </Animated.View>
@@ -264,19 +269,6 @@ const styles = StyleSheet.create({
   },
   photo: {
     flex: 1,
-  },
-photoTypeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.base,
-  },
-  photoTypeText: {
-    fontSize: fontSize.sm,
-    fontFamily: fonts.bold,
-    color: colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   buttonRow: {
     flexDirection: 'row',

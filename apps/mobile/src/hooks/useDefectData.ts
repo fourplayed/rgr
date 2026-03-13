@@ -18,7 +18,7 @@ import type {
 } from '@rgr/shared';
 import { useMutationFromService } from './useMutationFromService';
 import { assetKeys } from './useAssetData';
-import { optimisticInfiniteInsert, rollback } from './optimisticCache';
+import { optimisticInfiniteInsert, rollback, placeholderId } from './optimisticCache';
 import { suppressRealtimeFor } from './useRealtimeInvalidation';
 import { OPTIMISTIC_UPDATES_ENABLED } from '../config/featureFlags';
 import { useAuthStore } from '../store/authStore';
@@ -139,10 +139,10 @@ export function useAssetDefectReports(assetId: string | null) {
  */
 function buildDefectPlaceholder(
   input: CreateDefectReportInput,
-  currentUserName: string | null,
+  currentUserName: string | null
 ): DefectReportListItemType {
   return {
-    id: crypto.randomUUID(),
+    id: placeholderId(),
     assetId: input.assetId,
     title: input.title,
     description: input.description ?? null,
@@ -177,7 +177,7 @@ export function useCreateDefectReport() {
       const listSnapshot = await optimisticInfiniteInsert(
         queryClient,
         defectKeys.list({}),
-        placeholder,
+        placeholder
       );
       return { listSnapshot };
     },

@@ -60,6 +60,7 @@ export function usePushNotifications() {
     // Only register on physical devices
     if (!Device.isDevice) {
       if (__DEV__) console.log('[Push] Skipping — not a physical device');
+      isRegisteringRef.current = false;
       return;
     }
 

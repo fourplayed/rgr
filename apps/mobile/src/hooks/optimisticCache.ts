@@ -1,6 +1,16 @@
 import type { QueryClient, InfiniteData } from '@tanstack/react-query';
 
 /**
+ * React Native-safe placeholder ID for optimistic cache entries.
+ * Hermes doesn't provide the Web Crypto API, so crypto.randomUUID() is unavailable.
+ * These IDs are ephemeral — replaced by real server IDs when onSettled invalidates the cache.
+ */
+export function placeholderId(): string {
+  const s = () => Math.random().toString(16).slice(2, 10);
+  return `${s()}${s()}-${s().slice(0, 4)}-4${s().slice(1, 4)}-${((Math.random() * 4) | 8).toString(16)}${s().slice(1, 4)}-${s()}${s().slice(0, 4)}`;
+}
+
+/**
  * Snapshot of a cache entry before an optimistic update.
  * Used by `rollback()` to restore the exact previous state.
  */
@@ -27,7 +37,7 @@ export interface InfinitePage<TItem> {
 export async function optimisticInfiniteInsert<TItem>(
   queryClient: QueryClient,
   queryKey: readonly unknown[],
-  item: TItem,
+  item: TItem
 ): Promise<OptimisticSnapshot<InfiniteData<InfinitePage<TItem>>>> {
   await queryClient.cancelQueries({ queryKey });
 
@@ -57,7 +67,7 @@ export async function optimisticInfiniteInsert<TItem>(
 export async function optimisticPatch<TItem>(
   queryClient: QueryClient,
   queryKey: readonly unknown[],
-  patch: Partial<TItem>,
+  patch: Partial<TItem>
 ): Promise<OptimisticSnapshot<TItem>> {
   await queryClient.cancelQueries({ queryKey });
 
@@ -76,7 +86,7 @@ export async function optimisticPatch<TItem>(
  */
 export function rollback<TCache>(
   queryClient: QueryClient,
-  snapshot: OptimisticSnapshot<TCache>,
+  snapshot: OptimisticSnapshot<TCache>
 ): void {
   if (snapshot.previousData !== undefined) {
     queryClient.setQueryData(snapshot.queryKey, snapshot.previousData);

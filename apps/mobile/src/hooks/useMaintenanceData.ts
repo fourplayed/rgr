@@ -19,7 +19,13 @@ import type {
 import { useMutationFromService } from './useMutationFromService';
 import { assetKeys } from './useAssetData';
 import { defectKeys } from './useDefectData';
-import { optimisticInfiniteInsert, optimisticPatch, rollback, type OptimisticSnapshot } from './optimisticCache';
+import {
+  optimisticInfiniteInsert,
+  optimisticPatch,
+  rollback,
+  placeholderId,
+  type OptimisticSnapshot,
+} from './optimisticCache';
 import { suppressRealtimeFor } from './useRealtimeInvalidation';
 import { OPTIMISTIC_UPDATES_ENABLED } from '../config/featureFlags';
 import { useAuthStore } from '../store/authStore';
@@ -118,14 +124,14 @@ export function useMaintenance(id: string | null) {
 
 /**
  * Build a placeholder list item for optimistic insertion.
- * Uses crypto.randomUUID() — the real ID arrives when onSettled invalidates.
+ * The real ID arrives when onSettled invalidates the cache.
  */
 function buildMaintenancePlaceholder(
   input: CreateMaintenanceInput,
-  currentUserName: string | null,
+  currentUserName: string | null
 ): MaintenanceListItemType {
   return {
-    id: crypto.randomUUID(),
+    id: placeholderId(),
     assetId: input.assetId,
     title: input.title,
     description: input.description ?? null,
@@ -163,7 +169,7 @@ export function useCreateMaintenance() {
       const listSnapshot = await optimisticInfiniteInsert(
         queryClient,
         maintenanceKeys.list({}),
-        placeholder,
+        placeholder
       );
       return { listSnapshot };
     },
@@ -197,11 +203,9 @@ export function useUpdateMaintenanceStatus() {
     onMutate: async (vars: { id: string; status: MaintenanceStatus }) => {
       if (!OPTIMISTIC_UPDATES_ENABLED) return undefined;
       suppressRealtimeFor('maintenance');
-      const detailSnapshot = await optimisticPatch(
-        queryClient,
-        maintenanceKeys.detail(vars.id),
-        { status: vars.status },
-      );
+      const detailSnapshot = await optimisticPatch(queryClient, maintenanceKeys.detail(vars.id), {
+        status: vars.status,
+      });
       return { detailSnapshot };
     },
     onError: (_error, _vars, context) => {

@@ -8,11 +8,20 @@ import type { ScanContextModal } from '../../src/hooks/scan/useScanFlow';
 import { useAssetAssessment } from '../../src/hooks/useAssetAssessment';
 import { usePersistentBackdrop } from '../../src/hooks/usePersistentBackdrop';
 import { PersistentBackdrop } from '../../src/components/common/PersistentBackdrop';
-import { PermissionScreen, CameraOverlay, ScanConfirmation, ScanSuccessFlash } from '../../src/components/scanner';
+import {
+  PermissionScreen,
+  CameraOverlay,
+  ScanConfirmation,
+  ScanSuccessFlash,
+} from '../../src/components/scanner';
 import { SheetModal } from '../../src/components/common/SheetModal';
 import { DefectReportSheet } from '../../src/components/scanner/DefectReportSheet';
 import { CameraCapture, PhotoReviewSheet } from '../../src/components/photos';
-import { CreateMaintenanceModal, DefectReportDetailModal, MaintenanceDetailModal } from '../../src/components/maintenance';
+import {
+  CreateMaintenanceModal,
+  DefectReportDetailModal,
+  MaintenanceDetailModal,
+} from '../../src/components/maintenance';
 import { useAcceptDefect } from '../../src/hooks/useAcceptDefect';
 import type { CreateMaintenanceInput } from '@rgr/shared';
 import { AlertSheet, ErrorBoundary } from '../../src/components/common';
@@ -26,7 +35,7 @@ export default function ScanScreen() {
   const flow = useScanFlow({ canMarkMaintenance });
 
   // ── Persistent backdrop (blur + fade) ──
-  const backdrop = usePersistentBackdrop(flow.showOverlay && !flow.isCompleting);
+  const backdrop = usePersistentBackdrop(flow.showOverlay || flow.isCompleting);
 
   // ── Asset assessment ──
   const assessment = useAssetAssessment(flow.scannedAsset, flow.matchedDepot);
@@ -55,29 +64,43 @@ export default function ScanScreen() {
     hasRequestedPermissions.current = true;
     if (!permission?.granted) requestPermission();
     if (!flow.hasLocationPermission) flow.requestLocationPermission();
-  }, [permission?.granted, flow.hasLocationPermission, flow.requestLocationPermission, requestPermission]);
+  }, [
+    permission?.granted,
+    flow.hasLocationPermission,
+    flow.requestLocationPermission,
+    requestPermission,
+  ]);
 
   // ── Accept defect → create maintenance ──
   const { mutateAsync: acceptDefect } = useAcceptDefect();
 
-  const handleAcceptPress = useCallback((ctx: {
-    defectId: string; assetId: string; assetNumber: string | null;
-    title: string; description: string | null;
-  }) => {
-    flow.openAcceptDefect({ type: 'acceptDefect', ...ctx });
-  }, [flow.openAcceptDefect]);
+  const handleAcceptPress = useCallback(
+    (ctx: {
+      defectId: string;
+      assetId: string;
+      assetNumber: string | null;
+      title: string;
+      description: string | null;
+    }) => {
+      flow.openAcceptDefect({ type: 'acceptDefect', ...ctx });
+    },
+    [flow.openAcceptDefect]
+  );
 
   const acceptCtx = flow.contextModal.type === 'acceptDefect' ? flow.contextModal : null;
 
-  const handleAcceptSubmit = useCallback(async (input: CreateMaintenanceInput) => {
-    if (!acceptCtx) return;
-    await acceptDefect({
-      defectReportId: acceptCtx.defectId,
-      maintenanceInput: input,
-    });
-    flow.closeContextModal();
-    flow.refetchContext();
-  }, [acceptCtx, acceptDefect, flow.closeContextModal, flow.refetchContext]);
+  const handleAcceptSubmit = useCallback(
+    async (input: CreateMaintenanceInput) => {
+      if (!acceptCtx) return;
+      await acceptDefect({
+        defectReportId: acceptCtx.defectId,
+        maintenanceInput: input,
+      });
+      flow.closeContextModal();
+      flow.refetchContext();
+    },
+    [acceptCtx, acceptDefect, flow.closeContextModal, flow.refetchContext]
+  );
 
   const handleDismissConfirmed = useCallback(() => {
     flow.closeContextModal();
@@ -239,7 +262,9 @@ export default function ScanScreen() {
       />
       <MaintenanceDetailModal
         visible={flow.contextModal.type === 'maintenanceDetail'}
-        maintenanceId={flow.contextModal.type === 'maintenanceDetail' ? flow.contextModal.maintenanceId : null}
+        maintenanceId={
+          flow.contextModal.type === 'maintenanceDetail' ? flow.contextModal.maintenanceId : null
+        }
         onClose={flow.closeContextModal}
         variant="compact"
         noBackdrop
@@ -295,7 +320,7 @@ export default function ScanScreen() {
         type={flow.alertSheet.type}
         title={flow.alertSheet.title}
         message={flow.alertSheet.message}
-        onDismiss={() => flow.setAlertSheet(prev => ({ ...prev, visible: false }))}
+        onDismiss={() => flow.setAlertSheet((prev) => ({ ...prev, visible: false }))}
         actionLabel={flow.alertSheet.actionLabel}
         onAction={flow.alertSheet.onAction}
       />

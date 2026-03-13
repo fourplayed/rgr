@@ -1,5 +1,12 @@
 import React, { useState, useEffect, useRef, memo } from 'react';
-import { View, TouchableOpacity, StyleSheet, Animated, Keyboard, type TextInput } from 'react-native';
+import {
+  View,
+  TouchableOpacity,
+  StyleSheet,
+  Animated,
+  Keyboard,
+  type TextInput,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';

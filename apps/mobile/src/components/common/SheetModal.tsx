@@ -114,6 +114,7 @@ export function SheetModal({
         }
       };
     } else if (!visible && isPresentedRef.current) {
+      if (__DEV__) console.log('[SheetModal] visible→false, triggering programmatic dismiss');
       programmaticDismissRef.current = true;
       ref.current?.dismiss();
       isPresentedRef.current = false;
@@ -126,11 +127,11 @@ export function SheetModal({
         if (programmaticDismissRef.current && !dismissHandledRef.current) {
           dismissHandledRef.current = true;
           programmaticDismissRef.current = false;
-          onExitComplete?.();
+          onExitCompleteRef.current?.();
         }
       }, 500);
     }
-  }, [visible, onExitComplete]);
+  }, [visible]);
 
   // Cleanup on unmount — prevent orphaned portals.
   // Mark as programmatic so handleDismiss doesn't call onClose.
@@ -153,6 +154,16 @@ export function SheetModal({
   }, []);
 
   const handleDismiss = useCallback(() => {
+    if (__DEV__) {
+      console.log(
+        '[SheetModal] handleDismiss — programmatic:',
+        programmaticDismissRef.current,
+        'wasPresented:',
+        wasPresentedRef.current,
+        'dismissHandled:',
+        dismissHandledRef.current
+      );
+    }
     // Clear the dismiss fallback — gorhom fired onDismiss normally.
     if (dismissFallbackRef.current) {
       clearTimeout(dismissFallbackRef.current);

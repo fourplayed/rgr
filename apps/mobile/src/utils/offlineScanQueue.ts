@@ -22,7 +22,8 @@ function isQueuedScan(item: unknown): item is QueuedScan {
   return (
     typeof o['id'] === 'string' &&
     typeof o['queuedAt'] === 'string' &&
-    typeof o['input'] === 'object' && o['input'] !== null
+    typeof o['input'] === 'object' &&
+    o['input'] !== null
   );
 }
 
@@ -134,6 +135,8 @@ export async function replayQueue(): Promise<{ replayed: number; failed: number 
         queue = queue.slice(1);
         await saveQueue(queue);
       } else {
+        // Brief pause before retrying to avoid hammering the server when all entries fail
+        await new Promise((r) => setTimeout(r, 1500));
         failed++;
         const retries = (entry.retryCount ?? 0) + 1;
         if (retries >= MAX_RETRIES) {

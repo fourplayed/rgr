@@ -95,10 +95,10 @@ export const csrfService = {
       }
 
       // Generate new token if missing or expired
-      return this.generateNewToken();
+      return csrfService.generateNewToken();
     } catch (error) {
       console.error('CSRF token retrieval error:', error);
-      return this.generateNewToken();
+      return csrfService.generateNewToken();
     }
   },
 
@@ -155,7 +155,7 @@ export const csrfService = {
    * Use this when making authenticated requests
    */
   getHeaders(): Record<string, string> {
-    const token = this.getToken();
+    const token = csrfService.getToken();
     if (!token) {
       return {};
     }
