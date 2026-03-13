@@ -1,10 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import {
-  View,
-  FlatList,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet} from 'react-native';
+import { View, FlatList, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import {
@@ -32,7 +27,11 @@ import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
 import { AppText } from '../../src/components/common';
 
-const STATUS_VALUES: string[] = [AssetStatus.SERVICED, AssetStatus.MAINTENANCE, AssetStatus.OUT_OF_SERVICE];
+const STATUS_VALUES: string[] = [
+  AssetStatus.SERVICED,
+  AssetStatus.MAINTENANCE,
+  AssetStatus.OUT_OF_SERVICE,
+];
 
 export default function AssetAdminScreen() {
   const router = useRouter();
@@ -155,10 +154,13 @@ export default function AssetAdminScreen() {
     ({ item }: { item: AssetWithRelations }) => {
       const isSelected = selectedIds.has(item.id);
       const statusColor =
-        AssetStatusColors[item.status as keyof typeof AssetStatusColors] ||
-        colors.electricBlue;
-      const depot = item.depotCode ? depotLookup.byCode.get(item.depotCode.toLowerCase()) ?? null : null;
-      const depotBadgeColors = item.depotCode ? getDepotBadgeColors(depot, colors.chrome, colors.text) : null;
+        AssetStatusColors[item.status as keyof typeof AssetStatusColors] || colors.electricBlue;
+      const depot = item.depotCode
+        ? (depotLookup.byCode.get(item.depotCode.toLowerCase()) ?? null)
+        : null;
+      const depotBadgeColors = item.depotCode
+        ? getDepotBadgeColors(depot, colors.chrome, colors.text)
+        : null;
 
       return (
         <TouchableOpacity
@@ -186,9 +188,7 @@ export default function AssetAdminScreen() {
             </TouchableOpacity>
           )}
           <View style={styles.checkbox}>
-            {isSelected && (
-              <Ionicons name="checkmark" size={16} color={colors.electricBlue} />
-            )}
+            {isSelected && <Ionicons name="checkmark" size={16} color={colors.electricBlue} />}
           </View>
           <View style={styles.assetInfo}>
             <View style={styles.assetHeaderRow}>
@@ -203,7 +203,8 @@ export default function AssetAdminScreen() {
                 )}
                 <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
                   <AppText style={styles.statusBadgeText}>
-                    {AssetStatusLabels[item.status as keyof typeof AssetStatusLabels] || item.status}
+                    {AssetStatusLabels[item.status as keyof typeof AssetStatusLabels] ||
+                      item.status}
                   </AppText>
                 </View>
               </View>
@@ -238,217 +239,207 @@ export default function AssetAdminScreen() {
 
   return (
     <View style={styles.container}>
-        {/* Header */}
-        {hasSelection ? (
-          <SheetHeader
-            icon="cube"
-            title={`${selectedIds.size} Selected`}
-            onClose={clearSelection}
-          />
-        ) : (
-          <SheetHeader
-            icon="cube"
-            title="Asset Admin"
-            onClose={() => router.back()}
-            closeIcon="arrow-back"
-            headerAction={{
-              icon: 'add-circle',
-              onPress: () => router.push('/(admin)/create-asset'),
-              accessibilityLabel: 'Add asset',
-            }}
-          />
-        )}
+      {/* Header */}
+      {hasSelection ? (
+        <SheetHeader icon="cube" title={`${selectedIds.size} Selected`} onClose={clearSelection} />
+      ) : (
+        <SheetHeader
+          icon="cube"
+          title="Asset Admin"
+          onClose={() => router.back()}
+          closeIcon="arrow-back"
+          headerAction={{
+            icon: 'add-circle',
+            onPress: () => router.push('/(admin)/create-asset'),
+            accessibilityLabel: 'Add asset',
+          }}
+        />
+      )}
 
-        {/* Search */}
-        <View style={styles.searchContainer}>
-          <View style={styles.searchBox}>
-            <Ionicons name="search" size={20} color={colors.textSecondary} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search assets..."
-              placeholderTextColor={colors.textSecondary}
-              value={search}
-              onChangeText={handleSearch}
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-            {search.length > 0 && (
-              <TouchableOpacity onPress={() => handleSearch('')}>
-                <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
-              </TouchableOpacity>
-            )}
-          </View>
+      {/* Search */}
+      <View style={styles.searchContainer}>
+        <View style={styles.searchBox}>
+          <Ionicons name="search" size={20} color={colors.textSecondary} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search assets..."
+            placeholderTextColor={colors.textSecondary}
+            value={search}
+            onChangeText={handleSearch}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          {search.length > 0 && (
+            <TouchableOpacity onPress={() => handleSearch('')}>
+              <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
+          )}
         </View>
+      </View>
 
-        {/* Select All bar */}
-        {hasSelection && assets.length > 0 && (
-          <View style={styles.selectAllBar}>
-            <TouchableOpacity onPress={toggleSelectAll} style={styles.selectAllButton}>
-              <Ionicons
-                name={allSelected ? 'checkbox' : 'square-outline'}
-                size={20}
-                color={colors.electricBlue}
-              />
-              <AppText style={styles.selectAllText}>
-                {allSelected ? 'Deselect All' : 'Select All'}
-              </AppText>
-            </TouchableOpacity>
-            <AppText style={styles.selectedCountText}>
-              {selectedIds.size} of {assets.length} selected
+      {/* Select All bar */}
+      {hasSelection && assets.length > 0 && (
+        <View style={styles.selectAllBar}>
+          <TouchableOpacity onPress={toggleSelectAll} style={styles.selectAllButton}>
+            <Ionicons
+              name={allSelected ? 'checkbox' : 'square-outline'}
+              size={20}
+              color={colors.electricBlue}
+            />
+            <AppText style={styles.selectAllText}>
+              {allSelected ? 'Deselect All' : 'Select All'}
             </AppText>
-          </View>
-        )}
+          </TouchableOpacity>
+          <AppText style={styles.selectedCountText}>
+            {selectedIds.size} of {assets.length} selected
+          </AppText>
+        </View>
+      )}
 
-        {/* Toolbar */}
-        {hasSelection && (
-          <View style={styles.toolbar}>
-            <TouchableOpacity
-              style={[styles.toolbarButton, styles.toolbarButtonDanger]}
-              onPress={() => {
-                if (selectedIds.size === 1) {
-                  const firstId = Array.from(selectedIds)[0];
-                  const asset = assets.find((a) => a.id === firstId);
-                  if (asset) setDeleteTarget(asset);
-                } else {
-                  setBulkDeleteIds(Array.from(selectedIds));
-                }
-              }}
-            >
-              <Ionicons name="trash-outline" size={18} color={colors.error} />
-              <AppText style={[styles.toolbarButtonText, { color: colors.error }]}>
-                Delete{selectedIds.size > 1 ? ` (${selectedIds.size})` : ''}
-              </AppText>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.toolbarButton, styles.toolbarButtonDanger]}
-              onPress={() => setHardDeleteIds(Array.from(selectedIds))}
-            >
-              <Ionicons name="trash" size={18} color={colors.error} />
-              <AppText style={[styles.toolbarButtonText, { color: colors.error }]}>
-                Hard Delete
-              </AppText>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.toolbarButton}
-              onPress={() => setShowStatusPicker(true)}
-            >
-              <Ionicons name="swap-horizontal-outline" size={18} color={colors.electricBlue} />
-              <AppText style={[styles.toolbarButtonText, { color: colors.electricBlue }]}>
-                Change Status
-              </AppText>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Bulk status result */}
-        {bulkStatusMutation.isSuccess && bulkStatusMutation.data && (
-          <View style={styles.resultBanner}>
-            <AppText style={styles.resultText}>
-              Updated {bulkStatusMutation.data.updated} of {bulkStatusMutation.data.total} assets
+      {/* Toolbar */}
+      {hasSelection && (
+        <View style={styles.toolbar}>
+          <TouchableOpacity
+            style={[styles.toolbarButton, styles.toolbarButtonDanger]}
+            onPress={() => {
+              if (selectedIds.size === 1) {
+                const firstId = Array.from(selectedIds)[0];
+                const asset = assets.find((a) => a.id === firstId);
+                if (asset) setDeleteTarget(asset);
+              } else {
+                setBulkDeleteIds(Array.from(selectedIds));
+              }
+            }}
+          >
+            <Ionicons name="trash-outline" size={18} color={colors.error} />
+            <AppText style={[styles.toolbarButtonText, { color: colors.error }]}>
+              Delete{selectedIds.size > 1 ? ` (${selectedIds.size})` : ''}
             </AppText>
-          </View>
-        )}
+          </TouchableOpacity>
 
-        {/* Content */}
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <LoadingDots color={colors.textSecondary} size={12} />
-          </View>
-        ) : error ? (
-          <View style={styles.centerContent}>
-            <AppText style={styles.errorText}>Failed to load assets</AppText>
-            <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
-              <AppText style={styles.retryButtonText}>Retry</AppText>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <FlatList
-            data={assets}
-            renderItem={renderItem}
-            keyExtractor={keyExtractor}
-            ListEmptyComponent={renderEmpty}
-            removeClippedSubviews
-            contentContainerStyle={
-              assets.length === 0 ? styles.emptyListContent : styles.listContent
-            }
-          />
-        )}
+          <TouchableOpacity
+            style={[styles.toolbarButton, styles.toolbarButtonDanger]}
+            onPress={() => setHardDeleteIds(Array.from(selectedIds))}
+          >
+            <Ionicons name="trash" size={18} color={colors.error} />
+            <AppText style={[styles.toolbarButtonText, { color: colors.error }]}>
+              Hard Delete
+            </AppText>
+          </TouchableOpacity>
 
-        {/* Delete Confirm */}
-        <ConfirmSheet
-          visible={!!deleteTarget}
-          type="danger"
-          title="Delete Asset"
-          message={
-            deleteTarget
-              ? `Soft-delete "${formatAssetNumber(deleteTarget.assetNumber)}"? This sets status to Out of Service.${
-                  relatedCounts
-                    ? `\n\nRelated records: ${relatedCounts.scanEvents} scans, ${relatedCounts.maintenanceRecords} maintenance records (preserved).`
-                    : ''
-                }`
-              : ''
-          }
-          confirmLabel="Delete"
-          onConfirm={handleDelete}
-          onCancel={() => setDeleteTarget(null)}
-          isLoading={deleteMutation.isPending}
+          <TouchableOpacity style={styles.toolbarButton} onPress={() => setShowStatusPicker(true)}>
+            <Ionicons name="swap-horizontal-outline" size={18} color={colors.electricBlue} />
+            <AppText style={[styles.toolbarButtonText, { color: colors.electricBlue }]}>
+              Change Status
+            </AppText>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Bulk status result */}
+      {bulkStatusMutation.isSuccess && bulkStatusMutation.data && (
+        <View style={styles.resultBanner}>
+          <AppText style={styles.resultText}>
+            Updated {bulkStatusMutation.data.updated} of {bulkStatusMutation.data.total} assets
+          </AppText>
+        </View>
+      )}
+
+      {/* Content */}
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <LoadingDots color={colors.textSecondary} size={12} />
+        </View>
+      ) : error ? (
+        <View style={styles.centerContent}>
+          <AppText style={styles.errorText}>Failed to load assets</AppText>
+          <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
+            <AppText style={styles.retryButtonText}>Retry</AppText>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <FlatList
+          data={assets}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
+          ListEmptyComponent={renderEmpty}
+          removeClippedSubviews
+          contentContainerStyle={assets.length === 0 ? styles.emptyListContent : styles.listContent}
         />
+      )}
 
-        {/* Bulk Delete Confirm */}
-        <ConfirmSheet
-          visible={bulkDeleteIds.length > 0}
-          type="danger"
-          title={`Delete ${bulkDeleteIds.length} Assets?`}
-          message={`This will soft-delete ${bulkDeleteIds.length} selected assets, setting their status to Out of Service.`}
-          confirmLabel={`Delete ${bulkDeleteIds.length}`}
-          onConfirm={handleBulkDelete}
-          onCancel={() => setBulkDeleteIds([])}
-          isLoading={bulkDeleteMutation.isPending}
-        />
+      {/* Delete Confirm */}
+      <ConfirmSheet
+        visible={!!deleteTarget}
+        type="danger"
+        title="Delete Asset"
+        message={
+          deleteTarget
+            ? `Soft-delete "${formatAssetNumber(deleteTarget.assetNumber)}"? This sets status to Out of Service.${
+                relatedCounts
+                  ? `\n\nRelated records: ${relatedCounts.scanEvents} scans, ${relatedCounts.maintenanceRecords} maintenance records (preserved).`
+                  : ''
+              }`
+            : ''
+        }
+        confirmLabel="Delete"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+        isLoading={deleteMutation.isPending}
+      />
 
-        {/* Hard Delete Confirm */}
-        <ConfirmSheet
-          visible={hardDeleteIds.length > 0}
-          type="danger"
-          title={`Permanently Delete ${hardDeleteIds.length} Asset(s)?`}
-          message={`This will permanently remove ${hardDeleteIds.length} asset(s) and ALL related scan events, maintenance records, and defect reports. This cannot be undone.`}
-          confirmLabel="Delete Forever"
-          onConfirm={handleHardDelete}
-          onCancel={() => setHardDeleteIds([])}
-          isLoading={hardDeleteMutation.isPending}
-        />
+      {/* Bulk Delete Confirm */}
+      <ConfirmSheet
+        visible={bulkDeleteIds.length > 0}
+        type="danger"
+        title={`Delete ${bulkDeleteIds.length} Assets?`}
+        message={`This will soft-delete ${bulkDeleteIds.length} selected assets, setting their status to Out of Service.`}
+        confirmLabel={`Delete ${bulkDeleteIds.length}`}
+        onConfirm={handleBulkDelete}
+        onCancel={() => setBulkDeleteIds([])}
+        isLoading={bulkDeleteMutation.isPending}
+      />
 
-        {/* Status Picker Sheet */}
-        <SheetModal visible={showStatusPicker} onClose={() => setShowStatusPicker(false)}>
-          <View style={styles.statusPickerSheet}>
-            <AppText style={styles.statusPickerTitle}>Change Status</AppText>
-            {STATUS_VALUES.map((status) => {
-              const color =
-                AssetStatusColors[status as keyof typeof AssetStatusColors] ||
-                colors.electricBlue;
-              return (
-                <TouchableOpacity
-                  key={status}
-                  style={styles.statusOption}
-                  onPress={() => handleBulkStatus(status)}
-                >
-                  <View style={[styles.statusDot, { backgroundColor: color }]} />
-                  <AppText style={styles.statusOptionText}>
-                    {AssetStatusLabels[status as keyof typeof AssetStatusLabels] || status}
-                  </AppText>
-                </TouchableOpacity>
-              );
-            })}
-            <TouchableOpacity
-              style={styles.statusCancelButton}
-              onPress={() => setShowStatusPicker(false)}
-            >
-              <AppText style={styles.statusCancelText}>Cancel</AppText>
-            </TouchableOpacity>
-          </View>
-        </SheetModal>
+      {/* Hard Delete Confirm */}
+      <ConfirmSheet
+        visible={hardDeleteIds.length > 0}
+        type="danger"
+        title={`Permanently Delete ${hardDeleteIds.length} Asset(s)?`}
+        message={`This will permanently remove ${hardDeleteIds.length} asset(s) and ALL related scan events, maintenance records, and defect reports. This cannot be undone.`}
+        confirmLabel="Delete Forever"
+        onConfirm={handleHardDelete}
+        onCancel={() => setHardDeleteIds([])}
+        isLoading={hardDeleteMutation.isPending}
+      />
+
+      {/* Status Picker Sheet */}
+      <SheetModal visible={showStatusPicker} onClose={() => setShowStatusPicker(false)}>
+        <View style={styles.statusPickerSheet}>
+          <AppText style={styles.statusPickerTitle}>Change Status</AppText>
+          {STATUS_VALUES.map((status) => {
+            const color =
+              AssetStatusColors[status as keyof typeof AssetStatusColors] || colors.electricBlue;
+            return (
+              <TouchableOpacity
+                key={status}
+                style={styles.statusOption}
+                onPress={() => handleBulkStatus(status)}
+              >
+                <View style={[styles.statusDot, { backgroundColor: color }]} />
+                <AppText style={styles.statusOptionText}>
+                  {AssetStatusLabels[status as keyof typeof AssetStatusLabels] || status}
+                </AppText>
+              </TouchableOpacity>
+            );
+          })}
+          <TouchableOpacity
+            style={styles.statusCancelButton}
+            onPress={() => setShowStatusPicker(false)}
+          >
+            <AppText style={styles.statusCancelText}>Cancel</AppText>
+          </TouchableOpacity>
+        </View>
+      </SheetModal>
     </View>
   );
 }
@@ -679,7 +670,11 @@ const styles = StyleSheet.create({
     color: colors.textInverse,
     textTransform: 'uppercase',
   },
-  listContent: { paddingTop: spacing.sm, paddingBottom: spacing['2xl'], paddingHorizontal: spacing.lg },
+  listContent: {
+    paddingTop: spacing.sm,
+    paddingBottom: spacing['2xl'],
+    paddingHorizontal: spacing.lg,
+  },
   emptyListContent: { flex: 1 },
   // Status picker sheet
   statusPickerSheet: {

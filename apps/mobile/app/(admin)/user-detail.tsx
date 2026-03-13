@@ -1,14 +1,14 @@
 import React, { useState, useCallback } from 'react';
-import {
-  View,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet} from 'react-native';
+import { View, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { UserRoleLabels } from '@rgr/shared';
 import type { UserRole } from '@rgr/shared';
-import { useUserDetail, useUpdateUserRole, useUpdateUserStatus } from '../../src/hooks/useAdminUsers';
+import {
+  useUserDetail,
+  useUpdateUserRole,
+  useUpdateUserStatus,
+} from '../../src/hooks/useAdminUsers';
 import { useAuthStore } from '../../src/store/authStore';
 import { UserRolePicker } from '../../src/components/admin/UserRolePicker';
 import { ConfirmSheet } from '../../src/components/common/ConfirmSheet';
@@ -54,7 +54,12 @@ export default function UserDetailScreen() {
   if (isLoading || !profile) {
     return (
       <View style={styles.container}>
-        <SheetHeader icon="person" title="User" onClose={() => router.back()} closeIcon="arrow-back" />
+        <SheetHeader
+          icon="person"
+          title="User"
+          onClose={() => router.back()}
+          closeIcon="arrow-back"
+        />
         <View style={styles.loadingContainer}>
           <LoadingDots color={colors.textSecondary} size={12} />
         </View>
@@ -63,8 +68,7 @@ export default function UserDetailScreen() {
   }
 
   const roleColor =
-    colors.userRole[profile.role as keyof typeof colors.userRole] ||
-    colors.backgroundDark;
+    colors.userRole[profile.role as keyof typeof colors.userRole] || colors.backgroundDark;
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return 'Never';
@@ -77,165 +81,168 @@ export default function UserDetailScreen() {
 
   return (
     <View style={styles.container}>
-        <SheetHeader icon="person" title="User Detail" onClose={() => router.back()} closeIcon="arrow-back" />
+      <SheetHeader
+        icon="person"
+        title="User Detail"
+        onClose={() => router.back()}
+        closeIcon="arrow-back"
+      />
 
-        <ScrollView style={styles.scrollView} contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingTop: spacing.base, paddingBottom: spacing['2xl'] }}>
-          {/* Profile Card */}
-          <View style={styles.card}>
-            <View style={styles.profileHeader}>
-              <View style={styles.profileInfo}>
-                <AppText style={styles.profileName}>{profile.fullName}</AppText>
-                <AppText style={styles.profileEmail}>{profile.email}</AppText>
-              </View>
-              <View style={[styles.roleBadge, { backgroundColor: roleColor }]}>
-                <AppText style={styles.roleBadgeText}>
-                  {UserRoleLabels[profile.role]}
-                </AppText>
-              </View>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={{
+          paddingHorizontal: spacing.lg,
+          paddingTop: spacing.base,
+          paddingBottom: spacing['2xl'],
+        }}
+      >
+        {/* Profile Card */}
+        <View style={styles.card}>
+          <View style={styles.profileHeader}>
+            <View style={styles.profileInfo}>
+              <AppText style={styles.profileName}>{profile.fullName}</AppText>
+              <AppText style={styles.profileEmail}>{profile.email}</AppText>
             </View>
-
-            <View style={styles.divider} />
-
-            {/* Details */}
-            <View style={styles.detailRow}>
-              <AppText style={styles.detailLabel}>Status</AppText>
-              <AppText
-                style={[
-                  styles.detailValue,
-                  { color: profile.isActive ? colors.success : colors.error },
-                ]}
-              >
-                {profile.isActive ? 'Active' : 'Inactive'}
-              </AppText>
-            </View>
-            <View style={styles.detailRow}>
-              <AppText style={styles.detailLabel}>Depot</AppText>
-              <AppText style={styles.detailValue}>{profile.depot || 'Not assigned'}</AppText>
-            </View>
-            <View style={styles.detailRow}>
-              <AppText style={styles.detailLabel}>Phone</AppText>
-              <AppText style={styles.detailValue}>{profile.phone || 'Not set'}</AppText>
-            </View>
-            <View style={styles.detailRow}>
-              <AppText style={styles.detailLabel}>Employee ID</AppText>
-              <AppText style={styles.detailValue}>{profile.employeeId || 'Not set'}</AppText>
-            </View>
-            <View style={styles.detailRow}>
-              <AppText style={styles.detailLabel}>Last Login</AppText>
-              <AppText style={styles.detailValue}>{formatDate(profile.lastLoginAt)}</AppText>
-            </View>
-            <View style={styles.detailRow}>
-              <AppText style={styles.detailLabel}>Created</AppText>
-              <AppText style={styles.detailValue}>{formatDate(profile.createdAt)}</AppText>
+            <View style={[styles.roleBadge, { backgroundColor: roleColor }]}>
+              <AppText style={styles.roleBadgeText}>{UserRoleLabels[profile.role]}</AppText>
             </View>
           </View>
 
-          {/* Actions - hidden for self */}
-          {!isSelf && (
-            <View style={styles.actionsSection}>
-              <AppText style={styles.sectionTitle}>Actions</AppText>
-              <View style={styles.card}>
-                <TouchableOpacity
-                  style={styles.actionButton}
-                  onPress={() => setShowRolePicker(true)}
-                  disabled={updateRoleMutation.isPending}
-                  accessibilityRole="button"
-                  accessibilityLabel="Change role"
-                >
-                  <View style={styles.actionContent}>
-                    <Ionicons name="shield-outline" size={24} color={colors.textSecondary} />
-                    <View style={styles.actionText}>
-                      <AppText style={styles.actionTitle}>Change Role</AppText>
-                      <AppText style={styles.actionSubtitle}>
-                        Current: {UserRoleLabels[profile.role]}
-                      </AppText>
-                    </View>
+          <View style={styles.divider} />
+
+          {/* Details */}
+          <View style={styles.detailRow}>
+            <AppText style={styles.detailLabel}>Status</AppText>
+            <AppText
+              style={[
+                styles.detailValue,
+                { color: profile.isActive ? colors.success : colors.error },
+              ]}
+            >
+              {profile.isActive ? 'Active' : 'Inactive'}
+            </AppText>
+          </View>
+          <View style={styles.detailRow}>
+            <AppText style={styles.detailLabel}>Depot</AppText>
+            <AppText style={styles.detailValue}>{profile.depot || 'Not assigned'}</AppText>
+          </View>
+          <View style={styles.detailRow}>
+            <AppText style={styles.detailLabel}>Phone</AppText>
+            <AppText style={styles.detailValue}>{profile.phone || 'Not set'}</AppText>
+          </View>
+          <View style={styles.detailRow}>
+            <AppText style={styles.detailLabel}>Employee ID</AppText>
+            <AppText style={styles.detailValue}>{profile.employeeId || 'Not set'}</AppText>
+          </View>
+          <View style={styles.detailRow}>
+            <AppText style={styles.detailLabel}>Last Login</AppText>
+            <AppText style={styles.detailValue}>{formatDate(profile.lastLoginAt)}</AppText>
+          </View>
+          <View style={styles.detailRow}>
+            <AppText style={styles.detailLabel}>Created</AppText>
+            <AppText style={styles.detailValue}>{formatDate(profile.createdAt)}</AppText>
+          </View>
+        </View>
+
+        {/* Actions - hidden for self */}
+        {!isSelf && (
+          <View style={styles.actionsSection}>
+            <AppText style={styles.sectionTitle}>Actions</AppText>
+            <View style={styles.card}>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => setShowRolePicker(true)}
+                disabled={updateRoleMutation.isPending}
+                accessibilityRole="button"
+                accessibilityLabel="Change role"
+              >
+                <View style={styles.actionContent}>
+                  <Ionicons name="shield-outline" size={24} color={colors.textSecondary} />
+                  <View style={styles.actionText}>
+                    <AppText style={styles.actionTitle}>Change Role</AppText>
+                    <AppText style={styles.actionSubtitle}>
+                      Current: {UserRoleLabels[profile.role]}
+                    </AppText>
                   </View>
-                  {updateRoleMutation.isPending ? (
-                    <LoadingDots color={colors.textSecondary} size={6} />
-                  ) : (
-                    <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-                  )}
-                </TouchableOpacity>
+                </View>
+                {updateRoleMutation.isPending ? (
+                  <LoadingDots color={colors.textSecondary} size={6} />
+                ) : (
+                  <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+                )}
+              </TouchableOpacity>
 
-                <View style={styles.divider} />
+              <View style={styles.divider} />
 
-                <TouchableOpacity
-                  style={styles.actionButton}
-                  onPress={() => setShowStatusConfirm(true)}
-                  disabled={updateStatusMutation.isPending}
-                  accessibilityRole="button"
-                  accessibilityLabel={
-                    profile.isActive ? 'Deactivate user' : 'Activate user'
-                  }
-                >
-                  <View style={styles.actionContent}>
-                    <Ionicons
-                      name={profile.isActive ? 'close-circle-outline' : 'checkmark-circle-outline'}
-                      size={24}
-                      color={profile.isActive ? colors.error : colors.success}
-                    />
-                    <View style={styles.actionText}>
-                      <AppText style={styles.actionTitle}>
-                        {profile.isActive ? 'Deactivate User' : 'Activate User'}
-                      </AppText>
-                      <AppText style={styles.actionSubtitle}>
-                        {profile.isActive
-                          ? 'Prevent user from logging in'
-                          : 'Allow user to log in again'}
-                      </AppText>
-                    </View>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => setShowStatusConfirm(true)}
+                disabled={updateStatusMutation.isPending}
+                accessibilityRole="button"
+                accessibilityLabel={profile.isActive ? 'Deactivate user' : 'Activate user'}
+              >
+                <View style={styles.actionContent}>
+                  <Ionicons
+                    name={profile.isActive ? 'close-circle-outline' : 'checkmark-circle-outline'}
+                    size={24}
+                    color={profile.isActive ? colors.error : colors.success}
+                  />
+                  <View style={styles.actionText}>
+                    <AppText style={styles.actionTitle}>
+                      {profile.isActive ? 'Deactivate User' : 'Activate User'}
+                    </AppText>
+                    <AppText style={styles.actionSubtitle}>
+                      {profile.isActive
+                        ? 'Prevent user from logging in'
+                        : 'Allow user to log in again'}
+                    </AppText>
                   </View>
-                  {updateStatusMutation.isPending ? (
-                    <LoadingDots
-                      color={colors.textInverse}
-                      size={6}
-                    />
-                  ) : (
-                    <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-                  )}
-                </TouchableOpacity>
-              </View>
-
-              {(updateRoleMutation.isError || updateStatusMutation.isError) && (
-                <AppText style={styles.errorText}>
-                  {updateRoleMutation.error?.message || updateStatusMutation.error?.message}
-                </AppText>
-              )}
+                </View>
+                {updateStatusMutation.isPending ? (
+                  <LoadingDots color={colors.textInverse} size={6} />
+                ) : (
+                  <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+                )}
+              </TouchableOpacity>
             </View>
-          )}
 
-          {isSelf && (
-            <View style={styles.selfNote}>
-              <Ionicons name="information-circle-outline" size={20} color={colors.textSecondary} />
-              <AppText style={styles.selfNoteText}>
-                You cannot modify your own role or status
+            {(updateRoleMutation.isError || updateStatusMutation.isError) && (
+              <AppText style={styles.errorText}>
+                {updateRoleMutation.error?.message || updateStatusMutation.error?.message}
               </AppText>
-            </View>
-          )}
-        </ScrollView>
+            )}
+          </View>
+        )}
 
-        <UserRolePicker
-          visible={showRolePicker}
-          currentRole={profile.role}
-          onSelect={handleRoleSelect}
-          onCancel={() => setShowRolePicker(false)}
-        />
+        {isSelf && (
+          <View style={styles.selfNote}>
+            <Ionicons name="information-circle-outline" size={20} color={colors.textSecondary} />
+            <AppText style={styles.selfNoteText}>You cannot modify your own role or status</AppText>
+          </View>
+        )}
+      </ScrollView>
 
-        <ConfirmSheet
-          visible={showStatusConfirm}
-          type={profile.isActive ? 'danger' : 'warning'}
-          title={profile.isActive ? 'Deactivate User' : 'Activate User'}
-          message={
-            profile.isActive
-              ? `${profile.fullName} will no longer be able to log in. This can be reversed.`
-              : `${profile.fullName} will be able to log in again.`
-          }
-          confirmLabel={profile.isActive ? 'Deactivate' : 'Activate'}
-          onConfirm={handleToggleStatus}
-          onCancel={() => setShowStatusConfirm(false)}
-          isLoading={updateStatusMutation.isPending}
-        />
+      <UserRolePicker
+        visible={showRolePicker}
+        currentRole={profile.role}
+        onSelect={handleRoleSelect}
+        onCancel={() => setShowRolePicker(false)}
+      />
+
+      <ConfirmSheet
+        visible={showStatusConfirm}
+        type={profile.isActive ? 'danger' : 'warning'}
+        title={profile.isActive ? 'Deactivate User' : 'Activate User'}
+        message={
+          profile.isActive
+            ? `${profile.fullName} will no longer be able to log in. This can be reversed.`
+            : `${profile.fullName} will be able to log in again.`
+        }
+        confirmLabel={profile.isActive ? 'Deactivate' : 'Activate'}
+        onConfirm={handleToggleStatus}
+        onCancel={() => setShowStatusConfirm(false)}
+        isLoading={updateStatusMutation.isPending}
+      />
     </View>
   );
 }

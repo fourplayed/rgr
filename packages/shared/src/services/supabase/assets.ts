@@ -693,7 +693,7 @@ export async function getAssetMaintenance(
     completer: { full_name: string } | null;
   }
 
-  const records = (assertQueryResult<MaintenanceJoinRow[]>(data || [])).map((row) => {
+  const records = assertQueryResult<MaintenanceJoinRow[]>(data || []).map((row) => {
     const { reporter, assignee, completer, ...maintenanceRow } = row;
     const record = mapRowToMaintenanceRecord(maintenanceRow as MaintenanceRecordRow);
     return {

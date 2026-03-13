@@ -41,7 +41,11 @@ export async function upsertPushToken(
     return { success: false, data: null, error: `Failed to upsert push token: ${error.message}` };
   }
 
-  return { success: true, data: mapRowToPushToken(assertQueryResult<PushTokenRow>(data)), error: null };
+  return {
+    success: true,
+    data: mapRowToPushToken(assertQueryResult<PushTokenRow>(data)),
+    error: null,
+  };
 }
 
 /**
@@ -109,7 +113,9 @@ export async function getPushTokensForRole(role: string): Promise<ServiceResult<
     };
   }
 
-  const tokens = (tokenRows || []).map((row) => mapRowToPushToken(assertQueryResult<PushTokenRow>(row)));
+  const tokens = (tokenRows || []).map((row) =>
+    mapRowToPushToken(assertQueryResult<PushTokenRow>(row))
+  );
 
   return { success: true, data: tokens, error: null };
 }

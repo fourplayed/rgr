@@ -88,7 +88,9 @@ export function useModalTransition<T extends { type: string }>(initial: T) {
         timeoutRef.current = null;
         if (generationRef.current === gen) {
           if (__DEV__) {
-            console.warn('[useModalTransition] Safety timeout — onExitComplete not received within 1500ms');
+            console.warn(
+              '[useModalTransition] Safety timeout — onExitComplete not received within 1500ms'
+            );
           }
           mountPending();
         }

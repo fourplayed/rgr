@@ -54,7 +54,9 @@ function ValidationRow({ label, isValid }: ValidationRowProps) {
         size={16}
         color={isValid ? colors.success : colors.textSecondary}
       />
-      <AppText style={[styles.validationText, isValid && styles.validationTextValid]}>{label}</AppText>
+      <AppText style={[styles.validationText, isValid && styles.validationTextValid]}>
+        {label}
+      </AppText>
     </View>
   );
 }

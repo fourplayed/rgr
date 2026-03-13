@@ -6,7 +6,8 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  StyleSheet} from 'react-native';
+  StyleSheet,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { UserRoleLabels } from '@rgr/shared';
 import type { UserRole } from '@rgr/shared';
@@ -68,210 +69,195 @@ export default function CreateUserScreen() {
       },
       {}
     );
-  }, [
-    isValid,
-    email,
-    password,
-    fullName,
-    role,
-    phone,
-    selectedDepot,
-    createMutation,
-  ]);
+  }, [isValid, email, password, fullName, role, phone, selectedDepot, createMutation]);
 
   return (
     <View style={styles.container}>
-        <SheetHeader icon="person-add" title="Create User" onClose={() => router.back()} closeIcon="arrow-back" />
+      <SheetHeader
+        icon="person-add"
+        title="Create User"
+        onClose={() => router.back()}
+        closeIcon="arrow-back"
+      />
 
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.flex}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.flex}
+      >
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={{
+            paddingHorizontal: spacing.lg,
+            paddingTop: spacing.base,
+            paddingBottom: spacing['3xl'],
+          }}
+          keyboardShouldPersistTaps="handled"
         >
-          <ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingTop: spacing.base, paddingBottom: spacing['3xl'] }}
-            keyboardShouldPersistTaps="handled"
-          >
-            <View style={styles.card}>
-              {/* Email */}
-              <View style={styles.inputGroup}>
-                <AppText style={styles.label}>Email *</AppText>
-                <TextInput
-                  style={styles.input}
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="user@example.com"
-                  placeholderTextColor={colors.textSecondary}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-              </View>
+          <View style={styles.card}>
+            {/* Email */}
+            <View style={styles.inputGroup}>
+              <AppText style={styles.label}>Email *</AppText>
+              <TextInput
+                style={styles.input}
+                value={email}
+                onChangeText={setEmail}
+                placeholder="user@example.com"
+                placeholderTextColor={colors.textSecondary}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
 
-              {/* Password */}
-              <View style={styles.inputGroup}>
-                <AppText style={styles.label}>Password *</AppText>
-                <TextInput
-                  style={styles.input}
-                  value={password}
-                  onChangeText={setPassword}
-                  placeholder="Min. 8 characters"
-                  placeholderTextColor={colors.textSecondary}
-                  secureTextEntry
-                />
-              </View>
+            {/* Password */}
+            <View style={styles.inputGroup}>
+              <AppText style={styles.label}>Password *</AppText>
+              <TextInput
+                style={styles.input}
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Min. 8 characters"
+                placeholderTextColor={colors.textSecondary}
+                secureTextEntry
+              />
+            </View>
 
-              {/* Full Name */}
-              <View style={styles.inputGroup}>
-                <AppText style={styles.label}>Full Name *</AppText>
-                <TextInput
-                  style={styles.input}
-                  value={fullName}
-                  onChangeText={setFullName}
-                  placeholder="John Smith"
-                  placeholderTextColor={colors.textSecondary}
-                  autoCapitalize="words"
-                  maxLength={200}
-                />
-              </View>
+            {/* Full Name */}
+            <View style={styles.inputGroup}>
+              <AppText style={styles.label}>Full Name *</AppText>
+              <TextInput
+                style={styles.input}
+                value={fullName}
+                onChangeText={setFullName}
+                placeholder="John Smith"
+                placeholderTextColor={colors.textSecondary}
+                autoCapitalize="words"
+                maxLength={200}
+              />
+            </View>
 
-              {/* Role Picker */}
-              <View style={styles.inputGroup}>
-                <AppText style={styles.label}>Role *</AppText>
-                <View style={styles.chipContainer}>
-                  {ROLES.map((r) => {
-                    const isSelected = role === r;
-                    const roleColor =
-                      colors.userRole[r as keyof typeof colors.userRole] ||
-                      colors.backgroundDark;
-                    return (
-                      <TouchableOpacity
-                        key={r}
+            {/* Role Picker */}
+            <View style={styles.inputGroup}>
+              <AppText style={styles.label}>Role *</AppText>
+              <View style={styles.chipContainer}>
+                {ROLES.map((r) => {
+                  const isSelected = role === r;
+                  const roleColor =
+                    colors.userRole[r as keyof typeof colors.userRole] || colors.backgroundDark;
+                  return (
+                    <TouchableOpacity
+                      key={r}
+                      style={[
+                        styles.roleChip,
+                        {
+                          backgroundColor: isSelected ? roleColor : colors.surface,
+                          borderColor: isSelected ? 'transparent' : colors.border,
+                        },
+                      ]}
+                      onPress={() => setRole(r)}
+                      activeOpacity={0.7}
+                    >
+                      <AppText
                         style={[
-                          styles.roleChip,
+                          styles.roleChipText,
                           {
-                            backgroundColor: isSelected ? roleColor : colors.surface,
-                            borderColor: isSelected ? 'transparent' : colors.border,
+                            color: isSelected ? colors.textInverse : colors.text,
+                            fontFamily: isSelected ? fonts.bold : fonts.regular,
                           },
                         ]}
-                        onPress={() => setRole(r)}
-                        activeOpacity={0.7}
                       >
-                        <AppText
-                          style={[
-                            styles.roleChipText,
-                            {
-                              color: isSelected ? colors.textInverse : colors.text,
-                              fontFamily: isSelected ? fonts.bold : fonts.regular,
-                            },
-                          ]}
-                        >
-                          {UserRoleLabels[r]}
-                        </AppText>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </View>
-
-              {/* Phone */}
-              <View style={styles.inputGroup}>
-                <AppText style={styles.label}>Phone</AppText>
-                <TextInput
-                  style={styles.input}
-                  value={phone}
-                  onChangeText={setPhone}
-                  placeholder="Optional"
-                  placeholderTextColor={colors.textSecondary}
-                  keyboardType="phone-pad"
-                  maxLength={20}
-                />
-              </View>
-
-              {/* Depot Picker */}
-              <View style={styles.inputGroup}>
-                <AppText style={styles.label}>Depot</AppText>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.depotChipScroll}
-                >
-                  <TouchableOpacity
-                    style={[
-                      styles.depotChip,
-                      !selectedDepot && styles.depotChipSelected,
-                    ]}
-                    onPress={() => setSelectedDepot(null)}
-                    activeOpacity={0.7}
-                  >
-                    <AppText
-                      style={[
-                        styles.depotChipText,
-                        !selectedDepot && styles.depotChipTextSelected,
-                      ]}
-                    >
-                      None
-                    </AppText>
-                  </TouchableOpacity>
-                  {depots.map((depot) => {
-                    const isSelected = selectedDepot === depot.code;
-                    return (
-                      <TouchableOpacity
-                        key={depot.id}
-                        style={[
-                          styles.depotChip,
-                          isSelected && styles.depotChipSelected,
-                        ]}
-                        onPress={() => setSelectedDepot(depot.code)}
-                        activeOpacity={0.7}
-                      >
-                        <AppText
-                          style={[
-                            styles.depotChipText,
-                            isSelected && styles.depotChipTextSelected,
-                          ]}
-                        >
-                          {depot.code.toUpperCase()}
-                        </AppText>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
-              </View>
-
-              {error && (
-                <AppText style={styles.errorText}>{error}</AppText>
-              )}
-
-              {/* Buttons */}
-              <View style={styles.buttonRow}>
-                <TouchableOpacity
-                  style={[styles.button, styles.cancelButton]}
-                  onPress={() => router.back()}
-                  disabled={createMutation.isPending}
-                >
-                  <AppText style={styles.cancelButtonText}>Cancel</AppText>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.button,
-                    styles.saveButton,
-                    (!isValid || createMutation.isPending) && styles.buttonDisabled,
-                  ]}
-                  onPress={handleSubmit}
-                  disabled={!isValid || createMutation.isPending}
-                >
-                  {createMutation.isPending ? (
-                    <LoadingDots color={colors.textInverse} size={8} />
-                  ) : (
-                    <AppText style={styles.saveButtonText}>Create User</AppText>
-                  )}
-                </TouchableOpacity>
+                        {UserRoleLabels[r]}
+                      </AppText>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
+
+            {/* Phone */}
+            <View style={styles.inputGroup}>
+              <AppText style={styles.label}>Phone</AppText>
+              <TextInput
+                style={styles.input}
+                value={phone}
+                onChangeText={setPhone}
+                placeholder="Optional"
+                placeholderTextColor={colors.textSecondary}
+                keyboardType="phone-pad"
+                maxLength={20}
+              />
+            </View>
+
+            {/* Depot Picker */}
+            <View style={styles.inputGroup}>
+              <AppText style={styles.label}>Depot</AppText>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.depotChipScroll}
+              >
+                <TouchableOpacity
+                  style={[styles.depotChip, !selectedDepot && styles.depotChipSelected]}
+                  onPress={() => setSelectedDepot(null)}
+                  activeOpacity={0.7}
+                >
+                  <AppText
+                    style={[styles.depotChipText, !selectedDepot && styles.depotChipTextSelected]}
+                  >
+                    None
+                  </AppText>
+                </TouchableOpacity>
+                {depots.map((depot) => {
+                  const isSelected = selectedDepot === depot.code;
+                  return (
+                    <TouchableOpacity
+                      key={depot.id}
+                      style={[styles.depotChip, isSelected && styles.depotChipSelected]}
+                      onPress={() => setSelectedDepot(depot.code)}
+                      activeOpacity={0.7}
+                    >
+                      <AppText
+                        style={[styles.depotChipText, isSelected && styles.depotChipTextSelected]}
+                      >
+                        {depot.code.toUpperCase()}
+                      </AppText>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+
+            {error && <AppText style={styles.errorText}>{error}</AppText>}
+
+            {/* Buttons */}
+            <View style={styles.buttonRow}>
+              <TouchableOpacity
+                style={[styles.button, styles.cancelButton]}
+                onPress={() => router.back()}
+                disabled={createMutation.isPending}
+              >
+                <AppText style={styles.cancelButtonText}>Cancel</AppText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.button,
+                  styles.saveButton,
+                  (!isValid || createMutation.isPending) && styles.buttonDisabled,
+                ]}
+                onPress={handleSubmit}
+                disabled={!isValid || createMutation.isPending}
+              >
+                {createMutation.isPending ? (
+                  <LoadingDots color={colors.textInverse} size={8} />
+                ) : (
+                  <AppText style={styles.saveButtonText}>Create User</AppText>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       <CreateUserOverlay
         visible={showOverlay}

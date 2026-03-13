@@ -31,7 +31,11 @@ export function PersistentBackdrop({
       pointerEvents={showBackdrop ? 'auto' : 'none'}
     >
       {Platform.OS === 'ios' && (
-        <BlurView intensity={BACKDROP_BLUR_INTENSITY} tint={BACKDROP_BLUR_TINT} style={StyleSheet.absoluteFillObject} />
+        <BlurView
+          intensity={BACKDROP_BLUR_INTENSITY}
+          tint={BACKDROP_BLUR_TINT}
+          style={StyleSheet.absoluteFillObject}
+        />
       )}
       <TouchableOpacity
         style={StyleSheet.absoluteFill}

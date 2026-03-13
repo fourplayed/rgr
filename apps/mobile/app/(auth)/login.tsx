@@ -7,7 +7,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Animated,
-  Easing} from 'react-native';
+  Easing,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -20,12 +21,22 @@ import { depotKeys } from '../../src/hooks/useDepots';
 import { SaveCredentialsModal } from '../../src/components/auth/SaveCredentialsModal';
 import { isAutoLoginEnabled } from '../../src/utils/secureStorage';
 import { colors } from '../../src/theme/colors';
-import { spacing, fontSize, fontWeight, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
+import {
+  spacing,
+  fontSize,
+  fontWeight,
+  borderRadius,
+  fontFamily as fonts,
+} from '../../src/theme/spacing';
 import { AppText, LoadingDots, AlertSheet } from '../../src/components/common';
 import { logger } from '../../src/utils/logger';
 
 const APP_VERSION = Constants.expoConfig?.version || '1.0.0';
-const BUILD_NUMBER = Constants['nativeBuildVersion'] || Constants.expoConfig?.ios?.buildNumber || Constants.expoConfig?.android?.versionCode || '0';
+const BUILD_NUMBER =
+  Constants['nativeBuildVersion'] ||
+  Constants.expoConfig?.ios?.buildNumber ||
+  Constants.expoConfig?.android?.versionCode ||
+  '0';
 
 const LOGIN_STRIPE_HEIGHT = 84;
 const ACCENT_LINE_HEIGHT = 13;
@@ -34,7 +45,8 @@ const ACCENT_LINE_GAP = 6;
 export default function LoginScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { login, isLoading, clearError, clearSavedSession, authError, clearAuthError } = useAuthStore();
+  const { login, isLoading, clearError, clearSavedSession, authError, clearAuthError } =
+    useAuthStore();
   const { resolveDepot } = useLocationStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -127,17 +139,20 @@ export default function LoginScreen() {
     if (result.success) {
       // Fire and forget: fetch depots via React Query cache, then resolve location
       // Errors are non-fatal - user can still use the app without depot resolution
-      queryClient.fetchQuery({
-        queryKey: depotKeys.list(),
-        queryFn: async () => {
-          const result = await listDepots();
-          if (!result.success) throw new Error(result.error);
-          return result.data;
-        },
-        staleTime: 1000 * 60 * 10,
-      }).then((depots) => resolveDepot(depots)).catch((err) => {
-        logger.warn('Failed to resolve depot on login', err);
-      });
+      queryClient
+        .fetchQuery({
+          queryKey: depotKeys.list(),
+          queryFn: async () => {
+            const result = await listDepots();
+            if (!result.success) throw new Error(result.error);
+            return result.data;
+          },
+          staleTime: 1000 * 60 * 10,
+        })
+        .then((depots) => resolveDepot(depots))
+        .catch((err) => {
+          logger.warn('Failed to resolve depot on login', err);
+        });
 
       // Check if auto-login is already enabled
       const autoLoginAlreadyEnabled = await isAutoLoginEnabled();
@@ -174,155 +189,161 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-    <KeyboardAvoidingView
-      style={styles.containerInner}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <Animated.View style={styles.content}>
-        <View style={styles.header}>
-          <View style={styles.loginStripeContainer}>
-            <View style={styles.loginAccentLine}>
-              <Animated.View
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  right: 0,
-                  top: 0,
-                  bottom: 0,
-                  transform: [{
-                    translateX: accentAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [-100, 100],
-                    }),
-                  }],
-                }}
-              >
-                <LinearGradient
-                  colors={['#00A4E4', '#00D4FF', '#00A4E4']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={{ flex: 1, width: '200%', marginLeft: '-50%' }}
-                />
-              </Animated.View>
+      <KeyboardAvoidingView
+        style={styles.containerInner}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <Animated.View style={styles.content}>
+          <View style={styles.header}>
+            <View style={styles.loginStripeContainer}>
+              <View style={styles.loginAccentLine}>
+                <Animated.View
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                    transform: [
+                      {
+                        translateX: accentAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [-100, 100],
+                        }),
+                      },
+                    ],
+                  }}
+                >
+                  <LinearGradient
+                    colors={['#00A4E4', '#00D4FF', '#00A4E4']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={{ flex: 1, width: '200%', marginLeft: '-50%' }}
+                  />
+                </Animated.View>
+              </View>
+              <View style={styles.loginStripe}>
+                <Animated.View
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                    transform: [
+                      {
+                        translateX: accentAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [-50, 50],
+                        }),
+                      },
+                    ],
+                  }}
+                >
+                  <LinearGradient
+                    colors={['#0000DD', '#0000FF', '#0000DD']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={{ flex: 1, width: '200%', marginLeft: '-50%' }}
+                  />
+                </Animated.View>
+              </View>
             </View>
-            <View style={styles.loginStripe}>
+            <View style={styles.logoContainer}>
               <Animated.View
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  right: 0,
-                  top: 0,
-                  bottom: 0,
-                  transform: [{
-                    translateX: accentAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [-50, 50],
-                    }),
-                  }],
-                }}
+                style={[
+                  styles.logoShadow,
+                  {
+                    transform: [
+                      { perspective: 1000 },
+                      {
+                        rotateY: tiltAnim.interpolate({
+                          inputRange: [-1, 1],
+                          outputRange: ['-4deg', '4deg'],
+                        }),
+                      },
+                    ],
+                  },
+                ]}
               >
-                <LinearGradient
-                  colors={['#0000DD', '#0000FF', '#0000DD']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={{ flex: 1, width: '200%', marginLeft: '-50%' }}
+                <Animated.Image
+                  source={require('../../src/assets/logo.png')}
+                  style={styles.logo}
+                  resizeMode="contain"
                 />
               </Animated.View>
             </View>
           </View>
-          <View style={styles.logoContainer}>
-            <Animated.View
-              style={[
-                styles.logoShadow,
-                {
-                  transform: [
-                    { perspective: 1000 },
-                    {
-                      rotateY: tiltAnim.interpolate({
-                        inputRange: [-1, 1],
-                        outputRange: ['-4deg', '4deg'],
-                      }),
-                    },
-                  ],
-                },
-              ]}
-            >
-              <Animated.Image
-                source={require('../../src/assets/logo.png')}
-                style={styles.logo}
-                resizeMode="contain"
+
+          <View style={styles.form}>
+            <View style={styles.inputGroup}>
+              <AppText style={styles.label}>Email</AppText>
+              <TextInput
+                style={[styles.input, !email && { fontStyle: 'italic' }]}
+                placeholder="Enter your email address"
+                placeholderTextColor={colors.textSecondary}
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="email-address"
+                editable={!isLoading}
+                accessibilityLabel="Email address"
+                accessibilityHint="Enter your email address to sign in"
               />
-            </Animated.View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <AppText style={styles.label}>Password</AppText>
+              <TextInput
+                style={[styles.input, !password && { fontStyle: 'italic' }]}
+                placeholder="Enter your password"
+                placeholderTextColor={colors.textSecondary}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                editable={!isLoading}
+                accessibilityLabel="Password"
+                accessibilityHint="Enter your password to sign in"
+              />
+            </View>
+
+            <TouchableOpacity
+              style={styles.button}
+              onPress={handleLogin}
+              disabled={isLoading}
+              accessibilityRole="button"
+              accessibilityLabel={isLoading ? 'Signing in' : 'Sign in'}
+              accessibilityHint="Double tap to sign in to your account"
+              accessibilityState={{ disabled: !isFormValid || isLoading }}
+            >
+              {isLoading ? (
+                <LoadingDots color={colors.textInverse} />
+              ) : (
+                <AppText style={styles.buttonText}>Sign In</AppText>
+              )}
+            </TouchableOpacity>
           </View>
-        </View>
+        </Animated.View>
+      </KeyboardAvoidingView>
 
-        <View style={styles.form}>
-          <View style={styles.inputGroup}>
-            <AppText style={styles.label}>Email</AppText>
-            <TextInput
-              style={[styles.input, !email && { fontStyle: 'italic' }]}
-              placeholder="Enter your email address"
-              placeholderTextColor={colors.textSecondary}
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              autoCorrect={false}
-              keyboardType="email-address"
-              editable={!isLoading}
-              accessibilityLabel="Email address"
-              accessibilityHint="Enter your email address to sign in"
-            />
-          </View>
+      <AppText style={styles.versionText}>
+        v{APP_VERSION} ({BUILD_NUMBER})
+      </AppText>
 
-          <View style={styles.inputGroup}>
-            <AppText style={styles.label}>Password</AppText>
-            <TextInput
-              style={[styles.input, !password && { fontStyle: 'italic' }]}
-              placeholder="Enter your password"
-              placeholderTextColor={colors.textSecondary}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              editable={!isLoading}
-              accessibilityLabel="Password"
-              accessibilityHint="Enter your password to sign in"
-            />
-          </View>
+      <SaveCredentialsModal
+        visible={showSaveModal}
+        onSave={handleSaveCredentials}
+        onSkip={handleSkipSave}
+      />
 
-          <TouchableOpacity
-            style={styles.button}
-            onPress={handleLogin}
-            disabled={isLoading}
-            accessibilityRole="button"
-            accessibilityLabel={isLoading ? "Signing in" : "Sign in"}
-            accessibilityHint="Double tap to sign in to your account"
-            accessibilityState={{ disabled: !isFormValid || isLoading }}
-          >
-            {isLoading ? (
-              <LoadingDots color={colors.textInverse} />
-            ) : (
-              <AppText style={styles.buttonText}>Sign In</AppText>
-            )}
-          </TouchableOpacity>
-        </View>
-      </Animated.View>
-    </KeyboardAvoidingView>
-
-    <AppText style={styles.versionText}>v{APP_VERSION} ({BUILD_NUMBER})</AppText>
-
-    <SaveCredentialsModal
-      visible={showSaveModal}
-      onSave={handleSaveCredentials}
-      onSkip={handleSkipSave}
-    />
-
-    <AlertSheet
-      visible={alertSheet.visible}
-      type={alertSheet.type}
-      title={alertSheet.title}
-      message={alertSheet.message}
-      onDismiss={() => setAlertSheet(prev => ({ ...prev, visible: false }))}
-    />
+      <AlertSheet
+        visible={alertSheet.visible}
+        type={alertSheet.type}
+        title={alertSheet.title}
+        message={alertSheet.message}
+        onDismiss={() => setAlertSheet((prev) => ({ ...prev, visible: false }))}
+      />
     </View>
   );
 }

@@ -33,16 +33,10 @@ jest.mock('../../config/featureFlags', () => ({
 }));
 
 jest.mock('../../store/authStore', () => ({
-  useAuthStore: jest.fn((selector: any) =>
-    selector({ user: { fullName: 'Test User' } })
-  ),
+  useAuthStore: jest.fn((selector: any) => selector({ user: { fullName: 'Test User' } })),
 }));
 
-import {
-  listMaintenance,
-  createMaintenance,
-  updateMaintenanceStatus,
-} from '@rgr/shared';
+import { listMaintenance, createMaintenance, updateMaintenanceStatus } from '@rgr/shared';
 import {
   maintenanceKeys,
   useMaintenanceList,
@@ -259,7 +253,12 @@ describe('optimistic: createMaintenance', () => {
 
   const seedListCache = (queryClient: any) => {
     queryClient.setQueryData(maintenanceKeys.list({}), {
-      pages: [{ data: [{ id: 'm1', title: 'Existing', createdAt: '2026-01-01T00:00:00Z' }], hasMore: false }],
+      pages: [
+        {
+          data: [{ id: 'm1', title: 'Existing', createdAt: '2026-01-01T00:00:00Z' }],
+          hasMore: false,
+        },
+      ],
       pageParams: [undefined],
     });
   };
@@ -271,7 +270,10 @@ describe('optimistic: createMaintenance', () => {
     // Mutation hangs so we can inspect cache mid-flight
     let resolveMutation!: (value: any) => void;
     mockCreateMaintenance.mockImplementation(
-      () => new Promise((resolve) => { resolveMutation = resolve; })
+      () =>
+        new Promise((resolve) => {
+          resolveMutation = resolve;
+        })
     );
 
     const { result } = renderHook(() => useCreateMaintenance(), { wrapper });
@@ -359,7 +361,10 @@ describe('optimistic: updateMaintenanceStatus', () => {
 
     let resolveMutation!: (value: any) => void;
     mockUpdateMaintenanceStatus.mockImplementation(
-      () => new Promise((resolve) => { resolveMutation = resolve; })
+      () =>
+        new Promise((resolve) => {
+          resolveMutation = resolve;
+        })
     );
 
     const { result } = renderHook(() => useUpdateMaintenanceStatus(), { wrapper });

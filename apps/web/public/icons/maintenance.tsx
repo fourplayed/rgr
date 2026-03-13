@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { motion, useAnimation } from "motion/react";
-import type { Transition, Variants } from "motion/react";
+import { motion, useAnimation } from 'motion/react';
+import type { Transition, Variants } from 'motion/react';
 
 interface BoltProps extends React.SVGAttributes<SVGSVGElement> {
   width?: number;
@@ -12,7 +12,7 @@ interface BoltProps extends React.SVGAttributes<SVGSVGElement> {
 
 const transition: Transition = {
   duration: 2,
-  ease: "linear",
+  ease: 'linear',
   repeat: 0,
 };
 
@@ -25,7 +25,7 @@ const Bolt = ({
   width = 28,
   height = 28,
   strokeWidth = 2,
-  stroke = "#ffffff",
+  stroke = '#ffffff',
   ...props
 }: BoltProps) => {
   const controls = useAnimation();
@@ -33,17 +33,17 @@ const Bolt = ({
   return (
     <div
       style={{
-        cursor: "pointer",
-        userSelect: "none",
-        padding: "8px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        cursor: 'pointer',
+        userSelect: 'none',
+        padding: '8px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
       }}
-      onMouseEnter={() => controls.start("animate")}
+      onMouseEnter={() => controls.start('animate')}
       onMouseLeave={() => {
         controls.stop();
-        controls.start("normal");
+        controls.start('normal');
       }}
     >
       <svg

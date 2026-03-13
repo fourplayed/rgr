@@ -1,10 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  Animated,
-  LayoutChangeEvent,
-  StyleSheet,
-  TouchableOpacity,
-  View} from 'react-native';
+import { Animated, LayoutChangeEvent, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { colors } from '../../theme/colors';
 import { borderRadius, fontSize, spacing, fontFamily as fonts } from '../../theme/spacing';
 import { AppText } from './AppText';
@@ -74,7 +69,9 @@ export function SegmentedTabs<T extends string>({
             accessibilityState={{ selected }}
             accessibilityLabel={`${tab.label} tab`}
           >
-            <AppText style={[styles.tabText, selected && styles.tabTextActive]}>{tab.label}</AppText>
+            <AppText style={[styles.tabText, selected && styles.tabTextActive]}>
+              {tab.label}
+            </AppText>
           </TouchableOpacity>
         );
       })}

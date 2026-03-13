@@ -1,31 +1,15 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import {
-  View,
-  FlatList,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView} from 'react-native';
+import { View, FlatList, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import {
-  DefectStatus,
-  formatAssetNumber,
-  formatRelativeTime,
-} from '@rgr/shared';
+import { DefectStatus, formatAssetNumber, formatRelativeTime } from '@rgr/shared';
 import type { AdminDefectListItem } from '@rgr/shared';
-import {
-  useAdminDefectList,
-  useBulkDeleteDefects,
-} from '../../src/hooks/useAdminDefects';
+import { useAdminDefectList, useBulkDeleteDefects } from '../../src/hooks/useAdminDefects';
 import { SheetHeader } from '../../src/components/common/SheetHeader';
 import { FilterChip } from '../../src/components/common/FilterChip';
 import { ConfirmSheet } from '../../src/components/common/ConfirmSheet';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
-import {
-  DefectStatusBadge,
-  DEFECT_STATUS_CONFIG,
-} from '../../src/components/maintenance';
+import { DefectStatusBadge, DEFECT_STATUS_CONFIG } from '../../src/components/maintenance';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
 import { AppText } from '../../src/components/common';
@@ -58,9 +42,7 @@ export default function DefectsAdminScreen() {
 
   const toggleStatusFilter = useCallback((status: DefectStatus) => {
     setStatusFilter((prev) => {
-      const next = prev.includes(status)
-        ? prev.filter((s) => s !== status)
-        : [...prev, status];
+      const next = prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status];
       return next;
     });
     setPage(1);
@@ -106,8 +88,7 @@ export default function DefectsAdminScreen() {
     ({ item }: { item: AdminDefectListItem }) => {
       const isSelected = selectedIds.has(item.id);
       const config =
-        DEFECT_STATUS_CONFIG[item.status as DefectStatus] ??
-        DEFECT_STATUS_CONFIG.reported;
+        DEFECT_STATUS_CONFIG[item.status as DefectStatus] ?? DEFECT_STATUS_CONFIG.reported;
 
       return (
         <TouchableOpacity
@@ -122,16 +103,12 @@ export default function DefectsAdminScreen() {
           accessibilityState={{ checked: isSelected }}
         >
           <View style={styles.checkbox}>
-            {isSelected && (
-              <Ionicons name="checkmark" size={16} color={colors.electricBlue} />
-            )}
+            {isSelected && <Ionicons name="checkmark" size={16} color={colors.electricBlue} />}
           </View>
           <View style={styles.itemInfo}>
             <View style={styles.itemHeaderRow}>
               <AppText style={styles.itemAssetNumber} numberOfLines={1}>
-                {item.assetNumber
-                  ? formatAssetNumber(item.assetNumber)
-                  : 'Unknown Asset'}
+                {item.assetNumber ? formatAssetNumber(item.assetNumber) : 'Unknown Asset'}
               </AppText>
               <DefectStatusBadge status={item.status as DefectStatus} />
             </View>
@@ -166,154 +143,160 @@ export default function DefectsAdminScreen() {
 
   return (
     <View style={styles.container}>
-        {hasSelection ? (
-          <SheetHeader
-            icon="warning"
-            title={`${selectedIds.size} Selected`}
-            onClose={clearSelection}
-            backgroundColor={colors.defectYellow}
-            headerAction={{
-              icon: 'trash',
-              onPress: () => setShowDeleteConfirm(true),
-              accessibilityLabel: 'Delete selected',
-            }}
-          />
-        ) : (
-          <SheetHeader
-            icon="warning"
-            title="Defect Reports"
-            onClose={() => router.back()}
-            closeIcon="arrow-back"
-            backgroundColor={colors.defectYellow}
-          />
-        )}
-
-        {/* Search */}
-        <View style={styles.searchContainer}>
-          <View style={styles.searchBox}>
-            <Ionicons name="search" size={20} color={colors.textSecondary} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search defects..."
-              placeholderTextColor={colors.textSecondary}
-              value={search}
-              onChangeText={handleSearch}
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-            {search.length > 0 && (
-              <TouchableOpacity onPress={() => handleSearch('')}>
-                <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-
-        {/* Filter chips */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filterRow}
-        >
-          {STATUS_FILTERS.map((filter) => (
-            <FilterChip
-              key={filter.value}
-              label={filter.label}
-              isSelected={statusFilter.includes(filter.value)}
-              onPress={() => toggleStatusFilter(filter.value)}
-            />
-          ))}
-        </ScrollView>
-
-        {/* Toolbar */}
-        {hasSelection && (
-          <View style={styles.toolbar}>
-            <TouchableOpacity
-              style={[styles.toolbarButton, styles.toolbarButtonDanger]}
-              onPress={() => setShowDeleteConfirm(true)}
-            >
-              <Ionicons name="trash-outline" size={18} color={colors.error} />
-              <AppText style={[styles.toolbarButtonText, { color: colors.error }]}>
-                Delete{selectedIds.size > 1 ? ` (${selectedIds.size})` : ''}
-              </AppText>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Content */}
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <LoadingDots color={colors.textSecondary} size={12} />
-          </View>
-        ) : error ? (
-          <View style={styles.centerContent}>
-            <AppText style={styles.errorText}>Failed to load defects</AppText>
-            <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
-              <AppText style={styles.retryButtonText}>Retry</AppText>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <>
-            <FlatList
-              data={items}
-              renderItem={renderItem}
-              keyExtractor={keyExtractor}
-              ListEmptyComponent={renderEmpty}
-              removeClippedSubviews
-              contentContainerStyle={
-                items.length === 0 ? styles.emptyListContent : styles.listContent
-              }
-            />
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <View style={styles.pagination}>
-                <TouchableOpacity
-                  onPress={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page <= 1}
-                  style={[styles.pageButton, page <= 1 && styles.pageButtonDisabled]}
-                >
-                  <Ionicons
-                    name="chevron-back"
-                    size={20}
-                    color={page <= 1 ? colors.textSecondary : colors.text}
-                  />
-                </TouchableOpacity>
-                <AppText style={styles.pageText}>
-                  {page} / {totalPages}
-                </AppText>
-                <TouchableOpacity
-                  onPress={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page >= totalPages}
-                  style={[styles.pageButton, page >= totalPages && styles.pageButtonDisabled]}
-                >
-                  <Ionicons
-                    name="chevron-forward"
-                    size={20}
-                    color={page >= totalPages ? colors.textSecondary : colors.text}
-                  />
-                </TouchableOpacity>
-              </View>
-            )}
-          </>
-        )}
-
-        <ConfirmSheet
-          visible={showDeleteConfirm}
-          type="danger"
-          title={`Delete ${selectedIds.size} Defect${selectedIds.size > 1 ? 's' : ''}?`}
-          message="This will permanently delete the selected defect reports. This cannot be undone."
-          confirmLabel={`Delete ${selectedIds.size}`}
-          onConfirm={handleBulkDelete}
-          onCancel={() => setShowDeleteConfirm(false)}
-          isLoading={bulkDeleteMutation.isPending}
+      {hasSelection ? (
+        <SheetHeader
+          icon="warning"
+          title={`${selectedIds.size} Selected`}
+          onClose={clearSelection}
+          backgroundColor={colors.defectYellow}
+          headerAction={{
+            icon: 'trash',
+            onPress: () => setShowDeleteConfirm(true),
+            accessibilityLabel: 'Delete selected',
+          }}
         />
+      ) : (
+        <SheetHeader
+          icon="warning"
+          title="Defect Reports"
+          onClose={() => router.back()}
+          closeIcon="arrow-back"
+          backgroundColor={colors.defectYellow}
+        />
+      )}
+
+      {/* Search */}
+      <View style={styles.searchContainer}>
+        <View style={styles.searchBox}>
+          <Ionicons name="search" size={20} color={colors.textSecondary} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search defects..."
+            placeholderTextColor={colors.textSecondary}
+            value={search}
+            onChangeText={handleSearch}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          {search.length > 0 && (
+            <TouchableOpacity onPress={() => handleSearch('')}>
+              <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      {/* Filter chips */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filterRow}
+      >
+        {STATUS_FILTERS.map((filter) => (
+          <FilterChip
+            key={filter.value}
+            label={filter.label}
+            isSelected={statusFilter.includes(filter.value)}
+            onPress={() => toggleStatusFilter(filter.value)}
+          />
+        ))}
+      </ScrollView>
+
+      {/* Toolbar */}
+      {hasSelection && (
+        <View style={styles.toolbar}>
+          <TouchableOpacity
+            style={[styles.toolbarButton, styles.toolbarButtonDanger]}
+            onPress={() => setShowDeleteConfirm(true)}
+          >
+            <Ionicons name="trash-outline" size={18} color={colors.error} />
+            <AppText style={[styles.toolbarButtonText, { color: colors.error }]}>
+              Delete{selectedIds.size > 1 ? ` (${selectedIds.size})` : ''}
+            </AppText>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Content */}
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <LoadingDots color={colors.textSecondary} size={12} />
+        </View>
+      ) : error ? (
+        <View style={styles.centerContent}>
+          <AppText style={styles.errorText}>Failed to load defects</AppText>
+          <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
+            <AppText style={styles.retryButtonText}>Retry</AppText>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <>
+          <FlatList
+            data={items}
+            renderItem={renderItem}
+            keyExtractor={keyExtractor}
+            ListEmptyComponent={renderEmpty}
+            removeClippedSubviews
+            contentContainerStyle={
+              items.length === 0 ? styles.emptyListContent : styles.listContent
+            }
+          />
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <View style={styles.pagination}>
+              <TouchableOpacity
+                onPress={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                style={[styles.pageButton, page <= 1 && styles.pageButtonDisabled]}
+              >
+                <Ionicons
+                  name="chevron-back"
+                  size={20}
+                  color={page <= 1 ? colors.textSecondary : colors.text}
+                />
+              </TouchableOpacity>
+              <AppText style={styles.pageText}>
+                {page} / {totalPages}
+              </AppText>
+              <TouchableOpacity
+                onPress={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+                style={[styles.pageButton, page >= totalPages && styles.pageButtonDisabled]}
+              >
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={page >= totalPages ? colors.textSecondary : colors.text}
+                />
+              </TouchableOpacity>
+            </View>
+          )}
+        </>
+      )}
+
+      <ConfirmSheet
+        visible={showDeleteConfirm}
+        type="danger"
+        title={`Delete ${selectedIds.size} Defect${selectedIds.size > 1 ? 's' : ''}?`}
+        message="This will permanently delete the selected defect reports. This cannot be undone."
+        confirmLabel={`Delete ${selectedIds.size}`}
+        onConfirm={handleBulkDelete}
+        onCancel={() => setShowDeleteConfirm(false)}
+        isLoading={bulkDeleteMutation.isPending}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.chrome, borderTopLeftRadius: borderRadius.xl, borderTopRightRadius: borderRadius.xl, overflow: 'hidden' as const },
+  container: {
+    flex: 1,
+    backgroundColor: colors.chrome,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
+    overflow: 'hidden' as const,
+  },
   searchContainer: {
     paddingHorizontal: spacing.base,
     marginBottom: spacing.sm,

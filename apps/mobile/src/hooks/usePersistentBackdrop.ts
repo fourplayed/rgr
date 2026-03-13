@@ -17,10 +17,7 @@ interface PersistentBackdropOptions {
  * and a `mounted` flag that delays unmount until the fade-out animation completes
  * (avoids compositing an invisible BlurView on iOS).
  */
-export function usePersistentBackdrop(
-  isVisible: boolean,
-  options?: PersistentBackdropOptions,
-) {
+export function usePersistentBackdrop(isVisible: boolean, options?: PersistentBackdropOptions) {
   const { syncOverlay = true } = options ?? {};
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const [mounted, setMounted] = useState(false);

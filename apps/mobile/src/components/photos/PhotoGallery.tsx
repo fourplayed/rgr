@@ -1,10 +1,5 @@
 import React, { memo, useMemo } from 'react';
-import {
-  View,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  useWindowDimensions} from 'react-native';
+import { View, ScrollView, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { PhotoThumbnail } from './PhotoThumbnail';
 import { LoadingDots } from '../common/LoadingDots';

@@ -69,64 +69,70 @@ export default function DataDashboardScreen() {
 
   return (
     <View style={styles.container}>
-      <SheetHeader icon="stats-chart" title="Data Dashboard" onClose={() => router.back()} closeIcon="arrow-back" />
+      <SheetHeader
+        icon="stats-chart"
+        title="Data Dashboard"
+        onClose={() => router.back()}
+        closeIcon="arrow-back"
+      />
 
-        {isLoading ? (
-          <View style={styles.centerContent}>
-            <LoadingDots color={colors.textSecondary} size={12} />
+      {isLoading ? (
+        <View style={styles.centerContent}>
+          <LoadingDots color={colors.textSecondary} size={12} />
+        </View>
+      ) : error ? (
+        <View style={styles.centerContent}>
+          <AppText style={styles.errorText}>Failed to load stats</AppText>
+          <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
+            <AppText style={styles.retryButtonText}>Retry</AppText>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={{
+            paddingHorizontal: spacing.lg,
+            paddingTop: spacing.base,
+            paddingBottom: spacing['3xl'],
+          }}
+        >
+          <AppText style={styles.sectionTitle}>Overview</AppText>
+          <View style={styles.statsGrid}>
+            {STAT_CARDS.map((card) => (
+              <TouchableOpacity
+                key={card.key}
+                style={[styles.statCard, { backgroundColor: card.color }]}
+                onPress={() => router.push(card.route)}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel={`${card.label}: ${stats ? card.getValue(stats) : 0}. Tap to manage.`}
+              >
+                <View style={styles.statRow}>
+                  <Ionicons name={card.icon} size={32} color="#FFFFFF" style={styles.statIcon} />
+                  <CountUpValue value={stats ? card.getValue(stats) : 0} style={styles.statValue} />
+                </View>
+                <AppText style={styles.statLabel}>{card.label}</AppText>
+                <AppText style={styles.statSubtitle}>
+                  {stats ? card.getSubtitle(stats) : ''}
+                </AppText>
+              </TouchableOpacity>
+            ))}
           </View>
-        ) : error ? (
-          <View style={styles.centerContent}>
-            <AppText style={styles.errorText}>Failed to load stats</AppText>
-            <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
-              <AppText style={styles.retryButtonText}>Retry</AppText>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingTop: spacing.base, paddingBottom: spacing['3xl'] }}
-          >
-            <AppText style={styles.sectionTitle}>Overview</AppText>
-            <View style={styles.statsGrid}>
-              {STAT_CARDS.map((card) => (
-                <TouchableOpacity
-                  key={card.key}
-                  style={[styles.statCard, { backgroundColor: card.color }]}
-                  onPress={() => router.push(card.route)}
-                  activeOpacity={0.8}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${card.label}: ${stats ? card.getValue(stats) : 0}. Tap to manage.`}
-                >
-                  <View style={styles.statRow}>
-                    <Ionicons name={card.icon} size={32} color="#FFFFFF" style={styles.statIcon} />
-                    <CountUpValue
-                      value={stats ? card.getValue(stats) : 0}
-                      style={styles.statValue}
-                    />
-                  </View>
-                  <AppText style={styles.statLabel}>{card.label}</AppText>
-                  <AppText style={styles.statSubtitle}>
-                    {stats ? card.getSubtitle(stats) : ''}
-                  </AppText>
-                </TouchableOpacity>
-              ))}
-            </View>
 
-            {/* Scans info row */}
-            <View style={styles.infoCard}>
-              <View style={styles.infoRow}>
-                <View style={styles.infoIcon}>
-                  <Ionicons name="qr-code" size={24} color={colors.electricBlue} />
-                </View>
-                <View style={styles.infoContent}>
-                  <AppText style={styles.infoLabel}>Total Scans</AppText>
-                  <AppText style={styles.infoValue}>{stats?.totalScans ?? 0}</AppText>
-                </View>
+          {/* Scans info row */}
+          <View style={styles.infoCard}>
+            <View style={styles.infoRow}>
+              <View style={styles.infoIcon}>
+                <Ionicons name="qr-code" size={24} color={colors.electricBlue} />
+              </View>
+              <View style={styles.infoContent}>
+                <AppText style={styles.infoLabel}>Total Scans</AppText>
+                <AppText style={styles.infoValue}>{stats?.totalScans ?? 0}</AppText>
               </View>
             </View>
-          </ScrollView>
-        )}
+          </View>
+        </ScrollView>
+      )}
     </View>
   );
 }

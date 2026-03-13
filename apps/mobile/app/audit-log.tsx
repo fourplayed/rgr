@@ -1,9 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import {
-  View,
-  FlatList,
-  TouchableOpacity,
-  StyleSheet} from 'react-native';
+import { View, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import type { AuditLogWithUser } from '@rgr/shared';
@@ -33,20 +29,10 @@ export default function AuditLogScreen() {
     }
   }, [canViewAuditLog, router]);
 
-  const {
-    data,
-    isLoading,
-    error,
-    refetch,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useAuditLogs(filters);
+  const { data, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useAuditLogs(filters);
 
-  const allLogs = useMemo(
-    () => data?.pages?.flatMap((page) => page.data) ?? [],
-    [data]
-  );
+  const allLogs = useMemo(() => data?.pages?.flatMap((page) => page.data) ?? [], [data]);
 
   const handleEndReached = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -79,11 +65,7 @@ export default function AuditLogScreen() {
     () => (
       <View style={styles.centerContent}>
         <View style={styles.iconContainer}>
-          <Ionicons
-            name="document-text-outline"
-            size={64}
-            color={colors.textSecondary}
-          />
+          <Ionicons name="document-text-outline" size={64} color={colors.textSecondary} />
         </View>
         <AppText style={styles.emptyText}>No audit logs</AppText>
         <AppText style={styles.emptySubtext}>Activity will appear here</AppText>
@@ -94,55 +76,54 @@ export default function AuditLogScreen() {
 
   if (!canViewAuditLog) return null;
 
-  const hasActiveFilters =
-    !!filters.action || !!filters.startDate || !!filters.endDate;
+  const hasActiveFilters = !!filters.action || !!filters.startDate || !!filters.endDate;
 
   return (
     <View style={styles.container}>
-        <SheetHeader
-          icon="document-text"
-          title="Audit Log"
-          onClose={() => router.back()}
-          closeIcon="arrow-back"
-          headerAction={{
-            icon: hasActiveFilters ? 'funnel' : 'funnel-outline',
-            onPress: () => setShowFilters(true),
-            accessibilityLabel: 'Filter audit logs',
-          }}
-        />
+      <SheetHeader
+        icon="document-text"
+        title="Audit Log"
+        onClose={() => router.back()}
+        closeIcon="arrow-back"
+        headerAction={{
+          icon: hasActiveFilters ? 'funnel' : 'funnel-outline',
+          onPress: () => setShowFilters(true),
+          accessibilityLabel: 'Filter audit logs',
+        }}
+      />
 
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <LoadingDots color={colors.textSecondary} size={12} />
-          </View>
-        ) : error ? (
-          <View style={styles.centerContent}>
-            <AppText style={styles.errorText}>Failed to load audit logs</AppText>
-            <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
-              <AppText style={styles.retryButtonText}>Retry</AppText>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <FlatList
-            data={allLogs}
-            renderItem={renderItem}
-            keyExtractor={keyExtractor}
-            ListEmptyComponent={renderEmpty}
-            ListFooterComponent={renderFooter}
-            onEndReached={handleEndReached}
-            onEndReachedThreshold={0.3}
-            contentContainerStyle={
-              allLogs.length === 0 ? styles.emptyListContent : styles.listContent
-            }
-          />
-        )}
-
-        <AuditLogFilterSheet
-          visible={showFilters}
-          filters={filters}
-          onApply={handleApplyFilters}
-          onClose={() => setShowFilters(false)}
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <LoadingDots color={colors.textSecondary} size={12} />
+        </View>
+      ) : error ? (
+        <View style={styles.centerContent}>
+          <AppText style={styles.errorText}>Failed to load audit logs</AppText>
+          <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
+            <AppText style={styles.retryButtonText}>Retry</AppText>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <FlatList
+          data={allLogs}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
+          ListEmptyComponent={renderEmpty}
+          ListFooterComponent={renderFooter}
+          onEndReached={handleEndReached}
+          onEndReachedThreshold={0.3}
+          contentContainerStyle={
+            allLogs.length === 0 ? styles.emptyListContent : styles.listContent
+          }
         />
+      )}
+
+      <AuditLogFilterSheet
+        visible={showFilters}
+        filters={filters}
+        onApply={handleApplyFilters}
+        onClose={() => setShowFilters(false)}
+      />
     </View>
   );
 }

@@ -9,7 +9,8 @@ import {
   Platform,
   Linking,
   Animated,
-  Dimensions} from 'react-native';
+  Dimensions,
+} from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { usePhoto, useDeletePhoto, useSignedUrl } from '../../hooks/usePhotos';

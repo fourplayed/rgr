@@ -10,19 +10,25 @@ import { useLocationLifecycle } from '../../src/hooks/useLocationLifecycle';
 import { usePersistentBackdrop } from '../../src/hooks/usePersistentBackdrop';
 import { useIsOverlayActive } from '../../src/store/overlayStore';
 import { colors } from '../../src/theme/colors';
-import { BACKDROP_COLOR, BACKDROP_BLUR_INTENSITY, BACKDROP_BLUR_TINT } from '../../src/theme/backdrop';
+import {
+  BACKDROP_COLOR,
+  BACKDROP_BLUR_INTENSITY,
+  BACKDROP_BLUR_TINT,
+} from '../../src/theme/backdrop';
 
 const TAB_BAR_BACKGROUND = colors.brandTabBar;
 const TAB_ACTIVE_BACKGROUND = colors.brandTabActive;
 const TAB_ICON_COLOR = colors.textInverse;
 
-const TAB_ICONS: Record<string, { outline: keyof typeof Ionicons.glyphMap; filled: keyof typeof Ionicons.glyphMap }> = {
+const TAB_ICONS: Record<
+  string,
+  { outline: keyof typeof Ionicons.glyphMap; filled: keyof typeof Ionicons.glyphMap }
+> = {
   home: { outline: 'home-outline', filled: 'home' },
   scan: { outline: 'qr-code-outline', filled: 'qr-code' },
   assets: { outline: 'cube-outline', filled: 'cube' },
   maintenance: { outline: 'construct-outline', filled: 'construct' },
 };
-
 
 // ── Animated tab bar with sliding active indicator ──────────────
 function AnimatedTabBar({ state, navigation }: BottomTabBarProps) {
@@ -40,7 +46,7 @@ function AnimatedTabBar({ state, navigation }: BottomTabBarProps) {
   const activeRouteKey = state.routes[state.index]?.key;
   const activeVisualIndex = Math.max(
     0,
-    visibleRoutes.findIndex((r) => r.key === activeRouteKey),
+    visibleRoutes.findIndex((r) => r.key === activeRouteKey)
   );
 
   useEffect(() => {
@@ -65,13 +71,13 @@ function AnimatedTabBar({ state, navigation }: BottomTabBarProps) {
 
   const handleLayout = useCallback(
     (e: { nativeEvent: { layout: { width: number } } }) => setBarWidth(e.nativeEvent.layout.width),
-    [],
+    []
   );
 
   // Pre-compute animated indicator style (dynamic: depends on tabWidth & translateX)
   const indicatorStyle = useMemo(
     () => [tabStyles.indicator, { width: tabWidth, transform: [{ translateX }] }],
-    [tabWidth, translateX],
+    [tabWidth, translateX]
   );
 
   // Stable tab press handler keyed by route
@@ -86,14 +92,14 @@ function AnimatedTabBar({ state, navigation }: BottomTabBarProps) {
         navigation.navigate(route.name, route.params);
       }
     },
-    [navigation],
+    [navigation]
   );
 
   const handleTabLongPress = useCallback(
     (routeKey: string) => {
       navigation.emit({ type: 'tabLongPress', target: routeKey });
     },
-    [navigation],
+    [navigation]
   );
 
   return (
@@ -151,16 +157,9 @@ function AnimatedTabBar({ state, navigation }: BottomTabBarProps) {
               onLongPress={() => handleTabLongPress(route.key)}
               style={tabStyles.button}
             >
-              <Ionicons
-                name={icon}
-                size={32}
-                color={TAB_ICON_COLOR}
-                style={tabStyles.iconShadow}
-              />
+              <Ionicons name={icon} size={32} color={TAB_ICON_COLOR} style={tabStyles.iconShadow} />
               {/* Subtle separator between tabs */}
-              {index < tabCount - 1 && (
-                <View style={tabStyles.separator} />
-              )}
+              {index < tabCount - 1 && <View style={tabStyles.separator} />}
             </TouchableOpacity>
           );
         })}
@@ -188,7 +187,11 @@ function HeaderBlurOverlay() {
       importantForAccessibility={isActive ? 'no-hide-descendants' : 'auto'}
     >
       {Platform.OS === 'ios' ? (
-        <BlurView intensity={BACKDROP_BLUR_INTENSITY} tint={BACKDROP_BLUR_TINT} style={StyleSheet.absoluteFillObject} />
+        <BlurView
+          intensity={BACKDROP_BLUR_INTENSITY}
+          tint={BACKDROP_BLUR_TINT}
+          style={StyleSheet.absoluteFillObject}
+        />
       ) : (
         <View style={[StyleSheet.absoluteFillObject, { backgroundColor: BACKDROP_COLOR }]} />
       )}
@@ -205,10 +208,7 @@ export default function TabsLayout() {
         screenOptions={{ headerShown: false }}
         tabBar={(props) => <AnimatedTabBar {...props} />}
       >
-        <Tabs.Screen
-          name="index"
-          options={{ href: null }}
-        />
+        <Tabs.Screen name="index" options={{ href: null }} />
         <Tabs.Screen name="home" options={{ title: 'Home' }} />
         <Tabs.Screen name="scan" options={{ title: 'Scan' }} />
         <Tabs.Screen name="assets" options={{ title: 'Assets' }} />

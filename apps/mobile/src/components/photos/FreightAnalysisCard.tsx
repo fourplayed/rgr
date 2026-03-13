@@ -34,14 +34,18 @@ function FreightAnalysisCardComponent({ analysis, hazards }: FreightAnalysisCard
         <View style={styles.categorySection}>
           <AppText style={styles.categoryLabel}>Category</AppText>
           <View style={styles.categoryRow}>
-            <AppText style={styles.categoryValue}>{analysis.primaryCategory.replace(/_/g, ' ')}</AppText>
+            <AppText style={styles.categoryValue}>
+              {analysis.primaryCategory.replace(/_/g, ' ')}
+            </AppText>
             {confidencePercent !== null && (
               <View style={styles.confidenceBadge}>
                 <AppText style={styles.confidenceText}>{confidencePercent}%</AppText>
               </View>
             )}
           </View>
-          {analysis.description && <AppText style={styles.description}>{analysis.description}</AppText>}
+          {analysis.description && (
+            <AppText style={styles.description}>{analysis.description}</AppText>
+          )}
         </View>
       )}
 
@@ -50,7 +54,9 @@ function FreightAnalysisCardComponent({ analysis, hazards }: FreightAnalysisCard
         {analysis.estimatedWeightKg != null && (
           <View style={styles.statItem}>
             <Ionicons name="scale-outline" size={18} color={colors.textSecondary} />
-            <AppText style={styles.statValue}>{analysis.estimatedWeightKg.toLocaleString()} kg</AppText>
+            <AppText style={styles.statValue}>
+              {analysis.estimatedWeightKg.toLocaleString()} kg
+            </AppText>
             <AppText style={styles.statLabel}>Est. Weight</AppText>
           </View>
         )}
@@ -99,7 +105,9 @@ function FreightAnalysisCardComponent({ analysis, hazards }: FreightAnalysisCard
             </View>
           ))}
 
-          {hazards.length > 3 && <AppText style={styles.moreHazards}>+{hazards.length - 3} more</AppText>}
+          {hazards.length > 3 && (
+            <AppText style={styles.moreHazards}>+{hazards.length - 3} more</AppText>
+          )}
         </View>
       )}
 

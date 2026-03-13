@@ -1,9 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import {
-  View,
-  FlatList,
-  TouchableOpacity,
-  StyleSheet} from 'react-native';
+import { View, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import type { Depot, CreateDepotInput, UpdateDepotInput } from '@rgr/shared';
@@ -52,9 +48,7 @@ export default function DepotsScreen() {
   const handleFormSubmit = useCallback(
     async (input: CreateDepotInput | UpdateDepotInput) => {
       if (editingDepot) {
-        await updateMutation.mutateAsync(
-          { id: editingDepot.id, input: input as UpdateDepotInput },
-        );
+        await updateMutation.mutateAsync({ id: editingDepot.id, input: input as UpdateDepotInput });
       } else {
         await createMutation.mutateAsync(input as CreateDepotInput);
       }
@@ -89,11 +83,7 @@ export default function DepotsScreen() {
 
   const renderItem = useCallback(
     ({ item }: { item: Depot }) => (
-      <DepotListItem
-        depot={item}
-        onPress={handleDepotPress}
-        onLongPress={handleDepotLongPress}
-      />
+      <DepotListItem depot={item} onPress={handleDepotPress} onLongPress={handleDepotLongPress} />
     ),
     [handleDepotPress, handleDepotLongPress]
   );
@@ -113,70 +103,68 @@ export default function DepotsScreen() {
 
   return (
     <View style={styles.container}>
-        <SheetHeader
-          icon="business"
-          title="Depots"
-          onClose={() => router.back()}
-          closeIcon="arrow-back"
-          headerAction={{
-            icon: 'add-circle',
-            onPress: handleCreate,
-            accessibilityLabel: 'Add depot',
-          }}
-        />
+      <SheetHeader
+        icon="business"
+        title="Depots"
+        onClose={() => router.back()}
+        closeIcon="arrow-back"
+        headerAction={{
+          icon: 'add-circle',
+          onPress: handleCreate,
+          accessibilityLabel: 'Add depot',
+        }}
+      />
 
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <LoadingDots color={colors.textSecondary} size={12} />
-          </View>
-        ) : error ? (
-          <View style={styles.centerContent}>
-            <AppText style={styles.errorText}>Failed to load depots</AppText>
-            <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
-              <AppText style={styles.retryButtonText}>Retry</AppText>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <FlatList
-            data={depots ?? []}
-            renderItem={renderItem}
-            keyExtractor={keyExtractor}
-            getItemLayout={getItemLayout}
-            ListEmptyComponent={renderEmpty}
-            removeClippedSubviews
-            contentContainerStyle={
-              (depots?.length ?? 0) === 0
-                ? styles.emptyListContent
-                : styles.listContent
-            }
-          />
-        )}
-
-        <DepotFormSheet
-          visible={showForm}
-          depot={editingDepot}
-          onSubmit={handleFormSubmit}
-          onClose={() => setShowForm(false)}
-          isLoading={createMutation.isPending || updateMutation.isPending}
-        />
-
-        <ConfirmSheet
-          visible={!!deletingDepot}
-          type="danger"
-          title="Delete Depot"
-          message={
-            deleteError
-              ? deleteError
-              : `Are you sure you want to delete "${deletingDepot?.name}"? This cannot be undone.`
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <LoadingDots color={colors.textSecondary} size={12} />
+        </View>
+      ) : error ? (
+        <View style={styles.centerContent}>
+          <AppText style={styles.errorText}>Failed to load depots</AppText>
+          <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
+            <AppText style={styles.retryButtonText}>Retry</AppText>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <FlatList
+          data={depots ?? []}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
+          getItemLayout={getItemLayout}
+          ListEmptyComponent={renderEmpty}
+          removeClippedSubviews
+          contentContainerStyle={
+            (depots?.length ?? 0) === 0 ? styles.emptyListContent : styles.listContent
           }
-          confirmLabel="Delete"
-          onConfirm={handleDelete}
-          onCancel={() => {
-            setDeletingDepot(null);
-            setDeleteError(null);
-          }}
-          isLoading={deleteMutation.isPending}
         />
+      )}
+
+      <DepotFormSheet
+        visible={showForm}
+        depot={editingDepot}
+        onSubmit={handleFormSubmit}
+        onClose={() => setShowForm(false)}
+        isLoading={createMutation.isPending || updateMutation.isPending}
+      />
+
+      <ConfirmSheet
+        visible={!!deletingDepot}
+        type="danger"
+        title="Delete Depot"
+        message={
+          deleteError
+            ? deleteError
+            : `Are you sure you want to delete "${deletingDepot?.name}"? This cannot be undone.`
+        }
+        confirmLabel="Delete"
+        onConfirm={handleDelete}
+        onCancel={() => {
+          setDeletingDepot(null);
+          setDeleteError(null);
+        }}
+        isLoading={deleteMutation.isPending}
+      />
     </View>
   );
 }

@@ -5,12 +5,10 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  StyleSheet} from 'react-native';
+  StyleSheet,
+} from 'react-native';
 import { useRouter } from 'expo-router';
-import {
-  AssetCategoryLabels,
-  TrailerSubtypes,
-} from '@rgr/shared';
+import { AssetCategoryLabels, TrailerSubtypes } from '@rgr/shared';
 import type { AssetCategory as AssetCategoryType, CreateAssetInput } from '@rgr/shared';
 import { useCreateAsset } from '../../src/hooks/useAdminAssets';
 import { useDepots } from '../../src/hooks/useDepots';
@@ -20,7 +18,13 @@ import { SheetHeader } from '../../src/components/common/SheetHeader';
 import { FilterChip } from '../../src/components/common/FilterChip';
 import { Button } from '../../src/components/common/Button';
 import { colors } from '../../src/theme/colors';
-import { spacing, fontSize, shadows, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
+import {
+  spacing,
+  fontSize,
+  shadows,
+  borderRadius,
+  fontFamily as fonts,
+} from '../../src/theme/spacing';
 import { formStyles } from '../../src/theme/formStyles';
 import { AppText } from '../../src/components/common';
 
@@ -117,175 +121,63 @@ export default function CreateAssetScreen() {
 
   return (
     <View style={styles.container}>
-      <SheetHeader icon="add-circle" title="Create Asset" onClose={() => router.back()} closeIcon="arrow-back" />
+      <SheetHeader
+        icon="add-circle"
+        title="Create Asset"
+        onClose={() => router.back()}
+        closeIcon="arrow-back"
+      />
 
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.flex}
+      >
+        <ScrollView
           style={styles.flex}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
         >
-          <ScrollView
-            style={styles.flex}
-            contentContainerStyle={styles.scrollContent}
-            keyboardShouldPersistTaps="handled"
-          >
-            {/* Asset Number */}
-            <View style={formStyles.inputGroup}>
-              <AppText style={formStyles.label}>Asset Number *</AppText>
-              <TextInput
-                style={formStyles.input}
-                value={assetNumber}
-                onChangeText={setAssetNumber}
-                placeholder="e.g. TL001"
-                placeholderTextColor={colors.textSecondary}
-                autoCapitalize="characters"
-                autoCorrect={false}
-                maxLength={20}
-              />
-              {assetNumber.trim().length > 0 && !isAssetNumberValid && (
-                <AppText style={styles.hintText}>
-                  Format: 2 letters + 3+ digits (e.g. TL001)
-                </AppText>
-              )}
-            </View>
-
-            {/* Category */}
-            <View style={formStyles.inputGroup}>
-              <AppText style={formStyles.label}>Category *</AppText>
-              <View style={styles.chipRow}>
-                {CATEGORIES.map((c) => (
-                  <FilterChip
-                    key={c}
-                    label={AssetCategoryLabels[c]}
-                    isSelected={category === c}
-                    selectedColor={colors.electricBlue}
-                    onPress={() => {
-                      setCategory(c);
-                      if (c === 'dolly') setSubtype(null);
-                    }}
-                  />
-                ))}
-              </View>
-            </View>
-
-            {/* Subtype — only for Trailer */}
-            {category === 'trailer' && (
-              <View style={formStyles.inputGroup}>
-                <AppText style={formStyles.label}>Subtype</AppText>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.chipScroll}
-                >
-                  <FilterChip
-                    label="None"
-                    isSelected={!subtype}
-                    selectedColor={colors.electricBlue}
-                    onPress={() => setSubtype(null)}
-                  />
-                  {TrailerSubtypes.map((st) => (
-                    <FilterChip
-                      key={st}
-                      label={st}
-                      isSelected={subtype === st}
-                      selectedColor={colors.electricBlue}
-                      onPress={() => setSubtype(st)}
-                    />
-                  ))}
-                </ScrollView>
-              </View>
+          {/* Asset Number */}
+          <View style={formStyles.inputGroup}>
+            <AppText style={formStyles.label}>Asset Number *</AppText>
+            <TextInput
+              style={formStyles.input}
+              value={assetNumber}
+              onChangeText={setAssetNumber}
+              placeholder="e.g. TL001"
+              placeholderTextColor={colors.textSecondary}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              maxLength={20}
+            />
+            {assetNumber.trim().length > 0 && !isAssetNumberValid && (
+              <AppText style={styles.hintText}>Format: 2 letters + 3+ digits (e.g. TL001)</AppText>
             )}
+          </View>
 
-            {/* Make */}
-            <View style={formStyles.inputGroup}>
-              <AppText style={formStyles.label}>Make</AppText>
-              <TextInput
-                style={formStyles.input}
-                value={make}
-                onChangeText={setMake}
-                placeholder="Optional"
-                placeholderTextColor={colors.textSecondary}
-                maxLength={100}
-              />
+          {/* Category */}
+          <View style={formStyles.inputGroup}>
+            <AppText style={formStyles.label}>Category *</AppText>
+            <View style={styles.chipRow}>
+              {CATEGORIES.map((c) => (
+                <FilterChip
+                  key={c}
+                  label={AssetCategoryLabels[c]}
+                  isSelected={category === c}
+                  selectedColor={colors.electricBlue}
+                  onPress={() => {
+                    setCategory(c);
+                    if (c === 'dolly') setSubtype(null);
+                  }}
+                />
+              ))}
             </View>
+          </View>
 
-            {/* Model */}
+          {/* Subtype — only for Trailer */}
+          {category === 'trailer' && (
             <View style={formStyles.inputGroup}>
-              <AppText style={formStyles.label}>Model</AppText>
-              <TextInput
-                style={formStyles.input}
-                value={model}
-                onChangeText={setModel}
-                placeholder="Optional"
-                placeholderTextColor={colors.textSecondary}
-                maxLength={100}
-              />
-            </View>
-
-            {/* Year */}
-            <View style={formStyles.inputGroup}>
-              <AppText style={formStyles.label}>Year</AppText>
-              <TextInput
-                style={formStyles.input}
-                value={year}
-                onChangeText={setYear}
-                placeholder="Optional"
-                placeholderTextColor={colors.textSecondary}
-                keyboardType="number-pad"
-                maxLength={4}
-              />
-            </View>
-
-            {/* VIN */}
-            <View style={formStyles.inputGroup}>
-              <AppText style={formStyles.label}>VIN</AppText>
-              <TextInput
-                style={formStyles.input}
-                value={vin}
-                onChangeText={setVin}
-                placeholder="Optional"
-                placeholderTextColor={colors.textSecondary}
-                autoCapitalize="characters"
-                autoCorrect={false}
-                maxLength={50}
-              />
-            </View>
-
-            {/* Registration No. */}
-            <View style={formStyles.inputGroup}>
-              <AppText style={formStyles.label}>Registration No. *</AppText>
-              <TextInput
-                style={formStyles.input}
-                value={registrationNumber}
-                onChangeText={setRegistrationNumber}
-                placeholder="e.g. 1ABC234"
-                placeholderTextColor={colors.textSecondary}
-                autoCapitalize="characters"
-                autoCorrect={false}
-                maxLength={20}
-              />
-            </View>
-
-            {/* Registration Expiry */}
-            <View style={formStyles.inputGroup}>
-              <AppText style={formStyles.label}>Registration Expiry</AppText>
-              <TextInput
-                style={formStyles.input}
-                value={registrationExpiry}
-                onChangeText={setRegistrationExpiry}
-                placeholder="YYYY-MM-DD"
-                placeholderTextColor={colors.textSecondary}
-                maxLength={10}
-              />
-              {registrationExpiry.trim().length > 0 && !isExpiryFormatValid && (
-                <AppText style={styles.hintText}>
-                  Format: YYYY-MM-DD (e.g. 2026-06-30)
-                </AppText>
-              )}
-            </View>
-
-            {/* Depot */}
-            <View style={formStyles.inputGroup}>
-              <AppText style={formStyles.label}>Depot</AppText>
+              <AppText style={formStyles.label}>Subtype</AppText>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -293,77 +185,188 @@ export default function CreateAssetScreen() {
               >
                 <FilterChip
                   label="None"
-                  isSelected={!selectedDepotId}
+                  isSelected={!subtype}
                   selectedColor={colors.electricBlue}
-                  onPress={() => setSelectedDepotId(null)}
+                  onPress={() => setSubtype(null)}
                 />
-                {depots.map((depot) => (
+                {TrailerSubtypes.map((st) => (
                   <FilterChip
-                    key={depot.id}
-                    label={depot.code.toUpperCase()}
-                    isSelected={selectedDepotId === depot.id}
+                    key={st}
+                    label={st}
+                    isSelected={subtype === st}
                     selectedColor={colors.electricBlue}
-                    onPress={() => setSelectedDepotId(depot.id)}
+                    onPress={() => setSubtype(st)}
                   />
                 ))}
               </ScrollView>
             </View>
+          )}
 
-            {/* Description */}
-            <View style={formStyles.inputGroup}>
-              <AppText style={formStyles.label}>Description</AppText>
-              <TextInput
-                style={[formStyles.input, formStyles.textArea]}
-                value={description}
-                onChangeText={setDescription}
-                placeholder="Optional"
-                placeholderTextColor={colors.textSecondary}
-                multiline
-                textAlignVertical="top"
-              />
-            </View>
+          {/* Make */}
+          <View style={formStyles.inputGroup}>
+            <AppText style={formStyles.label}>Make</AppText>
+            <TextInput
+              style={formStyles.input}
+              value={make}
+              onChangeText={setMake}
+              placeholder="Optional"
+              placeholderTextColor={colors.textSecondary}
+              maxLength={100}
+            />
+          </View>
 
-            {/* Notes */}
-            <View style={formStyles.inputGroup}>
-              <AppText style={formStyles.label}>Notes</AppText>
-              <TextInput
-                style={[formStyles.input, formStyles.textArea]}
-                value={notes}
-                onChangeText={setNotes}
-                placeholder="Optional"
-                placeholderTextColor={colors.textSecondary}
-                multiline
-                textAlignVertical="top"
-              />
-            </View>
+          {/* Model */}
+          <View style={formStyles.inputGroup}>
+            <AppText style={formStyles.label}>Model</AppText>
+            <TextInput
+              style={formStyles.input}
+              value={model}
+              onChangeText={setModel}
+              placeholder="Optional"
+              placeholderTextColor={colors.textSecondary}
+              maxLength={100}
+            />
+          </View>
 
-            {error && (
-              <AppText style={formStyles.errorText}>{error}</AppText>
+          {/* Year */}
+          <View style={formStyles.inputGroup}>
+            <AppText style={formStyles.label}>Year</AppText>
+            <TextInput
+              style={formStyles.input}
+              value={year}
+              onChangeText={setYear}
+              placeholder="Optional"
+              placeholderTextColor={colors.textSecondary}
+              keyboardType="number-pad"
+              maxLength={4}
+            />
+          </View>
+
+          {/* VIN */}
+          <View style={formStyles.inputGroup}>
+            <AppText style={formStyles.label}>VIN</AppText>
+            <TextInput
+              style={formStyles.input}
+              value={vin}
+              onChangeText={setVin}
+              placeholder="Optional"
+              placeholderTextColor={colors.textSecondary}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              maxLength={50}
+            />
+          </View>
+
+          {/* Registration No. */}
+          <View style={formStyles.inputGroup}>
+            <AppText style={formStyles.label}>Registration No. *</AppText>
+            <TextInput
+              style={formStyles.input}
+              value={registrationNumber}
+              onChangeText={setRegistrationNumber}
+              placeholder="e.g. 1ABC234"
+              placeholderTextColor={colors.textSecondary}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              maxLength={20}
+            />
+          </View>
+
+          {/* Registration Expiry */}
+          <View style={formStyles.inputGroup}>
+            <AppText style={formStyles.label}>Registration Expiry</AppText>
+            <TextInput
+              style={formStyles.input}
+              value={registrationExpiry}
+              onChangeText={setRegistrationExpiry}
+              placeholder="YYYY-MM-DD"
+              placeholderTextColor={colors.textSecondary}
+              maxLength={10}
+            />
+            {registrationExpiry.trim().length > 0 && !isExpiryFormatValid && (
+              <AppText style={styles.hintText}>Format: YYYY-MM-DD (e.g. 2026-06-30)</AppText>
             )}
+          </View>
 
-            {/* Buttons */}
-            <View style={formStyles.buttonRow}>
-              <Button
-                variant="secondary"
-                onPress={() => router.back()}
-                flex
-                disabled={createMutation.isPending}
-              >
-                Cancel
-              </Button>
-              <Button
-                color={colors.success}
-                onPress={handleSubmit}
-                flex
-                disabled={!isValid}
-                isLoading={createMutation.isPending}
-                style={styles.submitButton}
-              >
-                Create Asset
-              </Button>
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
+          {/* Depot */}
+          <View style={formStyles.inputGroup}>
+            <AppText style={formStyles.label}>Depot</AppText>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.chipScroll}
+            >
+              <FilterChip
+                label="None"
+                isSelected={!selectedDepotId}
+                selectedColor={colors.electricBlue}
+                onPress={() => setSelectedDepotId(null)}
+              />
+              {depots.map((depot) => (
+                <FilterChip
+                  key={depot.id}
+                  label={depot.code.toUpperCase()}
+                  isSelected={selectedDepotId === depot.id}
+                  selectedColor={colors.electricBlue}
+                  onPress={() => setSelectedDepotId(depot.id)}
+                />
+              ))}
+            </ScrollView>
+          </View>
+
+          {/* Description */}
+          <View style={formStyles.inputGroup}>
+            <AppText style={formStyles.label}>Description</AppText>
+            <TextInput
+              style={[formStyles.input, formStyles.textArea]}
+              value={description}
+              onChangeText={setDescription}
+              placeholder="Optional"
+              placeholderTextColor={colors.textSecondary}
+              multiline
+              textAlignVertical="top"
+            />
+          </View>
+
+          {/* Notes */}
+          <View style={formStyles.inputGroup}>
+            <AppText style={formStyles.label}>Notes</AppText>
+            <TextInput
+              style={[formStyles.input, formStyles.textArea]}
+              value={notes}
+              onChangeText={setNotes}
+              placeholder="Optional"
+              placeholderTextColor={colors.textSecondary}
+              multiline
+              textAlignVertical="top"
+            />
+          </View>
+
+          {error && <AppText style={formStyles.errorText}>{error}</AppText>}
+
+          {/* Buttons */}
+          <View style={formStyles.buttonRow}>
+            <Button
+              variant="secondary"
+              onPress={() => router.back()}
+              flex
+              disabled={createMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              color={colors.success}
+              onPress={handleSubmit}
+              flex
+              disabled={!isValid}
+              isLoading={createMutation.isPending}
+              style={styles.submitButton}
+            >
+              Create Asset
+            </Button>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       <CreateAssetOverlay
         visible={showOverlay}

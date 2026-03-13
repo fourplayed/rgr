@@ -1,18 +1,8 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import {
-  View,
-  FlatList,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView} from 'react-native';
+import { View, FlatList, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import {
-  MaintenanceStatus,
-  formatAssetNumber,
-  formatRelativeTime,
-} from '@rgr/shared';
+import { MaintenanceStatus, formatAssetNumber, formatRelativeTime } from '@rgr/shared';
 import type { AdminMaintenanceListItem } from '@rgr/shared';
 import {
   useAdminMaintenanceList,
@@ -57,9 +47,7 @@ export default function MaintenanceAdminScreen() {
 
   const toggleStatusFilter = useCallback((status: MaintenanceStatus) => {
     setStatusFilter((prev) => {
-      const next = prev.includes(status)
-        ? prev.filter((s) => s !== status)
-        : [...prev, status];
+      const next = prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status];
       return next;
     });
     setPage(1);
@@ -104,10 +92,7 @@ export default function MaintenanceAdminScreen() {
   const renderItem = useCallback(
     ({ item }: { item: AdminMaintenanceListItem }) => {
       const isSelected = selectedIds.has(item.id);
-      const { color } = getMaintenanceVisualConfig(
-        item.status as MaintenanceStatus,
-        item.dueDate
-      );
+      const { color } = getMaintenanceVisualConfig(item.status as MaintenanceStatus, item.dueDate);
 
       return (
         <TouchableOpacity
@@ -122,16 +107,12 @@ export default function MaintenanceAdminScreen() {
           accessibilityState={{ checked: isSelected }}
         >
           <View style={styles.checkbox}>
-            {isSelected && (
-              <Ionicons name="checkmark" size={16} color={colors.electricBlue} />
-            )}
+            {isSelected && <Ionicons name="checkmark" size={16} color={colors.electricBlue} />}
           </View>
           <View style={styles.itemInfo}>
             <View style={styles.itemHeaderRow}>
               <AppText style={styles.itemAssetNumber} numberOfLines={1}>
-                {item.assetNumber
-                  ? formatAssetNumber(item.assetNumber)
-                  : 'Unknown Asset'}
+                {item.assetNumber ? formatAssetNumber(item.assetNumber) : 'Unknown Asset'}
               </AppText>
               <MaintenanceStatusBadge status={item.status as MaintenanceStatus} />
             </View>
@@ -166,149 +147,155 @@ export default function MaintenanceAdminScreen() {
 
   return (
     <View style={styles.container}>
-        {hasSelection ? (
-          <SheetHeader
-            icon="construct"
-            title={`${selectedIds.size} Selected`}
-            onClose={clearSelection}
-            backgroundColor={colors.warning}
-          />
-        ) : (
-          <SheetHeader
-            icon="construct"
-            title="Maintenance"
-            onClose={() => router.back()}
-            closeIcon="arrow-back"
-            backgroundColor={colors.warning}
-          />
-        )}
-
-        {/* Search */}
-        <View style={styles.searchContainer}>
-          <View style={styles.searchBox}>
-            <Ionicons name="search" size={20} color={colors.textSecondary} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search tasks..."
-              placeholderTextColor={colors.textSecondary}
-              value={search}
-              onChangeText={handleSearch}
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-            {search.length > 0 && (
-              <TouchableOpacity onPress={() => handleSearch('')}>
-                <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-
-        {/* Filter chips */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filterRow}
-        >
-          {STATUS_FILTERS.map((filter) => (
-            <FilterChip
-              key={filter.value}
-              label={filter.label}
-              isSelected={statusFilter.includes(filter.value)}
-              onPress={() => toggleStatusFilter(filter.value)}
-            />
-          ))}
-        </ScrollView>
-
-        {/* Toolbar */}
-        {hasSelection && (
-          <View style={styles.toolbar}>
-            <TouchableOpacity
-              style={[styles.toolbarButton, styles.toolbarButtonDanger]}
-              onPress={() => setShowDeleteConfirm(true)}
-            >
-              <Ionicons name="trash-outline" size={18} color={colors.error} />
-              <AppText style={[styles.toolbarButtonText, { color: colors.error }]}>
-                Cancel{selectedIds.size > 1 ? ` (${selectedIds.size})` : ''}
-              </AppText>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Content */}
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <LoadingDots color={colors.textSecondary} size={12} />
-          </View>
-        ) : error ? (
-          <View style={styles.centerContent}>
-            <AppText style={styles.errorText}>Failed to load tasks</AppText>
-            <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
-              <AppText style={styles.retryButtonText}>Retry</AppText>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <>
-            <FlatList
-              data={items}
-              renderItem={renderItem}
-              keyExtractor={keyExtractor}
-              ListEmptyComponent={renderEmpty}
-              removeClippedSubviews
-              contentContainerStyle={
-                items.length === 0 ? styles.emptyListContent : styles.listContent
-              }
-            />
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <View style={styles.pagination}>
-                <TouchableOpacity
-                  onPress={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page <= 1}
-                  style={[styles.pageButton, page <= 1 && styles.pageButtonDisabled]}
-                >
-                  <Ionicons
-                    name="chevron-back"
-                    size={20}
-                    color={page <= 1 ? colors.textSecondary : colors.text}
-                  />
-                </TouchableOpacity>
-                <AppText style={styles.pageText}>
-                  {page} / {totalPages}
-                </AppText>
-                <TouchableOpacity
-                  onPress={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page >= totalPages}
-                  style={[styles.pageButton, page >= totalPages && styles.pageButtonDisabled]}
-                >
-                  <Ionicons
-                    name="chevron-forward"
-                    size={20}
-                    color={page >= totalPages ? colors.textSecondary : colors.text}
-                  />
-                </TouchableOpacity>
-              </View>
-            )}
-          </>
-        )}
-
-        <ConfirmSheet
-          visible={showDeleteConfirm}
-          type="danger"
-          title={`Cancel ${selectedIds.size} Task${selectedIds.size > 1 ? 's' : ''}?`}
-          message="This will cancel the selected maintenance tasks and resolve any linked defect reports."
-          confirmLabel={`Cancel ${selectedIds.size}`}
-          onConfirm={handleBulkCancel}
-          onCancel={() => setShowDeleteConfirm(false)}
-          isLoading={bulkCancelMutation.isPending}
+      {hasSelection ? (
+        <SheetHeader
+          icon="construct"
+          title={`${selectedIds.size} Selected`}
+          onClose={clearSelection}
+          backgroundColor={colors.warning}
         />
+      ) : (
+        <SheetHeader
+          icon="construct"
+          title="Maintenance"
+          onClose={() => router.back()}
+          closeIcon="arrow-back"
+          backgroundColor={colors.warning}
+        />
+      )}
+
+      {/* Search */}
+      <View style={styles.searchContainer}>
+        <View style={styles.searchBox}>
+          <Ionicons name="search" size={20} color={colors.textSecondary} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search tasks..."
+            placeholderTextColor={colors.textSecondary}
+            value={search}
+            onChangeText={handleSearch}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          {search.length > 0 && (
+            <TouchableOpacity onPress={() => handleSearch('')}>
+              <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      {/* Filter chips */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filterRow}
+      >
+        {STATUS_FILTERS.map((filter) => (
+          <FilterChip
+            key={filter.value}
+            label={filter.label}
+            isSelected={statusFilter.includes(filter.value)}
+            onPress={() => toggleStatusFilter(filter.value)}
+          />
+        ))}
+      </ScrollView>
+
+      {/* Toolbar */}
+      {hasSelection && (
+        <View style={styles.toolbar}>
+          <TouchableOpacity
+            style={[styles.toolbarButton, styles.toolbarButtonDanger]}
+            onPress={() => setShowDeleteConfirm(true)}
+          >
+            <Ionicons name="trash-outline" size={18} color={colors.error} />
+            <AppText style={[styles.toolbarButtonText, { color: colors.error }]}>
+              Cancel{selectedIds.size > 1 ? ` (${selectedIds.size})` : ''}
+            </AppText>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Content */}
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <LoadingDots color={colors.textSecondary} size={12} />
+        </View>
+      ) : error ? (
+        <View style={styles.centerContent}>
+          <AppText style={styles.errorText}>Failed to load tasks</AppText>
+          <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
+            <AppText style={styles.retryButtonText}>Retry</AppText>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <>
+          <FlatList
+            data={items}
+            renderItem={renderItem}
+            keyExtractor={keyExtractor}
+            ListEmptyComponent={renderEmpty}
+            removeClippedSubviews
+            contentContainerStyle={
+              items.length === 0 ? styles.emptyListContent : styles.listContent
+            }
+          />
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <View style={styles.pagination}>
+              <TouchableOpacity
+                onPress={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                style={[styles.pageButton, page <= 1 && styles.pageButtonDisabled]}
+              >
+                <Ionicons
+                  name="chevron-back"
+                  size={20}
+                  color={page <= 1 ? colors.textSecondary : colors.text}
+                />
+              </TouchableOpacity>
+              <AppText style={styles.pageText}>
+                {page} / {totalPages}
+              </AppText>
+              <TouchableOpacity
+                onPress={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+                style={[styles.pageButton, page >= totalPages && styles.pageButtonDisabled]}
+              >
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={page >= totalPages ? colors.textSecondary : colors.text}
+                />
+              </TouchableOpacity>
+            </View>
+          )}
+        </>
+      )}
+
+      <ConfirmSheet
+        visible={showDeleteConfirm}
+        type="danger"
+        title={`Cancel ${selectedIds.size} Task${selectedIds.size > 1 ? 's' : ''}?`}
+        message="This will cancel the selected maintenance tasks and resolve any linked defect reports."
+        confirmLabel={`Cancel ${selectedIds.size}`}
+        onConfirm={handleBulkCancel}
+        onCancel={() => setShowDeleteConfirm(false)}
+        isLoading={bulkCancelMutation.isPending}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.chrome, borderTopLeftRadius: borderRadius.xl, borderTopRightRadius: borderRadius.xl, overflow: 'hidden' as const },
+  container: {
+    flex: 1,
+    backgroundColor: colors.chrome,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
+    overflow: 'hidden' as const,
+  },
   searchContainer: {
     paddingHorizontal: spacing.base,
     marginBottom: spacing.sm,

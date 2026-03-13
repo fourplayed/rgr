@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { motion, useAnimation } from "motion/react";
-import type { Variants } from "motion/react";
+import { motion, useAnimation } from 'motion/react';
+import type { Variants } from 'motion/react';
 
 interface ChartColumnProps extends React.SVGAttributes<SVGSVGElement> {
   width?: number;
@@ -24,7 +24,7 @@ const ChartColumn = ({
   width = 28,
   height = 28,
   strokeWidth = 2,
-  stroke = "#ffffff",
+  stroke = '#ffffff',
   ...props
 }: ChartColumnProps) => {
   const controls = useAnimation();
@@ -43,18 +43,18 @@ const ChartColumn = ({
   };
 
   const handleHoverEnd = () => {
-    controls.start("visible");
+    controls.start('visible');
   };
 
   return (
     <div
       style={{
-        cursor: "pointer",
-        userSelect: "none",
-        padding: "8px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        cursor: 'pointer',
+        userSelect: 'none',
+        padding: '8px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
       }}
       onMouseEnter={handleHoverStart}
       onMouseLeave={handleHoverEnd}

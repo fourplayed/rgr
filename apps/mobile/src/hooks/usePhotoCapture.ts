@@ -51,11 +51,14 @@ export function usePhotoCapture() {
   const thumbnailUriRef = useRef<string | null>(null);
 
   // Clean up thumbnail file on unmount (only if no upload is in progress)
-  useEffect(() => () => {
-    if (thumbnailUriRef.current && !isUploadingRef.current) {
-      FileSystem.deleteAsync(thumbnailUriRef.current, { idempotent: true }).catch(() => {});
-    }
-  }, []);
+  useEffect(
+    () => () => {
+      if (thumbnailUriRef.current && !isUploadingRef.current) {
+        FileSystem.deleteAsync(thumbnailUriRef.current, { idempotent: true }).catch(() => {});
+      }
+    },
+    []
+  );
 
   /**
    * Take a photo using the provided camera ref.

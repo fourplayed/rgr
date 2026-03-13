@@ -3,7 +3,11 @@ import { View, StyleSheet, TouchableOpacity, Pressable } from 'react-native';
 import { BottomSheetScrollView } from '../common/SheetModal';
 import { AppTextInput } from '../common/AppTextInput';
 import { Ionicons } from '@expo/vector-icons';
-import type { AssetCategory as AssetCategoryType, TrailerSubtype, CreateAssetInput } from '@rgr/shared';
+import type {
+  AssetCategory as AssetCategoryType,
+  TrailerSubtype,
+  CreateAssetInput,
+} from '@rgr/shared';
 import { AssetCategory, AssetCategoryLabels, TrailerSubtypes } from '@rgr/shared';
 import { Button } from '../common/Button';
 import { FilterChip } from '../common/FilterChip';
@@ -314,18 +318,20 @@ export function CreateAssetModal({
                     ) : depots.length === 0 ? (
                       <AppText style={styles.depotPickerEmpty}>No depots found</AppText>
                     ) : (
-                      depots.filter((d) => d.isActive).map((depot) => (
-                        <TouchableOpacity
-                          key={depot.id}
-                          style={styles.depotPickerItem}
-                          onPress={() => handleSelectDepot(depot.id, depot.name)}
-                          activeOpacity={0.7}
-                        >
-                          <Ionicons name="business" size={16} color={colors.text} />
-                          <AppText style={styles.depotPickerItemText}>{depot.name}</AppText>
-                          <AppText style={styles.depotPickerItemSub}>{depot.code}</AppText>
-                        </TouchableOpacity>
-                      ))
+                      depots
+                        .filter((d) => d.isActive)
+                        .map((depot) => (
+                          <TouchableOpacity
+                            key={depot.id}
+                            style={styles.depotPickerItem}
+                            onPress={() => handleSelectDepot(depot.id, depot.name)}
+                            activeOpacity={0.7}
+                          >
+                            <Ionicons name="business" size={16} color={colors.text} />
+                            <AppText style={styles.depotPickerItemText}>{depot.name}</AppText>
+                            <AppText style={styles.depotPickerItemSub}>{depot.code}</AppText>
+                          </TouchableOpacity>
+                        ))
                     )}
                   </View>
                 )}

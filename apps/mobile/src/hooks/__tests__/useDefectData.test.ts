@@ -7,11 +7,7 @@ import {
   useCreateDefectReport,
   useUpdateDefectReportStatus,
 } from '../useDefectData';
-import {
-  listDefectReports,
-  createDefectReport,
-  updateDefectReportStatus,
-} from '@rgr/shared';
+import { listDefectReports, createDefectReport, updateDefectReportStatus } from '@rgr/shared';
 
 // ── Mocks ──
 
@@ -42,9 +38,7 @@ jest.mock('../../config/featureFlags', () => ({
 }));
 
 jest.mock('../../store/authStore', () => ({
-  useAuthStore: jest.fn((selector: any) =>
-    selector({ user: { fullName: 'Test User' } })
-  ),
+  useAuthStore: jest.fn((selector: any) => selector({ user: { fullName: 'Test User' } })),
 }));
 
 const mockListDefectReports = listDefectReports as jest.MockedFunction<typeof listDefectReports>;
@@ -243,11 +237,9 @@ describe('useUpdateDefectReportStatus', () => {
     result.current.mutate(input);
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(mockUpdateDefectReportStatus).toHaveBeenCalledWith(
-      'dr-1',
-      'task_created',
-      { maintenanceRecordId: 'mr-1' }
-    );
+    expect(mockUpdateDefectReportStatus).toHaveBeenCalledWith('dr-1', 'task_created', {
+      maintenanceRecordId: 'mr-1',
+    });
   });
 
   it('invalidates detail, lists, and stats on success', async () => {
@@ -301,7 +293,10 @@ describe('optimistic: createDefectReport', () => {
     // Mutation hangs so we can inspect cache mid-flight
     let resolveMutation!: (value: any) => void;
     mockCreateDefectReport.mockImplementation(
-      () => new Promise((resolve) => { resolveMutation = resolve; })
+      () =>
+        new Promise((resolve) => {
+          resolveMutation = resolve;
+        })
     );
 
     const { result } = renderHook(() => useCreateDefectReport(), { wrapper });

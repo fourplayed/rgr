@@ -1,10 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import {
-  View,
-  FlatList,
-  TouchableOpacity,
-  StyleSheet,
-  useWindowDimensions} from 'react-native';
+import { View, FlatList, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { formatAssetNumber } from '@rgr/shared';
@@ -157,22 +152,11 @@ export default function AssetPhotosScreen() {
           onLongPress={() => handlePhotoLongPress(item)}
           style={{ position: 'relative' }}
         >
-          <PhotoThumbnail
-            photo={item}
-            size={thumbnailSize}
-            onPress={handlePhotoPress}
-          />
+          <PhotoThumbnail photo={item} size={thumbnailSize} onPress={handlePhotoPress} />
           {selectionMode && (
             <View style={styles.checkboxOverlay}>
-              <View
-                style={[
-                  styles.checkboxCircle,
-                  isSelected && styles.checkboxCircleSelected,
-                ]}
-              >
-                {isSelected && (
-                  <Ionicons name="checkmark" size={14} color={colors.textInverse} />
-                )}
+              <View style={[styles.checkboxCircle, isSelected && styles.checkboxCircleSelected]}>
+                {isSelected && <Ionicons name="checkmark" size={14} color={colors.textInverse} />}
               </View>
             </View>
           )}
@@ -191,9 +175,7 @@ export default function AssetPhotosScreen() {
           <Ionicons name="camera-outline" size={64} color={colors.textSecondary} />
         </View>
         <AppText style={styles.emptyText}>No photos</AppText>
-        <AppText style={styles.emptySubtext}>
-          No photos have been uploaded for this asset
-        </AppText>
+        <AppText style={styles.emptySubtext}>No photos have been uploaded for this asset</AppText>
       </View>
     ),
     []
@@ -201,101 +183,98 @@ export default function AssetPhotosScreen() {
 
   return (
     <View style={styles.container}>
-        {selectionMode ? (
-          <SheetHeader
-            icon="images"
-            title={`${selectedIds.size} Selected`}
-            onClose={exitSelectionMode}
-          />
-        ) : (
-          <SheetHeader
-            icon="images"
-            title={assetNumber ? `${formatAssetNumber(assetNumber)} Photos` : 'Photos'}
-            onClose={() => router.back()}
-            closeIcon="arrow-back"
-            headerAction={photos?.length ? {
-              icon: 'checkmark-circle',
-              onPress: () => enterSelectionMode(),
-              accessibilityLabel: 'Select photos',
-            } : undefined}
-          />
-        )}
+      {selectionMode ? (
+        <SheetHeader
+          icon="images"
+          title={`${selectedIds.size} Selected`}
+          onClose={exitSelectionMode}
+        />
+      ) : (
+        <SheetHeader
+          icon="images"
+          title={assetNumber ? `${formatAssetNumber(assetNumber)} Photos` : 'Photos'}
+          onClose={() => router.back()}
+          closeIcon="arrow-back"
+          headerAction={
+            photos?.length
+              ? {
+                  icon: 'checkmark-circle',
+                  onPress: () => enterSelectionMode(),
+                  accessibilityLabel: 'Select photos',
+                }
+              : undefined
+          }
+        />
+      )}
 
-        {/* Select All bar */}
-        {selectionMode && photos && photos.length > 0 && (
-          <View style={styles.selectAllBar}>
-            <TouchableOpacity onPress={toggleSelectAll} style={styles.selectAllButton}>
-              <Ionicons
-                name={allSelected ? 'checkbox' : 'square-outline'}
-                size={20}
-                color={colors.electricBlue}
-              />
-              <AppText style={styles.selectAllText}>
-                {allSelected ? 'Deselect All' : 'Select All'}
-              </AppText>
-            </TouchableOpacity>
-            <AppText style={styles.selectedCountText}>
-              {selectedIds.size} selected
+      {/* Select All bar */}
+      {selectionMode && photos && photos.length > 0 && (
+        <View style={styles.selectAllBar}>
+          <TouchableOpacity onPress={toggleSelectAll} style={styles.selectAllButton}>
+            <Ionicons
+              name={allSelected ? 'checkbox' : 'square-outline'}
+              size={20}
+              color={colors.electricBlue}
+            />
+            <AppText style={styles.selectAllText}>
+              {allSelected ? 'Deselect All' : 'Select All'}
             </AppText>
-          </View>
-        )}
+          </TouchableOpacity>
+          <AppText style={styles.selectedCountText}>{selectedIds.size} selected</AppText>
+        </View>
+      )}
 
-        {/* Content */}
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <LoadingDots color={colors.textSecondary} size={12} />
-          </View>
-        ) : error ? (
-          <View style={styles.centerContent}>
-            <AppText style={styles.errorText}>Failed to load photos</AppText>
-            <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
-              <AppText style={styles.retryButtonText}>Retry</AppText>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <FlatList
-            data={photos}
-            renderItem={renderItem}
-            keyExtractor={keyExtractor}
-            numColumns={NUM_COLUMNS}
-            columnWrapperStyle={styles.row}
-            ListEmptyComponent={renderEmpty}
-            removeClippedSubviews
-            contentContainerStyle={
-              photos && photos.length > 0
-                ? styles.listContent
-                : styles.emptyListContent
-            }
-          />
-        )}
+      {/* Content */}
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <LoadingDots color={colors.textSecondary} size={12} />
+        </View>
+      ) : error ? (
+        <View style={styles.centerContent}>
+          <AppText style={styles.errorText}>Failed to load photos</AppText>
+          <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
+            <AppText style={styles.retryButtonText}>Retry</AppText>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <FlatList
+          data={photos}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
+          numColumns={NUM_COLUMNS}
+          columnWrapperStyle={styles.row}
+          ListEmptyComponent={renderEmpty}
+          removeClippedSubviews
+          contentContainerStyle={
+            photos && photos.length > 0 ? styles.listContent : styles.emptyListContent
+          }
+        />
+      )}
 
-        {/* Bottom toolbar in selection mode */}
-        {selectionMode && selectedIds.size > 0 && (
-          <View style={styles.bottomToolbar}>
-            <TouchableOpacity
-              style={styles.deleteButton}
-              onPress={handleDeleteSelected}
-              disabled={bulkDeleteMutation.isPending}
-            >
-              {bulkDeleteMutation.isPending ? (
-                <LoadingDots color={colors.textInverse} size={6} />
-              ) : (
-                <>
-                  <Ionicons name="trash-outline" size={20} color={colors.textInverse} />
-                  <AppText style={styles.deleteButtonText}>
-                    Delete Selected ({selectedIds.size})
-                  </AppText>
-                </>
-              )}
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.clearButton}
-              onPress={() => setSelectedIds(new Set())}
-            >
-              <AppText style={styles.clearButtonText}>Clear</AppText>
-            </TouchableOpacity>
-          </View>
-        )}
+      {/* Bottom toolbar in selection mode */}
+      {selectionMode && selectedIds.size > 0 && (
+        <View style={styles.bottomToolbar}>
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={handleDeleteSelected}
+            disabled={bulkDeleteMutation.isPending}
+          >
+            {bulkDeleteMutation.isPending ? (
+              <LoadingDots color={colors.textInverse} size={6} />
+            ) : (
+              <>
+                <Ionicons name="trash-outline" size={20} color={colors.textInverse} />
+                <AppText style={styles.deleteButtonText}>
+                  Delete Selected ({selectedIds.size})
+                </AppText>
+              </>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.clearButton} onPress={() => setSelectedIds(new Set())}>
+            <AppText style={styles.clearButtonText}>Clear</AppText>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Photo Detail Modal */}
       {detailPhotoId && assetId && (

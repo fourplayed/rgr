@@ -6,7 +6,8 @@ import {
   Modal,
   Linking,
   Animated,
-  Dimensions} from 'react-native';
+  Dimensions,
+} from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';

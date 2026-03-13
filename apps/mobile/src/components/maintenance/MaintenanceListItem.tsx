@@ -51,10 +51,7 @@ function MaintenanceListItemComponent({ maintenance, onPress }: MaintenanceListI
     onPress(maintenance);
   }, [onPress, maintenance]);
   const containerStyle = useMemo(
-    () => [
-      cardStyles.container,
-      { borderLeftColor: color, backgroundColor: color + '08' },
-    ],
+    () => [cardStyles.container, { borderLeftColor: color, backgroundColor: color + '08' }],
     [color]
   );
 
@@ -85,7 +82,9 @@ function MaintenanceListItemComponent({ maintenance, onPress }: MaintenanceListI
             <AppText style={cardStyles.cardSecondaryText} numberOfLines={1}>
               {maintenance.description || maintenance.title}
             </AppText>
-            <AppText style={cardStyles.cardTime}>{formatRelativeTime(maintenance.createdAt)}</AppText>
+            <AppText style={cardStyles.cardTime}>
+              {formatRelativeTime(maintenance.createdAt)}
+            </AppText>
           </View>
         </View>
       </View>

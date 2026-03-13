@@ -43,9 +43,7 @@ import { useRealtimeInvalidation } from '../useRealtimeInvalidation';
 
 /** Find the `.on()` call whose options object matches the given table name. */
 function findOnCallForTable(table: string) {
-  const call = mockOn.mock.calls.find(
-    (args: any[]) => args[1] && args[1].table === table
-  );
+  const call = mockOn.mock.calls.find((args: any[]) => args[1] && args[1].table === table);
   if (!call) throw new Error(`No .on() call found for table "${table}"`);
   return call;
 }

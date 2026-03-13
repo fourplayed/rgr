@@ -6,7 +6,8 @@ import {
   LayoutAnimation,
   Platform,
   UIManager,
-  Animated} from 'react-native';
+  Animated,
+} from 'react-native';
 import { BottomSheetScrollView } from '../common/SheetModal';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
@@ -174,8 +175,8 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
           <View style={styles.locationRow}>
             <Ionicons name="location" size={16} color={colors.success} />
             <AppText style={styles.locationText}>
-              Location updated to <AppText style={styles.locationName}>{matchedDepot.depot.name}</AppText>{' '}
-              (
+              Location updated to{' '}
+              <AppText style={styles.locationName}>{matchedDepot.depot.name}</AppText> (
               {matchedDepot.distanceKm < 1
                 ? `${Math.round(matchedDepot.distanceKm * 1000)}m away`
                 : `${matchedDepot.distanceKm.toFixed(1)}km away`}
@@ -382,7 +383,9 @@ function OpenItemsSection({
                     <AppText style={cardStyles.cardSecondaryText} numberOfLines={1}>
                       {defect.description ?? defect.title}
                     </AppText>
-                    <AppText style={cardStyles.cardTime}>{formatRelativeTime(defect.createdAt)}</AppText>
+                    <AppText style={cardStyles.cardTime}>
+                      {formatRelativeTime(defect.createdAt)}
+                    </AppText>
                   </View>
                 </View>
               </View>
@@ -418,7 +421,9 @@ function OpenItemsSection({
                     <AppText style={cardStyles.cardSecondaryText} numberOfLines={1}>
                       {task.title}
                     </AppText>
-                    <AppText style={cardStyles.cardTime}>{formatRelativeTime(task.createdAt)}</AppText>
+                    <AppText style={cardStyles.cardTime}>
+                      {formatRelativeTime(task.createdAt)}
+                    </AppText>
                   </View>
                 </View>
               </View>

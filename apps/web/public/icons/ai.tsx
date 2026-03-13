@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { motion, useAnimation } from "motion/react";
-import type { Variants } from "motion/react";
+import { motion, useAnimation } from 'motion/react';
+import type { Variants } from 'motion/react';
 
 interface ActivityProps extends React.SVGAttributes<SVGSVGElement> {
   width?: number;
@@ -22,7 +22,7 @@ const pathVariants: Variants = {
     opacity: [0.3, 1],
     transition: {
       duration: 1.5,
-      ease: "easeInOut",
+      ease: 'easeInOut',
       repeat: Infinity,
       repeatDelay: 0.5,
     },
@@ -33,7 +33,7 @@ const Activity = ({
   width = 28,
   height = 28,
   strokeWidth = 2,
-  stroke = "white",
+  stroke = 'white',
   ...props
 }: ActivityProps) => {
   const controls = useAnimation();
@@ -46,10 +46,10 @@ const Activity = ({
         padding: '8px',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
       }}
-      onMouseEnter={() => controls.start("animate")}
-      onMouseLeave={() => controls.start("normal")}
+      onMouseEnter={() => controls.start('animate')}
+      onMouseLeave={() => controls.start('normal')}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"

@@ -8,20 +8,26 @@ import { mapRowToHazardAlert } from '../../types/entities/hazardAlert';
 // ── Interfaces ──
 
 export interface HazardAlertForReview extends HazardAlert {
-  freightAnalysis: {
-    id: string;
-    photoId: string;
-    createdAt: string;
-  } | undefined;
-  photo: {
-    id: string;
-    storagePath: string;
-    thumbnailPath: string;
-  } | undefined;
-  asset: {
-    id: string;
-    assetNumber: string;
-  } | undefined;
+  freightAnalysis:
+    | {
+        id: string;
+        photoId: string;
+        createdAt: string;
+      }
+    | undefined;
+  photo:
+    | {
+        id: string;
+        storagePath: string;
+        thumbnailPath: string;
+      }
+    | undefined;
+  asset:
+    | {
+        id: string;
+        assetNumber: string;
+      }
+    | undefined;
 }
 
 export interface HazardReviewParams {

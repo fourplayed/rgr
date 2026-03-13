@@ -1,10 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import {
-  View,
-  FlatList,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet} from 'react-native';
+import { View, FlatList, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { UserRoleLabels } from '@rgr/shared';
@@ -72,9 +67,7 @@ export default function UsersScreen() {
   const keyExtractor = useCallback((item: Profile) => item.id, []);
 
   const renderItem = useCallback(
-    ({ item }: { item: Profile }) => (
-      <UserListItem user={item} onPress={handleUserPress} />
-    ),
+    ({ item }: { item: Profile }) => <UserListItem user={item} onPress={handleUserPress} />,
     [handleUserPress]
   );
 
@@ -93,136 +86,122 @@ export default function UsersScreen() {
 
   return (
     <View style={styles.container}>
-        <SheetHeader
-          icon="people"
-          title="Users"
-          onClose={() => router.back()}
-          closeIcon="arrow-back"
-          headerAction={{
-            icon: 'add-circle',
-            onPress: () => router.push('/(admin)/create-user'),
-            accessibilityLabel: 'Add user',
-          }}
-        />
+      <SheetHeader
+        icon="people"
+        title="Users"
+        onClose={() => router.back()}
+        closeIcon="arrow-back"
+        headerAction={{
+          icon: 'add-circle',
+          onPress: () => router.push('/(admin)/create-user'),
+          accessibilityLabel: 'Add user',
+        }}
+      />
 
-        {/* Search */}
-        <View style={styles.searchContainer}>
-          <View style={styles.searchBox}>
-            <Ionicons name="search" size={20} color={colors.textSecondary} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search by name or email..."
-              placeholderTextColor={colors.textSecondary}
-              value={search}
-              onChangeText={handleSearch}
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-            {search.length > 0 && (
-              <TouchableOpacity onPress={() => handleSearch('')}>
-                <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
-              </TouchableOpacity>
-            )}
-          </View>
+      {/* Search */}
+      <View style={styles.searchContainer}>
+        <View style={styles.searchBox}>
+          <Ionicons name="search" size={20} color={colors.textSecondary} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search by name or email..."
+            placeholderTextColor={colors.textSecondary}
+            value={search}
+            onChangeText={handleSearch}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          {search.length > 0 && (
+            <TouchableOpacity onPress={() => handleSearch('')}>
+              <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
+          )}
         </View>
+      </View>
 
-        {/* Filter Chips */}
-        <View style={styles.chipRow}>
-          {ROLES.map((role) => {
-            const isSelected = selectedRoles.includes(role);
-            const roleColor =
-              colors.userRole[role as keyof typeof colors.userRole] || colors.backgroundDark;
-            return (
-              <TouchableOpacity
-                key={role}
-                style={[
-                  styles.chip,
-                  {
-                    backgroundColor: isSelected ? roleColor : colors.surface,
-                    borderColor: isSelected ? 'transparent' : colors.border,
-                  },
-                ]}
-                onPress={() => toggleRole(role)}
-                activeOpacity={0.7}
-              >
-                <AppText
-                  style={[
-                    styles.chipText,
-                    {
-                      color: isSelected ? colors.textInverse : colors.text,
-                      fontFamily: isSelected ? fonts.bold : fonts.regular,
-                    },
-                  ]}
-                >
-                  {UserRoleLabels[role]}
-                </AppText>
-              </TouchableOpacity>
-            );
-          })}
-          <TouchableOpacity
-            style={[
-              styles.chip,
-              {
-                backgroundColor:
-                  showInactive === false ? colors.success : colors.surface,
-                borderColor:
-                  showInactive === false ? 'transparent' : colors.border,
-              },
-            ]}
-            onPress={() =>
-              setShowInactive((prev) =>
-                prev === false ? undefined : false
-              )
-            }
-            activeOpacity={0.7}
-          >
-            <AppText
+      {/* Filter Chips */}
+      <View style={styles.chipRow}>
+        {ROLES.map((role) => {
+          const isSelected = selectedRoles.includes(role);
+          const roleColor =
+            colors.userRole[role as keyof typeof colors.userRole] || colors.backgroundDark;
+          return (
+            <TouchableOpacity
+              key={role}
               style={[
-                styles.chipText,
+                styles.chip,
                 {
-                  color:
-                    showInactive === false
-                      ? colors.textInverse
-                      : colors.text,
-                  fontFamily:
-                    showInactive === false
-                      ? fonts.bold
-                      : fonts.regular,
+                  backgroundColor: isSelected ? roleColor : colors.surface,
+                  borderColor: isSelected ? 'transparent' : colors.border,
                 },
               ]}
+              onPress={() => toggleRole(role)}
+              activeOpacity={0.7}
             >
-              Active Only
-            </AppText>
+              <AppText
+                style={[
+                  styles.chipText,
+                  {
+                    color: isSelected ? colors.textInverse : colors.text,
+                    fontFamily: isSelected ? fonts.bold : fonts.regular,
+                  },
+                ]}
+              >
+                {UserRoleLabels[role]}
+              </AppText>
+            </TouchableOpacity>
+          );
+        })}
+        <TouchableOpacity
+          style={[
+            styles.chip,
+            {
+              backgroundColor: showInactive === false ? colors.success : colors.surface,
+              borderColor: showInactive === false ? 'transparent' : colors.border,
+            },
+          ]}
+          onPress={() => setShowInactive((prev) => (prev === false ? undefined : false))}
+          activeOpacity={0.7}
+        >
+          <AppText
+            style={[
+              styles.chipText,
+              {
+                color: showInactive === false ? colors.textInverse : colors.text,
+                fontFamily: showInactive === false ? fonts.bold : fonts.regular,
+              },
+            ]}
+          >
+            Active Only
+          </AppText>
+        </TouchableOpacity>
+      </View>
+
+      {/* Content */}
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <LoadingDots color={colors.textSecondary} size={12} />
+        </View>
+      ) : error ? (
+        <View style={styles.centerContent}>
+          <AppText style={styles.errorText}>Failed to load users</AppText>
+          <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
+            <AppText style={styles.retryButtonText}>Retry</AppText>
           </TouchableOpacity>
         </View>
-
-        {/* Content */}
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <LoadingDots color={colors.textSecondary} size={12} />
-          </View>
-        ) : error ? (
-          <View style={styles.centerContent}>
-            <AppText style={styles.errorText}>Failed to load users</AppText>
-            <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
-              <AppText style={styles.retryButtonText}>Retry</AppText>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <FlatList
-            data={data?.data ?? []}
-            renderItem={renderItem}
-            keyExtractor={keyExtractor}
-            getItemLayout={getItemLayout}
-            ListEmptyComponent={renderEmpty}
-            removeClippedSubviews
-            contentContainerStyle={
-              (data?.data?.length ?? 0) === 0
-                ? styles.emptyListContent
-                : styles.listContent
-            }
-          />
-        )}
+      ) : (
+        <FlatList
+          data={data?.data ?? []}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
+          getItemLayout={getItemLayout}
+          ListEmptyComponent={renderEmpty}
+          removeClippedSubviews
+          contentContainerStyle={
+            (data?.data?.length ?? 0) === 0 ? styles.emptyListContent : styles.listContent
+          }
+        />
+      )}
     </View>
   );
 }

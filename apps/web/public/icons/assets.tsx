@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import type { Variants } from "motion/react";
-import { motion, useAnimation } from "motion/react";
+import type { Variants } from 'motion/react';
+import { motion, useAnimation } from 'motion/react';
 
 interface BoxesProps extends React.SVGAttributes<SVGSVGElement> {
   width?: number;
@@ -15,31 +15,31 @@ const pathVariants: Variants = {
     pathLength: 1,
     transition: {
       duration: 0.3,
-      ease: "easeInOut",
+      ease: 'easeInOut',
     },
   },
   animate: {
     pathLength: [0, 1],
     transition: {
       duration: 1,
-      ease: "easeInOut",
+      ease: 'easeInOut',
     },
   },
 };
 
 const boxVariants: Variants = {
   normal: {
-    offsetDistance: "0%",
+    offsetDistance: '0%',
     transition: {
       duration: 0.3,
-      ease: "easeInOut",
+      ease: 'easeInOut',
     },
   },
   animate: {
-    offsetDistance: "100%",
+    offsetDistance: '100%',
     transition: {
       duration: 1,
-      ease: "easeInOut",
+      ease: 'easeInOut',
     },
   },
 };
@@ -48,7 +48,7 @@ const Boxes = ({
   width = 28,
   height = 28,
   strokeWidth = 2,
-  stroke = "#ffffff",
+  stroke = '#ffffff',
   ...props
 }: BoxesProps) => {
   const controls = useAnimation();
@@ -56,15 +56,15 @@ const Boxes = ({
   return (
     <div
       style={{
-        cursor: "pointer",
-        userSelect: "none",
-        padding: "8px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        cursor: 'pointer',
+        userSelect: 'none',
+        padding: '8px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
       }}
-      onMouseEnter={() => controls.start("animate")}
-      onMouseLeave={() => controls.start("normal")}
+      onMouseEnter={() => controls.start('animate')}
+      onMouseLeave={() => controls.start('normal')}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -84,21 +84,9 @@ const Boxes = ({
           variants={pathVariants}
           animate={controls}
         />
-        <motion.path
-          d="m7 16.5-4.74-2.85"
-          variants={pathVariants}
-          animate={controls}
-        />
-        <motion.path
-          d="m7 16.5 5-3"
-          variants={pathVariants}
-          animate={controls}
-        />
-        <motion.path
-          d="M7 16.5v5.17"
-          variants={pathVariants}
-          animate={controls}
-        />
+        <motion.path d="m7 16.5-4.74-2.85" variants={pathVariants} animate={controls} />
+        <motion.path d="m7 16.5 5-3" variants={pathVariants} animate={controls} />
+        <motion.path d="M7 16.5v5.17" variants={pathVariants} animate={controls} />
 
         {/* Bottom right box */}
         <motion.path
@@ -106,21 +94,9 @@ const Boxes = ({
           variants={pathVariants}
           animate={controls}
         />
-        <motion.path
-          d="m17 16.5-5-3"
-          variants={pathVariants}
-          animate={controls}
-        />
-        <motion.path
-          d="m17 16.5 4.74-2.85"
-          variants={pathVariants}
-          animate={controls}
-        />
-        <motion.path
-          d="M17 16.5v5.17"
-          variants={pathVariants}
-          animate={controls}
-        />
+        <motion.path d="m17 16.5-5-3" variants={pathVariants} animate={controls} />
+        <motion.path d="m17 16.5 4.74-2.85" variants={pathVariants} animate={controls} />
+        <motion.path d="M17 16.5v5.17" variants={pathVariants} animate={controls} />
 
         {/* Top box */}
         <motion.path
@@ -128,21 +104,9 @@ const Boxes = ({
           variants={pathVariants}
           animate={controls}
         />
-        <motion.path
-          d="M12 8 7.26 5.15"
-          variants={pathVariants}
-          animate={controls}
-        />
-        <motion.path
-          d="m12 8 4.74-2.85"
-          variants={pathVariants}
-          animate={controls}
-        />
-        <motion.path
-          d="M12 13.5V8"
-          variants={pathVariants}
-          animate={controls}
-        />
+        <motion.path d="M12 8 7.26 5.15" variants={pathVariants} animate={controls} />
+        <motion.path d="m12 8 4.74-2.85" variants={pathVariants} animate={controls} />
+        <motion.path d="M12 13.5V8" variants={pathVariants} animate={controls} />
 
         {/* Dot that follows the path */}
         <motion.circle

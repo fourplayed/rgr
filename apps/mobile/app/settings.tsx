@@ -1,9 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity} from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../src/store/authStore';
@@ -11,7 +7,9 @@ import { useUserPermissions } from '../src/contexts/UserPermissionsContext';
 import { UserRoleLabels } from '@rgr/shared';
 import { colors } from '../src/theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../src/theme/spacing';
-import { AppText, ConfirmSheet,
+import {
+  AppText,
+  ConfirmSheet,
   Button,
   CollapsibleSection,
   PillBadge,
@@ -81,14 +79,22 @@ export default function SettingsScreen() {
   }
 
   const roleLabel = UserRoleLabels[user.role] || user.role;
-  const roleColor = colors.userRole[user.role as keyof typeof colors.userRole] || colors.backgroundDark;
+  const roleColor =
+    colors.userRole[user.role as keyof typeof colors.userRole] || colors.backgroundDark;
 
   return (
     <View style={styles.container}>
       <View style={styles.safeArea}>
         <SheetHeader icon="settings" title="Settings" onClose={handleBack} />
 
-        <ScrollView style={styles.scrollView} contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingTop: spacing.base, paddingBottom: spacing['2xl'] }}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={{
+            paddingHorizontal: spacing.lg,
+            paddingTop: spacing.base,
+            paddingBottom: spacing['2xl'],
+          }}
+        >
           {/* Profile card */}
           <View style={styles.section}>
             <View style={styles.card}>
@@ -173,7 +179,9 @@ export default function SettingsScreen() {
                     </View>
                     <View style={styles.settingsItemContent}>
                       <AppText style={styles.settingsItemTitle}>Enable Console</AppText>
-                      <AppText style={styles.settingsItemSubtitle}>Diagnostics and sync tools</AppText>
+                      <AppText style={styles.settingsItemSubtitle}>
+                        Diagnostics and sync tools
+                      </AppText>
                     </View>
                     <Ionicons
                       name={consoleEnabled ? 'checkbox' : 'square-outline'}
@@ -198,7 +206,13 @@ export default function SettingsScreen() {
           )}
         </ScrollView>
 
-        <View style={{ paddingHorizontal: spacing.lg, paddingTop: spacing.base, paddingBottom: sheetBottomPadding }}>
+        <View
+          style={{
+            paddingHorizontal: spacing.lg,
+            paddingTop: spacing.base,
+            paddingBottom: sheetBottomPadding,
+          }}
+        >
           <Button
             onPress={() => setShowLogoutConfirm(true)}
             color={colors.electricBlue}
@@ -208,20 +222,14 @@ export default function SettingsScreen() {
           </Button>
         </View>
 
-        <EditProfileModal
-          visible={showEditProfile}
-          onClose={() => setShowEditProfile(false)}
-        />
+        <EditProfileModal visible={showEditProfile} onClose={() => setShowEditProfile(false)} />
 
         <NotificationsModal
           visible={showNotifications}
           onClose={() => setShowNotifications(false)}
         />
 
-        <SecurityModal
-          visible={showSecurity}
-          onClose={() => setShowSecurity(false)}
-        />
+        <SecurityModal visible={showSecurity} onClose={() => setShowSecurity(false)} />
 
         <ConfirmSheet
           visible={showLogoutConfirm}

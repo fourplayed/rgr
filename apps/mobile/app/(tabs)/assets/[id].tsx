@@ -5,7 +5,8 @@ import {
   StyleSheet,
   SafeAreaView,
   TouchableOpacity,
-  Animated} from 'react-native';
+  Animated,
+} from 'react-native';
 import { LoadingDots } from '../../../src/components/common/LoadingDots';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,7 +14,14 @@ import QRCode from 'react-native-qrcode-svg';
 import { useAsset, useAssetScans, useAssetMaintenance } from '../../../src/hooks/useAssetData';
 import { useAssetPhotos } from '../../../src/hooks/usePhotos';
 import { useAssetDefectReports } from '../../../src/hooks/useDefectData';
-import type { ScanEventWithScanner, MaintenanceRecord, MaintenanceRecordWithNames, PhotoListItem, DefectReportListItem, CreateMaintenanceInput } from '@rgr/shared';
+import type {
+  ScanEventWithScanner,
+  MaintenanceRecord,
+  MaintenanceRecordWithNames,
+  PhotoListItem,
+  DefectReportListItem,
+  CreateMaintenanceInput,
+} from '@rgr/shared';
 import { AssetInfoCard } from '../../../src/components/assets/AssetInfoCard';
 import { useAssetAssessment } from '../../../src/hooks/useAssetAssessment';
 import { SegmentedTabs } from '../../../src/components/common/SegmentedTabs';
@@ -52,7 +60,14 @@ import { AppText } from '../../../src/components/common';
 type AssetModalState =
   | { type: 'none' }
   | { type: 'defectDetail'; defectId: string }
-  | { type: 'acceptDefect'; defectId: string; assetId: string; assetNumber: string | null; title: string; description: string | null }
+  | {
+      type: 'acceptDefect';
+      defectId: string;
+      assetId: string;
+      assetNumber: string | null;
+      title: string;
+      description: string | null;
+    }
   | { type: 'maintenanceDetail'; maintenanceId: string };
 
 type ActivityItem =
@@ -113,23 +128,30 @@ const ActivityCard = React.memo(function ActivityCard({
   const secondaryText = (() => {
     if (item.type === 'scan') return item.data.scannerName || 'Unknown';
     if (item.type === 'photo') {
-      return item.data.primaryCategory?.replace(/_/g, ' ') || item.data.photoType.replace(/_/g, ' ');
+      return (
+        item.data.primaryCategory?.replace(/_/g, ' ') || item.data.photoType.replace(/_/g, ' ')
+      );
     }
     if (item.type === 'defect') return item.data.description || item.data.title;
     // maintenance
     if (item.data.status === 'completed') {
-      const completedAt = item.data.completedAt ? formatRelativeTime(item.data.completedAt) : formatRelativeTime(item.data.updatedAt);
+      const completedAt = item.data.completedAt
+        ? formatRelativeTime(item.data.completedAt)
+        : formatRelativeTime(item.data.updatedAt);
       const completerSuffix = (item.data as MaintenanceRecordWithNames).completerName
         ? ` by ${(item.data as MaintenanceRecordWithNames).completerName}`
         : '';
       return `Completed ${completedAt}${completerSuffix}`;
     }
-    return item.data.description || item.data.maintenanceType?.replace(/_/g, ' ') || item.data.status.replace(/_/g, ' ');
+    return (
+      item.data.description ||
+      item.data.maintenanceType?.replace(/_/g, ' ') ||
+      item.data.status.replace(/_/g, ' ')
+    );
   })();
 
-  const timeValue = item.type === 'maintenance'
-    ? (item.data.updatedAt || item.data.createdAt)
-    : item.data.createdAt;
+  const timeValue =
+    item.type === 'maintenance' ? item.data.updatedAt || item.data.createdAt : item.data.createdAt;
 
   const titleText = (() => {
     if (item.type === 'scan') return formatScanTypeLabel(item.data.scanType);
@@ -139,7 +161,12 @@ const ActivityCard = React.memo(function ActivityCard({
   })();
 
   const cardContent = (
-    <View style={[cardStyles.containerInline, { borderColor: activityColor, backgroundColor: activityColor + '08' }]}>
+    <View
+      style={[
+        cardStyles.containerInline,
+        { borderColor: activityColor, backgroundColor: activityColor + '08' },
+      ]}
+    >
       <View style={cardStyles.cardRow}>
         <View style={cardStyles.cardIconContainer}>
           <Ionicons name={activityIcon} size={32} color={activityColor} />
@@ -152,15 +179,17 @@ const ActivityCard = React.memo(function ActivityCard({
             <View style={cardStyles.cardBadges}>
               {depotBadge}
               {item.type === 'photo' && item.data.hazardCount > 0 && (
-                <View style={[
-                  activityCardStyles.locationBadge,
-                  {
-                    backgroundColor:
-                      item.data.maxSeverity === 'critical' || item.data.maxSeverity === 'high'
-                        ? colors.error
-                        : colors.warning,
-                  },
-                ]}>
+                <View
+                  style={[
+                    activityCardStyles.locationBadge,
+                    {
+                      backgroundColor:
+                        item.data.maxSeverity === 'critical' || item.data.maxSeverity === 'high'
+                          ? colors.error
+                          : colors.warning,
+                    },
+                  ]}
+                >
                   <AppText style={[activityCardStyles.locationText, { color: colors.textInverse }]}>
                     {item.data.hazardCount} Hazard{item.data.hazardCount !== 1 ? 's' : ''}
                   </AppText>
@@ -242,11 +271,17 @@ const MaintenanceCard = React.memo(function MaintenanceCard({
   item,
   onPress,
 }: MaintenanceCardProps) {
-  const { icon: maintIcon, color: statusColor } = getMaintenanceVisualConfig(item.status, item.dueDate);
+  const { icon: maintIcon, color: statusColor } = getMaintenanceVisualConfig(
+    item.status,
+    item.dueDate
+  );
 
   return (
     <TouchableOpacity
-      style={[cardStyles.containerInline, { borderColor: statusColor, backgroundColor: statusColor + '08' }]}
+      style={[
+        cardStyles.containerInline,
+        { borderColor: statusColor, backgroundColor: statusColor + '08' },
+      ]}
       onPress={() => onPress(item)}
       activeOpacity={0.7}
       accessibilityRole="button"
@@ -282,12 +317,12 @@ const ASSET_DETAIL_TABS = [
   { key: 'photos', label: 'Photos' },
   { key: 'maintenance', label: 'Maint.' },
 ] as const;
-type AssetDetailTab = typeof ASSET_DETAIL_TABS[number]['key'];
+type AssetDetailTab = (typeof ASSET_DETAIL_TABS)[number]['key'];
 
 export default function AssetDetailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ id: string }>();
-  const user = useAuthStore(s => s.user);
+  const user = useAuthStore((s) => s.user);
 
   // Validate route params - handle array case from Expo Router
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -298,37 +333,49 @@ export default function AssetDetailScreen() {
   const [showPhotoDetail, setShowPhotoDetail] = useState(false);
 
   // Modal state machine for defect/maintenance flow — only one at a time
-  const { modal, closeModal, transitionTo, isTransitioning, handleExitComplete } = useModalTransition<AssetModalState>({ type: 'none' });
+  const { modal, closeModal, transitionTo, isTransitioning, handleExitComplete } =
+    useModalTransition<AssetModalState>({ type: 'none' });
 
   // Persistent backdrop — stays visible during A→B modal transitions
-  const { backdropOpacity, showBackdrop, mounted: backdropMounted } = usePersistentBackdrop(
-    modal.type !== 'none' || isTransitioning
-  );
+  const {
+    backdropOpacity,
+    showBackdrop,
+    mounted: backdropMounted,
+  } = usePersistentBackdrop(modal.type !== 'none' || isTransitioning);
 
   const { mutateAsync: acceptDefect } = useAcceptDefect();
 
-  const handleAcceptPress = useCallback((context: {
-    defectId: string;
-    assetId: string;
-    assetNumber: string | null;
-    title: string;
-    description: string | null;
-  }) => {
-    transitionTo({ type: 'acceptDefect', ...context });
-  }, [transitionTo]);
+  const handleAcceptPress = useCallback(
+    (context: {
+      defectId: string;
+      assetId: string;
+      assetNumber: string | null;
+      title: string;
+      description: string | null;
+    }) => {
+      transitionTo({ type: 'acceptDefect', ...context });
+    },
+    [transitionTo]
+  );
 
-  const handleViewTaskPress = useCallback((maintenanceId: string) => {
-    transitionTo({ type: 'maintenanceDetail', maintenanceId });
-  }, [transitionTo]);
+  const handleViewTaskPress = useCallback(
+    (maintenanceId: string) => {
+      transitionTo({ type: 'maintenanceDetail', maintenanceId });
+    },
+    [transitionTo]
+  );
 
-  const handleAcceptSubmit = useCallback(async (input: CreateMaintenanceInput) => {
-    if (modal.type !== 'acceptDefect') return;
-    await acceptDefect({
-      defectReportId: modal.defectId,
-      maintenanceInput: input,
-    });
-    closeModal();
-  }, [modal, acceptDefect, closeModal]);
+  const handleAcceptSubmit = useCallback(
+    async (input: CreateMaintenanceInput) => {
+      if (modal.type !== 'acceptDefect') return;
+      await acceptDefect({
+        defectReportId: modal.defectId,
+        maintenanceInput: input,
+      });
+      closeModal();
+    },
+    [modal, acceptDefect, closeModal]
+  );
 
   // Dismiss defect flow (confirmation + delete handled inside DefectReportDetailModal)
   const handleDismissConfirmed = useCallback(() => {
@@ -348,20 +395,22 @@ export default function AssetDetailScreen() {
     setSelectedPhotoId(null);
   }, []);
 
-  const handleMaintenancePress = useCallback((item: MaintenanceRecord) => {
-    transitionTo({ type: 'maintenanceDetail', maintenanceId: item.id });
-  }, [transitionTo]);
+  const handleMaintenancePress = useCallback(
+    (item: MaintenanceRecord) => {
+      transitionTo({ type: 'maintenanceDetail', maintenanceId: item.id });
+    },
+    [transitionTo]
+  );
 
-  const handleDefectPress = useCallback((defectId: string) => {
-    transitionTo({ type: 'defectDetail', defectId });
-  }, [transitionTo]);
+  const handleDefectPress = useCallback(
+    (defectId: string) => {
+      transitionTo({ type: 'defectDetail', defectId });
+    },
+    [transitionTo]
+  );
 
   // Always fetch (needed for header)
-  const {
-    data: asset,
-    isLoading: assetLoading,
-    error: assetError,
-  } = useAsset(id);
+  const { data: asset, isLoading: assetLoading, error: assetError } = useAsset(id);
 
   // Assessment fetches all data sources unconditionally (not tab-gated)
   const assessment = useAssetAssessment(asset);
@@ -369,53 +418,47 @@ export default function AssetDetailScreen() {
   // Gate tab-specific queries: activity + maintenance tabs share scans/maintenance/defects
   const activityOrMaint = activeTab === 'activity' || activeTab === 'maintenance';
 
-  const {
-    data: scans = [],
-    isLoading: scansLoading,
-  } = useAssetScans(activityOrMaint ? id : undefined);
+  const { data: scans = [], isLoading: scansLoading } = useAssetScans(
+    activityOrMaint ? id : undefined
+  );
 
-  const {
-    data: maintenance = [],
-  } = useAssetMaintenance(activityOrMaint ? id : undefined);
+  const { data: maintenance = [] } = useAssetMaintenance(activityOrMaint ? id : undefined);
 
-  const {
-    data: defectReports = [],
-  } = useAssetDefectReports(activityOrMaint ? id : undefined);
+  const { data: defectReports = [] } = useAssetDefectReports(activityOrMaint ? id : undefined);
 
   // Photos tab only
-  const {
-    data: photos = [],
-  } = useAssetPhotos(activeTab === 'photos' ? id : undefined);
+  const { data: photos = [] } = useAssetPhotos(activeTab === 'photos' ? id : undefined);
 
   // Maintenance IDs that are linked to defect reports (used by activity + maintenance tabs)
   const defectLinkedMaintenanceIds = useMemo(
-    () => new Set(defectReports.filter(d => d.maintenanceRecordId).map(d => d.maintenanceRecordId)),
+    () =>
+      new Set(defectReports.filter((d) => d.maintenanceRecordId).map((d) => d.maintenanceRecordId)),
     [defectReports]
   );
 
   // Merge scans, maintenance, defects, and photos into a unified activity feed
   const recentActivity: ActivityItem[] = useMemo(() => {
     const allItems = [
-      ...scans.map(scan => ({
+      ...scans.map((scan) => ({
         type: 'scan' as const,
         data: scan,
         timestampStr: scan.createdAt,
       })),
       ...maintenance
-        .filter(m => !defectLinkedMaintenanceIds.has(m.id))
-        .map(m => ({
+        .filter((m) => !defectLinkedMaintenanceIds.has(m.id))
+        .map((m) => ({
           type: 'maintenance' as const,
           data: m,
           timestampStr: m.updatedAt || m.createdAt,
         })),
       ...defectReports
-        .filter(d => d.status !== 'dismissed')
-        .map(d => ({
+        .filter((d) => d.status !== 'dismissed')
+        .map((d) => ({
           type: 'defect' as const,
           data: d,
           timestampStr: d.createdAt,
         })),
-      ...photos.map(photo => ({
+      ...photos.map((photo) => ({
         type: 'photo' as const,
         data: photo,
         timestampStr: photo.createdAt,
@@ -424,7 +467,7 @@ export default function AssetDetailScreen() {
       .sort((a, b) => b.timestampStr.localeCompare(a.timestampStr))
       .slice(0, 10);
 
-    return allItems.map(item => ({
+    return allItems.map((item) => ({
       type: item.type,
       data: item.data,
       timestamp: new Date(item.timestampStr),
@@ -435,28 +478,30 @@ export default function AssetDetailScreen() {
   const nextService = useMemo(
     () =>
       maintenance
-        .filter(m => m.status === 'scheduled' && m.scheduledDate)
-        .sort((a, b) => new Date(a.scheduledDate!).getTime() - new Date(b.scheduledDate!).getTime())[0],
-    [maintenance],
+        .filter((m) => m.status === 'scheduled' && m.scheduledDate)
+        .sort(
+          (a, b) => new Date(a.scheduledDate!).getTime() - new Date(b.scheduledDate!).getTime()
+        )[0],
+    [maintenance]
   );
 
   // Validate required route param
   if (!id) {
     return (
       <View style={styles.container}>
-      <SafeAreaView style={styles.containerInner}>
-        <View style={styles.centerContent}>
-          <AppText style={styles.errorText}>Asset ID is required</AppText>
-          <TouchableOpacity
-            style={styles.retryButton}
-            onPress={() => router.back()}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
-            <AppText style={styles.retryButtonText}>Go Back</AppText>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
+        <SafeAreaView style={styles.containerInner}>
+          <View style={styles.centerContent}>
+            <AppText style={styles.errorText}>Asset ID is required</AppText>
+            <TouchableOpacity
+              style={styles.retryButton}
+              onPress={() => router.back()}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+            >
+              <AppText style={styles.retryButtonText}>Go Back</AppText>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
       </View>
     );
   }
@@ -464,11 +509,11 @@ export default function AssetDetailScreen() {
   if (assetLoading) {
     return (
       <View style={styles.container}>
-      <SafeAreaView style={styles.containerInner}>
-        <View style={styles.centerContent}>
-          <LoadingDots color={colors.textSecondary} size={12} />
-        </View>
-      </SafeAreaView>
+        <SafeAreaView style={styles.containerInner}>
+          <View style={styles.centerContent}>
+            <LoadingDots color={colors.textSecondary} size={12} />
+          </View>
+        </SafeAreaView>
       </View>
     );
   }
@@ -476,152 +521,169 @@ export default function AssetDetailScreen() {
   if (assetError || !asset) {
     return (
       <View style={styles.container}>
-      <SafeAreaView style={styles.containerInner}>
-        <View style={styles.centerContent}>
-          <AppText style={styles.errorText}>Failed to load asset</AppText>
-          <TouchableOpacity
-            style={styles.retryButton}
-            onPress={() => router.back()}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
-            <AppText style={styles.retryButtonText}>Go Back</AppText>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
+        <SafeAreaView style={styles.containerInner}>
+          <View style={styles.centerContent}>
+            <AppText style={styles.errorText}>Failed to load asset</AppText>
+            <TouchableOpacity
+              style={styles.retryButton}
+              onPress={() => router.back()}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+            >
+              <AppText style={styles.retryButtonText}>Go Back</AppText>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-    <SafeAreaView style={styles.containerInner}>
-      <View style={styles.pinnedHeader}>
-        <AssetInfoCard
-          asset={asset}
-          nextServiceDate={nextService?.scheduledDate}
-          assessment={assessment}
-          {...(isSuperuser && asset.qrCodeData ? { onPress: () => setShowQRModal(true) } : {})}
-        />
-        <SegmentedTabs tabs={ASSET_DETAIL_TABS} activeTab={activeTab} onTabPress={setActiveTab} />
-      </View>
-
-      <Animated.View style={[styles.tabContentArea, tabFade]}>
-        {activeTab === 'activity' && (
-          <ScrollView contentContainerStyle={styles.tabScrollContent}>
-            {scansLoading ? (
-              <LoadingDots color={colors.textSecondary} size={6} />
-            ) : recentActivity.length === 0 ? (
-              <EmptyState icon="time-outline" title="No activity recorded" subtitle="Scans and maintenance will appear here" />
-            ) : (
-              <View style={styles.activityList}>
-                {recentActivity.map((item) => (
-                  <ActivityCard
-                    key={item.type === 'maintenance' ? `m-${item.data.id}` : item.type === 'defect' ? `d-${item.data.id}` : item.data.id}
-                    item={item}
-                    depots={depots}
-                    onMaintenancePress={handleMaintenancePress}
-                    onDefectPress={handleDefectPress}
-                  />
-                ))}
-              </View>
-            )}
-          </ScrollView>
-        )}
-
-        {activeTab === 'photos' && (
-          <View style={styles.photosTab}>
-            <PhotoGallery assetId={id} onPhotoPress={handlePhotoPress} />
-          </View>
-        )}
-
-        {activeTab === 'maintenance' && (
-          <ScrollView contentContainerStyle={styles.tabScrollContent}>
-            {maintenance.length === 0 ? (
-              <EmptyState icon="construct-outline" title="No maintenance records" subtitle="Scheduled tasks will appear here" />
-            ) : (
-              <View style={styles.maintenanceList}>
-                {maintenance.map((item) => (
-                  <MaintenanceCard
-                    key={item.id}
-                    item={item}
-                    onPress={handleMaintenancePress}
-                  />
-                ))}
-              </View>
-            )}
-          </ScrollView>
-        )}
-      </Animated.View>
-
-      {/* QR Code Sheet - Superuser Only */}
-      <BottomSheet visible={showQRModal} onDismiss={() => setShowQRModal(false)}>
-        <View style={styles.qrSheetContent}>
-          <AppText style={styles.qrSheetTitle}>Asset QR Code</AppText>
-          <AppText style={styles.modalAssetNumber}>{formatAssetNumber(asset.assetNumber)}</AppText>
-          <View style={styles.qrContainer}>
-            {asset.qrCodeData && (
-              <QRCode
-                value={asset.qrCodeData}
-                size={200}
-                color={colors.text}
-                backgroundColor={colors.background}
-              />
-            )}
-          </View>
-          <AppText style={styles.qrDataText}>{asset.qrCodeData}</AppText>
+      <SafeAreaView style={styles.containerInner}>
+        <View style={styles.pinnedHeader}>
+          <AssetInfoCard
+            asset={asset}
+            nextServiceDate={nextService?.scheduledDate}
+            assessment={assessment}
+            {...(isSuperuser && asset.qrCodeData ? { onPress: () => setShowQRModal(true) } : {})}
+          />
+          <SegmentedTabs tabs={ASSET_DETAIL_TABS} activeTab={activeTab} onTabPress={setActiveTab} />
         </View>
-      </BottomSheet>
 
-      {/* Photo Detail Modal */}
-      <PhotoDetailModal
-        visible={showPhotoDetail}
-        photoId={selectedPhotoId}
-        assetId={id}
-        onClose={handleClosePhotoDetail}
-      />
+        <Animated.View style={[styles.tabContentArea, tabFade]}>
+          {activeTab === 'activity' && (
+            <ScrollView contentContainerStyle={styles.tabScrollContent}>
+              {scansLoading ? (
+                <LoadingDots color={colors.textSecondary} size={6} />
+              ) : recentActivity.length === 0 ? (
+                <EmptyState
+                  icon="time-outline"
+                  title="No activity recorded"
+                  subtitle="Scans and maintenance will appear here"
+                />
+              ) : (
+                <View style={styles.activityList}>
+                  {recentActivity.map((item) => (
+                    <ActivityCard
+                      key={
+                        item.type === 'maintenance'
+                          ? `m-${item.data.id}`
+                          : item.type === 'defect'
+                            ? `d-${item.data.id}`
+                            : item.data.id
+                      }
+                      item={item}
+                      depots={depots}
+                      onMaintenancePress={handleMaintenancePress}
+                      onDefectPress={handleDefectPress}
+                    />
+                  ))}
+                </View>
+              )}
+            </ScrollView>
+          )}
 
-      {/* Persistent backdrop — stays visible during A→B modal transitions */}
-      <PersistentBackdrop
-        opacity={backdropOpacity}
-        showBackdrop={showBackdrop}
-        mounted={backdropMounted}
-        onPress={closeModal}
-      />
+          {activeTab === 'photos' && (
+            <View style={styles.photosTab}>
+              <PhotoGallery assetId={id} onPhotoPress={handlePhotoPress} />
+            </View>
+          )}
 
-      {/* Chained modals — gorhom portal rendering (no wrapper needed) */}
-      <DefectReportDetailModal
-        visible={modal.type === 'defectDetail'}
-        defectId={modal.type === 'defectDetail' ? modal.defectId : null}
-        onClose={closeModal}
-        onAcceptPress={handleAcceptPress}
-        onViewTaskPress={handleViewTaskPress}
-        onDismissConfirmed={handleDismissConfirmed}
-        noBackdrop onExitComplete={handleExitComplete}
-      />
+          {activeTab === 'maintenance' && (
+            <ScrollView contentContainerStyle={styles.tabScrollContent}>
+              {maintenance.length === 0 ? (
+                <EmptyState
+                  icon="construct-outline"
+                  title="No maintenance records"
+                  subtitle="Scheduled tasks will appear here"
+                />
+              ) : (
+                <View style={styles.maintenanceList}>
+                  {maintenance.map((item) => (
+                    <MaintenanceCard key={item.id} item={item} onPress={handleMaintenancePress} />
+                  ))}
+                </View>
+              )}
+            </ScrollView>
+          )}
+        </Animated.View>
 
-      <CreateMaintenanceModal
-        visible={modal.type === 'acceptDefect'}
-        onClose={closeModal}
-        noBackdrop onExitComplete={handleExitComplete}
-        {...(modal.type === 'acceptDefect' ? {
-          assetId: modal.assetId,
-          assetNumber: modal.assetNumber,
-          defectReportId: modal.defectId,
-          defaultTitle: modal.description ?? modal.title,
-          defaultDescription: undefined,
-          defaultPriority: 'medium' as const,
-          onExternalSubmit: handleAcceptSubmit,
-        } : {})}
-      />
+        {/* QR Code Sheet - Superuser Only */}
+        <BottomSheet visible={showQRModal} onDismiss={() => setShowQRModal(false)}>
+          <View style={styles.qrSheetContent}>
+            <AppText style={styles.qrSheetTitle}>Asset QR Code</AppText>
+            <AppText style={styles.modalAssetNumber}>
+              {formatAssetNumber(asset.assetNumber)}
+            </AppText>
+            <View style={styles.qrContainer}>
+              {asset.qrCodeData && (
+                <QRCode
+                  value={asset.qrCodeData}
+                  size={200}
+                  color={colors.text}
+                  backgroundColor={colors.background}
+                />
+              )}
+            </View>
+            <AppText style={styles.qrDataText}>{asset.qrCodeData}</AppText>
+          </View>
+        </BottomSheet>
 
-      <MaintenanceDetailModal
-        visible={modal.type === 'maintenanceDetail'}
-        maintenanceId={modal.type === 'maintenanceDetail' ? modal.maintenanceId : null}
-        onClose={closeModal}
-        noBackdrop onExitComplete={handleExitComplete}
-      />
-    </SafeAreaView>
+        {/* Photo Detail Modal */}
+        <PhotoDetailModal
+          visible={showPhotoDetail}
+          photoId={selectedPhotoId}
+          assetId={id}
+          onClose={handleClosePhotoDetail}
+        />
+
+        {/* Persistent backdrop — stays visible during A→B modal transitions */}
+        <PersistentBackdrop
+          opacity={backdropOpacity}
+          showBackdrop={showBackdrop}
+          mounted={backdropMounted}
+          onPress={closeModal}
+        />
+
+        {/* Chained modals — gorhom portal rendering (no wrapper needed) */}
+        <DefectReportDetailModal
+          visible={modal.type === 'defectDetail'}
+          defectId={modal.type === 'defectDetail' ? modal.defectId : null}
+          onClose={closeModal}
+          onAcceptPress={handleAcceptPress}
+          onViewTaskPress={handleViewTaskPress}
+          onDismissConfirmed={handleDismissConfirmed}
+          noBackdrop
+          onExitComplete={handleExitComplete}
+        />
+
+        <CreateMaintenanceModal
+          visible={modal.type === 'acceptDefect'}
+          onClose={closeModal}
+          noBackdrop
+          onExitComplete={handleExitComplete}
+          {...(modal.type === 'acceptDefect'
+            ? {
+                assetId: modal.assetId,
+                assetNumber: modal.assetNumber,
+                defectReportId: modal.defectId,
+                defaultTitle: modal.description ?? modal.title,
+                defaultDescription: undefined,
+                defaultPriority: 'medium' as const,
+                onExternalSubmit: handleAcceptSubmit,
+              }
+            : {})}
+        />
+
+        <MaintenanceDetailModal
+          visible={modal.type === 'maintenanceDetail'}
+          maintenanceId={modal.type === 'maintenanceDetail' ? modal.maintenanceId : null}
+          onClose={closeModal}
+          noBackdrop
+          onExitComplete={handleExitComplete}
+        />
+      </SafeAreaView>
     </View>
   );
 }

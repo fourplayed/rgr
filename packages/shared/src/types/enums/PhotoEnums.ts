@@ -22,4 +22,3 @@ export const PhotoTypeLabels: Record<PhotoType, string> = {
   inspection: 'Inspection',
   general: 'General',
 };
-
