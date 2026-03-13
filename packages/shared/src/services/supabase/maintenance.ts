@@ -29,6 +29,7 @@ import { AssetCategorySchema } from '../../types/enums/AssetEnums';
 import { safeParseEnum } from '../../utils/safeParseEnum';
 import { isValidUUID, isValidISOTimestamp } from '../../utils/constants';
 import { assertQueryResult } from '../../utils';
+import { MaintenanceStatsResultSchema } from '../../types/rpcResults';
 
 // ── Types ──
 
@@ -447,21 +448,23 @@ export async function getMaintenanceStats(): Promise<ServiceResult<MaintenanceSt
     };
   }
 
-  if (data == null || typeof data !== 'object') {
-    return { success: false, data: null, error: 'Invalid maintenance stats response' };
+  const parsed = MaintenanceStatsResultSchema.safeParse(data);
+  if (!parsed.success) {
+    return {
+      success: false,
+      data: null,
+      error: 'Unexpected RPC response shape for get_maintenance_stats',
+    };
   }
-
-  // RPC returns JSON with snake_case keys — use bracket access for index signature
-  const stats = data as Record<string, number>;
 
   return {
     success: true,
     data: {
-      total: stats['total'] ?? 0,
-      scheduled: stats['scheduled'] ?? 0,
-      completed: stats['completed'] ?? 0,
-      cancelled: stats['cancelled'] ?? 0,
-      overdue: stats['overdue'] ?? 0,
+      total: parsed.data.total,
+      scheduled: parsed.data.scheduled,
+      completed: parsed.data.completed,
+      cancelled: parsed.data.cancelled,
+      overdue: parsed.data.overdue,
     },
     error: null,
   };

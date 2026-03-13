@@ -4,6 +4,7 @@ import type { AssetCategory, AssetStatus, ScanType } from '../../types/enums';
 import { AssetCategorySchema, AssetStatusSchema } from '../../types/enums/AssetEnums';
 import { ScanTypeSchema } from '../../types/enums/ScanEnums';
 import { safeParseEnum } from '../../utils/safeParseEnum';
+import { FleetStatisticsResultSchema } from '../../types/rpcResults';
 
 // ── Interfaces ──
 
@@ -91,16 +92,17 @@ export async function getFleetStatistics(): Promise<ServiceResult<FleetStatistic
 
   const { data, error } = await supabase.rpc('get_fleet_statistics');
 
-  if (!error && data != null && typeof data === 'object') {
-    const stats = data as {
-      total_assets: number;
-      serviced: number;
-      maintenance: number;
-      out_of_service: number;
-      trailer_count: number;
-      dolly_count: number;
-    };
+  if (!error && data != null) {
+    const parsed = FleetStatisticsResultSchema.safeParse(data);
+    if (!parsed.success) {
+      return {
+        success: false,
+        data: null,
+        error: 'Unexpected RPC response shape for get_fleet_statistics',
+      };
+    }
 
+    const stats = parsed.data;
     return {
       success: true,
       data: {

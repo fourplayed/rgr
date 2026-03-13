@@ -22,6 +22,10 @@ import { AssetCategorySchema } from '../../types/enums/AssetEnums';
 import { safeParseEnum } from '../../utils/safeParseEnum';
 import { isValidUUID, isValidISOTimestamp } from '../../utils/constants';
 import { assertQueryResult } from '../../utils';
+import {
+  AcceptDefectReportResultSchema,
+  DefectReportStatsResultSchema,
+} from '../../types/rpcResults';
 
 // ── Types ──
 
@@ -392,12 +396,20 @@ export async function acceptDefectReport(
     return { success: false, data: null, error: error.message };
   }
 
-  const result = data as { maintenance_id: string; defect_report_id: string };
+  const parsed = AcceptDefectReportResultSchema.safeParse(data);
+  if (!parsed.success) {
+    return {
+      success: false,
+      data: null,
+      error: 'Unexpected RPC response shape for accept_defect_report',
+    };
+  }
+
   return {
     success: true,
     data: {
-      maintenanceId: result.maintenance_id,
-      defectReportId: result.defect_report_id,
+      maintenanceId: parsed.data.maintenance_id,
+      defectReportId: parsed.data.defect_report_id,
     },
     error: null,
   };
@@ -428,26 +440,23 @@ export async function getDefectReportStats(): Promise<ServiceResult<DefectReport
     return { success: false, data: null, error: `Failed to fetch defect stats: ${error.message}` };
   }
 
-  if (data == null || typeof data !== 'object') {
-    return { success: false, data: null, error: 'Invalid defect report stats response' };
+  const parsed = DefectReportStatsResultSchema.safeParse(data);
+  if (!parsed.success) {
+    return {
+      success: false,
+      data: null,
+      error: 'Unexpected RPC response shape for get_defect_report_stats',
+    };
   }
-
-  const stats = assertQueryResult<{
-    total: number;
-    reported: number;
-    task_created: number;
-    resolved: number;
-    dismissed: number;
-  }>(data);
 
   return {
     success: true,
     data: {
-      total: stats.total ?? 0,
-      reported: stats.reported ?? 0,
-      taskCreated: stats.task_created ?? 0,
-      resolved: stats.resolved ?? 0,
-      dismissed: stats.dismissed ?? 0,
+      total: parsed.data.total,
+      reported: parsed.data.reported,
+      taskCreated: parsed.data.task_created,
+      resolved: parsed.data.resolved,
+      dismissed: parsed.data.dismissed,
     },
     error: null,
   };

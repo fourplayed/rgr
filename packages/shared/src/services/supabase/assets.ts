@@ -48,6 +48,11 @@ import { mapRowToMaintenanceRecord } from '../../types/entities/maintenanceRecor
 import { mapRowToHazardAlert } from '../../types/entities/hazardAlert';
 import { mapRowToDepot } from '../../types/entities/depot';
 import { assertQueryResult } from '../../utils';
+import {
+  AssetScanContextResultSchema,
+  HardDeleteAssetsResultSchema,
+  AssetCountsByStatusResultSchema,
+} from '../../types/rpcResults';
 
 // ── Join Result Types ──
 
@@ -816,9 +821,18 @@ export async function getAssetCountsByStatus(): Promise<ServiceResult<AssetCount
     return { success: false, data: null, error: `Failed to fetch asset counts: ${error.message}` };
   }
 
+  const parsed = AssetCountsByStatusResultSchema.safeParse(data || []);
+  if (!parsed.success) {
+    return {
+      success: false,
+      data: null,
+      error: 'Unexpected RPC response shape for get_asset_counts_by_status',
+    };
+  }
+
   return {
     success: true,
-    data: (data || []).map((row: { status: string; count: string | number }) => ({
+    data: parsed.data.map((row) => ({
       status: safeParseEnum(AssetStatusSchema, row.status, 'serviced'),
       count: typeof row.count === 'string' ? parseInt(row.count, 10) : row.count,
     })),
@@ -867,42 +881,29 @@ export async function getAssetScanContext(
     return { success: false, data: null, error: `Failed to fetch scan context: ${error.message}` };
   }
 
-  if (data == null || typeof data !== 'object') {
-    return { success: false, data: null, error: 'Invalid scan context response' };
+  const parsed = AssetScanContextResultSchema.safeParse(data);
+  if (!parsed.success) {
+    return {
+      success: false,
+      data: null,
+      error: 'Unexpected RPC response shape for get_asset_scan_context',
+    };
   }
 
-  const raw = data as {
-    open_defect_count: number;
-    active_task_count: number;
-    open_defects: Array<{
-      id: string;
-      title: string;
-      description: string | null;
-      status: string;
-      created_at: string;
-    }>;
-    active_tasks: Array<{
-      id: string;
-      title: string;
-      status: string;
-      priority: string;
-      created_at: string;
-    }>;
-  };
-
+  const raw = parsed.data;
   return {
     success: true,
     data: {
       openDefectCount: raw.open_defect_count,
       activeTaskCount: raw.active_task_count,
-      openDefects: (raw.open_defects ?? []).map((d) => ({
+      openDefects: raw.open_defects.map((d) => ({
         id: d.id,
         title: d.title,
         description: d.description ?? null,
         status: safeParseEnum(DefectStatusSchema, d.status, 'reported'),
         createdAt: d.created_at,
       })),
-      activeTasks: (raw.active_tasks ?? []).map((t) => ({
+      activeTasks: raw.active_tasks.map((t) => ({
         id: t.id,
         title: t.title,
         status: safeParseEnum(MaintenanceStatusSchema, t.status, 'scheduled'),
@@ -1000,9 +1001,16 @@ export async function hardDeleteAssets(
     return { success: false, data: null, error: `Failed to hard delete assets: ${error.message}` };
   }
 
-  const deletedIds = new Set(
-    ((data ?? []) as Array<{ deleted_id: string }>).map((r) => r.deleted_id)
-  );
+  const parsed = HardDeleteAssetsResultSchema.safeParse(data ?? []);
+  if (!parsed.success) {
+    return {
+      success: false,
+      data: null,
+      error: 'Unexpected RPC response shape for hard_delete_assets',
+    };
+  }
+
+  const deletedIds = new Set(parsed.data.map((r) => r.deleted_id));
   const failed = ids.filter((id) => !deletedIds.has(id));
 
   return {

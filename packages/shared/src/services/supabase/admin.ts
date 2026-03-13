@@ -38,6 +38,7 @@ import { assertQueryResult } from '../../utils';
 import { safeParseEnum } from '../../utils/safeParseEnum';
 import { MaintenanceStatusSchema } from '../../types/enums/MaintenanceEnums';
 import { DefectStatusSchema } from '../../types/enums/DefectEnums';
+import { BulkCancelMaintenanceResultSchema } from '../../types/rpcResults';
 
 // ── List Profiles ──
 
@@ -800,9 +801,16 @@ export async function bulkCancelMaintenanceTasks(
       return { success: false, data: null, error: `Failed to cancel: ${error.message}` };
     }
 
-    const cancelledIds = new Set(
-      ((data ?? []) as Array<{ cancelled_id: string }>).map((r) => r.cancelled_id)
-    );
+    const parsed = BulkCancelMaintenanceResultSchema.safeParse(data ?? []);
+    if (!parsed.success) {
+      return {
+        success: false,
+        data: null,
+        error: 'Unexpected RPC response shape for bulk_cancel_maintenance_tasks',
+      };
+    }
+
+    const cancelledIds = new Set(parsed.data.map((r) => r.cancelled_id));
     const failed = ids.filter((id) => !cancelledIds.has(id));
 
     return {

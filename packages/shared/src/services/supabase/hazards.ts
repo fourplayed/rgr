@@ -1,9 +1,11 @@
+import { z } from 'zod';
 import { getSupabaseClient } from './client';
 import type { ServiceResult } from '../../types';
 import type { HazardAlert } from '../../types/entities';
 import type { HazardAlertRow } from '../../types/entities/hazardAlert';
 import type { HazardSeverity, ReviewOutcome } from '../../types/enums/HazardEnums';
 import { mapRowToHazardAlert } from '../../types/entities/hazardAlert';
+import { HazardReviewStatsResultSchema } from '../../types/rpcResults';
 
 // ── Interfaces ──
 
@@ -216,31 +218,23 @@ export async function getHazardReviewStats(): Promise<ServiceResult<HazardReview
     return { success: false, data: null, error: `Failed to fetch review stats: ${error.message}` };
   }
 
-  if (data == null || typeof data !== 'object') {
-    return { success: false, data: null, error: 'Invalid hazard review stats response' };
-  }
-
-  const rpc = data as {
-    total_photos_analyzed: number;
-    pending_reviews: number;
-    ai_accuracy: number;
-    false_positive_rate: number;
-    severity_breakdown: {
-      critical: number;
-      high: number;
-      medium: number;
-      low: number;
+  const parsed = HazardReviewStatsResultSchema.safeParse(data);
+  if (!parsed.success) {
+    return {
+      success: false,
+      data: null,
+      error: 'Unexpected RPC response shape for get_hazard_review_stats',
     };
-  };
+  }
 
   return {
     success: true,
     data: {
-      pendingReviews: rpc.pending_reviews,
-      aiAccuracy: rpc.ai_accuracy,
-      falsePositiveRate: rpc.false_positive_rate,
-      totalPhotosAnalyzed: rpc.total_photos_analyzed,
-      severityBreakdown: rpc.severity_breakdown,
+      pendingReviews: parsed.data.pending_reviews,
+      aiAccuracy: parsed.data.ai_accuracy,
+      falsePositiveRate: parsed.data.false_positive_rate,
+      totalPhotosAnalyzed: parsed.data.total_photos_analyzed,
+      severityBreakdown: parsed.data.severity_breakdown,
     },
     error: null,
   };
@@ -382,7 +376,16 @@ export async function submitAnalysisFeedback(
     };
   }
 
-  return { success: true, data: { updatedCount: data as number }, error: null };
+  const parsed = z.number().safeParse(data);
+  if (!parsed.success) {
+    return {
+      success: false,
+      data: null,
+      error: 'Unexpected RPC response shape for submit_hazard_feedback',
+    };
+  }
+
+  return { success: true, data: { updatedCount: parsed.data }, error: null };
 }
 
 // ── Helpers ──
