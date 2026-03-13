@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { PhotoTypeSchema } from '../enums/PhotoEnums';
 import type { PhotoType } from '../enums/PhotoEnums';
 import { safeParseEnum } from '../../utils/safeParseEnum';
+import type { AssertTypesMatch, MustBeTrue } from '../typeAssert';
 
 /**
  * Photo — camelCase application interface
@@ -53,20 +54,20 @@ export interface PhotoRow {
  * Input for creating a photo record
  */
 export interface CreatePhotoInput {
-  assetId?: string | null;
-  scanEventId?: string | null;
+  assetId?: string | null | undefined;
+  scanEventId?: string | null | undefined;
   uploadedBy: string;
   photoType: PhotoType;
   storagePath: string;
-  thumbnailPath?: string | null;
-  filename?: string | null;
-  fileSize?: number | null;
-  mimeType?: string | null;
-  width?: number | null;
-  height?: number | null;
-  locationDescription?: string | null;
-  latitude?: number | null;
-  longitude?: number | null;
+  thumbnailPath?: string | null | undefined;
+  filename?: string | null | undefined;
+  fileSize?: number | null | undefined;
+  mimeType?: string | null | undefined;
+  width?: number | null | undefined;
+  height?: number | null | undefined;
+  locationDescription?: string | null | undefined;
+  latitude?: number | null | undefined;
+  longitude?: number | null | undefined;
 }
 
 // ── Zod schemas ──
@@ -134,3 +135,8 @@ export function mapPhotoToInsert(input: CreatePhotoInput): PhotoInsertRow {
     longitude: input.longitude ?? null,
   };
 }
+
+// Compile-time schema <-> interface drift detection
+type _CreatePhotoCheck = MustBeTrue<
+  AssertTypesMatch<z.infer<typeof CreatePhotoInputSchema>, CreatePhotoInput>
+>;

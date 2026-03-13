@@ -11,6 +11,7 @@ import type {
 } from '../enums/MaintenanceEnums';
 import type { Json } from '../database.types';
 import { safeParseEnum } from '../../utils/safeParseEnum';
+import type { AssertTypesMatch, MustBeTrue } from '../typeAssert';
 
 /**
  * MaintenanceRecord — camelCase application interface
@@ -80,38 +81,38 @@ export interface MaintenanceRecordWithNames extends MaintenanceRecord {
  */
 export interface CreateMaintenanceInput {
   assetId: string;
-  reportedBy?: string | null;
-  assignedTo?: string | null;
+  reportedBy?: string | null | undefined;
+  assignedTo?: string | null | undefined;
   title: string;
-  description?: string | null;
-  priority?: MaintenancePriority;
-  status?: MaintenanceStatus;
-  maintenanceType?: MaintenanceType | null;
-  scheduledDate?: string | null;
-  dueDate?: string | null;
-  hazardAlertId?: string | null;
-  scanEventId?: string | null;
-  notes?: string | null;
+  description?: string | null | undefined;
+  priority?: MaintenancePriority | undefined;
+  status?: MaintenanceStatus | undefined;
+  maintenanceType?: MaintenanceType | null | undefined;
+  scheduledDate?: string | null | undefined;
+  dueDate?: string | null | undefined;
+  hazardAlertId?: string | null | undefined;
+  scanEventId?: string | null | undefined;
+  notes?: string | null | undefined;
 }
 
 /**
  * Input for updating a maintenance record
  */
 export interface UpdateMaintenanceInput {
-  assignedTo?: string | null;
-  completedBy?: string | null;
-  title?: string;
-  description?: string | null;
-  priority?: MaintenancePriority;
-  status?: MaintenanceStatus;
-  maintenanceType?: MaintenanceType | null;
-  scheduledDate?: string | null;
-  completedAt?: string | null;
-  dueDate?: string | null;
-  estimatedCost?: number | null;
-  actualCost?: number | null;
-  partsUsed?: Json | null;
-  notes?: string | null;
+  assignedTo?: string | null | undefined;
+  completedBy?: string | null | undefined;
+  title?: string | undefined;
+  description?: string | null | undefined;
+  priority?: MaintenancePriority | undefined;
+  status?: MaintenanceStatus | undefined;
+  maintenanceType?: MaintenanceType | null | undefined;
+  scheduledDate?: string | null | undefined;
+  completedAt?: string | null | undefined;
+  dueDate?: string | null | undefined;
+  estimatedCost?: number | null | undefined;
+  actualCost?: number | null | undefined;
+  partsUsed?: Json | null | undefined;
+  notes?: string | null | undefined;
 }
 
 // ── Zod schemas ──
@@ -230,3 +231,14 @@ export function mapMaintenanceToUpdate(input: UpdateMaintenanceInput): Maintenan
 
   return updates;
 }
+
+// Compile-time schema <-> interface drift detection
+type _CreateMaintenanceCheck = MustBeTrue<
+  AssertTypesMatch<z.infer<typeof CreateMaintenanceInputSchema>, CreateMaintenanceInput>
+>;
+// CONCERN (Task 2): partsUsed uses z.record(z.string(), z.unknown()) in schema vs Json in interface.
+// These are structurally incompatible — Task 2 will replace Json with a Zod-compatible branded type.
+type _UpdateMaintenanceCheck = MustBeTrue<
+  // @ts-expect-error TS2344: Known Json/z.record mismatch — tracked in Task 2
+  AssertTypesMatch<z.infer<typeof UpdateMaintenanceInputSchema>, UpdateMaintenanceInput>
+>;

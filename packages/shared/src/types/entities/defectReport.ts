@@ -3,6 +3,7 @@ import { DefectStatusSchema } from '../enums/DefectEnums';
 import type { DefectStatus } from '../enums/DefectEnums';
 import type { AssetCategory } from '../enums/AssetEnums';
 import { safeParseEnum } from '../../utils/safeParseEnum';
+import type { AssertTypesMatch, MustBeTrue } from '../typeAssert';
 
 /**
  * DefectReport — camelCase application interface
@@ -74,11 +75,11 @@ export interface DefectReportListItem {
  */
 export interface CreateDefectReportInput {
   assetId: string;
-  reportedBy?: string | null;
-  scanEventId?: string | null;
+  reportedBy?: string | null | undefined;
+  scanEventId?: string | null | undefined;
   title: string;
-  description?: string | null;
-  notes?: string | null;
+  description?: string | null | undefined;
+  notes?: string | null | undefined;
 }
 
 /**
@@ -87,14 +88,14 @@ export interface CreateDefectReportInput {
  * `updateDefectReportStatus` for transition validation.
  */
 export interface UpdateDefectReportInput {
-  title?: string;
-  description?: string | null;
-  maintenanceRecordId?: string | null;
-  acceptedAt?: string | null;
-  resolvedAt?: string | null;
-  dismissedAt?: string | null;
-  dismissedReason?: string | null;
-  notes?: string | null;
+  title?: string | undefined;
+  description?: string | null | undefined;
+  maintenanceRecordId?: string | null | undefined;
+  acceptedAt?: string | null | undefined;
+  resolvedAt?: string | null | undefined;
+  dismissedAt?: string | null | undefined;
+  dismissedReason?: string | null | undefined;
+  notes?: string | null | undefined;
 }
 
 // ── Zod schemas ──
@@ -184,3 +185,11 @@ export function mapDefectReportToUpdate(input: UpdateDefectReportInput): DefectR
 
   return updates;
 }
+
+// Compile-time schema <-> interface drift detection
+type _CreateDefectReportCheck = MustBeTrue<
+  AssertTypesMatch<z.infer<typeof CreateDefectReportInputSchema>, CreateDefectReportInput>
+>;
+type _UpdateDefectReportCheck = MustBeTrue<
+  AssertTypesMatch<z.infer<typeof UpdateDefectReportInputSchema>, UpdateDefectReportInput>
+>;

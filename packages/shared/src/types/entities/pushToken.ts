@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { AssertTypesMatch, MustBeTrue } from '../typeAssert';
 
 /**
  * PushToken — camelCase application interface
@@ -58,3 +59,8 @@ export function mapRowToPushToken(row: PushTokenRow): PushToken {
     updatedAt: row.updated_at,
   };
 }
+
+// Compile-time schema <-> interface drift detection
+type _CreatePushTokenCheck = MustBeTrue<
+  AssertTypesMatch<z.infer<typeof CreatePushTokenInputSchema>, CreatePushTokenInput>
+>;

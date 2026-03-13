@@ -7,6 +7,7 @@ import {
 import type { HazardSeverity, HazardStatus, ReviewOutcome } from '../enums/HazardEnums';
 import type { Json } from '../database.types';
 import { safeParseEnum } from '../../utils/safeParseEnum';
+import type { AssertTypesMatch, MustBeTrue } from '../typeAssert';
 
 /**
  * HazardAlert — camelCase application interface
@@ -72,14 +73,14 @@ export interface HazardAlertRow {
  * Input for acknowledging/reviewing a hazard alert
  */
 export interface UpdateHazardAlertInput {
-  status?: HazardStatus;
-  acknowledgedBy?: string | null;
-  acknowledgedAt?: string | null;
-  acknowledgmentType?: string | null;
-  managerReviewBy?: string | null;
-  managerReviewAt?: string | null;
-  reviewOutcome?: ReviewOutcome | null;
-  reviewNotes?: string | null;
+  status?: HazardStatus | undefined;
+  acknowledgedBy?: string | null | undefined;
+  acknowledgedAt?: string | null | undefined;
+  acknowledgmentType?: string | null | undefined;
+  managerReviewBy?: string | null | undefined;
+  managerReviewAt?: string | null | undefined;
+  reviewOutcome?: ReviewOutcome | null | undefined;
+  reviewNotes?: string | null | undefined;
 }
 
 // ── Zod schemas ──
@@ -146,3 +147,8 @@ export function mapHazardAlertToUpdate(input: UpdateHazardAlertInput): HazardAle
 
   return updates;
 }
+
+// Compile-time schema <-> interface drift detection
+type _UpdateHazardAlertCheck = MustBeTrue<
+  AssertTypesMatch<z.infer<typeof UpdateHazardAlertInputSchema>, UpdateHazardAlertInput>
+>;

@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { AssetStatusSchema, AssetCategorySchema } from '../enums/AssetEnums';
 import type { AssetStatus, AssetCategory } from '../enums/AssetEnums';
 import { safeParseEnum } from '../../utils/safeParseEnum';
+import type { AssertTypesMatch, MustBeTrue } from '../typeAssert';
 
 /**
  * Trailer subtypes - centralized list for filtering and validation
@@ -122,40 +123,40 @@ export interface AssetWithRelations extends Asset {
 export interface CreateAssetInput {
   assetNumber: string;
   category: AssetCategory;
-  subtype?: TrailerSubtype | null;
-  status?: AssetStatus;
-  description?: string | null;
-  yearManufactured?: number | null;
-  make?: string | null;
-  model?: string | null;
-  vin?: string | null;
+  subtype?: TrailerSubtype | null | undefined;
+  status?: AssetStatus | undefined;
+  description?: string | null | undefined;
+  yearManufactured?: number | null | undefined;
+  make?: string | null | undefined;
+  model?: string | null | undefined;
+  vin?: string | null | undefined;
   registrationNumber: string;
-  registrationExpiry?: string | null;
-  assignedDepotId?: string | null;
-  assignedDriverId?: string | null;
-  notes?: string | null;
+  registrationExpiry?: string | null | undefined;
+  assignedDepotId?: string | null | undefined;
+  assignedDriverId?: string | null | undefined;
+  notes?: string | null | undefined;
 }
 
 /**
  * Input for updating an asset
  */
 export interface UpdateAssetInput {
-  assetNumber?: string;
-  category?: AssetCategory;
-  subtype?: TrailerSubtype | null;
-  status?: AssetStatus;
-  description?: string | null;
-  yearManufactured?: number | null;
-  make?: string | null;
-  model?: string | null;
-  vin?: string | null;
-  registrationNumber?: string | null;
-  registrationExpiry?: string | null;
-  assignedDepotId?: string | null;
-  assignedDriverId?: string | null;
-  notes?: string | null;
-  qrCodeData?: string | null;
-  qrGeneratedAt?: string | null;
+  assetNumber?: string | undefined;
+  category?: AssetCategory | undefined;
+  subtype?: TrailerSubtype | null | undefined;
+  status?: AssetStatus | undefined;
+  description?: string | null | undefined;
+  yearManufactured?: number | null | undefined;
+  make?: string | null | undefined;
+  model?: string | null | undefined;
+  vin?: string | null | undefined;
+  registrationNumber?: string | null | undefined;
+  registrationExpiry?: string | null | undefined;
+  assignedDepotId?: string | null | undefined;
+  assignedDriverId?: string | null | undefined;
+  notes?: string | null | undefined;
+  qrCodeData?: string | null | undefined;
+  qrGeneratedAt?: string | null | undefined;
 }
 
 // ── Zod schemas ──
@@ -284,3 +285,11 @@ export function mapAssetToUpdate(input: UpdateAssetInput): AssetUpdateRow {
 
   return updates;
 }
+
+// Compile-time schema <-> interface drift detection
+type _CreateAssetCheck = MustBeTrue<
+  AssertTypesMatch<z.infer<typeof CreateAssetInputSchema>, CreateAssetInput>
+>;
+type _UpdateAssetCheck = MustBeTrue<
+  AssertTypesMatch<z.infer<typeof UpdateAssetInputSchema>, UpdateAssetInput>
+>;

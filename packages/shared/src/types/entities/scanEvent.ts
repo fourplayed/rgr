@@ -4,6 +4,7 @@ import type { ScanType } from '../enums/ScanEnums';
 import type { AssetCategory } from '../enums/AssetEnums';
 import type { Json } from '../database.types';
 import { safeParseEnum } from '../../utils/safeParseEnum';
+import type { AssertTypesMatch, MustBeTrue } from '../typeAssert';
 
 /**
  * ScanEvent — camelCase application interface
@@ -59,17 +60,17 @@ export interface ScanEventWithScanner extends ScanEvent {
  */
 export interface CreateScanEventInput {
   assetId: string;
-  scannedBy?: string | null;
-  scanType?: ScanType;
-  latitude?: number | null;
-  longitude?: number | null;
-  accuracy?: number | null;
-  altitude?: number | null;
-  heading?: number | null;
-  speed?: number | null;
-  locationDescription?: string | null;
-  deviceInfo?: Json | null;
-  rawScanData?: string | null;
+  scannedBy?: string | null | undefined;
+  scanType?: ScanType | undefined;
+  latitude?: number | null | undefined;
+  longitude?: number | null | undefined;
+  accuracy?: number | null | undefined;
+  altitude?: number | null | undefined;
+  heading?: number | null | undefined;
+  speed?: number | null | undefined;
+  locationDescription?: string | null | undefined;
+  deviceInfo?: Json | null | undefined;
+  rawScanData?: string | null | undefined;
 }
 
 export const CreateScanEventInputSchema = z.object({
@@ -126,3 +127,11 @@ export function mapScanEventToInsert(input: CreateScanEventInput): ScanEventInse
     raw_scan_data: input.rawScanData ?? null,
   };
 }
+
+// Compile-time schema <-> interface drift detection
+// CONCERN (Task 2): deviceInfo uses z.record(z.string(), z.unknown()) in schema vs Json in interface.
+// These are structurally incompatible — Task 2 will replace Json with a Zod-compatible branded type.
+type _CreateScanEventCheck = MustBeTrue<
+  // @ts-expect-error TS2344: Known Json/z.record mismatch — tracked in Task 2
+  AssertTypesMatch<z.infer<typeof CreateScanEventInputSchema>, CreateScanEventInput>
+>;
