@@ -18,7 +18,6 @@ import { logger } from '../../utils/logger';
 import { scanFlowReducer, initialScanFlowState } from './scanFlowMachine';
 import type {
   ScanFlowState,
-  ScanFlowAction,
   MatchedDepot,
   ScanSheetId,
   ConfirmAction,
@@ -394,6 +393,7 @@ export function useScanFlow({ canMarkMaintenance }: UseScanFlowOptions): UseScan
         });
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- scannedAsset?.id avoids re-creating when other asset fields change
     [
       state.phase,
       scannedAsset?.id,
@@ -453,6 +453,7 @@ export function useScanFlow({ canMarkMaintenance }: UseScanFlowOptions): UseScan
         sheetExitTimeoutRef.current = null;
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- isAwaitingSheetExit is derived from state.phase + state.awaitingSheetExit
   }, [isAwaitingSheetExit]);
 
   // ── BackHandler (Android) ──

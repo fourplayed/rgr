@@ -24,7 +24,6 @@ import {
   optimisticPatch,
   rollback,
   placeholderId,
-  type OptimisticSnapshot,
 } from './optimisticCache';
 import { suppressRealtimeFor } from './useRealtimeInvalidation';
 import { OPTIMISTIC_UPDATES_ENABLED } from '../config/featureFlags';

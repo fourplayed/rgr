@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { motion, useAnimation } from "motion/react";
-import type { Variants } from "motion/react";
+import { motion, useAnimation } from 'motion/react';
+import type { Variants } from 'motion/react';
 
 const boxVariants: Variants = {
-  normal: (i: number) => ({
+  normal: (_i: number) => ({
     x: 0,
     y: 0,
     transition: {
-      type: "spring",
+      type: 'spring',
       stiffness: 300,
       damping: 25,
     },
@@ -24,7 +24,7 @@ const boxVariants: Variants = {
     return {
       ...positions[i],
       transition: {
-        type: "spring",
+        type: 'spring',
         stiffness: 300,
         damping: 25,
       },
@@ -43,7 +43,7 @@ const LayoutGrid = ({
   width = 28,
   height = 28,
   strokeWidth = 2,
-  stroke = "#ffffff",
+  stroke = '#ffffff',
   ...props
 }: LayoutGridProps) => {
   const controls = useAnimation();
@@ -51,15 +51,15 @@ const LayoutGrid = ({
   return (
     <div
       style={{
-        cursor: "pointer",
-        userSelect: "none",
-        padding: "8px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        cursor: 'pointer',
+        userSelect: 'none',
+        padding: '8px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
       }}
-      onMouseEnter={() => controls.start("animate")}
-      onMouseLeave={() => controls.start("normal")}
+      onMouseEnter={() => controls.start('animate')}
+      onMouseLeave={() => controls.start('normal')}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"

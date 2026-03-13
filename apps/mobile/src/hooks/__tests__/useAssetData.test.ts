@@ -1,11 +1,5 @@
 import { renderHook, waitFor } from '@testing-library/react-native';
-import {
-  listAssets,
-  getAssetCountsByStatus,
-  createScanEvent,
-  updateAsset,
-  queryFromService,
-} from '@rgr/shared';
+import { listAssets, getAssetCountsByStatus, createScanEvent, updateAsset } from '@rgr/shared';
 import {
   assetKeys,
   useInfiniteAssetList,

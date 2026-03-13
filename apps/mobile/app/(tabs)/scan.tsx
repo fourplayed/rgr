@@ -4,7 +4,6 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 
 import { useUserPermissions } from '../../src/contexts/UserPermissionsContext';
 import { useScanFlow } from '../../src/hooks/scan/useScanFlow';
-import type { ScanContextModal } from '../../src/hooks/scan/useScanFlow';
 import { useAssetAssessment } from '../../src/hooks/useAssetAssessment';
 import { usePersistentBackdrop } from '../../src/hooks/usePersistentBackdrop';
 import { PersistentBackdrop } from '../../src/components/common/PersistentBackdrop';
@@ -135,8 +134,6 @@ export default function ScanScreen() {
   }
 
   const variant = canMarkMaintenance ? 'mechanic' : 'driver';
-  const contextModalOpen = flow.contextModal.type !== 'closed';
-  const anyOverlay = contextModalOpen || flow.activeSheet !== null;
 
   return (
     <View style={styles.container}>

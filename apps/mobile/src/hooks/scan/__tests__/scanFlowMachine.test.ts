@@ -1,5 +1,5 @@
 import { scanFlowReducer, initialScanFlowState, shouldAutoComplete } from '../scanFlowMachine';
-import type { ScanFlowState, MatchedDepot, CompletionSummary } from '../scanFlowMachine';
+import type { ScanFlowState, MatchedDepot } from '../scanFlowMachine';
 import type { Asset } from '@rgr/shared';
 import type { CachedLocationData } from '../../../store/locationStore';
 
@@ -106,7 +106,7 @@ describe('scanFlowMachine', () => {
     let confirming: ConfirmingState;
 
     beforeEach(() => {
-      let s = scanFlowReducer(initialScanFlowState, {
+      const s = scanFlowReducer(initialScanFlowState, {
         type: 'QR_DETECTED',
         scanStatus: 'Looking up...',
       });
@@ -343,7 +343,7 @@ describe('scanFlowMachine', () => {
         activeSheet: 'defect',
         confirmedAction: 'defect',
       });
-      let s = scanFlowReducer(active, {
+      const s = scanFlowReducer(active, {
         type: 'DEFECT_SUBMITTED',
         wantsPhoto: false,
       }) as ActiveState;
@@ -407,7 +407,7 @@ describe('scanFlowMachine', () => {
         activeSheet: 'createTask',
         confirmedAction: 'maintenance',
       });
-      let s = scanFlowReducer(active, { type: 'MAINTENANCE_CREATED' }) as ActiveState;
+      const s = scanFlowReducer(active, { type: 'MAINTENANCE_CREATED' }) as ActiveState;
       expect(s.maintenanceCompleted).toBe(true);
       expect(s.awaitingSheetExit).toBe(true);
 
@@ -442,7 +442,9 @@ describe('scanFlowMachine', () => {
       expect(afterCreated.maintenanceCompleted).toBe(true);
 
       // SHEET_DISMISSED should NOT clobber the compound action's state
-      const afterDismiss = scanFlowReducer(afterCreated, { type: 'SHEET_DISMISSED' }) as ActiveState;
+      const afterDismiss = scanFlowReducer(afterCreated, {
+        type: 'SHEET_DISMISSED',
+      }) as ActiveState;
       expect(afterDismiss.awaitingSheetExit).toBe(true);
       expect(afterDismiss.confirmedAction).toBe('maintenance');
       expect(afterDismiss.maintenanceCompleted).toBe(true);
@@ -572,7 +574,11 @@ describe('scanFlowMachine', () => {
     });
 
     it('captures null depot when no match', () => {
-      const active = buildActiveState({ confirmedAction: 'photo', photoCompleted: true, matchedDepot: null });
+      const active = buildActiveState({
+        confirmedAction: 'photo',
+        photoCompleted: true,
+        matchedDepot: null,
+      });
       const result = scanFlowReducer(active, { type: 'FINISH' }) as CompletingState;
       expect(result.summary.depotName).toBeNull();
     });

@@ -12,7 +12,7 @@ import {
 } from '@rgr/shared';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, shadows, fontFamily as fonts } from '../../theme/spacing';
-import { DEPOT_ORDER, getDepotColor, getDepotTextColor } from '../../utils/depotDisplay';
+import { DEPOT_ORDER, getDepotColor } from '../../utils/depotDisplay';
 import { FilterChip } from '../common/FilterChip';
 import { AppText } from '../common';
 

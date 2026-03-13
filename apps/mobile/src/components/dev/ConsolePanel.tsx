@@ -7,10 +7,10 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  View} from 'react-native';
+  View,
+} from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useConsoleStore } from '../../store/consoleStore';
 import type { ConsoleEntry, ConsoleNamespace } from '../../store/consoleStore';
 import { ConsoleEntryRow, ROW_HEIGHT } from './ConsoleEntryRow';
@@ -44,7 +44,6 @@ const FILTER_LABELS: Record<string, string> = {
 };
 
 export function ConsolePanel() {
-  const insets = useSafeAreaInsets();
   const isOpen = useConsoleStore((s) => s.isOpen);
   const entries = useConsoleStore((s) => s.entries);
   const activeFilter = useConsoleStore((s) => s.activeFilter);
