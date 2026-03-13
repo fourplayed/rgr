@@ -191,7 +191,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return false;
     }
 
-    set({ autoLoginAttempted: true });
+    set({ autoLoginAttempted: true, isLoginInProgress: true });
 
     try {
       const enabled = await isAutoLoginEnabled();
@@ -283,8 +283,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ authError: 'Session expired. Please log in again.' });
       return false;
     } finally {
-      // Guarantee isLoading is cleared on every exit path
-      set({ isLoading: false });
+      // Guarantee isLoading and isLoginInProgress are cleared on every exit path
+      set({ isLoading: false, isLoginInProgress: false });
     }
   },
 

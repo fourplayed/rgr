@@ -36,7 +36,7 @@ export function useMutationFromService<TInput, TData, TContext = unknown>({
       if (!result.success) throw new Error(result.error);
       return result.data;
     },
-    onMutate: onMutate ?? undefined!,
+    ...(onMutate && { onMutate }),
     onSuccess: (data, variables) => {
       const keys = typeof invalidates === 'function' ? invalidates(data, variables) : invalidates;
 
@@ -49,7 +49,7 @@ export function useMutationFromService<TInput, TData, TContext = unknown>({
 
       onSuccess?.(data, variables);
     },
-    onError: onError ?? undefined!,
-    onSettled: onSettled ?? undefined!,
+    ...(onError && { onError }),
+    ...(onSettled && { onSettled }),
   });
 }

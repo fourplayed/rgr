@@ -1,4 +1,3 @@
-import Constants from 'expo-constants';
 import { getSupabaseClient } from '@rgr/shared';
 
 /**
@@ -9,17 +8,6 @@ export async function triggerRegoLookup(assetId: string): Promise<void> {
   try {
     const supabase = getSupabaseClient();
 
-    // Get the current session for auth
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session) return;
-
-    const supabaseUrl =
-      Constants.expoConfig?.extra?.['supabaseUrl'] || process.env['EXPO_PUBLIC_SUPABASE_URL'];
-
-    if (!supabaseUrl) return;
-
     // Get the asset's registration number
     const { data: asset } = await supabase
       .from('assets')
@@ -29,19 +17,12 @@ export async function triggerRegoLookup(assetId: string): Promise<void> {
 
     if (!asset?.registration_number) return;
 
-    const response = await fetch(`${supabaseUrl}/functions/v1/rego-lookup`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${session.access_token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        registrationNumber: asset.registration_number,
-        assetId,
-      }),
+    const { error } = await supabase.functions.invoke('rego-lookup', {
+      body: { registrationNumber: asset.registration_number, assetId },
     });
-    if (!response.ok && __DEV__) {
-      console.warn(`[RegoLookup] Edge function returned ${response.status}`);
+
+    if (error && __DEV__) {
+      console.warn(`[RegoLookup] Edge function error: ${error.message}`);
     }
   } catch (err: unknown) {
     console.warn('[RegoLookup] Fire-and-forget failed:', err);

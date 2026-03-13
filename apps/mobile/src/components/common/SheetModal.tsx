@@ -187,14 +187,14 @@ export function SheetModal({
       // Dismiss was triggered by visible→false — skip onClose (state machine
       // already knows) and only fire the exit-complete signal.
       programmaticDismissRef.current = false;
-      onExitComplete?.();
+      onExitCompleteRef.current?.();
       return;
     }
     // User-initiated dismiss (swipe / backdrop tap)
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onClose();
-    onExitComplete?.();
-  }, [onClose, onExitComplete]);
+    onExitCompleteRef.current?.();
+  }, [onClose]);
 
   const preventDismissRef = useRef(preventDismissWhileBusy);
   preventDismissRef.current = preventDismissWhileBusy;

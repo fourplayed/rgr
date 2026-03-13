@@ -5,7 +5,13 @@ import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { LoadingDots } from '../src/components/common/LoadingDots';
 import { StatusBar } from 'expo-status-bar';
 import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-router';
-import { QueryClient, QueryClientProvider, QueryCache, MutationCache, onlineManager } from '@tanstack/react-query';
+import {
+  QueryClient,
+  QueryClientProvider,
+  QueryCache,
+  MutationCache,
+  onlineManager,
+} from '@tanstack/react-query';
 import NetInfo from '@react-native-community/netinfo';
 import { isAuthError } from '../src/utils/authErrors';
 import {
@@ -103,12 +109,12 @@ export default function RootLayout() {
 
   const router = useRouter();
   const segments = useSegments();
-  const user = useAuthStore(s => s.user);
-  const isAuthenticated = useAuthStore(s => s.isAuthenticated);
-  const isLoading = useAuthStore(s => s.isLoading);
-  const checkAuth = useAuthStore(s => s.checkAuth);
-  const attemptAutoLogin = useAuthStore(s => s.attemptAutoLogin);
-  const resolveDepot = useLocationStore(s => s.resolveDepot);
+  const user = useAuthStore((s) => s.user);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isLoading = useAuthStore((s) => s.isLoading);
+  const checkAuth = useAuthStore((s) => s.checkAuth);
+  const attemptAutoLogin = useAuthStore((s) => s.attemptAutoLogin);
+  const resolveDepot = useLocationStore((s) => s.resolveDepot);
 
   // Check auth on mount - try auto-login first, then fall back to session check
   useEffect(() => {
@@ -118,17 +124,20 @@ export default function RootLayout() {
 
       if (autoLoginSuccess) {
         // Fetch depots through React Query cache, then resolve location
-        queryClient.fetchQuery({
-          queryKey: depotKeys.list(),
-          queryFn: async () => {
-            const result = await listDepots();
-            if (!result.success) throw new Error(result.error);
-            return result.data;
-          },
-          staleTime: 1000 * 60 * 10,
-        }).then((depots) => resolveDepot(depots)).catch(() => {
-          // Non-fatal: user can still use the app without depot resolution
-        });
+        queryClient
+          .fetchQuery({
+            queryKey: depotKeys.list(),
+            queryFn: async () => {
+              const result = await listDepots();
+              if (!result.success) throw new Error(result.error);
+              return result.data;
+            },
+            staleTime: 1000 * 60 * 10,
+          })
+          .then((depots) => resolveDepot(depots))
+          .catch(() => {
+            // Non-fatal: user can still use the app without depot resolution
+          });
       } else {
         // If auto-login didn't succeed, check for existing session
         await checkAuth();
@@ -187,7 +196,7 @@ export default function RootLayout() {
       if (nextAppState === 'active') {
         const { isAuthenticated } = useAuthStore.getState();
         if (isAuthenticated) {
-          refreshSessionSafe();
+          refreshSessionSafe().catch(() => {});
         }
       }
     });

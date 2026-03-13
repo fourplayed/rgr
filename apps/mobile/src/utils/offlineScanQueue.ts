@@ -19,12 +19,16 @@ export interface QueuedScan {
 function isQueuedScan(item: unknown): item is QueuedScan {
   if (typeof item !== 'object' || item === null) return false;
   const o = item as Record<string, unknown>;
-  return (
-    typeof o['id'] === 'string' &&
-    typeof o['queuedAt'] === 'string' &&
-    typeof o['input'] === 'object' &&
-    o['input'] !== null
-  );
+  if (
+    typeof o['id'] !== 'string' ||
+    typeof o['queuedAt'] !== 'string' ||
+    typeof o['input'] !== 'object' ||
+    o['input'] === null
+  ) {
+    return false;
+  }
+  const input = o['input'] as Record<string, unknown>;
+  return typeof input['assetId'] === 'string' && typeof input['scannedBy'] === 'string';
 }
 
 /**
@@ -115,6 +119,7 @@ export async function replayQueue(): Promise<{ replayed: number; failed: number 
     logger.info(`Replaying ${queue.length} queued scan(s)...`);
     let replayed = 0;
     let failed = 0;
+    let consecutiveFailures = 0;
 
     while (queue.length > 0) {
       if (_abortReplay || !onlineManager.isOnline()) {
@@ -126,11 +131,19 @@ export async function replayQueue(): Promise<{ replayed: number; failed: number 
         break;
       }
 
+      if (consecutiveFailures >= 3) {
+        logger.warn(
+          `Circuit breaker: ${consecutiveFailures} consecutive failures — stopping replay with ${queue.length} scan(s) remaining`
+        );
+        break;
+      }
+
       const entry = queue[0]!;
       const result = await createScanEvent(entry.input);
 
       if (result.success) {
         replayed++;
+        consecutiveFailures = 0;
         logger.info(`Replayed queued scan ${entry.id}`);
         queue = queue.slice(1);
         await saveQueue(queue);
@@ -138,6 +151,7 @@ export async function replayQueue(): Promise<{ replayed: number; failed: number 
         // Brief pause before retrying to avoid hammering the server when all entries fail
         await new Promise((r) => setTimeout(r, 1500));
         failed++;
+        consecutiveFailures++;
         const retries = (entry.retryCount ?? 0) + 1;
         if (retries >= MAX_RETRIES) {
           logger.warn(

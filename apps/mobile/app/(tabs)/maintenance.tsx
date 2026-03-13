@@ -1,11 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import {
-  View,
-  FlatList,
-  StyleSheet,
-  SafeAreaView,
-  TouchableOpacity,
-  Animated} from 'react-native';
+import { View, FlatList, StyleSheet, SafeAreaView, TouchableOpacity, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import type {
@@ -17,7 +11,13 @@ import type {
   CreateMaintenanceInput,
 } from '@rgr/shared';
 import { colors } from '../../src/theme/colors';
-import { spacing, fontSize, lineHeight, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
+import {
+  spacing,
+  fontSize,
+  lineHeight,
+  borderRadius,
+  fontFamily as fonts,
+} from '../../src/theme/spacing';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
 import { ScreenHeader } from '../../src/components/common/ScreenHeader';
 import { SegmentedTabs } from '../../src/components/common/SegmentedTabs';
@@ -46,7 +46,14 @@ import { AppText } from '../../src/components/common';
 type ModalState =
   | { type: 'none' }
   | { type: 'defectDetail'; defectId: string }
-  | { type: 'acceptDefect'; defectId: string; assetId: string; assetNumber: string | null; title: string; description: string | null }
+  | {
+      type: 'acceptDefect';
+      defectId: string;
+      assetId: string;
+      assetNumber: string | null;
+      title: string;
+      description: string | null;
+    }
   | { type: 'maintenanceDetail'; maintenanceId: string }
   | { type: 'createMaintenance' };
 
@@ -93,38 +100,55 @@ export default function MaintenanceScreen() {
   }, [tab, defectStatus, router]);
 
   // Modal state machine — only one modal visible at a time
-  const { modal, closeModal: close, transitionTo, isTransitioning, handleExitComplete } = useModalTransition<ModalState>({ type: 'none' });
+  const {
+    modal,
+    closeModal: close,
+    transitionTo,
+    isTransitioning,
+    handleExitComplete,
+  } = useModalTransition<ModalState>({ type: 'none' });
 
   // Persistent backdrop — stays visible during A→B modal transitions
-  const { backdropOpacity, showBackdrop, mounted: backdropMounted } = usePersistentBackdrop(
-    modal.type !== 'none' || isTransitioning
-  );
+  const {
+    backdropOpacity,
+    showBackdrop,
+    mounted: backdropMounted,
+  } = usePersistentBackdrop(modal.type !== 'none' || isTransitioning);
 
   // Accept defect hook (moved up from DefectReportDetailModal)
   const { mutateAsync: acceptDefect } = useAcceptDefect();
 
-  const handleAcceptPress = useCallback((context: {
-    defectId: string;
-    assetId: string;
-    assetNumber: string | null;
-    title: string;
-    description: string | null;
-  }) => {
-    transitionTo({ type: 'acceptDefect', ...context });
-  }, [transitionTo]);
+  const handleAcceptPress = useCallback(
+    (context: {
+      defectId: string;
+      assetId: string;
+      assetNumber: string | null;
+      title: string;
+      description: string | null;
+    }) => {
+      transitionTo({ type: 'acceptDefect', ...context });
+    },
+    [transitionTo]
+  );
 
-  const handleViewTaskPress = useCallback((maintenanceId: string) => {
-    transitionTo({ type: 'maintenanceDetail', maintenanceId });
-  }, [transitionTo]);
+  const handleViewTaskPress = useCallback(
+    (maintenanceId: string) => {
+      transitionTo({ type: 'maintenanceDetail', maintenanceId });
+    },
+    [transitionTo]
+  );
 
-  const handleAcceptSubmit = useCallback(async (input: CreateMaintenanceInput) => {
-    if (modal.type !== 'acceptDefect') return;
-    await acceptDefect({
-      defectReportId: modal.defectId,
-      maintenanceInput: input,
-    });
-    close();
-  }, [modal, acceptDefect, close]);
+  const handleAcceptSubmit = useCallback(
+    async (input: CreateMaintenanceInput) => {
+      if (modal.type !== 'acceptDefect') return;
+      await acceptDefect({
+        defectReportId: modal.defectId,
+        maintenanceInput: input,
+      });
+      close();
+    },
+    [modal, acceptDefect, close]
+  );
 
   // Dismiss defect flow (confirmation + delete handled inside DefectReportDetailModal)
   const handleDismissConfirmed = useCallback(() => {
@@ -132,10 +156,13 @@ export default function MaintenanceScreen() {
   }, [close]);
 
   // Fetch maintenance list with filters
-  const maintenanceFilters = useMemo(() => ({
-    ...(statuses.length > 0 && { status: statuses }),
-    ...(priorities.length > 0 && { priority: priorities }),
-  }), [statuses, priorities]);
+  const maintenanceFilters = useMemo(
+    () => ({
+      ...(statuses.length > 0 && { status: statuses }),
+      ...(priorities.length > 0 && { priority: priorities }),
+    }),
+    [statuses, priorities]
+  );
 
   const {
     data: maintenanceData,
@@ -149,14 +176,18 @@ export default function MaintenanceScreen() {
 
   // Flatten infinite query pages into a single array for FlatList
   const maintenance = useMemo(
-    () => (maintenanceData?.pages.flatMap(p => p.data) ?? []).filter(m => m.status !== 'cancelled'),
+    () =>
+      (maintenanceData?.pages.flatMap((p) => p.data) ?? []).filter((m) => m.status !== 'cancelled'),
     [maintenanceData]
   );
 
   // Fetch defect report list with filters
-  const defectFilters = useMemo(() => ({
-    ...(defectStatuses.length > 0 && { status: defectStatuses }),
-  }), [defectStatuses]);
+  const defectFilters = useMemo(
+    () => ({
+      ...(defectStatuses.length > 0 && { status: defectStatuses }),
+    }),
+    [defectStatuses]
+  );
 
   const {
     data: defectsData,
@@ -169,76 +200,96 @@ export default function MaintenanceScreen() {
   } = useDefectReportList(defectFilters);
 
   const defects = useMemo(
-    () => (defectsData?.pages.flatMap(p => p.data) ?? []).filter(d => d.status !== 'dismissed'),
+    () => (defectsData?.pages.flatMap((p) => p.data) ?? []).filter((d) => d.status !== 'dismissed'),
     [defectsData]
   );
 
   const handleToggleFilters = useCallback(() => {
-    setFiltersExpanded(prev => !prev);
+    setFiltersExpanded((prev) => !prev);
   }, []);
 
   const handleToggleDefectFilters = useCallback(() => {
-    setDefectFiltersExpanded(prev => !prev);
+    setDefectFiltersExpanded((prev) => !prev);
   }, []);
 
-  const handleMaintenancePress = useCallback((item: MaintenanceListItemType) => {
-    transitionTo({ type: 'maintenanceDetail', maintenanceId: item.id });
-  }, [transitionTo]);
+  const handleMaintenancePress = useCallback(
+    (item: MaintenanceListItemType) => {
+      transitionTo({ type: 'maintenanceDetail', maintenanceId: item.id });
+    },
+    [transitionTo]
+  );
 
-  const handleDefectPress = useCallback((item: DefectReportListItemType) => {
-    transitionTo({ type: 'defectDetail', defectId: item.id });
-  }, [transitionTo]);
+  const handleDefectPress = useCallback(
+    (item: DefectReportListItemType) => {
+      transitionTo({ type: 'defectDetail', defectId: item.id });
+    },
+    [transitionTo]
+  );
 
   const handleOpenCreate = useCallback(() => {
     transitionTo({ type: 'createMaintenance' });
   }, [transitionTo]);
 
   // Maintenance list renderers
-  const renderMaintenanceItem = useCallback(({ item }: { item: MaintenanceListItemType }) => (
-    <MaintenanceListItem
-      maintenance={item}
-      onPress={handleMaintenancePress}
-    />
-  ), [handleMaintenancePress]);
+  const renderMaintenanceItem = useCallback(
+    ({ item }: { item: MaintenanceListItemType }) => (
+      <MaintenanceListItem maintenance={item} onPress={handleMaintenancePress} />
+    ),
+    [handleMaintenancePress]
+  );
 
   const maintenanceKeyExtractor = useCallback((item: MaintenanceListItemType) => item.id, []);
 
-  const getMaintenanceItemLayout = useCallback((_: unknown, index: number) => ({
-    length: MAINTENANCE_ITEM_HEIGHT,
-    offset: MAINTENANCE_ITEM_HEIGHT * index,
-    index,
-  }), []);
+  const getMaintenanceItemLayout = useCallback(
+    (_: unknown, index: number) => ({
+      length: MAINTENANCE_ITEM_HEIGHT,
+      offset: MAINTENANCE_ITEM_HEIGHT * index,
+      index,
+    }),
+    []
+  );
 
   // Defect list renderers
-  const renderDefectItem = useCallback(({ item }: { item: DefectReportListItemType }) => (
-    <DefectReportListItem
-      defect={item}
-      onPress={handleDefectPress}
-    />
-  ), [handleDefectPress]);
+  const renderDefectItem = useCallback(
+    ({ item }: { item: DefectReportListItemType }) => (
+      <DefectReportListItem defect={item} onPress={handleDefectPress} />
+    ),
+    [handleDefectPress]
+  );
 
   const defectKeyExtractor = useCallback((item: DefectReportListItemType) => item.id, []);
 
-  const getDefectItemLayout = useCallback((_: unknown, index: number) => ({
-    length: DEFECT_ITEM_HEIGHT,
-    offset: DEFECT_ITEM_HEIGHT * index,
-    index,
-  }), []);
-
-  const renderMaintenanceEmpty = () => (
-    <EmptyState
-      icon="construct-outline"
-      title="No maintenance records"
-      subtitle={canMarkMaintenance ? 'Tap + to schedule maintenance' : 'No scheduled maintenance tasks'}
-    />
+  const getDefectItemLayout = useCallback(
+    (_: unknown, index: number) => ({
+      length: DEFECT_ITEM_HEIGHT,
+      offset: DEFECT_ITEM_HEIGHT * index,
+      index,
+    }),
+    []
   );
 
-  const renderDefectsEmpty = () => (
-    <EmptyState
-      icon="warning-outline"
-      title="No defect reports"
-      subtitle="Defects are reported during scanning when issues are found"
-    />
+  const renderMaintenanceEmpty = useCallback(
+    () => (
+      <EmptyState
+        icon="construct-outline"
+        title="No maintenance records"
+        subtitle={
+          canMarkMaintenance ? 'Tap + to schedule maintenance' : 'No scheduled maintenance tasks'
+        }
+      />
+    ),
+    [canMarkMaintenance]
+  );
+
+  const renderDefectsEmpty = useCallback(
+    () => (
+      <EmptyState
+        icon="warning-outline"
+        title="No defect reports"
+        subtitle="Defects are reported during scanning when issues are found"
+      />
+    ),
+    []
   );
 
   const isLoading = activeTab === 'tasks' ? isMaintenanceLoading : isDefectsLoading;
@@ -251,29 +302,27 @@ export default function MaintenanceScreen() {
         {/* Header */}
         <ScreenHeader
           title="Maintenance"
-          rightAction={canMarkMaintenance ? (
-            <TouchableOpacity
-              style={styles.addLink}
-              onPress={handleOpenCreate}
-              activeOpacity={0.6}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              accessibilityRole="button"
-              accessibilityLabel="Create maintenance record"
-              accessibilityHint="Double tap to schedule new maintenance"
-            >
-              <Ionicons name="add-circle-outline" size={16} color={colors.electricBlue} />
-              <AppText style={styles.addLinkText}>New Task</AppText>
-            </TouchableOpacity>
-          ) : undefined}
+          rightAction={
+            canMarkMaintenance ? (
+              <TouchableOpacity
+                style={styles.addLink}
+                onPress={handleOpenCreate}
+                activeOpacity={0.6}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel="Create maintenance record"
+                accessibilityHint="Double tap to schedule new maintenance"
+              >
+                <Ionicons name="add-circle-outline" size={16} color={colors.electricBlue} />
+                <AppText style={styles.addLinkText}>New Task</AppText>
+              </TouchableOpacity>
+            ) : undefined
+          }
         />
 
         {/* Segment tabs */}
         <View style={styles.tabContainer}>
-          <SegmentedTabs
-            tabs={TABS}
-            activeTab={activeTab}
-            onTabPress={setActiveTab}
-          />
+          <SegmentedTabs tabs={TABS} activeTab={activeTab} onTabPress={setActiveTab} />
         </View>
 
         {/* Filters */}
@@ -374,29 +423,34 @@ export default function MaintenanceScreen() {
           onAcceptPress={handleAcceptPress}
           onViewTaskPress={handleViewTaskPress}
           onDismissConfirmed={handleDismissConfirmed}
-          noBackdrop onExitComplete={handleExitComplete}
+          noBackdrop
+          onExitComplete={handleExitComplete}
         />
 
         <CreateMaintenanceModal
           visible={modal.type === 'acceptDefect' || modal.type === 'createMaintenance'}
           onClose={close}
-          noBackdrop onExitComplete={handleExitComplete}
-          {...(modal.type === 'acceptDefect' ? {
-            assetId: modal.assetId,
-            assetNumber: modal.assetNumber,
-            defectReportId: modal.defectId,
-            defaultTitle: modal.description ?? modal.title,
-            defaultDescription: undefined,
-            defaultPriority: 'medium' as const,
-            onExternalSubmit: handleAcceptSubmit,
-          } : {})}
+          noBackdrop
+          onExitComplete={handleExitComplete}
+          {...(modal.type === 'acceptDefect'
+            ? {
+                assetId: modal.assetId,
+                assetNumber: modal.assetNumber,
+                defectReportId: modal.defectId,
+                defaultTitle: modal.description ?? modal.title,
+                defaultDescription: undefined,
+                defaultPriority: 'medium' as const,
+                onExternalSubmit: handleAcceptSubmit,
+              }
+            : {})}
         />
 
         <MaintenanceDetailModal
           visible={modal.type === 'maintenanceDetail'}
           maintenanceId={modal.type === 'maintenanceDetail' ? modal.maintenanceId : null}
           onClose={close}
-          noBackdrop onExitComplete={handleExitComplete}
+          noBackdrop
+          onExitComplete={handleExitComplete}
         />
       </SafeAreaView>
     </View>

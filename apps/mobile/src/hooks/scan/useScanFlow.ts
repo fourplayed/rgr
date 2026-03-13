@@ -121,7 +121,7 @@ export interface UseScanFlowReturn {
   scanContext: AssetScanContext | null;
   isContextLoading: boolean;
   contextError: Error | null;
-  refetchContext: () => void; // Returns Promise<QueryObserverResult> at runtime; typed as void since consumers don't await
+  refetchContext: () => unknown;
 
   // Context modals
   contextModal: ScanContextModal;

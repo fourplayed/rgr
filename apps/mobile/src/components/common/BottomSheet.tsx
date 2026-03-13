@@ -36,11 +36,16 @@ export function BottomSheet({
 }: BottomSheetProps) {
   const ref = useRef<BottomSheetModal>(null);
   const isPresentedRef = useRef(false);
+  // Tracks whether present() was ever called during this mount cycle.
+  // gorhom v5 can fire onDismiss for never-presented modals during
+  // internal provider cleanup — this guard prevents spurious callbacks.
+  const wasPresentedRef = useRef(false);
 
   useEffect(() => {
     if (visible && !isPresentedRef.current) {
       ref.current?.present();
       isPresentedRef.current = true;
+      wasPresentedRef.current = true;
     } else if (!visible && isPresentedRef.current) {
       ref.current?.dismiss();
       isPresentedRef.current = false;
@@ -56,6 +61,11 @@ export function BottomSheet({
 
   const handleDismiss = useCallback(() => {
     isPresentedRef.current = false;
+    if (!wasPresentedRef.current) {
+      // gorhom v5 fires onDismiss during internal provider cleanup for modals
+      // that were never present()ed. Skip all callbacks to prevent spurious effects.
+      return;
+    }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onDismiss();
   }, [onDismiss]);
@@ -69,7 +79,11 @@ export function BottomSheet({
         pressBehavior="close"
       >
         {Platform.OS === 'ios' ? (
-          <BlurView intensity={BACKDROP_BLUR_INTENSITY} tint={BACKDROP_BLUR_TINT} style={StyleSheet.absoluteFillObject} />
+          <BlurView
+            intensity={BACKDROP_BLUR_INTENSITY}
+            tint={BACKDROP_BLUR_TINT}
+            style={StyleSheet.absoluteFillObject}
+          />
         ) : null}
       </BottomSheetBackdrop>
     ),

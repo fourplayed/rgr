@@ -5,22 +5,26 @@ import { assertQueryResult } from '../../utils';
 
 /** Schema for validating secure-auth Edge Function responses */
 const SecureAuthResponseSchema = z.object({
-  user: z.object({
-    id: z.string(),
-    email: z.string(),
-    aud: z.string().optional(),
-    role: z.string().optional(),
-    email_confirmed_at: z.string().nullable().optional(),
-    created_at: z.string().optional(),
-    updated_at: z.string().optional(),
-  }).passthrough(),
-  session: z.object({
-    access_token: z.string(),
-    refresh_token: z.string(),
-    expires_in: z.number().optional(),
-    token_type: z.string().optional(),
-    expires_at: z.number().optional(),
-  }).passthrough(),
+  user: z
+    .object({
+      id: z.string(),
+      email: z.string(),
+      aud: z.string().optional(),
+      role: z.string().optional(),
+      email_confirmed_at: z.string().nullable().optional(),
+      created_at: z.string().optional(),
+      updated_at: z.string().optional(),
+    })
+    .passthrough(),
+  session: z
+    .object({
+      access_token: z.string(),
+      refresh_token: z.string(),
+      expires_in: z.number().optional(),
+      token_type: z.string().optional(),
+      expires_at: z.number().optional(),
+    })
+    .passthrough(),
 });
 
 // Singleton promise for deduplicating concurrent token refreshes
@@ -145,7 +149,16 @@ export async function signInWithEmailSecure(
     });
     clearTimeout(timeout);
 
-    const body = await response.json();
+    let body: Record<string, unknown>;
+    try {
+      body = await response.json();
+    } catch {
+      return {
+        success: false,
+        data: null,
+        error: 'Authentication service returned invalid response',
+      };
+    }
 
     // Edge Function not deployed — fail safely, don't bypass
     if (response.status === 404) {
@@ -158,7 +171,13 @@ export async function signInWithEmailSecure(
 
     if (!response.ok) {
       recordFailure(credentials.email);
-      const errorMessage = body.error?.message || body.error || 'Authentication failed';
+      const err = body['error'];
+      const errorMessage =
+        typeof err === 'object' && err !== null && 'message' in err
+          ? String((err as Record<string, unknown>)['message'])
+          : typeof err === 'string'
+            ? err
+            : 'Authentication failed';
       return { success: false, data: null, error: errorMessage };
     }
 

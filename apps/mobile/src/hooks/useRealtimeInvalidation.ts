@@ -9,18 +9,31 @@ import { useAuthStore } from '../store/authStore';
  * to prevent the incoming realtime event from racing with onSettled.
  */
 const suppressedKeys = new Set<string>();
+const suppressionTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
 /**
  * Temporarily suppress realtime invalidation for a query key prefix.
  * Use in optimistic mutation `onMutate` to prevent the realtime handler
  * from overwriting optimistic state before onSettled fires.
  *
+ * If called again for the same key before the previous timer expires,
+ * the old timer is cleared and a new one starts (prevents premature removal).
+ *
  * @param keyPrefix - The first segment of the query key (e.g. 'maintenance', 'defects')
  * @param durationMs - How long to suppress (default 3000ms)
  */
 export function suppressRealtimeFor(keyPrefix: string, durationMs = 3000): void {
+  const existingTimer = suppressionTimers.get(keyPrefix);
+  if (existingTimer) {
+    clearTimeout(existingTimer);
+  }
+
   suppressedKeys.add(keyPrefix);
-  setTimeout(() => suppressedKeys.delete(keyPrefix), durationMs);
+  const timer = setTimeout(() => {
+    suppressedKeys.delete(keyPrefix);
+    suppressionTimers.delete(keyPrefix);
+  }, durationMs);
+  suppressionTimers.set(keyPrefix, timer);
 }
 
 /**

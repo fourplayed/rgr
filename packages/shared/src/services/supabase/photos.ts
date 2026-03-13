@@ -236,7 +236,16 @@ export async function uploadPhoto(options: UploadPhotoOptions): Promise<ServiceR
 
     const dbData = mapPhotoToInsert(parsed.data as CreatePhotoInput);
 
-    const { data, error: dbError } = await supabase.from('photos').insert(dbData).select().single();
+    const { data, error: dbError } = await withRetry(
+      async () => {
+        const result = await supabase.from('photos').insert(dbData).select().single();
+        if (result.error) throw result.error;
+        return result;
+      },
+      { maxAttempts: 2, baseDelayMs: 1000 }
+    )
+      .then((result) => ({ data: result.data, error: null }))
+      .catch((err) => ({ data: null, error: err as Error }));
 
     if (dbError) {
       // Cleanup uploaded files on database failure

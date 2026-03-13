@@ -78,7 +78,7 @@ function DefectReportSheetComponent({
     onCancel();
   };
 
-  const canSubmit = notesRef.current.trim().length > 0;
+  const canSubmit = charCount > 0;
 
   // Fade submit button in/out instead of showing it disabled
   const submitOpacity = useRef(new Animated.Value(0)).current;

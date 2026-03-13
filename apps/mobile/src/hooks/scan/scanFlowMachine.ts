@@ -311,7 +311,10 @@ export function scanFlowReducer(state: ScanFlowState, action: ScanFlowAction): S
     case 'RESET':
       return { phase: 'idle' };
 
-    default:
+    default: {
+      const _exhaustive: never = action;
+      void _exhaustive;
       return state;
+    }
   }
 }
