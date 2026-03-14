@@ -108,7 +108,7 @@ function App() {
     return () => {
       unsubscribeAuth?.();
     };
-  }, [checkAuth]);
+  }, [checkAuth, queryClient]);
 
   // Show initialization error if any
   if (initError) {
