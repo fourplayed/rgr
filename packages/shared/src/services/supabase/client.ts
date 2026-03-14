@@ -81,13 +81,17 @@ export function initSupabase(config: SupabaseConfig): SupabaseClient<Database> {
       fetch: (url: RequestInfo | URL, options?: RequestInit) => {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 30000);
-        // Merge caller's signal (e.g. React Query cancellation) with our timeout
-        const signals = [controller.signal, options?.signal].filter(
-          (s): s is AbortSignal => s != null
-        );
-        const mergedSignal =
-          signals.length > 1 ? AbortSignal.any(signals) : (signals[0] ?? controller.signal);
-        return fetch(url, { ...options, signal: mergedSignal }).finally(() =>
+        // Forward caller's signal (e.g. React Query cancellation) to our controller.
+        // Uses addEventListener instead of AbortSignal.any() for Hermes compatibility.
+        const callerSignal = options?.signal;
+        if (callerSignal) {
+          if (callerSignal.aborted) {
+            controller.abort();
+          } else {
+            callerSignal.addEventListener('abort', () => controller.abort(), { once: true });
+          }
+        }
+        return fetch(url, { ...options, signal: controller.signal }).finally(() =>
           clearTimeout(timeout)
         );
       },
