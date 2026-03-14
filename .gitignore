@@ -59,3 +59,4 @@ supabase/.temp/
 
 # One-off scripts
 scripts/plan-review.sh
+scripts/deploy-asc.sh
