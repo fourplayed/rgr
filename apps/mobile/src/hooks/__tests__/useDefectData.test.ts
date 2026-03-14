@@ -8,6 +8,16 @@ import {
   useUpdateDefectReportStatus,
 } from '../useDefectData';
 import { listDefectReports, createDefectReport, updateDefectReportStatus } from '@rgr/shared';
+import type { CreateDefectReportInput } from '@rgr/shared';
+
+type ListDefectResult = Awaited<ReturnType<typeof listDefectReports>>;
+type CreateDefectResult = Awaited<ReturnType<typeof createDefectReport>>;
+type UpdateDefectStatusResult = Awaited<ReturnType<typeof updateDefectReportStatus>>;
+
+interface InfiniteCacheShape {
+  pages: Array<{ data: Array<Record<string, unknown>>; hasMore: boolean }>;
+  pageParams: unknown[];
+}
 
 // ── Mocks ──
 
@@ -20,7 +30,7 @@ jest.mock('@rgr/shared', () => ({
   deleteDefectReport: jest.fn(),
   getDefectReportStats: jest.fn(),
   getAssetDefectReports: jest.fn(),
-  queryFromService: jest.fn((fn: () => Promise<any>) => fn),
+  queryFromService: jest.fn((fn: () => Promise<unknown>) => fn),
 }));
 
 jest.mock('../useAssetData', () => ({
@@ -38,7 +48,9 @@ jest.mock('../../config/featureFlags', () => ({
 }));
 
 jest.mock('../../store/authStore', () => ({
-  useAuthStore: jest.fn((selector: any) => selector({ user: { fullName: 'Test User' } })),
+  useAuthStore: jest.fn((selector: (s: Record<string, unknown>) => unknown) =>
+    selector({ user: { fullName: 'Test User' } })
+  ),
 }));
 
 const mockListDefectReports = listDefectReports as jest.MockedFunction<typeof listDefectReports>;
@@ -91,7 +103,7 @@ describe('useDefectReportList', () => {
     mockListDefectReports.mockResolvedValue({
       success: true,
       data: { data: items, hasMore: false },
-    } as any);
+    } as unknown as ListDefectResult);
 
     const { wrapper } = createWrapper();
     const { result } = renderHook(() => useDefectReportList(), { wrapper });
@@ -105,7 +117,7 @@ describe('useDefectReportList', () => {
     mockListDefectReports.mockResolvedValue({
       success: true,
       data: { data: [], hasMore: false },
-    } as any);
+    } as unknown as ListDefectResult);
 
     const filters = { status: ['reported' as const], assetId: 'asset-99' };
     const { wrapper } = createWrapper();
@@ -128,7 +140,7 @@ describe('useDefectReportList', () => {
     mockListDefectReports.mockResolvedValueOnce({
       success: true,
       data: { data: [item], hasMore: true },
-    } as any);
+    } as unknown as ListDefectResult);
 
     const { wrapper } = createWrapper();
     const { result } = renderHook(() => useDefectReportList(), { wrapper });
@@ -143,7 +155,7 @@ describe('useDefectReportList', () => {
     mockListDefectReports.mockResolvedValueOnce({
       success: true,
       data: { data: [item2], hasMore: false },
-    } as any);
+    } as unknown as ListDefectResult);
 
     result.current.fetchNextPage();
 
@@ -176,13 +188,13 @@ describe('useCreateDefectReport', () => {
     mockCreateDefectReport.mockResolvedValue({
       success: true,
       data: created,
-    } as any);
+    } as unknown as CreateDefectResult);
 
     const { wrapper } = createWrapper();
     const { result } = renderHook(() => useCreateDefectReport(), { wrapper });
 
     const input = { assetId: 'asset-1', title: 'Flat tyre' };
-    result.current.mutate(input as any);
+    result.current.mutate(input as unknown as CreateDefectReportInput);
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual(created);
@@ -194,14 +206,17 @@ describe('useCreateDefectReport', () => {
     mockCreateDefectReport.mockResolvedValue({
       success: true,
       data: created,
-    } as any);
+    } as unknown as CreateDefectResult);
 
     const { wrapper, queryClient } = createWrapper();
     const spy = jest.spyOn(queryClient, 'invalidateQueries');
 
     const { result } = renderHook(() => useCreateDefectReport(), { wrapper });
 
-    result.current.mutate({ assetId: 'asset-1', title: 'Flat tyre' } as any);
+    result.current.mutate({
+      assetId: 'asset-1',
+      title: 'Flat tyre',
+    } as unknown as CreateDefectReportInput);
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -224,7 +239,7 @@ describe('useUpdateDefectReportStatus', () => {
     mockUpdateDefectReportStatus.mockResolvedValue({
       success: true,
       data: updated,
-    } as any);
+    } as unknown as UpdateDefectStatusResult);
 
     const { wrapper } = createWrapper();
     const { result } = renderHook(() => useUpdateDefectReportStatus(), { wrapper });
@@ -247,7 +262,7 @@ describe('useUpdateDefectReportStatus', () => {
     mockUpdateDefectReportStatus.mockResolvedValue({
       success: true,
       data: updated,
-    } as any);
+    } as unknown as UpdateDefectStatusResult);
 
     const { wrapper, queryClient } = createWrapper();
     const spy = jest.spyOn(queryClient, 'invalidateQueries');
@@ -279,7 +294,7 @@ describe('optimistic: createDefectReport', () => {
       },
     });
 
-  const seedListCache = (queryClient: any) => {
+  const seedListCache = (queryClient: QueryClient) => {
     queryClient.setQueryData(defectKeys.list({}), {
       pages: [{ data: [defectItem()], hasMore: false }],
       pageParams: [undefined],
@@ -291,31 +306,37 @@ describe('optimistic: createDefectReport', () => {
     seedListCache(queryClient);
 
     // Mutation hangs so we can inspect cache mid-flight
-    let resolveMutation!: (value: any) => void;
+    let resolveMutation!: (value: CreateDefectResult) => void;
     mockCreateDefectReport.mockImplementation(
       () =>
-        new Promise((resolve) => {
+        new Promise<CreateDefectResult>((resolve) => {
           resolveMutation = resolve;
         })
     );
 
     const { result } = renderHook(() => useCreateDefectReport(), { wrapper });
 
-    result.current.mutate({ assetId: 'asset-1', title: 'New defect' } as any);
+    result.current.mutate({
+      assetId: 'asset-1',
+      title: 'New defect',
+    } as unknown as CreateDefectReportInput);
 
     // onMutate fires before mutationFn — placeholder should be prepended
     await waitFor(() => {
-      const cache = queryClient.getQueryData(defectKeys.list({})) as any;
+      const cache = queryClient.getQueryData(defectKeys.list({})) as unknown as InfiniteCacheShape;
       expect(cache?.pages[0]?.data).toHaveLength(2);
     });
 
-    const cache = queryClient.getQueryData(defectKeys.list({})) as any;
-    expect(cache.pages[0].data[0].title).toBe('New defect');
-    expect(cache.pages[0].data[0].status).toBe('reported');
-    expect(cache.pages[0].data[1].id).toBe('dr-1');
+    const cache = queryClient.getQueryData(defectKeys.list({})) as unknown as InfiniteCacheShape;
+    expect(cache.pages[0]!.data[0]!['title']).toBe('New defect');
+    expect(cache.pages[0]!.data[0]!['status']).toBe('reported');
+    expect(cache.pages[0]!.data[1]!['id']).toBe('dr-1');
 
     // Cleanup: resolve and let mutation settle
-    resolveMutation({ success: true, data: { id: 'dr-new', assetId: 'asset-1' } });
+    resolveMutation({
+      success: true,
+      data: { id: 'dr-new', assetId: 'asset-1' },
+    } as unknown as CreateDefectResult);
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
 
@@ -327,18 +348,21 @@ describe('optimistic: createDefectReport', () => {
       success: false,
       data: null,
       error: 'Network error',
-    } as any);
+    } as unknown as CreateDefectResult);
 
     const { result } = renderHook(() => useCreateDefectReport(), { wrapper });
 
-    result.current.mutate({ assetId: 'asset-1', title: 'Will fail' } as any);
+    result.current.mutate({
+      assetId: 'asset-1',
+      title: 'Will fail',
+    } as unknown as CreateDefectReportInput);
 
     await waitFor(() => expect(result.current.isError).toBe(true));
 
     // Cache should be rolled back to original single item
-    const cache = queryClient.getQueryData(defectKeys.list({})) as any;
-    expect(cache.pages[0].data).toHaveLength(1);
-    expect(cache.pages[0].data[0].id).toBe('dr-1');
+    const cache = queryClient.getQueryData(defectKeys.list({})) as unknown as InfiniteCacheShape;
+    expect(cache.pages[0]!.data).toHaveLength(1);
+    expect(cache.pages[0]!.data[0]!['id']).toBe('dr-1');
   });
 
   it('cancels in-flight queries during onMutate', async () => {
@@ -349,11 +373,14 @@ describe('optimistic: createDefectReport', () => {
     mockCreateDefectReport.mockResolvedValue({
       success: true,
       data: { id: 'dr-new', assetId: 'asset-1' },
-    } as any);
+    } as unknown as CreateDefectResult);
 
     const { result } = renderHook(() => useCreateDefectReport(), { wrapper });
 
-    result.current.mutate({ assetId: 'asset-1', title: 'New defect' } as any);
+    result.current.mutate({
+      assetId: 'asset-1',
+      title: 'New defect',
+    } as unknown as CreateDefectReportInput);
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 

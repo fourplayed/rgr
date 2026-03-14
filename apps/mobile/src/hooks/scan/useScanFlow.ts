@@ -339,13 +339,10 @@ export function useScanFlow({ canMarkMaintenance }: UseScanFlowOptions): UseScan
       !!state.capturedPhotoUri &&
       state.activeSheet === null &&
       !state.awaitingSheetExit,
-    [
-      state.phase,
-      state.cameraOpen,
-      state.capturedPhotoUri,
-      state.activeSheet,
-      state.awaitingSheetExit,
-    ]
+    // state object reference changes whenever the reducer produces a new value,
+    // so [state] is functionally equivalent to listing each phase-specific field
+    // and avoids TS errors from accessing discriminated-union properties in deps.
+    [state]
   );
 
   useEffect(() => {

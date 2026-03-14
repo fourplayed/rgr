@@ -1,6 +1,7 @@
 import { renderHook, waitFor } from '@testing-library/react-native';
 import { QueryClient } from '@tanstack/react-query';
 import { createWrapper } from './testUtils';
+import type { MaintenanceStatus, MaintenancePriority, CreateMaintenanceInput } from '@rgr/shared';
 
 jest.mock('@rgr/shared', () => ({
   listMaintenance: jest.fn(),
@@ -10,7 +11,7 @@ jest.mock('@rgr/shared', () => ({
   updateMaintenance: jest.fn(),
   cancelMaintenanceTask: jest.fn(),
   getMaintenanceStats: jest.fn(),
-  queryFromService: jest.fn((fn: () => Promise<any>) => fn),
+  queryFromService: jest.fn((fn: () => Promise<unknown>) => fn),
 }));
 
 jest.mock('../useAssetData', () => ({
@@ -33,7 +34,9 @@ jest.mock('../../config/featureFlags', () => ({
 }));
 
 jest.mock('../../store/authStore', () => ({
-  useAuthStore: jest.fn((selector: any) => selector({ user: { fullName: 'Test User' } })),
+  useAuthStore: jest.fn((selector: (s: Record<string, unknown>) => unknown) =>
+    selector({ user: { fullName: 'Test User' } })
+  ),
 }));
 
 import { listMaintenance, createMaintenance, updateMaintenanceStatus } from '@rgr/shared';
@@ -50,6 +53,15 @@ const mockUpdateMaintenanceStatus = updateMaintenanceStatus as jest.MockedFuncti
   typeof updateMaintenanceStatus
 >;
 
+type ListMaintenanceResult = Awaited<ReturnType<typeof listMaintenance>>;
+type CreateMaintenanceResult = Awaited<ReturnType<typeof createMaintenance>>;
+type UpdateMaintenanceStatusResult = Awaited<ReturnType<typeof updateMaintenanceStatus>>;
+
+interface InfiniteCacheShape {
+  pages: Array<{ data: Array<Record<string, unknown>>; hasMore: boolean }>;
+  pageParams: unknown[];
+}
+
 beforeEach(() => {
   jest.clearAllMocks();
 });
@@ -63,8 +75,8 @@ describe('maintenanceKeys', () => {
   });
 
   it('includes filter object in .list()', () => {
-    const filters = { status: ['scheduled'] };
-    expect(maintenanceKeys.list(filters as any)).toEqual([
+    const filters = { status: ['scheduled' as MaintenanceStatus] };
+    expect(maintenanceKeys.list(filters)).toEqual([
       'maintenance',
       'list',
       { status: ['scheduled'] },
@@ -84,7 +96,7 @@ describe('useMaintenanceList', () => {
     mockListMaintenance.mockResolvedValue({
       success: true,
       data: { data: items, hasMore: false },
-    } as any);
+    } as unknown as ListMaintenanceResult);
 
     const { wrapper } = createWrapper();
     const { result } = renderHook(() => useMaintenanceList(), { wrapper });
@@ -99,9 +111,13 @@ describe('useMaintenanceList', () => {
     mockListMaintenance.mockResolvedValue({
       success: true,
       data: { data: [], hasMore: false },
-    } as any);
+    } as unknown as ListMaintenanceResult);
 
-    const filters = { status: ['scheduled'] as any, priority: ['high'] as any, assetId: 'a1' };
+    const filters = {
+      status: ['scheduled' as MaintenanceStatus],
+      priority: ['high' as MaintenancePriority],
+      assetId: 'a1',
+    };
     const { wrapper } = createWrapper();
     renderHook(() => useMaintenanceList(filters), { wrapper });
 
@@ -127,7 +143,7 @@ describe('useMaintenanceList', () => {
     mockListMaintenance.mockResolvedValueOnce({
       success: true,
       data: { data: items, hasMore: true },
-    } as any);
+    } as unknown as ListMaintenanceResult);
 
     const { wrapper } = createWrapper();
     const { result } = renderHook(() => useMaintenanceList(), { wrapper });
@@ -139,7 +155,7 @@ describe('useMaintenanceList', () => {
     mockListMaintenance.mockResolvedValueOnce({
       success: true,
       data: { data: [{ id: 'm3', createdAt: '2026-01-03T00:00:00Z' }], hasMore: false },
-    } as any);
+    } as unknown as ListMaintenanceResult);
 
     result.current.fetchNextPage();
 
@@ -161,12 +177,18 @@ describe('useMaintenanceList', () => {
 describe('useCreateMaintenance', () => {
   it('calls createMaintenance with input and returns data', async () => {
     const created = { id: 'm-new', assetId: 'a1', title: 'New task' };
-    mockCreateMaintenance.mockResolvedValue({ success: true, data: created } as any);
+    mockCreateMaintenance.mockResolvedValue({
+      success: true,
+      data: created,
+    } as unknown as CreateMaintenanceResult);
 
     const { wrapper } = createWrapper();
     const { result } = renderHook(() => useCreateMaintenance(), { wrapper });
 
-    result.current.mutate({ assetId: 'a1', title: 'New task' } as any);
+    result.current.mutate({
+      assetId: 'a1',
+      title: 'New task',
+    } as unknown as CreateMaintenanceInput);
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual(created);
@@ -177,14 +199,20 @@ describe('useCreateMaintenance', () => {
 
   it('invalidates maintenance lists, stats, and asset-specific keys', async () => {
     const created = { id: 'm-new', assetId: 'a1', title: 'New task' };
-    mockCreateMaintenance.mockResolvedValue({ success: true, data: created } as any);
+    mockCreateMaintenance.mockResolvedValue({
+      success: true,
+      data: created,
+    } as unknown as CreateMaintenanceResult);
 
     const { wrapper, queryClient } = createWrapper();
     const spy = jest.spyOn(queryClient, 'invalidateQueries');
 
     const { result } = renderHook(() => useCreateMaintenance(), { wrapper });
 
-    result.current.mutate({ assetId: 'a1', title: 'New task' } as any);
+    result.current.mutate({
+      assetId: 'a1',
+      title: 'New task',
+    } as unknown as CreateMaintenanceInput);
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -201,14 +229,17 @@ describe('useCreateMaintenance', () => {
 describe('useUpdateMaintenanceStatus', () => {
   it('calls updateMaintenanceStatus with id, status, and extras', async () => {
     const updated = { id: 'm1', status: 'completed' };
-    mockUpdateMaintenanceStatus.mockResolvedValue({ success: true, data: updated } as any);
+    mockUpdateMaintenanceStatus.mockResolvedValue({
+      success: true,
+      data: updated,
+    } as unknown as UpdateMaintenanceStatusResult);
 
     const { wrapper } = createWrapper();
     const { result } = renderHook(() => useUpdateMaintenanceStatus(), { wrapper });
 
     result.current.mutate({
       id: 'm1',
-      status: 'completed' as any,
+      status: 'completed' as MaintenanceStatus,
       extras: { completedBy: 'user-1' },
     });
 
@@ -221,14 +252,17 @@ describe('useUpdateMaintenanceStatus', () => {
 
   it('invalidates detail, lists, and stats', async () => {
     const updated = { id: 'm1', status: 'completed' };
-    mockUpdateMaintenanceStatus.mockResolvedValue({ success: true, data: updated } as any);
+    mockUpdateMaintenanceStatus.mockResolvedValue({
+      success: true,
+      data: updated,
+    } as unknown as UpdateMaintenanceStatusResult);
 
     const { wrapper, queryClient } = createWrapper();
     const spy = jest.spyOn(queryClient, 'invalidateQueries');
 
     const { result } = renderHook(() => useUpdateMaintenanceStatus(), { wrapper });
 
-    result.current.mutate({ id: 'm1', status: 'completed' as any });
+    result.current.mutate({ id: 'm1', status: 'completed' as MaintenanceStatus });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -251,7 +285,7 @@ describe('optimistic: createMaintenance', () => {
       },
     });
 
-  const seedListCache = (queryClient: any) => {
+  const seedListCache = (queryClient: QueryClient) => {
     queryClient.setQueryData(maintenanceKeys.list({}), {
       pages: [
         {
@@ -268,31 +302,41 @@ describe('optimistic: createMaintenance', () => {
     seedListCache(queryClient);
 
     // Mutation hangs so we can inspect cache mid-flight
-    let resolveMutation!: (value: any) => void;
+    let resolveMutation!: (value: CreateMaintenanceResult) => void;
     mockCreateMaintenance.mockImplementation(
       () =>
-        new Promise((resolve) => {
+        new Promise<CreateMaintenanceResult>((resolve) => {
           resolveMutation = resolve;
         })
     );
 
     const { result } = renderHook(() => useCreateMaintenance(), { wrapper });
 
-    result.current.mutate({ assetId: 'a1', title: 'New task' } as any);
+    result.current.mutate({
+      assetId: 'a1',
+      title: 'New task',
+    } as unknown as CreateMaintenanceInput);
 
     // onMutate fires before mutationFn — placeholder should be prepended
     await waitFor(() => {
-      const cache = queryClient.getQueryData(maintenanceKeys.list({})) as any;
+      const cache = queryClient.getQueryData(
+        maintenanceKeys.list({})
+      ) as unknown as InfiniteCacheShape;
       expect(cache?.pages[0]?.data).toHaveLength(2);
     });
 
-    const cache = queryClient.getQueryData(maintenanceKeys.list({})) as any;
-    expect(cache.pages[0].data[0].title).toBe('New task');
-    expect(cache.pages[0].data[0].status).toBe('scheduled');
-    expect(cache.pages[0].data[1].id).toBe('m1');
+    const cache = queryClient.getQueryData(
+      maintenanceKeys.list({})
+    ) as unknown as InfiniteCacheShape;
+    expect(cache.pages[0]!.data[0]!['title']).toBe('New task');
+    expect(cache.pages[0]!.data[0]!['status']).toBe('scheduled');
+    expect(cache.pages[0]!.data[1]!['id']).toBe('m1');
 
     // Cleanup: resolve and let mutation settle
-    resolveMutation({ success: true, data: { id: 'm-new', assetId: 'a1' } });
+    resolveMutation({
+      success: true,
+      data: { id: 'm-new', assetId: 'a1' },
+    } as unknown as CreateMaintenanceResult);
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
 
@@ -304,18 +348,23 @@ describe('optimistic: createMaintenance', () => {
       success: false,
       data: null,
       error: 'Network error',
-    } as any);
+    } as unknown as CreateMaintenanceResult);
 
     const { result } = renderHook(() => useCreateMaintenance(), { wrapper });
 
-    result.current.mutate({ assetId: 'a1', title: 'Will fail' } as any);
+    result.current.mutate({
+      assetId: 'a1',
+      title: 'Will fail',
+    } as unknown as CreateMaintenanceInput);
 
     await waitFor(() => expect(result.current.isError).toBe(true));
 
     // Cache should be rolled back to original single item
-    const cache = queryClient.getQueryData(maintenanceKeys.list({})) as any;
-    expect(cache.pages[0].data).toHaveLength(1);
-    expect(cache.pages[0].data[0].id).toBe('m1');
+    const cache = queryClient.getQueryData(
+      maintenanceKeys.list({})
+    ) as unknown as InfiniteCacheShape;
+    expect(cache.pages[0]!.data).toHaveLength(1);
+    expect(cache.pages[0]!.data[0]!['id']).toBe('m1');
   });
 
   it('cancels in-flight queries during onMutate', async () => {
@@ -326,11 +375,14 @@ describe('optimistic: createMaintenance', () => {
     mockCreateMaintenance.mockResolvedValue({
       success: true,
       data: { id: 'm-new', assetId: 'a1' },
-    } as any);
+    } as unknown as CreateMaintenanceResult);
 
     const { result } = renderHook(() => useCreateMaintenance(), { wrapper });
 
-    result.current.mutate({ assetId: 'a1', title: 'New task' } as any);
+    result.current.mutate({
+      assetId: 'a1',
+      title: 'New task',
+    } as unknown as CreateMaintenanceInput);
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -359,26 +411,32 @@ describe('optimistic: updateMaintenanceStatus', () => {
       title: 'Test task',
     });
 
-    let resolveMutation!: (value: any) => void;
+    let resolveMutation!: (value: UpdateMaintenanceStatusResult) => void;
     mockUpdateMaintenanceStatus.mockImplementation(
       () =>
-        new Promise((resolve) => {
+        new Promise<UpdateMaintenanceStatusResult>((resolve) => {
           resolveMutation = resolve;
         })
     );
 
     const { result } = renderHook(() => useUpdateMaintenanceStatus(), { wrapper });
 
-    result.current.mutate({ id: 'm1', status: 'completed' as any });
+    result.current.mutate({ id: 'm1', status: 'completed' as MaintenanceStatus });
 
     // onMutate patches the detail cache immediately
     await waitFor(() => {
-      const detail = queryClient.getQueryData(maintenanceKeys.detail('m1')) as any;
-      expect(detail?.status).toBe('completed');
+      const detail = queryClient.getQueryData(maintenanceKeys.detail('m1')) as unknown as Record<
+        string,
+        unknown
+      >;
+      expect(detail?.['status']).toBe('completed');
     });
 
     // Cleanup: resolve and let mutation settle
-    resolveMutation({ success: true, data: { id: 'm1', status: 'completed' } });
+    resolveMutation({
+      success: true,
+      data: { id: 'm1', status: 'completed' },
+    } as unknown as UpdateMaintenanceStatusResult);
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
 
@@ -395,16 +453,19 @@ describe('optimistic: updateMaintenanceStatus', () => {
       success: false,
       data: null,
       error: 'Failed',
-    } as any);
+    } as unknown as UpdateMaintenanceStatusResult);
 
     const { result } = renderHook(() => useUpdateMaintenanceStatus(), { wrapper });
 
-    result.current.mutate({ id: 'm1', status: 'completed' as any });
+    result.current.mutate({ id: 'm1', status: 'completed' as MaintenanceStatus });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
 
     // Detail cache should be rolled back to 'scheduled'
-    const detail = queryClient.getQueryData(maintenanceKeys.detail('m1')) as any;
-    expect(detail.status).toBe('scheduled');
+    const detail = queryClient.getQueryData(maintenanceKeys.detail('m1')) as unknown as Record<
+      string,
+      unknown
+    >;
+    expect(detail['status']).toBe('scheduled');
   });
 });

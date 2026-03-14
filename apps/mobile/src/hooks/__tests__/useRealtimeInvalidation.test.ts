@@ -26,7 +26,7 @@ jest.mock('@rgr/shared', () => ({
 
 let mockIsAuthenticated = false;
 jest.mock('../../store/authStore', () => ({
-  useAuthStore: jest.fn((selector: (s: { isAuthenticated: boolean }) => any) =>
+  useAuthStore: jest.fn((selector: (s: { isAuthenticated: boolean }) => unknown) =>
     selector({ isAuthenticated: mockIsAuthenticated })
   ),
 }));
@@ -43,7 +43,9 @@ import { useRealtimeInvalidation } from '../useRealtimeInvalidation';
 
 /** Find the `.on()` call whose options object matches the given table name. */
 function findOnCallForTable(table: string) {
-  const call = mockOn.mock.calls.find((args: any[]) => args[1] && args[1].table === table);
+  const call = mockOn.mock.calls.find(
+    (args: unknown[]) => args[1] && (args[1] as Record<string, unknown>)['table'] === table
+  );
   if (!call) throw new Error(`No .on() call found for table "${table}"`);
   return call;
 }

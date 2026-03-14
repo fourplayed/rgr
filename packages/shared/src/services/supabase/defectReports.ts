@@ -7,10 +7,10 @@ import type {
   UpdateDefectReportInput,
   DefectReportRow,
   DefectReportListItem,
+  CreateMaintenanceInput,
 } from '../../types/entities';
 import type { DefectStatus } from '../../types/enums';
 import { DefectStatusSchema } from '../../types/enums/DefectEnums';
-import type { MaintenancePriority, MaintenanceStatus } from '../../types/enums';
 import {
   mapRowToDefectReport,
   mapDefectReportToInsert,
@@ -355,21 +355,7 @@ export interface AcceptDefectResult {
  */
 export async function acceptDefectReport(
   defectReportId: string,
-  maintenanceInput: {
-    assetId: string;
-    title: string;
-    description?: string | null;
-    priority?: MaintenancePriority;
-    status?: MaintenanceStatus;
-    maintenanceType?: string | null;
-    reportedBy?: string | null;
-    assignedTo?: string | null;
-    scheduledDate?: string | null;
-    dueDate?: string | null;
-    hazardAlertId?: string | null;
-    scanEventId?: string | null;
-    notes?: string | null;
-  }
+  maintenanceInput: CreateMaintenanceInput
 ): Promise<ServiceResult<AcceptDefectResult>> {
   const supabase = getSupabaseClient();
 
