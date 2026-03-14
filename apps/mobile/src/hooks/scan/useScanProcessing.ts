@@ -50,7 +50,7 @@ export function useScanProcessing(
       try {
         logger.scan(`QR code detected: ${qrData.substring(0, 30)}...`);
         await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        dispatch({ type: 'QR_DETECTED', scanStatus: 'QR detected' });
+        dispatch({ type: 'QR_DETECTED', scanStep: 'detected' });
 
         // 1. Read fresh location from the Zustand store to avoid stale closures
         let { lastLocation: freshLocation, resolvedDepot: freshDepot } =
@@ -61,7 +61,7 @@ export function useScanProcessing(
 
           if (isResolvingDepot) {
             logger.scan('Location resolving — waiting for GPS...');
-            dispatch({ type: 'UPDATE_SCAN_STATUS', scanStatus: 'Resolving location...' });
+            dispatch({ type: 'UPDATE_SCAN_STEP', scanStep: 'location' });
 
             const resolved = await waitForLocationResolution(15_000);
 
@@ -98,7 +98,7 @@ export function useScanProcessing(
 
         // 2. Lookup asset
         logger.scan('Looking up asset...');
-        dispatch({ type: 'UPDATE_SCAN_STATUS', scanStatus: 'Looking up asset...' });
+        dispatch({ type: 'UPDATE_SCAN_STEP', scanStep: 'lookup' });
         const asset = await lookupAsset(qrData);
         logger.scan(`Asset found: ${asset.assetNumber}`);
 

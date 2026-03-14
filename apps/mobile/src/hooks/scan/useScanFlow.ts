@@ -12,6 +12,7 @@ import { useLocationStore } from '../../store/locationStore';
 import type { CachedLocationData } from '../../store/locationStore';
 import type { Asset } from '@rgr/shared';
 import type { BarcodeScanningResult } from 'expo-camera';
+import type { ScanStep } from '../../components/scanner/ScanProgressOverlay';
 import { useScanProcessing } from './useScanProcessing';
 import { useModalTransition } from '../useModalTransition';
 import { logger } from '../../utils/logger';
@@ -33,6 +34,7 @@ export type {
   ConfirmAction,
   CompletionSummary,
 } from './scanFlowMachine';
+export type { ScanStep } from '../../components/scanner/ScanProgressOverlay';
 
 // ── Context modal type ──
 
@@ -74,7 +76,7 @@ export interface UseScanFlowReturn {
   activeSheet: ScanSheetId | null;
   cameraOpen: boolean;
   isCreatingScan: boolean;
-  scanStatus: string | null;
+  scanStep: ScanStep | null;
   showOverlay: boolean;
   showCard: boolean;
   buttonsDisabled: boolean;
@@ -272,7 +274,7 @@ export function useScanFlow({ canMarkMaintenance }: UseScanFlowOptions): UseScan
   const cameraOpen = state.phase === 'active' ? state.cameraOpen : false;
   const isAwaitingSheetExit = state.phase === 'active' ? state.awaitingSheetExit : false;
   const isCreatingScan = state.phase === 'confirming';
-  const scanStatus = state.phase === 'scanning' ? state.scanStatus : null;
+  const scanStep = state.phase === 'scanning' ? state.scanStep : null;
   // showOverlay: backdrop stays up during the entire confirming/active phase
   const showOverlay = state.phase === 'confirming' || state.phase === 'active';
   // showCard: confirmation card hides when camera, review sheet, pending review,
@@ -506,7 +508,7 @@ export function useScanFlow({ canMarkMaintenance }: UseScanFlowOptions): UseScan
     activeSheet,
     cameraOpen,
     isCreatingScan,
-    scanStatus,
+    scanStep,
     showOverlay,
     showCard,
     buttonsDisabled,

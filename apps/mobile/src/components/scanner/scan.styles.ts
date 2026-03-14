@@ -103,24 +103,6 @@ export const styles = StyleSheet.create({
     borderRightWidth: CORNER_THICKNESS,
   },
 
-  // ── Scan status pill (below reticle) ───────────────────
-  scanStatusPill: {
-    marginTop: spacing.md,
-    alignSelf: 'center',
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.base,
-    borderRadius: borderRadius.full,
-    gap: spacing.sm,
-  },
-  scanStatusText: {
-    fontSize: fontSize.sm,
-    fontFamily: fonts.bold,
-    color: colors.textInverse,
-  },
-
   // ── Footer tray (replaces footer) ─────────────────────
   footerTray: {
     backgroundColor: colors.overlayCard,

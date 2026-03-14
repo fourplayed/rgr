@@ -1,5 +1,6 @@
 import type { Asset, Depot } from '@rgr/shared';
 import type { CachedLocationData } from '../../store/locationStore';
+import type { ScanStep } from '../../components/scanner/ScanProgressOverlay';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -24,7 +25,7 @@ export interface CompletionSummary {
 
 export type ScanFlowState =
   | { phase: 'idle' }
-  | { phase: 'scanning'; scanStatus: string }
+  | { phase: 'scanning'; scanStep: ScanStep }
   | ({
       phase: 'confirming';
       isCreatingScan: boolean;
@@ -48,8 +49,8 @@ export type ScanFlowState =
 // ── Actions ──────────────────────────────────────────────────────────────────
 
 export type ScanFlowAction =
-  | { type: 'QR_DETECTED'; scanStatus: string }
-  | { type: 'UPDATE_SCAN_STATUS'; scanStatus: string }
+  | { type: 'QR_DETECTED'; scanStep: ScanStep }
+  | { type: 'UPDATE_SCAN_STEP'; scanStep: ScanStep }
   | {
       type: 'ASSET_FOUND';
       scannedAsset: Asset;
@@ -111,18 +112,18 @@ export function scanFlowReducer(state: ScanFlowState, action: ScanFlowAction): S
 
     case 'QR_DETECTED':
       if (state.phase !== 'idle' && state.phase !== 'scanning') return state;
-      return { phase: 'scanning', scanStatus: action.scanStatus };
+      return { phase: 'scanning', scanStep: action.scanStep };
 
     case 'INVALID_QR':
-      return { phase: 'scanning', scanStatus: 'Not a valid asset code' };
+      return { phase: 'scanning', scanStep: 'invalid' };
 
     case 'CLEAR_INVALID_STATUS':
       if (state.phase !== 'scanning') return state;
       return { phase: 'idle' };
 
-    case 'UPDATE_SCAN_STATUS':
+    case 'UPDATE_SCAN_STEP':
       if (state.phase !== 'scanning') return state;
-      return { ...state, scanStatus: action.scanStatus };
+      return { ...state, scanStep: action.scanStep };
 
     case 'ASSET_FOUND':
       if (state.phase !== 'scanning') return state;
@@ -216,14 +217,20 @@ export function scanFlowReducer(state: ScanFlowState, action: ScanFlowAction): S
       if (!state.capturedPhotoUri) return state;
       return { ...state, activeSheet: 'review' };
 
-    case 'CAMERA_CANCELLED':
+    case 'CAMERA_CANCELLED': {
       if (state.phase !== 'active') return state;
-      return {
+      const primaryActionDone =
+        (state.confirmedAction === 'defect' && state.defectCompleted) ||
+        (state.confirmedAction === 'maintenance' && state.maintenanceCompleted);
+      const next: ActiveState = {
         ...state,
         cameraOpen: false,
-        confirmedAction: null,
+        confirmedAction: primaryActionDone ? state.confirmedAction : null,
         capturedPhotoUri: null,
       };
+      if (shouldAutoComplete(next)) return toCompleting(next);
+      return next;
+    }
 
     // ── Sheet lifecycle ──
 
@@ -250,19 +257,26 @@ export function scanFlowReducer(state: ScanFlowState, action: ScanFlowAction): S
       return cleared;
     }
 
-    case 'SHEET_DISMISSED':
+    case 'SHEET_DISMISSED': {
       if (state.phase !== 'active') return state;
       // If a compound action (DEFECT_SUBMITTED, PHOTO_FLOW_COMPLETE, MAINTENANCE_CREATED)
       // already set awaitingSheetExit, it owns the exit lifecycle — ignore the dismiss.
       if (state.awaitingSheetExit) return state;
-      // User swiped to dismiss — clear confirmed action so no auto-complete
-      return {
+      // Preserve confirmedAction when the primary action already completed (defect/maintenance
+      // submitted) — the user is dismissing the optional photo review, not cancelling the flow.
+      const primaryDone =
+        (state.confirmedAction === 'defect' && state.defectCompleted) ||
+        (state.confirmedAction === 'maintenance' && state.maintenanceCompleted);
+      const next: ActiveState = {
         ...state,
         activeSheet: null,
         awaitingSheetExit: false,
-        confirmedAction: null,
+        confirmedAction: primaryDone ? state.confirmedAction : null,
         capturedPhotoUri: null,
       };
+      if (shouldAutoComplete(next)) return toCompleting(next);
+      return next;
+    }
 
     // ── Compound actions (from mutation onSuccess) ──
 

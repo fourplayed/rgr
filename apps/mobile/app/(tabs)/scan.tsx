@@ -155,7 +155,7 @@ export default function ScanScreen() {
           <CameraOverlay
             hasLocationPermission={flow.hasLocationPermission}
             onRequestLocationPermission={flow.requestLocationPermission}
-            scanStatus={flow.scanStatus}
+            scanStep={flow.scanStep}
             onDebugScan={flow.triggerDebugScan}
           />
         )}

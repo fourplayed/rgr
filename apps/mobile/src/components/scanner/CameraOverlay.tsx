@@ -1,15 +1,16 @@
 import React, { useEffect, useRef } from 'react';
 import { View, SafeAreaView, TouchableOpacity, Animated } from 'react-native';
-import { LoadingDots } from '../common/LoadingDots';
 import { Button } from '../common/Button';
 import { colors } from '../../theme/colors';
 import { styles } from './scan.styles';
 import { AppText } from '../common';
+import { ScanProgressOverlay } from './ScanProgressOverlay';
+import type { ScanStep } from './ScanProgressOverlay';
 
 interface CameraOverlayProps {
   hasLocationPermission: boolean;
   onRequestLocationPermission: () => void;
-  scanStatus?: string | null;
+  scanStep?: ScanStep | null;
   /** __DEV__-only: triggers a scan using the first asset from the database */
   onDebugScan?: () => void;
 }
@@ -17,13 +18,13 @@ interface CameraOverlayProps {
 function CameraOverlayComponent({
   hasLocationPermission,
   onRequestLocationPermission,
-  scanStatus,
+  scanStep,
   onDebugScan,
 }: CameraOverlayProps) {
   const cornerOpacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    if (scanStatus) {
+    if (scanStep) {
       // QR detected — solid corners during processing
       cornerOpacity.setValue(1);
       return;
@@ -46,7 +47,7 @@ function CameraOverlayComponent({
     );
     animation.start();
     return () => animation.stop();
-  }, [scanStatus, cornerOpacity]);
+  }, [scanStep, cornerOpacity]);
 
   return (
     <SafeAreaView style={styles.overlay}>
@@ -73,15 +74,8 @@ function CameraOverlayComponent({
           <Animated.View
             style={[styles.corner, styles.cornerBottomRight, { opacity: cornerOpacity }]}
           />
+          {scanStep ? <ScanProgressOverlay step={scanStep} /> : null}
         </View>
-
-        {/* Scan status pill (below reticle) */}
-        {scanStatus ? (
-          <View style={styles.scanStatusPill}>
-            <LoadingDots color={colors.textInverse} size={6} />
-            <AppText style={styles.scanStatusText}>{scanStatus}</AppText>
-          </View>
-        ) : null}
       </View>
 
       {/* ── Footer: location prompt + debug scan ── */}

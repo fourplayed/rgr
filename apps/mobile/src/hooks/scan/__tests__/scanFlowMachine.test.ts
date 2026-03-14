@@ -48,7 +48,7 @@ const makeDepotMatch = (overrides = {}): MatchedDepot => ({
 function buildActiveState(overrides: Partial<ActiveState> = {}): ActiveState {
   let s: ScanFlowState = scanFlowReducer(initialScanFlowState, {
     type: 'QR_DETECTED',
-    scanStatus: 'Looking up...',
+    scanStep: 'detected',
   });
   s = scanFlowReducer(s, {
     type: 'ASSET_FOUND',
@@ -72,10 +72,10 @@ describe('scanFlowMachine', () => {
     it('QR_DETECTED from idle transitions to scanning', () => {
       const next = scanFlowReducer(initialScanFlowState, {
         type: 'QR_DETECTED',
-        scanStatus: 'QR detected',
+        scanStep: 'detected',
       }) as ScanningState;
       expect(next.phase).toBe('scanning');
-      expect(next.scanStatus).toBe('QR detected');
+      expect(next.scanStep).toBe('detected');
     });
 
     it('ASSET_FOUND from idle is ignored', () => {
@@ -90,7 +90,7 @@ describe('scanFlowMachine', () => {
 
     it('INVALID_QR sets error status', () => {
       const next = scanFlowReducer(initialScanFlowState, { type: 'INVALID_QR' }) as ScanningState;
-      expect(next.scanStatus).toBe('Not a valid asset code');
+      expect(next.scanStep).toBe('invalid');
     });
 
     it('CLEAR_INVALID_STATUS returns to idle', () => {
@@ -108,7 +108,7 @@ describe('scanFlowMachine', () => {
     beforeEach(() => {
       const s = scanFlowReducer(initialScanFlowState, {
         type: 'QR_DETECTED',
-        scanStatus: 'Looking up...',
+        scanStep: 'detected',
       });
       confirming = scanFlowReducer(s, {
         type: 'ASSET_FOUND',
@@ -249,12 +249,23 @@ describe('scanFlowMachine', () => {
       expect(next).toBe(active);
     });
 
-    it('CAMERA_CANCELLED clears confirmedAction', () => {
+    it('CAMERA_CANCELLED clears confirmedAction when no primary action done', () => {
       const active = buildActiveState({ cameraOpen: true, confirmedAction: 'photo' });
       const next = scanFlowReducer(active, { type: 'CAMERA_CANCELLED' }) as ActiveState;
       expect(next.cameraOpen).toBe(false);
       expect(next.confirmedAction).toBeNull();
       expect(next.capturedPhotoUri).toBeNull();
+    });
+
+    it('CAMERA_CANCELLED after defect submitted preserves confirmedAction and auto-completes', () => {
+      const active = buildActiveState({
+        cameraOpen: true,
+        confirmedAction: 'defect',
+        defectCompleted: true,
+      });
+      const result = scanFlowReducer(active, { type: 'CAMERA_CANCELLED' });
+      expect(result.phase).toBe('completing');
+      expect((result as CompletingState).summary.defectCompleted).toBe(true);
     });
 
     it('full photo flow: CAMERA_CAPTURED → OPEN_REVIEW → confirm → auto-complete', () => {
@@ -419,7 +430,7 @@ describe('scanFlowMachine', () => {
   // ── Sheet lifecycle ──
 
   describe('sheet lifecycle', () => {
-    it('SHEET_DISMISSED clears confirmedAction (no auto-complete)', () => {
+    it('SHEET_DISMISSED clears confirmedAction when no primary action done', () => {
       const active = buildActiveState({
         activeSheet: 'defect',
         confirmedAction: 'defect',
@@ -428,6 +439,17 @@ describe('scanFlowMachine', () => {
       expect(next.activeSheet).toBeNull();
       expect(next.confirmedAction).toBeNull();
       expect(next.awaitingSheetExit).toBe(false);
+    });
+
+    it('SHEET_DISMISSED after defect submitted preserves confirmedAction and auto-completes', () => {
+      const active = buildActiveState({
+        activeSheet: 'review',
+        confirmedAction: 'defect',
+        defectCompleted: true,
+      });
+      const result = scanFlowReducer(active, { type: 'SHEET_DISMISSED' });
+      expect(result.phase).toBe('completing');
+      expect((result as CompletingState).summary.defectCompleted).toBe(true);
     });
 
     it('SHEET_DISMISSED is ignored when awaitingSheetExit is true', () => {
@@ -527,7 +549,7 @@ describe('scanFlowMachine', () => {
 
   describe('phase guards', () => {
     it('CONFIRM_ACTION ignored in scanning phase', () => {
-      const scanning: ScanFlowState = { phase: 'scanning', scanStatus: 'looking...' };
+      const scanning: ScanFlowState = { phase: 'scanning', scanStep: 'lookup' };
       const next = scanFlowReducer(scanning, { type: 'CONFIRM_ACTION', action: 'photo' });
       expect(next).toBe(scanning);
     });
