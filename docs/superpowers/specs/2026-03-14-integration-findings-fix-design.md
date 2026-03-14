@@ -20,7 +20,7 @@
 
 **Problem:** The `onAuthStateChange` listener in `_layout.tsx` only acts on `SIGNED_OUT` or `TOKEN_REFRESHED && !session`. When a refresh succeeds with a valid session, the new tokens are not saved to SecureStore. If the app is killed, auto-login uses stale tokens.
 
-**Fix:** Add a branch for `TOKEN_REFRESHED && session` that calls `storeSession()` with the new session data.
+**Fix:** Add a branch for `TOKEN_REFRESHED && session` that calls `storeSession()` with the new session data. Guard that `session.access_token` and `session.refresh_token` are truthy before storing — a defensive check matching the project's pattern of validating at boundaries.
 
 **File:** `apps/mobile/app/_layout.tsx` (lines 157-167)
 
@@ -59,9 +59,9 @@ ALTER PUBLICATION supabase_realtime ADD TABLE maintenance_records;
 
 **Problem:** When the realtime connection flaps, each SUBSCRIBED event triggers full query invalidation. Rapid reconnects cause repeated refetches.
 
-**Fix:** Track `lastInvalidatedAt` per-channel using a `Map<string, number>` keyed by channel name. Skip invalidation if the previous one for that specific channel was less than 5 seconds ago. Per-channel tracking prevents one channel's reconnect from suppressing another channel's legitimate invalidation.
+**Fix:** Track `lastInvalidatedAt` per-channel using a `Map<string, number>` keyed by channel name. Skip invalidation if the previous one for that specific channel was less than 5 seconds ago. Per-channel tracking prevents one channel's reconnect from suppressing another channel's legitimate invalidation. Export a `clearRealtimeDebounce()` function to reset the map on logout — call it alongside the existing `clearRealtimeSuppressions()` in `_layout.tsx`.
 
-**File:** `apps/mobile/src/hooks/useRealtimeInvalidation.ts`
+**File:** `apps/mobile/src/hooks/useRealtimeInvalidation.ts`, `apps/mobile/app/_layout.tsx`
 
 ---
 
@@ -102,7 +102,7 @@ type QueuedMutation = {
   id: string;
   type: 'scan' | 'defect_report' | 'maintenance';
   payload: CreateScanEventInput | CreateDefectReportInput | CreateMaintenanceRecordInput;
-  queuedAt: number;
+  queuedAt: string; // ISO 8601 string (matches existing QueuedScan pattern)
   photoUris?: string[]; // local file paths, uploaded during replay
 };
 ```
@@ -134,11 +134,13 @@ Post-replay invalidation in `_layout.tsx` extended to also invalidate defect and
 
 **Problem:** The offline enqueue path in `useScanProcessing.ts` only recognizes `rgr://asset/` prefix. Other QR formats supported by the `lookup_asset_by_qr` RPC are silently dropped.
 
-**Fix:** The shared function already exists — `extractAssetInfo()` in `packages/shared/src/utils/qrCode.ts` handles `rgr://asset/`, `rgr://a/`, raw UUIDs, and asset numbers. The offline fallback path in `useScanProcessing.ts` uses a hand-rolled `qrData.startsWith('rgr://asset/')` instead of calling this function.
+**Fix:** The shared function `extractAssetInfo()` in `packages/shared/src/utils/qrCode.ts` already handles `rgr://asset/`, raw UUIDs, and asset numbers — but NOT the `rgr://a/` short prefix (which is only handled by the server-side `lookup_asset_by_qr` RPC). The offline fallback path in `useScanProcessing.ts` uses a hand-rolled `qrData.startsWith('rgr://asset/')` instead of calling this function.
 
-Replace the hand-rolled prefix check with `extractAssetInfo(qrData)` from `@rgr/shared`. If it returns null, show the user "This QR format can't be queued offline - try again when connected" instead of silently dropping.
+Two changes:
+1. Add `rgr://a/` short prefix support to `extractAssetInfo()` for full parity with the server-side RPC (trivial — one additional `startsWith` check).
+2. Replace the hand-rolled prefix check in `useScanProcessing.ts` with `extractAssetInfo(qrData)` from `@rgr/shared`. If it returns null, show the user "This QR format can't be queued offline - try again when connected" instead of silently dropping.
 
-**Files:** `apps/mobile/src/hooks/scan/useScanProcessing.ts` (import and use existing `extractAssetInfo`)
+**Files:** `packages/shared/src/utils/qrCode.ts` (add `rgr://a/` prefix), `apps/mobile/src/hooks/scan/useScanProcessing.ts`
 
 ### F10 — No UI indicator for pending offline queue
 
