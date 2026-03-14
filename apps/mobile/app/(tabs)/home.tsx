@@ -95,7 +95,7 @@ const ActivityCard = memo(function ActivityCard({
     return (
       <Animated.View style={{ opacity: entranceOpacity }}>
         <TouchableOpacity
-          style={[styles.scanCard, { backgroundColor: activityColor + '08' }]}
+          style={[styles.scanCard, { backgroundColor: activityColor + '1A' }]}
           onPress={handlePress}
           activeOpacity={0.7}
           accessibilityRole="button"
@@ -152,7 +152,7 @@ const ActivityCard = memo(function ActivityCard({
     return (
       <Animated.View style={{ opacity: entranceOpacity }}>
         <TouchableOpacity
-          style={[styles.scanCard, { backgroundColor: colors.defectYellow + '08' }]}
+          style={[styles.scanCard, { backgroundColor: colors.defectYellow + '1A' }]}
           onPress={handlePress}
           activeOpacity={0.7}
           accessibilityRole="button"
@@ -195,7 +195,7 @@ const ActivityCard = memo(function ActivityCard({
   return (
     <Animated.View style={{ opacity: entranceOpacity }}>
       <TouchableOpacity
-        style={[styles.scanCard, { backgroundColor: maintConfig.color + '08' }]}
+        style={[styles.scanCard, { backgroundColor: maintConfig.color + '1A' }]}
         onPress={handlePress}
         activeOpacity={0.7}
         accessibilityRole="button"

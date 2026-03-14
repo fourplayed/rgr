@@ -20,7 +20,7 @@ function DefectReportListItemComponent({ defect, onPress }: DefectReportListItem
     onPress(defect);
   }, [onPress, defect]);
   const containerStyle = useMemo(
-    () => [cardStyles.container, { borderLeftColor: color, backgroundColor: color + '08' }],
+    () => [cardStyles.container, { borderLeftColor: color, backgroundColor: color + '1A' }],
     [color]
   );
 

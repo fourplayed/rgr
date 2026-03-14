@@ -96,6 +96,7 @@ function DefectReportSheetComponent({
       onClose={handleCancel}
       onExitComplete={onExitComplete}
       noBackdrop={noBackdrop}
+      preventDismissWhileBusy={isSubmitting}
       keyboardAware
       snapPoint="55%"
     >

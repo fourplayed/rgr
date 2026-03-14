@@ -127,6 +127,7 @@ export function SheetModal({
         if (programmaticDismissRef.current && !dismissHandledRef.current) {
           dismissHandledRef.current = true;
           programmaticDismissRef.current = false;
+          ref.current?.forceClose();
           onExitCompleteRef.current?.();
         }
       }, 500);
@@ -150,7 +151,7 @@ export function SheetModal({
         onExitCompleteRef.current?.();
       }
       programmaticDismissRef.current = true;
-      sheetRef?.dismiss();
+      sheetRef?.forceClose();
     };
   }, []);
 

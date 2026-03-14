@@ -145,7 +145,7 @@ const ActivityCard = React.memo(function ActivityCard({
     <View
       style={[
         cardStyles.containerInline,
-        { borderColor: activityColor, backgroundColor: activityColor + '08' },
+        { borderColor: activityColor, backgroundColor: activityColor + '1A' },
       ]}
     >
       <View style={cardStyles.cardRow}>
@@ -261,7 +261,7 @@ const MaintenanceCard = React.memo(function MaintenanceCard({
     <TouchableOpacity
       style={[
         cardStyles.containerInline,
-        { borderColor: statusColor, backgroundColor: statusColor + '08' },
+        { borderColor: statusColor, backgroundColor: statusColor + '1A' },
       ]}
       onPress={() => onPress(item)}
       activeOpacity={0.7}

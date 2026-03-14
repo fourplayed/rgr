@@ -24,6 +24,20 @@
 
 ---
 
+## gorhom BottomSheetModal Stack Race Condition (2026-03-11)
+
+**Pattern**: When multiple gorhom `BottomSheetModal` instances share a `BottomSheetModalProvider`, presenting modal B while modal A's dismiss animation is in progress can suppress A's `onDismiss` callback. This blocks any callback-driven state transitions (like `SHEET_EXIT_COMPLETE`) that depend on `onDismiss` firing.
+
+**Root cause in scan flow**: The `showCard` derived value in `useScanFlow.ts` didn't account for `awaitingSheetExit`. After compound actions (`PHOTO_FLOW_COMPLETE`, `DEFECT_SUBMITTED`, `MAINTENANCE_CREATED`), the sub-sheet was animating out (`awaitingSheetExit=true`) while `showCard` evaluated to `true`, causing the confirmation card to `present()` into the gorhom stack during the exit animation.
+
+**Symptom**: Blank screen (dark blur backdrop visible, no sheet on top) after photo capture. The `onDismiss` callback from the review sheet was suppressed, blocking `SHEET_EXIT_COMPLETE`, and leaving the state stuck in `active` phase with `awaitingSheetExit=true`.
+
+**Fix**: Added `!state.awaitingSheetExit` to the `showCard` condition in `useScanFlow.ts`.
+
+**Key lesson**: Any derived visibility flag for gorhom modals must check `awaitingSheetExit` to prevent stack conflicts during sheet-to-sheet transitions.
+
+---
+
 ## Project Structure
 - Monorepo at `rgr-new/rgr/` (NOT `rgr-new/apps/`) -- files are under `rgr/apps/web/src/`
 - React + TypeScript + Vite + Vitest

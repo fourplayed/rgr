@@ -61,7 +61,7 @@ export function AssetInfoCard({ asset, nextServiceDate, assessment, onPress }: A
         {
           borderLeftWidth: 4,
           borderLeftColor: statusColor,
-          backgroundColor: statusColor + '08',
+          backgroundColor: statusColor + '1A',
         },
       ]}
     >

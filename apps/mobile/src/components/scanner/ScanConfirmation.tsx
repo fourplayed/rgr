@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   TouchableOpacity,
@@ -92,11 +92,30 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
   const [selectedAction, setSelectedAction] = useState<ConfirmAction>(null);
   const [activeTab, setActiveTab] = useState<ScanTab>('actions');
 
+  // Track the maximum tab content height so the modal never shrinks on tab switch.
+  // gorhom's enableDynamicSizing re-measures on layout changes — if the new tab is
+  // shorter, the sheet visibly collapses. Applying minHeight prevents this.
+  const maxTabHeightRef = useRef(0);
+  const [minTabHeight, setMinTabHeight] = useState(0);
+
+  const handleTabContentLayout = useCallback(
+    (e: { nativeEvent: { layout: { height: number } } }) => {
+      const h = e.nativeEvent.layout.height;
+      if (h > maxTabHeightRef.current) {
+        maxTabHeightRef.current = h;
+        setMinTabHeight(h);
+      }
+    },
+    []
+  );
+
   // Reset selection when a new scan starts (component stays mounted via displayAsset ref)
   useEffect(() => {
     if (isCreating) {
       setSelectedAction(null);
       setActiveTab('actions');
+      maxTabHeightRef.current = 0;
+      setMinTabHeight(0);
     }
   }, [isCreating]);
   const tabFade = useTabFade(activeTab);
@@ -191,7 +210,10 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
             <View style={styles.tabContainer}>
               <SegmentedTabs tabs={scanTabs} activeTab={activeTab} onTabPress={setActiveTab} />
             </View>
-            <Animated.View style={tabFade}>
+            <Animated.View
+              style={[tabFade, minTabHeight > 0 && { minHeight: minTabHeight }]}
+              onLayout={handleTabContentLayout}
+            >
               {activeTab === 'actions' ? (
                 <View style={styles.checkboxList}>
                   <CheckboxOption
