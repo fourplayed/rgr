@@ -25,7 +25,6 @@ import type {
   ScanEventWithScanner,
   MaintenanceListItem as MaintenanceListItemData,
   DefectReportListItem as DefectReportListItemData,
-  CreateMaintenanceInput,
   Depot,
 } from '@rgr/shared';
 import { colors } from '../../src/theme/colors';
@@ -37,10 +36,7 @@ import { EmptyState } from '../../src/components/common/EmptyState';
 import { Badge } from '../../src/components/common/StatusBadge';
 import {
   MaintenanceStatusBadge,
-  MaintenanceDetailModal,
-  CreateMaintenanceModal,
   DefectStatusBadge,
-  DefectReportDetailModal,
   DEFECT_STATUS_CONFIG,
   getMaintenanceVisualConfig,
 } from '../../src/components/maintenance';
@@ -51,10 +47,8 @@ import {
 } from '../../src/utils/scanFormatters';
 import { findDepotByLocationString, getDepotBadgeColors } from '@rgr/shared';
 import { useDepotLookup } from '../../src/hooks/useDepots';
-import { useAcceptDefect } from '../../src/hooks/useAcceptDefect';
-import { useModalTransition } from '../../src/hooks/useModalTransition';
-import { usePersistentBackdrop } from '../../src/hooks/usePersistentBackdrop';
-import { PersistentBackdrop } from '../../src/components/common/PersistentBackdrop';
+import { useDefectMaintenanceModals } from '../../src/hooks/useDefectMaintenanceModals';
+import { DefectMaintenanceModals } from '../../src/components/common/DefectMaintenanceModals';
 import { useCountUp } from '../../src/hooks/useCountUp';
 import { useStaggeredEntrance } from '../../src/hooks/useStaggeredEntrance';
 import { AppText } from '../../src/components/common';
@@ -63,19 +57,6 @@ import { AppText } from '../../src/components/common';
 const FONT_SIZE_USERNAME = fontSize.display;
 const FONT_SIZE_STAT_VALUE = fontSize.hero;
 const FONT_SIZE_STAT_LABEL = fontSize.sm;
-
-type HomeModalState =
-  | { type: 'none' }
-  | { type: 'defectDetail'; defectId: string }
-  | {
-      type: 'acceptDefect';
-      defectId: string;
-      assetId: string;
-      assetNumber: string | null;
-      title: string;
-      description: string | null;
-    }
-  | { type: 'maintenanceDetail'; maintenanceId: string };
 
 type DashboardActivityItem =
   | { type: 'scan'; data: ScanEventWithScanner; timestamp: string }
@@ -260,55 +241,8 @@ export default function HomeScreen() {
   const isFocused = useIsFocused();
   const { depots } = useDepotLookup();
 
-  // Modal state machine — only one modal visible at a time
-  const { modal, closeModal, transitionTo, isTransitioning, handleExitComplete } =
-    useModalTransition<HomeModalState>({ type: 'none' });
-
-  // Persistent backdrop — stays visible during A→B modal transitions
-  const {
-    backdropOpacity,
-    showBackdrop,
-    mounted: backdropMounted,
-  } = usePersistentBackdrop(modal.type !== 'none' || isTransitioning);
-
-  const { mutateAsync: acceptDefect } = useAcceptDefect();
-
-  const handleAcceptPress = useCallback(
-    (context: {
-      defectId: string;
-      assetId: string;
-      assetNumber: string | null;
-      title: string;
-      description: string | null;
-    }) => {
-      transitionTo({ type: 'acceptDefect', ...context });
-    },
-    [transitionTo]
-  );
-
-  const handleViewTaskPress = useCallback(
-    (maintenanceId: string) => {
-      transitionTo({ type: 'maintenanceDetail', maintenanceId });
-    },
-    [transitionTo]
-  );
-
-  const handleAcceptSubmit = useCallback(
-    async (input: CreateMaintenanceInput) => {
-      if (modal.type !== 'acceptDefect') return;
-      await acceptDefect({
-        defectReportId: modal.defectId,
-        maintenanceInput: input,
-      });
-      closeModal();
-    },
-    [modal, acceptDefect, closeModal]
-  );
-
-  // Dismiss defect flow (confirmation + delete handled inside DefectReportDetailModal)
-  const handleDismissConfirmed = useCallback(() => {
-    closeModal();
-  }, [closeModal]);
+  // Shared defect/maintenance modal chain (detail -> accept -> task detail)
+  const modals = useDefectMaintenanceModals();
 
   // Recent scans across all users (global activity)
   const {
@@ -514,12 +448,12 @@ export default function HomeScreen() {
       if (item.type === 'scan') {
         router.navigate(`/(tabs)/assets/${item.data.assetId}`);
       } else if (item.type === 'defect') {
-        transitionTo({ type: 'defectDetail', defectId: item.data.id });
+        modals.openDefectDetail(item.data.id);
       } else {
-        transitionTo({ type: 'maintenanceDetail', maintenanceId: item.data.id });
+        modals.openMaintenanceDetail(item.data.id);
       }
     },
-    [router, transitionTo]
+    [router, modals]
   );
 
   // Thin wrapper delegates to memoized ActivityCard (passes index for stagger)
@@ -672,51 +606,8 @@ export default function HomeScreen() {
           }
         />
 
-        {/* Persistent backdrop — stays visible during A→B modal transitions */}
-        <PersistentBackdrop
-          opacity={backdropOpacity}
-          showBackdrop={showBackdrop}
-          mounted={backdropMounted}
-          onPress={closeModal}
-        />
-
-        {/* Chained modals — gorhom portal rendering (no wrapper needed) */}
-        <DefectReportDetailModal
-          visible={modal.type === 'defectDetail'}
-          defectId={modal.type === 'defectDetail' ? modal.defectId : null}
-          onClose={closeModal}
-          onAcceptPress={handleAcceptPress}
-          onViewTaskPress={handleViewTaskPress}
-          onDismissConfirmed={handleDismissConfirmed}
-          noBackdrop
-          onExitComplete={handleExitComplete}
-        />
-
-        <CreateMaintenanceModal
-          visible={modal.type === 'acceptDefect'}
-          onClose={closeModal}
-          noBackdrop
-          onExitComplete={handleExitComplete}
-          {...(modal.type === 'acceptDefect'
-            ? {
-                assetId: modal.assetId,
-                assetNumber: modal.assetNumber,
-                defectReportId: modal.defectId,
-                defaultTitle: modal.description ?? modal.title,
-                defaultDescription: undefined,
-                defaultPriority: 'medium' as const,
-                onExternalSubmit: handleAcceptSubmit,
-              }
-            : {})}
-        />
-
-        <MaintenanceDetailModal
-          visible={modal.type === 'maintenanceDetail'}
-          maintenanceId={modal.type === 'maintenanceDetail' ? modal.maintenanceId : null}
-          onClose={closeModal}
-          noBackdrop
-          onExitComplete={handleExitComplete}
-        />
+        {/* Shared defect/maintenance modal chain */}
+        <DefectMaintenanceModals {...modals} />
       </SafeAreaView>
     </View>
   );

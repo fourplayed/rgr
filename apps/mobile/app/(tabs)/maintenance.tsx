@@ -8,7 +8,6 @@ import type {
   MaintenanceListItem as MaintenanceListItemType,
   DefectStatus,
   DefectReportListItem as DefectReportListItemType,
-  CreateMaintenanceInput,
 } from '@rgr/shared';
 import { colors } from '../../src/theme/colors';
 import {
@@ -27,35 +26,17 @@ import {
   MaintenanceFilterPanel,
   DefectFilterPanel,
   CreateMaintenanceModal,
-  MaintenanceDetailModal,
   DefectReportListItem,
-  DefectReportDetailModal,
   MAINTENANCE_ITEM_HEIGHT,
   DEFECT_ITEM_HEIGHT,
 } from '../../src/components/maintenance';
 import { useMaintenanceList } from '../../src/hooks/useMaintenanceData';
 import { useDefectReportList } from '../../src/hooks/useDefectData';
-import { useAcceptDefect } from '../../src/hooks/useAcceptDefect';
-import { useModalTransition } from '../../src/hooks/useModalTransition';
+import { useDefectMaintenanceModals } from '../../src/hooks/useDefectMaintenanceModals';
+import { DefectMaintenanceModals } from '../../src/components/common/DefectMaintenanceModals';
 import { useTabFade } from '../../src/hooks/useTabFade';
-import { usePersistentBackdrop } from '../../src/hooks/usePersistentBackdrop';
-import { PersistentBackdrop } from '../../src/components/common/PersistentBackdrop';
 import { useUserPermissions } from '../../src/contexts/UserPermissionsContext';
 import { AppText } from '../../src/components/common';
-
-type ModalState =
-  | { type: 'none' }
-  | { type: 'defectDetail'; defectId: string }
-  | {
-      type: 'acceptDefect';
-      defectId: string;
-      assetId: string;
-      assetNumber: string | null;
-      title: string;
-      description: string | null;
-    }
-  | { type: 'maintenanceDetail'; maintenanceId: string }
-  | { type: 'createMaintenance' };
 
 // Segment tabs
 type TabKey = 'tasks' | 'defects';
@@ -103,61 +84,11 @@ export default function MaintenanceScreen() {
     }
   }, [tab, defectStatus, router]);
 
-  // Modal state machine — only one modal visible at a time
-  const {
-    modal,
-    closeModal: close,
-    transitionTo,
-    isTransitioning,
-    handleExitComplete,
-  } = useModalTransition<ModalState>({ type: 'none' });
+  // Shared defect/maintenance modal chain (detail -> accept -> task detail)
+  const modals = useDefectMaintenanceModals();
 
-  // Persistent backdrop — stays visible during A→B modal transitions
-  const {
-    backdropOpacity,
-    showBackdrop,
-    mounted: backdropMounted,
-  } = usePersistentBackdrop(modal.type !== 'none' || isTransitioning);
-
-  // Accept defect hook (moved up from DefectReportDetailModal)
-  const { mutateAsync: acceptDefect } = useAcceptDefect();
-
-  const handleAcceptPress = useCallback(
-    (context: {
-      defectId: string;
-      assetId: string;
-      assetNumber: string | null;
-      title: string;
-      description: string | null;
-    }) => {
-      transitionTo({ type: 'acceptDefect', ...context });
-    },
-    [transitionTo]
-  );
-
-  const handleViewTaskPress = useCallback(
-    (maintenanceId: string) => {
-      transitionTo({ type: 'maintenanceDetail', maintenanceId });
-    },
-    [transitionTo]
-  );
-
-  const handleAcceptSubmit = useCallback(
-    async (input: CreateMaintenanceInput) => {
-      if (modal.type !== 'acceptDefect') return;
-      await acceptDefect({
-        defectReportId: modal.defectId,
-        maintenanceInput: input,
-      });
-      close();
-    },
-    [modal, acceptDefect, close]
-  );
-
-  // Dismiss defect flow (confirmation + delete handled inside DefectReportDetailModal)
-  const handleDismissConfirmed = useCallback(() => {
-    close();
-  }, [close]);
+  // Standalone "create maintenance" state — separate from the defect chain
+  const [showCreateMaintenance, setShowCreateMaintenance] = useState(false);
 
   // Fetch maintenance list with filters — always exclude cancelled at the query level
   const maintenanceFilters = useMemo(
@@ -218,21 +149,25 @@ export default function MaintenanceScreen() {
 
   const handleMaintenancePress = useCallback(
     (item: MaintenanceListItemType) => {
-      transitionTo({ type: 'maintenanceDetail', maintenanceId: item.id });
+      modals.openMaintenanceDetail(item.id);
     },
-    [transitionTo]
+    [modals]
   );
 
   const handleDefectPress = useCallback(
     (item: DefectReportListItemType) => {
-      transitionTo({ type: 'defectDetail', defectId: item.id });
+      modals.openDefectDetail(item.id);
     },
-    [transitionTo]
+    [modals]
   );
 
   const handleOpenCreate = useCallback(() => {
-    transitionTo({ type: 'createMaintenance' });
-  }, [transitionTo]);
+    setShowCreateMaintenance(true);
+  }, []);
+
+  const handleCloseCreate = useCallback(() => {
+    setShowCreateMaintenance(false);
+  }, []);
 
   // Maintenance list renderers
   const renderMaintenanceItem = useCallback(
@@ -411,51 +346,11 @@ export default function MaintenanceScreen() {
           )}
         </Animated.View>
 
-        {/* Persistent backdrop — stays visible during A→B modal transitions */}
-        <PersistentBackdrop
-          opacity={backdropOpacity}
-          showBackdrop={showBackdrop}
-          mounted={backdropMounted}
-          onPress={close}
-        />
+        {/* Shared defect/maintenance modal chain */}
+        <DefectMaintenanceModals {...modals} />
 
-        {/* Chained modals — gorhom portal rendering (no wrapper needed) */}
-        <DefectReportDetailModal
-          visible={modal.type === 'defectDetail'}
-          defectId={modal.type === 'defectDetail' ? modal.defectId : null}
-          onClose={close}
-          onAcceptPress={handleAcceptPress}
-          onViewTaskPress={handleViewTaskPress}
-          onDismissConfirmed={handleDismissConfirmed}
-          noBackdrop
-          onExitComplete={handleExitComplete}
-        />
-
-        <CreateMaintenanceModal
-          visible={modal.type === 'acceptDefect' || modal.type === 'createMaintenance'}
-          onClose={close}
-          noBackdrop
-          onExitComplete={handleExitComplete}
-          {...(modal.type === 'acceptDefect'
-            ? {
-                assetId: modal.assetId,
-                assetNumber: modal.assetNumber,
-                defectReportId: modal.defectId,
-                defaultTitle: modal.description ?? modal.title,
-                defaultDescription: undefined,
-                defaultPriority: 'medium' as const,
-                onExternalSubmit: handleAcceptSubmit,
-              }
-            : {})}
-        />
-
-        <MaintenanceDetailModal
-          visible={modal.type === 'maintenanceDetail'}
-          maintenanceId={modal.type === 'maintenanceDetail' ? modal.maintenanceId : null}
-          onClose={close}
-          noBackdrop
-          onExitComplete={handleExitComplete}
-        />
+        {/* Standalone "create maintenance" modal — separate from defect chain */}
+        <CreateMaintenanceModal visible={showCreateMaintenance} onClose={handleCloseCreate} />
       </SafeAreaView>
     </View>
   );
