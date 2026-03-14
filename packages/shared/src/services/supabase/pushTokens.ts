@@ -1,7 +1,7 @@
 import { getSupabaseClient } from './client';
 import type { ServiceResult } from '../../types';
 import type { UserRole } from '../../types/enums';
-import type { PushToken, PushTokenRow, CreatePushTokenInput } from '../../types/entities/pushToken';
+import type { PushToken, CreatePushTokenInput } from '../../types/entities/pushToken';
 import { mapRowToPushToken, CreatePushTokenInputSchema } from '../../types/entities/pushToken';
 import { validateQueryResult } from '../../utils';
 import { PushTokenRowResponseSchema } from '../../types/entities/responseSchemas';
