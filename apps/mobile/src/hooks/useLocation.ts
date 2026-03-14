@@ -34,30 +34,21 @@ export function useLocation(): UseLocationResult {
   const [errorType, setErrorType] = useState<LocationErrorType | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [hasPermission, setHasPermission] = useState(false);
-  // Track if component is mounted to prevent state updates after unmount
-  const isMountedRef = useRef(true);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    isMountedRef.current = true;
-
     // Inline permission check to avoid ESLint exhaustive-deps warning
     (async () => {
       try {
         const { status } = await Location.getForegroundPermissionsAsync();
-        if (isMountedRef.current) {
-          setHasPermission(status === 'granted');
-        }
+        setHasPermission(status === 'granted');
       } catch (err: unknown) {
         logger.error('Error checking location permission', err);
-        if (isMountedRef.current) {
-          setHasPermission(false);
-        }
+        setHasPermission(false);
       }
     })();
 
     return () => {
-      isMountedRef.current = false;
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
@@ -69,25 +60,19 @@ export function useLocation(): UseLocationResult {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       const granted = status === 'granted';
-      if (isMountedRef.current) {
-        setHasPermission(granted);
-      }
+      setHasPermission(granted);
       return granted;
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to request location permission';
-      if (isMountedRef.current) {
-        setError(message);
-      }
+      setError(message);
       return false;
     }
   }, []);
 
   const requestLocation = useCallback(async (): Promise<LocationData | null> => {
-    if (isMountedRef.current) {
-      setIsLoading(true);
-      setError(null);
-      setErrorType(null);
-    }
+    setIsLoading(true);
+    setError(null);
+    setErrorType(null);
 
     try {
       // DEV-only: return simulated location if debug override is active
@@ -102,10 +87,8 @@ export function useLocation(): UseLocationResult {
             heading: null,
             speed: null,
           };
-          if (isMountedRef.current) {
-            setLocation(locationData);
-            setIsLoading(false);
-          }
+          setLocation(locationData);
+          setIsLoading(false);
           return locationData;
         }
       }
@@ -122,11 +105,9 @@ export function useLocation(): UseLocationResult {
       if (currentStatus !== 'granted') {
         const granted = await requestPermission();
         if (!granted) {
-          if (isMountedRef.current) {
-            setError('Location permission not granted');
-            setErrorType('permission');
-            setIsLoading(false);
-          }
+          setError('Location permission not granted');
+          setErrorType('permission');
+          setIsLoading(false);
           return null;
         }
       }
@@ -161,19 +142,15 @@ export function useLocation(): UseLocationResult {
         speed: sanitizeNonNegative(result.coords.speed),
       };
 
-      if (isMountedRef.current) {
-        setLocation(locationData);
-        setIsLoading(false);
-      }
+      setLocation(locationData);
+      setIsLoading(false);
       return locationData;
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to get location';
       const isTimeout = message === 'Location request timed out';
-      if (isMountedRef.current) {
-        setError(message);
-        setErrorType(isTimeout ? 'timeout' : 'unavailable');
-        setIsLoading(false);
-      }
+      setError(message);
+      setErrorType(isTimeout ? 'timeout' : 'unavailable');
+      setIsLoading(false);
       return null;
     }
   }, [requestPermission]);

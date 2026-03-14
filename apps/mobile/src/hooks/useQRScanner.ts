@@ -36,8 +36,6 @@ export function useQRScanner(
   const lastScanRef = useRef<{ data: string; timestamp: number } | null>(null);
   // Ref-based lock to prevent race conditions in async callback execution
   const isProcessingRef = useRef(false);
-  // Track if component is mounted to prevent state updates after unmount
-  const isMountedRef = useRef(true);
   // Safety timeout to prevent stuck scanner state
   const lockTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Store onScan in a ref to avoid stale closures and unnecessary callback recreation.
@@ -58,14 +56,11 @@ export function useQRScanner(
   const isPausedRef = useRef(false);
 
   useEffect(() => {
-    isMountedRef.current = true;
-
     const subscription = AppState.addEventListener('change', (nextState) => {
       isPausedRef.current = nextState !== 'active';
     });
 
     return () => {
-      isMountedRef.current = false;
       subscription.remove();
       // Clear any pending timeout on unmount
       if (lockTimeoutRef.current) {
@@ -113,7 +108,7 @@ export function useQRScanner(
 
       // Set safety timeout to auto-reset lock if stuck (e.g., callback never completes)
       lockTimeoutRef.current = setTimeout(() => {
-        if (isMountedRef.current && isProcessingRef.current) {
+        if (isProcessingRef.current) {
           logger.warn('Scanner lock timeout - auto-resetting after 30s');
           isProcessingRef.current = false;
           setIsProcessing(false);
@@ -122,12 +117,6 @@ export function useQRScanner(
 
       // Trigger haptic feedback
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-
-      // Update state only if still mounted
-      if (!isMountedRef.current) {
-        isProcessingRef.current = false;
-        return;
-      }
 
       const scanResult: QRScanResult = {
         data,
@@ -147,10 +136,8 @@ export function useQRScanner(
           // Error handling is done by the caller; lock is released in finally
         } finally {
           // Always release the lock after callback completes (success or failure)
-          if (isMountedRef.current) {
-            isProcessingRef.current = false;
-            setIsProcessing(false);
-          }
+          isProcessingRef.current = false;
+          setIsProcessing(false);
         }
       }
     },
@@ -158,7 +145,6 @@ export function useQRScanner(
   );
 
   const resetScanner = useCallback(() => {
-    if (!isMountedRef.current) return;
     // Clear safety timeout when manually reset
     if (lockTimeoutRef.current) {
       clearTimeout(lockTimeoutRef.current);

@@ -332,14 +332,21 @@ export function useScanFlow({ canMarkMaintenance }: UseScanFlowOptions): UseScan
   // After CAMERA_CAPTURED, the native Modal must fully dismiss before a gorhom
   // SheetModal can present.  This effect detects the "captured photo pending review"
   // state and opens the review sheet after a brief delay.
-  let pendingReview = false;
-  if (state.phase === 'active') {
-    pendingReview =
+  const pendingReview = useMemo(
+    () =>
+      state.phase === 'active' &&
       !state.cameraOpen &&
       !!state.capturedPhotoUri &&
       state.activeSheet === null &&
-      !state.awaitingSheetExit;
-  }
+      !state.awaitingSheetExit,
+    [
+      state.phase,
+      state.cameraOpen,
+      state.capturedPhotoUri,
+      state.activeSheet,
+      state.awaitingSheetExit,
+    ]
+  );
 
   useEffect(() => {
     if (!pendingReview) return;
