@@ -15,7 +15,7 @@ const SecureAuthResponseSchema = z.object({
       created_at: z.string().optional(),
       updated_at: z.string().optional(),
     })
-    .passthrough(),
+    .strip(),
   session: z
     .object({
       access_token: z.string(),
@@ -24,7 +24,7 @@ const SecureAuthResponseSchema = z.object({
       token_type: z.string().optional(),
       expires_at: z.number().optional(),
     })
-    .passthrough(),
+    .strip(),
 });
 
 // Singleton promise for deduplicating concurrent token refreshes
@@ -134,6 +134,9 @@ export async function signInWithEmailSecure(
   const timeout = setTimeout(() => controller.abort(), 15000);
 
   try {
+    // Uses raw fetch instead of supabase.functions.invoke() because
+    // the user has no session token at login time — the SDK method
+    // would attach an empty/invalid Authorization header.
     const response = await fetch(functionUrl, {
       method: 'POST',
       headers: {

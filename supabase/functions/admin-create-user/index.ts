@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 /**
  * Admin Create User Edge Function
@@ -15,13 +15,12 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // ---------------------------------------------------------------------------
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') || '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-const VALID_ROLES = ["driver", "mechanic", "manager", "superuser"];
+const VALID_ROLES = ['driver', 'mechanic', 'manager', 'superuser'];
 
 // ---------------------------------------------------------------------------
 // Rate-limit configuration (IP-based, 10 creates per minute)
@@ -39,15 +38,12 @@ function errorResponse(
   code: string,
   message: string,
   status: number,
-  extra?: Record<string, unknown>,
+  extra?: Record<string, unknown>
 ): Response {
-  return new Response(
-    JSON.stringify({ error: { code, message }, ...extra }),
-    {
-      status,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    },
-  );
+  return new Response(JSON.stringify({ error: { code, message }, ...extra }), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -56,14 +52,10 @@ function errorResponse(
 
 async function checkIpRateLimit(
   serviceClient: ReturnType<typeof createClient>,
-  ip: string,
+  ip: string
 ): Promise<{ allowed: boolean; retryAfterSeconds: number }> {
   const key = `admin-create:${ip}`;
-  const { data } = await serviceClient
-    .from("rate_limits")
-    .select("*")
-    .eq("key", key)
-    .maybeSingle();
+  const { data } = await serviceClient.from('rate_limits').select('*').eq('key', key).maybeSingle();
 
   if (!data) return { allowed: true, retryAfterSeconds: 0 };
 
@@ -74,7 +66,7 @@ async function checkIpRateLimit(
   if (now - firstFailureAt > CREATE_USER_WINDOW_MS) {
     const lockoutExpired = !data.lockout_until || now >= new Date(data.lockout_until).getTime();
     if (lockoutExpired) {
-      await serviceClient.from("rate_limits").delete().eq("key", key);
+      await serviceClient.from('rate_limits').delete().eq('key', key);
       return { allowed: true, retryAfterSeconds: 0 };
     }
   }
@@ -92,17 +84,13 @@ async function checkIpRateLimit(
 
 async function recordCreateAttempt(
   serviceClient: ReturnType<typeof createClient>,
-  ip: string,
+  ip: string
 ): Promise<void> {
   const key = `admin-create:${ip}`;
-  const { data } = await serviceClient
-    .from("rate_limits")
-    .select("*")
-    .eq("key", key)
-    .maybeSingle();
+  const { data } = await serviceClient.from('rate_limits').select('*').eq('key', key).maybeSingle();
 
   if (!data) {
-    await serviceClient.from("rate_limits").upsert({
+    await serviceClient.from('rate_limits').upsert({
       key,
       failures: 1,
       first_failure_at: new Date().toISOString(),
@@ -119,7 +107,7 @@ async function recordCreateAttempt(
     updates.lockout_until = new Date(Date.now() + CREATE_USER_LOCKOUT_S * 1000).toISOString();
   }
 
-  await serviceClient.from("rate_limits").update(updates).eq("key", key);
+  await serviceClient.from('rate_limits').update(updates).eq('key', key);
 }
 
 // ---------------------------------------------------------------------------
@@ -128,26 +116,26 @@ async function recordCreateAttempt(
 
 Deno.serve(async (req: Request): Promise<Response> => {
   // Handle CORS preflight
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
   }
 
-  if (req.method !== "POST") {
-    return errorResponse("METHOD_NOT_ALLOWED", "Method not allowed", 405);
+  if (req.method !== 'POST') {
+    return errorResponse('METHOD_NOT_ALLOWED', 'Method not allowed', 405);
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
 
     // Extract and verify JWT
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return errorResponse("UNAUTHORIZED", "Missing authorization token", 401);
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return errorResponse('UNAUTHORIZED', 'Missing authorization token', 401);
     }
 
-    const jwt = authHeader.replace("Bearer ", "");
+    const jwt = authHeader.replace('Bearer ', '');
 
     // Use anon client to verify the JWT and get the user
     const anonClient = createClient(supabaseUrl, supabaseAnonKey, {
@@ -155,11 +143,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
       global: { headers: { Authorization: `Bearer ${jwt}` } },
     });
 
-    const { data: { user: callerAuth }, error: authError } =
-      await anonClient.auth.getUser(jwt);
+    const {
+      data: { user: callerAuth },
+      error: authError,
+    } = await anonClient.auth.getUser(jwt);
 
     if (authError || !callerAuth) {
-      return errorResponse("UNAUTHORIZED", "Invalid or expired token", 401);
+      return errorResponse('UNAUTHORIZED', 'Invalid or expired token', 401);
     }
 
     // Verify caller role from profiles table (never trust JWT claims)
@@ -168,32 +158,32 @@ Deno.serve(async (req: Request): Promise<Response> => {
     });
 
     const { data: callerProfile, error: profileError } = await serviceClient
-      .from("profiles")
-      .select("role")
-      .eq("id", callerAuth.id)
+      .from('profiles')
+      .select('role')
+      .eq('id', callerAuth.id)
       .single();
 
     if (profileError || !callerProfile) {
-      return errorResponse("UNAUTHORIZED", "Could not verify caller permissions", 403);
+      return errorResponse('UNAUTHORIZED', 'Could not verify caller permissions', 403);
     }
 
-    if (callerProfile.role !== "superuser") {
-      return errorResponse("UNAUTHORIZED", "Only superusers can create users", 403);
+    if (callerProfile.role !== 'superuser') {
+      return errorResponse('UNAUTHORIZED', 'Only superusers can create users', 403);
     }
 
     // IP-based rate limiting for user creation
     const clientIp =
-      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-      req.headers.get("x-real-ip") ||
-      "unknown";
+      req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+      req.headers.get('x-real-ip') ||
+      'unknown';
 
     const rateCheck = await checkIpRateLimit(serviceClient, clientIp);
     if (!rateCheck.allowed) {
       return errorResponse(
-        "RATE_LIMITED",
+        'RATE_LIMITED',
         `Too many user creation attempts. Please try again in ${rateCheck.retryAfterSeconds} seconds.`,
         429,
-        { retryAfterSeconds: rateCheck.retryAfterSeconds },
+        { retryAfterSeconds: rateCheck.retryAfterSeconds }
       );
     }
 
@@ -201,45 +191,39 @@ Deno.serve(async (req: Request): Promise<Response> => {
     await recordCreateAttempt(serviceClient, clientIp);
 
     // Parse and validate input
-    const { email, password, fullName, role, phone, employeeId, depot } =
-      await req.json();
+    const { email, password, fullName, role, phone, employeeId, depot } = await req.json();
 
     if (!email || !password || !fullName || !role) {
       return errorResponse(
-        "VALIDATION_ERROR",
-        "Email, password, full name, and role are required",
-        400,
+        'VALIDATION_ERROR',
+        'Email, password, full name, and role are required',
+        400
       );
     }
 
-    if (typeof password !== "string" || password.length < 8) {
-      return errorResponse(
-        "VALIDATION_ERROR",
-        "Password must be at least 8 characters",
-        400,
-      );
+    if (typeof password !== 'string' || password.length < 8) {
+      return errorResponse('VALIDATION_ERROR', 'Password must be at least 8 characters', 400);
     }
 
     if (!VALID_ROLES.includes(role)) {
       return errorResponse(
-        "VALIDATION_ERROR",
-        `Invalid role. Must be one of: ${VALID_ROLES.join(", ")}`,
-        400,
+        'VALIDATION_ERROR',
+        `Invalid role. Must be one of: ${VALID_ROLES.join(', ')}`,
+        400
       );
     }
 
     // Create auth user via admin API (service_role key)
-    const { data: newUser, error: createError } =
-      await serviceClient.auth.admin.createUser({
-        email: email.toLowerCase().trim(),
-        password, // Never logged or stored
-        email_confirm: true,
-        user_metadata: { full_name: fullName },
-      });
+    const { data: newUser, error: createError } = await serviceClient.auth.admin.createUser({
+      email: email.toLowerCase().trim(),
+      password, // Never logged or stored
+      email_confirm: true,
+      user_metadata: { full_name: fullName },
+    });
 
     if (createError || !newUser?.user) {
-      const msg = createError?.message || "Failed to create auth user";
-      return errorResponse("VALIDATION_ERROR", msg, 400);
+      const msg = createError?.message || 'Failed to create auth user';
+      return errorResponse('VALIDATION_ERROR', msg, 400);
     }
 
     const newUserId = newUser.user.id;
@@ -255,30 +239,25 @@ Deno.serve(async (req: Request): Promise<Response> => {
       is_active: true,
     };
     if (phone !== undefined && phone !== null) profileData.phone = phone;
-    if (employeeId !== undefined && employeeId !== null)
-      profileData.employee_id = employeeId;
+    if (employeeId !== undefined && employeeId !== null) profileData.employee_id = employeeId;
     if (depot !== undefined && depot !== null) profileData.depot = depot;
 
     const { data: updatedProfile, error: updateError } = await serviceClient
-      .from("profiles")
-      .upsert(profileData, { onConflict: "id" })
-      .select("id, role, full_name")
+      .from('profiles')
+      .upsert(profileData, { onConflict: 'id' })
+      .select('id, role, full_name')
       .single();
 
     if (updateError || !updatedProfile) {
       // Rollback: delete the orphaned auth user
-      const updateMsg = updateError?.message || "No profile row returned";
-      const updateCode = updateError?.code || "unknown";
+      const updateMsg = updateError?.message || 'No profile row returned';
+      const updateCode = updateError?.code || 'unknown';
       console.error(
-        `Profile update failed [${updateCode}]: ${updateMsg}. Rolling back auth user ${newUserId}`,
+        `Profile update failed [${updateCode}]: ${updateMsg}. Rolling back auth user ${newUserId}`
       );
       await serviceClient.auth.admin.deleteUser(newUserId);
 
-      return errorResponse(
-        "INTERNAL_ERROR",
-        `Failed to set up user profile: ${updateMsg}`,
-        500,
-      );
+      return errorResponse('INTERNAL_ERROR', `Failed to set up user profile: ${updateMsg}`, 500);
     }
 
     return new Response(
@@ -292,11 +271,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
       }),
       {
         status: 201,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
     );
   } catch (err) {
-    console.error("admin-create-user error:", err);
-    return errorResponse("INTERNAL_ERROR", "Internal server error", 500);
+    console.error('admin-create-user error:', err);
+    return errorResponse('INTERNAL_ERROR', 'Internal server error', 500);
   }
 });

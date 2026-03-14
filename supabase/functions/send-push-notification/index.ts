@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 /**
  * Send Push Notification Edge Function
@@ -16,10 +16,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // ---------------------------------------------------------------------------
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') || '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
 // ---------------------------------------------------------------------------
@@ -27,8 +26,8 @@ const corsHeaders = {
 // ---------------------------------------------------------------------------
 
 function getServiceClient() {
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   return createClient(supabaseUrl, supabaseServiceKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
@@ -37,11 +36,11 @@ function getServiceClient() {
 function errorResponse(message: string, status: number): Response {
   return new Response(JSON.stringify({ error: message }), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 }
 
-const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
+const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
 const BATCH_SIZE = 100; // Expo limit per request
 
 interface ExpoPushMessage {
@@ -49,12 +48,12 @@ interface ExpoPushMessage {
   title: string;
   body: string;
   data?: Record<string, unknown>;
-  sound: "default";
-  priority: "high";
+  sound: 'default';
+  priority: 'high';
 }
 
 interface ExpoPushReceipt {
-  status: "ok" | "error";
+  status: 'ok' | 'error';
   details?: { error?: string };
 }
 
@@ -63,7 +62,7 @@ interface ExpoPushReceipt {
  * Returns the count of successful sends and any stale token IDs to remove.
  */
 async function sendBatch(
-  messages: ExpoPushMessage[],
+  messages: ExpoPushMessage[]
 ): Promise<{ sent: number; failed: number; staleTokens: string[] }> {
   let sent = 0;
   let failed = 0;
@@ -71,18 +70,16 @@ async function sendBatch(
 
   try {
     const response = await fetch(EXPO_PUSH_URL, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
       },
       body: JSON.stringify(messages),
     });
 
     if (!response.ok) {
-      console.error(
-        `Expo Push API returned ${response.status}: ${await response.text()}`,
-      );
+      console.error(`Expo Push API returned ${response.status}: ${await response.text()}`);
       return { sent: 0, failed: messages.length, staleTokens: [] };
     }
 
@@ -91,17 +88,17 @@ async function sendBatch(
 
     for (let i = 0; i < receipts.length; i++) {
       const receipt = receipts[i];
-      if (receipt.status === "ok") {
+      if (receipt.status === 'ok') {
         sent++;
       } else {
         failed++;
-        if (receipt.details?.error === "DeviceNotRegistered") {
+        if (receipt.details?.error === 'DeviceNotRegistered') {
           staleTokens.push(messages[i].to);
         }
       }
     }
   } catch (err) {
-    console.error("Expo Push API error:", err);
+    console.error('Expo Push API error:', err);
     failed = messages.length;
   }
 
@@ -113,20 +110,20 @@ async function sendBatch(
 // ---------------------------------------------------------------------------
 
 Deno.serve(async (req: Request): Promise<Response> => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
   }
 
-  if (req.method !== "POST") {
-    return errorResponse("Method not allowed", 405);
+  if (req.method !== 'POST') {
+    return errorResponse('Method not allowed', 405);
   }
 
   try {
     // Verify service_role auth — exact match only
-    const authHeader = req.headers.get("Authorization");
-    const token = authHeader?.replace("Bearer ", "");
-    if (token !== Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) {
-      return errorResponse("Unauthorized — service_role required", 403);
+    const authHeader = req.headers.get('Authorization');
+    const token = authHeader?.replace('Bearer ', '');
+    if (token !== Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')) {
+      return errorResponse('Unauthorized — service_role required', 403);
     }
 
     const { title, body, data, targetRoles } = (await req.json()) as {
@@ -137,63 +134,48 @@ Deno.serve(async (req: Request): Promise<Response> => {
     };
 
     if (!title || !body || !targetRoles || targetRoles.length === 0) {
-      return errorResponse(
-        "title, body, and targetRoles are required",
-        400,
-      );
+      return errorResponse('title, body, and targetRoles are required', 400);
     }
 
     const serviceClient = getServiceClient();
 
     // Step 1: Get active user IDs for target roles
     const { data: profileRows, error: profileError } = await serviceClient
-      .from("profiles")
-      .select("id")
-      .in("role", targetRoles)
-      .eq("is_active", true);
+      .from('profiles')
+      .select('id')
+      .in('role', targetRoles)
+      .eq('is_active', true);
 
     if (profileError) {
-      console.error("Error fetching profiles:", profileError);
-      return errorResponse(
-        `Failed to fetch profiles: ${profileError.message}`,
-        500,
-      );
+      console.error('Error fetching profiles:', profileError);
+      return errorResponse(`Failed to fetch profiles: ${profileError.message}`, 500);
     }
 
     if (!profileRows || profileRows.length === 0) {
-      return new Response(
-        JSON.stringify({ sent: 0, failed: 0, tokensRemoved: 0 }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
-      );
+      return new Response(JSON.stringify({ sent: 0, failed: 0, tokensRemoved: 0 }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const userIds = profileRows.map((p: { id: string }) => p.id);
 
     // Step 2: Get push tokens for those users
     const { data: tokenRows, error: tokenError } = await serviceClient
-      .from("push_tokens")
-      .select("token")
-      .in("user_id", userIds);
+      .from('push_tokens')
+      .select('token')
+      .in('user_id', userIds);
 
     if (tokenError) {
-      console.error("Error fetching push tokens:", tokenError);
-      return errorResponse(
-        `Failed to fetch push tokens: ${tokenError.message}`,
-        500,
-      );
+      console.error('Error fetching push tokens:', tokenError);
+      return errorResponse(`Failed to fetch push tokens: ${tokenError.message}`, 500);
     }
 
     if (!tokenRows || tokenRows.length === 0) {
-      return new Response(
-        JSON.stringify({ sent: 0, failed: 0, tokensRemoved: 0 }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
-      );
+      return new Response(JSON.stringify({ sent: 0, failed: 0, tokensRemoved: 0 }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Build Expo push messages
@@ -203,8 +185,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
       title,
       body,
       data: data || {},
-      sound: "default" as const,
-      priority: "high" as const,
+      sound: 'default' as const,
+      priority: 'high' as const,
     }));
 
     // Send in batches of 100
@@ -224,9 +206,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
     let tokensRemoved = 0;
     if (allStaleTokens.length > 0) {
       const { count } = await serviceClient
-        .from("push_tokens")
+        .from('push_tokens')
         .delete()
-        .in("token", allStaleTokens);
+        .in('token', allStaleTokens);
       tokensRemoved = count || 0;
     }
 
@@ -238,11 +220,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
       }),
       {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
     );
   } catch (err) {
-    console.error("send-push-notification error:", err);
-    return errorResponse("Internal server error", 500);
+    console.error('send-push-notification error:', err);
+    return errorResponse('Internal server error', 500);
   }
 });

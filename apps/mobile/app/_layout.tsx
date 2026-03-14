@@ -95,7 +95,10 @@ export default function RootLayout() {
               if (isAuthError(error)) return false;
               return failureCount < 3;
             },
-            retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+            retryDelay: (attemptIndex) => {
+              const base = Math.min(1000 * 2 ** attemptIndex, 30000);
+              return base * (0.5 + Math.random() * 0.5);
+            },
             refetchOnWindowFocus: false,
             refetchOnReconnect: 'always',
           },
@@ -104,7 +107,10 @@ export default function RootLayout() {
               if (isAuthError(error)) return false;
               return failureCount < 2;
             },
-            retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+            retryDelay: (attemptIndex) => {
+              const base = Math.min(1000 * 2 ** attemptIndex, 10000);
+              return base * (0.5 + Math.random() * 0.5);
+            },
           },
         },
       })

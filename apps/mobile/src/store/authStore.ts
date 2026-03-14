@@ -215,7 +215,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       const expiresAt = storedSession.expires_at * 1000; // Convert to milliseconds
       const now = Date.now();
-      const bufferMs = 60 * 1000; // 1 minute buffer to account for clock skew
+      const bufferMs = 5 * 60 * 1000; // 5 minute buffer — ensures near-expiry tokens are rejected
       if (now >= expiresAt - bufferMs) {
         // Token expired or about to expire, clear and require fresh login
         await clearSession();

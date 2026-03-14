@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 /**
  * Secure Auth Edge Function
@@ -48,34 +48,28 @@ interface CheckResult {
 }
 
 function getServiceClient() {
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   return createClient(supabaseUrl, supabaseServiceKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 }
 
-async function pruneExpired(
-  serviceClient: ReturnType<typeof createClient>,
-): Promise<void> {
+async function pruneExpired(serviceClient: ReturnType<typeof createClient>): Promise<void> {
   await serviceClient
-    .from("rate_limits")
+    .from('rate_limits')
     .delete()
-    .lt("first_failure_at", new Date(Date.now() - 15 * 60 * 1000).toISOString())
-    .or("lockout_until.is.null,lockout_until.lt." + new Date().toISOString());
+    .lt('first_failure_at', new Date(Date.now() - 15 * 60 * 1000).toISOString())
+    .or('lockout_until.is.null,lockout_until.lt.' + new Date().toISOString());
 }
 
 async function checkLimit(
   serviceClient: ReturnType<typeof createClient>,
   key: string,
   _maxFailures: number,
-  windowMs: number,
+  windowMs: number
 ): Promise<CheckResult> {
-  const { data } = await serviceClient
-    .from("rate_limits")
-    .select("*")
-    .eq("key", key)
-    .maybeSingle();
+  const { data } = await serviceClient.from('rate_limits').select('*').eq('key', key).maybeSingle();
 
   if (!data) {
     return { allowed: true, retryAfterSeconds: 0 };
@@ -89,7 +83,7 @@ async function checkLimit(
   if (now - firstFailureAt > windowMs) {
     const lockoutExpired = !entry.lockout_until || now >= new Date(entry.lockout_until).getTime();
     if (lockoutExpired) {
-      await serviceClient.from("rate_limits").delete().eq("key", key);
+      await serviceClient.from('rate_limits').delete().eq('key', key);
       return { allowed: true, retryAfterSeconds: 0 };
     }
   }
@@ -111,16 +105,12 @@ async function recordFailure(
   key: string,
   maxFailures: number,
   initialLockoutS: number,
-  maxLockoutS: number,
+  maxLockoutS: number
 ): Promise<void> {
-  const { data } = await serviceClient
-    .from("rate_limits")
-    .select("*")
-    .eq("key", key)
-    .maybeSingle();
+  const { data } = await serviceClient.from('rate_limits').select('*').eq('key', key).maybeSingle();
 
   if (!data) {
-    await serviceClient.from("rate_limits").upsert({
+    await serviceClient.from('rate_limits').upsert({
       key,
       failures: 1,
       first_failure_at: new Date().toISOString(),
@@ -143,14 +133,14 @@ async function recordFailure(
     updates.lockout_seconds = lockoutSeconds;
   }
 
-  await serviceClient.from("rate_limits").update(updates).eq("key", key);
+  await serviceClient.from('rate_limits').update(updates).eq('key', key);
 }
 
 async function recordSuccess(
   serviceClient: ReturnType<typeof createClient>,
-  key: string,
+  key: string
 ): Promise<void> {
-  await serviceClient.from("rate_limits").delete().eq("key", key);
+  await serviceClient.from('rate_limits').delete().eq('key', key);
 }
 
 // ---------------------------------------------------------------------------
@@ -162,15 +152,12 @@ function errorResponse(
   message: string,
   status: number,
   corsHeaders: Record<string, string>,
-  extra?: Record<string, unknown>,
+  extra?: Record<string, unknown>
 ): Response {
-  return new Response(
-    JSON.stringify({ error: { code, message }, ...extra }),
-    {
-      status,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    },
-  );
+  return new Response(JSON.stringify({ error: { code, message }, ...extra }), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -178,10 +165,9 @@ function errorResponse(
 // ---------------------------------------------------------------------------
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') || '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
 // ---------------------------------------------------------------------------
@@ -190,12 +176,12 @@ const corsHeaders = {
 
 Deno.serve(async (req: Request): Promise<Response> => {
   // Handle CORS preflight
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
   }
 
-  if (req.method !== "POST") {
-    return errorResponse("METHOD_NOT_ALLOWED", "Method not allowed", 405, corsHeaders);
+  if (req.method !== 'POST') {
+    return errorResponse('METHOD_NOT_ALLOWED', 'Method not allowed', 405, corsHeaders);
   }
 
   try {
@@ -203,16 +189,16 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const { email, password } = await req.json();
 
     if (!email || !password) {
-      return errorResponse("VALIDATION_ERROR", "Email and password are required", 400, corsHeaders);
+      return errorResponse('VALIDATION_ERROR', 'Email and password are required', 400, corsHeaders);
     }
 
     const normalizedEmail = email.toLowerCase().trim();
 
     // Extract client IP from headers (Supabase/Deno Deploy sets these)
     const clientIp =
-      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-      req.headers.get("x-real-ip") ||
-      "unknown";
+      req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+      req.headers.get('x-real-ip') ||
+      'unknown';
 
     const serviceClient = getServiceClient();
 
@@ -224,15 +210,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
       serviceClient,
       `ip:${clientIp}`,
       IP_MAX_FAILURES,
-      IP_WINDOW_MS,
+      IP_WINDOW_MS
     );
     if (!ipCheck.allowed) {
       return errorResponse(
-        "RATE_LIMITED",
+        'RATE_LIMITED',
         `Too many login attempts from this device. Please try again in ${ipCheck.retryAfterSeconds} seconds.`,
         429,
         corsHeaders,
-        { retryAfterSeconds: ipCheck.retryAfterSeconds },
+        { retryAfterSeconds: ipCheck.retryAfterSeconds }
       );
     }
 
@@ -241,21 +227,21 @@ Deno.serve(async (req: Request): Promise<Response> => {
       serviceClient,
       `email:${normalizedEmail}`,
       EMAIL_MAX_FAILURES,
-      EMAIL_WINDOW_MS,
+      EMAIL_WINDOW_MS
     );
     if (!emailCheck.allowed) {
       return errorResponse(
-        "RATE_LIMITED",
+        'RATE_LIMITED',
         `Too many login attempts. Please try again in ${emailCheck.retryAfterSeconds} seconds.`,
         429,
         corsHeaders,
-        { retryAfterSeconds: emailCheck.retryAfterSeconds },
+        { retryAfterSeconds: emailCheck.retryAfterSeconds }
       );
     }
 
     // Create a Supabase client using the anon key since signInWithPassword is a public endpoint.
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
 
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
@@ -277,20 +263,20 @@ Deno.serve(async (req: Request): Promise<Response> => {
         `email:${normalizedEmail}`,
         EMAIL_MAX_FAILURES,
         EMAIL_INITIAL_LOCKOUT_S,
-        EMAIL_MAX_LOCKOUT_S,
+        EMAIL_MAX_LOCKOUT_S
       );
       await recordFailure(
         serviceClient,
         `ip:${clientIp}`,
         IP_MAX_FAILURES,
         IP_LOCKOUT_S,
-        IP_LOCKOUT_S,
+        IP_LOCKOUT_S
       );
 
       // Map common Supabase auth errors to user-friendly messages
       const errorMessage = mapAuthError(error.message);
 
-      return errorResponse("INVALID_CREDENTIALS", errorMessage, 401, corsHeaders);
+      return errorResponse('INVALID_CREDENTIALS', errorMessage, 401, corsHeaders);
     }
 
     if (!data.user || !data.session) {
@@ -299,17 +285,17 @@ Deno.serve(async (req: Request): Promise<Response> => {
         `email:${normalizedEmail}`,
         EMAIL_MAX_FAILURES,
         EMAIL_INITIAL_LOCKOUT_S,
-        EMAIL_MAX_LOCKOUT_S,
+        EMAIL_MAX_LOCKOUT_S
       );
       await recordFailure(
         serviceClient,
         `ip:${clientIp}`,
         IP_MAX_FAILURES,
         IP_LOCKOUT_S,
-        IP_LOCKOUT_S,
+        IP_LOCKOUT_S
       );
 
-      return errorResponse("INVALID_CREDENTIALS", "Authentication failed", 401, corsHeaders);
+      return errorResponse('INVALID_CREDENTIALS', 'Authentication failed', 401, corsHeaders);
     }
 
     // Success -- clear rate-limit state for this email (IP state is left
@@ -329,13 +315,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
       }),
       {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
     );
   } catch (err) {
-    console.error("secure-auth error:", err);
+    console.error('secure-auth error:', err);
 
-    return errorResponse("INTERNAL_ERROR", "Internal server error", 500, corsHeaders);
+    return errorResponse('INTERNAL_ERROR', 'Internal server error', 500, corsHeaders);
   }
 });
 
@@ -345,9 +331,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
 function mapAuthError(message: string): string {
   const errorMap: Record<string, string> = {
-    "Invalid login credentials": "Invalid email or password",
-    "Email not confirmed": "Please verify your email address",
-    "User not found": "No account found with this email",
+    'Invalid login credentials': 'Invalid email or password',
+    'Email not confirmed': 'Please verify your email address',
+    'User not found': 'No account found with this email',
   };
   return errorMap[message] || message;
 }
