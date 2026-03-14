@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { getSupabaseClient, getSupabaseConfig } from './client';
 
 function logServiceError(context: string, err: unknown): void {
@@ -5,7 +6,9 @@ function logServiceError(context: string, err: unknown): void {
   console.error(`[admin] ${context}: ${message}`);
 }
 import type { ServiceResult, PaginatedResult } from '../../types';
-import type { UserRole, AssetStatus, PhotoType } from '../../types/enums';
+import type { AssetStatus, PhotoType } from '../../types/enums';
+import { UserRoleSchema } from '../../types/enums';
+import type { UserRole } from '../../types/enums';
 import type { MaintenanceStatus } from '../../types/enums/MaintenanceEnums';
 import type { DefectStatus } from '../../types/enums/DefectEnums';
 import { getFleetStatistics } from './fleet';
@@ -417,6 +420,11 @@ export async function listAuditLogs(
 
 // ── Create User (calls edge function) ──
 
+const AdminCreateUserResponseSchema = z.object({
+  user: z.object({ id: z.string(), email: z.string() }),
+  profile: z.object({ id: z.string(), role: UserRoleSchema, fullName: z.string() }),
+});
+
 export async function adminCreateUser(input: CreateUserInput): Promise<
   ServiceResult<{
     user: { id: string; email: string };
@@ -457,20 +465,16 @@ export async function adminCreateUser(input: CreateUserInput): Promise<
     const body = await response.json();
 
     if (!response.ok) {
-      return { success: false, data: null, error: body.error || 'Failed to create user' };
+      const errMsg = typeof body?.error === 'string' ? body.error : 'Failed to create user';
+      return { success: false, data: null, error: errMsg };
     }
 
-    if (
-      typeof body?.user?.id !== 'string' ||
-      typeof body?.user?.email !== 'string' ||
-      typeof body?.profile?.id !== 'string' ||
-      typeof body?.profile?.role !== 'string' ||
-      typeof body?.profile?.fullName !== 'string'
-    ) {
+    const parsed = AdminCreateUserResponseSchema.safeParse(body);
+    if (!parsed.success) {
       return { success: false, data: null, error: 'Invalid response from create user service' };
     }
 
-    return { success: true, data: body, error: null };
+    return { success: true, data: parsed.data, error: null };
   } catch (err) {
     logServiceError('adminCreateUser', err);
     const message = err instanceof Error ? err.message : 'Failed to create user';

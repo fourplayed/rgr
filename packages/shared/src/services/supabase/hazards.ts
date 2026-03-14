@@ -10,26 +10,20 @@ import { HazardReviewStatsResultSchema } from '../../types/rpcResults';
 // ── Interfaces ──
 
 export interface HazardAlertForReview extends HazardAlert {
-  freightAnalysis:
-    | {
-        id: string;
-        photoId: string;
-        createdAt: string;
-      }
-    | undefined;
-  photo:
-    | {
-        id: string;
-        storagePath: string;
-        thumbnailPath: string;
-      }
-    | undefined;
-  asset:
-    | {
-        id: string;
-        assetNumber: string;
-      }
-    | undefined;
+  freightAnalysis: {
+    id: string;
+    photoId: string;
+    createdAt: string;
+  } | null;
+  photo: {
+    id: string;
+    storagePath: string;
+    thumbnailPath: string;
+  } | null;
+  asset: {
+    id: string;
+    assetNumber: string;
+  } | null;
 }
 
 export interface HazardReviewParams {
@@ -184,20 +178,20 @@ export async function getHazardAlertsForReview(
             photoId: freight_analysis.photo_id,
             createdAt: freight_analysis.created_at,
           }
-        : undefined,
+        : null,
       photo: photos
         ? {
             id: photos.id,
             storagePath: photos.storage_path,
             thumbnailPath: photos.thumbnail_path,
           }
-        : undefined,
+        : null,
       asset: assets
         ? {
             id: assets.id,
             assetNumber: assets.asset_number,
           }
-        : undefined,
+        : null,
     } as HazardAlertForReview;
   });
 

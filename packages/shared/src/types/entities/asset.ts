@@ -150,6 +150,7 @@ export interface UpdateAssetInput {
   make?: string | null | undefined;
   model?: string | null | undefined;
   vin?: string | null | undefined;
+  /** Can be set to null to clear registration (e.g., asset decommissioned). Required on create only. */
   registrationNumber?: string | null | undefined;
   registrationExpiry?: string | null | undefined;
   assignedDepotId?: string | null | undefined;

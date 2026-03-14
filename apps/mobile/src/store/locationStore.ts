@@ -19,7 +19,8 @@ const MAX_RETRY_MS = 60000;
 export interface CachedLocationData {
   latitude: number;
   longitude: number;
-  accuracy: number | null;
+  /** GPS accuracy in meters. 0 means "unknown" (GPS returned null/negative). */
+  accuracy: number;
   altitude: number | null;
   heading: number | null;
   speed: number | null;
@@ -173,11 +174,12 @@ export const useLocationStore = create<LocationState>((set, get) => ({
 
       const { coords } = locationResult;
 
-      // Sanitize GPS values: expo-location returns -1 for heading/speed when unavailable
+      // Sanitize GPS values: expo-location returns -1 for heading/speed when unavailable.
+      // accuracy uses 0 as sentinel for "unknown" to match LocationData (number, not number|null).
       const cachedLocation: CachedLocationData = {
         latitude: coords.latitude,
         longitude: coords.longitude,
-        accuracy: sanitizeNonNegative(coords.accuracy),
+        accuracy: sanitizeNonNegative(coords.accuracy) ?? 0,
         altitude: coords.altitude,
         heading: sanitizeNonNegative(coords.heading),
         speed: sanitizeNonNegative(coords.speed),
