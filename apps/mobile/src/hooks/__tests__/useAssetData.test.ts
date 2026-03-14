@@ -1,5 +1,6 @@
 import { renderHook, waitFor } from '@testing-library/react-native';
 import { listAssets, getAssetCountsByStatus, createScanEvent, updateAsset } from '@rgr/shared';
+import type { CreateScanEventInput, UpdateAssetInput } from '@rgr/shared';
 import {
   assetKeys,
   useInfiniteAssetList,
@@ -14,7 +15,7 @@ jest.mock('@rgr/shared', () => ({
   getAssetCountsByStatus: jest.fn(),
   createScanEvent: jest.fn(),
   updateAsset: jest.fn(),
-  queryFromService: jest.fn((fn: () => Promise<any>) => fn),
+  queryFromService: jest.fn((fn: () => Promise<unknown>) => fn),
 }));
 
 const mockListAssets = listAssets as jest.Mock;
@@ -182,7 +183,7 @@ describe('useCreateScanEvent', () => {
     const { result } = renderHook(() => useCreateScanEvent(), { wrapper });
 
     const input = { assetId: 'a1', eventType: 'check_in' };
-    result.current.mutate(input as any);
+    result.current.mutate(input as unknown as CreateScanEventInput);
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(mockCreateScanEvent).toHaveBeenCalledWith(input);
@@ -196,7 +197,10 @@ describe('useCreateScanEvent', () => {
     const spy = jest.spyOn(queryClient, 'invalidateQueries');
     const { result } = renderHook(() => useCreateScanEvent(), { wrapper });
 
-    result.current.mutate({ assetId: 'a1', eventType: 'check_in' } as any);
+    result.current.mutate({
+      assetId: 'a1',
+      eventType: 'check_in',
+    } as unknown as CreateScanEventInput);
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -219,8 +223,11 @@ describe('useUpdateAsset', () => {
     const { wrapper } = createWrapper();
     const { result } = renderHook(() => useUpdateAsset(), { wrapper });
 
-    const input = { id: 'a1', input: { assetNumber: 'A001-updated' } };
-    result.current.mutate(input as any);
+    const input = {
+      id: 'a1',
+      input: { assetNumber: 'A001-updated' } as unknown as UpdateAssetInput,
+    };
+    result.current.mutate(input);
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(mockUpdateAsset).toHaveBeenCalledWith('a1', { assetNumber: 'A001-updated' });
@@ -235,7 +242,10 @@ describe('useUpdateAsset', () => {
     const spy = jest.spyOn(queryClient, 'invalidateQueries');
     const { result } = renderHook(() => useUpdateAsset(), { wrapper });
 
-    result.current.mutate({ id: 'a1', input: { assetNumber: 'A001-updated' } } as any);
+    result.current.mutate({
+      id: 'a1',
+      input: { assetNumber: 'A001-updated' } as unknown as UpdateAssetInput,
+    });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
