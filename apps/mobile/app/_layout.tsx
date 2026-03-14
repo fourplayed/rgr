@@ -46,6 +46,7 @@ import { DevConsole } from '../src/components/dev/DevConsole';
 import { usePushNotifications } from '../src/hooks/usePushNotifications';
 import { replayQueue, clearQueue } from '../src/utils/offlineScanQueue';
 import { setUser as setErrorReportingUser } from '../src/utils/errorReporting';
+import { saveSession } from '../src/utils/secureStorage';
 import { colors } from '../src/theme/colors';
 
 // Initialize Supabase client
@@ -166,6 +167,17 @@ export default function RootLayout() {
         const { isAuthenticated, handleSessionExpired } = useAuthStore.getState();
         if (isAuthenticated) {
           handleSessionExpired();
+        }
+      } else if (event === 'TOKEN_REFRESHED' && session) {
+        // Persist refreshed tokens so auto-login uses fresh credentials after app restart
+        if (session.access_token && session.refresh_token) {
+          saveSession({
+            access_token: session.access_token,
+            refresh_token: session.refresh_token,
+            expires_at: session.expires_at,
+          }).catch((err) => {
+            console.warn('[Auth] Failed to persist refreshed session', err);
+          });
         }
       }
     });
