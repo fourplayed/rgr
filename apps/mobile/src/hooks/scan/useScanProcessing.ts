@@ -6,7 +6,7 @@ import { useLocationStore, waitForLocationResolution } from '../../store/locatio
 import type { Asset } from '@rgr/shared';
 import { getAssetByQRCode, listAssets } from '@rgr/shared';
 import { logger } from '../../utils/logger';
-import { enqueueScan } from '../../utils/offlineScanQueue';
+import { enqueueScan } from '../../utils/offlineMutationQueue';
 import type { ScanFlowAction, MatchedDepot } from './scanFlowMachine';
 import type { AlertSheetState } from './useScanFlow';
 import type { Profile } from '@rgr/shared';

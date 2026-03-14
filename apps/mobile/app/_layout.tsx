@@ -27,7 +27,14 @@ import {
   Lato_900Black,
   Lato_900Black_Italic,
 } from '@expo-google-fonts/lato';
-import { onAuthStateChange, refreshSessionSafe, listDepots } from '@rgr/shared';
+import {
+  onAuthStateChange,
+  refreshSessionSafe,
+  listDepots,
+  createScanEvent,
+  createDefectReport,
+  createMaintenance,
+} from '@rgr/shared';
 import { initializeMobileSupabase } from '../src/config/supabase';
 import { useAuthStore } from '../src/store/authStore';
 import { useLocationStore } from '../src/store/locationStore';
@@ -45,7 +52,7 @@ import { useConsoleNetworkLogger } from '../src/hooks/useConsoleNetworkLogger';
 import { useConsoleStoreLogger } from '../src/hooks/useConsoleStoreLogger';
 import { DevConsole } from '../src/components/dev/DevConsole';
 import { usePushNotifications } from '../src/hooks/usePushNotifications';
-import { replayQueue, clearQueue } from '../src/utils/offlineScanQueue';
+import { replayQueue, clearQueue } from '../src/utils/offlineMutationQueue';
 import { setUser as setErrorReportingUser } from '../src/utils/errorReporting';
 import { saveSession } from '../src/utils/secureStorage';
 import { colors } from '../src/theme/colors';
@@ -194,11 +201,19 @@ export default function RootLayout() {
         const wasOffline = !onlineManager.isOnline();
         setOnline(!!state.isConnected);
         if (wasOffline && state.isConnected) {
-          replayQueue()
+          replayQueue({
+            scan: (payload) => createScanEvent(payload as Parameters<typeof createScanEvent>[0]),
+            defect_report: (payload) =>
+              createDefectReport(payload as Parameters<typeof createDefectReport>[0]),
+            maintenance: (payload) =>
+              createMaintenance(payload as Parameters<typeof createMaintenance>[0]),
+          })
             .then(({ replayed }) => {
               if (replayed > 0) {
                 queryClient.invalidateQueries({ queryKey: ['scans'] });
                 queryClient.invalidateQueries({ queryKey: ['assets', 'list'] });
+                queryClient.invalidateQueries({ queryKey: ['defect-reports'] });
+                queryClient.invalidateQueries({ queryKey: ['maintenance'] });
               }
             })
             .catch(() => {

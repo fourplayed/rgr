@@ -3,7 +3,7 @@
  * Shared mocks for mobile test suite.
  *
  * Per-file jest.mock() calls override these globals, so existing tests
- * (e.g. offlineScanQueue.test.ts) with their own mocks are unaffected.
+ * (e.g. offlineMutationQueue.test.ts) with their own mocks are unaffected.
  *
  * IMPORTANT: Variables referenced inside jest.mock() factories must be
  * prefixed with `mock` (case insensitive) due to Jest's hoisting rules.
