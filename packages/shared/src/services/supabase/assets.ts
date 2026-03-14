@@ -47,7 +47,11 @@ import {
 import { mapRowToMaintenanceRecord } from '../../types/entities/maintenanceRecord';
 import { mapRowToHazardAlert } from '../../types/entities/hazardAlert';
 import { mapRowToDepot } from '../../types/entities/depot';
-import { assertQueryResult } from '../../utils';
+import { validateQueryResult } from '../../utils';
+import {
+  AssetWithJoinsResponseSchema,
+  MaintenanceWithNamesResponseSchema,
+} from '../../types/entities/responseSchemas';
 import type { Database } from '../../types/database.types';
 import {
   AssetScanContextResultSchema,
@@ -301,9 +305,9 @@ export async function getAsset(id: string): Promise<ServiceResult<AssetWithRelat
     return { success: false, data: null, error: 'Asset not found' };
   }
 
-  const { depot, driver, scanner, photos, ...assetRow } = assertQueryResult<
-    AssetRowWithJoins & { photos: [{ count: number }] }
-  >(data);
+  const validated = validateQueryResult(data, AssetWithJoinsResponseSchema);
+  const { depot, driver, scanner, photos, ...assetRow } = validated as typeof validated &
+    AssetRowWithJoins;
   const asset = mapRowToAsset(assetRow as AssetRow);
 
   return {
@@ -704,7 +708,8 @@ export async function getAssetMaintenance(
     completer: { full_name: string } | null;
   }
 
-  const records = assertQueryResult<MaintenanceJoinRow[]>(data || []).map((row) => {
+  const validatedRows = validateQueryResult(data || [], MaintenanceWithNamesResponseSchema);
+  const records = (validatedRows as unknown as MaintenanceJoinRow[]).map((row) => {
     const { reporter, assignee, completer, ...maintenanceRow } = row;
     const record = mapRowToMaintenanceRecord(maintenanceRow as MaintenanceRecordRow);
     return {

@@ -28,7 +28,11 @@ import {
 import { AssetCategorySchema } from '../../types/enums/AssetEnums';
 import { safeParseEnum } from '../../utils/safeParseEnum';
 import { isValidUUID, isValidISOTimestamp } from '../../utils/constants';
-import { assertQueryResult } from '../../utils';
+import { validateQueryResult } from '../../utils';
+import {
+  MaintenanceListResponseSchema,
+  MaintenanceDetailResponseSchema,
+} from '../../types/entities/responseSchemas';
 import type { Database } from '../../types/database.types';
 import { MaintenanceStatsResultSchema } from '../../types/rpcResults';
 
@@ -153,22 +157,7 @@ export async function listMaintenance(
     return { success: false, data: null, error: `Failed to list maintenance: ${error.message}` };
   }
 
-  interface MaintenanceListRow {
-    id: string;
-    asset_id: string;
-    title: string;
-    description: string | null;
-    priority: string;
-    status: string;
-    maintenance_type: string | null;
-    scheduled_date: string | null;
-    due_date: string | null;
-    created_at: string;
-    reporter: { full_name: string } | null;
-    asset: { asset_number: string; category: string } | null;
-  }
-
-  const rows = assertQueryResult<MaintenanceListRow[]>(data || []);
+  const rows = validateQueryResult(data || [], MaintenanceListResponseSchema);
   const hasMore = rows.length > limit;
   const pageRows = hasMore ? rows.slice(0, limit) : rows;
 
@@ -226,12 +215,9 @@ export async function getMaintenanceById(
     return { success: false, data: null, error: 'Maintenance record not found' };
   }
 
-  const { reporter, assignee, completer, ...maintenanceRow } = assertQueryResult<
-    MaintenanceRowWithJoins & {
-      assignee: { full_name: string } | null;
-      completer: { full_name: string } | null;
-    }
-  >(data);
+  const validated = validateQueryResult(data, MaintenanceDetailResponseSchema);
+  const { reporter, assignee, completer, ...maintenanceRow } = validated as typeof validated &
+    MaintenanceRowWithJoins;
   const record = mapRowToMaintenanceRecord(maintenanceRow as MaintenanceRecordRow);
 
   return {

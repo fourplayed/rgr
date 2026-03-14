@@ -29,7 +29,8 @@ import {
   isValidUUID,
   isValidISOTimestamp,
 } from '../../utils/constants';
-import { assertQueryResult } from '../../utils';
+import { validateQueryResult } from '../../utils';
+import { PhotoWithAnalysisResponseSchema } from '../../types/entities/responseSchemas';
 
 /**
  * Generate a unique ID for filenames.
@@ -491,7 +492,8 @@ export async function getPhotoById(photoId: string): Promise<ServiceResult<Photo
     freight_analysis: (Omit<FreightAnalysisRow, 'raw_response'> & { raw_response?: never }) | null;
   }
 
-  const row = assertQueryResult<PhotoWithAnalysisRow>(photoResult.data);
+  const validated = validateQueryResult(photoResult.data, PhotoWithAnalysisResponseSchema);
+  const row = validated as unknown as PhotoWithAnalysisRow;
   const { freight_analysis, ...photoRow } = row;
   const photo = mapRowToPhoto(photoRow as PhotoRow);
 

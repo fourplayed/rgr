@@ -42,7 +42,12 @@ import {
 } from '../../types/entities/depot';
 import { mapRowToAuditLog } from '../../types/entities/auditLog';
 import { isValidUUID, isValidISOTimestamp } from '../../utils/constants';
-import { assertQueryResult } from '../../utils';
+import { validateQueryResult } from '../../utils';
+import {
+  AdminMaintenanceListResponseSchema,
+  AdminDefectListResponseSchema,
+  AdminPhotoListResponseSchema,
+} from '../../types/entities/responseSchemas';
 import { safeParseEnum } from '../../utils/safeParseEnum';
 import { MaintenanceStatusSchema } from '../../types/enums/MaintenanceEnums';
 import { DefectStatusSchema } from '../../types/enums/DefectEnums';
@@ -615,7 +620,10 @@ export async function adminListMaintenance(
     const total = count ?? 0;
     // Supabase SDK can't resolve the ambiguous profiles FK — reporter:reported_by
     // hint works at runtime but generates a SelectQueryError at type level
-    const rows = assertQueryResult<MaintenanceJoinRow[]>(data ?? []);
+    const rows = validateQueryResult(
+      data ?? [],
+      AdminMaintenanceListResponseSchema
+    ) as unknown as MaintenanceJoinRow[];
     const items: AdminMaintenanceListItem[] = rows.map((row) => ({
       id: row.id,
       title: row.title,
@@ -698,7 +706,10 @@ export async function adminListDefectReports(
     }
 
     const total = count ?? 0;
-    const defectRows = assertQueryResult<DefectJoinRow[]>(data ?? []);
+    const defectRows = validateQueryResult(
+      data ?? [],
+      AdminDefectListResponseSchema
+    ) as unknown as DefectJoinRow[];
     const items: AdminDefectListItem[] = defectRows.map((row) => ({
       id: row.id,
       title: row.title,
@@ -775,7 +786,10 @@ export async function adminListPhotos(
     }
 
     const total = count ?? 0;
-    const photoRows = assertQueryResult<PhotoJoinRow[]>(data ?? []);
+    const photoRows = validateQueryResult(
+      data ?? [],
+      AdminPhotoListResponseSchema
+    ) as unknown as PhotoJoinRow[];
     const items: AdminPhotoListItem[] = photoRows.map((row) => ({
       id: row.id,
       storagePath: row.storage_path,

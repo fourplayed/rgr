@@ -3,7 +3,8 @@ import type { ServiceResult } from '../../types';
 import type { UserRole } from '../../types/enums';
 import type { PushToken, PushTokenRow, CreatePushTokenInput } from '../../types/entities/pushToken';
 import { mapRowToPushToken, CreatePushTokenInputSchema } from '../../types/entities/pushToken';
-import { assertQueryResult } from '../../utils';
+import { validateQueryResult } from '../../utils';
+import { PushTokenRowResponseSchema } from '../../types/entities/responseSchemas';
 
 /**
  * Upsert a push token by user_id + device_id.
@@ -44,7 +45,7 @@ export async function upsertPushToken(
 
   return {
     success: true,
-    data: mapRowToPushToken(assertQueryResult<PushTokenRow>(data)),
+    data: mapRowToPushToken(validateQueryResult(data, PushTokenRowResponseSchema)),
     error: null,
   };
 }
@@ -115,7 +116,7 @@ export async function getPushTokensForRole(role: UserRole): Promise<ServiceResul
   }
 
   const tokens = (tokenRows || []).map((row) =>
-    mapRowToPushToken(assertQueryResult<PushTokenRow>(row))
+    mapRowToPushToken(validateQueryResult(row, PushTokenRowResponseSchema))
   );
 
   return { success: true, data: tokens, error: null };

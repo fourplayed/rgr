@@ -1,7 +1,7 @@
 import type { Session, AuthError, User as AuthUser } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { getSupabaseClient, getSupabaseConfig } from './client';
-import { assertQueryResult } from '../../utils';
+// assertQueryResult removed — auth data is validated by SecureAuthResponseSchema above
 
 /** Schema for validating secure-auth Edge Function responses */
 const SecureAuthResponseSchema = z.object({
@@ -204,15 +204,16 @@ export async function signInWithEmailSecure(
     return {
       success: true,
       data: {
-        user: assertQueryResult<AuthUser>(validatedUser),
-        session: assertQueryResult<Session>({
+        // Upstream Zod validation (SecureAuthResponseSchema) ensures shape
+        user: validatedUser as unknown as AuthUser,
+        session: {
           access_token: validatedSession.access_token,
           refresh_token: validatedSession.refresh_token,
           expires_at: validatedSession.expires_at,
           expires_in: validatedSession.expires_in,
           token_type: validatedSession.token_type,
           user: validatedUser,
-        }),
+        } as unknown as Session,
       },
       error: null,
     };

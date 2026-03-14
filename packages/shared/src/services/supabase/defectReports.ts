@@ -21,7 +21,8 @@ import {
 import { AssetCategorySchema } from '../../types/enums/AssetEnums';
 import { safeParseEnum } from '../../utils/safeParseEnum';
 import { isValidUUID, isValidISOTimestamp } from '../../utils/constants';
-import { assertQueryResult } from '../../utils';
+import { validateQueryResult } from '../../utils';
+import { DefectListResponseSchema } from '../../types/entities/responseSchemas';
 import {
   AcceptDefectReportResultSchema,
   DefectReportStatsResultSchema,
@@ -114,19 +115,7 @@ export async function listDefectReports(
     return { success: false, data: null, error: `Failed to list defect reports: ${error.message}` };
   }
 
-  interface DefectListRow {
-    id: string;
-    asset_id: string;
-    title: string;
-    description: string | null;
-    status: DefectStatus;
-    maintenance_record_id: string | null;
-    created_at: string;
-    reporter: { full_name: string } | null;
-    asset: { asset_number: string; category: string } | null;
-  }
-
-  const rows = assertQueryResult<DefectListRow[]>(data || []);
+  const rows = validateQueryResult(data || [], DefectListResponseSchema);
   const hasMore = rows.length > limit;
   const pageRows = hasMore ? rows.slice(0, limit) : rows;
 
@@ -135,7 +124,7 @@ export async function listDefectReports(
     assetId: row.asset_id,
     title: row.title,
     description: row.description,
-    status: row.status,
+    status: safeParseEnum(DefectStatusSchema, row.status, 'reported'),
     maintenanceRecordId: row.maintenance_record_id,
     createdAt: row.created_at,
     reporterName: row.reporter?.full_name ?? null,

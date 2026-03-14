@@ -17,15 +17,22 @@ export { withRetry } from './withRetry';
 export type { RetryOptions } from './withRetry';
 export { escapeHtml, isValidHexColor } from './sanitize';
 
+import { type ZodType, ZodError } from 'zod';
+
 /**
- * SAFETY: Supabase SDK cannot resolve ambiguous FK joins at the type level.
- * The select string is verified against the local interface by visual inspection.
- * Centralizes the escape hatch for auditability.
- *
- * @internal
+ * Validates a Supabase query result against a Zod schema at runtime.
+ * Replaces assertQueryResult which was a pure type assertion.
  */
-export function assertQueryResult<T>(data: unknown): T {
-  return data as T;
+export function validateQueryResult<T>(data: unknown, schema: ZodType<T>): T {
+  try {
+    return schema.parse(data);
+  } catch (err) {
+    if (err instanceof ZodError) {
+      const details = err.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
+      throw new Error(`Query result validation failed: ${details}`);
+    }
+    throw err;
+  }
 }
 
 /**
