@@ -35,7 +35,10 @@ import { depotKeys } from '../src/hooks/useDepots';
 import { UserPermissionsProvider } from '../src/contexts/UserPermissionsContext';
 import { ErrorBoundary } from '../src/components/common/ErrorBoundary';
 import { OfflineBanner } from '../src/components/common/OfflineBanner';
-import { useRealtimeInvalidation } from '../src/hooks/useRealtimeInvalidation';
+import {
+  useRealtimeInvalidation,
+  clearRealtimeSuppressions,
+} from '../src/hooks/useRealtimeInvalidation';
 import { useConsoleQueryLogger } from '../src/hooks/useConsoleQueryLogger';
 import { useConsoleNetworkLogger } from '../src/hooks/useConsoleNetworkLogger';
 import { useConsoleStoreLogger } from '../src/hooks/useConsoleStoreLogger';
@@ -214,12 +217,13 @@ export default function RootLayout() {
     }
   }, [user]);
 
-  // Clear React Query cache and offline queue when user logs out
+  // Clear React Query cache, offline queue, and realtime suppressions when user logs out
   const wasAuthenticated = useRef(false);
   useEffect(() => {
     if (wasAuthenticated.current && !isAuthenticated) {
       queryClient.clear();
       clearQueue().catch(() => {});
+      clearRealtimeSuppressions();
     }
     wasAuthenticated.current = isAuthenticated;
   }, [isAuthenticated, queryClient]);

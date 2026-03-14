@@ -170,6 +170,13 @@ export function useCreateMaintenance() {
         maintenanceKeys.list({}),
         placeholder
       );
+      // Invalidate any filtered list caches so they refetch
+      // (skip the unfiltered list we just optimistically updated)
+      const unfilteredKey = JSON.stringify(maintenanceKeys.list({}));
+      queryClient.invalidateQueries({
+        queryKey: maintenanceKeys.lists(),
+        predicate: (query) => JSON.stringify(query.queryKey) !== unfilteredKey,
+      });
       return { listSnapshot };
     },
     onError: (_error, _vars, context) => {

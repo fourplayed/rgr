@@ -157,13 +157,15 @@ export function useBulkDeletePhotos() {
 export function useBatchSignedUrls(storagePaths: string[]) {
   const queryClient = useQueryClient();
 
-  // Create a stable cache key from sorted paths
-  const pathsKey = useMemo(() => storagePaths.slice().sort().join(','), [storagePaths]);
+  // Sort paths for cache key stability and use the same sorted order in queryFn
+  // so the request is deterministic relative to the cache key.
+  const sortedPaths = useMemo(() => storagePaths.slice().sort(), [storagePaths]);
+  const pathsKey = useMemo(() => sortedPaths.join(','), [sortedPaths]);
 
   return useQuery({
     queryKey: [...photoKeys.all, 'signedUrls', pathsKey],
     queryFn: async () => {
-      const result = await getSignedUrls(storagePaths);
+      const result = await getSignedUrls(sortedPaths);
       if (!result.success) throw new Error(result.error ?? 'Failed to fetch signed URLs');
 
       // Seed individual signedUrl cache entries so components using

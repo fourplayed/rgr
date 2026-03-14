@@ -37,6 +37,19 @@ export function suppressRealtimeFor(keyPrefix: string, durationMs = 3000): void 
 }
 
 /**
+ * Clear all active realtime suppressions and their timers.
+ * Call on logout to prevent stale suppression state from carrying
+ * over into a subsequent session.
+ */
+export function clearRealtimeSuppressions(): void {
+  for (const timer of suppressionTimers.values()) {
+    clearTimeout(timer);
+  }
+  suppressionTimers.clear();
+  suppressedKeys.clear();
+}
+
+/**
  * Subscribe to Supabase Realtime changes and invalidate React Query caches.
  *
  * Mirrors the web's useFleetRealtime pattern for the mobile app.
@@ -77,8 +90,8 @@ export function useRealtimeInvalidation(): void {
       })
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          queryClient.invalidateQueries({ queryKey: ['scans'], refetchType: 'active' });
-          queryClient.invalidateQueries({ queryKey: ['assets'], refetchType: 'active' });
+          invalidateIfNotSuppressed('scans', ['scans']);
+          invalidateIfNotSuppressed('assets', ['assets']);
         }
       });
 
@@ -89,7 +102,7 @@ export function useRealtimeInvalidation(): void {
       })
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          queryClient.invalidateQueries({ queryKey: ['assets'], refetchType: 'active' });
+          invalidateIfNotSuppressed('assets', ['assets']);
         }
       });
 
@@ -101,8 +114,8 @@ export function useRealtimeInvalidation(): void {
       })
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          queryClient.invalidateQueries({ queryKey: ['defects'], refetchType: 'active' });
-          queryClient.invalidateQueries({ queryKey: ['assets'], refetchType: 'active' });
+          invalidateIfNotSuppressed('defects', ['defects']);
+          invalidateIfNotSuppressed('assets', ['assets']);
         }
       });
 
@@ -118,8 +131,8 @@ export function useRealtimeInvalidation(): void {
       )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          queryClient.invalidateQueries({ queryKey: ['maintenance'], refetchType: 'active' });
-          queryClient.invalidateQueries({ queryKey: ['assets'], refetchType: 'active' });
+          invalidateIfNotSuppressed('maintenance', ['maintenance']);
+          invalidateIfNotSuppressed('assets', ['assets']);
         }
       });
 
