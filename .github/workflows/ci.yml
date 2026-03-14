@@ -118,6 +118,7 @@ jobs:
 
       - name: Run web tests with coverage
         run: npm run test --workspace=@rgr/web -- --run --coverage --coverage.reporter=text --coverage.reporter=lcov
+        timeout-minutes: 5
         env:
           NODE_OPTIONS: '--max-old-space-size=4096'
 

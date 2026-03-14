@@ -40,7 +40,7 @@ export default defineConfig({
   },
   clearScreen: false,
   test: {
-    pool: 'threads',
+    pool: process.env.CI ? 'forks' : 'threads',
     setupFiles: ['./src/test/setup.ts'],
     environment: 'jsdom',
     globals: true,
