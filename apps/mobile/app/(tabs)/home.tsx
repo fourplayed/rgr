@@ -251,6 +251,9 @@ const ActivityCard = memo(function ActivityCard({
 
 export default function HomeScreen() {
   const router = useRouter();
+  // Stable ref so the listHeader useMemo doesn't re-create when navigation state changes
+  const routerRef = useRef(router);
+  routerRef.current = router;
   const user = useAuthStore((s) => s.user);
   const resolvedDepot = useLocationStore((s) => s.resolvedDepot);
   const isResolvingDepot = useLocationStore((s) => s.isResolvingDepot);
@@ -584,7 +587,9 @@ export default function HomeScreen() {
               <TouchableOpacity
                 key={stat.label}
                 style={[styles.statCard, { backgroundColor: stat.color }]}
-                onPress={() => router.navigate({ pathname: stat.route, params: stat.params })}
+                onPress={() =>
+                  routerRef.current.navigate({ pathname: stat.route, params: stat.params })
+                }
                 activeOpacity={0.8}
                 accessibilityRole="button"
                 accessibilityLabel={`${stat.label}: ${stat.value}. Tap to view assets.`}
@@ -604,10 +609,8 @@ export default function HomeScreen() {
           <AppText style={styles.sectionTitle}>Recent Activity</AppText>
         </View>
       </>
-      // depots.length is used instead of the full depots array to prevent re-creation
-      // when the array reference changes but content hasn't.
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- depots.length is intentional: avoids re-creation when array reference changes but length is the same; routerRef is stable
     [
       isRefetching,
       greeting,
@@ -617,6 +620,9 @@ export default function HomeScreen() {
       resolvedDepot,
       depots.length,
       statsCards,
+      greetingOpacity,
+      usernameOpacity,
+      geofenceOpacity,
     ]
   );
 

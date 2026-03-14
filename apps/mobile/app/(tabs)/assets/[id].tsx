@@ -71,10 +71,10 @@ type AssetModalState =
   | { type: 'maintenanceDetail'; maintenanceId: string };
 
 type ActivityItem =
-  | { type: 'scan'; data: ScanEventWithScanner; timestamp: Date }
-  | { type: 'maintenance'; data: MaintenanceRecord; timestamp: Date }
-  | { type: 'photo'; data: PhotoListItem; timestamp: Date }
-  | { type: 'defect'; data: DefectReportListItem; timestamp: Date };
+  | { type: 'scan'; data: ScanEventWithScanner }
+  | { type: 'maintenance'; data: MaintenanceRecord }
+  | { type: 'photo'; data: PhotoListItem }
+  | { type: 'defect'; data: DefectReportListItem };
 
 // ---------------------------------------------------------------------------
 // ActivityCard — memoized to prevent re-render when unrelated state changes.
@@ -470,7 +470,6 @@ export default function AssetDetailScreen() {
     return allItems.map((item) => ({
       type: item.type,
       data: item.data,
-      timestamp: new Date(item.timestampStr),
     })) as ActivityItem[];
   }, [scans, maintenance, defectReports, photos, defectLinkedMaintenanceIds]);
 

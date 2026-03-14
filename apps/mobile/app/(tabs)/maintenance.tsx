@@ -64,9 +64,13 @@ const TABS = [
   { key: 'defects' as const, label: 'Defects' },
 ] as const;
 
-// Default filters: show all (no pre-selection)
+// Default filters: show all non-cancelled/non-dismissed items without requiring client-side filter
 const DEFAULT_STATUSES: MaintenanceStatus[] = [];
 const DEFAULT_PRIORITIES: MaintenancePriority[] = [];
+// Statuses to fetch when no user filter is active — excludes cancelled at the query level
+const ACTIVE_MAINTENANCE_STATUSES: MaintenanceStatus[] = ['scheduled', 'in_progress', 'completed'];
+// Defect statuses to fetch when no user filter is active — excludes dismissed at the query level
+const ACTIVE_DEFECT_STATUSES: DefectStatus[] = ['reported', 'task_created', 'resolved'];
 
 export default function MaintenanceScreen() {
   const router = useRouter();
@@ -155,10 +159,11 @@ export default function MaintenanceScreen() {
     close();
   }, [close]);
 
-  // Fetch maintenance list with filters
+  // Fetch maintenance list with filters — always exclude cancelled at the query level
   const maintenanceFilters = useMemo(
     () => ({
-      ...(statuses.length > 0 && { status: statuses }),
+      // When the user has selected specific statuses, use those; otherwise fetch all active statuses
+      status: statuses.length > 0 ? statuses : ACTIVE_MAINTENANCE_STATUSES,
       ...(priorities.length > 0 && { priority: priorities }),
     }),
     [statuses, priorities]
@@ -175,16 +180,17 @@ export default function MaintenanceScreen() {
   } = useMaintenanceList(maintenanceFilters);
 
   // Flatten infinite query pages into a single array for FlatList
+  // (cancelled items are excluded at the query level via maintenanceFilters.status)
   const maintenance = useMemo(
-    () =>
-      (maintenanceData?.pages.flatMap((p) => p.data) ?? []).filter((m) => m.status !== 'cancelled'),
+    () => maintenanceData?.pages.flatMap((p) => p.data) ?? [],
     [maintenanceData]
   );
 
-  // Fetch defect report list with filters
+  // Fetch defect report list with filters — always exclude dismissed at the query level
   const defectFilters = useMemo(
     () => ({
-      ...(defectStatuses.length > 0 && { status: defectStatuses }),
+      // When the user has selected specific statuses, use those; otherwise fetch all active statuses
+      status: defectStatuses.length > 0 ? defectStatuses : ACTIVE_DEFECT_STATUSES,
     }),
     [defectStatuses]
   );
@@ -199,10 +205,8 @@ export default function MaintenanceScreen() {
     isFetchingNextPage: isFetchingNextDefectsPage,
   } = useDefectReportList(defectFilters);
 
-  const defects = useMemo(
-    () => (defectsData?.pages.flatMap((p) => p.data) ?? []).filter((d) => d.status !== 'dismissed'),
-    [defectsData]
-  );
+  // (dismissed items are excluded at the query level via defectFilters.status)
+  const defects = useMemo(() => defectsData?.pages.flatMap((p) => p.data) ?? [], [defectsData]);
 
   const handleToggleFilters = useCallback(() => {
     setFiltersExpanded((prev) => !prev);
