@@ -54,8 +54,9 @@ export function BottomSheet({
 
   // Cleanup on unmount — prevent orphaned portals
   useEffect(() => {
+    const sheetRef = ref.current;
     return () => {
-      ref.current?.dismiss();
+      sheetRef?.dismiss();
     };
   }, []);
 

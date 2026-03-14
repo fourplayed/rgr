@@ -63,6 +63,7 @@ export default function ScanScreen() {
     hasRequestedPermissions.current = true;
     if (!permission?.granted) requestPermission();
     if (!flow.hasLocationPermission) flow.requestLocationPermission();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- flow.xxx accesses stable useCallback-wrapped functions; adding `flow` would re-fire on every render
   }, [
     permission?.granted,
     flow.hasLocationPermission,
@@ -83,6 +84,7 @@ export default function ScanScreen() {
     }) => {
       flow.openAcceptDefect({ type: 'acceptDefect', ...ctx });
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- flow.openAcceptDefect is a stable useCallback; adding `flow` would recreate on every render
     [flow.openAcceptDefect]
   );
 
@@ -98,23 +100,27 @@ export default function ScanScreen() {
       flow.closeContextModal();
       flow.refetchContext();
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- flow.xxx accesses stable callbacks; adding `flow` would recreate on every render
     [acceptCtx, acceptDefect, flow.closeContextModal, flow.refetchContext]
   );
 
   const handleDismissConfirmed = useCallback(() => {
     flow.closeContextModal();
     flow.refetchContext();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- flow.xxx accesses stable callbacks; adding `flow` would recreate on every render
   }, [flow.closeContextModal, flow.refetchContext]);
 
   // ── Maintenance created callback ──
   const handleTaskCreated = useCallback(() => {
     flow.refetchContext();
     flow.handleMaintenanceCreated();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- flow.xxx accesses stable callbacks; adding `flow` would recreate on every render
   }, [flow.refetchContext, flow.handleMaintenanceCreated]);
 
   // ── Defect cancel (user closed without submitting) ──
   const handleDefectCancel = useCallback(() => {
     flow.handleSheetDismissed();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- flow.handleSheetDismissed is a stable useCallback; adding `flow` would recreate on every render
   }, [flow.handleSheetDismissed]);
 
   // ── Backdrop press ──

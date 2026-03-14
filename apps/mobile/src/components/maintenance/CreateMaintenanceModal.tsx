@@ -71,6 +71,7 @@ export function CreateMaintenanceModal({
 
   const [error, setError] = useState<string | null>(null);
   const [calendarExpanded, setCalendarExpanded] = useState(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally recompute `today` when modal becomes visible so the calendar always shows the current date
   const today = useMemo(() => new Date(), [visible]);
 
   // Asset selection state (used when no assetId prop is provided)

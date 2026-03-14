@@ -139,6 +139,7 @@ export function SheetModal({
   // this covers conditionally-mounted sheets (e.g. PhotoReviewSheet) where React
   // unmounts the component before gorhom can fire its onDismiss callback.
   useEffect(() => {
+    const sheetRef = ref.current;
     return () => {
       if (dismissFallbackRef.current) {
         clearTimeout(dismissFallbackRef.current);
@@ -149,7 +150,7 @@ export function SheetModal({
         onExitCompleteRef.current?.();
       }
       programmaticDismissRef.current = true;
-      ref.current?.dismiss();
+      sheetRef?.dismiss();
     };
   }, []);
 
