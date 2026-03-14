@@ -88,14 +88,15 @@ describe('useRealtimeInvalidation', () => {
       expect(mockSupabase.channel).not.toHaveBeenCalled();
     });
 
-    it('unsubscribes and removes all channels on unmount', () => {
+    it('removes all channels on unmount (removeChannel handles unsubscription)', () => {
       mockIsAuthenticated = true;
       const { wrapper } = createWrapper();
 
       const { unmount } = renderHook(() => useRealtimeInvalidation(), { wrapper });
       unmount();
 
-      expect(mockUnsubscribe).toHaveBeenCalledTimes(4);
+      // removeChannel() handles unsubscription internally — no separate unsubscribe() calls
+      expect(mockUnsubscribe).toHaveBeenCalledTimes(0);
       expect(mockRemoveChannel).toHaveBeenCalledTimes(4);
     });
   });

@@ -49,6 +49,22 @@ export function clearRealtimeSuppressions(): void {
   suppressedKeys.clear();
 }
 
+const RECONNECT_DEBOUNCE_MS = 5000;
+const _lastInvalidatedAt = new Map<string, number>();
+
+/** Reset reconnect debounce timestamps — call on logout */
+export function clearRealtimeDebounce(): void {
+  _lastInvalidatedAt.clear();
+}
+
+function shouldDebounceReconnect(channelName: string): boolean {
+  const last = _lastInvalidatedAt.get(channelName);
+  const now = Date.now();
+  if (last && now - last < RECONNECT_DEBOUNCE_MS) return true;
+  _lastInvalidatedAt.set(channelName, now);
+  return false;
+}
+
 /**
  * Subscribe to Supabase Realtime changes and invalidate React Query caches.
  *
@@ -89,7 +105,7 @@ export function useRealtimeInvalidation(): void {
         invalidateIfNotSuppressed('assets', ['assets']);
       })
       .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
+        if (status === 'SUBSCRIBED' && !shouldDebounceReconnect('scan')) {
           invalidateIfNotSuppressed('scans', ['scans']);
           invalidateIfNotSuppressed('assets', ['assets']);
         }
@@ -101,7 +117,7 @@ export function useRealtimeInvalidation(): void {
         invalidateIfNotSuppressed('assets', ['assets']);
       })
       .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
+        if (status === 'SUBSCRIBED' && !shouldDebounceReconnect('asset')) {
           invalidateIfNotSuppressed('assets', ['assets']);
         }
       });
@@ -113,7 +129,7 @@ export function useRealtimeInvalidation(): void {
         invalidateIfNotSuppressed('assets', ['assets']);
       })
       .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
+        if (status === 'SUBSCRIBED' && !shouldDebounceReconnect('defect')) {
           invalidateIfNotSuppressed('defects', ['defects']);
           invalidateIfNotSuppressed('assets', ['assets']);
         }
@@ -130,17 +146,13 @@ export function useRealtimeInvalidation(): void {
         }
       )
       .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
+        if (status === 'SUBSCRIBED' && !shouldDebounceReconnect('maintenance')) {
           invalidateIfNotSuppressed('maintenance', ['maintenance']);
           invalidateIfNotSuppressed('assets', ['assets']);
         }
       });
 
     return () => {
-      scanChannel.unsubscribe();
-      assetChannel.unsubscribe();
-      defectChannel.unsubscribe();
-      maintenanceChannel.unsubscribe();
       supabase.removeChannel(scanChannel);
       supabase.removeChannel(assetChannel);
       supabase.removeChannel(defectChannel);

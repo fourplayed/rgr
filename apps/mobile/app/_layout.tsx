@@ -38,6 +38,7 @@ import { OfflineBanner } from '../src/components/common/OfflineBanner';
 import {
   useRealtimeInvalidation,
   clearRealtimeSuppressions,
+  clearRealtimeDebounce,
 } from '../src/hooks/useRealtimeInvalidation';
 import { useConsoleQueryLogger } from '../src/hooks/useConsoleQueryLogger';
 import { useConsoleNetworkLogger } from '../src/hooks/useConsoleNetworkLogger';
@@ -242,6 +243,7 @@ export default function RootLayout() {
       queryClient.clear();
       clearQueue().catch(() => {});
       clearRealtimeSuppressions();
+      clearRealtimeDebounce();
     }
     wasAuthenticated.current = isAuthenticated;
   }, [isAuthenticated, queryClient]);
