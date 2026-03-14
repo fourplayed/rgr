@@ -48,6 +48,7 @@ import { mapRowToMaintenanceRecord } from '../../types/entities/maintenanceRecor
 import { mapRowToHazardAlert } from '../../types/entities/hazardAlert';
 import { mapRowToDepot } from '../../types/entities/depot';
 import { assertQueryResult } from '../../utils';
+import type { Database } from '../../types/database.types';
 import {
   AssetScanContextResultSchema,
   HardDeleteAssetsResultSchema,
@@ -518,12 +519,10 @@ export async function createScanEvent(
   const supabase = getSupabaseClient();
   const dbData = mapScanEventToInsert(parsed.data as CreateScanEventInput);
 
-  // Cast needed: ScanEventInsertRow uses Record<string, unknown>|null for device_info,
-  // but the generated DB type expects the broader Json type. The mapper is the boundary.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  type ScanEventInsert = Database['public']['Tables']['scan_events']['Insert'];
   const { data, error } = await supabase
     .from('scan_events')
-    .insert(dbData as any)
+    .insert(dbData as ScanEventInsert)
     .select()
     .single();
 

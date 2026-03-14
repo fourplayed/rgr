@@ -29,6 +29,7 @@ import { AssetCategorySchema } from '../../types/enums/AssetEnums';
 import { safeParseEnum } from '../../utils/safeParseEnum';
 import { isValidUUID, isValidISOTimestamp } from '../../utils/constants';
 import { assertQueryResult } from '../../utils';
+import type { Database } from '../../types/database.types';
 import { MaintenanceStatsResultSchema } from '../../types/rpcResults';
 
 // ── Types ──
@@ -387,12 +388,10 @@ export async function updateMaintenance(
     return { success: false, data: null, error: 'No fields to update' };
   }
 
-  // Cast needed: MaintenanceUpdateRow uses Record<string, unknown>|null for parts_used,
-  // but the generated DB type expects the broader Json type. The mapper is the boundary.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  type MaintenanceUpdate = Database['public']['Tables']['maintenance_records']['Update'];
   const { data, error } = await supabase
     .from('maintenance_records')
-    .update(dbData as any)
+    .update(dbData as MaintenanceUpdate)
     .eq('id', id)
     .select()
     .single();

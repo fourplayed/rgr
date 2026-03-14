@@ -762,10 +762,8 @@ export async function adminListPhotos(
 
     if (search) {
       const safeSearch = search.replace(/[%_\\,().]/g, (c) => `\\${c}`);
-      // PostgREST filters on joined columns require a cast — the SDK doesn't
-      // type this path. This works for PostgREST v11+ embedded filters.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      query = query.ilike('asset.asset_number' as any, `%${safeSearch}%`);
+      // PostgREST embedded filter — SDK doesn't type nested column references
+      query = query.ilike('asset.asset_number' as string, `%${safeSearch}%`);
     }
 
     query = query.order('created_at', { ascending: false }).range(from, to);
