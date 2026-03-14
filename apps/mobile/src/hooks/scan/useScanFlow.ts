@@ -68,6 +68,12 @@ export interface AlertSheetState {
 
 // ── Return type ──
 
+/**
+ * Full return surface of useScanFlow — intentionally broad (40+ fields) because
+ * this is the single orchestrator for the entire scan tab. Fields are grouped by
+ * domain. If the scan tab is decomposed into smaller screens, consider splitting
+ * into `useScanFlowState()` and `useScanFlowActions()` sub-hooks.
+ */
 export interface UseScanFlowReturn {
   // State
   state: ScanFlowState;

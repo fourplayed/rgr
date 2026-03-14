@@ -316,7 +316,7 @@ export async function updateMaintenanceStatus(
     status: newStatus,
   };
 
-  if (newStatus === 'completed' && currentStatus === 'scheduled') {
+  if (newStatus === 'completed') {
     updates.completed_at = new Date().toISOString();
     if (extras?.completedBy) {
       updates.completed_by = extras.completedBy;

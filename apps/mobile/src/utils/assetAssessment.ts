@@ -62,8 +62,11 @@ function analyzeLocationHistory(
 
     // Found a scan at a different location
     if (!matchedName || matchedName.toLowerCase() !== currentLower) {
+      // i === 0 means the newest scan is already at a different location —
+      // no scans confirm presence at the current depot
+      if (i === 0) return null;
       // The scan just before this one (closer to present) is when it arrived
-      const arrival = i > 0 ? sorted[i - 1]! : sorted[0]!;
+      const arrival = sorted[i - 1]!;
       return {
         durationDays: Math.floor((now.getTime() - new Date(arrival.createdAt).getTime()) / DAY_MS),
         previousName: matchedName || scan.locationDescription,

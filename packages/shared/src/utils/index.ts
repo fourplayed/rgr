@@ -39,7 +39,7 @@ export function validateQueryResult<T>(data: unknown, schema: ZodType<T>): T {
  * Validate email format
  */
 export function validateEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailRegex = /^[^\s@]+@[^\s@][^\s@]*\.[^\s@]+$/;
   return emailRegex.test(email);
 }
 
@@ -115,7 +115,8 @@ export function debounce<A extends unknown[]>(
 }
 
 /**
- * Throttle a function
+ * Throttle a function (leading-edge only — fires immediately, then suppresses
+ * for `limitMs`). Trailing calls during the suppression window are dropped.
  */
 export function throttle<A extends unknown[]>(
   fn: (...args: A) => void,

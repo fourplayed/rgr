@@ -170,10 +170,14 @@ export function usePushNotifications() {
       if (__DEV__) console.log('[Push] Received:', notification.request.content.title);
     });
 
-    // User tapped on a notification
+    // User tapped on a notification — only navigate if still authenticated
     const responseSub = Notifications.addNotificationResponseReceivedListener((response) => {
       const data = response.notification.request.content.data;
       if (__DEV__) console.log('[Push] Tapped:', data);
+      if (!useAuthStore.getState().isAuthenticated) {
+        if (__DEV__) console.log('[Push] Ignoring tap — user not authenticated');
+        return;
+      }
       if (data?.['assetId']) {
         router.push(`/(tabs)/assets/${data['assetId']}`);
       } else if (data?.['maintenanceId']) {

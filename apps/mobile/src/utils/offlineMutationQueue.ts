@@ -18,6 +18,7 @@ export type QueuedMutation = {
   queuedAt: string;
   photoUris?: string[];
   photoStatus: 'pending' | 'uploaded' | 'failed';
+  retryCount?: number;
 };
 
 export type ReplayHandlers = {
@@ -210,7 +211,16 @@ export async function replayQueue(
     // Filter out stale entries older than TTL
     const now = Date.now();
     const before = queue.length;
-    queue = queue.filter((entry) => now - new Date(entry.queuedAt).getTime() < TTL_MS);
+    queue = queue.filter((entry) => {
+      const queuedMs = new Date(entry.queuedAt).getTime();
+      if (Number.isNaN(queuedMs)) {
+        logger.warn(
+          `Dropping queued mutation ${entry.id} with unparseable date: ${entry.queuedAt}`
+        );
+        return false;
+      }
+      return now - queuedMs < TTL_MS;
+    });
     if (queue.length < before) {
       logger.info(`Dropped ${before - queue.length} stale queued mutation(s) (>48h old)`);
       await saveQueue(queue);
@@ -255,7 +265,7 @@ export async function replayQueue(
         await new Promise((r) => setTimeout(r, 1500));
         failed++;
         consecutiveFailures++;
-        const retries = ((entry as QueuedMutation & { retryCount?: number }).retryCount ?? 0) + 1;
+        const retries = (entry.retryCount ?? 0) + 1;
         if (retries >= MAX_RETRIES) {
           logger.warn(
             `Discarding ${entry.type} mutation ${entry.id} after ${MAX_RETRIES} failed attempts: ${result.error}`
@@ -266,7 +276,7 @@ export async function replayQueue(
             `Failed to replay ${entry.type} mutation ${entry.id} (attempt ${retries}/${MAX_RETRIES}): ${result.error}`
           );
           // Move to back of queue to avoid head-of-line blocking
-          queue = [...queue.slice(1), { ...entry, retryCount: retries } as QueuedMutation];
+          queue = [...queue.slice(1), { ...entry, retryCount: retries }];
         }
         await saveQueue(queue);
       }

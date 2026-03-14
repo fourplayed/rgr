@@ -46,7 +46,9 @@ export function initSupabase(config: SupabaseConfig): SupabaseClient<Database> {
   // Return existing client if already initialized
   if (supabaseClient) {
     if (config.url !== currentConfig?.url) {
-      console.warn('[initSupabase] Called with different URL but client already initialized');
+      throw new Error(
+        `[initSupabase] Already initialized with ${currentConfig?.url} — cannot re-init with ${config.url}. Call resetSupabaseClient() first.`
+      );
     }
     return supabaseClient;
   }
@@ -79,7 +81,13 @@ export function initSupabase(config: SupabaseConfig): SupabaseClient<Database> {
       fetch: (url: RequestInfo | URL, options?: RequestInit) => {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 30000);
-        return fetch(url, { ...options, signal: controller.signal }).finally(() =>
+        // Merge caller's signal (e.g. React Query cancellation) with our timeout
+        const signals = [controller.signal, options?.signal].filter(
+          (s): s is AbortSignal => s != null
+        );
+        const mergedSignal =
+          signals.length > 1 ? AbortSignal.any(signals) : (signals[0] ?? controller.signal);
+        return fetch(url, { ...options, signal: mergedSignal }).finally(() =>
           clearTimeout(timeout)
         );
       },

@@ -295,6 +295,27 @@ interface PhotoListRow {
   freight_analysis: FreightAnalysisSummary | FreightAnalysisSummary[] | null;
 }
 
+/** Map a PhotoListRow (Supabase join shape) to a PhotoListItem (app shape). */
+function mapRowToPhotoListItem(row: PhotoListRow): PhotoListItem {
+  const analysis = Array.isArray(row.freight_analysis)
+    ? row.freight_analysis[0]
+    : row.freight_analysis;
+
+  return {
+    id: row.id,
+    storagePath: row.storage_path,
+    thumbnailPath: row.thumbnail_path,
+    photoType: safeParseEnum(PhotoTypeSchema, row.photo_type, 'freight'),
+    createdAt: row.created_at,
+    primaryCategory: analysis?.primary_category ?? null,
+    confidence: analysis?.confidence ?? null,
+    hazardCount: analysis?.hazard_count ?? 0,
+    maxSeverity: safeParseEnum(HazardSeveritySchema, analysis?.max_severity, null),
+    requiresAcknowledgment: analysis?.requires_acknowledgment ?? false,
+    blockedFromDeparture: analysis?.blocked_from_departure ?? false,
+  };
+}
+
 /**
  * Get photos for an asset with analysis summary data.
  * Uses optimized query excluding raw_response JSONB.
@@ -348,26 +369,9 @@ export async function getAssetPhotos(
     return { success: false, data: null, error: `Failed to fetch photos: ${error.message}` };
   }
 
-  const photos: PhotoListItem[] = (data || []).map((row: PhotoListRow) => {
-    // Handle both single object and array (Supabase join quirk)
-    const analysis = Array.isArray(row.freight_analysis)
-      ? row.freight_analysis[0]
-      : row.freight_analysis;
-
-    return {
-      id: row.id,
-      storagePath: row.storage_path,
-      thumbnailPath: row.thumbnail_path,
-      photoType: safeParseEnum(PhotoTypeSchema, row.photo_type, 'freight'),
-      createdAt: row.created_at,
-      primaryCategory: analysis?.primary_category ?? null,
-      confidence: analysis?.confidence ?? null,
-      hazardCount: analysis?.hazard_count ?? 0,
-      maxSeverity: safeParseEnum(HazardSeveritySchema, analysis?.max_severity, null),
-      requiresAcknowledgment: analysis?.requires_acknowledgment ?? false,
-      blockedFromDeparture: analysis?.blocked_from_departure ?? false,
-    };
-  });
+  const photos: PhotoListItem[] = (data || []).map((row: PhotoListRow) =>
+    mapRowToPhotoListItem(row)
+  );
 
   return { success: true, data: photos, error: null };
 }
@@ -408,25 +412,9 @@ export async function getPhotosByScanEventId(
     return { success: false, data: null, error: `Failed to fetch photos: ${error.message}` };
   }
 
-  const photos: PhotoListItem[] = (data || []).map((row: PhotoListRow) => {
-    const analysis = Array.isArray(row.freight_analysis)
-      ? row.freight_analysis[0]
-      : row.freight_analysis;
-
-    return {
-      id: row.id,
-      storagePath: row.storage_path,
-      thumbnailPath: row.thumbnail_path,
-      photoType: safeParseEnum(PhotoTypeSchema, row.photo_type, 'freight'),
-      createdAt: row.created_at,
-      primaryCategory: analysis?.primary_category ?? null,
-      confidence: analysis?.confidence ?? null,
-      hazardCount: analysis?.hazard_count ?? 0,
-      maxSeverity: safeParseEnum(HazardSeveritySchema, analysis?.max_severity, null),
-      requiresAcknowledgment: analysis?.requires_acknowledgment ?? false,
-      blockedFromDeparture: analysis?.blocked_from_departure ?? false,
-    };
-  });
+  const photos: PhotoListItem[] = (data || []).map((row: PhotoListRow) =>
+    mapRowToPhotoListItem(row)
+  );
 
   return { success: true, data: photos, error: null };
 }

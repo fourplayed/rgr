@@ -7,7 +7,7 @@ import type { QueryClient, InfiniteData } from '@tanstack/react-query';
  */
 export function placeholderId(): string {
   const s = () => Math.random().toString(16).slice(2, 10);
-  return `${s()}${s()}-${s().slice(0, 4)}-4${s().slice(1, 4)}-${((Math.random() * 4) | 8).toString(16)}${s().slice(1, 4)}-${s()}${s().slice(0, 4)}`;
+  return `${s()}-${s().slice(0, 4)}-4${s().slice(1, 4)}-${((Math.random() * 4) | 8).toString(16)}${s().slice(1, 4)}-${s()}${s().slice(0, 4)}`;
 }
 
 /**

@@ -7,9 +7,24 @@ import { useAuthStore } from '../store/authStore';
  * Module-scoped set of query key prefixes currently suppressed.
  * When a local optimistic mutation fires, it calls `suppressRealtimeFor()`
  * to prevent the incoming realtime event from racing with onSettled.
+ *
+ * Cleaned up on hot-reload (via module.hot) so stale suppressions
+ * don't carry across edits during development.
  */
 const suppressedKeys = new Set<string>();
 const suppressionTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+// Clean up module-scoped state on hot-reload to prevent stale suppressions
+if (
+  __DEV__ &&
+  typeof module !== 'undefined' &&
+  (module as NodeModule & { hot?: { dispose: (cb: () => void) => void } }).hot
+) {
+  (module as NodeModule & { hot?: { dispose: (cb: () => void) => void } }).hot!.dispose(() => {
+    clearRealtimeSuppressions();
+    clearRealtimeDebounce();
+  });
+}
 
 /**
  * Temporarily suppress realtime invalidation for a query key prefix.

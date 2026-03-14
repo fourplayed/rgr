@@ -198,8 +198,8 @@ export function usePrefetchImages(photos: PhotoListItem[] | undefined) {
   }, [photos]);
 
   // Stable string key for the dependency array — avoids re-firing on
-  // referentially different arrays with identical content
-  const pathsKey = useMemo(() => prefetchPaths.slice().sort().join('\0'), [prefetchPaths]);
+  // referentially different arrays with identical content (matches useBatchSignedUrls separator)
+  const pathsKey = useMemo(() => prefetchPaths.slice().sort().join(','), [prefetchPaths]);
 
   useEffect(() => {
     if (!prefetchPaths.length) return;

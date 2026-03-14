@@ -1,4 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
+import { logger } from './logger';
 
 const KEYS = {
   SESSION: 'rgr_session',
@@ -42,7 +43,13 @@ function isStoredSession(obj: unknown): obj is StoredSession {
  * Retrieve stored session tokens
  */
 export async function getSession(): Promise<StoredSession | null> {
-  const sessionStr = await SecureStore.getItemAsync(KEYS.SESSION);
+  let sessionStr: string | null;
+  try {
+    sessionStr = await SecureStore.getItemAsync(KEYS.SESSION);
+  } catch (err) {
+    logger.warn('SecureStore read failed (keychain may be locked)', err);
+    return null;
+  }
   if (!sessionStr) return null;
   try {
     const parsed: unknown = JSON.parse(sessionStr);
@@ -66,8 +73,13 @@ export async function clearSession(): Promise<void> {
  * Check if auto-login is enabled
  */
 export async function isAutoLoginEnabled(): Promise<boolean> {
-  const enabled = await SecureStore.getItemAsync(KEYS.AUTO_LOGIN_ENABLED);
-  return enabled === 'true';
+  try {
+    const enabled = await SecureStore.getItemAsync(KEYS.AUTO_LOGIN_ENABLED);
+    return enabled === 'true';
+  } catch (err) {
+    logger.warn('SecureStore read failed for auto-login check', err);
+    return false;
+  }
 }
 
 /**

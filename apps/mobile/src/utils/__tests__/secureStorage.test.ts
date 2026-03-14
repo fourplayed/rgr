@@ -106,11 +106,18 @@ describe('secureStorage', () => {
     await expect(saveSession(validSession)).rejects.toThrow('Keychain locked');
   });
 
-  it('getSession handles SecureStore throw gracefully', async () => {
+  it('getSession returns null when SecureStore throws (keychain locked)', async () => {
     jest.mocked(SecureStore.getItemAsync).mockRejectedValueOnce(new Error('Keychain unavailable'));
 
-    // getItemAsync is outside the try/catch in getSession, so the
-    // rejection propagates rather than being caught.
-    await expect(getSession()).rejects.toThrow('Keychain unavailable');
+    // getItemAsync failure is now caught and returns null instead of propagating
+    const result = await getSession();
+    expect(result).toBeNull();
+  });
+
+  it('isAutoLoginEnabled returns false when SecureStore throws', async () => {
+    jest.mocked(SecureStore.getItemAsync).mockRejectedValueOnce(new Error('Keychain locked'));
+
+    const result = await isAutoLoginEnabled();
+    expect(result).toBe(false);
   });
 });
