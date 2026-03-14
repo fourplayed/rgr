@@ -142,12 +142,13 @@ describe('offlineMutationQueue', () => {
 
     // New key should have migrated entries with correct shape
     const raw = await mockAsyncStorage.getItem('rgr:offline-mutation-queue');
-    const entries = JSON.parse(raw);
-    expect(entries[0].type).toBe('scan');
-    expect(entries[0].payload).toEqual(oldEntries[0].input);
-    expect(entries[0].photoStatus).toBe('pending');
-    expect(entries[1].type).toBe('scan');
-    expect(entries[1].payload).toEqual(oldEntries[1].input);
+    const entries = JSON.parse(raw) as Array<Record<string, unknown>>;
+    expect(entries).toHaveLength(2);
+    expect(entries[0]!['type']).toBe('scan');
+    expect(entries[0]!['payload']).toEqual(oldEntries[0]!.input);
+    expect(entries[0]!['photoStatus']).toBe('pending');
+    expect(entries[1]!['type']).toBe('scan');
+    expect(entries[1]!['payload']).toEqual(oldEntries[1]!.input);
   });
 
   it('migration only runs once per session', async () => {

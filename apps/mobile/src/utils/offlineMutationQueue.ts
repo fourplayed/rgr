@@ -153,7 +153,7 @@ export async function enqueueMutation(opts: {
     type: opts.type,
     payload: opts.payload,
     queuedAt: new Date().toISOString(),
-    photoUris: opts.photoUris,
+    ...(opts.photoUris ? { photoUris: opts.photoUris } : {}),
     photoStatus: 'pending',
   };
   let queue = await getQueue();
