@@ -4,7 +4,7 @@ import { useQueryClient, onlineManager } from '@tanstack/react-query';
 import { assetKeys, useCreateScanEvent, useUpdateAsset, useDeleteScanEvent } from '../useAssetData';
 import { useLocationStore, waitForLocationResolution } from '../../store/locationStore';
 import type { Asset } from '@rgr/shared';
-import { getAssetByQRCode, listAssets } from '@rgr/shared';
+import { getAssetByQRCode, listAssets, extractAssetInfo } from '@rgr/shared';
 import { logger } from '../../utils/logger';
 import { enqueueScan } from '../../utils/offlineMutationQueue';
 import type { ScanFlowAction, MatchedDepot } from './scanFlowMachine';
@@ -173,9 +173,8 @@ export function useScanProcessing(
           // We need at minimum the asset lookup to have succeeded (step 2 above).
           // If the error happened during createScan (step 5), the asset was already found.
           // Parse the assetId from the QR data to build the queued input.
-          const qrAssetId = qrData.startsWith('rgr://asset/')
-            ? qrData.slice('rgr://asset/'.length)
-            : null;
+          const assetInfo = extractAssetInfo(qrData);
+          const qrAssetId = assetInfo?.assetId ?? null;
 
           if (qrAssetId) {
             try {
@@ -204,6 +203,16 @@ export function useScanProcessing(
             } catch (queueError: unknown) {
               logger.warn('Failed to enqueue offline scan:', queueError);
             }
+          } else {
+            dispatch({ type: 'RESET' });
+            setAlertSheet({
+              visible: true,
+              type: 'error',
+              title: 'Cannot Queue Offline',
+              message: 'This QR format cannot be queued offline. Try again when connected.',
+            });
+            resetScannerRef.current();
+            return;
           }
         }
 

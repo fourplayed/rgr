@@ -6,6 +6,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { DatePickerField } from '../common/DatePickerField';
 import type { MaintenancePriority, CreateMaintenanceInput } from '@rgr/shared';
 import { MaintenancePriorityLabels, formatAssetNumber } from '@rgr/shared';
+import { onlineManager } from '@tanstack/react-query';
+import { enqueueMutation } from '../../utils/offlineMutationQueue';
+import { logger } from '../../utils/logger';
 import { Button } from '../common/Button';
 import { FilterChip } from '../common/FilterChip';
 import { SheetHeader } from '../common/SheetHeader';
@@ -162,6 +165,19 @@ export function CreateMaintenanceModal({
             onClose();
           }
         } catch (err: unknown) {
+          // If offline and this is a direct creation (not delegated), queue for later replay
+          if (!onlineManager.isOnline() && !onExternalSubmit) {
+            try {
+              await enqueueMutation({
+                type: 'maintenance',
+                payload: input as unknown as Record<string, unknown>,
+              });
+              onClose();
+              return;
+            } catch (queueError: unknown) {
+              logger.warn('Failed to enqueue offline maintenance record:', queueError);
+            }
+          }
           setError(err instanceof Error ? err.message : 'Failed to create maintenance record');
         }
       }),

@@ -2,6 +2,8 @@ import { useReducer, useCallback, useRef, useState, useEffect, useMemo } from 'r
 import { BackHandler } from 'react-native';
 import type { AssetScanContext, PhotoType } from '@rgr/shared';
 import * as Haptics from 'expo-haptics';
+import { onlineManager } from '@tanstack/react-query';
+import { enqueueMutation } from '../../utils/offlineMutationQueue';
 import { useAssetScanContext } from '../useAssetData';
 import { useCreateDefectReport } from '../useDefectData';
 import { useLocation } from '../useLocation';
@@ -391,6 +393,34 @@ export function useScanFlow({ canMarkMaintenance }: UseScanFlowOptions): UseScan
         const message = error instanceof Error ? error.message : 'Failed to submit defect report';
         if (__DEV__) console.error('[useScanFlow] handleDefectSubmit ERROR:', message, error);
         addDebugLog(`ERROR: ${message}`);
+
+        // If offline, enqueue the defect report for later replay
+        if (!onlineManager.isOnline() && scannedAsset && user && lastScanEventId) {
+          try {
+            await enqueueMutation({
+              type: 'defect_report',
+              payload: {
+                assetId: scannedAsset.id,
+                reportedBy: user.id,
+                title: 'Defect reported',
+                description: notes,
+                scanEventId: lastScanEventId,
+              },
+            });
+            dispatch({ type: 'DEFECT_SUBMITTED', wantsPhoto });
+            setAlertSheet({
+              visible: true,
+              type: 'info',
+              title: 'Defect Queued',
+              message:
+                'You are offline. This defect report has been saved and will be submitted when connectivity is restored.',
+            });
+            return;
+          } catch (queueError: unknown) {
+            logger.warn('Failed to enqueue offline defect report:', queueError);
+          }
+        }
+
         setAlertSheet({
           visible: true,
           type: 'error',

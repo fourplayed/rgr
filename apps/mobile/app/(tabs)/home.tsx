@@ -51,6 +51,7 @@ import { useDefectMaintenanceModals } from '../../src/hooks/useDefectMaintenance
 import { DefectMaintenanceModals } from '../../src/components/common/DefectMaintenanceModals';
 import { useCountUp } from '../../src/hooks/useCountUp';
 import { useStaggeredEntrance } from '../../src/hooks/useStaggeredEntrance';
+import { useOfflineQueueStatus } from '../../src/hooks/useOfflineQueueStatus';
 import { AppText } from '../../src/components/common';
 
 // Dashboard font sizes — now use global tokens (display: 28, hero: 35)
@@ -243,6 +244,9 @@ export default function HomeScreen() {
 
   // Shared defect/maintenance modal chain (detail -> accept -> task detail)
   const modals = useDefectMaintenanceModals();
+
+  // Offline queue status for banner
+  const offlineQueueCount = useOfflineQueueStatus();
 
   // Recent scans across all users (global activity)
   const {
@@ -471,6 +475,15 @@ export default function HomeScreen() {
     () => (
       <>
         <RefreshLoadingDots isRefetching={!!isRefetching} />
+        {offlineQueueCount > 0 && (
+          <View style={styles.offlineBanner}>
+            <Ionicons name="cloud-offline-outline" size={16} color={colors.warning} />
+            <AppText style={styles.offlineBannerText}>
+              {offlineQueueCount} action{offlineQueueCount !== 1 ? 's' : ''} queued — will sync when
+              online
+            </AppText>
+          </View>
+        )}
         {/* User Profile Section */}
         <View style={styles.profileSection}>
           <View style={styles.profileHeader}>
@@ -557,6 +570,7 @@ export default function HomeScreen() {
       greetingOpacity,
       usernameOpacity,
       geofenceOpacity,
+      offlineQueueCount,
     ]
   );
 
@@ -806,5 +820,20 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     fontFamily: fonts.regular,
     color: colors.textSecondary,
+  },
+  offlineBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: '#F59E0B1A',
+    borderRadius: 8,
+    marginHorizontal: 16,
+    marginBottom: 8,
+  },
+  offlineBannerText: {
+    fontSize: 13,
+    color: '#F59E0B',
   },
 });
