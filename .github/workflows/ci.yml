@@ -120,7 +120,7 @@ jobs:
         run: npm run test --workspace=@rgr/web -- --run --coverage --coverage.reporter=text --coverage.reporter=lcov
         timeout-minutes: 5
         env:
-          NODE_OPTIONS: '--max-old-space-size=4096'
+          NODE_OPTIONS: '--max-old-space-size=6144'
 
       - name: Upload web coverage artifact
         if: always()

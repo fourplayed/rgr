@@ -41,6 +41,9 @@ export default defineConfig({
   clearScreen: false,
   test: {
     pool: process.env.CI ? 'forks' : 'threads',
+    poolOptions: {
+      forks: { maxForks: 2 },
+    },
     setupFiles: ['./src/test/setup.ts'],
     environment: 'jsdom',
     globals: true,
