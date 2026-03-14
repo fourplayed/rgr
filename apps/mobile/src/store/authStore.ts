@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { Platform } from 'react-native';
 import {
   signInWithEmailSecure,
   signOut,
@@ -7,6 +8,7 @@ import {
   updateProfile,
   updateLastLogin,
   getSupabaseClient,
+  deletePushToken,
 } from '@rgr/shared';
 import type { UpdateProfileInput } from '@rgr/shared';
 import type { Profile } from '@rgr/shared';
@@ -114,6 +116,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: async () => {
+    // Capture user ID before clearing state (set() below nullifies get().user)
+    const userId = get().user?.id;
+
     // Reset state BEFORE signOut() to prevent the onAuthStateChange listener
     // from firing handleSessionExpired() and showing "Session Expired" modal
     set({
@@ -128,10 +133,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     await clearSession();
     eventBus.emit(AppEvents.USER_LOGOUT);
 
+    // Best-effort push token cleanup — don't block logout on failure
+    if (userId) {
+      try {
+        const Application = await import('expo-application');
+        const deviceId =
+          Platform.OS === 'android'
+            ? Application.getAndroidId()
+            : ((await Application.getIosIdForVendorAsync()) ?? 'unknown');
+        await deletePushToken(userId, deviceId);
+      } catch (err: unknown) {
+        logger.warn('Failed to delete push token during logout', err);
+      }
+    }
+
     try {
       await signOut();
     } catch (error: unknown) {
-      // Best-effort: local auth state is already cleared
       logger.warn('signOut failed during logout', error);
     }
   },

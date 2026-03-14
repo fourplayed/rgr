@@ -176,6 +176,12 @@ export function usePushNotifications() {
       if (__DEV__) console.log('[Push] Tapped:', data);
       if (data?.['assetId']) {
         router.push(`/(tabs)/assets/${data['assetId']}`);
+      } else if (data?.['maintenanceId']) {
+        router.push('/(tabs)/maintenance');
+      } else if (data?.['defectId']) {
+        router.push('/(tabs)/maintenance');
+      } else if (__DEV__) {
+        console.warn('[Push] Unrecognized notification payload:', data);
       }
     });
 
