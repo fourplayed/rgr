@@ -10,11 +10,11 @@
 
 ### F3 — Near-expiry tokens during auto-login
 
-**Problem:** `authStore.ts` `attemptAutoLogin` accepts tokens within the 60s buffer but doesn't proactively refresh them. A narrow window exists where the token expires before the auto-refresh timer fires.
+**Problem:** `authStore.ts` `attemptAutoLogin` rejects tokens within the 60s buffer, but a token expiring in 61-300 seconds passes the check. Supabase's `setSession()` triggers a server-side refresh, and the new tokens are persisted. However, the 60-second buffer is tight — network latency or clock skew could allow a near-expiry token through that expires before the SDK's auto-refresh timer fires.
 
-**Fix:** After `setSession()` succeeds, check if the token expires within 5 minutes. If so, immediately call `refreshSessionSafe()`. This closes the gap between auto-login and the first AppState-triggered refresh.
+**Fix:** Widen the buffer constant from 60 seconds to 5 minutes (300 seconds). This ensures tokens close to expiry are rejected and the user re-authenticates cleanly, rather than bolting on a second refresh after `setSession()` already handles it. The `setSession()` + persist flow remains unchanged.
 
-**File:** `apps/mobile/src/store/authStore.ts` (lines 207-248)
+**File:** `apps/mobile/src/store/authStore.ts` (lines 216-219)
 
 ### F4 — Token refresh doesn't persist to SecureStore
 
@@ -40,6 +40,8 @@
 
 **Problem:** `useRealtimeInvalidation.ts` subscribes to `maintenance_records` changes, but the table was never added to the `supabase_realtime` publication. The subscription connects successfully but never receives events.
 
+**Note:** This is a day-1 bug from when `maintenance_records` was introduced — no data was lost, events were simply never received. No regression risk, only improvement.
+
 **Fix:** Apply migration via Supabase MCP:
 ```sql
 ALTER PUBLICATION supabase_realtime ADD TABLE maintenance_records;
@@ -57,7 +59,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE maintenance_records;
 
 **Problem:** When the realtime connection flaps, each SUBSCRIBED event triggers full query invalidation. Rapid reconnects cause repeated refetches.
 
-**Fix:** Track `lastInvalidatedAt` timestamp. Skip invalidation if the previous one was less than 5 seconds ago. Apply to all four channel SUBSCRIBED callbacks.
+**Fix:** Track `lastInvalidatedAt` per-channel using a `Map<string, number>` keyed by channel name. Skip invalidation if the previous one for that specific channel was less than 5 seconds ago. Per-channel tracking prevents one channel's reconnect from suppressing another channel's legitimate invalidation.
 
 **File:** `apps/mobile/src/hooks/useRealtimeInvalidation.ts`
 
@@ -69,7 +71,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE maintenance_records;
 
 **Problem:** Logout flow in `authStore.ts` clears the session and calls `signOut()` but never removes the push token from the database. Stale tokens can route notifications to the wrong user on shared devices.
 
-**Fix:** Before `signOut()`, call `deletePushToken(userId, deviceId)` using the same device identifier from `expo-application` used during registration. Wrap in try-catch so a failed delete doesn't block logout.
+**Fix:** Capture `userId` from `get().user?.id` at the top of the `logout` function, *before* the `set()` call that clears state to null. Then call `deletePushToken(userId, deviceId)` using the captured ID and the same device identifier from `expo-application` used during registration. Wrap in try-catch so a failed delete doesn't block logout.
 
 **Files:** `apps/mobile/src/store/authStore.ts` (lines 116-137)
 
@@ -112,7 +114,12 @@ Each type has a replay handler calling the corresponding shared service function
 - Concurrency: `_isReplaying` guard
 - Abort: `_abortReplay` for clean logout
 
-Photo handling: photo URIs stored as local file paths in the queue entry. During replay, photos are uploaded first, then the mutation is submitted with the resulting photo IDs. If photo upload fails, the entry is retried (counts toward circuit breaker).
+Photo handling: photos reference their parent record via FK, so they must be uploaded *after* the parent mutation succeeds. Replay order per entry:
+1. Create the defect/maintenance record, receive the new record ID
+2. Upload photos referencing the new record's ID
+3. If photo upload fails, mark the entry's `photoStatus: 'failed'` but do NOT discard the text record (it's already persisted server-side)
+
+Queue entry gains a `photoStatus: 'pending' | 'uploaded' | 'failed'` field. Entries with `photoStatus: 'failed'` can be retried for photo upload only (the parent record already exists). Photo failures do NOT count toward the circuit breaker — only parent mutation failures do.
 
 Post-replay invalidation in `_layout.tsx` extended to also invalidate defect and maintenance queries.
 
@@ -127,15 +134,11 @@ Post-replay invalidation in `_layout.tsx` extended to also invalidate defect and
 
 **Problem:** The offline enqueue path in `useScanProcessing.ts` only recognizes `rgr://asset/` prefix. Other QR formats supported by the `lookup_asset_by_qr` RPC are silently dropped.
 
-**Fix:** Extract QR parsing into a shared pure function:
-```typescript
-// packages/shared/src/utils/qrCode.ts
-export function parseQrCode(raw: string): { assetId: string } | null
-```
+**Fix:** The shared function already exists — `extractAssetInfo()` in `packages/shared/src/utils/qrCode.ts` handles `rgr://asset/`, `rgr://a/`, raw UUIDs, and asset numbers. The offline fallback path in `useScanProcessing.ts` uses a hand-rolled `qrData.startsWith('rgr://asset/')` instead of calling this function.
 
-Both the offline path and the RPC use this function. If parsing returns null, show the user "This QR format can't be queued offline - try again when connected" instead of silently dropping.
+Replace the hand-rolled prefix check with `extractAssetInfo(qrData)` from `@rgr/shared`. If it returns null, show the user "This QR format can't be queued offline - try again when connected" instead of silently dropping.
 
-**Files:** `packages/shared/src/utils/qrCode.ts`, `apps/mobile/src/hooks/scan/useScanProcessing.ts`
+**Files:** `apps/mobile/src/hooks/scan/useScanProcessing.ts` (import and use existing `extractAssetInfo`)
 
 ### F10 — No UI indicator for pending offline queue
 
@@ -181,10 +184,11 @@ Apply to both query and mutation defaults.
 **Problem:** 18 usages of `assertQueryResult<T>` perform pure type assertion (`return data as T`) without runtime validation. Join query results are unchecked — a column rename or FK change produces silent corruption.
 
 **Fix:**
-1. Create response schemas for all join queries (e.g., `AssetDetailResponseSchema`, `MaintenanceWithPhotosSchema`). Schemas live in `packages/shared/src/types/entities/` alongside existing entity schemas.
-2. Create `validateQueryResult<T>(data: unknown, schema: ZodType<T>): T` that calls `schema.parse(data)` and throws `ServiceError` on failure.
-3. Replace all 18 `assertQueryResult` callsites with `validateQueryResult`.
-4. Delete `assertQueryResult`.
+1. Create `validateQueryResult<T>(data: unknown, schema: ZodType<T>): T` that calls `schema.parse(data)` and throws `ServiceError` on failure.
+2. For the ~10-12 join query callsites (in `assets.ts`, `maintenance.ts`, `defectReports.ts`, `admin.ts`, `photos.ts`), create response schemas (e.g., `AssetDetailResponseSchema`, `MaintenanceWithPhotosSchema`). Schemas live in `packages/shared/src/types/entities/`.
+3. For simple single-row callsites (`pushTokens.ts`, `auth.ts`), use existing entity schemas or the already-validated upstream data (e.g., `auth.ts` callsites are already validated by `SecureAuthResponseSchema` — just cast the validated result).
+4. Replace all `assertQueryResult` callsites with `validateQueryResult` or typed casts as appropriate.
+5. Delete `assertQueryResult`.
 
 **Files:** All shared service files, entity schema files, `packages/shared/src/utils/index.ts`
 
@@ -229,12 +233,18 @@ Safe because edge functions are already protected by Supabase API key requiremen
 
 ## Testing Strategy
 
-- **Group 1:** Manually test login with near-expiry token, verify SecureStore persistence after token refresh
+- **Group 1:** Manually test login with near-expiry token (within 5 min buffer), verify SecureStore persistence after token refresh
 - **Group 2:** Verify realtime events arrive for maintenance_records after migration; test reconnect debounce with rapid subscribe/unsubscribe
 - **Group 3:** Verify push token deleted from DB after logout; test notification tap with various payloads
-- **Group 4:** Test offline queue for all three mutation types; verify photo upload during replay; test QR fallback with multiple formats; verify home screen banner
+- **Group 4:** Unit tests for the generalized mutation queue:
+  - Replay ordering (parent record created before photo upload)
+  - Circuit breaker interaction (photo failures don't trigger breaker, parent failures do)
+  - Photo failure isolation (`photoStatus: 'failed'` doesn't discard text record)
+  - TTL/eviction behavior with mixed mutation types
+  - QR fallback with multiple formats via `extractAssetInfo`
+  - Home screen banner shows/hides correctly
 - **Group 5:** Verify jitter in retry timing; test rego lookup with simulated timeout
-- **Group 6:** Run existing test suites — Zod validation changes should cause failures on schema drift; verify `as any` replacements compile cleanly
+- **Group 6:** Unit tests for each new join response schema against known Supabase response fixtures. Run existing test suites to verify no regressions. Verify `as any` replacements compile cleanly.
 
 ## Implementation Order
 
