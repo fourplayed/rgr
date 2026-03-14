@@ -117,7 +117,7 @@ jobs:
         run: npm ci
 
       - name: Run web tests with coverage
-        run: npm run test --workspace=@rgr/web -- --run --coverage --reporter=default --reporter=lcov --outputFile.lcov=apps/web/coverage/lcov.info
+        run: npm run test --workspace=@rgr/web -- --run --coverage --coverage.reporter=text --coverage.reporter=lcov
         env:
           NODE_OPTIONS: '--max-old-space-size=4096'
 
