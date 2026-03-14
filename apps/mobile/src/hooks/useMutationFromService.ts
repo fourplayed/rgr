@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { UseMutationResult } from '@tanstack/react-query';
 import type { ServiceResult } from '@rgr/shared';
 
 interface MutationFromServiceOptions<TInput, TData, TContext = unknown> {
@@ -27,7 +28,12 @@ export function useMutationFromService<TInput, TData, TContext = unknown>({
   onMutate,
   onError,
   onSettled,
-}: MutationFromServiceOptions<TInput, TData, TContext>) {
+}: MutationFromServiceOptions<TInput, TData, TContext>): UseMutationResult<
+  TData,
+  Error,
+  TInput,
+  TContext
+> {
   const queryClient = useQueryClient();
 
   return useMutation<TData, Error, TInput, TContext>({

@@ -10,7 +10,7 @@ export * from './depots';
 export * from './authRateLimiter';
 export { MAX_PHOTO_SIZE_BYTES } from './constants';
 export { STORAGE_BUCKETS } from './constants';
-export { queryFromService } from './queryFromService';
+export { queryFromService, ServiceError } from './queryFromService';
 export { safeParseEnum } from './safeParseEnum';
 export { formatAssetNumber } from './formatAssetNumber';
 export { withRetry } from './withRetry';
@@ -21,6 +21,8 @@ export { escapeHtml, isValidHexColor } from './sanitize';
  * SAFETY: Supabase SDK cannot resolve ambiguous FK joins at the type level.
  * The select string is verified against the local interface by visual inspection.
  * Centralizes the escape hatch for auditability.
+ *
+ * @internal
  */
 export function assertQueryResult<T>(data: unknown): T {
   return data as T;

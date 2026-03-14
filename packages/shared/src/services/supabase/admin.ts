@@ -1,4 +1,9 @@
 import { getSupabaseClient, getSupabaseConfig } from './client';
+
+function logServiceError(context: string, err: unknown): void {
+  const message = err instanceof Error ? err.message : String(err);
+  console.error(`[admin] ${context}: ${message}`);
+}
 import type { ServiceResult, PaginatedResult } from '../../types';
 import type { UserRole, AssetStatus, PhotoType } from '../../types/enums';
 import type { MaintenanceStatus } from '../../types/enums/MaintenanceEnums';
@@ -98,6 +103,7 @@ export async function listProfiles(
       error: null,
     };
   } catch (err) {
+    logServiceError('listProfiles', err);
     return { success: false, data: null, error: 'Failed to load users' };
   }
 }
@@ -137,6 +143,7 @@ export async function adminUpdateProfile(
 
     return { success: true, data: mapRowToProfile(data as ProfileRow), error: null };
   } catch (err) {
+    logServiceError('adminUpdateProfile', err);
     return { success: false, data: null, error: 'Failed to update user' };
   }
 }
@@ -163,6 +170,7 @@ export async function listAllDepots(): Promise<ServiceResult<Depot[]>> {
       error: null,
     };
   } catch (err) {
+    logServiceError('listAllDepots', err);
     return { success: false, data: null, error: 'Failed to load depots' };
   }
 }
@@ -189,6 +197,7 @@ export async function createDepot(input: CreateDepotInput): Promise<ServiceResul
 
     return { success: true, data: mapRowToDepot(data as DepotRow), error: null };
   } catch (err) {
+    logServiceError('createDepot', err);
     return { success: false, data: null, error: 'Failed to create depot' };
   }
 }
@@ -223,6 +232,7 @@ export async function updateDepot(
 
     return { success: true, data: mapRowToDepot(data as DepotRow), error: null };
   } catch (err) {
+    logServiceError('updateDepot', err);
     return { success: false, data: null, error: 'Failed to update depot' };
   }
 }
@@ -246,6 +256,7 @@ export async function deleteDepot(id: string): Promise<ServiceResult<void>> {
 
     return { success: true, data: undefined, error: null };
   } catch (err) {
+    logServiceError('deleteDepot', err);
     return { success: false, data: null, error: 'Failed to delete depot' };
   }
 }
@@ -277,6 +288,7 @@ export async function getAssetRelatedCounts(
       error: null,
     };
   } catch (err) {
+    logServiceError('getAssetRelatedCounts', err);
     return { success: false, data: null, error: 'Failed to get related counts' };
   }
 }
@@ -310,6 +322,7 @@ export async function bulkUpdateAssetStatus(
       error: null,
     };
   } catch (err) {
+    logServiceError('bulkUpdateAssetStatus', err);
     return { success: false, data: null, error: 'Failed to update assets' };
   }
 }
@@ -397,6 +410,7 @@ export async function listAuditLogs(
       error: null,
     };
   } catch (err) {
+    logServiceError('listAuditLogs', err);
     return { success: false, data: null, error: 'Failed to load audit logs' };
   }
 }
@@ -458,6 +472,7 @@ export async function adminCreateUser(input: CreateUserInput): Promise<
 
     return { success: true, data: body, error: null };
   } catch (err) {
+    logServiceError('adminCreateUser', err);
     const message = err instanceof Error ? err.message : 'Failed to create user';
     return { success: false, data: null, error: message };
   }
@@ -503,6 +518,7 @@ export async function getAdminDataStats(): Promise<ServiceResult<AdminDataStats>
       error: null,
     };
   } catch (err) {
+    logServiceError('getAdminDataStats', err);
     return { success: false, data: null, error: 'Failed to load admin stats' };
   }
 }
@@ -618,6 +634,7 @@ export async function adminListMaintenance(
       error: null,
     };
   } catch (err) {
+    logServiceError('adminListMaintenance', err);
     return { success: false, data: null, error: 'Failed to load maintenance records' };
   }
 }
@@ -699,6 +716,7 @@ export async function adminListDefectReports(
       error: null,
     };
   } catch (err) {
+    logServiceError('adminListDefectReports', err);
     return { success: false, data: null, error: 'Failed to load defect reports' };
   }
 }
@@ -777,6 +795,7 @@ export async function adminListPhotos(
       error: null,
     };
   } catch (err) {
+    logServiceError('adminListPhotos', err);
     return { success: false, data: null, error: 'Failed to load photos' };
   }
 }
@@ -819,6 +838,7 @@ export async function bulkCancelMaintenanceTasks(
       error: null,
     };
   } catch (err) {
+    logServiceError('bulkCancelMaintenanceTasks', err);
     return { success: false, data: null, error: 'Failed to cancel maintenance tasks' };
   }
 }
@@ -854,6 +874,7 @@ export async function bulkDeleteDefectReports(
       error: null,
     };
   } catch (err) {
+    logServiceError('bulkDeleteDefectReports', err);
     return { success: false, data: null, error: 'Failed to delete defect reports' };
   }
 }

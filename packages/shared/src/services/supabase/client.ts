@@ -6,6 +6,8 @@ import type { Database } from '../../types/database.types';
  *
  * For React Native, pass `storage` (AsyncStorage) and set
  * `detectSessionInUrl: false` to avoid browser-only APIs.
+ *
+ * @internal
  */
 export interface SupabaseConfig {
   url: string;
@@ -126,6 +128,8 @@ export function isSupabaseInitialized(): boolean {
 
 /**
  * Reset the Supabase client (useful for testing)
+ *
+ * @internal
  */
 export function resetSupabaseClient(): void {
   supabaseClient = null;
