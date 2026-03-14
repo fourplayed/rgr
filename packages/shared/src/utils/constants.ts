@@ -20,6 +20,11 @@ export const MAX_PAGE_SIZE = 100;
 export const QR_CODE_PREFIX = 'rgr://asset/';
 
 /**
+ * QR code short protocol prefix
+ */
+export const QR_CODE_SHORT_PREFIX = 'rgr://a/';
+
+/**
  * Regex pattern for asset numbers
  * Trailers: TL### (e.g., TL001, TL042)
  * Dollies: DL### (e.g., DL001, DL015)

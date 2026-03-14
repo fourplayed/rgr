@@ -8,7 +8,7 @@
  * Asset number format: 2 uppercase letters followed by digits (e.g., TL001, DL015)
  */
 
-import { ASSET_NUMBER_REGEX, QR_CODE_PREFIX } from './constants';
+import { ASSET_NUMBER_REGEX, QR_CODE_PREFIX, QR_CODE_SHORT_PREFIX } from './constants';
 
 /** Regex for a standard UUID (v4 or similar) */
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -106,6 +106,15 @@ export function extractAssetInfo(value: string): AssetInfo | null {
   // Try QR code format first
   if (trimmed.startsWith(QR_CODE_PREFIX)) {
     const uuidPart = trimmed.slice(QR_CODE_PREFIX.length);
+    if (UUID_REGEX.test(uuidPart)) {
+      return { assetId: uuidPart.toLowerCase() };
+    }
+    return null;
+  }
+
+  // Try short QR code format (rgr://a/{UUID})
+  if (trimmed.startsWith(QR_CODE_SHORT_PREFIX)) {
+    const uuidPart = trimmed.slice(QR_CODE_SHORT_PREFIX.length);
     if (UUID_REGEX.test(uuidPart)) {
       return { assetId: uuidPart.toLowerCase() };
     }
