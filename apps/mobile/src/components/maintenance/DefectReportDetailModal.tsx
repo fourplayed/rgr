@@ -204,7 +204,7 @@ export function DefectReportDetailModal({
       onClose={onClose}
       onExitComplete={onExitComplete}
       noBackdrop={noBackdrop}
-      snapPoint={['75%', '92%']}
+      snapPoint={['45%', '80%']}
     >
       <View style={sheetLayout.container}>
         <SheetHeader
@@ -219,14 +219,14 @@ export function DefectReportDetailModal({
             <LoadingDots color={colors.textSecondary} size={10} />
           </View>
         ) : (
-          <BottomSheetScrollView
-            style={sheetLayout.scroll}
-            contentContainerStyle={[
-              sheetLayout.scrollContent,
-              { paddingTop: spacing.lg, paddingBottom: spacing.lg, gap: spacing.md },
-            ]}
-            bounces={true}
-            showsVerticalScrollIndicator={false}
+          <View
+            style={{
+              flex: 1,
+              paddingHorizontal: spacing.lg,
+              paddingTop: spacing.lg,
+              paddingBottom: spacing.lg,
+              gap: spacing.md,
+            }}
           >
             {/* Info Row: Asset Number + Badge */}
             <Animated.View style={getAnimatedStyle(0)}>
@@ -371,13 +371,10 @@ export function DefectReportDetailModal({
                 </View>
               </Animated.View>
             )}
-          </BottomSheetScrollView>
-        )}
-
-        {!isLoading && defect && renderStatusActions() && (
-          <SheetFooter>
-            <Animated.View style={getAnimatedStyle(6)}>{renderStatusActions()}</Animated.View>
-          </SheetFooter>
+            {!isLoading && defect && (
+              <View style={{ paddingTop: spacing.md }}>{renderStatusActions()}</View>
+            )}
+          </View>
         )}
       </View>
 
