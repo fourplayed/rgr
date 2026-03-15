@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
-import { borderRadius } from './spacing';
+import { borderRadius, spacing } from './spacing';
+import { colors } from './colors';
 
 /**
  * Shared structural styles for sheet modals.
@@ -39,5 +40,10 @@ export const sheetLayout = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20, // spacing.lg
+  },
+  footer: {
+    paddingHorizontal: 20, // spacing.lg — matches scrollContent
+    paddingTop: spacing.md,
+    backgroundColor: colors.chrome,
   },
 });

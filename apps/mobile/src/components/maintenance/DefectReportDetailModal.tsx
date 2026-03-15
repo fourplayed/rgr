@@ -17,7 +17,7 @@ import {
   lineHeight,
 } from '../../theme/spacing';
 import { sheetLayout } from '../../theme/sheetLayout';
-import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
+import { SheetFooter } from '../common/SheetFooter';
 import { useDefectReport, useDeleteDefectReport } from '../../hooks/useDefectData';
 import { useAsset } from '../../hooks/useAssetData';
 import { useMaintenance } from '../../hooks/useMaintenanceData';
@@ -63,7 +63,6 @@ export function DefectReportDetailModal({
   onExitComplete,
 }: DefectReportDetailModalProps) {
   const { canMarkMaintenance } = useUserPermissions();
-  const sheetBottomPadding = useSheetBottomPadding();
   const { data: defect, isLoading } = useDefectReport(defectId);
   const { data: asset } = useAsset(defect?.assetId);
   const { data: linkedMaintenance } = useMaintenance(defect?.maintenanceRecordId ?? null);
@@ -86,7 +85,7 @@ export function DefectReportDetailModal({
   // Compose scatter-exit opacity with entrance opacity via multiply
   const getAnimatedStyle = (index: number) => ({
     opacity: Animated.multiply(getStyle(index).opacity, getEntryStyle(index).opacity),
-    transform: getStyle(index).transform,
+    transform: [...(getEntryStyle(index).transform ?? []), ...getStyle(index).transform],
   });
 
   // Reset scatter state when modal opens
@@ -229,7 +228,7 @@ export function DefectReportDetailModal({
             style={sheetLayout.scroll}
             contentContainerStyle={[
               sheetLayout.scrollContent,
-              { paddingTop: spacing.lg, paddingBottom: sheetBottomPadding, gap: spacing.md },
+              { paddingTop: spacing.lg, paddingBottom: spacing.lg, gap: spacing.md },
             ]}
             bounces={true}
             showsVerticalScrollIndicator={false}
@@ -267,10 +266,8 @@ export function DefectReportDetailModal({
             {/* Description */}
             {defect.description && (
               <Animated.View style={getAnimatedStyle(1)}>
-                <View style={styles.sectionGroup}>
-                  <AppText style={styles.detailLabel}>Description</AppText>
-                  <AppText style={styles.descriptionText}>{defect.description}</AppText>
-                </View>
+                <AppText style={styles.detailLabel}>Description</AppText>
+                <AppText style={styles.descriptionText}>{defect.description}</AppText>
               </Animated.View>
             )}
 
@@ -279,33 +276,31 @@ export function DefectReportDetailModal({
               <Animated.View style={getAnimatedStyle(2)}>
                 <View style={styles.sectionGroup}>
                   <AppText style={styles.sectionTitle}>Defect Photo</AppText>
-                  <View style={styles.sectionCard}>
-                    {isPhotoLoading ? (
-                      <View style={styles.defectPhotoPlaceholder}>
-                        <LoadingDots color={colors.textSecondary} size={8} />
-                      </View>
-                    ) : photoError || !defectPhotoUrl ? (
-                      <View style={styles.defectPhotoPlaceholder}>
-                        <Ionicons name="image-outline" size={28} color={colors.textSecondary} />
-                        <AppText style={styles.defectPhotoErrorText}>Photo unavailable</AppText>
-                      </View>
-                    ) : (
-                      <View
-                        style={styles.defectPhotoContainer}
-                        accessible
-                        accessibilityRole="image"
-                        accessibilityLabel="Defect photo"
-                      >
-                        <Image
-                          source={{ uri: defectPhotoUrl }}
-                          style={styles.defectPhoto}
-                          contentFit="cover"
-                          transition={200}
-                          cachePolicy="memory-disk"
-                        />
-                      </View>
-                    )}
-                  </View>
+                  {isPhotoLoading ? (
+                    <View style={styles.defectPhotoPlaceholder}>
+                      <LoadingDots color={colors.textSecondary} size={8} />
+                    </View>
+                  ) : photoError || !defectPhotoUrl ? (
+                    <View style={styles.defectPhotoPlaceholder}>
+                      <Ionicons name="image-outline" size={28} color={colors.textSecondary} />
+                      <AppText style={styles.defectPhotoErrorText}>Photo unavailable</AppText>
+                    </View>
+                  ) : (
+                    <View
+                      style={styles.defectPhotoContainer}
+                      accessible
+                      accessibilityRole="image"
+                      accessibilityLabel="Defect photo"
+                    >
+                      <Image
+                        source={{ uri: defectPhotoUrl }}
+                        style={styles.defectPhoto}
+                        contentFit="cover"
+                        transition={200}
+                        cachePolicy="memory-disk"
+                      />
+                    </View>
+                  )}
                 </View>
               </Animated.View>
             )}
@@ -315,19 +310,19 @@ export function DefectReportDetailModal({
               <Animated.View style={getAnimatedStyle(3)}>
                 <View style={styles.sectionGroup}>
                   <AppText style={styles.sectionTitle}>Linked Maintenance Task</AppText>
-                  <View style={styles.sectionCard}>
-                    {linkedMaintenance && (
-                      <AppText style={styles.detailValue}>{linkedMaintenance.title}</AppText>
-                    )}
-                    <TouchableOpacity
-                      style={styles.linkedTaskLink}
-                      onPress={handleViewLinkedTask}
-                      activeOpacity={0.7}
-                    >
-                      <AppText style={styles.linkedTaskLinkText}>View Task</AppText>
-                      <Ionicons name="chevron-forward" size={16} color={colors.electricBlue} />
-                    </TouchableOpacity>
-                  </View>
+                  <TouchableOpacity
+                    style={styles.linkedTaskRow}
+                    onPress={handleViewLinkedTask}
+                    activeOpacity={0.7}
+                  >
+                    <View style={{ flex: 1 }}>
+                      {linkedMaintenance && (
+                        <AppText style={styles.detailValue}>{linkedMaintenance.title}</AppText>
+                      )}
+                      <AppText style={styles.linkedTaskHint}>Tap to view task details</AppText>
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color={colors.electricBlue} />
+                  </TouchableOpacity>
                 </View>
               </Animated.View>
             )}
@@ -336,23 +331,36 @@ export function DefectReportDetailModal({
             {variant === 'full' && (defect.acceptedAt || defect.resolvedAt) && (
               <Animated.View style={getAnimatedStyle(4)}>
                 <View style={styles.sectionGroup}>
-                  {defect.acceptedAt && (
-                    <View style={styles.detailRow}>
-                      <AppText style={styles.detailLabel}>Accepted</AppText>
-                      <AppText style={styles.detailValue}>
-                        {formatRelativeTime(defect.acceptedAt)}
-                      </AppText>
-                    </View>
-                  )}
-
-                  {defect.resolvedAt && (
-                    <View style={styles.detailRow}>
-                      <AppText style={styles.detailLabel}>Resolved</AppText>
-                      <AppText style={styles.detailValue}>
-                        {formatRelativeTime(defect.resolvedAt)}
-                      </AppText>
-                    </View>
-                  )}
+                  <AppText style={styles.sectionTitle}>Timeline</AppText>
+                  <View style={styles.timelineContainer}>
+                    {defect.acceptedAt && (
+                      <View style={styles.timelineItem}>
+                        <View style={styles.timelineDotWrap}>
+                          <View style={[styles.timelineDot, { backgroundColor: colors.success }]} />
+                          {defect.resolvedAt && <View style={styles.timelineLine} />}
+                        </View>
+                        <View style={styles.timelineContent}>
+                          <AppText style={styles.timelineLabel}>Accepted</AppText>
+                          <AppText style={styles.timelineValue}>
+                            {formatRelativeTime(defect.acceptedAt)}
+                          </AppText>
+                        </View>
+                      </View>
+                    )}
+                    {defect.resolvedAt && (
+                      <View style={styles.timelineItem}>
+                        <View style={styles.timelineDotWrap}>
+                          <View style={[styles.timelineDot, { backgroundColor: colors.info }]} />
+                        </View>
+                        <View style={styles.timelineContent}>
+                          <AppText style={styles.timelineLabel}>Resolved</AppText>
+                          <AppText style={styles.timelineValue}>
+                            {formatRelativeTime(defect.resolvedAt)}
+                          </AppText>
+                        </View>
+                      </View>
+                    )}
+                  </View>
                 </View>
               </Animated.View>
             )}
@@ -362,16 +370,19 @@ export function DefectReportDetailModal({
               <Animated.View style={getAnimatedStyle(5)}>
                 <View style={styles.sectionGroup}>
                   <AppText style={styles.sectionTitle}>Notes</AppText>
-                  <View style={styles.sectionCard}>
+                  <View style={styles.notesCardSubdued}>
                     <AppText style={styles.notesText}>{defect.notes}</AppText>
                   </View>
                 </View>
               </Animated.View>
             )}
-
-            {/* Status Actions */}
-            <Animated.View style={getAnimatedStyle(6)}>{renderStatusActions()}</Animated.View>
           </BottomSheetScrollView>
+        )}
+
+        {!isLoading && defect && renderStatusActions() && (
+          <SheetFooter>
+            <Animated.View style={getAnimatedStyle(6)}>{renderStatusActions()}</Animated.View>
+          </SheetFooter>
         )}
       </View>
 
@@ -461,17 +472,22 @@ const styles = StyleSheet.create({
     fontSize: fontSize.base,
     fontFamily: fonts.regular,
     color: colors.text,
+    lineHeight: lineHeight.relaxed,
   },
-  linkedTaskLink: {
+  linkedTaskRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: spacing.md,
+    padding: spacing.base,
+    backgroundColor: 'rgba(0, 168, 255, 0.06)',
+    borderRadius: borderRadius.md,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.electricBlue,
   },
-  linkedTaskLinkText: {
-    fontSize: fontSize.sm,
-    fontFamily: fonts.bold,
-    color: colors.electricBlue,
-    textTransform: 'uppercase',
+  linkedTaskHint: {
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
+    marginTop: 2,
   },
   actionsContainer: {
     flexDirection: 'row',
@@ -492,16 +508,21 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   defectPhotoContainer: {
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.lg,
     overflow: 'hidden',
     aspectRatio: 4 / 3,
+    shadowColor: '#000030',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 4,
   },
   defectPhoto: {
     flex: 1,
   },
   defectPhotoPlaceholder: {
     aspectRatio: 4 / 3,
-    backgroundColor: colors.surface,
+    backgroundColor: '#2A2A3A',
     borderRadius: borderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',
@@ -513,7 +534,7 @@ const styles = StyleSheet.create({
   defectPhotoErrorText: {
     fontSize: fontSize.xs,
     fontFamily: fonts.regular,
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.5)',
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
@@ -522,5 +543,53 @@ const styles = StyleSheet.create({
     fontFamily: fonts.regular,
     color: colors.textSecondary,
     lineHeight: lineHeight.body,
+  },
+  notesCardSubdued: {
+    backgroundColor: colors.chrome,
+    borderRadius: borderRadius.md,
+    padding: spacing.base,
+  },
+  timelineContainer: {
+    paddingLeft: 4,
+  },
+  timelineItem: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    paddingBottom: spacing.base,
+  },
+  timelineDotWrap: {
+    alignItems: 'center',
+    width: 16,
+  },
+  timelineDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+  },
+  timelineLine: {
+    width: 2,
+    flex: 1,
+    backgroundColor: colors.border,
+    marginTop: 2,
+  },
+  timelineContent: {
+    flex: 1,
+    paddingBottom: spacing.xs,
+  },
+  timelineLabel: {
+    fontSize: fontSize.xs,
+    fontFamily: fonts.bold,
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  timelineValue: {
+    fontSize: fontSize.base,
+    fontFamily: fonts.bold,
+    color: colors.text,
+    marginTop: 2,
   },
 });

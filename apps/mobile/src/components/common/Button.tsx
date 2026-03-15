@@ -1,4 +1,4 @@
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Pressable,
@@ -7,12 +7,23 @@ import {
   type ViewStyle,
   type StyleProp,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LoadingDots } from './LoadingDots';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, shadows, fontFamily as fonts } from '../../theme/spacing';
 import { AppText } from './AppText';
+
+// Reverse lookup: hex color → gradient endpoint
+const GRADIENT_LOOKUP: Record<string, string> = {
+  [colors.success]: colors.gradientEndpoints.success,
+  [colors.defectYellow]: colors.gradientEndpoints.defectYellow,
+  [colors.warning]: colors.gradientEndpoints.warning,
+  [colors.electricBlue]: colors.gradientEndpoints.electricBlue,
+  [colors.error]: colors.gradientEndpoints.error,
+  [colors.primary]: colors.gradientEndpoints.primary,
+};
 
 type ButtonVariant = 'primary' | 'secondary' | 'danger';
 
@@ -51,9 +62,29 @@ export function Button({
   const scale = useRef(new Animated.Value(1)).current;
   const variantStyle = variantStyles[variant];
   const textStyle = textStyles[variant];
-  const bgOverride = color ? { backgroundColor: color } : undefined;
-  const textColorOverride = textColor ? { color: textColor } : undefined;
   const isDisabled = disabled || isLoading;
+
+  // Gradient: only for primary/danger variants with a color prop that has a known endpoint
+  const gradientEnd = color ? GRADIENT_LOOKUP[color] : undefined;
+  const useGradient =
+    !!gradientEnd && !isDisabled && (variant === 'primary' || variant === 'danger');
+
+  // Colored shadow for gradient buttons (iOS only — Android uses elevation)
+  const coloredShadow = useMemo(
+    () =>
+      color && !isDisabled
+        ? {
+            shadowColor: color,
+            shadowOpacity: 0.3,
+            shadowRadius: 12,
+            shadowOffset: { width: 0, height: 4 },
+          }
+        : undefined,
+    [color, isDisabled]
+  );
+
+  const bgOverride = !useGradient && color ? { backgroundColor: color } : undefined;
+  const textColorOverride = textColor ? { color: textColor } : undefined;
 
   const disabledTextOverride =
     isDisabled && !isLoading ? { color: colors.textDisabled } : undefined;
@@ -82,7 +113,7 @@ export function Button({
   }, [onPress]);
 
   const resolvedColor = isDisabled ? colors.textDisabled : (textColor ?? textStyle.color);
-  const content = isLoading ? (
+  const contentEl = isLoading ? (
     <LoadingDots color={resolvedColor} size={8} />
   ) : icon ? (
     <View style={styles.iconRow}>
@@ -103,19 +134,41 @@ export function Button({
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? children}
     >
-      <Animated.View
-        style={[
-          styles.base,
-          variantStyle,
-          bgOverride,
-          flex && styles.flex,
-          isDisabled && styles.disabled,
-          style,
-          { transform: [{ scale }] },
-        ]}
-      >
-        {content}
-      </Animated.View>
+      {useGradient ? (
+        <Animated.View
+          style={[flex && styles.flex, coloredShadow, style, { transform: [{ scale }] }]}
+        >
+          <LinearGradient
+            colors={[color!, gradientEnd]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[
+              styles.base,
+              variantStyle,
+              { backgroundColor: undefined },
+              flex && styles.flex,
+              isDisabled && styles.disabled,
+            ]}
+          >
+            {contentEl}
+          </LinearGradient>
+        </Animated.View>
+      ) : (
+        <Animated.View
+          style={[
+            styles.base,
+            variantStyle,
+            bgOverride,
+            flex && styles.flex,
+            isDisabled && styles.disabled,
+            coloredShadow,
+            style,
+            { transform: [{ scale }] },
+          ]}
+        >
+          {contentEl}
+        </Animated.View>
+      )}
     </Pressable>
   );
 }
@@ -127,6 +180,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.xl,
+    overflow: 'hidden',
   },
   flex: {
     flex: 1,
@@ -166,7 +220,7 @@ const textStyles = StyleSheet.create({
     fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
-    textShadowColor: 'rgba(0, 0, 0, 0.25)',
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
@@ -181,7 +235,7 @@ const textStyles = StyleSheet.create({
     fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
-    textShadowColor: 'rgba(0, 0, 0, 0.25)',
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },

@@ -2,6 +2,7 @@ import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import {
   View,
   TouchableOpacity,
+  Pressable,
   StyleSheet,
   LayoutAnimation,
   Platform,
@@ -9,6 +10,7 @@ import {
   Animated,
 } from 'react-native';
 import { BottomSheetScrollView } from '../common/SheetModal';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import type { Asset, AssetWithRelations, AssetScanContext } from '@rgr/shared';
@@ -21,7 +23,7 @@ import { SheetHeader } from '../common/SheetHeader';
 import { SegmentedTabs } from '../common/SegmentedTabs';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, shadows, fontFamily as fonts } from '../../theme/spacing';
-import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
+import { SheetFooter } from '../common/SheetFooter';
 import { useTabFade } from '../../hooks/useTabFade';
 import type { MatchedDepot, ConfirmAction } from '../../hooks/scan/scanFlowMachine';
 import { AppText } from '../common';
@@ -73,7 +75,6 @@ type ScanConfirmationProps =
 
 function ScanConfirmationComponent(props: ScanConfirmationProps) {
   const { asset, matchedDepot, disabled, isCreating } = props;
-  const sheetBottomPadding = useSheetBottomPadding();
 
   // Build AssetWithRelations for AssetInfoCard
   const assetWithRelations = useMemo<AssetWithRelations>(
@@ -179,7 +180,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
       {/* ── Scrollable content ── */}
       <BottomSheetScrollView
         style={styles.scrollView}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: sheetBottomPadding }]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: spacing.lg }]}
         showsVerticalScrollIndicator={false}
         bounces={false}
         keyboardShouldPersistTaps="handled"
@@ -300,6 +301,9 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
             </View>
           </>
         )}
+      </BottomSheetScrollView>
+
+      <SheetFooter>
         <Button
           onPress={() => props.onConfirm(selectedAction)}
           disabled={disabled}
@@ -310,7 +314,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
         >
           {buttonLabel}
         </Button>
-      </BottomSheetScrollView>
+      </SheetFooter>
     </View>
   );
 }
@@ -457,6 +461,14 @@ function OpenItemsSection({
   );
 }
 
+// ── Gradient endpoint lookup for CheckboxOption ──────────────────────────────
+
+const GRADIENT_ENDPOINTS: Record<string, string> = {
+  [colors.electricBlue]: colors.gradientEndpoints.electricBlue,
+  [colors.defectYellow]: colors.gradientEndpoints.defectYellow,
+  [colors.warning]: colors.gradientEndpoints.warning,
+};
+
 // ── Checkbox option sub-component ────────────────────────────────────────────
 
 function CheckboxOption({
@@ -478,33 +490,98 @@ function CheckboxOption({
   disabled: boolean;
   accentColor: string;
 }) {
-  const checkboxIcon = completed
-    ? 'checkmark-circle'
-    : checked
-      ? 'radio-button-on'
-      : 'radio-button-off';
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handleToggle = useCallback(() => {
+    onToggle();
+    Animated.spring(scaleAnim, {
+      toValue: 1.02,
+      friction: 7,
+      tension: 100,
+      useNativeDriver: true,
+    }).start(() => {
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 7,
+        tension: 100,
+        useNativeDriver: true,
+      }).start();
+    });
+  }, [onToggle, scaleAnim]);
+
+  // Determine border and shadow styles based on state
+  const isSelected = checked && !completed;
+  const isUnselected = !checked && !completed;
+
+  const dynamicRowStyle = [
+    styles.checkboxRow,
+    isSelected && {
+      borderColor: accentColor,
+      borderWidth: 1.5,
+      shadowColor: accentColor,
+      shadowOpacity: 0.15,
+      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 0 },
+    },
+    isUnselected && {
+      borderColor: `${accentColor}66`,
+    },
+    completed && {
+      borderColor: accentColor,
+    },
+    disabled && styles.checkboxRowDisabled,
+  ];
+
+  const gradientEnd = GRADIENT_ENDPOINTS[accentColor] ?? accentColor;
+
+  // Radio indicator
+  const renderRadioIndicator = () => {
+    if (completed) {
+      return <Ionicons name="checkmark-circle" size={24} color={accentColor} />;
+    }
+    if (checked) {
+      return (
+        <View style={{ width: 24, height: 24, borderRadius: 12, overflow: 'hidden' }}>
+          <LinearGradient
+            colors={[accentColor, gradientEnd]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{ width: 24, height: 24, borderRadius: 12 }}
+          />
+        </View>
+      );
+    }
+    return <Ionicons name="radio-button-off" size={24} color={accentColor} />;
+  };
 
   return (
-    <TouchableOpacity
-      style={[
-        styles.checkboxRow,
-        { borderColor: accentColor, backgroundColor: `${accentColor}18` },
-        disabled && styles.checkboxRowDisabled,
-      ]}
-      onPress={onToggle}
+    <Pressable
+      onPress={handleToggle}
       disabled={disabled}
-      activeOpacity={0.7}
       accessibilityRole="radio"
       accessibilityLabel={label}
       accessibilityState={{ checked, disabled }}
     >
-      <Ionicons name={icon} size={32} color={accentColor} />
-      <View style={styles.checkboxTextColumn}>
-        <AppText style={[styles.checkboxLabel, { color: accentColor }]}>{label}</AppText>
-        <AppText style={styles.checkboxDescription}>{description}</AppText>
-      </View>
-      <Ionicons name={checkboxIcon} size={26} color={accentColor} />
-    </TouchableOpacity>
+      <Animated.View style={[dynamicRowStyle, { transform: [{ scale: scaleAnim }] }]}>
+        <LinearGradient
+          colors={[`${accentColor}1A`, `${accentColor}0A`]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[StyleSheet.absoluteFillObject, { borderRadius: borderRadius.md }]}
+        />
+        <Ionicons
+          name={icon}
+          size={24}
+          color={accentColor}
+          style={isUnselected ? { opacity: 0.7 } : undefined}
+        />
+        <View style={styles.checkboxTextColumn}>
+          <AppText style={[styles.checkboxLabel, { color: accentColor }]}>{label}</AppText>
+          <AppText style={styles.checkboxDescription}>{description}</AppText>
+        </View>
+        {renderRadioIndicator()}
+      </Animated.View>
+    </Pressable>
   );
 }
 
@@ -543,7 +620,9 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     backgroundColor: 'rgba(34, 197, 94, 0.08)',
-    borderRadius: borderRadius.sm,
+    borderRadius: borderRadius.base,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.success,
   },
   locationText: {
     flex: 1,
@@ -581,8 +660,9 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     borderRadius: borderRadius.md,
     borderWidth: 1,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.base,
     paddingHorizontal: spacing.base,
+    overflow: 'hidden',
   },
   checkboxRowDisabled: {
     opacity: 0.5,
@@ -596,9 +676,6 @@ const styles = StyleSheet.create({
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    textShadowColor: 'rgba(0, 0, 0, 0.15)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   checkboxDescription: {
     fontSize: fontSize.xs,
@@ -641,6 +718,5 @@ const styles = StyleSheet.create({
   // Confirm button
   confirmButton: {
     ...shadows.sm,
-    marginTop: spacing.lg,
   },
 });

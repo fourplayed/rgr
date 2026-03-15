@@ -8,6 +8,9 @@ export const colors = {
   navy: '#000030',
   electricBlue: '#00A8FF',
   neonViolet: '#9D00FF',
+  neonPurple: '#BF5AF2',
+  neonTeal: '#00E5CC',
+  aiRainbow: ['#FF6B6B', '#FF9F43', '#FECA57', '#48DBFB', '#BF5AF2', '#FF6B9D'] as const,
   violet: '#8B5CF6',
   chrome: '#F0F2F5',
   // Primary action color (buttons, links)
@@ -118,6 +121,28 @@ export const colors = {
 
   // Dev console (dev-only, matches electricBlue)
   devConsole: '#00A8FF',
+
+  // Gradient end-stops (15% darker variants for Elevated Depth headers/buttons)
+  gradientEndpoints: {
+    success: '#16A34A',
+    defectYellow: '#D4A800',
+    warning: '#D97706',
+    electricBlue: '#0090DD',
+    scheduled: '#3B82F6',
+    error: '#DC2626',
+    primary: '#2929CC',
+  },
+
+  // Glow variant for success flash
+  successGlow: '#34D399',
+
+  // Tinted surface backgrounds (for section differentiation)
+  surfaceTint: {
+    blue: 'rgba(0, 168, 255, 0.06)',
+    yellow: 'rgba(235, 197, 0, 0.06)',
+    orange: 'rgba(245, 158, 11, 0.06)',
+    green: 'rgba(34, 197, 94, 0.06)',
+  },
 } as const;
 
 export type ColorKey = keyof typeof colors;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { View, StyleSheet, Pressable, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Pressable, TouchableOpacity, Animated } from 'react-native';
 import { BottomSheetScrollView } from '../common/SheetModal';
 import { AppTextInput } from '../common/AppTextInput';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,7 +18,7 @@ import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts, shadows } from '../../theme/spacing';
 import { formStyles } from '../../theme/formStyles';
 import { sheetLayout } from '../../theme/sheetLayout';
-import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
+import { SheetFooter } from '../common/SheetFooter';
 import { useAuthStore } from '../../store/authStore';
 import { useCreateMaintenance } from '../../hooks/useMaintenanceData';
 import { useAssetList } from '../../hooks/useAssetData';
@@ -61,7 +61,6 @@ export function CreateMaintenanceModal({
   noBackdrop,
   onExitComplete,
 }: CreateMaintenanceModalProps) {
-  const sheetBottomPadding = useSheetBottomPadding();
   const user = useAuthStore((s) => s.user);
   const { mutateAsync: createMaintenanceAsync, isPending } = useCreateMaintenance();
   const guard = useSubmitGuard();
@@ -82,6 +81,20 @@ export function CreateMaintenanceModal({
   const [selectedAssetNumber, setSelectedAssetNumber] = useState<string | null>(null);
   const [assetSearch, setAssetSearch] = useState('');
   const [showAssetPicker, setShowAssetPicker] = useState(false);
+
+  // Chevron rotation animation for asset picker toggle
+  const chevronRotation = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(chevronRotation, {
+      toValue: showAssetPicker ? 1 : 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  }, [showAssetPicker, chevronRotation]);
+  const chevronRotate = chevronRotation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '180deg'],
+  });
 
   const effectiveAssetId = assetId ?? selectedAssetId ?? undefined;
 
@@ -219,7 +232,7 @@ export function CreateMaintenanceModal({
           style={sheetLayout.scroll}
           contentContainerStyle={[
             sheetLayout.scrollContent,
-            { paddingTop: spacing.base, paddingBottom: sheetBottomPadding },
+            { paddingTop: spacing.base, paddingBottom: spacing.lg },
           ]}
           bounces={true}
           showsVerticalScrollIndicator={false}
@@ -234,7 +247,7 @@ export function CreateMaintenanceModal({
           )}
 
           {/* Asset selection */}
-          <View style={formStyles.inputGroup}>
+          <View style={[formStyles.inputGroup, styles.inputGroupWide]}>
             <AppText style={formStyles.label}>Asset *</AppText>
             {assetId && assetNumber ? (
               // Pre-selected (read-only) — from defect accept or asset detail
@@ -268,11 +281,9 @@ export function CreateMaintenanceModal({
                 >
                   <Ionicons name="cube-outline" size={18} color={colors.textSecondary} />
                   <AppText style={styles.assetPickerPlaceholder}>Tap to select asset</AppText>
-                  <Ionicons
-                    name={showAssetPicker ? 'chevron-up' : 'chevron-down'}
-                    size={16}
-                    color={colors.textSecondary}
-                  />
+                  <Animated.View style={{ transform: [{ rotate: chevronRotate }] }}>
+                    <Ionicons name="chevron-down" size={16} color={colors.textSecondary} />
+                  </Animated.View>
                 </Pressable>
                 {showAssetPicker && (
                   <View style={styles.assetPickerDropdown}>
@@ -313,10 +324,10 @@ export function CreateMaintenanceModal({
           </View>
 
           {/* Title */}
-          <View style={formStyles.inputGroup}>
+          <View style={[formStyles.inputGroup, styles.inputGroupWide]}>
             <AppText style={formStyles.label}>Title *</AppText>
             <AppTextInput
-              style={formStyles.input}
+              style={[formStyles.input, styles.inputElevated]}
               value={title}
               onChangeText={setTitle}
               placeholder="e.g., Brake inspection, Tire replacement"
@@ -327,7 +338,7 @@ export function CreateMaintenanceModal({
           </View>
 
           {/* Priority */}
-          <View style={formStyles.inputGroup}>
+          <View style={[formStyles.inputGroup, styles.inputGroupWide]}>
             <AppText style={formStyles.label}>Priority</AppText>
             <View style={styles.chipContainer}>
               {PRIORITY_ORDER.map((p) => (
@@ -343,7 +354,7 @@ export function CreateMaintenanceModal({
           </View>
 
           {/* Due Date */}
-          <View style={formStyles.inputGroup}>
+          <View style={[formStyles.inputGroup, styles.inputGroupWide]}>
             <AppText style={formStyles.label}>Due Date *</AppText>
             <DatePickerField
               value={dueDate}
@@ -354,11 +365,11 @@ export function CreateMaintenanceModal({
           </View>
 
           {/* Description */}
-          <View style={formStyles.inputGroup}>
+          <View style={[formStyles.inputGroup, styles.inputGroupWide]}>
             <AppText style={formStyles.label}>Description (optional)</AppText>
             <AppTextInput
               key={formKey}
-              style={[formStyles.input, formStyles.textArea]}
+              style={[formStyles.input, formStyles.textArea, styles.inputElevated]}
               defaultValue={descriptionRef.current}
               onChangeText={(text) => {
                 descriptionRef.current = text;
@@ -372,34 +383,50 @@ export function CreateMaintenanceModal({
           </View>
 
           {error && <AppText style={formStyles.errorText}>{error}</AppText>}
-
-          <View style={{ marginTop: spacing.lg }}>
-            <Button
-              isLoading={isLoading}
-              onPress={handleSubmit}
-              color={colors.success}
-              style={styles.submitButton}
-            >
-              Create Task
-            </Button>
-          </View>
         </BottomSheetScrollView>
+
+        <SheetFooter>
+          <Button
+            isLoading={isLoading}
+            onPress={handleSubmit}
+            color={colors.success}
+            style={styles.submitButton}
+          >
+            Create Task
+          </Button>
+        </SheetFooter>
       </View>
     </SheetModal>
   );
 }
 
 const styles = StyleSheet.create({
+  inputElevated: {
+    backgroundColor: colors.background,
+    shadowColor: '#000030',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  inputGroupWide: {
+    marginBottom: spacing.base,
+  },
   assetSelected: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.background,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: borderRadius.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.base,
+    shadowColor: '#000030',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 2,
   },
   assetSelectedText: {
     flex: 1,
@@ -412,12 +439,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.background,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: borderRadius.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.base,
+    shadowColor: '#000030',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 2,
   },
   assetPickerPlaceholder: {
     flex: 1,
@@ -433,6 +465,11 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     overflow: 'hidden',
     maxHeight: 200,
+    shadowColor: '#000030',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 2,
   },
   assetSearchInput: {
     paddingHorizontal: spacing.md,
@@ -492,6 +529,8 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     borderWidth: 1,
     borderColor: colors.warningBorder,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.warning,
     marginBottom: spacing.md,
   },
   defectBannerText: {

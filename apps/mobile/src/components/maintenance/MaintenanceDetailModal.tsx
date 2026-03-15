@@ -27,7 +27,7 @@ import {
 } from '../../theme/spacing';
 import { formStyles } from '../../theme/formStyles';
 import { sheetLayout } from '../../theme/sheetLayout';
-import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
+import { SheetFooter } from '../common/SheetFooter';
 import {
   useMaintenance,
   useUpdateMaintenanceStatus,
@@ -67,7 +67,6 @@ export function MaintenanceDetailModal({
   onExitComplete,
 }: MaintenanceDetailModalProps) {
   const { canMarkMaintenance } = useUserPermissions();
-  const sheetBottomPadding = useSheetBottomPadding();
   const user = useAuthStore((s) => s.user);
   const { data: maintenance, isLoading } = useMaintenance(maintenanceId);
   const { data: asset } = useAsset(maintenance?.assetId);
@@ -92,10 +91,10 @@ export function MaintenanceDetailModal({
 
   const { getEntryStyle } = useStaggeredEntrances(!isLoading && !!maintenance ? 7 : 0);
 
-  // Compose scatter-exit (opacity + translateX) with entrance (opacity) via multiply
+  // Compose scatter-exit (opacity + translateX) with entrance (opacity + translateY) via multiply
   const getAnimatedStyle = (index: number) => ({
     opacity: Animated.multiply(getStyle(index).opacity, getEntryStyle(index).opacity),
-    transform: getStyle(index).transform,
+    transform: [...(getEntryStyle(index).transform ?? []), ...getStyle(index).transform],
   });
 
   useEffect(() => {
@@ -345,12 +344,7 @@ export function MaintenanceDetailModal({
       );
     }
 
-    return (
-      <View style={styles.detailRow}>
-        <AppText style={styles.detailLabel}>Title</AppText>
-        <AppText style={styles.detailValue}>{maintenance.title}</AppText>
-      </View>
-    );
+    return <AppText style={styles.titleHeading}>{maintenance.title}</AppText>;
   };
 
   const renderDescriptionSection = () => {
@@ -381,7 +375,9 @@ export function MaintenanceDetailModal({
     return (
       <View style={styles.detailRow}>
         <AppText style={styles.detailLabel}>Description</AppText>
-        <AppText style={styles.detailValue}>{maintenance.description}</AppText>
+        <AppText style={[styles.detailValue, { lineHeight: lineHeight.relaxed }]}>
+          {maintenance.description}
+        </AppText>
       </View>
     );
   };
@@ -466,7 +462,7 @@ export function MaintenanceDetailModal({
             style={sheetLayout.scroll}
             contentContainerStyle={[
               sheetLayout.scrollContent,
-              { paddingTop: spacing.lg, paddingBottom: sheetBottomPadding, gap: spacing.md },
+              { paddingTop: spacing.lg, paddingBottom: spacing.lg, gap: spacing.md },
             ]}
             bounces={true}
             showsVerticalScrollIndicator={false}
@@ -532,33 +528,34 @@ export function MaintenanceDetailModal({
                   {renderDescriptionSection()}
                 </Animated.View>
 
-                {maintenance.maintenanceType && (
+                {(maintenance.maintenanceType || maintenance.scheduledDate) && (
                   <Animated.View style={getAnimatedStyle(2)}>
-                    <View style={styles.detailRow}>
-                      <AppText style={styles.detailLabel}>Type</AppText>
-                      <AppText style={styles.detailValue}>
-                        {maintenance.maintenanceType.replace(/_/g, ' ')}
-                      </AppText>
-                    </View>
-                  </Animated.View>
-                )}
-
-                {maintenance.scheduledDate && (
-                  <Animated.View style={getAnimatedStyle(2)}>
-                    <View style={styles.detailRow}>
-                      <AppText style={styles.detailLabel}>Scheduled Date</AppText>
-                      <AppText style={styles.detailValue}>
-                        {formatDate(maintenance.scheduledDate)}
-                      </AppText>
+                    <View style={styles.metadataGrid}>
+                      {maintenance.maintenanceType && (
+                        <View style={styles.metadataCell}>
+                          <AppText style={styles.detailLabel}>Type</AppText>
+                          <AppText style={styles.detailValue}>
+                            {maintenance.maintenanceType.replace(/_/g, ' ')}
+                          </AppText>
+                        </View>
+                      )}
+                      {maintenance.scheduledDate && (
+                        <View style={styles.metadataCell}>
+                          <AppText style={styles.detailLabel}>Scheduled Date</AppText>
+                          <AppText style={styles.detailValue}>
+                            {formatDate(maintenance.scheduledDate)}
+                          </AppText>
+                        </View>
+                      )}
                     </View>
                   </Animated.View>
                 )}
 
                 {maintenance.assigneeName && (
                   <Animated.View style={getAnimatedStyle(3)}>
-                    <View style={styles.detailRow}>
-                      <AppText style={styles.detailLabel}>Assigned To</AppText>
-                      <AppText style={styles.detailValue}>{maintenance.assigneeName}</AppText>
+                    <View style={styles.assigneeChip}>
+                      <Ionicons name="person" size={14} color={colors.electricBlue} />
+                      <AppText style={styles.assigneeText}>{maintenance.assigneeName}</AppText>
                     </View>
                   </Animated.View>
                 )}
@@ -570,33 +567,31 @@ export function MaintenanceDetailModal({
               <Animated.View style={getAnimatedStyle(3)}>
                 <View style={styles.sectionGroup}>
                   <AppText style={styles.sectionTitle}>Defect Photo</AppText>
-                  <View style={styles.sectionCard}>
-                    {isPhotoLoading ? (
-                      <View style={styles.defectPhotoPlaceholder}>
-                        <LoadingDots color={colors.textSecondary} size={8} />
-                      </View>
-                    ) : photoError || !defectPhotoUrl ? (
-                      <View style={styles.defectPhotoPlaceholder}>
-                        <Ionicons name="image-outline" size={28} color={colors.textSecondary} />
-                        <AppText style={styles.defectPhotoErrorText}>Photo unavailable</AppText>
-                      </View>
-                    ) : (
-                      <View
-                        style={styles.defectPhotoContainer}
-                        accessible
-                        accessibilityRole="image"
-                        accessibilityLabel="Defect photo for this maintenance record"
-                      >
-                        <Image
-                          source={{ uri: defectPhotoUrl }}
-                          style={styles.defectPhoto}
-                          contentFit="cover"
-                          transition={200}
-                          cachePolicy="memory-disk"
-                        />
-                      </View>
-                    )}
-                  </View>
+                  {isPhotoLoading ? (
+                    <View style={styles.defectPhotoPlaceholder}>
+                      <LoadingDots color={colors.textSecondary} size={8} />
+                    </View>
+                  ) : photoError || !defectPhotoUrl ? (
+                    <View style={styles.defectPhotoPlaceholder}>
+                      <Ionicons name="image-outline" size={28} color={colors.textSecondary} />
+                      <AppText style={styles.defectPhotoErrorText}>Photo unavailable</AppText>
+                    </View>
+                  ) : (
+                    <View
+                      style={styles.defectPhotoContainer}
+                      accessible
+                      accessibilityRole="image"
+                      accessibilityLabel="Defect photo for this maintenance record"
+                    >
+                      <Image
+                        source={{ uri: defectPhotoUrl }}
+                        style={styles.defectPhoto}
+                        contentFit="cover"
+                        transition={200}
+                        cachePolicy="memory-disk"
+                      />
+                    </View>
+                  )}
                 </View>
               </Animated.View>
             )}
@@ -622,7 +617,12 @@ export function MaintenanceDetailModal({
                         </TouchableOpacity>
                       )}
                   </View>
-                  <View style={[styles.sectionCard, editingNotes && styles.notesCardEditing]}>
+                  <View
+                    style={[
+                      editingNotes ? styles.sectionCard : styles.notesCardSubdued,
+                      editingNotes && styles.notesCardEditing,
+                    ]}
+                  >
                     {editingNotes ? (
                       <>
                         <AppTextInput
@@ -660,9 +660,13 @@ export function MaintenanceDetailModal({
                 </View>
               </Animated.View>
             )}
-            {/* Status Actions */}
-            <Animated.View style={getAnimatedStyle(6)}>{renderStatusActions()}</Animated.View>
           </BottomSheetScrollView>
+        )}
+
+        {!isLoading && maintenance && renderStatusActions() && (
+          <SheetFooter>
+            <Animated.View style={getAnimatedStyle(6)}>{renderStatusActions()}</Animated.View>
+          </SheetFooter>
         )}
       </View>
 
@@ -794,16 +798,21 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   defectPhotoContainer: {
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.lg,
     overflow: 'hidden',
     aspectRatio: 4 / 3,
+    shadowColor: '#000030',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 4,
   },
   defectPhoto: {
     flex: 1,
   },
   defectPhotoPlaceholder: {
     aspectRatio: 4 / 3,
-    backgroundColor: colors.surface,
+    backgroundColor: '#2A2A3A',
     borderRadius: borderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',
@@ -812,7 +821,7 @@ const styles = StyleSheet.create({
   defectPhotoErrorText: {
     fontSize: fontSize.xs,
     fontFamily: fonts.regular,
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.5)',
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
@@ -841,5 +850,37 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
+  },
+  titleHeading: {
+    fontSize: fontSize.xl,
+    fontFamily: fonts.bold,
+    color: colors.text,
+  },
+  metadataGrid: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  metadataCell: {
+    flex: 1,
+  },
+  assigneeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: 'rgba(0, 168, 255, 0.06)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full,
+    alignSelf: 'flex-start',
+  },
+  assigneeText: {
+    fontSize: fontSize.sm,
+    fontFamily: fonts.bold,
+    color: colors.text,
+  },
+  notesCardSubdued: {
+    backgroundColor: colors.chrome,
+    borderRadius: borderRadius.md,
+    padding: spacing.base,
   },
 });

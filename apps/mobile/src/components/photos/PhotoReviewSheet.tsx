@@ -1,11 +1,12 @@
 import React, { useCallback, useRef, useEffect, memo } from 'react';
-import { View, StyleSheet, Animated, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Animated, ActivityIndicator, Platform } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import type { PhotoType } from '@rgr/shared';
 import { usePhotoCapture, type UploadStep } from '../../hooks/usePhotoCapture';
-import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
+import { SheetFooter } from '../common/SheetFooter';
 import { SheetModal, BottomSheetScrollView } from '../common/SheetModal';
 import { SheetHeader } from '../common/SheetHeader';
 import { sheetLayout } from '../../theme/sheetLayout';
@@ -44,7 +45,6 @@ function PhotoReviewSheetComponent({
     uploadStep,
   } = usePhotoCapture();
 
-  const bottomPad = useSheetBottomPadding();
   // Keep a stable URI for display during exit animation
   const stableUri = useRef(capturedUri);
   if (capturedUri) stableUri.current = capturedUri;
@@ -103,7 +103,7 @@ function PhotoReviewSheetComponent({
           style={sheetLayout.scroll}
           contentContainerStyle={[
             sheetLayout.scrollContent,
-            { paddingTop: spacing.md, paddingBottom: bottomPad },
+            { paddingTop: spacing.md, paddingBottom: spacing.lg },
           ]}
           bounces={false}
           showsVerticalScrollIndicator={false}
@@ -126,7 +126,9 @@ function PhotoReviewSheetComponent({
               </View>
             </View>
           )}
+        </BottomSheetScrollView>
 
+        <SheetFooter>
           <View style={styles.buttonRow}>
             <Animated.View style={[styles.flexOne, { opacity: retakeOpacity }]}>
               <Button
@@ -142,7 +144,7 @@ function PhotoReviewSheetComponent({
               Use Photo
             </Button>
           </View>
-        </BottomSheetScrollView>
+        </SheetFooter>
       </View>
     </SheetModal>
   );
@@ -160,8 +162,17 @@ const UPLOAD_STEPS = [
 
 const STEP_KEYS = UPLOAD_STEPS.map((s) => s.key);
 
+const STEP_PROGRESS: Record<string, number> = {
+  validating: 0.33,
+  thumbnail: 0.66,
+  uploading: 1.0,
+  complete: 1.0,
+};
+
 function UploadProgressOverlay({ step }: { step: NonNullable<UploadStep> }) {
   const opacity = useRef(new Animated.Value(0)).current;
+  const completeScale = useRef(new Animated.Value(0)).current;
+  const progressScaleX = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.timing(opacity, {
@@ -171,10 +182,35 @@ function UploadProgressOverlay({ step }: { step: NonNullable<UploadStep> }) {
     }).start();
   }, [opacity]);
 
+  // Animate progress bar on step change
+  useEffect(() => {
+    const target = STEP_PROGRESS[step] ?? 0;
+    Animated.timing(progressScaleX, {
+      toValue: target,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }, [step, progressScaleX]);
+
+  // Spring scale on complete checkmark
+  useEffect(() => {
+    if (step === 'complete') {
+      Animated.spring(completeScale, {
+        toValue: 1,
+        friction: 5,
+        tension: 100,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [step, completeScale]);
+
   const currentIndex = step === 'complete' ? STEP_KEYS.length : STEP_KEYS.indexOf(step);
 
   return (
     <Animated.View style={[overlayStyles.container, { opacity }]}>
+      {Platform.OS === 'ios' && (
+        <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFillObject} />
+      )}
       <View style={overlayStyles.card}>
         {UPLOAD_STEPS.map((s, i) => {
           const isComplete = step === 'complete' || i < currentIndex;
@@ -203,10 +239,17 @@ function UploadProgressOverlay({ step }: { step: NonNullable<UploadStep> }) {
         })}
         {step === 'complete' && (
           <View style={overlayStyles.doneRow}>
-            <Ionicons name="checkmark-circle" size={18} color={colors.success} />
+            <Animated.View style={{ transform: [{ scale: completeScale }] }}>
+              <Ionicons name="checkmark-circle" size={18} color={colors.success} />
+            </Animated.View>
             <AppText style={overlayStyles.doneText}>Photo saved</AppText>
           </View>
         )}
+        <View style={overlayStyles.progressTrack}>
+          <Animated.View
+            style={[overlayStyles.progressFill, { transform: [{ scaleX: progressScaleX }] }]}
+          />
+        </View>
       </View>
     </Animated.View>
   );
@@ -215,7 +258,7 @@ function UploadProgressOverlay({ step }: { step: NonNullable<UploadStep> }) {
 const overlayStyles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     borderRadius: borderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',
@@ -228,7 +271,7 @@ const overlayStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    height: 28,
+    height: 32,
   },
   label: {
     fontSize: fontSize.sm,
@@ -257,6 +300,20 @@ const overlayStyles = StyleSheet.create({
     fontFamily: fonts.bold,
     color: colors.success,
   },
+  progressTrack: {
+    height: 3,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 2,
+    marginTop: spacing.md,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: 3,
+    width: '100%',
+    backgroundColor: colors.success,
+    borderRadius: 2,
+    transformOrigin: 'left',
+  },
 });
 
 const styles = StyleSheet.create({
@@ -274,7 +331,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
     alignSelf: 'stretch',
-    marginTop: spacing.lg,
   },
   flexOne: {
     flex: 1,

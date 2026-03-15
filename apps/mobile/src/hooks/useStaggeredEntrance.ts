@@ -34,8 +34,8 @@ export function useStaggeredEntrance(index: number, staggerMs = 80): Animated.Va
 const MAX_ENTRANCE_SECTIONS = 8;
 
 /**
- * Batch variant: pre-allocates staggered opacity values for N sections.
- * Returns `getEntryStyle(index)` whose `.opacity` is an Animated.Value
+ * Batch variant: pre-allocates staggered opacity + translateY values for N sections.
+ * Returns `getEntryStyle(index)` with `opacity` and `transform: [{ translateY }]`
  * that can be composed with other animated styles via `Animated.multiply`.
  *
  * Pass count=0 while loading, then the real count when data arrives —
@@ -46,32 +46,53 @@ export function useStaggeredEntrances(count: number, staggerMs = 80) {
     Array.from({ length: MAX_ENTRANCE_SECTIONS }, () => new Animated.Value(0))
   ).current;
 
+  const translateYs = useRef(
+    Array.from({ length: MAX_ENTRANCE_SECTIONS }, () => new Animated.Value(8))
+  ).current;
+
   useEffect(() => {
     if (count === 0) return;
     const n = Math.min(count, MAX_ENTRANCE_SECTIONS);
 
-    for (let i = 0; i < n; i++) opacities[i]!.setValue(0);
+    for (let i = 0; i < n; i++) {
+      opacities[i]!.setValue(0);
+      translateYs[i]!.setValue(8);
+    }
 
     const anims = Array.from({ length: n }, (_, i) =>
-      Animated.timing(opacities[i]!, {
-        toValue: 1,
-        duration: 300,
-        delay: i * staggerMs,
-        useNativeDriver: true,
-      })
+      Animated.parallel([
+        Animated.timing(opacities[i]!, {
+          toValue: 1,
+          duration: 300,
+          delay: i * staggerMs,
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateYs[i]!, {
+          toValue: 0,
+          duration: 300,
+          delay: i * staggerMs,
+          useNativeDriver: true,
+        }),
+      ])
     );
 
     Animated.parallel(anims).start();
 
     return () => anims.forEach((a) => a.stop());
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- opacities is a stable ref
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- opacities/translateYs are stable refs
   }, [count, staggerMs]);
 
   const getEntryStyle = useCallback(
-    (index: number) => ({
-      opacity: opacities[Math.min(index, MAX_ENTRANCE_SECTIONS - 1)]!,
-    }),
-    [opacities]
+    (index: number) => {
+      const i = Math.min(index, MAX_ENTRANCE_SECTIONS - 1);
+      return {
+        opacity: opacities[i]!,
+        transform: [{ translateY: translateYs[i]! }] as Animated.WithAnimatedObject<
+          { translateY: number }[]
+        >,
+      };
+    },
+    [opacities, translateYs]
   );
 
   return { getEntryStyle };

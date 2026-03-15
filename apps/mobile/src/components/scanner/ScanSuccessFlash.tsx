@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useMemo } from 'react';
-import { StyleSheet, Animated, TouchableWithoutFeedback } from 'react-native';
+import { StyleSheet, Animated, TouchableWithoutFeedback, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { fontSize, spacing, fontFamily as fonts } from '../../theme/spacing';
 import { AppText } from '../common';
@@ -29,8 +30,10 @@ export function ScanSuccessFlash({
 }: ScanSuccessFlashProps) {
   const overlayOpacity = useRef(new Animated.Value(0)).current;
   const hintOpacity = useRef(new Animated.Value(0)).current;
+  const checkmarkScale = useRef(new Animated.Value(0)).current;
   const onDismissRef = useRef(onDismiss);
   const dismissingRef = useRef(false);
+  const hintLoopRef = useRef<Animated.CompositeAnimation | null>(null);
 
   useEffect(() => {
     onDismissRef.current = onDismiss;
@@ -67,9 +70,15 @@ export function ScanSuccessFlash({
 
   useEffect(() => {
     if (!visible) {
+      // Stop hint loop if running
+      if (hintLoopRef.current) {
+        hintLoopRef.current.stop();
+        hintLoopRef.current = null;
+      }
       // Reset all values
       overlayOpacity.setValue(0);
       hintOpacity.setValue(0);
+      checkmarkScale.setValue(0);
       headerOpacity.setValue(0);
       headerTranslateY.setValue(8);
       dismissingRef.current = false;
@@ -88,8 +97,14 @@ export function ScanSuccessFlash({
       duration: FADE_DURATION,
       useNativeDriver: true,
     }).start(() => {
-      // 2. Fade in header (checkmark + asset number)
+      // 2. Fade in header (checkmark + asset number) with checkmark spring
       Animated.parallel([
+        Animated.spring(checkmarkScale, {
+          toValue: 1,
+          friction: 5,
+          tension: 80,
+          useNativeDriver: true,
+        }),
         Animated.timing(headerOpacity, {
           toValue: 1,
           duration: 250,
@@ -128,12 +143,29 @@ export function ScanSuccessFlash({
         });
 
         Animated.stagger(STAGGER_DELAY, rowAnimations).start(() => {
-          // 4. Show "Tap to continue" hint immediately after last item
+          // 4. Show "Tap to continue" hint then start pulsing loop
           Animated.timing(hintOpacity, {
             toValue: 1,
             duration: FADE_DURATION,
             useNativeDriver: true,
-          }).start();
+          }).start(() => {
+            const loop = Animated.loop(
+              Animated.sequence([
+                Animated.timing(hintOpacity, {
+                  toValue: 0.5,
+                  duration: 750,
+                  useNativeDriver: true,
+                }),
+                Animated.timing(hintOpacity, {
+                  toValue: 0.9,
+                  duration: 750,
+                  useNativeDriver: true,
+                }),
+              ])
+            );
+            hintLoopRef.current = loop;
+            loop.start();
+          });
         });
       });
     });
@@ -141,6 +173,7 @@ export function ScanSuccessFlash({
     visible,
     overlayOpacity,
     hintOpacity,
+    checkmarkScale,
     headerOpacity,
     headerTranslateY,
     rowAnims,
@@ -150,6 +183,12 @@ export function ScanSuccessFlash({
   const handleTap = () => {
     if (dismissingRef.current) return;
     dismissingRef.current = true;
+
+    // Stop hint loop
+    if (hintLoopRef.current) {
+      hintLoopRef.current.stop();
+      hintLoopRef.current = null;
+    }
 
     // Phase 1 — Scatter rows out (alternating left/right, staggered 80ms)
     const scatterRows = Animated.stagger(
@@ -212,62 +251,93 @@ export function ScanSuccessFlash({
 
   return (
     <TouchableWithoutFeedback onPress={handleTap}>
-      <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]}>
-        <Animated.View
-          style={[
-            styles.header,
-            {
-              opacity: headerOpacity,
-              transform: [{ translateY: headerTranslateY }],
-            },
-          ]}
+      <Animated.View style={[styles.overlayWrapper, { opacity: overlayOpacity }]}>
+        <LinearGradient
+          colors={['#22C55E', '#16A34A', '#15803D']}
+          start={{ x: 0.3, y: 0 }}
+          end={{ x: 0.7, y: 1 }}
+          style={styles.overlay}
         >
-          <Ionicons name="checkmark-circle" size={64} color="#fff" />
-          <AppText style={styles.assetNumber}>{assetNumber}</AppText>
-        </Animated.View>
+          {/* Glow circle behind checkmark */}
+          <View style={styles.glowCircle} pointerEvents="none" />
 
-        <Animated.View style={styles.checklist}>
-          {checklistItems.map((label, i) => {
-            const { opacity, translateY, translateX, checkScale } = rowAnims[i]!;
-            return (
-              <Animated.View
-                key={label}
-                style={[styles.checkRow, { opacity, transform: [{ translateY }, { translateX }] }]}
-              >
-                <Animated.View style={{ transform: [{ scale: checkScale }] }}>
-                  <Ionicons name="checkmark-circle" size={22} color="#fff" />
+          <Animated.View
+            style={[
+              styles.header,
+              {
+                opacity: headerOpacity,
+                transform: [{ translateY: headerTranslateY }],
+              },
+            ]}
+          >
+            <Animated.View style={{ transform: [{ scale: checkmarkScale }] }}>
+              <Ionicons name="checkmark-circle" size={64} color="#fff" />
+            </Animated.View>
+            <AppText style={styles.assetNumber}>{assetNumber}</AppText>
+          </Animated.View>
+
+          <Animated.View style={styles.checklist}>
+            {checklistItems.map((label, i) => {
+              const { opacity, translateY, translateX, checkScale } = rowAnims[i]!;
+              return (
+                <Animated.View
+                  key={label}
+                  style={[
+                    styles.checkRow,
+                    { opacity, transform: [{ translateY }, { translateX }] },
+                  ]}
+                >
+                  <View style={styles.rowAccent} />
+                  <Animated.View style={{ transform: [{ scale: checkScale }] }}>
+                    <Ionicons name="checkmark-circle" size={22} color="#fff" />
+                  </Animated.View>
+                  <AppText style={styles.checkText}>{label}</AppText>
                 </Animated.View>
-                <AppText style={styles.checkText}>{label}</AppText>
-              </Animated.View>
-            );
-          })}
-        </Animated.View>
+              );
+            })}
+          </Animated.View>
 
-        <Animated.Text style={[styles.hint, { opacity: hintOpacity }]}>
-          Tap to continue
-        </Animated.Text>
+          <Animated.Text style={[styles.hint, { opacity: hintOpacity }]}>
+            Tap to continue
+          </Animated.Text>
+        </LinearGradient>
       </Animated.View>
     </TouchableWithoutFeedback>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
+  overlayWrapper: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(34, 197, 94, 1)',
+    zIndex: 999,
+  },
+  overlay: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 999,
+  },
+  glowCircle: {
+    position: 'absolute',
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: '#34D399',
+    opacity: 0.25,
+    alignSelf: 'center',
+    top: 120,
   },
   header: {
     alignItems: 'center',
   },
   assetNumber: {
-    fontSize: fontSize['2xl'],
-    fontFamily: fonts.bold,
+    fontSize: fontSize.display,
+    fontFamily: fonts.black,
     color: '#fff',
     marginTop: spacing.lg,
     marginBottom: spacing.xl,
+    textShadowColor: 'rgba(0, 0, 0, 0.15)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   checklist: {
     gap: 12,
@@ -277,6 +347,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  rowAccent: {
+    width: 2,
+    height: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 1,
   },
   checkText: {
     fontSize: fontSize.base,

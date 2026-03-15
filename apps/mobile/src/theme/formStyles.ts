@@ -86,4 +86,16 @@ export const formStyles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
   },
+
+  /**
+   * Section/group label — unified ALL-CAPS label for sheet modal sections.
+   * Replaces 5 slightly different patterns across modals.
+   */
+  sectionLabel: {
+    fontSize: fontSize.xs,
+    fontFamily: fonts.bold,
+    color: colors.textSecondary,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 1,
+  },
 });
