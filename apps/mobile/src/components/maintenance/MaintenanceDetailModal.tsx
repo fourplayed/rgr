@@ -446,11 +446,6 @@ export function MaintenanceDetailModal({
           onClose={onClose}
           backgroundColor={colors.maintenanceStatus.scheduled}
           headerAction={headerAction}
-          titleStyle={{
-            textShadowColor: 'rgba(0, 0, 0, 0.3)',
-            textShadowOffset: { width: 0, height: 1 },
-            textShadowRadius: 2,
-          }}
         />
 
         {isLoading || !maintenance ? (

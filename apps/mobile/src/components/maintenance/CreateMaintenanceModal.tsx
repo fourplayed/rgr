@@ -24,6 +24,7 @@ import { useCreateMaintenance } from '../../hooks/useMaintenanceData';
 import { useAssetList } from '../../hooks/useAssetData';
 import { useSubmitGuard } from '../../hooks/useSubmitGuard';
 import { AppText } from '../common';
+import { useSheetEntrance } from '../../hooks/useSheetEntrance';
 
 interface CreateMaintenanceModalProps {
   visible: boolean;
@@ -81,6 +82,8 @@ export function CreateMaintenanceModal({
   const [selectedAssetNumber, setSelectedAssetNumber] = useState<string | null>(null);
   const [assetSearch, setAssetSearch] = useState('');
   const [showAssetPicker, setShowAssetPicker] = useState(false);
+
+  const entranceStyle = useSheetEntrance(visible);
 
   // Chevron rotation animation for asset picker toggle
   const chevronRotation = useRef(new Animated.Value(0)).current;
@@ -238,151 +241,155 @@ export function CreateMaintenanceModal({
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Defect context banner */}
-          {defectReportId && (
-            <View style={styles.defectBanner}>
-              <Ionicons name="warning" size={16} color={colors.warningText} />
-              <AppText style={styles.defectBannerText}>From Defect Report</AppText>
-            </View>
-          )}
-
-          {/* Asset selection */}
-          <View style={[formStyles.inputGroup, styles.inputGroupWide]}>
-            <AppText style={formStyles.label}>Asset *</AppText>
-            {assetId && assetNumber ? (
-              // Pre-selected (read-only) — from defect accept or asset detail
-              <View style={styles.assetSelected}>
-                <Ionicons name="cube" size={20} color={colors.text} />
-                <AppText style={styles.assetSelectedText}>{formatAssetNumber(assetNumber)}</AppText>
+          <Animated.View style={entranceStyle}>
+            {/* Defect context banner */}
+            {defectReportId && (
+              <View style={styles.defectBanner}>
+                <Ionicons name="warning" size={16} color={colors.warningText} />
+                <AppText style={styles.defectBannerText}>From Defect Report</AppText>
               </View>
-            ) : selectedAssetId && selectedAssetNumber ? (
-              // User-selected — show with clear option
-              <View style={styles.assetSelected}>
-                <Ionicons name="cube" size={20} color={colors.text} />
-                <AppText style={styles.assetSelectedText}>
-                  {formatAssetNumber(selectedAssetNumber)}
-                </AppText>
-                <TouchableOpacity
-                  onPress={handleClearAsset}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  accessibilityLabel="Clear asset selection"
-                >
-                  <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
-                </TouchableOpacity>
-              </View>
-            ) : (
-              // No asset — show search picker
-              <>
-                <Pressable
-                  style={styles.assetPickerField}
-                  onPress={() => setShowAssetPicker((prev) => !prev)}
-                  accessibilityRole="button"
-                  accessibilityLabel="Select an asset"
-                >
-                  <Ionicons name="cube-outline" size={18} color={colors.textSecondary} />
-                  <AppText style={styles.assetPickerPlaceholder}>Tap to select asset</AppText>
-                  <Animated.View style={{ transform: [{ rotate: chevronRotate }] }}>
-                    <Ionicons name="chevron-down" size={16} color={colors.textSecondary} />
-                  </Animated.View>
-                </Pressable>
-                {showAssetPicker && (
-                  <View style={styles.assetPickerDropdown}>
-                    <AppTextInput
-                      style={styles.assetSearchInput}
-                      value={assetSearch}
-                      onChangeText={setAssetSearch}
-                      placeholder="Search by asset number..."
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                    />
-                    {assetsLoading ? (
-                      <View style={styles.assetPickerLoading}>
-                        <LoadingDots color={colors.textSecondary} size={6} />
-                      </View>
-                    ) : assetResults.length === 0 ? (
-                      <AppText style={styles.assetPickerEmpty}>No assets found</AppText>
-                    ) : (
-                      assetResults.map((asset) => (
-                        <TouchableOpacity
-                          key={asset.id}
-                          style={styles.assetPickerItem}
-                          onPress={() => handleSelectAsset(asset.id, asset.assetNumber)}
-                          activeOpacity={0.7}
-                        >
-                          <Ionicons name="cube" size={16} color={colors.text} />
-                          <AppText style={styles.assetPickerItemText}>
-                            {formatAssetNumber(asset.assetNumber)}
-                          </AppText>
-                          <AppText style={styles.assetPickerItemSub}>{asset.category}</AppText>
-                        </TouchableOpacity>
-                      ))
-                    )}
-                  </View>
-                )}
-              </>
             )}
-          </View>
 
-          {/* Title */}
-          <View style={[formStyles.inputGroup, styles.inputGroupWide]}>
-            <AppText style={formStyles.label}>Title *</AppText>
-            <AppTextInput
-              style={[formStyles.input, styles.inputElevated]}
-              value={title}
-              onChangeText={setTitle}
-              placeholder="e.g., Brake inspection, Tire replacement"
-              autoCapitalize="sentences"
-              maxLength={200}
-              accessibilityLabel="Maintenance title"
-            />
-          </View>
-
-          {/* Priority */}
-          <View style={[formStyles.inputGroup, styles.inputGroupWide]}>
-            <AppText style={formStyles.label}>Priority</AppText>
-            <View style={styles.chipContainer}>
-              {PRIORITY_ORDER.map((p) => (
-                <FilterChip
-                  key={p}
-                  label={MaintenancePriorityLabels[p]}
-                  isSelected={priority === p}
-                  onPress={() => setPriority(p)}
-                  selectedColor={colors.maintenancePriority[p]}
-                />
-              ))}
+            {/* Asset selection */}
+            <View style={[formStyles.inputGroup, styles.inputGroupWide]}>
+              <AppText style={formStyles.label}>Asset *</AppText>
+              {assetId && assetNumber ? (
+                // Pre-selected (read-only) — from defect accept or asset detail
+                <View style={styles.assetSelected}>
+                  <Ionicons name="cube" size={20} color={colors.text} />
+                  <AppText style={styles.assetSelectedText}>
+                    {formatAssetNumber(assetNumber)}
+                  </AppText>
+                </View>
+              ) : selectedAssetId && selectedAssetNumber ? (
+                // User-selected — show with clear option
+                <View style={styles.assetSelected}>
+                  <Ionicons name="cube" size={20} color={colors.text} />
+                  <AppText style={styles.assetSelectedText}>
+                    {formatAssetNumber(selectedAssetNumber)}
+                  </AppText>
+                  <TouchableOpacity
+                    onPress={handleClearAsset}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    accessibilityLabel="Clear asset selection"
+                  >
+                    <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                // No asset — show search picker
+                <>
+                  <Pressable
+                    style={styles.assetPickerField}
+                    onPress={() => setShowAssetPicker((prev) => !prev)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Select an asset"
+                  >
+                    <Ionicons name="cube-outline" size={18} color={colors.textSecondary} />
+                    <AppText style={styles.assetPickerPlaceholder}>Tap to select asset</AppText>
+                    <Animated.View style={{ transform: [{ rotate: chevronRotate }] }}>
+                      <Ionicons name="chevron-down" size={16} color={colors.textSecondary} />
+                    </Animated.View>
+                  </Pressable>
+                  {showAssetPicker && (
+                    <View style={styles.assetPickerDropdown}>
+                      <AppTextInput
+                        style={styles.assetSearchInput}
+                        value={assetSearch}
+                        onChangeText={setAssetSearch}
+                        placeholder="Search by asset number..."
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                      />
+                      {assetsLoading ? (
+                        <View style={styles.assetPickerLoading}>
+                          <LoadingDots color={colors.textSecondary} size={6} />
+                        </View>
+                      ) : assetResults.length === 0 ? (
+                        <AppText style={styles.assetPickerEmpty}>No assets found</AppText>
+                      ) : (
+                        assetResults.map((asset) => (
+                          <TouchableOpacity
+                            key={asset.id}
+                            style={styles.assetPickerItem}
+                            onPress={() => handleSelectAsset(asset.id, asset.assetNumber)}
+                            activeOpacity={0.7}
+                          >
+                            <Ionicons name="cube" size={16} color={colors.text} />
+                            <AppText style={styles.assetPickerItemText}>
+                              {formatAssetNumber(asset.assetNumber)}
+                            </AppText>
+                            <AppText style={styles.assetPickerItemSub}>{asset.category}</AppText>
+                          </TouchableOpacity>
+                        ))
+                      )}
+                    </View>
+                  )}
+                </>
+              )}
             </View>
-          </View>
 
-          {/* Due Date */}
-          <View style={[formStyles.inputGroup, styles.inputGroupWide]}>
-            <AppText style={formStyles.label}>Due Date *</AppText>
-            <DatePickerField
-              value={dueDate}
-              onChange={setDueDate}
-              minimumDate={today}
-              onExpandedChange={setCalendarExpanded}
-            />
-          </View>
+            {/* Title */}
+            <View style={[formStyles.inputGroup, styles.inputGroupWide]}>
+              <AppText style={formStyles.label}>Title *</AppText>
+              <AppTextInput
+                style={[formStyles.input, styles.inputElevated]}
+                value={title}
+                onChangeText={setTitle}
+                placeholder="e.g., Brake inspection, Tire replacement"
+                autoCapitalize="sentences"
+                maxLength={200}
+                accessibilityLabel="Maintenance title"
+              />
+            </View>
 
-          {/* Description */}
-          <View style={[formStyles.inputGroup, styles.inputGroupWide]}>
-            <AppText style={formStyles.label}>Description (optional)</AppText>
-            <AppTextInput
-              key={formKey}
-              style={[formStyles.input, formStyles.textArea, styles.inputElevated]}
-              defaultValue={descriptionRef.current}
-              onChangeText={(text) => {
-                descriptionRef.current = text;
-              }}
-              placeholder="Describe the maintenance work needed"
-              multiline
-              numberOfLines={3}
-              textAlignVertical="top"
-              accessibilityLabel="Maintenance description"
-            />
-          </View>
+            {/* Priority */}
+            <View style={[formStyles.inputGroup, styles.inputGroupWide]}>
+              <AppText style={formStyles.label}>Priority</AppText>
+              <View style={styles.chipContainer}>
+                {PRIORITY_ORDER.map((p) => (
+                  <FilterChip
+                    key={p}
+                    label={MaintenancePriorityLabels[p]}
+                    isSelected={priority === p}
+                    onPress={() => setPriority(p)}
+                    selectedColor={colors.maintenancePriority[p]}
+                  />
+                ))}
+              </View>
+            </View>
 
-          {error && <AppText style={formStyles.errorText}>{error}</AppText>}
+            {/* Due Date */}
+            <View style={[formStyles.inputGroup, styles.inputGroupWide]}>
+              <AppText style={formStyles.label}>Due Date *</AppText>
+              <DatePickerField
+                value={dueDate}
+                onChange={setDueDate}
+                minimumDate={today}
+                onExpandedChange={setCalendarExpanded}
+              />
+            </View>
+
+            {/* Description */}
+            <View style={[formStyles.inputGroup, styles.inputGroupWide]}>
+              <AppText style={formStyles.label}>Description (optional)</AppText>
+              <AppTextInput
+                key={formKey}
+                style={[formStyles.input, formStyles.textArea, styles.inputElevated]}
+                defaultValue={descriptionRef.current}
+                onChangeText={(text) => {
+                  descriptionRef.current = text;
+                }}
+                placeholder="Describe the maintenance work needed"
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+                accessibilityLabel="Maintenance description"
+              />
+            </View>
+
+            {error && <AppText style={formStyles.errorText}>{error}</AppText>}
+          </Animated.View>
         </BottomSheetScrollView>
 
         <SheetFooter>

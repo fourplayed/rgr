@@ -18,6 +18,7 @@ import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../them
 import { sheetLayout } from '../../theme/sheetLayout';
 import { SheetFooter } from '../common/SheetFooter';
 import { AppText } from '../common';
+import { useSheetEntrance } from '../../hooks/useSheetEntrance';
 
 interface DefectReportSheetProps {
   visible: boolean;
@@ -46,6 +47,7 @@ function DefectReportSheetComponent({
   const wasVisibleRef = useRef(false);
   const inputRef = useRef<TextInput>(null);
   const notesRef = useRef('');
+  const entranceStyle = useSheetEntrance(visible);
 
   // Reset state and focus input on fresh open (false→true edge)
   useEffect(() => {
@@ -107,11 +109,6 @@ function DefectReportSheetComponent({
           title="Report Defect"
           onClose={handleCancel}
           backgroundColor={colors.defectYellow}
-          titleStyle={{
-            textShadowColor: 'rgba(0, 0, 0, 0.3)',
-            textShadowOffset: { width: 0, height: 1 },
-            textShadowRadius: 2,
-          }}
         />
 
         <BottomSheetScrollView
@@ -124,63 +121,65 @@ function DefectReportSheetComponent({
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Notes Input */}
-          <View style={styles.inputSection}>
-            <AppText style={styles.inputLabel}>Describe the defect</AppText>
-            <View style={[styles.inputWrapper, isFocused && styles.inputWrapperFocused]}>
-              <AppTextInput
-                ref={inputRef}
-                style={[styles.textInput, isFocused && styles.textInputFocused]}
-                placeholder="Enter details about the defect, damage, or issue..."
-                onChangeText={handleChangeText}
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}
-                multiline
-                numberOfLines={4}
-                maxLength={2000}
-                textAlignVertical="top"
-              />
+          <Animated.View style={entranceStyle}>
+            {/* Notes Input */}
+            <View style={styles.inputSection}>
+              <AppText style={styles.inputLabel}>Describe the defect</AppText>
+              <View style={[styles.inputWrapper, isFocused && styles.inputWrapperFocused]}>
+                <AppTextInput
+                  ref={inputRef}
+                  style={[styles.textInput, isFocused && styles.textInputFocused]}
+                  placeholder="Enter details about the defect, damage, or issue..."
+                  onChangeText={handleChangeText}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
+                  multiline
+                  numberOfLines={4}
+                  maxLength={2000}
+                  textAlignVertical="top"
+                />
+              </View>
+              {charCount === 0 ? (
+                <View style={styles.charCountRequired}>
+                  <Ionicons name="alert-circle" size={12} color={colors.warning} />
+                  <AppText style={styles.charCountRequiredText}>Required</AppText>
+                </View>
+              ) : (
+                <AppText style={styles.charCount}>{charCount}/2000</AppText>
+              )}
             </View>
-            {charCount === 0 ? (
-              <View style={styles.charCountRequired}>
-                <Ionicons name="alert-circle" size={12} color={colors.warning} />
-                <AppText style={styles.charCountRequiredText}>Required</AppText>
-              </View>
-            ) : (
-              <AppText style={styles.charCount}>{charCount}/2000</AppText>
-            )}
-          </View>
 
-          {/* Photo Option (hidden when showPhotoOption is false) */}
-          {showPhotoOption && (
-            <TouchableOpacity
-              style={styles.photoOption}
-              onPress={() => setWantsPhoto(!wantsPhoto)}
-              activeOpacity={0.7}
-              accessibilityRole="checkbox"
-              accessibilityLabel="Capture Photo"
-              accessibilityState={{ checked: wantsPhoto }}
-            >
-              <LinearGradient
-                colors={[colors.electricBlue + '0F', colors.electricBlue + '05']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={[StyleSheet.absoluteFillObject, { borderRadius: borderRadius.sm }]}
-              />
-              <Ionicons name="camera" size={24} color={colors.electricBlue} />
-              <View style={styles.photoOptionText}>
-                <AppText style={styles.photoOptionLabel}>Capture Photo</AppText>
-                <AppText style={styles.photoOptionDescription}>
-                  Capture a photo of the defect to document the issue
-                </AppText>
-              </View>
-              <Ionicons
-                name={wantsPhoto ? 'checkbox' : 'square-outline'}
-                size={26}
-                color={colors.electricBlue}
-              />
-            </TouchableOpacity>
-          )}
+            {/* Photo Option (hidden when showPhotoOption is false) */}
+            {showPhotoOption && (
+              <TouchableOpacity
+                style={styles.photoOption}
+                onPress={() => setWantsPhoto(!wantsPhoto)}
+                activeOpacity={0.7}
+                accessibilityRole="checkbox"
+                accessibilityLabel="Capture Photo"
+                accessibilityState={{ checked: wantsPhoto }}
+              >
+                <LinearGradient
+                  colors={[colors.electricBlue + '0F', colors.electricBlue + '05']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={[StyleSheet.absoluteFillObject, { borderRadius: borderRadius.sm }]}
+                />
+                <Ionicons name="camera" size={24} color={colors.electricBlue} />
+                <View style={styles.photoOptionText}>
+                  <AppText style={styles.photoOptionLabel}>Capture Photo</AppText>
+                  <AppText style={styles.photoOptionDescription}>
+                    Capture a photo of the defect to document the issue
+                  </AppText>
+                </View>
+                <Ionicons
+                  name={wantsPhoto ? 'checkbox' : 'square-outline'}
+                  size={26}
+                  color={colors.electricBlue}
+                />
+              </TouchableOpacity>
+            )}
+          </Animated.View>
         </BottomSheetScrollView>
 
         <SheetFooter>

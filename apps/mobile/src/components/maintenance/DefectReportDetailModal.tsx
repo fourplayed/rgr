@@ -212,11 +212,6 @@ export function DefectReportDetailModal({
           title="Defect Report"
           onClose={onClose}
           backgroundColor={colors.defectYellow}
-          titleStyle={{
-            textShadowColor: 'rgba(0, 0, 0, 0.3)',
-            textShadowOffset: { width: 0, height: 1 },
-            textShadowRadius: 2,
-          }}
         />
 
         {isLoading || !defect ? (

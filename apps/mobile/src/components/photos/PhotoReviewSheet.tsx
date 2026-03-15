@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import type { PhotoType } from '@rgr/shared';
 import { usePhotoCapture, type UploadStep } from '../../hooks/usePhotoCapture';
+import { useSheetEntrance } from '../../hooks/useSheetEntrance';
 import { SheetFooter } from '../common/SheetFooter';
 import { SheetModal, BottomSheetScrollView } from '../common/SheetModal';
 import { SheetHeader } from '../common/SheetHeader';
@@ -48,6 +49,8 @@ function PhotoReviewSheetComponent({
   // Keep a stable URI for display during exit animation
   const stableUri = useRef(capturedUri);
   if (capturedUri) stableUri.current = capturedUri;
+
+  const entranceStyle = useSheetEntrance(visible);
 
   const handleConfirm = useCallback(async () => {
     const success = await confirmAndUpload(photoType);
@@ -108,24 +111,26 @@ function PhotoReviewSheetComponent({
           bounces={false}
           showsVerticalScrollIndicator={false}
         >
-          {displayUri && (
-            <View style={styles.photoContainer}>
-              <Image source={{ uri: displayUri }} style={styles.photo} contentFit="contain" />
-              {uploadStep && <UploadProgressOverlay step={uploadStep} />}
-            </View>
-          )}
+          <Animated.View style={entranceStyle}>
+            {displayUri && (
+              <View style={styles.photoContainer}>
+                <Image source={{ uri: displayUri }} style={styles.photo} contentFit="contain" />
+                {uploadStep && <UploadProgressOverlay step={uploadStep} />}
+              </View>
+            )}
 
-          {uploadError && (
-            <View style={styles.errorContainer}>
-              <View style={styles.errorRow}>
-                <Ionicons name="alert-circle" size={18} color={colors.error} />
-                <View>
-                  <AppText style={styles.errorTitle}>Upload Failed</AppText>
-                  <AppText style={styles.errorText}>{uploadError}</AppText>
+            {uploadError && (
+              <View style={styles.errorContainer}>
+                <View style={styles.errorRow}>
+                  <Ionicons name="alert-circle" size={18} color={colors.error} />
+                  <View>
+                    <AppText style={styles.errorTitle}>Upload Failed</AppText>
+                    <AppText style={styles.errorText}>{uploadError}</AppText>
+                  </View>
                 </View>
               </View>
-            </View>
-          )}
+            )}
+          </Animated.View>
         </BottomSheetScrollView>
 
         <SheetFooter>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet, TouchableOpacity, Pressable } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Pressable, Animated } from 'react-native';
 import { BottomSheetScrollView } from '../common/SheetModal';
 import { AppTextInput } from '../common/AppTextInput';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,7 +18,8 @@ import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts, shadows } from '../../theme/spacing';
 import { formStyles } from '../../theme/formStyles';
 import { sheetLayout } from '../../theme/sheetLayout';
-import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
+import { useSheetEntrance } from '../../hooks/useSheetEntrance';
+import { SheetFooter } from '../common/SheetFooter';
 import { useCreateAsset } from '../../hooks/useAdminAssets';
 import { useDepots } from '../../hooks/useAssetData';
 import { useSubmitGuard } from '../../hooks/useSubmitGuard';
@@ -40,7 +41,7 @@ export function CreateAssetModal({
   noBackdrop,
   onExitComplete,
 }: CreateAssetModalProps) {
-  const sheetBottomPadding = useSheetBottomPadding();
+  const entranceStyle = useSheetEntrance(visible);
   const { mutateAsync: createAssetAsync, isPending } = useCreateAsset();
   const guard = useSubmitGuard();
   const { data: depots = [], isLoading: depotsLoading } = useDepots();
@@ -168,205 +169,207 @@ export function CreateAssetModal({
           style={sheetLayout.scroll}
           contentContainerStyle={[
             sheetLayout.scrollContent,
-            { paddingTop: spacing.base, paddingBottom: sheetBottomPadding },
+            { paddingTop: spacing.base, paddingBottom: spacing.lg },
           ]}
           bounces={true}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Asset Number */}
-          <View style={formStyles.inputGroup}>
-            <AppText style={formStyles.label}>Asset Number *</AppText>
-            <AppTextInput
-              style={formStyles.input}
-              value={assetNumber}
-              onChangeText={setAssetNumber}
-              placeholder="e.g., TR-001"
-              autoCapitalize="characters"
-              maxLength={50}
-              accessibilityLabel="Asset number"
-            />
-          </View>
-
-          {/* Category */}
-          <View style={formStyles.inputGroup}>
-            <AppText style={formStyles.label}>Category *</AppText>
-            <View style={styles.chipContainer}>
-              {CATEGORY_ORDER.map((cat) => (
-                <FilterChip
-                  key={cat}
-                  label={AssetCategoryLabels[cat]}
-                  isSelected={category === cat}
-                  onPress={() => handleCategoryChange(cat)}
-                  selectedColor={colors.electricBlue}
-                />
-              ))}
-            </View>
-          </View>
-
-          {/* Subtype (trailer only) */}
-          {category === AssetCategory.TRAILER && (
+          <Animated.View style={entranceStyle}>
+            {/* Asset Number */}
             <View style={formStyles.inputGroup}>
-              <AppText style={formStyles.label}>Subtype</AppText>
+              <AppText style={formStyles.label}>Asset Number *</AppText>
+              <AppTextInput
+                style={formStyles.input}
+                value={assetNumber}
+                onChangeText={setAssetNumber}
+                placeholder="e.g., TR-001"
+                autoCapitalize="characters"
+                maxLength={50}
+                accessibilityLabel="Asset number"
+              />
+            </View>
+
+            {/* Category */}
+            <View style={formStyles.inputGroup}>
+              <AppText style={formStyles.label}>Category *</AppText>
               <View style={styles.chipContainer}>
-                {TrailerSubtypes.map((st) => (
+                {CATEGORY_ORDER.map((cat) => (
                   <FilterChip
-                    key={st}
-                    label={st}
-                    isSelected={subtype === st}
-                    onPress={() => setSubtype(subtype === st ? null : st)}
+                    key={cat}
+                    label={AssetCategoryLabels[cat]}
+                    isSelected={category === cat}
+                    onPress={() => handleCategoryChange(cat)}
                     selectedColor={colors.electricBlue}
                   />
                 ))}
               </View>
             </View>
-          )}
 
-          {/* Registration Number */}
-          <View style={formStyles.inputGroup}>
-            <AppText style={formStyles.label}>Registration Number *</AppText>
-            <AppTextInput
-              style={formStyles.input}
-              value={registrationNumber}
-              onChangeText={setRegistrationNumber}
-              placeholder="e.g., 1ABC234"
-              autoCapitalize="characters"
-              maxLength={20}
-              accessibilityLabel="Registration number"
-            />
-          </View>
-
-          {/* Make / Model (side by side) */}
-          <View style={styles.row}>
-            <View style={[formStyles.inputGroup, styles.halfField]}>
-              <AppText style={formStyles.label}>Make</AppText>
-              <AppTextInput
-                style={formStyles.input}
-                value={make}
-                onChangeText={setMake}
-                placeholder="e.g., Vawdrey"
-                autoCapitalize="words"
-                maxLength={100}
-                accessibilityLabel="Make"
-              />
-            </View>
-            <View style={[formStyles.inputGroup, styles.halfField]}>
-              <AppText style={formStyles.label}>Model</AppText>
-              <AppTextInput
-                style={formStyles.input}
-                value={model}
-                onChangeText={setModel}
-                placeholder="e.g., VB-S3"
-                autoCapitalize="words"
-                maxLength={100}
-                accessibilityLabel="Model"
-              />
-            </View>
-          </View>
-
-          {/* Year */}
-          <View style={formStyles.inputGroup}>
-            <AppText style={formStyles.label}>Year</AppText>
-            <AppTextInput
-              style={formStyles.input}
-              value={year}
-              onChangeText={setYear}
-              placeholder="e.g., 2024"
-              keyboardType="number-pad"
-              maxLength={4}
-              accessibilityLabel="Year manufactured"
-            />
-          </View>
-
-          {/* Depot */}
-          <View style={formStyles.inputGroup}>
-            <AppText style={formStyles.label}>Depot</AppText>
-            {selectedDepotId && selectedDepotName ? (
-              <View style={styles.depotSelected}>
-                <Ionicons name="business" size={20} color={colors.text} />
-                <AppText style={styles.depotSelectedText}>{selectedDepotName}</AppText>
-                <TouchableOpacity
-                  onPress={handleClearDepot}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  accessibilityLabel="Clear depot selection"
-                >
-                  <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
-                </TouchableOpacity>
+            {/* Subtype (trailer only) */}
+            {category === AssetCategory.TRAILER && (
+              <View style={formStyles.inputGroup}>
+                <AppText style={formStyles.label}>Subtype</AppText>
+                <View style={styles.chipContainer}>
+                  {TrailerSubtypes.map((st) => (
+                    <FilterChip
+                      key={st}
+                      label={st}
+                      isSelected={subtype === st}
+                      onPress={() => setSubtype(subtype === st ? null : st)}
+                      selectedColor={colors.electricBlue}
+                    />
+                  ))}
+                </View>
               </View>
-            ) : (
-              <>
-                <Pressable
-                  style={styles.depotPickerField}
-                  onPress={() => setShowDepotPicker((prev) => !prev)}
-                  accessibilityRole="button"
-                  accessibilityLabel="Select a depot"
-                >
-                  <Ionicons name="business-outline" size={18} color={colors.textSecondary} />
-                  <AppText style={styles.depotPickerPlaceholder}>Tap to select depot</AppText>
-                  <Ionicons
-                    name={showDepotPicker ? 'chevron-up' : 'chevron-down'}
-                    size={16}
-                    color={colors.textSecondary}
-                  />
-                </Pressable>
-                {showDepotPicker && (
-                  <View style={styles.depotPickerDropdown}>
-                    {depotsLoading ? (
-                      <View style={styles.depotPickerLoading}>
-                        <LoadingDots color={colors.textSecondary} size={6} />
-                      </View>
-                    ) : depots.length === 0 ? (
-                      <AppText style={styles.depotPickerEmpty}>No depots found</AppText>
-                    ) : (
-                      depots
-                        .filter((d) => d.isActive)
-                        .map((depot) => (
-                          <TouchableOpacity
-                            key={depot.id}
-                            style={styles.depotPickerItem}
-                            onPress={() => handleSelectDepot(depot.id, depot.name)}
-                            activeOpacity={0.7}
-                          >
-                            <Ionicons name="business" size={16} color={colors.text} />
-                            <AppText style={styles.depotPickerItemText}>{depot.name}</AppText>
-                            <AppText style={styles.depotPickerItemSub}>{depot.code}</AppText>
-                          </TouchableOpacity>
-                        ))
-                    )}
-                  </View>
-                )}
-              </>
             )}
-          </View>
 
-          {/* Notes */}
-          <View style={formStyles.inputGroup}>
-            <AppText style={formStyles.label}>Notes</AppText>
-            <AppTextInput
-              style={[formStyles.input, formStyles.textArea]}
-              value={notes}
-              onChangeText={setNotes}
-              placeholder="Any additional notes about this asset"
-              multiline
-              numberOfLines={3}
-              textAlignVertical="top"
-              accessibilityLabel="Notes"
-            />
-          </View>
+            {/* Registration Number */}
+            <View style={formStyles.inputGroup}>
+              <AppText style={formStyles.label}>Registration Number *</AppText>
+              <AppTextInput
+                style={formStyles.input}
+                value={registrationNumber}
+                onChangeText={setRegistrationNumber}
+                placeholder="e.g., 1ABC234"
+                autoCapitalize="characters"
+                maxLength={20}
+                accessibilityLabel="Registration number"
+              />
+            </View>
 
-          {error && <AppText style={formStyles.errorText}>{error}</AppText>}
+            {/* Make / Model (side by side) */}
+            <View style={styles.row}>
+              <View style={[formStyles.inputGroup, styles.halfField]}>
+                <AppText style={formStyles.label}>Make</AppText>
+                <AppTextInput
+                  style={formStyles.input}
+                  value={make}
+                  onChangeText={setMake}
+                  placeholder="e.g., Vawdrey"
+                  autoCapitalize="words"
+                  maxLength={100}
+                  accessibilityLabel="Make"
+                />
+              </View>
+              <View style={[formStyles.inputGroup, styles.halfField]}>
+                <AppText style={formStyles.label}>Model</AppText>
+                <AppTextInput
+                  style={formStyles.input}
+                  value={model}
+                  onChangeText={setModel}
+                  placeholder="e.g., VB-S3"
+                  autoCapitalize="words"
+                  maxLength={100}
+                  accessibilityLabel="Model"
+                />
+              </View>
+            </View>
 
-          <View style={{ marginTop: spacing.lg }}>
-            <Button
-              isLoading={isPending}
-              onPress={handleSubmit}
-              color={colors.success}
-              style={styles.submitButton}
-            >
-              Create Asset
-            </Button>
-          </View>
+            {/* Year */}
+            <View style={formStyles.inputGroup}>
+              <AppText style={formStyles.label}>Year</AppText>
+              <AppTextInput
+                style={formStyles.input}
+                value={year}
+                onChangeText={setYear}
+                placeholder="e.g., 2024"
+                keyboardType="number-pad"
+                maxLength={4}
+                accessibilityLabel="Year manufactured"
+              />
+            </View>
+
+            {/* Depot */}
+            <View style={formStyles.inputGroup}>
+              <AppText style={formStyles.label}>Depot</AppText>
+              {selectedDepotId && selectedDepotName ? (
+                <View style={styles.depotSelected}>
+                  <Ionicons name="business" size={20} color={colors.text} />
+                  <AppText style={styles.depotSelectedText}>{selectedDepotName}</AppText>
+                  <TouchableOpacity
+                    onPress={handleClearDepot}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    accessibilityLabel="Clear depot selection"
+                  >
+                    <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <>
+                  <Pressable
+                    style={styles.depotPickerField}
+                    onPress={() => setShowDepotPicker((prev) => !prev)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Select a depot"
+                  >
+                    <Ionicons name="business-outline" size={18} color={colors.textSecondary} />
+                    <AppText style={styles.depotPickerPlaceholder}>Tap to select depot</AppText>
+                    <Ionicons
+                      name={showDepotPicker ? 'chevron-up' : 'chevron-down'}
+                      size={16}
+                      color={colors.textSecondary}
+                    />
+                  </Pressable>
+                  {showDepotPicker && (
+                    <View style={styles.depotPickerDropdown}>
+                      {depotsLoading ? (
+                        <View style={styles.depotPickerLoading}>
+                          <LoadingDots color={colors.textSecondary} size={6} />
+                        </View>
+                      ) : depots.length === 0 ? (
+                        <AppText style={styles.depotPickerEmpty}>No depots found</AppText>
+                      ) : (
+                        depots
+                          .filter((d) => d.isActive)
+                          .map((depot) => (
+                            <TouchableOpacity
+                              key={depot.id}
+                              style={styles.depotPickerItem}
+                              onPress={() => handleSelectDepot(depot.id, depot.name)}
+                              activeOpacity={0.7}
+                            >
+                              <Ionicons name="business" size={16} color={colors.text} />
+                              <AppText style={styles.depotPickerItemText}>{depot.name}</AppText>
+                              <AppText style={styles.depotPickerItemSub}>{depot.code}</AppText>
+                            </TouchableOpacity>
+                          ))
+                      )}
+                    </View>
+                  )}
+                </>
+              )}
+            </View>
+
+            {/* Notes */}
+            <View style={formStyles.inputGroup}>
+              <AppText style={formStyles.label}>Notes</AppText>
+              <AppTextInput
+                style={[formStyles.input, formStyles.textArea]}
+                value={notes}
+                onChangeText={setNotes}
+                placeholder="Any additional notes about this asset"
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+                accessibilityLabel="Notes"
+              />
+            </View>
+
+            {error && <AppText style={formStyles.errorText}>{error}</AppText>}
+          </Animated.View>
         </BottomSheetScrollView>
+
+        <SheetFooter>
+          <Button
+            isLoading={isPending}
+            onPress={handleSubmit}
+            color={colors.success}
+            style={styles.submitButton}
+          >
+            Create Asset
+          </Button>
+        </SheetFooter>
       </View>
     </SheetModal>
   );
