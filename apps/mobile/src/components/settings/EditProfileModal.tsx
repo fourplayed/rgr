@@ -7,7 +7,7 @@ import { AppTextInput } from '../common/AppTextInput';
 import { spacing } from '../../theme/spacing';
 import { formStyles } from '../../theme/formStyles';
 import { sheetLayout } from '../../theme/sheetLayout';
-import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
+import { SheetFooter } from '../common/SheetFooter';
 import { useAuthStore } from '../../store/authStore';
 import { useSubmitGuard } from '../../hooks/useSubmitGuard';
 import { AppText } from '../common';
@@ -18,7 +18,6 @@ interface EditProfileModalProps {
 }
 
 export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
-  const sheetBottomPadding = useSheetBottomPadding();
   const { user, updateUserProfile } = useAuthStore();
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
@@ -72,7 +71,7 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
           style={sheetLayout.scroll}
           contentContainerStyle={[
             sheetLayout.scrollContent,
-            { paddingTop: spacing.lg, paddingBottom: sheetBottomPadding },
+            { paddingTop: spacing.lg, paddingBottom: spacing.lg },
           ]}
           bounces={true}
           showsVerticalScrollIndicator={false}
@@ -105,8 +104,10 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
           </View>
 
           {error && <AppText style={formStyles.errorText}>{error}</AppText>}
+        </BottomSheetScrollView>
 
-          <View style={[formStyles.buttonRow, { marginTop: spacing.lg }]}>
+        <SheetFooter>
+          <View style={formStyles.buttonRow}>
             <Button variant="secondary" onPress={onClose} disabled={isLoading} flex>
               Cancel
             </Button>
@@ -115,7 +116,7 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
               Save
             </Button>
           </View>
-        </BottomSheetScrollView>
+        </SheetFooter>
       </View>
     </SheetModal>
   );

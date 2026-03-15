@@ -8,3 +8,4 @@ export * from './photo';
 export * from './freightAnalysis';
 export * from './auditLog';
 export * from './pushToken';
+export * from './fleetAnalysis';

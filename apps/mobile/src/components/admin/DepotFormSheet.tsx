@@ -9,7 +9,7 @@ import { colors } from '../../theme/colors';
 import { spacing, fontSize, fontFamily as fonts } from '../../theme/spacing';
 import { formStyles } from '../../theme/formStyles';
 import { sheetLayout } from '../../theme/sheetLayout';
-import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
+import { SheetFooter } from '../common/SheetFooter';
 import { useSubmitGuard } from '../../hooks/useSubmitGuard';
 import { AppText } from '../common';
 
@@ -28,7 +28,6 @@ export function DepotFormSheet({
   onClose,
   isLoading = false,
 }: DepotFormSheetProps) {
-  const sheetBottomPadding = useSheetBottomPadding();
   const isEdit = !!depot;
 
   const [name, setName] = useState('');
@@ -107,7 +106,7 @@ export function DepotFormSheet({
           style={sheetLayout.scroll}
           contentContainerStyle={[
             sheetLayout.scrollContent,
-            { paddingTop: spacing.lg, paddingBottom: sheetBottomPadding },
+            { paddingTop: spacing.lg, paddingBottom: spacing.lg },
           ]}
           bounces={true}
           showsVerticalScrollIndicator={false}
@@ -162,8 +161,10 @@ export function DepotFormSheet({
           </View>
 
           {error && <AppText style={styles.errorText}>{error}</AppText>}
+        </BottomSheetScrollView>
 
-          <View style={[formStyles.buttonRow, { marginTop: spacing.lg }]}>
+        <SheetFooter>
+          <View style={formStyles.buttonRow}>
             <Button variant="secondary" onPress={onClose} disabled={isLoading} flex>
               Cancel
             </Button>
@@ -172,7 +173,7 @@ export function DepotFormSheet({
               {isEdit ? 'Save' : 'Create'}
             </Button>
           </View>
-        </BottomSheetScrollView>
+        </SheetFooter>
       </View>
     </SheetModal>
   );

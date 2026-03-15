@@ -167,11 +167,27 @@ export function useRealtimeInvalidation(): void {
         }
       });
 
+    const fleetAnalysisChannel = supabase
+      .channel('mobile-fleet-analysis-updates')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'fleet_analysis' },
+        () => {
+          invalidateIfNotSuppressed('fleetAnalysis', ['fleetAnalysis']);
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED' && !shouldDebounceReconnect('fleetAnalysis')) {
+          invalidateIfNotSuppressed('fleetAnalysis', ['fleetAnalysis']);
+        }
+      });
+
     return () => {
       supabase.removeChannel(scanChannel);
       supabase.removeChannel(assetChannel);
       supabase.removeChannel(defectChannel);
       supabase.removeChannel(maintenanceChannel);
+      supabase.removeChannel(fleetAnalysisChannel);
     };
   }, [queryClient, isAuthenticated]);
 }

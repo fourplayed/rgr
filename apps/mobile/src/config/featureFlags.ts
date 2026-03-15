@@ -5,3 +5,4 @@
  * Set to `false` to disable the feature entirely.
  */
 export const OPTIMISTIC_UPDATES_ENABLED = true;
+export const FLEET_ANALYSIS_ENABLED = true;

@@ -65,18 +65,19 @@ describe('useRealtimeInvalidation', () => {
   // -----------------------------------------------------------------------
 
   describe('channel subscription lifecycle', () => {
-    it('subscribes to 4 channels when authenticated', () => {
+    it('subscribes to 5 channels when authenticated', () => {
       mockIsAuthenticated = true;
       const { wrapper } = createWrapper();
 
       renderHook(() => useRealtimeInvalidation(), { wrapper });
 
-      expect(mockSupabase.channel).toHaveBeenCalledTimes(4);
+      expect(mockSupabase.channel).toHaveBeenCalledTimes(5);
       expect(mockSupabase.channel).toHaveBeenCalledWith('mobile-scan-updates');
       expect(mockSupabase.channel).toHaveBeenCalledWith('mobile-asset-updates');
       expect(mockSupabase.channel).toHaveBeenCalledWith('mobile-defect-updates');
       expect(mockSupabase.channel).toHaveBeenCalledWith('mobile-maintenance-updates');
-      expect(mockSubscribe).toHaveBeenCalledTimes(4);
+      expect(mockSupabase.channel).toHaveBeenCalledWith('mobile-fleet-analysis-updates');
+      expect(mockSubscribe).toHaveBeenCalledTimes(5);
     });
 
     it('does NOT subscribe when not authenticated', () => {
@@ -97,7 +98,7 @@ describe('useRealtimeInvalidation', () => {
 
       // removeChannel() handles unsubscription internally — no separate unsubscribe() calls
       expect(mockUnsubscribe).toHaveBeenCalledTimes(0);
-      expect(mockRemoveChannel).toHaveBeenCalledTimes(4);
+      expect(mockRemoveChannel).toHaveBeenCalledTimes(5);
     });
   });
 

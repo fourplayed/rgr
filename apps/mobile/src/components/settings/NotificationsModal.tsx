@@ -3,7 +3,7 @@ import { View, Switch, StyleSheet } from 'react-native';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 import { sheetLayout } from '../../theme/sheetLayout';
-import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
+import { SheetFooter } from '../common/SheetFooter';
 import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
 import { SheetModal, BottomSheetScrollView } from '../common/SheetModal';
@@ -44,7 +44,6 @@ function ToggleRow({ title, subtitle, value, onValueChange, disabled }: ToggleRo
 }
 
 export function NotificationsModal({ visible, onClose }: NotificationsModalProps) {
-  const sheetBottomPadding = useSheetBottomPadding();
   const { notifications, setNotificationSetting } = useSettingsStore();
 
   const isPushDisabled = !notifications.pushEnabled;
@@ -56,7 +55,7 @@ export function NotificationsModal({ visible, onClose }: NotificationsModalProps
 
         <BottomSheetScrollView
           style={sheetLayout.scroll}
-          contentContainerStyle={[sheetLayout.scrollContent, { paddingBottom: sheetBottomPadding }]}
+          contentContainerStyle={[sheetLayout.scrollContent, { paddingBottom: spacing.lg }]}
           bounces={true}
           showsVerticalScrollIndicator={false}
         >
@@ -106,12 +105,13 @@ export function NotificationsModal({ visible, onClose }: NotificationsModalProps
               disabled={isPushDisabled}
             />
           </View>
-          <View style={{ marginTop: spacing.lg }}>
-            <Button onPress={onClose} style={{ alignSelf: 'stretch' }}>
-              Done
-            </Button>
-          </View>
         </BottomSheetScrollView>
+
+        <SheetFooter>
+          <Button onPress={onClose} style={{ alignSelf: 'stretch' }}>
+            Done
+          </Button>
+        </SheetFooter>
       </View>
     </SheetModal>
   );

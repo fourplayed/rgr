@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback, useMemo, memo } from 'react';
+import React, { useRef, useEffect, useCallback, useMemo, useState, memo } from 'react';
 import {
   View,
   FlatList,
@@ -53,6 +53,10 @@ import { useCountUp } from '../../src/hooks/useCountUp';
 import { useStaggeredEntrance } from '../../src/hooks/useStaggeredEntrance';
 import { useOfflineQueueStatus } from '../../src/hooks/useOfflineQueueStatus';
 import { AppText } from '../../src/components/common';
+import { LocationResolutionOverlay } from '../../src/components/common/LocationResolutionOverlay';
+import { FleetInsightCard } from '../../src/components/home/FleetInsightCard';
+import { useLatestFleetAnalysis } from '../../src/hooks/useFleetAnalysis';
+import { FLEET_ANALYSIS_ENABLED } from '../../src/config/featureFlags';
 
 // Dashboard font sizes — now use global tokens (display: 28, hero: 35)
 const FONT_SIZE_USERNAME = fontSize.display;
@@ -239,6 +243,8 @@ export default function HomeScreen() {
   const user = useAuthStore((s) => s.user);
   const resolvedDepot = useLocationStore((s) => s.resolvedDepot);
   const isResolvingDepot = useLocationStore((s) => s.isResolvingDepot);
+  const depotResolutionError = useLocationStore((s) => s.depotResolutionError);
+  const permissionDenied = useLocationStore((s) => s.permissionDenied);
   const isFocused = useIsFocused();
   const { depots } = useDepotLookup();
 
@@ -295,6 +301,9 @@ export default function HomeScreen() {
     refetch: refetchDefectStats,
     isRefetching: defectStatsRefetching,
   } = useDefectReportStats();
+
+  // Fleet analysis AI insight (daily cron-generated)
+  const { data: fleetAnalysis, isLoading: insightLoading } = useLatestFleetAnalysis();
 
   const isLoading =
     scansLoading ||
@@ -384,6 +393,31 @@ export default function HomeScreen() {
       animRef.current = null;
     };
   }, [isFocused, greetingOpacity, usernameOpacity, geofenceOpacity]);
+
+  // ── Location resolution overlay — shows once per session on first GPS resolution ──
+  const hasShownLocationOverlayRef = useRef(false);
+  const [locationOverlayState, setLocationOverlayState] = useState<
+    'hidden' | 'active' | 'success' | 'error'
+  >('hidden');
+
+  // Show overlay when first location resolution starts this session
+  useEffect(() => {
+    if (isResolvingDepot && !hasShownLocationOverlayRef.current) {
+      hasShownLocationOverlayRef.current = true;
+      setLocationOverlayState('active');
+    }
+  }, [isResolvingDepot]);
+
+  // Complete overlay when resolution finishes
+  useEffect(() => {
+    if (!isResolvingDepot && locationOverlayState === 'active') {
+      setLocationOverlayState(depotResolutionError || permissionDenied ? 'error' : 'success');
+    }
+  }, [isResolvingDepot, locationOverlayState, depotResolutionError, permissionDenied]);
+
+  const handleLocationOverlayDismiss = useCallback(() => {
+    setLocationOverlayState('hidden');
+  }, []);
 
   const servicedCount = assetStats?.serviced ?? 0;
   const outOfServiceCount = assetStats?.outOfService ?? 0;
@@ -499,7 +533,7 @@ export default function HomeScreen() {
                 {user?.fullName}
               </Animated.Text>
             </View>
-            <View style={{ position: 'absolute', top: 0, right: 0 }}>
+            <View style={styles.badgeStack}>
               <Badge
                 label={roleLabel}
                 color={
@@ -507,24 +541,34 @@ export default function HomeScreen() {
                 }
                 size="small"
               />
+              {resolvedDepot &&
+                (() => {
+                  const depotColors = getDepotBadgeColors(
+                    resolvedDepot.depot,
+                    colors.chrome,
+                    colors.text
+                  );
+                  return (
+                    <View style={[styles.depotLocationBadge, { backgroundColor: depotColors.bg }]}>
+                      <AppText style={[styles.depotLocationText, { color: depotColors.text }]}>
+                        {resolvedDepot.depot.name}
+                      </AppText>
+                    </View>
+                  );
+                })()}
             </View>
           </View>
-          <Animated.View
-            style={{ opacity: geofenceOpacity, alignItems: 'flex-end', marginRight: 16 }}
-          >
-            {isResolvingDepot ? (
-              <LoadingDots color={colors.textSecondary} size={6} />
-            ) : resolvedDepot ? (
-              <AppText style={styles.geofenceText}>
-                Your location is within the{' '}
-                <AppText style={styles.geofenceLocation}>{resolvedDepot.depot.name}</AppText>{' '}
-                geofence
-              </AppText>
-            ) : (
-              <AppText style={styles.geofenceText}>You are not within any depot geofence</AppText>
-            )}
-          </Animated.View>
         </View>
+
+        {FLEET_ANALYSIS_ENABLED && (
+          <Animated.View style={{ opacity: geofenceOpacity }}>
+            <FleetInsightCard
+              content={fleetAnalysis?.content ?? null}
+              isLoading={insightLoading}
+              createdAt={fleetAnalysis?.createdAt}
+            />
+          </Animated.View>
+        )}
 
         {/* Stats Cards Grid */}
         <View style={styles.statsSection}>
@@ -563,7 +607,6 @@ export default function HomeScreen() {
       greeting,
       user,
       roleLabel,
-      isResolvingDepot,
       resolvedDepot,
       depots.length,
       statsCards,
@@ -571,6 +614,8 @@ export default function HomeScreen() {
       usernameOpacity,
       geofenceOpacity,
       offlineQueueCount,
+      fleetAnalysis,
+      insightLoading,
     ]
   );
 
@@ -587,6 +632,14 @@ export default function HomeScreen() {
             <LoadingDots color={colors.textSecondary} size={12} />
           </View>
         </SafeAreaView>
+        <LocationResolutionOverlay
+          visible={locationOverlayState !== 'hidden'}
+          isSuccess={locationOverlayState === 'success'}
+          isError={locationOverlayState === 'error'}
+          error={depotResolutionError}
+          onDismiss={handleLocationOverlayDismiss}
+          depotName={resolvedDepot?.depot.name ?? null}
+        />
       </View>
     );
   }
@@ -622,6 +675,16 @@ export default function HomeScreen() {
 
         {/* Shared defect/maintenance modal chain */}
         <DefectMaintenanceModals {...modals} />
+
+        {/* Location resolution overlay — first login only */}
+        <LocationResolutionOverlay
+          visible={locationOverlayState !== 'hidden'}
+          isSuccess={locationOverlayState === 'success'}
+          isError={locationOverlayState === 'error'}
+          error={depotResolutionError}
+          onDismiss={handleLocationOverlayDismiss}
+          depotName={resolvedDepot?.depot.name ?? null}
+        />
       </SafeAreaView>
     </View>
   );
@@ -656,7 +719,7 @@ const styles = StyleSheet.create({
   // Profile Section
   profileSection: {
     marginTop: CONTENT_TOP_OFFSET,
-    marginBottom: spacing.lg,
+    marginBottom: 0,
   },
   profileHeader: {
     flexDirection: 'row',
@@ -669,6 +732,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.regular,
     color: colors.textSecondary,
     marginTop: -5,
+    marginBottom: spacing.xs,
   },
   userName: {
     fontSize: FONT_SIZE_USERNAME,
@@ -677,21 +741,18 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
     marginLeft: 16,
   },
-  geofenceText: {
-    fontSize: fontSize.sm,
-    fontFamily: fonts.regular,
-    color: colors.textSecondary,
-    fontStyle: 'italic',
-  },
-  geofenceLocation: {
-    fontFamily: fonts.bold,
-    fontStyle: 'normal',
+  badgeStack: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    alignItems: 'flex-end',
+    gap: spacing.xs,
   },
 
   // Stats Section
   statsSection: {
-    marginTop: spacing.sm - 5,
-    marginBottom: spacing.base,
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
   },
   sectionTitle: {
     fontSize: fontSize.sm,
@@ -749,7 +810,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'baseline',
-    marginTop: spacing['2xl'] - 5,
+    marginTop: spacing.base,
     marginBottom: spacing.xs,
   },
   // Scan Cards
