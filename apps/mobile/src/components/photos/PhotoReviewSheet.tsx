@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useEffect, memo } from 'react';
-import { View, StyleSheet, Animated, ActivityIndicator, Platform } from 'react-native';
+import { View, StyleSheet, Animated, ActivityIndicator, Platform, Dimensions } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -92,7 +92,7 @@ function PhotoReviewSheetComponent({
       onClose={handleClose}
       onExitComplete={onExitComplete}
       noBackdrop={noBackdrop}
-      snapPoint="75%"
+      snapPoint="90%"
     >
       <View style={sheetLayout.container}>
         <SheetHeader
@@ -131,9 +131,7 @@ function PhotoReviewSheetComponent({
               </View>
             )}
           </Animated.View>
-        </BottomSheetScrollView>
 
-        <SheetFooter>
           <View style={styles.buttonRow}>
             <Animated.View style={[styles.flexOne, { opacity: retakeOpacity }]}>
               <Button
@@ -149,7 +147,7 @@ function PhotoReviewSheetComponent({
               Use Photo
             </Button>
           </View>
-        </SheetFooter>
+        </BottomSheetScrollView>
       </View>
     </SheetModal>
   );
@@ -323,8 +321,7 @@ const overlayStyles = StyleSheet.create({
 
 const styles = StyleSheet.create({
   photoContainer: {
-    aspectRatio: 3 / 4,
-    marginTop: spacing.md,
+    height: Dimensions.get('window').height * 0.55,
     borderRadius: borderRadius.md,
     overflow: 'hidden',
     backgroundColor: '#000',
@@ -336,6 +333,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
     alignSelf: 'stretch',
+    marginTop: spacing.lg,
+    marginBottom: spacing.md,
   },
   flexOne: {
     flex: 1,
