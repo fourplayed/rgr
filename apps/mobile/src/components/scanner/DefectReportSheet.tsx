@@ -101,7 +101,7 @@ function DefectReportSheetComponent({
       noBackdrop={noBackdrop}
       preventDismissWhileBusy={isSubmitting}
       keyboardAware
-      snapPoint="55%"
+      snapPoint="50%"
     >
       <View style={sheetLayout.containerTall}>
         <SheetHeader
@@ -111,15 +111,13 @@ function DefectReportSheetComponent({
           backgroundColor={colors.defectYellow}
         />
 
-        <BottomSheetScrollView
-          style={sheetLayout.scroll}
-          contentContainerStyle={[
-            sheetLayout.scrollContent,
-            { paddingTop: spacing.lg, paddingBottom: spacing.lg },
-          ]}
-          bounces={true}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
+        <View
+          style={{
+            flex: 1,
+            paddingHorizontal: spacing.lg,
+            paddingTop: spacing.lg,
+            paddingBottom: spacing.lg,
+          }}
         >
           <Animated.View style={entranceStyle}>
             {/* Notes Input */}
@@ -180,20 +178,20 @@ function DefectReportSheetComponent({
               </TouchableOpacity>
             )}
           </Animated.View>
-        </BottomSheetScrollView>
 
-        <SheetFooter>
-          <Animated.View style={{ opacity: submitOpacity }}>
-            <Button
-              isLoading={isSubmitting}
-              onPress={handleSubmit}
-              disabled={!canSubmit}
-              color={wantsPhoto ? colors.electricBlue : colors.success}
-            >
-              {wantsPhoto ? 'Capture & Submit' : 'Submit'}
-            </Button>
-          </Animated.View>
-        </SheetFooter>
+          <View style={styles.submitContainer}>
+            <Animated.View style={{ opacity: submitOpacity }}>
+              <Button
+                isLoading={isSubmitting}
+                onPress={handleSubmit}
+                disabled={!canSubmit}
+                color={wantsPhoto ? colors.electricBlue : colors.success}
+              >
+                {wantsPhoto ? 'Capture & Submit' : 'Submit'}
+              </Button>
+            </Animated.View>
+          </View>
+        </View>
       </View>
     </SheetModal>
   );
@@ -232,7 +230,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.base,
     fontFamily: fonts.regular,
     color: colors.text,
-    minHeight: 140,
+    minHeight: 100,
     maxHeight: 200,
   },
   textInputFocused: {
@@ -287,5 +285,9 @@ const styles = StyleSheet.create({
     fontFamily: fonts.regular,
     color: colors.textSecondary,
     marginTop: 2,
+  },
+  submitContainer: {
+    marginTop: spacing.lg,
+    marginBottom: spacing.md,
   },
 });
