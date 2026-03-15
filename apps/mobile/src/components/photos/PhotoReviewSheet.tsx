@@ -92,7 +92,7 @@ function PhotoReviewSheetComponent({
       onClose={handleClose}
       onExitComplete={onExitComplete}
       noBackdrop={noBackdrop}
-      snapPoint="90%"
+      snapPoint="72%"
     >
       <View style={sheetLayout.container}>
         <SheetHeader
@@ -321,7 +321,7 @@ const overlayStyles = StyleSheet.create({
 
 const styles = StyleSheet.create({
   photoContainer: {
-    height: Dimensions.get('window').height * 0.55,
+    height: Dimensions.get('window').height * 0.45,
     borderRadius: borderRadius.md,
     overflow: 'hidden',
     backgroundColor: '#000',

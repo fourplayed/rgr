@@ -437,7 +437,7 @@ export function MaintenanceDetailModal({
       onExitComplete={onExitComplete}
       noBackdrop={noBackdrop}
       keyboardAware={isEditing || editingNotes}
-      snapPoint={editingNotes || isEditing ? '78%' : ['55%', '82%']}
+      snapPoint={editingNotes || isEditing ? '80%' : ['60%', '85%']}
     >
       <View style={sheetLayout.container}>
         <SheetHeader
