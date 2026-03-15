@@ -180,7 +180,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
       {/* ── Scrollable content ── */}
       <BottomSheetScrollView
         style={styles.scrollView}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: spacing.lg }]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: spacing.sm }]}
         showsVerticalScrollIndicator={false}
         bounces={false}
         keyboardShouldPersistTaps="handled"
@@ -608,7 +608,7 @@ const styles = StyleSheet.create({
 
   // Asset detail card
   assetCard: {
-    marginTop: spacing.base,
+    marginTop: spacing.sm,
   },
 
   // Location info
@@ -652,7 +652,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   checkboxList: {
-    gap: spacing.base,
+    gap: spacing.xs,
   },
   checkboxRow: {
     flexDirection: 'row',
@@ -660,7 +660,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     borderRadius: borderRadius.md,
     borderWidth: 1,
-    paddingVertical: spacing.base,
+    paddingVertical: spacing.md,
     paddingHorizontal: spacing.base,
     overflow: 'hidden',
   },

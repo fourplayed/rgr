@@ -89,7 +89,7 @@ function PhotoReviewSheetComponent({
       onClose={handleClose}
       onExitComplete={onExitComplete}
       noBackdrop={noBackdrop}
-      snapPoint="77%"
+      snapPoint="75%"
     >
       <View style={sheetLayout.container}>
         <SheetHeader

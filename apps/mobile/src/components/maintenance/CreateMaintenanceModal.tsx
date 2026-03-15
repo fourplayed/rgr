@@ -218,7 +218,7 @@ export function CreateMaintenanceModal({
       onExitComplete={onExitComplete}
       noBackdrop={noBackdrop}
       preventDismissWhileBusy={isPending}
-      snapPoint={calendarExpanded ? '90%' : '73%'}
+      snapPoint={calendarExpanded ? '88%' : '70%'}
     >
       <View style={sheetLayout.containerTall}>
         <SheetHeader

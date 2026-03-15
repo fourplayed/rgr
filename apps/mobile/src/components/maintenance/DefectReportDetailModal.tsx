@@ -204,7 +204,7 @@ export function DefectReportDetailModal({
       onClose={onClose}
       onExitComplete={onExitComplete}
       noBackdrop={noBackdrop}
-      snapPoint={['75%', '92%']}
+      snapPoint={['70%', '90%']}
     >
       <View style={sheetLayout.container}>
         <SheetHeader

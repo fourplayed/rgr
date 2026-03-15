@@ -99,7 +99,7 @@ function DefectReportSheetComponent({
       noBackdrop={noBackdrop}
       preventDismissWhileBusy={isSubmitting}
       keyboardAware
-      snapPoint="60%"
+      snapPoint="55%"
     >
       <View style={sheetLayout.containerTall}>
         <SheetHeader
