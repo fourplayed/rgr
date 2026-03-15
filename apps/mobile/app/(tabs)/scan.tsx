@@ -178,7 +178,7 @@ export default function ScanScreen() {
           visible={flow.showCard}
           onClose={flow.handleUndoPress}
           noBackdrop
-          snapPoint="68%"
+          snapPoint="72%"
           preventDismissWhileBusy={flow.isCreatingScan}
         >
           {variant === 'mechanic' ? (

@@ -121,6 +121,31 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
   }, [isCreating]);
   const tabFade = useTabFade(activeTab);
 
+  // Staggered entrance for the actions section (label + options fade/slide in)
+  const actionsOpacity = useRef(new Animated.Value(0)).current;
+  const actionsTranslateY = useRef(new Animated.Value(6)).current;
+  useEffect(() => {
+    if (!isCreating && asset) {
+      actionsOpacity.setValue(0);
+      actionsTranslateY.setValue(6);
+      Animated.parallel([
+        Animated.timing(actionsOpacity, {
+          toValue: 1,
+          duration: 300,
+          delay: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(actionsTranslateY, {
+          toValue: 0,
+          duration: 300,
+          delay: 150,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- stable refs
+  }, [isCreating, asset]);
+
   // Show tabs only for mechanics with existing open items
   const openItemCount =
     props.variant === 'mechanic' && props.scanContext != null
@@ -206,101 +231,105 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
         )}
 
         {/* ── Tabbed layout (mechanic with open items) or flat actions ── */}
-        {props.variant === 'mechanic' && hasOpenItems ? (
-          <>
-            <View style={styles.tabContainer}>
-              <SegmentedTabs tabs={scanTabs} activeTab={activeTab} onTabPress={setActiveTab} />
-            </View>
-            <Animated.View
-              style={[tabFade, minTabHeight > 0 && { minHeight: minTabHeight }]}
-              onLayout={handleTabContentLayout}
-            >
-              {activeTab === 'actions' ? (
-                <View style={styles.checkboxList}>
-                  <CheckboxOption
-                    icon="camera"
-                    label="Capture Photo"
-                    description="Timestamped photo for records"
-                    checked={props.photoCompleted || selectedAction === 'photo'}
-                    completed={props.photoCompleted}
-                    onToggle={() => toggleAction('photo')}
-                    disabled={disabled || props.photoCompleted}
-                    accentColor={colors.electricBlue}
-                  />
-                  <CheckboxOption
-                    icon="warning"
-                    label="Report Defect"
-                    description="Log damage with details and photo"
-                    checked={defectCompleted || selectedAction === 'defect'}
-                    completed={defectCompleted}
-                    onToggle={() => toggleAction('defect')}
-                    disabled={disabled || defectCompleted}
-                    accentColor={colors.defectYellow}
-                  />
-                  <CheckboxOption
-                    icon="construct"
-                    label="Schedule Maintenance"
-                    description="Create a task with priority"
-                    checked={maintenanceCompleted || selectedAction === 'maintenance'}
-                    completed={maintenanceCompleted}
-                    onToggle={() => toggleAction('maintenance')}
-                    disabled={disabled || maintenanceCompleted}
-                    accentColor={colors.warning}
-                  />
-                </View>
-              ) : (
-                props.scanContext && (
-                  <OpenItemsSection
-                    scanContext={props.scanContext}
-                    onDefectPress={props.onDefectPress}
-                    onTaskPress={props.onTaskPress}
-                    alwaysExpanded
-                  />
-                )
-              )}
-            </Animated.View>
-          </>
-        ) : (
-          <>
-            <AppText style={styles.checkboxSectionTitle}>Actions</AppText>
-            <View style={styles.checkboxList}>
-              <CheckboxOption
-                icon="camera"
-                label="Capture Photo"
-                description="Timestamped photo for records"
-                checked={props.photoCompleted || selectedAction === 'photo'}
-                completed={props.photoCompleted}
-                onToggle={() => toggleAction('photo')}
-                disabled={disabled || props.photoCompleted}
-                accentColor={colors.electricBlue}
-              />
-              {props.variant === 'mechanic' && (
-                <>
-                  <CheckboxOption
-                    icon="warning"
-                    label="Report Defect"
-                    description="Log damage with details and photo"
-                    checked={defectCompleted || selectedAction === 'defect'}
-                    completed={defectCompleted}
-                    onToggle={() => toggleAction('defect')}
-                    disabled={disabled || defectCompleted}
-                    accentColor={colors.defectYellow}
-                  />
-                  <CheckboxOption
-                    icon="construct"
-                    label="Schedule Maintenance"
-                    description="Create a task with priority"
-                    checked={maintenanceCompleted || selectedAction === 'maintenance'}
-                    completed={maintenanceCompleted}
-                    onToggle={() => toggleAction('maintenance')}
-                    disabled={disabled || maintenanceCompleted}
-                    accentColor={colors.warning}
-                  />
-                </>
-              )}
-            </View>
-          </>
-        )}
+        <Animated.View
+          style={{ opacity: actionsOpacity, transform: [{ translateY: actionsTranslateY }] }}
+        >
+          {props.variant === 'mechanic' && hasOpenItems ? (
+            <>
+              <View style={styles.tabContainer}>
+                <SegmentedTabs tabs={scanTabs} activeTab={activeTab} onTabPress={setActiveTab} />
+              </View>
+              <Animated.View
+                style={[tabFade, minTabHeight > 0 && { minHeight: minTabHeight }]}
+                onLayout={handleTabContentLayout}
+              >
+                {activeTab === 'actions' ? (
+                  <View style={styles.checkboxList}>
+                    <CheckboxOption
+                      icon="camera"
+                      label="Capture Photo"
+                      description="Timestamped photo for records"
+                      checked={props.photoCompleted || selectedAction === 'photo'}
+                      completed={props.photoCompleted}
+                      onToggle={() => toggleAction('photo')}
+                      disabled={disabled || props.photoCompleted}
+                      accentColor={colors.electricBlue}
+                    />
+                    <CheckboxOption
+                      icon="warning"
+                      label="Report Defect"
+                      description="Log damage with details and photo"
+                      checked={defectCompleted || selectedAction === 'defect'}
+                      completed={defectCompleted}
+                      onToggle={() => toggleAction('defect')}
+                      disabled={disabled || defectCompleted}
+                      accentColor={colors.defectYellow}
+                    />
+                    <CheckboxOption
+                      icon="construct"
+                      label="Schedule Maintenance"
+                      description="Create a task with priority"
+                      checked={maintenanceCompleted || selectedAction === 'maintenance'}
+                      completed={maintenanceCompleted}
+                      onToggle={() => toggleAction('maintenance')}
+                      disabled={disabled || maintenanceCompleted}
+                      accentColor={colors.warning}
+                    />
+                  </View>
+                ) : (
+                  props.scanContext && (
+                    <OpenItemsSection
+                      scanContext={props.scanContext}
+                      onDefectPress={props.onDefectPress}
+                      onTaskPress={props.onTaskPress}
+                      alwaysExpanded
+                    />
+                  )
+                )}
+              </Animated.View>
+            </>
+          ) : (
+            <>
+              <AppText style={styles.checkboxSectionTitle}>Actions</AppText>
+              <View style={styles.checkboxList}>
+                <CheckboxOption
+                  icon="camera"
+                  label="Capture Photo"
+                  description="Timestamped photo for records"
+                  checked={props.photoCompleted || selectedAction === 'photo'}
+                  completed={props.photoCompleted}
+                  onToggle={() => toggleAction('photo')}
+                  disabled={disabled || props.photoCompleted}
+                  accentColor={colors.electricBlue}
+                />
+                {props.variant === 'mechanic' && (
+                  <>
+                    <CheckboxOption
+                      icon="warning"
+                      label="Report Defect"
+                      description="Log damage with details and photo"
+                      checked={defectCompleted || selectedAction === 'defect'}
+                      completed={defectCompleted}
+                      onToggle={() => toggleAction('defect')}
+                      disabled={disabled || defectCompleted}
+                      accentColor={colors.defectYellow}
+                    />
+                    <CheckboxOption
+                      icon="construct"
+                      label="Schedule Maintenance"
+                      description="Create a task with priority"
+                      checked={maintenanceCompleted || selectedAction === 'maintenance'}
+                      completed={maintenanceCompleted}
+                      onToggle={() => toggleAction('maintenance')}
+                      disabled={disabled || maintenanceCompleted}
+                      accentColor={colors.warning}
+                    />
+                  </>
+                )}
+              </View>
+            </>
+          )}
+        </Animated.View>
       </BottomSheetScrollView>
 
       <SheetFooter>
@@ -615,17 +644,12 @@ const styles = StyleSheet.create({
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: spacing.sm,
     marginTop: spacing.sm,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    backgroundColor: 'rgba(34, 197, 94, 0.08)',
-    borderRadius: borderRadius.base,
-    borderLeftWidth: 3,
-    borderLeftColor: colors.success,
+    paddingVertical: spacing.xs,
   },
   locationText: {
-    flex: 1,
     fontSize: fontSize.xs,
     fontFamily: fonts.regular,
     color: colors.textSecondary,
@@ -652,7 +676,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   checkboxList: {
-    gap: spacing.xs,
+    gap: spacing.md,
   },
   checkboxRow: {
     flexDirection: 'row',
