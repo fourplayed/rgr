@@ -7,8 +7,8 @@ import * as Haptics from 'expo-haptics';
 import type { PhotoType } from '@rgr/shared';
 import { usePhotoCapture, type UploadStep } from '../../hooks/usePhotoCapture';
 import { useSheetEntrance } from '../../hooks/useSheetEntrance';
-import { SheetFooter } from '../common/SheetFooter';
-import { SheetModal, BottomSheetScrollView } from '../common/SheetModal';
+import { SheetModal } from '../common/SheetModal';
+import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 import { SheetHeader } from '../common/SheetHeader';
 import { sheetLayout } from '../../theme/sheetLayout';
 import { Button } from '../common/Button';
@@ -51,6 +51,7 @@ function PhotoReviewSheetComponent({
   if (capturedUri) stableUri.current = capturedUri;
 
   const entranceStyle = useSheetEntrance(visible);
+  const bottomPadding = useSheetBottomPadding();
 
   const handleConfirm = useCallback(async () => {
     const success = await confirmAndUpload(photoType);
@@ -92,9 +93,9 @@ function PhotoReviewSheetComponent({
       onClose={handleClose}
       onExitComplete={onExitComplete}
       noBackdrop={noBackdrop}
-      snapPoint="66%"
+      compact
     >
-      <View style={sheetLayout.container}>
+      <View style={sheetLayout.containerCompact}>
         <SheetHeader
           icon="camera"
           title="Review Photo"
@@ -102,14 +103,13 @@ function PhotoReviewSheetComponent({
           backgroundColor={colors.electricBlue}
         />
 
-        <BottomSheetScrollView
-          style={sheetLayout.scroll}
-          contentContainerStyle={[
-            sheetLayout.scrollContent,
-            { paddingTop: spacing.md, paddingBottom: spacing.lg },
-          ]}
-          bounces={false}
-          showsVerticalScrollIndicator={false}
+        <View
+          style={{
+            flex: 1,
+            paddingHorizontal: spacing.lg,
+            paddingTop: spacing.md,
+            paddingBottom: bottomPadding,
+          }}
         >
           <Animated.View style={entranceStyle}>
             {displayUri && (
@@ -147,7 +147,7 @@ function PhotoReviewSheetComponent({
               Use Photo
             </Button>
           </View>
-        </BottomSheetScrollView>
+        </View>
       </View>
     </SheetModal>
   );

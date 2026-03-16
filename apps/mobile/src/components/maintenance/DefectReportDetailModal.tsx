@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, TouchableOpacity, StyleSheet, Animated, Alert } from 'react-native';
-import { BottomSheetScrollView } from '../common/SheetModal';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { formatRelativeTime, formatAssetNumber } from '@rgr/shared';
@@ -17,13 +16,13 @@ import {
   lineHeight,
 } from '../../theme/spacing';
 import { sheetLayout } from '../../theme/sheetLayout';
-import { SheetFooter } from '../common/SheetFooter';
 import { useDefectReport, useDeleteDefectReport } from '../../hooks/useDefectData';
 import { useAsset } from '../../hooks/useAssetData';
 import { useMaintenance } from '../../hooks/useMaintenanceData';
 import { useScanEventPhotos, useSignedUrl } from '../../hooks/usePhotos';
 import { useUserPermissions } from '../../contexts/UserPermissionsContext';
 import { useScatterExit } from '../../hooks/useScatterExit';
+import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 import { useStaggeredEntrances } from '../../hooks/useStaggeredEntrance';
 import { DefectStatusBadge, DEFECT_STATUS_CONFIG } from './DefectStatusBadge';
 
@@ -62,6 +61,7 @@ export function DefectReportDetailModal({
   noBackdrop,
   onExitComplete,
 }: DefectReportDetailModalProps) {
+  const bottomPadding = useSheetBottomPadding();
   const { canMarkMaintenance } = useUserPermissions();
   const { data: defect, isLoading } = useDefectReport(defectId);
   const { data: asset } = useAsset(defect?.assetId);
@@ -204,9 +204,9 @@ export function DefectReportDetailModal({
       onClose={onClose}
       onExitComplete={onExitComplete}
       noBackdrop={noBackdrop}
-      snapPoint={['45%', '80%']}
+      compact
     >
-      <View style={sheetLayout.container}>
+      <View style={sheetLayout.containerCompact}>
         <SheetHeader
           icon="warning"
           title="Defect Report"
@@ -221,10 +221,9 @@ export function DefectReportDetailModal({
         ) : (
           <View
             style={{
-              flex: 1,
               paddingHorizontal: spacing.lg,
               paddingTop: spacing.lg,
-              paddingBottom: spacing.lg,
+              paddingBottom: bottomPadding,
               gap: spacing.md,
             }}
           >

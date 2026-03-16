@@ -9,7 +9,6 @@ import {
   UIManager,
   Animated,
 } from 'react-native';
-import { BottomSheetScrollView } from '../common/SheetModal';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,7 +22,7 @@ import { SheetHeader } from '../common/SheetHeader';
 import { SegmentedTabs } from '../common/SegmentedTabs';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, shadows, fontFamily as fonts } from '../../theme/spacing';
-import { SheetFooter } from '../common/SheetFooter';
+import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 import { useTabFade } from '../../hooks/useTabFade';
 import type { MatchedDepot, ConfirmAction } from '../../hooks/scan/scanFlowMachine';
 import { AppText } from '../common';
@@ -119,6 +118,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
       setMinTabHeight(0);
     }
   }, [isCreating]);
+  const bottomPadding = useSheetBottomPadding();
   const tabFade = useTabFade(activeTab);
 
   // Staggered entrance for the actions section (label + options fade/slide in)
@@ -202,14 +202,8 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
         backgroundColor={colors.success}
       />
 
-      {/* ── Scrollable content ── */}
-      <BottomSheetScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: spacing.sm }]}
-        showsVerticalScrollIndicator={false}
-        bounces={false}
-        keyboardShouldPersistTaps="handled"
-      >
+      {/* ── Content ── */}
+      <View style={{ paddingHorizontal: spacing.lg, paddingBottom: bottomPadding }}>
         {/* ── Asset detail card (collapsible) ── */}
         <View style={styles.assetCard}>
           <AssetInfoCard asset={assetWithRelations} assessment={props.assessment ?? null} />
@@ -330,20 +324,19 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
             </>
           )}
         </Animated.View>
-      </BottomSheetScrollView>
-
-      <SheetFooter>
-        <Button
-          onPress={() => props.onConfirm(selectedAction)}
-          disabled={disabled}
-          isLoading={isLoading}
-          style={styles.confirmButton}
-          color={buttonColor}
-          accessibilityLabel={buttonLabel}
-        >
-          {buttonLabel}
-        </Button>
-      </SheetFooter>
+        <View style={{ marginTop: spacing.md }}>
+          <Button
+            onPress={() => props.onConfirm(selectedAction)}
+            disabled={disabled}
+            isLoading={isLoading}
+            style={styles.confirmButton}
+            color={buttonColor}
+            accessibilityLabel={buttonLabel}
+          >
+            {buttonLabel}
+          </Button>
+        </View>
+      </View>
     </View>
   );
 }
@@ -624,15 +617,6 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
     overflow: 'hidden',
-  },
-
-  // Scrollable content
-  scrollView: {
-    flexShrink: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.sm,
   },
 
   // Asset detail card
