@@ -8,5 +8,5 @@ import { spacing } from '../theme/spacing';
  */
 export function useSheetBottomPadding(): number {
   const insets = useSafeAreaInsets();
-  return Math.max(insets.bottom * 2.5 + spacing.lg, spacing['3xl']);
+  return Math.max(insets.bottom + spacing.lg, spacing['3xl']);
 }

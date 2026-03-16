@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
-    borderRadius: borderRadius.full,
+    borderRadius: borderRadius.base,
     borderWidth: 1,
   },
   chipCompact: {

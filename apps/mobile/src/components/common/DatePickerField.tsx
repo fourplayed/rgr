@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Pressable, Platform, StyleSheet } from 'react-native';
+import { View, Pressable, Platform, StyleSheet, LayoutAnimation } from 'react-native';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -36,13 +36,17 @@ export function DatePickerField({
         setShowAndroidPicker(false);
       }
       if (selectedDate) {
-        const iso = selectedDate.toISOString().slice(0, 10);
+        const y = selectedDate.getFullYear();
+        const m = String(selectedDate.getMonth() + 1).padStart(2, '0');
+        const d = String(selectedDate.getDate()).padStart(2, '0');
+        const iso = `${y}-${m}-${d}`;
         onChange(iso);
         Haptics.selectionAsync();
 
         // iOS: auto-collapse after a short delay for visual feedback
         if (Platform.OS === 'ios') {
           setTimeout(() => {
+            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
             setExpanded(false);
             onExpandedChange?.(false);
           }, 350);
@@ -54,6 +58,7 @@ export function DatePickerField({
 
   const handleFieldPress = useCallback(() => {
     if (Platform.OS === 'ios') {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       setExpanded((prev) => {
         const next = !prev;
         onExpandedChange?.(next);
@@ -99,7 +104,8 @@ export function DatePickerField({
             display="inline"
             {...(minimumDate != null && { minimumDate })}
             onChange={handleDateChange}
-            accentColor={colors.primary}
+            accentColor={colors.electricBlue}
+            themeVariant="light"
           />
         </View>
       )}
@@ -142,9 +148,7 @@ const styles = StyleSheet.create({
   },
   calendarContainer: {
     marginTop: spacing.sm,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
     borderRadius: borderRadius.md,
     overflow: 'hidden',
     padding: spacing.xs,

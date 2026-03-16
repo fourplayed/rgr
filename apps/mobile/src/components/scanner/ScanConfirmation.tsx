@@ -676,7 +676,8 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   checkboxTextColumn: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
   },
   checkboxLabel: {
     fontSize: fontSize.sm,

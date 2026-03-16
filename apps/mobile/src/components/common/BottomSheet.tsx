@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useCallback } from 'react';
 import { Platform, StyleSheet } from 'react-native';
 import {
   BottomSheetModal,
+  BottomSheetView,
   BottomSheetBackdrop,
   type BottomSheetBackdropProps,
 } from '@gorhom/bottom-sheet';
@@ -103,7 +104,7 @@ export function BottomSheet({
       {...(keyboardAware ? KEYBOARD_AWARE_PROPS : EMPTY_OBJ)}
       animationConfigs={GORHOM_SPRING}
     >
-      {children}
+      <BottomSheetView>{children}</BottomSheetView>
     </BottomSheetModal>
   );
 }

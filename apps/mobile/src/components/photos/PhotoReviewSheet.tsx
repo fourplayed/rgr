@@ -336,7 +336,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   flexOne: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
   },
   errorContainer: {
     marginBottom: spacing.md,

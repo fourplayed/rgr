@@ -183,7 +183,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   flex: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
   },
   disabled: {
     backgroundColor: colors.border,

@@ -371,7 +371,7 @@ export function DefectReportDetailModal({
               </Animated.View>
             )}
             {!isLoading && defect && (
-              <View style={{ paddingTop: spacing.md }}>{renderStatusActions()}</View>
+              <View style={{ paddingTop: spacing.lg }}>{renderStatusActions()}</View>
             )}
           </View>
         )}

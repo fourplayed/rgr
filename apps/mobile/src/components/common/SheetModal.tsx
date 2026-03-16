@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useCallback } from 'react';
 import { InteractionManager, Platform, StyleSheet, Dimensions } from 'react-native';
 import {
   BottomSheetModal,
+  BottomSheetView,
   BottomSheetBackdrop,
   BottomSheetScrollView,
   BottomSheetFlatList,
@@ -242,7 +243,7 @@ export function SheetModal({
       {...(keyboardAware ? KEYBOARD_AWARE_PROPS : EMPTY_OBJ)}
       animationConfigs={GORHOM_SPRING}
     >
-      {children}
+      {compact ? <BottomSheetView>{children}</BottomSheetView> : children}
     </BottomSheetModal>
   );
 }
