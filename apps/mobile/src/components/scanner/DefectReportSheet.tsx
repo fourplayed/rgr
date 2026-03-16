@@ -104,7 +104,7 @@ function DefectReportSheetComponent({
       keyboardAware
       snapPoint="70%"
     >
-      <View style={sheetLayout.containerCompact}>
+      <View style={sheetLayout.container}>
         <SheetHeader
           icon="warning"
           title="Report Defect"

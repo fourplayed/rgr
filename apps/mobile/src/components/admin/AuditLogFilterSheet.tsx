@@ -7,6 +7,8 @@ import { BottomSheetScrollView } from '../common/SheetModal';
 import { AppTextInput } from '../common/AppTextInput';
 import { Button } from '../common/Button';
 import { AppText } from '../common';
+import { SheetHeader } from '../common/SheetHeader';
+import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 
 const ACTION_TYPES = ['INSERT', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT'] as const;
 
@@ -41,6 +43,7 @@ export function AuditLogFilterSheet({
   onApply,
   onClose,
 }: AuditLogFilterSheetProps) {
+  const sheetBottomPadding = useSheetBottomPadding();
   const [action, setAction] = useState<string | undefined>(filters.action);
   const [startDate, setStartDate] = useState(filters.startDate || '');
   const [endDate, setEndDate] = useState(filters.endDate || '');
@@ -99,9 +102,15 @@ export function AuditLogFilterSheet({
 
   return (
     <BottomSheet visible={visible} onDismiss={onClose}>
-      <BottomSheetScrollView contentContainerStyle={styles.content}>
-        <AppText style={styles.title}>Filters</AppText>
-
+      <SheetHeader
+        icon="filter"
+        title="Filters"
+        onClose={onClose}
+        backgroundColor={colors.electricBlue}
+      />
+      <BottomSheetScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: sheetBottomPadding }]}
+      >
         {/* Action Type */}
         <View style={styles.section}>
           <AppText style={styles.label}>Action Type</AppText>
@@ -169,14 +178,6 @@ export function AuditLogFilterSheet({
 const styles = StyleSheet.create({
   content: {
     paddingHorizontal: spacing.lg,
-  },
-  title: {
-    fontSize: fontSize['2xl'],
-    fontFamily: fonts.bold,
-    color: colors.text,
-    textTransform: 'uppercase',
-    textAlign: 'center',
-    marginBottom: spacing.lg,
   },
   section: {
     marginBottom: spacing.lg,

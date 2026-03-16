@@ -223,7 +223,7 @@ export function CreateMaintenanceModal({
       preventDismissWhileBusy={isPending}
       snapPoint="92%"
     >
-      <View style={sheetLayout.containerCompact}>
+      <View style={sheetLayout.container}>
         <SheetHeader
           icon="construct"
           title="Schedule Maintenance"

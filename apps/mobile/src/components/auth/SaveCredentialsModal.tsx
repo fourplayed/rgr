@@ -5,6 +5,8 @@ import { BottomSheet } from '../common/BottomSheet';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, lineHeight, fontFamily as fonts } from '../../theme/spacing';
 import { AppText } from '../common';
+import { SheetHeader } from '../common/SheetHeader';
+import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 
 interface SaveCredentialsModalProps {
   visible: boolean;
@@ -13,11 +15,17 @@ interface SaveCredentialsModalProps {
 }
 
 export function SaveCredentialsModal({ visible, onSave, onSkip }: SaveCredentialsModalProps) {
+  const sheetBottomPadding = useSheetBottomPadding();
+
   return (
     <BottomSheet visible={visible} onDismiss={onSkip}>
-      <View style={styles.content}>
-        <AppText style={styles.title}>Save Login?</AppText>
-
+      <SheetHeader
+        icon="key-outline"
+        title="Save Login?"
+        onClose={onSkip}
+        backgroundColor={colors.primary}
+      />
+      <View style={[styles.content, { paddingBottom: sheetBottomPadding }]}>
         <AppText style={styles.description}>
           Save your credentials for automatic login next time you open the app?
         </AppText>
@@ -44,14 +52,6 @@ export function SaveCredentialsModal({ visible, onSave, onSkip }: SaveCredential
 const styles = StyleSheet.create({
   content: {
     paddingHorizontal: spacing.lg,
-  },
-  title: {
-    fontSize: fontSize['2xl'],
-    fontFamily: fonts.bold,
-    color: colors.text,
-    marginBottom: spacing.md,
-    textAlign: 'center',
-    textTransform: 'uppercase',
   },
   description: {
     fontSize: fontSize.base,

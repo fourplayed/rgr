@@ -5,8 +5,9 @@ import { colors } from '../../theme/colors';
 import { spacing, fontSize, lineHeight, fontFamily as fonts } from '../../theme/spacing';
 import { BottomSheet } from './BottomSheet';
 import { Button } from './Button';
-import { IconCircle } from './IconCircle';
+import { SheetHeader } from './SheetHeader';
 import { AppText } from './AppText';
+import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 
 export type AlertType = 'error' | 'warning' | 'info' | 'success';
 
@@ -39,15 +40,17 @@ export function AlertSheet({
   onAction,
 }: AlertSheetProps) {
   const config = alertConfig[type];
+  const sheetBottomPadding = useSheetBottomPadding();
 
   return (
     <BottomSheet visible={visible} onDismiss={onDismiss}>
-      <View style={styles.content}>
-        <View style={styles.iconWrapper}>
-          <IconCircle icon={config.icon} color={config.color} />
-        </View>
-
-        <AppText style={styles.title}>{title}</AppText>
+      <SheetHeader
+        icon={config.icon}
+        title={title}
+        onClose={onDismiss}
+        backgroundColor={config.color}
+      />
+      <View style={[styles.content, { paddingBottom: sheetBottomPadding }]}>
         <AppText style={styles.message}>{message}</AppText>
 
         <Button onPress={onDismiss} style={styles.fullWidth} accessibilityLabel={buttonLabel}>
@@ -72,17 +75,6 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: spacing.lg,
     alignItems: 'center',
-  },
-  iconWrapper: {
-    marginBottom: spacing.lg,
-  },
-  title: {
-    fontSize: fontSize['2xl'],
-    fontFamily: fonts.bold,
-    color: colors.text,
-    marginBottom: spacing.sm,
-    textAlign: 'center',
-    textTransform: 'uppercase',
   },
   message: {
     fontSize: fontSize.base,

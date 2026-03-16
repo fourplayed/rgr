@@ -5,6 +5,7 @@ import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 import { useAvatarStore, AVATAR_OPTIONS } from '../../store/avatarStore';
 import { BottomSheet } from '../common/BottomSheet';
+import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 import { SheetHeader } from '../common/SheetHeader';
 import { AppText } from '../common';
 
@@ -15,6 +16,7 @@ interface AvatarPickerProps {
 
 export function AvatarPicker({ visible, onClose }: AvatarPickerProps) {
   const { selectedAvatarId, setAvatar } = useAvatarStore();
+  const sheetBottomPadding = useSheetBottomPadding();
 
   const handleSelectAvatar = async (avatarId: string) => {
     await setAvatar(avatarId);
@@ -23,7 +25,7 @@ export function AvatarPicker({ visible, onClose }: AvatarPickerProps) {
 
   return (
     <BottomSheet visible={visible} onDismiss={onClose}>
-      <View style={styles.content}>
+      <View style={[styles.content, { paddingBottom: sheetBottomPadding }]}>
         <SheetHeader icon="person-circle-outline" title="Choose Avatar" onClose={onClose} />
 
         <View style={styles.grid}>
@@ -60,7 +62,6 @@ export function AvatarPicker({ visible, onClose }: AvatarPickerProps) {
 const styles = StyleSheet.create({
   content: {
     padding: spacing.base,
-    paddingBottom: spacing.xl,
   },
   grid: {
     flexDirection: 'row',

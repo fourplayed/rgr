@@ -8,6 +8,7 @@ import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
 import { SheetModal, BottomSheetScrollView } from '../common/SheetModal';
 import { useSettingsStore } from '../../store/settingsStore';
+import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 import { AppText } from '../common';
 
 interface NotificationsModalProps {
@@ -45,6 +46,7 @@ function ToggleRow({ title, subtitle, value, onValueChange, disabled }: ToggleRo
 
 export function NotificationsModal({ visible, onClose }: NotificationsModalProps) {
   const { notifications, setNotificationSetting } = useSettingsStore();
+  const sheetBottomPadding = useSheetBottomPadding();
 
   const isPushDisabled = !notifications.pushEnabled;
 
@@ -55,7 +57,7 @@ export function NotificationsModal({ visible, onClose }: NotificationsModalProps
 
         <BottomSheetScrollView
           style={sheetLayout.scroll}
-          contentContainerStyle={[sheetLayout.scrollContent, { paddingBottom: spacing.lg }]}
+          contentContainerStyle={[sheetLayout.scrollContent, { paddingBottom: sheetBottomPadding }]}
           bounces={true}
           showsVerticalScrollIndicator={false}
         >

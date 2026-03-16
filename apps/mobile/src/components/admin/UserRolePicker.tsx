@@ -6,6 +6,7 @@ import { BottomSheet } from '../common/BottomSheet';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 import { getUserRoleColor } from '../../utils/getUserRoleColor';
+import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 import { AppText } from '../common';
 
 const ROLES: UserRole[] = ['driver', 'mechanic', 'manager', 'superuser'];
@@ -18,9 +19,11 @@ interface UserRolePickerProps {
 }
 
 export function UserRolePicker({ visible, currentRole, onSelect, onCancel }: UserRolePickerProps) {
+  const sheetBottomPadding = useSheetBottomPadding();
+
   return (
     <BottomSheet visible={visible} onDismiss={onCancel}>
-      <View style={styles.content}>
+      <View style={[styles.content, { paddingBottom: sheetBottomPadding }]}>
         <AppText style={styles.title}>Change Role</AppText>
 
         {ROLES.map((role) => {

@@ -12,7 +12,9 @@ import {
 } from '../../theme/spacing';
 import { Button } from './Button';
 import { BottomSheet } from './BottomSheet';
+import { SheetHeader } from './SheetHeader';
 import { AppText } from './AppText';
+import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 
 interface InputSheetProps {
   visible: boolean;
@@ -55,6 +57,8 @@ export function InputSheet({
     onSubmit(value);
   };
 
+  const sheetBottomPadding = useSheetBottomPadding();
+
   const handleCancel = () => {
     Keyboard.dismiss();
     onCancel();
@@ -62,8 +66,13 @@ export function InputSheet({
 
   return (
     <BottomSheet visible={visible} onDismiss={handleCancel} keyboardAware>
-      <View style={styles.content}>
-        <AppText style={styles.title}>{title}</AppText>
+      <SheetHeader
+        icon="create-outline"
+        title={title}
+        onClose={handleCancel}
+        backgroundColor={colors.primary}
+      />
+      <View style={[styles.content, { paddingBottom: sheetBottomPadding }]}>
         <AppText style={styles.message}>{message}</AppText>
 
         <AppTextInput
@@ -105,14 +114,6 @@ export function InputSheet({
 const styles = StyleSheet.create({
   content: {
     paddingHorizontal: spacing.lg,
-  },
-  title: {
-    fontSize: fontSize['2xl'],
-    fontFamily: fonts.bold,
-    color: colors.text,
-    marginBottom: spacing.sm,
-    textAlign: 'center',
-    textTransform: 'uppercase',
   },
   message: {
     fontSize: fontSize.base,

@@ -158,7 +158,7 @@ export function CreateAssetModal({
       preventDismissWhileBusy={isPending}
       snapPoint="92%"
     >
-      <View style={sheetLayout.containerCompact}>
+      <View style={sheetLayout.container}>
         <SheetHeader
           icon="add-circle"
           title="Add New Asset"

@@ -7,6 +7,7 @@ import { AppTextInput } from '../common/AppTextInput';
 import { spacing } from '../../theme/spacing';
 import { formStyles } from '../../theme/formStyles';
 import { sheetLayout } from '../../theme/sheetLayout';
+import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 import { SheetFooter } from '../common/SheetFooter';
 import { useAuthStore } from '../../store/authStore';
 import { useSubmitGuard } from '../../hooks/useSubmitGuard';
@@ -19,6 +20,7 @@ interface EditProfileModalProps {
 
 export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
   const { user, updateUserProfile } = useAuthStore();
+  const sheetBottomPadding = useSheetBottomPadding();
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -71,7 +73,7 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
           style={sheetLayout.scroll}
           contentContainerStyle={[
             sheetLayout.scrollContent,
-            { paddingTop: spacing.lg, paddingBottom: spacing.lg },
+            { paddingTop: spacing.lg, paddingBottom: sheetBottomPadding },
           ]}
           bounces={true}
           showsVerticalScrollIndicator={false}

@@ -105,7 +105,6 @@ function PhotoReviewSheetComponent({
 
         <View
           style={{
-            flex: 1,
             paddingHorizontal: spacing.lg,
             paddingTop: spacing.md,
             paddingBottom: bottomPadding,

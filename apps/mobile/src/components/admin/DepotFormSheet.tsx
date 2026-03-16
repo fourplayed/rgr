@@ -9,6 +9,7 @@ import { colors } from '../../theme/colors';
 import { spacing, fontSize, fontFamily as fonts } from '../../theme/spacing';
 import { formStyles } from '../../theme/formStyles';
 import { sheetLayout } from '../../theme/sheetLayout';
+import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 import { SheetFooter } from '../common/SheetFooter';
 import { useSubmitGuard } from '../../hooks/useSubmitGuard';
 import { AppText } from '../common';
@@ -29,6 +30,7 @@ export function DepotFormSheet({
   isLoading = false,
 }: DepotFormSheetProps) {
   const isEdit = !!depot;
+  const sheetBottomPadding = useSheetBottomPadding();
 
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
@@ -106,7 +108,7 @@ export function DepotFormSheet({
           style={sheetLayout.scroll}
           contentContainerStyle={[
             sheetLayout.scrollContent,
-            { paddingTop: spacing.lg, paddingBottom: spacing.lg },
+            { paddingTop: spacing.lg, paddingBottom: sheetBottomPadding },
           ]}
           bounces={true}
           showsVerticalScrollIndicator={false}

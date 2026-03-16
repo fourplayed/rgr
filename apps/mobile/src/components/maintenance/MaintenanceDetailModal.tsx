@@ -439,7 +439,7 @@ export function MaintenanceDetailModal({
       keyboardAware={isEditing || editingNotes}
       snapPoint={isEditing ? '92%' : '85%'}
     >
-      <View style={sheetLayout.containerCompact}>
+      <View style={sheetLayout.container}>
         <SheetHeader
           icon="construct"
           title="Scheduled Task"
