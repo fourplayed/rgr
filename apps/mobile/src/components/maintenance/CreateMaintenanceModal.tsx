@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { View, StyleSheet, Pressable, TouchableOpacity, Animated } from 'react-native';
-import { BottomSheetScrollView } from '../common/SheetModal';
 import { AppTextInput } from '../common/AppTextInput';
 import { Ionicons } from '@expo/vector-icons';
 import { DatePickerField } from '../common/DatePickerField';
@@ -18,7 +17,7 @@ import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts, shadows } from '../../theme/spacing';
 import { formStyles } from '../../theme/formStyles';
 import { sheetLayout } from '../../theme/sheetLayout';
-import { SheetFooter } from '../common/SheetFooter';
+import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 import { useAuthStore } from '../../store/authStore';
 import { useCreateMaintenance } from '../../hooks/useMaintenanceData';
 import { useAssetList } from '../../hooks/useAssetData';
@@ -73,7 +72,7 @@ export function CreateMaintenanceModal({
   const [dueDate, setDueDate] = useState('');
 
   const [error, setError] = useState<string | null>(null);
-  const [calendarExpanded, setCalendarExpanded] = useState(false);
+  const [_calendarExpanded, setCalendarExpanded] = useState(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally recompute `today` when modal becomes visible so the calendar always shows the current date
   const today = useMemo(() => new Date(), [visible]);
 
@@ -84,6 +83,7 @@ export function CreateMaintenanceModal({
   const [showAssetPicker, setShowAssetPicker] = useState(false);
 
   const entranceStyle = useSheetEntrance(visible);
+  const bottomPadding = useSheetBottomPadding();
 
   // Chevron rotation animation for asset picker toggle
   const chevronRotation = useRef(new Animated.Value(0)).current;
@@ -221,9 +221,9 @@ export function CreateMaintenanceModal({
       onExitComplete={onExitComplete}
       noBackdrop={noBackdrop}
       preventDismissWhileBusy={isPending}
-      snapPoint={calendarExpanded ? '90%' : '73%'}
+      snapPoint="92%"
     >
-      <View style={sheetLayout.containerTall}>
+      <View style={sheetLayout.containerCompact}>
         <SheetHeader
           icon="construct"
           title="Schedule Maintenance"
@@ -231,15 +231,12 @@ export function CreateMaintenanceModal({
           backgroundColor={colors.warning}
         />
 
-        <BottomSheetScrollView
-          style={sheetLayout.scroll}
-          contentContainerStyle={[
-            sheetLayout.scrollContent,
-            { paddingTop: spacing.base, paddingBottom: spacing.lg },
-          ]}
-          bounces={true}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
+        <View
+          style={{
+            paddingHorizontal: spacing.lg,
+            paddingTop: spacing.base,
+            paddingBottom: bottomPadding,
+          }}
         >
           <Animated.View style={entranceStyle}>
             {/* Defect context banner */}
@@ -389,19 +386,19 @@ export function CreateMaintenanceModal({
             </View>
 
             {error && <AppText style={formStyles.errorText}>{error}</AppText>}
-          </Animated.View>
-        </BottomSheetScrollView>
 
-        <SheetFooter>
-          <Button
-            isLoading={isLoading}
-            onPress={handleSubmit}
-            color={colors.success}
-            style={styles.submitButton}
-          >
-            Create Task
-          </Button>
-        </SheetFooter>
+            <View style={{ marginTop: spacing.md }}>
+              <Button
+                isLoading={isLoading}
+                onPress={handleSubmit}
+                color={colors.success}
+                style={styles.submitButton}
+              >
+                Create Task
+              </Button>
+            </View>
+          </Animated.View>
+        </View>
       </View>
     </SheetModal>
   );

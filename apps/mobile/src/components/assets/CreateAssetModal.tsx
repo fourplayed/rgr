@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, TouchableOpacity, Pressable, Animated } from 'react-native';
-import { BottomSheetScrollView } from '../common/SheetModal';
 import { AppTextInput } from '../common/AppTextInput';
 import { Ionicons } from '@expo/vector-icons';
 import type {
@@ -19,7 +18,7 @@ import { spacing, fontSize, borderRadius, fontFamily as fonts, shadows } from '.
 import { formStyles } from '../../theme/formStyles';
 import { sheetLayout } from '../../theme/sheetLayout';
 import { useSheetEntrance } from '../../hooks/useSheetEntrance';
-import { SheetFooter } from '../common/SheetFooter';
+import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 import { useCreateAsset } from '../../hooks/useAdminAssets';
 import { useDepots } from '../../hooks/useAssetData';
 import { useSubmitGuard } from '../../hooks/useSubmitGuard';
@@ -42,6 +41,7 @@ export function CreateAssetModal({
   onExitComplete,
 }: CreateAssetModalProps) {
   const entranceStyle = useSheetEntrance(visible);
+  const bottomPadding = useSheetBottomPadding();
   const { mutateAsync: createAssetAsync, isPending } = useCreateAsset();
   const guard = useSubmitGuard();
   const { data: depots = [], isLoading: depotsLoading } = useDepots();
@@ -156,8 +156,9 @@ export function CreateAssetModal({
       onExitComplete={onExitComplete}
       noBackdrop={noBackdrop}
       preventDismissWhileBusy={isPending}
+      snapPoint="92%"
     >
-      <View style={sheetLayout.containerTall}>
+      <View style={sheetLayout.containerCompact}>
         <SheetHeader
           icon="add-circle"
           title="Add New Asset"
@@ -165,15 +166,12 @@ export function CreateAssetModal({
           backgroundColor={colors.electricBlue}
         />
 
-        <BottomSheetScrollView
-          style={sheetLayout.scroll}
-          contentContainerStyle={[
-            sheetLayout.scrollContent,
-            { paddingTop: spacing.base, paddingBottom: spacing.lg },
-          ]}
-          bounces={true}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
+        <View
+          style={{
+            paddingHorizontal: spacing.lg,
+            paddingTop: spacing.base,
+            paddingBottom: bottomPadding,
+          }}
         >
           <Animated.View style={entranceStyle}>
             {/* Asset Number */}
@@ -357,19 +355,19 @@ export function CreateAssetModal({
             </View>
 
             {error && <AppText style={formStyles.errorText}>{error}</AppText>}
-          </Animated.View>
-        </BottomSheetScrollView>
 
-        <SheetFooter>
-          <Button
-            isLoading={isPending}
-            onPress={handleSubmit}
-            color={colors.success}
-            style={styles.submitButton}
-          >
-            Create Asset
-          </Button>
-        </SheetFooter>
+            <View style={{ marginTop: spacing.md }}>
+              <Button
+                isLoading={isPending}
+                onPress={handleSubmit}
+                color={colors.success}
+                style={styles.submitButton}
+              >
+                Create Asset
+              </Button>
+            </View>
+          </Animated.View>
+        </View>
       </View>
     </SheetModal>
   );

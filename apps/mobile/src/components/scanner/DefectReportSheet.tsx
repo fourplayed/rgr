@@ -11,14 +11,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
-import { SheetModal, BottomSheetScrollView } from '../common/SheetModal';
+import { SheetModal } from '../common/SheetModal';
 import { AppTextInput } from '../common/AppTextInput';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 import { sheetLayout } from '../../theme/sheetLayout';
-import { SheetFooter } from '../common/SheetFooter';
 import { AppText } from '../common';
 import { useSheetEntrance } from '../../hooks/useSheetEntrance';
+import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 
 interface DefectReportSheetProps {
   visible: boolean;
@@ -48,6 +48,7 @@ function DefectReportSheetComponent({
   const inputRef = useRef<TextInput>(null);
   const notesRef = useRef('');
   const entranceStyle = useSheetEntrance(visible);
+  const bottomPadding = useSheetBottomPadding();
 
   // Reset state and focus input on fresh open (false→true edge)
   useEffect(() => {
@@ -101,9 +102,9 @@ function DefectReportSheetComponent({
       noBackdrop={noBackdrop}
       preventDismissWhileBusy={isSubmitting}
       keyboardAware
-      snapPoint="50%"
+      snapPoint="70%"
     >
-      <View style={sheetLayout.containerTall}>
+      <View style={sheetLayout.containerCompact}>
         <SheetHeader
           icon="warning"
           title="Report Defect"
@@ -113,10 +114,9 @@ function DefectReportSheetComponent({
 
         <View
           style={{
-            flex: 1,
             paddingHorizontal: spacing.lg,
             paddingTop: spacing.lg,
-            paddingBottom: spacing.lg,
+            paddingBottom: bottomPadding,
           }}
         >
           <Animated.View style={entranceStyle}>

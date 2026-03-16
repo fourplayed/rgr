@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { View, TouchableOpacity, StyleSheet, Animated, Alert } from 'react-native';
-import { BottomSheetScrollView } from '../common/SheetModal';
 import { AppTextInput } from '../common/AppTextInput';
 import { DatePickerField } from '../common/DatePickerField';
 import { Image } from 'expo-image';
@@ -27,7 +26,7 @@ import {
 } from '../../theme/spacing';
 import { formStyles } from '../../theme/formStyles';
 import { sheetLayout } from '../../theme/sheetLayout';
-import { SheetFooter } from '../common/SheetFooter';
+import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 import {
   useMaintenance,
   useUpdateMaintenanceStatus,
@@ -89,6 +88,7 @@ export function MaintenanceDetailModal({
   // Scatter exit animation
   const { getStyle, scatter, reset: resetScatter, isScattering } = useScatterExit();
 
+  const bottomPadding = useSheetBottomPadding();
   const { getEntryStyle } = useStaggeredEntrances(!isLoading && !!maintenance ? 7 : 0);
 
   // Compose scatter-exit (opacity + translateX) with entrance (opacity + translateY) via multiply
@@ -437,9 +437,9 @@ export function MaintenanceDetailModal({
       onExitComplete={onExitComplete}
       noBackdrop={noBackdrop}
       keyboardAware={isEditing || editingNotes}
-      snapPoint={editingNotes || isEditing ? '80%' : ['60%', '85%']}
+      snapPoint={isEditing ? '92%' : '85%'}
     >
-      <View style={sheetLayout.container}>
+      <View style={sheetLayout.containerCompact}>
         <SheetHeader
           icon="construct"
           title="Scheduled Task"
@@ -453,15 +453,13 @@ export function MaintenanceDetailModal({
             <LoadingDots color={colors.textSecondary} size={10} />
           </View>
         ) : (
-          <BottomSheetScrollView
-            style={sheetLayout.scroll}
-            contentContainerStyle={[
-              sheetLayout.scrollContent,
-              { paddingTop: spacing.lg, paddingBottom: spacing.lg, gap: spacing.md },
-            ]}
-            bounces={true}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps={isEditing ? 'handled' : undefined}
+          <View
+            style={{
+              paddingHorizontal: spacing.lg,
+              paddingTop: spacing.lg,
+              paddingBottom: bottomPadding,
+              gap: spacing.md,
+            }}
           >
             {/* Info Row: Asset Number + Badges */}
             <Animated.View style={getAnimatedStyle(0)}>
@@ -655,13 +653,10 @@ export function MaintenanceDetailModal({
                 </View>
               </Animated.View>
             )}
-          </BottomSheetScrollView>
-        )}
-
-        {!isLoading && maintenance && renderStatusActions() && (
-          <SheetFooter>
-            <Animated.View style={getAnimatedStyle(6)}>{renderStatusActions()}</Animated.View>
-          </SheetFooter>
+            {renderStatusActions() && (
+              <Animated.View style={getAnimatedStyle(6)}>{renderStatusActions()}</Animated.View>
+            )}
+          </View>
         )}
       </View>
 
