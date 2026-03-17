@@ -324,7 +324,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
             </>
           )}
         </Animated.View>
-        <View style={{ marginTop: spacing.md }}>
+        <View style={{ marginTop: spacing.lg }}>
           <Button
             onPress={() => props.onConfirm(selectedAction)}
             disabled={disabled}
@@ -567,7 +567,7 @@ function CheckboxOption({
           <LinearGradient
             colors={[accentColor, gradientEnd]}
             start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
+            end={{ x: 0, y: 1 }}
             style={{ width: 24, height: 24, borderRadius: 12 }}
           />
         </View>
@@ -588,7 +588,7 @@ function CheckboxOption({
         <LinearGradient
           colors={[`${accentColor}1A`, `${accentColor}0A`]}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
+          end={{ x: 0, y: 1 }}
           style={[StyleSheet.absoluteFillObject, { borderRadius: borderRadius.md }]}
         />
         <Ionicons

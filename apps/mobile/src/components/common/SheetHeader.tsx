@@ -64,7 +64,7 @@ export function SheetHeader({
       <LinearGradient
         colors={[backgroundColor, endColor]}
         start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        end={{ x: 0, y: 1 }}
         style={[styles.header, { shadowColor: backgroundColor }]}
       >
         <View style={styles.headerRow}>

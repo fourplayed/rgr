@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseClient } from './client';
 import type { ServiceResult } from '../../types';
 import type { FleetAnalysis, UserActionSummary } from '../../types/entities/fleetAnalysis';
@@ -30,8 +31,8 @@ export async function getLatestFleetAnalysis(): Promise<ServiceResult<FleetAnaly
   const supabase = getSupabaseClient();
 
   // fleet_analysis table is added by migration 20260316000000 —
-  // cast through `any` until database.types.ts is regenerated.
-  const { data, error } = await (supabase as any)
+  // cast to unparameterized SupabaseClient until database.types.ts is regenerated.
+  const { data, error } = await (supabase as unknown as SupabaseClient)
     .from('fleet_analysis')
     .select('id, analysis_date, content, input_data, status, created_at')
     .eq('status', 'success')
@@ -43,7 +44,7 @@ export async function getLatestFleetAnalysis(): Promise<ServiceResult<FleetAnaly
     return {
       success: false,
       data: null,
-      error: `Failed to fetch fleet analysis: ${(error as any).message}`,
+      error: `Failed to fetch fleet analysis: ${(error as { message: string }).message}`,
     };
   }
 
@@ -78,15 +79,18 @@ export async function getUserActionSummary(
   const supabase = getSupabaseClient();
 
   // RPC added by migration 20260316000000 — cast until types regenerated.
-  const { data, error } = await (supabase as any).rpc('get_user_action_summary', {
-    p_user_id: userId,
-  });
+  const { data, error } = await (supabase as unknown as SupabaseClient).rpc(
+    'get_user_action_summary',
+    {
+      p_user_id: userId,
+    }
+  );
 
   if (error) {
     return {
       success: false,
       data: null,
-      error: `Failed to fetch user action summary: ${(error as any).message}`,
+      error: `Failed to fetch user action summary: ${(error as { message: string }).message}`,
     };
   }
 

@@ -141,7 +141,7 @@ export function Button({
           <LinearGradient
             colors={[color!, gradientEnd]}
             start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
+            end={{ x: 0, y: 1 }}
             style={[
               styles.base,
               variantStyle,

@@ -160,7 +160,7 @@ function DefectReportSheetComponent({
                 <LinearGradient
                   colors={[colors.electricBlue + '0F', colors.electricBlue + '05']}
                   start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
+                  end={{ x: 0, y: 1 }}
                   style={[StyleSheet.absoluteFillObject, { borderRadius: borderRadius.sm }]}
                 />
                 <Ionicons name="camera" size={24} color={colors.electricBlue} />
