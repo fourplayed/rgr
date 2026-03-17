@@ -12,6 +12,7 @@ import {
   MaintenancePriorityLabels,
 } from '@rgr/shared';
 import { AppText, LoadingDots, AlertSheet, SheetModal } from '../common';
+import { BottomSheetScrollView } from '../common/SheetModal';
 import { SheetHeader } from '../common/SheetHeader';
 import { Button } from '../common/Button';
 import { FilterChip } from '../common/FilterChip';
@@ -459,13 +460,19 @@ export function MaintenanceDetailModal({
             <LoadingDots color={colors.textSecondary} size={10} />
           </View>
         ) : (
-          <View
-            style={{
-              paddingHorizontal: spacing.lg,
-              paddingTop: spacing.lg,
-              paddingBottom: bottomPadding,
-              gap: spacing.md,
-            }}
+          <BottomSheetScrollView
+            style={sheetLayout.scroll}
+            contentContainerStyle={[
+              sheetLayout.scrollContent,
+              {
+                paddingTop: spacing.lg,
+                paddingBottom: bottomPadding,
+                gap: spacing.md,
+              },
+            ]}
+            bounces={true}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
           >
             {/* Info Row: Asset Number + Badges */}
             <Animated.View style={getAnimatedStyle(0)}>
@@ -659,7 +666,7 @@ export function MaintenanceDetailModal({
                 </View>
               </Animated.View>
             )}
-          </View>
+          </BottomSheetScrollView>
         )}
       </View>
 
@@ -735,7 +742,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   detailValue: {
-    fontSize: fontSize.base,
+    fontSize: fontSize.sm,
     fontFamily: fonts.bold,
     color: colors.text,
   },
@@ -792,7 +799,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.base,
   },
   closedStatusText: {
-    fontSize: fontSize.base,
+    fontSize: fontSize.sm,
     fontFamily: fonts.bold,
     color: colors.textSecondary,
     textTransform: 'uppercase',

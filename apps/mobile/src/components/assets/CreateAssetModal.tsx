@@ -12,7 +12,7 @@ import { Button } from '../common/Button';
 import { FilterChip } from '../common/FilterChip';
 import { SheetHeader } from '../common/SheetHeader';
 import { LoadingDots } from '../common/LoadingDots';
-import { SheetModal } from '../common/SheetModal';
+import { SheetModal, BottomSheetScrollView } from '../common/SheetModal';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts, shadows } from '../../theme/spacing';
 import { formStyles } from '../../theme/formStyles';
@@ -166,12 +166,15 @@ export function CreateAssetModal({
           backgroundColor={colors.electricBlue}
         />
 
-        <View
-          style={{
-            paddingHorizontal: spacing.lg,
-            paddingTop: spacing.base,
-            paddingBottom: bottomPadding,
-          }}
+        <BottomSheetScrollView
+          style={sheetLayout.scroll}
+          contentContainerStyle={[
+            sheetLayout.scrollContent,
+            { paddingTop: spacing.base, paddingBottom: bottomPadding },
+          ]}
+          bounces={true}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           <Animated.View style={entranceStyle}>
             {/* Asset Number */}
@@ -367,7 +370,7 @@ export function CreateAssetModal({
               </Button>
             </View>
           </Animated.View>
-        </View>
+        </BottomSheetScrollView>
       </View>
     </SheetModal>
   );

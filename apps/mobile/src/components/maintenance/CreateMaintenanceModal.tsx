@@ -11,7 +11,7 @@ import { logger } from '../../utils/logger';
 import { Button } from '../common/Button';
 import { FilterChip } from '../common/FilterChip';
 import { SheetHeader } from '../common/SheetHeader';
-import { SheetModal } from '../common/SheetModal';
+import { SheetModal, BottomSheetScrollView } from '../common/SheetModal';
 import { LoadingDots } from '../common/LoadingDots';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts, shadows } from '../../theme/spacing';
@@ -233,12 +233,15 @@ export function CreateMaintenanceModal({
           backgroundColor={colors.warning}
         />
 
-        <View
-          style={{
-            paddingHorizontal: spacing.lg,
-            paddingTop: spacing.base,
-            paddingBottom: bottomPadding,
-          }}
+        <BottomSheetScrollView
+          style={sheetLayout.scroll}
+          contentContainerStyle={[
+            sheetLayout.scrollContent,
+            { paddingTop: spacing.base, paddingBottom: bottomPadding },
+          ]}
+          bounces={true}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           <Animated.View style={entranceStyle}>
             {/* Asset ID + defect context (when pre-selected) */}
@@ -433,7 +436,7 @@ export function CreateMaintenanceModal({
               </Button>
             </View>
           </Animated.View>
-        </View>
+        </BottomSheetScrollView>
       </View>
     </SheetModal>
   );

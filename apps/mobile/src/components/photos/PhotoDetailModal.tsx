@@ -408,7 +408,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   metadataValue: {
-    fontSize: fontSize.base,
+    fontSize: fontSize.sm,
     fontFamily: fonts.bold,
     color: colors.text,
   },

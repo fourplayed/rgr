@@ -455,12 +455,12 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   detailValue: {
-    fontSize: fontSize.base,
+    fontSize: fontSize.sm,
     fontFamily: fonts.bold,
     color: colors.text,
   },
   descriptionText: {
-    fontSize: fontSize.base,
+    fontSize: fontSize.sm,
     fontFamily: fonts.regular,
     color: colors.text,
     lineHeight: lineHeight.relaxed,
@@ -493,7 +493,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.base,
   },
   closedStatusText: {
-    fontSize: fontSize.base,
+    fontSize: fontSize.sm,
     fontFamily: fonts.bold,
     color: colors.textSecondary,
     textTransform: 'uppercase',
@@ -578,7 +578,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   timelineValue: {
-    fontSize: fontSize.base,
+    fontSize: fontSize.sm,
     fontFamily: fonts.bold,
     color: colors.text,
     marginTop: 2,
