@@ -199,7 +199,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
 
       {/* ── Scrollable content ── */}
       <BottomSheetScrollView
-        contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: spacing.md }}
+        contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: spacing.xl }}
         {...SHEET_SCROLL_PROPS}
       >
         {/* ── Asset detail card (collapsible) ── */}

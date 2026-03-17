@@ -190,7 +190,7 @@ export default function ScanScreen() {
             onClose={flow.handleUndoPress}
             noBackdrop
             scrollable
-            snapPoint={detailsExpanded ? '90%' : '82%'}
+            snapPoint={detailsExpanded ? '92%' : '85%'}
             preventDismissWhileBusy={flow.isCreatingScan}
           >
             {variant === 'mechanic' ? (

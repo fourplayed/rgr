@@ -1,5 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { AppState, View, StyleSheet } from 'react-native';
+import { AppState, View, StyleSheet, LogBox } from 'react-native';
+
+// Suppress iOS shadow+gradient ADVICE warnings — Button's gradientShadowHost
+// already sets backgroundColor for the fast shadow path, but iOS still warns
+// because the LinearGradient child is present. This is a cosmetic advisory,
+// not a performance issue since the shadow host has a solid background.
+LogBox.ignoreLogs(['(ADVICE)']);
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { LoadingDots } from '../src/components/common/LoadingDots';
