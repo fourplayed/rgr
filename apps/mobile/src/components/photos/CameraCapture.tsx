@@ -24,7 +24,7 @@ import {
   shadows,
   fontFamily as fonts,
 } from '../../theme/spacing';
-import { FULLSCREEN_SPRING, SHEET_EXIT } from '../../theme/animation';
+import { FULLSCREEN_SPRING } from '../../theme/animation';
 import { AppText } from '../common';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
