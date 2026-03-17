@@ -1,12 +1,5 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import {
-  View,
-  FlatList,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  useWindowDimensions,
-} from 'react-native';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
+import { View, FlatList, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { formatAssetNumber } from '@rgr/shared';
@@ -16,9 +9,12 @@ import { PhotoThumbnail } from '../../src/components/photos/PhotoThumbnail';
 import { SheetHeader } from '../../src/components/common/SheetHeader';
 import { ConfirmSheet } from '../../src/components/common/ConfirmSheet';
 import { AlertSheet } from '../../src/components/common/AlertSheet';
+import { AppSearchInput } from '../../src/components/common/AppSearchInput';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
+import { useDebounce } from '../../src/hooks/useDebounce';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
+import { adminStyles } from '../../src/theme/adminStyles';
 import { AppText } from '../../src/components/common';
 
 const NUM_COLUMNS = 3;
@@ -28,7 +24,7 @@ export default function PhotosAdminScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -39,15 +35,12 @@ export default function PhotosAdminScreen() {
     message: string;
   }>({ visible: false, title: '', message: '' });
 
-  const searchTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-  const handleSearch = useCallback((text: string) => {
-    setSearch(text);
-    if (searchTimer.current) clearTimeout(searchTimer.current);
-    searchTimer.current = setTimeout(() => {
-      setDebouncedSearch(text);
-      setPage(1);
-    }, 300);
-  }, []);
+  const prevSearchRef = useRef(debouncedSearch);
+  const effectivePage = prevSearchRef.current !== debouncedSearch ? 1 : page;
+  if (prevSearchRef.current !== debouncedSearch) {
+    prevSearchRef.current = debouncedSearch;
+    setPage(1);
+  }
 
   const thumbnailSize = useMemo(() => {
     const availableWidth = width - spacing.base * 2 - THUMBNAIL_GAP * (NUM_COLUMNS - 1);
@@ -56,11 +49,11 @@ export default function PhotosAdminScreen() {
 
   const queryParams = useMemo(
     () => ({
-      page,
+      page: effectivePage,
       pageSize: 30,
       ...(debouncedSearch && { search: debouncedSearch }),
     }),
-    [page, debouncedSearch]
+    [effectivePage, debouncedSearch]
   );
 
   const { data, isLoading, error, refetch } = useAdminPhotoList(queryParams);
@@ -186,19 +179,19 @@ export default function PhotosAdminScreen() {
 
   const renderEmpty = useCallback(
     () => (
-      <View style={styles.centerContent}>
-        <View style={styles.iconContainer}>
+      <View style={adminStyles.centerContent}>
+        <View style={adminStyles.iconContainer}>
           <Ionicons name="camera-outline" size={64} color={colors.textSecondary} />
         </View>
-        <AppText style={styles.emptyText}>No photos</AppText>
-        <AppText style={styles.emptySubtext}>Try adjusting your search</AppText>
+        <AppText style={adminStyles.emptyText}>No photos</AppText>
+        <AppText style={adminStyles.emptySubtext}>Try adjusting your search</AppText>
       </View>
     ),
     []
   );
 
   return (
-    <View style={styles.container}>
+    <View style={adminStyles.container}>
       {selectionMode ? (
         <SheetHeader
           icon="images"
@@ -224,20 +217,16 @@ export default function PhotosAdminScreen() {
       )}
 
       {/* Search */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchBox}>
-          <Ionicons name="search" size={20} color={colors.textSecondary} />
-          <TextInput
-            style={styles.searchInput}
+      <View style={adminStyles.searchContainer}>
+        <View style={adminStyles.searchBox}>
+          <AppSearchInput
+            icon="search"
             placeholder="Search by asset number..."
-            placeholderTextColor={colors.textSecondary}
             value={search}
-            onChangeText={handleSearch}
-            autoCapitalize="none"
-            autoCorrect={false}
+            onChangeText={setSearch}
           />
           {search.length > 0 && (
-            <TouchableOpacity onPress={() => handleSearch('')}>
+            <TouchableOpacity onPress={() => setSearch('')}>
               <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
             </TouchableOpacity>
           )}
@@ -263,14 +252,14 @@ export default function PhotosAdminScreen() {
 
       {/* Content */}
       {isLoading ? (
-        <View style={styles.loadingContainer}>
+        <View style={adminStyles.loadingContainer}>
           <LoadingDots color={colors.textSecondary} size={12} />
         </View>
       ) : error ? (
-        <View style={styles.centerContent}>
-          <AppText style={styles.errorText}>Failed to load photos</AppText>
-          <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
-            <AppText style={styles.retryButtonText}>Retry</AppText>
+        <View style={adminStyles.centerContent}>
+          <AppText style={adminStyles.errorText}>Failed to load photos</AppText>
+          <TouchableOpacity style={adminStyles.retryButton} onPress={() => refetch()}>
+            <AppText style={adminStyles.retryButtonText}>Retry</AppText>
           </TouchableOpacity>
         </View>
       ) : (
@@ -283,7 +272,9 @@ export default function PhotosAdminScreen() {
             columnWrapperStyle={styles.row}
             ListEmptyComponent={renderEmpty}
             removeClippedSubviews
-            contentContainerStyle={photos.length > 0 ? styles.listContent : styles.emptyListContent}
+            contentContainerStyle={
+              photos.length > 0 ? styles.listContent : adminStyles.emptyListContent
+            }
           />
 
           {/* Pagination */}
@@ -364,34 +355,6 @@ export default function PhotosAdminScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.chrome,
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
-    overflow: 'hidden',
-  },
-  searchContainer: {
-    paddingHorizontal: spacing.base,
-    marginBottom: spacing.sm,
-  },
-  searchBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.md,
-    height: 44,
-    gap: spacing.sm,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: fontSize.base,
-    fontFamily: fonts.regular,
-    color: colors.text,
-  },
   selectAllBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -423,7 +386,6 @@ const styles = StyleSheet.create({
     gap: THUMBNAIL_GAP,
     paddingBottom: spacing['4xl'],
   },
-  emptyListContent: { flex: 1 },
   row: { gap: THUMBNAIL_GAP },
   checkboxOverlay: {
     position: 'absolute',
@@ -479,56 +441,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.error,
   },
   deleteButtonText: {
-    fontSize: fontSize.base,
-    fontFamily: fonts.bold,
-    color: colors.textInverse,
-    textTransform: 'uppercase',
-  },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  centerContent: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: spacing['3xl'],
-  },
-  iconContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-  },
-  emptyText: {
-    fontSize: fontSize.lg,
-    fontFamily: fonts.bold,
-    color: colors.text,
-    textAlign: 'center',
-  },
-  emptySubtext: {
-    fontSize: fontSize.sm,
-    fontFamily: fonts.regular,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginTop: spacing.xs,
-  },
-  errorText: {
-    fontSize: fontSize.base,
-    fontFamily: fonts.regular,
-    color: colors.error,
-    textAlign: 'center',
-    marginBottom: spacing.base,
-  },
-  retryButton: {
-    height: 48,
-    paddingHorizontal: spacing.xl,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  retryButtonText: {
     fontSize: fontSize.base,
     fontFamily: fonts.bold,
     color: colors.textInverse,

@@ -355,7 +355,7 @@ export default function CreateAssetScreen() {
               Cancel
             </Button>
             <Button
-              color={colors.success}
+              color={colors.electricBlue}
               onPress={handleSubmit}
               flex
               disabled={!isValid}

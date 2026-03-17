@@ -79,6 +79,8 @@ export function SheetHeader({
 
 const styles = StyleSheet.create({
   headerShadowHost: {
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 12,

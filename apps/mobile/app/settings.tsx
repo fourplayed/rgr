@@ -8,15 +8,11 @@ import { useUserPermissions } from '../src/contexts/UserPermissionsContext';
 import { UserRoleLabels } from '@rgr/shared';
 import { colors } from '../src/theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../src/theme/spacing';
-import {
-  AppText,
-  ConfirmSheet,
-  Button,
-  CollapsibleSection,
-  PillBadge,
-} from '../src/components/common';
+import { AppText, ConfirmSheet, CollapsibleSection, Badge } from '../src/components/common';
+import { DepotBadge } from '../src/components/common/DepotBadge';
+import { getDepotBadgeColors } from '@rgr/shared';
+import { useDepotLookup } from '../src/hooks/useDepots';
 import { useConsoleStore } from '../src/store/consoleStore';
-import { useSheetBottomPadding } from '../src/hooks/useSheetBottomPadding';
 import { SheetHeader } from '../src/components/common/SheetHeader';
 import { EditProfileModal } from '../src/components/settings/EditProfileModal';
 import { NotificationsModal } from '../src/components/settings/NotificationsModal';
@@ -55,7 +51,6 @@ function SettingsItem({ icon, title, subtitle, onPress, showChevron = true }: Se
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const sheetBottomPadding = useSheetBottomPadding();
   const { user, logout } = useAuthStore();
   const { canAccessAdmin } = useUserPermissions();
   const [showEditProfile, setShowEditProfile] = useState(false);
@@ -75,6 +70,8 @@ export default function SettingsScreen() {
     router.back();
   };
 
+  const depotLookup = useDepotLookup();
+
   if (!user) {
     return null;
   }
@@ -82,6 +79,12 @@ export default function SettingsScreen() {
   const roleLabel = UserRoleLabels[user.role] || user.role;
   const roleColor =
     colors.userRole[user.role as keyof typeof colors.userRole] || colors.backgroundDark;
+  const userDepot = user.depot ? (depotLookup.byCode.get(user.depot.toLowerCase()) ?? null) : null;
+  const { bg: depotBg, text: depotText } = getDepotBadgeColors(
+    userDepot,
+    colors.chrome,
+    colors.text
+  );
 
   return (
     <BottomSheetModalProvider>
@@ -105,8 +108,29 @@ export default function SettingsScreen() {
                     <AppText style={styles.profileName}>{user.fullName}</AppText>
                     <AppText style={styles.profileEmail}>{user.email}</AppText>
                   </View>
-                  <PillBadge icon="person" label={roleLabel} color={roleColor} />
+                  <View style={styles.badgeColumn}>
+                    <Badge label={roleLabel} color={roleColor} />
+                    {user.depot && (
+                      <DepotBadge
+                        label={user.depot}
+                        bgColor={depotBg}
+                        textColor={depotText}
+                        showIcon
+                      />
+                    )}
+                  </View>
                 </View>
+                <View style={styles.divider} />
+                <TouchableOpacity
+                  style={styles.signOutRow}
+                  onPress={() => setShowLogoutConfirm(true)}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel="Sign Out"
+                >
+                  <Ionicons name="log-out-outline" size={20} color={colors.error} />
+                  <AppText style={styles.signOutText}>Sign Out</AppText>
+                </TouchableOpacity>
               </View>
             </View>
 
@@ -208,22 +232,6 @@ export default function SettingsScreen() {
             )}
           </ScrollView>
 
-          <View
-            style={{
-              paddingHorizontal: spacing.lg,
-              paddingTop: spacing.base,
-              paddingBottom: sheetBottomPadding,
-            }}
-          >
-            <Button
-              onPress={() => setShowLogoutConfirm(true)}
-              color={colors.electricBlue}
-              icon="log-out"
-            >
-              Sign Out
-            </Button>
-          </View>
-
           <EditProfileModal visible={showEditProfile} onClose={() => setShowEditProfile(false)} />
 
           <NotificationsModal
@@ -290,6 +298,10 @@ const styles = StyleSheet.create({
   profileInfo: {
     flex: 1,
   },
+  badgeColumn: {
+    alignItems: 'flex-end',
+    gap: spacing.xs,
+  },
   profileName: {
     fontSize: fontSize.lg,
     fontFamily: fonts.bold,
@@ -335,5 +347,18 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: colors.border,
     marginLeft: spacing.base + 40 + spacing.md,
+  },
+  signOutRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: spacing.base,
+  },
+  signOutText: {
+    fontSize: fontSize.sm,
+    fontFamily: fonts.bold,
+    color: colors.error,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
 });

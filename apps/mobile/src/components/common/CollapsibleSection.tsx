@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   titleFlat: {
-    fontSize: fontSize.xs,
+    fontSize: fontSize.sm,
     fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',

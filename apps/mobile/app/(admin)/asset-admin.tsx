@@ -1,7 +1,10 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { View, FlatList, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { useState, useCallback, useMemo } from 'react';
+import { View, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useDebounce } from '../../src/hooks/useDebounce';
+import { AppSearchInput } from '../../src/components/common/AppSearchInput';
+import { adminStyles } from '../../src/theme/adminStyles';
 import {
   AssetStatusLabels,
   AssetStatusColors,
@@ -36,19 +39,12 @@ const STATUS_VALUES: string[] = [
 export default function AssetAdminScreen() {
   const router = useRouter();
   const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [deleteTarget, setDeleteTarget] = useState<AssetWithRelations | null>(null);
   const [bulkDeleteIds, setBulkDeleteIds] = useState<string[]>([]);
   const [hardDeleteIds, setHardDeleteIds] = useState<string[]>([]);
   const [showStatusPicker, setShowStatusPicker] = useState(false);
-
-  const searchTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-  const handleSearch = useCallback((text: string) => {
-    setSearch(text);
-    if (searchTimer.current) clearTimeout(searchTimer.current);
-    searchTimer.current = setTimeout(() => setDebouncedSearch(text), 300);
-  }, []);
 
   const { data, isLoading, error, refetch } = useAssetList({
     ...(debouncedSearch && { search: debouncedSearch }),
@@ -223,12 +219,12 @@ export default function AssetAdminScreen() {
 
   const renderEmpty = useCallback(
     () => (
-      <View style={styles.centerContent}>
-        <View style={styles.iconContainer}>
+      <View style={adminStyles.centerContent}>
+        <View style={adminStyles.iconContainer}>
           <Ionicons name="cube-outline" size={64} color={colors.textSecondary} />
         </View>
-        <AppText style={styles.emptyText}>No assets found</AppText>
-        <AppText style={styles.emptySubtext}>Try adjusting your search</AppText>
+        <AppText style={adminStyles.emptyText}>No assets found</AppText>
+        <AppText style={adminStyles.emptySubtext}>Try adjusting your search</AppText>
       </View>
     ),
     []
@@ -238,7 +234,7 @@ export default function AssetAdminScreen() {
   const allSelected = assets.length > 0 && selectedIds.size === assets.length;
 
   return (
-    <View style={styles.container}>
+    <View style={adminStyles.container}>
       {/* Header */}
       {hasSelection ? (
         <SheetHeader icon="cube" title={`${selectedIds.size} Selected`} onClose={clearSelection} />
@@ -257,20 +253,16 @@ export default function AssetAdminScreen() {
       )}
 
       {/* Search */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchBox}>
-          <Ionicons name="search" size={20} color={colors.textSecondary} />
-          <TextInput
-            style={styles.searchInput}
+      <View style={adminStyles.searchContainer}>
+        <View style={adminStyles.searchBox}>
+          <AppSearchInput
+            icon="search"
             placeholder="Search assets..."
-            placeholderTextColor={colors.textSecondary}
             value={search}
-            onChangeText={handleSearch}
-            autoCapitalize="none"
-            autoCorrect={false}
+            onChangeText={setSearch}
           />
           {search.length > 0 && (
-            <TouchableOpacity onPress={() => handleSearch('')}>
+            <TouchableOpacity onPress={() => setSearch('')}>
               <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
             </TouchableOpacity>
           )}
@@ -298,9 +290,9 @@ export default function AssetAdminScreen() {
 
       {/* Toolbar */}
       {hasSelection && (
-        <View style={styles.toolbar}>
+        <View style={adminStyles.toolbar}>
           <TouchableOpacity
-            style={[styles.toolbarButton, styles.toolbarButtonDanger]}
+            style={[adminStyles.toolbarButton, adminStyles.toolbarButtonDanger]}
             onPress={() => {
               if (selectedIds.size === 1) {
                 const firstId = Array.from(selectedIds)[0];
@@ -312,24 +304,27 @@ export default function AssetAdminScreen() {
             }}
           >
             <Ionicons name="trash-outline" size={18} color={colors.error} />
-            <AppText style={[styles.toolbarButtonText, { color: colors.error }]}>
+            <AppText style={[adminStyles.toolbarButtonText, { color: colors.error }]}>
               Delete{selectedIds.size > 1 ? ` (${selectedIds.size})` : ''}
             </AppText>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.toolbarButton, styles.toolbarButtonDanger]}
+            style={[adminStyles.toolbarButton, adminStyles.toolbarButtonDanger]}
             onPress={() => setHardDeleteIds(Array.from(selectedIds))}
           >
             <Ionicons name="trash" size={18} color={colors.error} />
-            <AppText style={[styles.toolbarButtonText, { color: colors.error }]}>
+            <AppText style={[adminStyles.toolbarButtonText, { color: colors.error }]}>
               Hard Delete
             </AppText>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.toolbarButton} onPress={() => setShowStatusPicker(true)}>
+          <TouchableOpacity
+            style={adminStyles.toolbarButton}
+            onPress={() => setShowStatusPicker(true)}
+          >
             <Ionicons name="swap-horizontal-outline" size={18} color={colors.electricBlue} />
-            <AppText style={[styles.toolbarButtonText, { color: colors.electricBlue }]}>
+            <AppText style={[adminStyles.toolbarButtonText, { color: colors.electricBlue }]}>
               Change Status
             </AppText>
           </TouchableOpacity>
@@ -347,14 +342,14 @@ export default function AssetAdminScreen() {
 
       {/* Content */}
       {isLoading ? (
-        <View style={styles.loadingContainer}>
+        <View style={adminStyles.loadingContainer}>
           <LoadingDots color={colors.textSecondary} size={12} />
         </View>
       ) : error ? (
-        <View style={styles.centerContent}>
-          <AppText style={styles.errorText}>Failed to load assets</AppText>
-          <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
-            <AppText style={styles.retryButtonText}>Retry</AppText>
+        <View style={adminStyles.centerContent}>
+          <AppText style={adminStyles.errorText}>Failed to load assets</AppText>
+          <TouchableOpacity style={adminStyles.retryButton} onPress={() => refetch()}>
+            <AppText style={adminStyles.retryButtonText}>Retry</AppText>
           </TouchableOpacity>
         </View>
       ) : (
@@ -364,7 +359,9 @@ export default function AssetAdminScreen() {
           keyExtractor={keyExtractor}
           ListEmptyComponent={renderEmpty}
           removeClippedSubviews
-          contentContainerStyle={assets.length === 0 ? styles.emptyListContent : styles.listContent}
+          contentContainerStyle={
+            assets.length === 0 ? adminStyles.emptyListContent : styles.listContent
+          }
         />
       )}
 
@@ -445,34 +442,6 @@ export default function AssetAdminScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.chrome,
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
-    overflow: 'hidden',
-  },
-  searchContainer: {
-    paddingHorizontal: spacing.base,
-    marginBottom: spacing.sm,
-  },
-  searchBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.md,
-    height: 44,
-    gap: spacing.sm,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: fontSize.base,
-    fontFamily: fonts.regular,
-    color: colors.text,
-  },
   selectAllBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -498,31 +467,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontFamily: fonts.regular,
     color: colors.textSecondary,
-  },
-  toolbar: {
-    flexDirection: 'row',
-    paddingHorizontal: spacing.base,
-    marginBottom: spacing.sm,
-    gap: spacing.sm,
-  },
-  toolbarButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
-  },
-  toolbarButtonDanger: {
-    borderColor: colors.error + '40',
-  },
-  toolbarButtonText: {
-    fontSize: fontSize.sm,
-    fontFamily: fonts.bold,
-    textTransform: 'uppercase',
   },
   resultBanner: {
     marginHorizontal: spacing.base,
@@ -620,62 +564,11 @@ const styles = StyleSheet.create({
     fontFamily: fonts.regular,
     color: colors.textSecondary,
   },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  centerContent: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: spacing['3xl'],
-  },
-  iconContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-  },
-  emptyText: {
-    fontSize: fontSize.lg,
-    fontFamily: fonts.bold,
-    color: colors.text,
-    textAlign: 'center',
-  },
-  emptySubtext: {
-    fontSize: fontSize.sm,
-    fontFamily: fonts.regular,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginTop: spacing.xs,
-  },
-  errorText: {
-    fontSize: fontSize.base,
-    fontFamily: fonts.regular,
-    color: colors.error,
-    textAlign: 'center',
-    marginBottom: spacing.base,
-  },
-  retryButton: {
-    height: 48,
-    paddingHorizontal: spacing.xl,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  retryButtonText: {
-    fontSize: fontSize.base,
-    fontFamily: fonts.bold,
-    color: colors.textInverse,
-    textTransform: 'uppercase',
-  },
   listContent: {
     paddingTop: spacing.sm,
     paddingBottom: spacing['2xl'],
     paddingHorizontal: spacing.lg,
   },
-  emptyListContent: { flex: 1 },
   // Status picker sheet
   statusPickerSheet: {
     backgroundColor: colors.background,

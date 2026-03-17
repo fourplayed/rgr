@@ -4,6 +4,7 @@ import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
 import { SheetModal, BottomSheetScrollView } from '../common/SheetModal';
 import { AppTextInput } from '../common/AppTextInput';
+import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { formStyles } from '../../theme/formStyles';
 import { sheetLayout } from '../../theme/sheetLayout';
@@ -114,7 +115,7 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
               Cancel
             </Button>
 
-            <Button isLoading={isLoading} onPress={handleSave} flex>
+            <Button isLoading={isLoading} onPress={handleSave} flex color={colors.electricBlue}>
               Save
             </Button>
           </View>

@@ -214,7 +214,7 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
                 <Switch
                   value={autoLogin}
                   onValueChange={handleAutoLoginToggle}
-                  trackColor={{ false: colors.border, true: colors.primary }}
+                  trackColor={{ false: colors.border, true: colors.electricBlue }}
                   thumbColor={colors.background}
                 />
               )}
@@ -365,7 +365,12 @@ export function SecurityModal({ visible, onClose }: SecurityModalProps) {
                         Cancel
                       </Button>
 
-                      <Button isLoading={isLoading} onPress={handleChangePassword} flex>
+                      <Button
+                        isLoading={isLoading}
+                        onPress={handleChangePassword}
+                        flex
+                        color={colors.electricBlue}
+                      >
                         Update Password
                       </Button>
                     </View>

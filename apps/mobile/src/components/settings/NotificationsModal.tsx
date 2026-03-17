@@ -36,7 +36,7 @@ function ToggleRow({ title, subtitle, value, onValueChange, disabled }: ToggleRo
       <Switch
         value={value}
         onValueChange={onValueChange}
-        trackColor={{ false: colors.border, true: colors.primary }}
+        trackColor={{ false: colors.border, true: colors.electricBlue }}
         thumbColor={colors.background}
         disabled={disabled}
       />
@@ -110,7 +110,7 @@ export function NotificationsModal({ visible, onClose }: NotificationsModalProps
         </BottomSheetScrollView>
 
         <SheetFooter>
-          <Button onPress={onClose} style={{ alignSelf: 'stretch' }}>
+          <Button onPress={onClose} color={colors.electricBlue} style={{ alignSelf: 'stretch' }}>
             Done
           </Button>
         </SheetFooter>

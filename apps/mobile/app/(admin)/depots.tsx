@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     height: 48,
     paddingHorizontal: spacing.xl,
     borderRadius: borderRadius.md,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.electricBlue,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000000',

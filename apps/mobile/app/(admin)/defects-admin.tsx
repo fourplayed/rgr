@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { View, FlatList, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
+import { View, FlatList, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { DefectStatus, formatAssetNumber, formatRelativeTime } from '@rgr/shared';
@@ -9,10 +9,13 @@ import { SheetHeader } from '../../src/components/common/SheetHeader';
 import { FilterChip } from '../../src/components/common/FilterChip';
 import { ConfirmSheet } from '../../src/components/common/ConfirmSheet';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
+import { AppSearchInput } from '../../src/components/common/AppSearchInput';
 import { DefectStatusBadge, DEFECT_STATUS_CONFIG } from '../../src/components/maintenance';
 import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
+import { adminStyles } from '../../src/theme/adminStyles';
 import { AppText } from '../../src/components/common';
+import { useDebounce } from '../../src/hooks/useDebounce';
 
 const STATUS_FILTERS: { value: DefectStatus; label: string }[] = [
   { value: DefectStatus.REPORTED, label: 'Reported' },
@@ -24,21 +27,11 @@ const STATUS_FILTERS: { value: DefectStatus; label: string }[] = [
 export default function DefectsAdminScreen() {
   const router = useRouter();
   const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [statusFilter, setStatusFilter] = useState<DefectStatus[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [page, setPage] = useState(1);
-
-  const searchTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-  const handleSearch = useCallback((text: string) => {
-    setSearch(text);
-    if (searchTimer.current) clearTimeout(searchTimer.current);
-    searchTimer.current = setTimeout(() => {
-      setDebouncedSearch(text);
-      setPage(1);
-    }, 300);
-  }, []);
 
   const toggleStatusFilter = useCallback((status: DefectStatus) => {
     setStatusFilter((prev) => {
@@ -48,14 +41,21 @@ export default function DefectsAdminScreen() {
     setPage(1);
   }, []);
 
+  const prevSearchRef = useRef(debouncedSearch);
+  const effectivePage = prevSearchRef.current !== debouncedSearch ? 1 : page;
+  if (prevSearchRef.current !== debouncedSearch) {
+    prevSearchRef.current = debouncedSearch;
+    setPage(1);
+  }
+
   const queryParams = useMemo(
     () => ({
-      page,
+      page: effectivePage,
       pageSize: 30,
       ...(statusFilter.length > 0 && { status: statusFilter }),
       ...(debouncedSearch && { search: debouncedSearch }),
     }),
-    [page, statusFilter, debouncedSearch]
+    [effectivePage, statusFilter, debouncedSearch]
   );
 
   const { data, isLoading, error, refetch } = useAdminDefectList(queryParams);
@@ -130,25 +130,25 @@ export default function DefectsAdminScreen() {
 
   const renderEmpty = useCallback(
     () => (
-      <View style={styles.centerContent}>
-        <View style={styles.iconContainer}>
+      <View style={adminStyles.centerContent}>
+        <View style={adminStyles.iconContainer}>
           <Ionicons name="warning-outline" size={64} color={colors.textSecondary} />
         </View>
-        <AppText style={styles.emptyText}>No defect reports</AppText>
-        <AppText style={styles.emptySubtext}>Try adjusting your filters</AppText>
+        <AppText style={adminStyles.emptyText}>No defect reports</AppText>
+        <AppText style={adminStyles.emptySubtext}>Try adjusting your filters</AppText>
       </View>
     ),
     []
   );
 
   return (
-    <View style={styles.container}>
+    <View style={adminStyles.container}>
       {hasSelection ? (
         <SheetHeader
           icon="warning"
           title={`${selectedIds.size} Selected`}
           onClose={clearSelection}
-          backgroundColor={colors.defectYellow}
+          backgroundColor={colors.electricBlue}
           headerAction={{
             icon: 'trash',
             onPress: () => setShowDeleteConfirm(true),
@@ -161,25 +161,21 @@ export default function DefectsAdminScreen() {
           title="Defect Reports"
           onClose={() => router.back()}
           closeIcon="arrow-back"
-          backgroundColor={colors.defectYellow}
+          backgroundColor={colors.electricBlue}
         />
       )}
 
       {/* Search */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchBox}>
-          <Ionicons name="search" size={20} color={colors.textSecondary} />
-          <TextInput
-            style={styles.searchInput}
+      <View style={adminStyles.searchContainer}>
+        <View style={adminStyles.searchBox}>
+          <AppSearchInput
+            icon="search"
             placeholder="Search defects..."
-            placeholderTextColor={colors.textSecondary}
             value={search}
-            onChangeText={handleSearch}
-            autoCapitalize="none"
-            autoCorrect={false}
+            onChangeText={setSearch}
           />
           {search.length > 0 && (
-            <TouchableOpacity onPress={() => handleSearch('')}>
+            <TouchableOpacity onPress={() => setSearch('')}>
               <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
             </TouchableOpacity>
           )}
@@ -204,13 +200,13 @@ export default function DefectsAdminScreen() {
 
       {/* Toolbar */}
       {hasSelection && (
-        <View style={styles.toolbar}>
+        <View style={adminStyles.toolbar}>
           <TouchableOpacity
-            style={[styles.toolbarButton, styles.toolbarButtonDanger]}
+            style={[adminStyles.toolbarButton, adminStyles.toolbarButtonDanger]}
             onPress={() => setShowDeleteConfirm(true)}
           >
             <Ionicons name="trash-outline" size={18} color={colors.error} />
-            <AppText style={[styles.toolbarButtonText, { color: colors.error }]}>
+            <AppText style={[adminStyles.toolbarButtonText, { color: colors.error }]}>
               Delete{selectedIds.size > 1 ? ` (${selectedIds.size})` : ''}
             </AppText>
           </TouchableOpacity>
@@ -219,14 +215,14 @@ export default function DefectsAdminScreen() {
 
       {/* Content */}
       {isLoading ? (
-        <View style={styles.loadingContainer}>
+        <View style={adminStyles.loadingContainer}>
           <LoadingDots color={colors.textSecondary} size={12} />
         </View>
       ) : error ? (
-        <View style={styles.centerContent}>
-          <AppText style={styles.errorText}>Failed to load defects</AppText>
-          <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
-            <AppText style={styles.retryButtonText}>Retry</AppText>
+        <View style={adminStyles.centerContent}>
+          <AppText style={adminStyles.errorText}>Failed to load defects</AppText>
+          <TouchableOpacity style={adminStyles.retryButton} onPress={() => refetch()}>
+            <AppText style={adminStyles.retryButtonText}>Retry</AppText>
           </TouchableOpacity>
         </View>
       ) : (
@@ -238,7 +234,7 @@ export default function DefectsAdminScreen() {
             ListEmptyComponent={renderEmpty}
             removeClippedSubviews
             contentContainerStyle={
-              items.length === 0 ? styles.emptyListContent : styles.listContent
+              items.length === 0 ? adminStyles.emptyListContent : adminStyles.listContent
             }
           />
 
@@ -290,63 +286,10 @@ export default function DefectsAdminScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.chrome,
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
-    overflow: 'hidden' as const,
-  },
-  searchContainer: {
-    paddingHorizontal: spacing.base,
-    marginBottom: spacing.sm,
-  },
-  searchBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.md,
-    height: 44,
-    gap: spacing.sm,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: fontSize.base,
-    fontFamily: fonts.regular,
-    color: colors.text,
-  },
   filterRow: {
     paddingHorizontal: spacing.base,
     paddingBottom: spacing.sm,
     gap: spacing.sm,
-  },
-  toolbar: {
-    flexDirection: 'row',
-    paddingHorizontal: spacing.base,
-    marginBottom: spacing.sm,
-    gap: spacing.sm,
-  },
-  toolbarButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
-  },
-  toolbarButtonDanger: {
-    borderColor: colors.error + '40',
-  },
-  toolbarButtonText: {
-    fontSize: fontSize.sm,
-    fontFamily: fonts.bold,
-    textTransform: 'uppercase',
   },
   listItem: {
     flexDirection: 'row',
@@ -400,58 +343,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.regular,
     color: colors.textSecondary,
   },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  centerContent: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: spacing['3xl'],
-  },
-  iconContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-  },
-  emptyText: {
-    fontSize: fontSize.lg,
-    fontFamily: fonts.bold,
-    color: colors.text,
-    textAlign: 'center',
-  },
-  emptySubtext: {
-    fontSize: fontSize.sm,
-    fontFamily: fonts.regular,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginTop: spacing.xs,
-  },
-  errorText: {
-    fontSize: fontSize.base,
-    fontFamily: fonts.regular,
-    color: colors.error,
-    textAlign: 'center',
-    marginBottom: spacing.base,
-  },
-  retryButton: {
-    height: 48,
-    paddingHorizontal: spacing.xl,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  retryButtonText: {
-    fontSize: fontSize.base,
-    fontFamily: fonts.bold,
-    color: colors.textInverse,
-    textTransform: 'uppercase',
-  },
-  listContent: { paddingTop: spacing.sm, paddingBottom: spacing['2xl'] },
-  emptyListContent: { flex: 1 },
   pagination: {
     flexDirection: 'row',
     alignItems: 'center',
