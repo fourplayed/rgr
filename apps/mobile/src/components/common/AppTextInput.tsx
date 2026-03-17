@@ -15,7 +15,7 @@ export const AppTextInput = forwardRef<TextInput, TextInputProps>(function AppTe
     <BottomSheetTextInput
       ref={ref as React.ComponentProps<typeof BottomSheetTextInput>['ref']}
       style={style}
-      placeholderTextColor={placeholderTextColor ?? colors.textSecondary}
+      placeholderTextColor={placeholderTextColor ?? colors.textDisabled}
       {...props}
     />
   );

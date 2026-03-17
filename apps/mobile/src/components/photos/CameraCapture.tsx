@@ -86,23 +86,31 @@ function CameraCaptureComponent({
 
   const { takePhoto, startCapture, cancelCapture } = usePhotoCapture();
 
-  // Full-screen spring entrance
+  // Full-screen entrance (spring slide + fade) and exit (timed slide + fade)
   const slideY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (!visible) return;
     slideY.setValue(SCREEN_HEIGHT);
-    const anim = Animated.spring(slideY, { toValue: 0, ...FULLSCREEN_SPRING });
+    fadeAnim.setValue(0);
+    const anim = Animated.parallel([
+      Animated.spring(slideY, { toValue: 0, ...FULLSCREEN_SPRING }),
+      Animated.timing(fadeAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
+    ]);
     anim.start();
     return () => anim.stop();
-  }, [visible, slideY]);
+  }, [visible, slideY, fadeAnim]);
 
   const handleAnimatedClose = useCallback(() => {
-    Animated.timing(slideY, { toValue: SCREEN_HEIGHT, ...SHEET_EXIT }).start(() => {
+    Animated.parallel([
+      Animated.timing(slideY, { toValue: SCREEN_HEIGHT, duration: 300, useNativeDriver: true }),
+      Animated.timing(fadeAnim, { toValue: 0, duration: 250, useNativeDriver: true }),
+    ]).start(() => {
       cancelCapture();
       onClose();
     });
-  }, [slideY, cancelCapture, onClose]);
+  }, [slideY, fadeAnim, cancelCapture, onClose]);
 
   // Initialize capture state when modal opens
   useEffect(() => {
@@ -122,8 +130,11 @@ function CameraCaptureComponent({
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const uri = await takePhoto(cameraRef);
     if (uri) {
-      // Slide camera down before signaling parent (mirrors handleAnimatedClose)
-      Animated.timing(slideY, { toValue: SCREEN_HEIGHT, ...SHEET_EXIT }).start(() => {
+      // Slide + fade camera down before signaling parent
+      Animated.parallel([
+        Animated.timing(slideY, { toValue: SCREEN_HEIGHT, duration: 300, useNativeDriver: true }),
+        Animated.timing(fadeAnim, { toValue: 0, duration: 250, useNativeDriver: true }),
+      ]).start(() => {
         if (onCapturedUri) {
           onCapturedUri(uri);
         } else {
@@ -131,7 +142,7 @@ function CameraCaptureComponent({
         }
       });
     }
-  }, [takePhoto, onCapturedUri, onPhotoCaptured, slideY]);
+  }, [takePhoto, onCapturedUri, onPhotoCaptured, slideY, fadeAnim]);
 
   const handleClose = handleAnimatedClose;
 
@@ -174,7 +185,9 @@ function CameraCaptureComponent({
         onRequestClose={handleClose}
         onDismiss={onDismiss}
       >
-        <Animated.View style={[{ flex: 1 }, { transform: [{ translateY: slideY }] }]}>
+        <Animated.View
+          style={[{ flex: 1, opacity: fadeAnim }, { transform: [{ translateY: slideY }] }]}
+        >
           <SafeAreaProvider>
             <View style={styles.container}>
               <SafeAreaView style={styles.centered}>
@@ -204,7 +217,9 @@ function CameraCaptureComponent({
         onRequestClose={handleClose}
         onDismiss={onDismiss}
       >
-        <Animated.View style={[{ flex: 1 }, { transform: [{ translateY: slideY }] }]}>
+        <Animated.View
+          style={[{ flex: 1, opacity: fadeAnim }, { transform: [{ translateY: slideY }] }]}
+        >
           <SafeAreaProvider>
             <View style={styles.container}>
               <SafeAreaView style={styles.centered}>
@@ -259,7 +274,9 @@ function CameraCaptureComponent({
       onRequestClose={handleClose}
       onDismiss={onDismiss}
     >
-      <Animated.View style={[{ flex: 1 }, { transform: [{ translateY: slideY }] }]}>
+      <Animated.View
+        style={[{ flex: 1, opacity: fadeAnim }, { transform: [{ translateY: slideY }] }]}
+      >
         <SafeAreaProvider>
           <View style={styles.container}>
             <CameraView ref={cameraRef} style={styles.camera} facing="back" enableTorch={torchOn}>

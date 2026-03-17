@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useCallback } from 'react';
-import { InteractionManager, Platform, StyleSheet, Dimensions } from 'react-native';
+import { InteractionManager, Platform, StyleSheet } from 'react-native';
 import {
   BottomSheetModal,
   BottomSheetView,
@@ -10,13 +10,11 @@ import {
 } from '@gorhom/bottom-sheet';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../theme/colors';
 import { borderRadius } from '../../theme/spacing';
 import { GORHOM_SPRING } from '../../theme/animation';
 import { BACKDROP_BLUR_INTENSITY, BACKDROP_BLUR_TINT } from '../../theme/backdrop';
-
-const MAX_DYNAMIC_HEIGHT = Dimensions.get('window').height;
-
 /** Null handle removes the ~20px handle area above sheet content. */
 const NullHandle = () => null;
 
@@ -41,6 +39,12 @@ interface SheetModalProps {
   compact?: boolean | undefined;
   /** Fixed snap point override (e.g. '55%' or ['50%', '90%']). Ignored when `compact` is true. */
   snapPoint?: string | string[] | undefined;
+  /** When true (compact sheets only), skips the BottomSheetView wrapper so the consumer
+   *  can provide its own BottomSheetScrollView directly — required for scroll safety
+   *  without breaking gorhom's dynamic sizing measurement. */
+  scrollable?: boolean | undefined;
+  /** Active snap point index (for multi-snap sheets). Changes trigger `snapToIndex`. */
+  snapIndex?: number | undefined;
 }
 
 /**
@@ -61,7 +65,10 @@ export function SheetModal({
   noBackdrop = false,
   compact = false,
   snapPoint,
+  scrollable = false,
+  snapIndex,
 }: SheetModalProps) {
+  const insets = useSafeAreaInsets();
   const ref = useRef<BottomSheetModal>(null);
   const isPresentedRef = useRef(false);
   // Tracks whether present() was ever called during this mount cycle.
@@ -156,6 +163,13 @@ export function SheetModal({
     };
   }, []);
 
+  // Snap to the requested index when it changes
+  useEffect(() => {
+    if (snapIndex != null && isPresentedRef.current) {
+      ref.current?.snapToIndex(snapIndex);
+    }
+  }, [snapIndex]);
+
   const handleDismiss = useCallback(() => {
     if (__DEV__) {
       console.log(
@@ -225,8 +239,9 @@ export function SheetModal({
   return (
     <BottomSheetModal
       ref={ref}
-      {...(compact
-        ? { enableDynamicSizing: true, maxDynamicContentSize: MAX_DYNAMIC_HEIGHT }
+      topInset={insets.top}
+      {...(compact && !scrollable
+        ? { enableDynamicSizing: true }
         : {
             snapPoints: snapPoint
               ? Array.isArray(snapPoint)
@@ -240,10 +255,10 @@ export function SheetModal({
       {...(!noBackdrop ? { backdropComponent: renderBackdrop } : {})}
       backgroundStyle={styles.background}
       handleComponent={NullHandle}
-      {...(keyboardAware ? KEYBOARD_AWARE_PROPS : EMPTY_OBJ)}
+      {...(keyboardAware ? KEYBOARD_AWARE_PROPS : KEYBOARD_DISABLED_PROPS)}
       animationConfigs={GORHOM_SPRING}
     >
-      {compact ? <BottomSheetView>{children}</BottomSheetView> : children}
+      {compact && !scrollable ? <BottomSheetView>{children}</BottomSheetView> : children}
     </BottomSheetModal>
   );
 }
@@ -256,7 +271,10 @@ const KEYBOARD_AWARE_PROPS = {
   android_keyboardInputMode: 'adjustResize' as const,
 } as const;
 
-const EMPTY_OBJ = {} as const;
+const KEYBOARD_DISABLED_PROPS = {
+  keyboardBehavior: 'extend' as const,
+  keyboardBlurBehavior: 'none' as const,
+} as const;
 
 const styles = StyleSheet.create({
   background: {

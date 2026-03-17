@@ -130,23 +130,19 @@ function PhotoReviewSheetComponent({
               </View>
             )}
           </Animated.View>
-
-          <View style={styles.buttonRow}>
-            <Animated.View style={[styles.flexOne, { opacity: retakeOpacity }]}>
-              <Button
-                onPress={handleRetake}
-                disabled={isUploading}
-                flex
-                color={colors.electricBlue}
-              >
-                Recapture
-              </Button>
-            </Animated.View>
-            <Button onPress={handleConfirm} isLoading={isUploading} flex color={colors.success}>
-              Use Photo
-            </Button>
-          </View>
         </View>
+      </View>
+
+      {/* ── Fixed footer buttons ── */}
+      <View style={[sheetLayout.footer, styles.buttonRow]}>
+        <Animated.View style={[styles.flexOne, { opacity: retakeOpacity }]}>
+          <Button onPress={handleRetake} disabled={isUploading} flex color={colors.electricBlue}>
+            Recapture
+          </Button>
+        </Animated.View>
+        <Button onPress={handleConfirm} isLoading={isUploading} flex color={colors.success}>
+          Use Photo
+        </Button>
       </View>
     </SheetModal>
   );
@@ -331,9 +327,6 @@ const styles = StyleSheet.create({
   buttonRow: {
     flexDirection: 'row',
     gap: spacing.md,
-    alignSelf: 'stretch',
-    marginTop: spacing.lg,
-    marginBottom: spacing.md,
   },
   flexOne: {
     flexGrow: 1,

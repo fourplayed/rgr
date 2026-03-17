@@ -134,6 +134,7 @@ export interface UseScanFlowReturn {
 
   // Context modals
   contextModal: ScanContextModal;
+  isContextTransitioning: boolean;
   openDefectDetail: (id: string) => void;
   openMaintenanceDetail: (id: string) => void;
   openAcceptDefect: (ctx: Extract<ScanContextModal, { type: 'acceptDefect' }>) => void;
@@ -159,12 +160,16 @@ export interface UseScanFlowReturn {
 // ── Hook ──
 
 interface UseScanFlowOptions {
+  canReportDefect: boolean;
   canMarkMaintenance: boolean;
 }
 
 const SHEET_EXIT_SAFETY_TIMEOUT = 1500;
 
-export function useScanFlow({ canMarkMaintenance }: UseScanFlowOptions): UseScanFlowReturn {
+export function useScanFlow({
+  canReportDefect,
+  canMarkMaintenance,
+}: UseScanFlowOptions): UseScanFlowReturn {
   const [state, dispatch] = useReducer(scanFlowReducer, initialScanFlowState);
   const user = useAuthStore((s) => s.user);
   const cachedDepot = useLocationStore((s) => s.resolvedDepot);
@@ -244,6 +249,7 @@ export function useScanFlow({ canMarkMaintenance }: UseScanFlowOptions): UseScan
     modal: contextModal,
     closeModal: closeContextModal,
     transitionTo: transitionContextModal,
+    isTransitioning: isContextTransitioning,
     handleExitComplete: handleContextExitComplete,
   } = useModalTransition<ScanContextModal>(CLOSED_MODAL);
 
@@ -294,7 +300,7 @@ export function useScanFlow({ canMarkMaintenance }: UseScanFlowOptions): UseScan
     state.phase === 'confirming' ||
     (state.phase === 'active' &&
       !state.cameraOpen &&
-      state.activeSheet !== 'review' &&
+      !state.activeSheet &&
       !state.capturedPhotoUri &&
       !state.awaitingSheetExit);
   const buttonsDisabled = state.phase !== 'active';
@@ -527,9 +533,10 @@ export function useScanFlow({ canMarkMaintenance }: UseScanFlowOptions): UseScan
     return () => sub.remove();
   }, [state.phase, cameraOpen, activeSheet, handleUndoPress]);
 
-  // ── Scan context query (mechanic only) ──
+  // ── Scan context query (drivers see open defects, mechanics see defects + tasks) ──
   const scanContextAssetId =
-    canMarkMaintenance && (state.phase === 'confirming' || state.phase === 'active')
+    (canReportDefect || canMarkMaintenance) &&
+    (state.phase === 'confirming' || state.phase === 'active')
       ? state.scannedAsset.id
       : undefined;
 
@@ -584,6 +591,7 @@ export function useScanFlow({ canMarkMaintenance }: UseScanFlowOptions): UseScan
     refetchContext: scanContextQuery.refetch,
 
     contextModal,
+    isContextTransitioning,
     openDefectDetail,
     openMaintenanceDetail,
     openAcceptDefect,

@@ -82,6 +82,8 @@ export function CreateMaintenanceModal({
   const [assetSearch, setAssetSearch] = useState('');
   const [showAssetPicker, setShowAssetPicker] = useState(false);
 
+  const [titleFocused, setTitleFocused] = useState(false);
+  const [descFocused, setDescFocused] = useState(false);
   const entranceStyle = useSheetEntrance(visible);
   const bottomPadding = useSheetBottomPadding();
 
@@ -239,104 +241,139 @@ export function CreateMaintenanceModal({
           }}
         >
           <Animated.View style={entranceStyle}>
-            {/* Defect context banner */}
-            {defectReportId && (
-              <View style={styles.defectBanner}>
-                <Ionicons name="warning" size={16} color={colors.warningText} />
-                <AppText style={styles.defectBannerText}>From Defect Report</AppText>
+            {/* Asset ID + defect context (when pre-selected) */}
+            {assetId && assetNumber ? (
+              <View style={styles.assetHeaderRow}>
+                <View style={styles.assetInline}>
+                  <Ionicons name="cube" size={22} color={colors.text} />
+                  <AppText style={styles.assetIdText}>{formatAssetNumber(assetNumber)}</AppText>
+                </View>
+                {defectReportId && (
+                  <View style={styles.defectBannerInline}>
+                    <Ionicons name="warning" size={16} color={colors.warningText} />
+                    <AppText style={styles.defectBannerText}>Linked to Defect Report</AppText>
+                  </View>
+                )}
+              </View>
+            ) : null}
+
+            {/* Asset selection (only when no pre-selected asset) */}
+            {!assetId && !assetNumber && (
+              <View style={[formStyles.inputGroup, styles.inputGroupWide]}>
+                <AppText style={formStyles.label}>Asset *</AppText>
+                {selectedAssetId && selectedAssetNumber ? (
+                  // User-selected — show with clear option
+                  <View style={styles.assetSelected}>
+                    <Ionicons name="cube" size={20} color={colors.text} />
+                    <AppText style={styles.assetSelectedText}>
+                      {formatAssetNumber(selectedAssetNumber)}
+                    </AppText>
+                    <TouchableOpacity
+                      onPress={handleClearAsset}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      accessibilityLabel="Clear asset selection"
+                    >
+                      <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  // No asset — show search picker
+                  <>
+                    <Pressable
+                      style={styles.assetPickerField}
+                      onPress={() => setShowAssetPicker((prev) => !prev)}
+                      accessibilityRole="button"
+                      accessibilityLabel="Select an asset"
+                    >
+                      <Ionicons name="cube-outline" size={18} color={colors.textSecondary} />
+                      <AppText style={styles.assetPickerPlaceholder}>Tap to select asset</AppText>
+                      <Animated.View style={{ transform: [{ rotate: chevronRotate }] }}>
+                        <Ionicons name="chevron-down" size={16} color={colors.textSecondary} />
+                      </Animated.View>
+                    </Pressable>
+                    {showAssetPicker && (
+                      <View style={styles.assetPickerDropdown}>
+                        <AppTextInput
+                          style={styles.assetSearchInput}
+                          value={assetSearch}
+                          onChangeText={setAssetSearch}
+                          placeholder="Search by asset number..."
+                          autoCapitalize="none"
+                          autoCorrect={false}
+                        />
+                        {assetsLoading ? (
+                          <View style={styles.assetPickerLoading}>
+                            <LoadingDots color={colors.textSecondary} size={6} />
+                          </View>
+                        ) : assetResults.length === 0 ? (
+                          <AppText style={styles.assetPickerEmpty}>No assets found</AppText>
+                        ) : (
+                          assetResults.map((asset) => (
+                            <TouchableOpacity
+                              key={asset.id}
+                              style={styles.assetPickerItem}
+                              onPress={() => handleSelectAsset(asset.id, asset.assetNumber)}
+                              activeOpacity={0.7}
+                            >
+                              <Ionicons name="cube" size={16} color={colors.text} />
+                              <AppText style={styles.assetPickerItemText}>
+                                {formatAssetNumber(asset.assetNumber)}
+                              </AppText>
+                              <AppText style={styles.assetPickerItemSub}>{asset.category}</AppText>
+                            </TouchableOpacity>
+                          ))
+                        )}
+                      </View>
+                    )}
+                  </>
+                )}
               </View>
             )}
 
-            {/* Asset selection */}
-            <View style={[formStyles.inputGroup, styles.inputGroupWide]}>
-              <AppText style={formStyles.label}>Asset *</AppText>
-              {assetId && assetNumber ? (
-                // Pre-selected (read-only) — from defect accept or asset detail
-                <View style={styles.assetSelected}>
-                  <Ionicons name="cube" size={20} color={colors.text} />
-                  <AppText style={styles.assetSelectedText}>
-                    {formatAssetNumber(assetNumber)}
-                  </AppText>
-                </View>
-              ) : selectedAssetId && selectedAssetNumber ? (
-                // User-selected — show with clear option
-                <View style={styles.assetSelected}>
-                  <Ionicons name="cube" size={20} color={colors.text} />
-                  <AppText style={styles.assetSelectedText}>
-                    {formatAssetNumber(selectedAssetNumber)}
-                  </AppText>
-                  <TouchableOpacity
-                    onPress={handleClearAsset}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    accessibilityLabel="Clear asset selection"
-                  >
-                    <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
-                  </TouchableOpacity>
-                </View>
-              ) : (
-                // No asset — show search picker
-                <>
-                  <Pressable
-                    style={styles.assetPickerField}
-                    onPress={() => setShowAssetPicker((prev) => !prev)}
-                    accessibilityRole="button"
-                    accessibilityLabel="Select an asset"
-                  >
-                    <Ionicons name="cube-outline" size={18} color={colors.textSecondary} />
-                    <AppText style={styles.assetPickerPlaceholder}>Tap to select asset</AppText>
-                    <Animated.View style={{ transform: [{ rotate: chevronRotate }] }}>
-                      <Ionicons name="chevron-down" size={16} color={colors.textSecondary} />
-                    </Animated.View>
-                  </Pressable>
-                  {showAssetPicker && (
-                    <View style={styles.assetPickerDropdown}>
-                      <AppTextInput
-                        style={styles.assetSearchInput}
-                        value={assetSearch}
-                        onChangeText={setAssetSearch}
-                        placeholder="Search by asset number..."
-                        autoCapitalize="none"
-                        autoCorrect={false}
-                      />
-                      {assetsLoading ? (
-                        <View style={styles.assetPickerLoading}>
-                          <LoadingDots color={colors.textSecondary} size={6} />
-                        </View>
-                      ) : assetResults.length === 0 ? (
-                        <AppText style={styles.assetPickerEmpty}>No assets found</AppText>
-                      ) : (
-                        assetResults.map((asset) => (
-                          <TouchableOpacity
-                            key={asset.id}
-                            style={styles.assetPickerItem}
-                            onPress={() => handleSelectAsset(asset.id, asset.assetNumber)}
-                            activeOpacity={0.7}
-                          >
-                            <Ionicons name="cube" size={16} color={colors.text} />
-                            <AppText style={styles.assetPickerItemText}>
-                              {formatAssetNumber(asset.assetNumber)}
-                            </AppText>
-                            <AppText style={styles.assetPickerItemSub}>{asset.category}</AppText>
-                          </TouchableOpacity>
-                        ))
-                      )}
-                    </View>
-                  )}
-                </>
-              )}
-            </View>
-
             {/* Title */}
             <View style={[formStyles.inputGroup, styles.inputGroupWide]}>
-              <AppText style={formStyles.label}>Title *</AppText>
+              <View style={styles.labelRow}>
+                <AppText style={formStyles.label}>Title</AppText>
+                {!title.trim() && (
+                  <View style={styles.requiredBadge}>
+                    <Ionicons name="alert-circle" size={12} color={colors.warning} />
+                    <AppText style={styles.requiredText}>Required</AppText>
+                  </View>
+                )}
+              </View>
               <AppTextInput
-                style={[formStyles.input, styles.inputElevated]}
+                style={[
+                  formStyles.input,
+                  styles.inputElevated,
+                  titleFocused && styles.inputFocused,
+                ]}
                 value={title}
                 onChangeText={setTitle}
+                onFocus={() => setTitleFocused(true)}
+                onBlur={() => setTitleFocused(false)}
                 placeholder="e.g., Brake inspection, Tire replacement"
                 autoCapitalize="sentences"
                 maxLength={200}
                 accessibilityLabel="Maintenance title"
+              />
+            </View>
+
+            {/* Due Date */}
+            <View style={[formStyles.inputGroup, styles.inputGroupWide]}>
+              <View style={styles.labelRow}>
+                <AppText style={formStyles.label}>Due Date</AppText>
+                {!dueDate.trim() && (
+                  <View style={styles.requiredBadge}>
+                    <Ionicons name="alert-circle" size={12} color={colors.warning} />
+                    <AppText style={styles.requiredText}>Required</AppText>
+                  </View>
+                )}
+              </View>
+              <DatePickerField
+                value={dueDate}
+                onChange={setDueDate}
+                minimumDate={today}
+                onExpandedChange={setCalendarExpanded}
               />
             </View>
 
@@ -356,30 +393,27 @@ export function CreateMaintenanceModal({
               </View>
             </View>
 
-            {/* Due Date */}
-            <View style={[formStyles.inputGroup, styles.inputGroupWide]}>
-              <AppText style={formStyles.label}>Due Date *</AppText>
-              <DatePickerField
-                value={dueDate}
-                onChange={setDueDate}
-                minimumDate={today}
-                onExpandedChange={setCalendarExpanded}
-              />
-            </View>
-
             {/* Description */}
             <View style={[formStyles.inputGroup, styles.inputGroupWide]}>
-              <AppText style={formStyles.label}>Description (optional)</AppText>
+              <AppText style={formStyles.label}>Description</AppText>
               <AppTextInput
                 key={formKey}
-                style={[formStyles.input, formStyles.textArea, styles.inputElevated]}
+                style={[
+                  formStyles.input,
+                  formStyles.textArea,
+                  styles.inputElevated,
+                  { minHeight: 120 },
+                  descFocused && styles.inputFocused,
+                ]}
                 defaultValue={descriptionRef.current}
                 onChangeText={(text) => {
                   descriptionRef.current = text;
                 }}
+                onFocus={() => setDescFocused(true)}
+                onBlur={() => setDescFocused(false)}
                 placeholder="Describe the maintenance work needed"
                 multiline
-                numberOfLines={3}
+                numberOfLines={4}
                 textAlignVertical="top"
                 accessibilityLabel="Maintenance description"
               />
@@ -387,10 +421,11 @@ export function CreateMaintenanceModal({
 
             {error && <AppText style={formStyles.errorText}>{error}</AppText>}
 
-            <View style={{ marginTop: spacing.md }}>
+            <View style={{ marginTop: spacing.lg }}>
               <Button
                 isLoading={isLoading}
                 onPress={handleSubmit}
+                disabled={!effectiveAssetId || !title.trim() || !dueDate.trim()}
                 color={colors.success}
                 style={styles.submitButton}
               >
@@ -405,6 +440,21 @@ export function CreateMaintenanceModal({
 }
 
 const styles = StyleSheet.create({
+  labelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  requiredBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  requiredText: {
+    fontSize: fontSize.xs,
+    fontFamily: fonts.bold,
+    color: colors.warning,
+  },
   inputElevated: {
     backgroundColor: colors.background,
     shadowColor: '#000030',
@@ -413,8 +463,42 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 2,
   },
+  inputFocused: {
+    borderColor: colors.warning,
+    borderWidth: 1.5,
+    shadowColor: colors.warning,
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 0 },
+  },
   inputGroupWide: {
     marginBottom: spacing.base,
+  },
+  assetHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.base,
+  },
+  defectBannerInline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.defectYellow + '1A',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+  },
+  assetInline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  assetIdText: {
+    fontSize: fontSize.xl,
+    fontFamily: fonts.bold,
+    color: colors.text,
+    textTransform: 'uppercase',
   },
   assetSelected: {
     flexDirection: 'row',

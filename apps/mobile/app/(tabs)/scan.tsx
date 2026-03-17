@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { View } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 
@@ -27,11 +27,11 @@ import { AlertSheet, ErrorBoundary } from '../../src/components/common';
 import { styles } from '../../src/components/scanner/scan.styles';
 
 export default function ScanScreen() {
-  const { canMarkMaintenance } = useUserPermissions();
+  const { canReportDefect, canMarkMaintenance } = useUserPermissions();
   const [permission, requestPermission] = useCameraPermissions();
 
   // ── Unified scan flow ──
-  const flow = useScanFlow({ canMarkMaintenance });
+  const flow = useScanFlow({ canReportDefect, canMarkMaintenance });
 
   // ── Persistent backdrop (blur + fade) ──
   const backdrop = usePersistentBackdrop(flow.showOverlay);
@@ -128,6 +128,12 @@ export default function ScanScreen() {
     // Don't allow backdrop dismiss of confirmation card
   }, []);
 
+  // ── Details expansion → snap point ──
+  const [detailsExpanded, setDetailsExpanded] = useState(false);
+  const handleDetailsExpandedChange = useCallback((expanded: boolean) => {
+    setDetailsExpanded(expanded);
+  }, []);
+
   // ── Permission gate ──
   if (!permission || !permission.granted) {
     return (
@@ -173,46 +179,57 @@ export default function ScanScreen() {
          Unmount during camera to prevent stale gorhom provider stack entries — iOS native
          Modals freeze the underlying display link, so the dismiss animation never completes
          and the provider retains a stale entry that blocks future present() calls. */}
-      {displayAsset && !flow.cameraOpen && (
-        <SheetModal
-          visible={flow.showCard}
-          onClose={flow.handleUndoPress}
-          noBackdrop
-          compact
-          preventDismissWhileBusy={flow.isCreatingScan}
-        >
-          {variant === 'mechanic' ? (
-            <ScanConfirmation
-              variant="mechanic"
-              asset={displayAsset}
-              matchedDepot={flow.matchedDepot}
-              isCreating={flow.isCreatingScan}
-              onConfirm={flow.handleConfirmAction}
-              onUndoPress={flow.handleUndoPress}
-              photoCompleted={flow.photoCompleted}
-              defectCompleted={flow.defectCompleted}
-              maintenanceCompleted={flow.maintenanceCompleted}
-              disabled={flow.buttonsDisabled}
-              assessment={assessment}
-              scanContext={flow.scanContext}
-              onDefectPress={flow.openDefectDetail}
-              onTaskPress={flow.openMaintenanceDetail}
-            />
-          ) : (
-            <ScanConfirmation
-              variant="driver"
-              asset={displayAsset}
-              matchedDepot={flow.matchedDepot}
-              isCreating={flow.isCreatingScan}
-              onConfirm={flow.handleConfirmAction}
-              onUndoPress={flow.handleUndoPress}
-              photoCompleted={flow.photoCompleted}
-              disabled={flow.buttonsDisabled}
-              assessment={assessment}
-            />
-          )}
-        </SheetModal>
-      )}
+      {displayAsset &&
+        !flow.cameraOpen &&
+        !flow.activeSheet &&
+        flow.contextModal.type === 'closed' &&
+        !flow.isContextTransitioning &&
+        !acceptCtx && (
+          <SheetModal
+            visible={flow.showCard}
+            onClose={flow.handleUndoPress}
+            noBackdrop
+            scrollable
+            snapPoint={detailsExpanded ? '90%' : '82%'}
+            preventDismissWhileBusy={flow.isCreatingScan}
+          >
+            {variant === 'mechanic' ? (
+              <ScanConfirmation
+                variant="mechanic"
+                asset={displayAsset}
+                matchedDepot={flow.matchedDepot}
+                isCreating={flow.isCreatingScan}
+                onConfirm={flow.handleConfirmAction}
+                onUndoPress={flow.handleUndoPress}
+                photoCompleted={flow.photoCompleted}
+                defectCompleted={flow.defectCompleted}
+                maintenanceCompleted={flow.maintenanceCompleted}
+                disabled={flow.buttonsDisabled}
+                assessment={assessment}
+                scanContext={flow.scanContext}
+                onDefectPress={flow.openDefectDetail}
+                onTaskPress={flow.openMaintenanceDetail}
+                onDetailsExpandedChange={handleDetailsExpandedChange}
+              />
+            ) : (
+              <ScanConfirmation
+                variant="driver"
+                asset={displayAsset}
+                matchedDepot={flow.matchedDepot}
+                isCreating={flow.isCreatingScan}
+                onConfirm={flow.handleConfirmAction}
+                onUndoPress={flow.handleUndoPress}
+                photoCompleted={flow.photoCompleted}
+                defectCompleted={flow.defectCompleted}
+                disabled={flow.buttonsDisabled}
+                assessment={assessment}
+                scanContext={flow.scanContext}
+                onDefectPress={flow.openDefectDetail}
+                onDetailsExpandedChange={handleDetailsExpandedChange}
+              />
+            )}
+          </SheetModal>
+        )}
 
       {/* Sub-sheets (noBackdrop — PersistentBackdrop handles it) */}
       <DefectReportSheet

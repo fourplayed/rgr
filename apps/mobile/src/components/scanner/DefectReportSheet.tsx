@@ -6,6 +6,7 @@ import {
   Animated,
   Keyboard,
   type TextInput,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -44,23 +45,34 @@ function DefectReportSheetComponent({
   const [charCount, setCharCount] = useState(0);
   const [wantsPhoto, setWantsPhoto] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const wasVisibleRef = useRef(false);
   const inputRef = useRef<TextInput>(null);
   const notesRef = useRef('');
   const entranceStyle = useSheetEntrance(visible);
   const bottomPadding = useSheetBottomPadding();
 
-  // Reset state and focus input on fresh open (false→true edge)
+  // Track keyboard visibility for snap point (not input focus — avoids
+  // shrinking the sheet when tapping the photo checkbox while keyboard is up)
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const showSub = Keyboard.addListener(showEvent, () => setKeyboardVisible(true));
+    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardVisible(false));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
+  // Reset state on fresh open (false→true edge)
   useEffect(() => {
     if (visible && !wasVisibleRef.current) {
       notesRef.current = '';
       setCharCount(0);
       setWantsPhoto(false);
       inputRef.current?.clear();
-      // Delay focus until gorhom spring animation settles (~350ms)
-      const timer = setTimeout(() => inputRef.current?.focus(), 400);
       wasVisibleRef.current = visible;
-      return () => clearTimeout(timer);
     }
     wasVisibleRef.current = visible;
   }, [visible]);
@@ -101,10 +113,10 @@ function DefectReportSheetComponent({
       onExitComplete={onExitComplete}
       noBackdrop={noBackdrop}
       preventDismissWhileBusy={isSubmitting}
-      keyboardAware
-      snapPoint="70%"
+      snapPoint={['57%', '92%']}
+      snapIndex={keyboardVisible ? 1 : 0}
     >
-      <View style={sheetLayout.container}>
+      <View style={sheetLayout.containerCompact}>
         <SheetHeader
           icon="warning"
           title="Report Defect"
@@ -122,7 +134,17 @@ function DefectReportSheetComponent({
           <Animated.View style={entranceStyle}>
             {/* Notes Input */}
             <View style={styles.inputSection}>
-              <AppText style={styles.inputLabel}>Describe the defect</AppText>
+              <View style={styles.labelRow}>
+                <AppText style={styles.inputLabel}>Defect Description</AppText>
+                {charCount === 0 ? (
+                  <View style={styles.requiredBadge}>
+                    <Ionicons name="alert-circle" size={12} color={colors.warning} />
+                    <AppText style={styles.requiredText}>Required</AppText>
+                  </View>
+                ) : (
+                  <AppText style={styles.charCount}>{charCount}/2000</AppText>
+                )}
+              </View>
               <View style={[styles.inputWrapper, isFocused && styles.inputWrapperFocused]}>
                 <AppTextInput
                   ref={inputRef}
@@ -137,17 +159,10 @@ function DefectReportSheetComponent({
                   textAlignVertical="top"
                 />
               </View>
-              {charCount === 0 ? (
-                <View style={styles.charCountRequired}>
-                  <Ionicons name="alert-circle" size={12} color={colors.warning} />
-                  <AppText style={styles.charCountRequiredText}>Required</AppText>
-                </View>
-              ) : (
-                <AppText style={styles.charCount}>{charCount}/2000</AppText>
-              )}
             </View>
 
-            {/* Photo Option (hidden when showPhotoOption is false) */}
+            {/* Actions */}
+            {showPhotoOption && <AppText style={styles.actionsLabel}>Actions</AppText>}
             {showPhotoOption && (
               <TouchableOpacity
                 style={styles.photoOption}
@@ -158,28 +173,28 @@ function DefectReportSheetComponent({
                 accessibilityState={{ checked: wantsPhoto }}
               >
                 <LinearGradient
-                  colors={[colors.electricBlue + '0F', colors.electricBlue + '05']}
+                  colors={[colors.electricBlue + '1A', colors.electricBlue + '0A']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 0, y: 1 }}
-                  style={[StyleSheet.absoluteFillObject, { borderRadius: borderRadius.sm }]}
+                  style={[StyleSheet.absoluteFillObject, { borderRadius: borderRadius.md }]}
                 />
                 <Ionicons name="camera" size={24} color={colors.electricBlue} />
                 <View style={styles.photoOptionText}>
                   <AppText style={styles.photoOptionLabel}>Capture Photo</AppText>
                   <AppText style={styles.photoOptionDescription}>
-                    Capture a photo of the defect to document the issue
+                    Include a photo of the defect
                   </AppText>
                 </View>
                 <Ionicons
-                  name={wantsPhoto ? 'checkbox' : 'square-outline'}
-                  size={26}
+                  name={wantsPhoto ? 'checkmark-circle' : 'radio-button-off'}
+                  size={24}
                   color={colors.electricBlue}
                 />
               </TouchableOpacity>
             )}
           </Animated.View>
 
-          <View style={styles.submitContainer}>
+          <View style={{ marginTop: spacing.lg }}>
             <Animated.View style={{ opacity: submitOpacity }}>
               <Button
                 isLoading={isSubmitting}
@@ -210,10 +225,11 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: spacing.sm,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 1,
   },
   inputWrapper: {
     borderRadius: borderRadius.md,
+    backgroundColor: colors.chrome,
   },
   inputWrapperFocused: {
     shadowColor: colors.defectYellow,
@@ -241,20 +257,30 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     fontFamily: fonts.regular,
     color: colors.textSecondary,
-    textAlign: 'right',
-    marginTop: spacing.xs,
   },
-  charCountRequired: {
+  labelRow: {
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between' as const,
+    alignItems: 'center' as const,
+  },
+  requiredBadge: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
-    justifyContent: 'flex-end' as const,
     gap: 4,
-    marginTop: spacing.xs,
   },
-  charCountRequiredText: {
+  requiredText: {
     fontSize: fontSize.xs,
     fontFamily: fonts.bold,
     color: colors.warning,
+  },
+  actionsLabel: {
+    fontSize: fontSize.sm,
+    fontFamily: fonts.bold,
+    color: colors.text,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginTop: spacing.base,
+    marginBottom: spacing.md,
   },
 
   // Photo Option
@@ -262,8 +288,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderColor: colors.electricBlue + '66',
-    backgroundColor: 'transparent',
-    borderRadius: borderRadius.sm,
+    backgroundColor: colors.chrome,
+    borderRadius: borderRadius.md,
     borderWidth: 1,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.base,
@@ -278,16 +304,12 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bold,
     color: colors.electricBlue,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 1,
   },
   photoOptionDescription: {
     fontSize: fontSize.xs,
     fontFamily: fonts.regular,
     color: colors.textSecondary,
     marginTop: 2,
-  },
-  submitContainer: {
-    marginTop: spacing.lg,
-    marginBottom: spacing.md,
   },
 });

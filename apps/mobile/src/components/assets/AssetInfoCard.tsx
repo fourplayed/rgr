@@ -18,6 +18,8 @@ interface AssetInfoCardProps {
   nextServiceDate?: string | null | undefined;
   assessment?: string | null;
   onPress?: () => void;
+  /** Called when the details section expands or collapses */
+  onDetailsExpandedChange?: ((expanded: boolean) => void) | undefined;
 }
 
 /**
@@ -37,7 +39,13 @@ function getExpiryColor(expiryDate: string | null, isOverdue: boolean): string {
   return colors.success;
 }
 
-export function AssetInfoCard({ asset, nextServiceDate, assessment, onPress }: AssetInfoCardProps) {
+export function AssetInfoCard({
+  asset,
+  nextServiceDate,
+  assessment,
+  onPress,
+  onDetailsExpandedChange,
+}: AssetInfoCardProps) {
   const depotLookup = useDepotLookup();
   const depotCode = asset.depotCode?.toLowerCase();
   const depot = depotCode ? (depotLookup.byCode.get(depotCode) ?? null) : null;
@@ -83,7 +91,12 @@ export function AssetInfoCard({ asset, nextServiceDate, assessment, onPress }: A
 
       {assessment ? <AppText style={styles.assessmentText}>{assessment}</AppText> : null}
 
-      <CollapsibleSection title="Details" variant="flat" defaultExpanded={false}>
+      <CollapsibleSection
+        title="Details"
+        variant="flat"
+        defaultExpanded={false}
+        onExpandedChange={onDetailsExpandedChange}
+      >
         <View style={styles.infoGrid}>
           <InfoRow label="Registration" value={asset.registrationNumber || 'Unknown'} />
           <View style={styles.infoRow}>

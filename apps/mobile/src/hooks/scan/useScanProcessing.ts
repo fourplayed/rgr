@@ -63,7 +63,9 @@ export function useScanProcessing(
             logger.scan('Location resolving — waiting for GPS...');
             dispatch({ type: 'UPDATE_SCAN_STEP', scanStep: 'location' });
 
-            const resolved = await waitForLocationResolution(15_000);
+            // GPS can take up to 18s (10s High + 8s Balanced fallback).
+            // Allow 22s so the wait outlasts the worst-case GPS window.
+            const resolved = await waitForLocationResolution(22_000);
 
             if (resolved) {
               const updated = useLocationStore.getState();

@@ -9,6 +9,7 @@ import {
   UIManager,
   Animated,
 } from 'react-native';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,7 +23,10 @@ import { SheetHeader } from '../common/SheetHeader';
 import { SegmentedTabs } from '../common/SegmentedTabs';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, shadows, fontFamily as fonts } from '../../theme/spacing';
+import { sheetLayout } from '../../theme/sheetLayout';
+import { SHEET_SCROLL_PROPS } from '../../theme/sheetLayout';
 import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
+import { useStableTabHeight } from '../../hooks/useStableTabHeight';
 import { useTabFade } from '../../hooks/useTabFade';
 import type { MatchedDepot, ConfirmAction } from '../../hooks/scan/scanFlowMachine';
 import { AppText } from '../common';
@@ -50,8 +54,12 @@ type ScanConfirmationProps =
       onConfirm: (action: ConfirmAction) => void;
       onUndoPress: () => void;
       photoCompleted: boolean;
+      defectCompleted: boolean;
       disabled: boolean;
       assessment?: string | null;
+      scanContext?: AssetScanContext | null;
+      onDefectPress?: (id: string) => void;
+      onDetailsExpandedChange?: (expanded: boolean) => void;
     }
   | {
       variant: 'mechanic';
@@ -68,6 +76,7 @@ type ScanConfirmationProps =
       scanContext?: AssetScanContext | null;
       onDefectPress?: (id: string) => void;
       onTaskPress?: (id: string) => void;
+      onDetailsExpandedChange?: (expanded: boolean) => void;
     };
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -93,29 +102,14 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
   const [activeTab, setActiveTab] = useState<ScanTab>('actions');
 
   // Track the maximum tab content height so the modal never shrinks on tab switch.
-  // gorhom's enableDynamicSizing re-measures on layout changes — if the new tab is
-  // shorter, the sheet visibly collapses. Applying minHeight prevents this.
-  const maxTabHeightRef = useRef(0);
-  const [minTabHeight, setMinTabHeight] = useState(0);
-
-  const handleTabContentLayout = useCallback(
-    (e: { nativeEvent: { layout: { height: number } } }) => {
-      const h = e.nativeEvent.layout.height;
-      if (h > maxTabHeightRef.current) {
-        maxTabHeightRef.current = h;
-        setMinTabHeight(h);
-      }
-    },
-    []
-  );
+  const { minHeight: minTabHeight, onLayout: handleTabContentLayout } =
+    useStableTabHeight(isCreating);
 
   // Reset selection when a new scan starts (component stays mounted via displayAsset ref)
   useEffect(() => {
     if (isCreating) {
       setSelectedAction(null);
       setActiveTab('actions');
-      maxTabHeightRef.current = 0;
-      setMinTabHeight(0);
     }
   }, [isCreating]);
   const bottomPadding = useSheetBottomPadding();
@@ -146,10 +140,11 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- stable refs
   }, [isCreating, asset]);
 
-  // Show tabs only for mechanics with existing open items
+  // Show tabs when there are existing open items (defects for all roles, tasks for mechanics)
   const openItemCount =
-    props.variant === 'mechanic' && props.scanContext != null
-      ? props.scanContext.openDefectCount + props.scanContext.activeTaskCount
+    props.scanContext != null
+      ? props.scanContext.openDefectCount +
+        (props.variant === 'mechanic' ? props.scanContext.activeTaskCount : 0)
       : 0;
   const hasOpenItems = openItemCount > 0;
 
@@ -167,7 +162,7 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
   }, []);
 
   // Derive completed states
-  const defectCompleted = props.variant === 'mechanic' ? props.defectCompleted : false;
+  const defectCompleted = props.defectCompleted;
   const maintenanceCompleted = props.variant === 'mechanic' ? props.maintenanceCompleted : false;
 
   // Button color matches selected action
@@ -193,8 +188,8 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
           : 'DONE';
 
   return (
-    <View style={styles.container}>
-      {/* ── Header bar ── */}
+    <View style={sheetLayout.container}>
+      {/* ── Header bar (pinned above scroll) ── */}
       <SheetHeader
         icon="checkmark-circle"
         title="Asset Found"
@@ -202,11 +197,18 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
         backgroundColor={colors.success}
       />
 
-      {/* ── Content ── */}
-      <View style={{ paddingHorizontal: spacing.lg, paddingBottom: bottomPadding }}>
+      {/* ── Scrollable content ── */}
+      <BottomSheetScrollView
+        contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: spacing.md }}
+        {...SHEET_SCROLL_PROPS}
+      >
         {/* ── Asset detail card (collapsible) ── */}
         <View style={styles.assetCard}>
-          <AssetInfoCard asset={assetWithRelations} assessment={props.assessment ?? null} />
+          <AssetInfoCard
+            asset={assetWithRelations}
+            assessment={props.assessment ?? null}
+            onDetailsExpandedChange={props.onDetailsExpandedChange}
+          />
         </View>
 
         {/* ── Location info ── */}
@@ -224,11 +226,11 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
           </View>
         )}
 
-        {/* ── Tabbed layout (mechanic with open items) or flat actions ── */}
+        {/* ── Tabbed layout (with open items) or flat actions ── */}
         <Animated.View
           style={{ opacity: actionsOpacity, transform: [{ translateY: actionsTranslateY }] }}
         >
-          {props.variant === 'mechanic' && hasOpenItems ? (
+          {hasOpenItems ? (
             <>
               <View style={styles.tabContainer}>
                 <SegmentedTabs tabs={scanTabs} activeTab={activeTab} onTabPress={setActiveTab} />
@@ -259,23 +261,25 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
                       disabled={disabled || defectCompleted}
                       accentColor={colors.defectYellow}
                     />
-                    <CheckboxOption
-                      icon="construct"
-                      label="Schedule Maintenance"
-                      description="Create a task with priority"
-                      checked={maintenanceCompleted || selectedAction === 'maintenance'}
-                      completed={maintenanceCompleted}
-                      onToggle={() => toggleAction('maintenance')}
-                      disabled={disabled || maintenanceCompleted}
-                      accentColor={colors.warning}
-                    />
+                    {props.variant === 'mechanic' && (
+                      <CheckboxOption
+                        icon="construct"
+                        label="Schedule Maintenance"
+                        description="Create a task with priority"
+                        checked={maintenanceCompleted || selectedAction === 'maintenance'}
+                        completed={maintenanceCompleted}
+                        onToggle={() => toggleAction('maintenance')}
+                        disabled={disabled || maintenanceCompleted}
+                        accentColor={colors.warning}
+                      />
+                    )}
                   </View>
                 ) : (
                   props.scanContext && (
                     <OpenItemsSection
                       scanContext={props.scanContext}
                       onDefectPress={props.onDefectPress}
-                      onTaskPress={props.onTaskPress}
+                      onTaskPress={props.variant === 'mechanic' ? props.onTaskPress : undefined}
                       alwaysExpanded
                     />
                   )
@@ -296,46 +300,46 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
                   disabled={disabled || props.photoCompleted}
                   accentColor={colors.electricBlue}
                 />
+                <CheckboxOption
+                  icon="warning"
+                  label="Report Defect"
+                  description="Log damage with details and photo"
+                  checked={defectCompleted || selectedAction === 'defect'}
+                  completed={defectCompleted}
+                  onToggle={() => toggleAction('defect')}
+                  disabled={disabled || defectCompleted}
+                  accentColor={colors.defectYellow}
+                />
                 {props.variant === 'mechanic' && (
-                  <>
-                    <CheckboxOption
-                      icon="warning"
-                      label="Report Defect"
-                      description="Log damage with details and photo"
-                      checked={defectCompleted || selectedAction === 'defect'}
-                      completed={defectCompleted}
-                      onToggle={() => toggleAction('defect')}
-                      disabled={disabled || defectCompleted}
-                      accentColor={colors.defectYellow}
-                    />
-                    <CheckboxOption
-                      icon="construct"
-                      label="Schedule Maintenance"
-                      description="Create a task with priority"
-                      checked={maintenanceCompleted || selectedAction === 'maintenance'}
-                      completed={maintenanceCompleted}
-                      onToggle={() => toggleAction('maintenance')}
-                      disabled={disabled || maintenanceCompleted}
-                      accentColor={colors.warning}
-                    />
-                  </>
+                  <CheckboxOption
+                    icon="construct"
+                    label="Schedule Maintenance"
+                    description="Create a task with priority"
+                    checked={maintenanceCompleted || selectedAction === 'maintenance'}
+                    completed={maintenanceCompleted}
+                    onToggle={() => toggleAction('maintenance')}
+                    disabled={disabled || maintenanceCompleted}
+                    accentColor={colors.warning}
+                  />
                 )}
               </View>
             </>
           )}
         </Animated.View>
-        <View style={{ marginTop: spacing.lg }}>
-          <Button
-            onPress={() => props.onConfirm(selectedAction)}
-            disabled={disabled}
-            isLoading={isLoading}
-            style={styles.confirmButton}
-            color={buttonColor}
-            accessibilityLabel={buttonLabel}
-          >
-            {buttonLabel}
-          </Button>
-        </View>
+      </BottomSheetScrollView>
+
+      {/* ── Fixed footer button ── */}
+      <View style={sheetLayout.footer}>
+        <Button
+          onPress={() => props.onConfirm(selectedAction)}
+          disabled={disabled}
+          isLoading={isLoading}
+          style={styles.confirmButton}
+          color={buttonColor}
+          accessibilityLabel={buttonLabel}
+        >
+          {buttonLabel}
+        </Button>
       </View>
     </View>
   );
@@ -403,7 +407,7 @@ function OpenItemsSection({
                 cardStyles.containerInline,
                 {
                   borderLeftColor: colors.defectYellow,
-                  backgroundColor: colors.defectYellow + '08',
+                  backgroundColor: colors.defectYellow + '1A',
                 },
               ]}
               onPress={() => onDefectPress?.(defect.id)}
@@ -447,7 +451,7 @@ function OpenItemsSection({
                 cardStyles.containerInline,
                 {
                   borderLeftColor: colors.warning,
-                  backgroundColor: colors.warning + '08',
+                  backgroundColor: colors.warning + '1A',
                 },
               ]}
               onPress={() => onTaskPress?.(task.id)}
@@ -484,12 +488,6 @@ function OpenItemsSection({
 }
 
 // ── Gradient endpoint lookup for CheckboxOption ──────────────────────────────
-
-const GRADIENT_ENDPOINTS: Record<string, string> = {
-  [colors.electricBlue]: colors.gradientEndpoints.electricBlue,
-  [colors.defectYellow]: colors.gradientEndpoints.defectYellow,
-  [colors.warning]: colors.gradientEndpoints.warning,
-};
 
 // ── Checkbox option sub-component ────────────────────────────────────────────
 
@@ -535,43 +533,32 @@ function CheckboxOption({
   const isSelected = checked && !completed;
   const isUnselected = !checked && !completed;
 
-  const dynamicRowStyle = [
-    styles.checkboxRow,
-    isSelected && {
-      borderColor: accentColor,
-      borderWidth: 1.5,
-      shadowColor: accentColor,
-      shadowOpacity: 0.15,
-      shadowRadius: 10,
-      shadowOffset: { width: 0, height: 0 },
-    },
-    isUnselected && {
-      borderColor: `${accentColor}66`,
-    },
-    completed && {
-      borderColor: accentColor,
-    },
-    disabled && styles.checkboxRowDisabled,
-  ];
+  const dynamicRowStyle = useMemo(
+    () => [
+      styles.checkboxRow,
+      isSelected && {
+        borderColor: accentColor,
+        borderWidth: 1.5,
+        shadowColor: accentColor,
+        shadowOpacity: 0.15,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 0 },
+      },
+      isUnselected && {
+        borderColor: `${accentColor}66`,
+      },
+      completed && {
+        borderColor: accentColor,
+      },
+      disabled && styles.checkboxRowDisabled,
+    ],
+    [isSelected, isUnselected, completed, disabled, accentColor]
+  );
 
-  const gradientEnd = GRADIENT_ENDPOINTS[accentColor] ?? accentColor;
-
-  // Radio indicator
-  const renderRadioIndicator = () => {
-    if (completed) {
+  // Check-circle indicator
+  const renderIndicator = () => {
+    if (completed || checked) {
       return <Ionicons name="checkmark-circle" size={24} color={accentColor} />;
-    }
-    if (checked) {
-      return (
-        <View style={{ width: 24, height: 24, borderRadius: 12, overflow: 'hidden' }}>
-          <LinearGradient
-            colors={[accentColor, gradientEnd]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
-            style={{ width: 24, height: 24, borderRadius: 12 }}
-          />
-        </View>
-      );
     }
     return <Ionicons name="radio-button-off" size={24} color={accentColor} />;
   };
@@ -601,7 +588,7 @@ function CheckboxOption({
           <AppText style={[styles.checkboxLabel, { color: accentColor }]}>{label}</AppText>
           <AppText style={styles.checkboxDescription}>{description}</AppText>
         </View>
-        {renderRadioIndicator()}
+        {renderIndicator()}
       </Animated.View>
     </Pressable>
   );
@@ -612,16 +599,9 @@ export const ScanConfirmation = React.memo(ScanConfirmationComponent);
 // ── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.chrome,
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
-    overflow: 'hidden',
-  },
-
   // Asset detail card
   assetCard: {
-    marginTop: spacing.sm,
+    marginTop: spacing.base,
   },
 
   // Location info
@@ -651,13 +631,13 @@ const styles = StyleSheet.create({
 
   // Checkbox section
   checkboxSectionTitle: {
-    fontSize: fontSize.xs,
+    fontSize: fontSize.sm,
     fontFamily: fonts.bold,
-    color: colors.textSecondary,
+    color: colors.text,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginTop: spacing.sm,
-    marginBottom: spacing.sm,
+    letterSpacing: 1,
+    marginTop: spacing.base,
+    marginBottom: spacing.md,
   },
   checkboxList: {
     gap: spacing.md,
@@ -671,6 +651,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.base,
     overflow: 'hidden',
+    backgroundColor: colors.chrome,
   },
   checkboxRowDisabled: {
     opacity: 0.5,
@@ -684,7 +665,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 1,
   },
   checkboxDescription: {
     fontSize: fontSize.xs,

@@ -430,16 +430,22 @@ export function MaintenanceDetailModal({
     );
   };
 
+  const statusActionsEl = renderStatusActions();
+
   return (
     <SheetModal
       visible={visible}
       onClose={onClose}
       onExitComplete={onExitComplete}
       noBackdrop={noBackdrop}
-      keyboardAware={isEditing || editingNotes}
-      snapPoint={isEditing ? '92%' : '85%'}
+      {...(variant === 'compact'
+        ? { compact: true }
+        : {
+            keyboardAware: isEditing || editingNotes,
+            snapPoint: isEditing ? '92%' : '85%',
+          })}
     >
-      <View style={sheetLayout.container}>
+      <View style={variant === 'compact' ? sheetLayout.containerCompact : sheetLayout.container}>
         <SheetHeader
           icon="construct"
           title="Scheduled Task"
@@ -653,12 +659,16 @@ export function MaintenanceDetailModal({
                 </View>
               </Animated.View>
             )}
-            {renderStatusActions() && (
-              <Animated.View style={getAnimatedStyle(6)}>{renderStatusActions()}</Animated.View>
-            )}
           </View>
         )}
       </View>
+
+      {/* ── Fixed footer actions ── */}
+      {statusActionsEl && (
+        <Animated.View style={[sheetLayout.footer, getAnimatedStyle(6)]}>
+          {statusActionsEl}
+        </Animated.View>
+      )}
 
       {/* Alert Sheet for errors */}
       <AlertSheet

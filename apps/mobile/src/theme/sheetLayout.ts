@@ -2,6 +2,13 @@ import { StyleSheet } from 'react-native';
 import { borderRadius, spacing } from './spacing';
 import { colors } from './colors';
 
+/** Shared scroll defaults for BottomSheetScrollView inside compact sheets. */
+export const SHEET_SCROLL_PROPS = {
+  bounces: false,
+  showsVerticalScrollIndicator: false,
+  overScrollMode: 'never' as const,
+} as const;
+
 /**
  * Shared structural styles for sheet modals.
  *
@@ -43,7 +50,7 @@ export const sheetLayout = StyleSheet.create({
   },
   footer: {
     paddingHorizontal: 20, // spacing.lg — matches scrollContent
-    paddingTop: spacing.md,
+    paddingBottom: spacing['3xl'],
     backgroundColor: colors.chrome,
   },
 });

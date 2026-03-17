@@ -13,6 +13,8 @@ interface CollapsibleSectionProps {
   badge?: React.ReactNode;
   /** Use 'flat' for no container styling (title on background) */
   variant?: 'contained' | 'flat';
+  /** Called when the section expands or collapses */
+  onExpandedChange?: ((expanded: boolean) => void) | undefined;
 }
 
 export function CollapsibleSection({
@@ -21,6 +23,7 @@ export function CollapsibleSection({
   defaultExpanded = true,
   badge,
   variant = 'contained',
+  onExpandedChange,
 }: CollapsibleSectionProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const rotateAnim = useRef(new Animated.Value(defaultExpanded ? 1 : 0)).current;
@@ -39,6 +42,16 @@ export function CollapsibleSection({
     inputRange: [0, 1],
     outputRange: ['0deg', '180deg'],
   });
+
+  const didMountRef = useRef(false);
+  useEffect(() => {
+    if (didMountRef.current) {
+      onExpandedChange?.(expanded);
+    } else {
+      didMountRef.current = true;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only fire when expanded changes after mount
+  }, [expanded]);
 
   const toggle = useCallback(() => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
