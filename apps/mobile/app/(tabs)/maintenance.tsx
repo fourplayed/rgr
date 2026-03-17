@@ -10,13 +10,7 @@ import type {
   DefectReportListItem as DefectReportListItemType,
 } from '@rgr/shared';
 import { colors } from '../../src/theme/colors';
-import {
-  spacing,
-  fontSize,
-  lineHeight,
-  borderRadius,
-  fontFamily as fonts,
-} from '../../src/theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
 import { LoadingDots } from '../../src/components/common/LoadingDots';
 import { ScreenHeader } from '../../src/components/common/ScreenHeader';
 import { SegmentedTabs } from '../../src/components/common/SegmentedTabs';
@@ -60,7 +54,7 @@ export default function MaintenanceScreen() {
 
   // Tab state
   const [activeTab, setActiveTab] = useState<TabKey>('tasks');
-  const tabFade = useTabFade(activeTab);
+  const { opacity: tabOpacity, visibleTab } = useTabFade(activeTab);
 
   // Maintenance filter state
   const [statuses, setStatuses] = useState<MaintenanceStatus[]>(DEFAULT_STATUSES);
@@ -147,18 +141,32 @@ export default function MaintenanceScreen() {
     setDefectFiltersExpanded((prev) => !prev);
   }, []);
 
+  const { openMaintenanceDetail, openDefectDetail } = modals;
+
+  const handleMaintenanceEndReached = useCallback(() => {
+    if (hasNextMaintenancePage && !isFetchingNextMaintenancePage) {
+      fetchNextMaintenancePage();
+    }
+  }, [hasNextMaintenancePage, isFetchingNextMaintenancePage, fetchNextMaintenancePage]);
+
+  const handleDefectEndReached = useCallback(() => {
+    if (hasNextDefectsPage && !isFetchingNextDefectsPage) {
+      fetchNextDefectsPage();
+    }
+  }, [hasNextDefectsPage, isFetchingNextDefectsPage, fetchNextDefectsPage]);
+
   const handleMaintenancePress = useCallback(
     (item: MaintenanceListItemType) => {
-      modals.openMaintenanceDetail(item.id);
+      openMaintenanceDetail(item.id);
     },
-    [modals]
+    [openMaintenanceDetail]
   );
 
   const handleDefectPress = useCallback(
     (item: DefectReportListItemType) => {
-      modals.openDefectDetail(item.id);
+      openDefectDetail(item.id);
     },
-    [modals]
+    [openDefectDetail]
   );
 
   const handleOpenCreate = useCallback(() => {
@@ -231,9 +239,9 @@ export default function MaintenanceScreen() {
     []
   );
 
-  const isLoading = activeTab === 'tasks' ? isMaintenanceLoading : isDefectsLoading;
-  const error = activeTab === 'tasks' ? maintenanceError : defectsError;
-  const refetch = activeTab === 'tasks' ? refetchMaintenance : refetchDefects;
+  const isLoading = visibleTab === 'tasks' ? isMaintenanceLoading : isDefectsLoading;
+  const error = visibleTab === 'tasks' ? maintenanceError : defectsError;
+  const refetch = visibleTab === 'tasks' ? refetchMaintenance : refetchDefects;
 
   return (
     <View style={styles.container}>
@@ -265,7 +273,7 @@ export default function MaintenanceScreen() {
         </View>
 
         {/* Filters */}
-        {activeTab === 'tasks' ? (
+        {visibleTab === 'tasks' ? (
           <MaintenanceFilterPanel
             statuses={statuses}
             priorities={priorities}
@@ -284,7 +292,7 @@ export default function MaintenanceScreen() {
         )}
 
         {/* Content */}
-        <Animated.View style={[{ flex: 1 }, tabFade]}>
+        <Animated.View style={[{ flex: 1 }, { opacity: tabOpacity }]}>
           {isLoading ? (
             <View style={styles.loadingContainer}>
               <LoadingDots color={colors.textSecondary} size={12} />
@@ -292,7 +300,7 @@ export default function MaintenanceScreen() {
           ) : error ? (
             <View style={styles.centerContent}>
               <AppText style={styles.errorText}>
-                Failed to load {activeTab === 'tasks' ? 'maintenance' : 'defects'}
+                Failed to load {visibleTab === 'tasks' ? 'maintenance' : 'defects'}
               </AppText>
               <TouchableOpacity
                 style={styles.retryButton}
@@ -303,7 +311,7 @@ export default function MaintenanceScreen() {
                 <AppText style={styles.retryButtonText}>Retry</AppText>
               </TouchableOpacity>
             </View>
-          ) : activeTab === 'tasks' ? (
+          ) : visibleTab === 'tasks' ? (
             <FlatList
               data={maintenance}
               renderItem={renderMaintenanceItem}
@@ -316,11 +324,7 @@ export default function MaintenanceScreen() {
               removeClippedSubviews={true}
               maxToRenderPerBatch={10}
               windowSize={5}
-              onEndReached={() => {
-                if (hasNextMaintenancePage && !isFetchingNextMaintenancePage) {
-                  fetchNextMaintenancePage();
-                }
-              }}
+              onEndReached={handleMaintenanceEndReached}
               onEndReachedThreshold={0.5}
             />
           ) : (
@@ -336,11 +340,7 @@ export default function MaintenanceScreen() {
               removeClippedSubviews={true}
               maxToRenderPerBatch={10}
               windowSize={5}
-              onEndReached={() => {
-                if (hasNextDefectsPage && !isFetchingNextDefectsPage) {
-                  fetchNextDefectsPage();
-                }
-              }}
+              onEndReached={handleDefectEndReached}
               onEndReachedThreshold={0.5}
             />
           )}
@@ -397,29 +397,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: spacing['3xl'],
-  },
-  iconContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: colors.surfaceSubtle,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-  },
-  emptyText: {
-    fontSize: fontSize.xl,
-    fontFamily: fonts.bold,
-    color: colors.text,
-    marginBottom: spacing.sm,
-    textAlign: 'center',
-  },
-  emptySubtext: {
-    fontSize: fontSize.sm,
-    fontFamily: fonts.regular,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: lineHeight.snug,
   },
   errorText: {
     fontSize: fontSize.base,

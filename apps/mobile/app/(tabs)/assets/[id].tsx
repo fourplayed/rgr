@@ -308,7 +308,7 @@ export default function AssetDetailScreen() {
   // Validate route params - handle array case from Expo Router
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const [activeTab, setActiveTab] = useState<AssetDetailTab>('activity');
-  const tabFade = useTabFade(activeTab);
+  const { opacity: tabOpacity, visibleTab } = useTabFade(activeTab);
   const [showQRModal, setShowQRModal] = useState(false);
   const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
   const [showPhotoDetail, setShowPhotoDetail] = useState(false);
@@ -484,8 +484,8 @@ export default function AssetDetailScreen() {
           <SegmentedTabs tabs={ASSET_DETAIL_TABS} activeTab={activeTab} onTabPress={setActiveTab} />
         </View>
 
-        <Animated.View style={[styles.tabContentArea, tabFade]}>
-          {activeTab === 'activity' && (
+        <Animated.View style={[styles.tabContentArea, { opacity: tabOpacity }]}>
+          {visibleTab === 'activity' && (
             <ScrollView contentContainerStyle={styles.tabScrollContent}>
               {scansLoading ? (
                 <LoadingDots color={colors.textSecondary} size={6} />
@@ -517,13 +517,13 @@ export default function AssetDetailScreen() {
             </ScrollView>
           )}
 
-          {activeTab === 'photos' && (
+          {visibleTab === 'photos' && (
             <View style={styles.photosTab}>
               <PhotoGallery assetId={id} onPhotoPress={handlePhotoPress} />
             </View>
           )}
 
-          {activeTab === 'maintenance' && (
+          {visibleTab === 'maintenance' && (
             <ScrollView contentContainerStyle={styles.tabScrollContent}>
               {maintenance.length === 0 ? (
                 <EmptyState

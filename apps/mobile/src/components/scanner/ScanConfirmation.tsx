@@ -25,7 +25,7 @@ import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, shadows, fontFamily as fonts } from '../../theme/spacing';
 import { sheetLayout } from '../../theme/sheetLayout';
 import { SHEET_SCROLL_PROPS } from '../../theme/sheetLayout';
-import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
+
 import { useStableTabHeight } from '../../hooks/useStableTabHeight';
 import { useTabFade } from '../../hooks/useTabFade';
 import type { MatchedDepot, ConfirmAction } from '../../hooks/scan/scanFlowMachine';
@@ -112,8 +112,8 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
       setActiveTab('actions');
     }
   }, [isCreating]);
-  const bottomPadding = useSheetBottomPadding();
-  const tabFade = useTabFade(activeTab);
+
+  const { opacity: tabOpacity, visibleTab } = useTabFade(activeTab);
 
   // Staggered entrance for the actions section (label + options fade/slide in)
   const actionsOpacity = useRef(new Animated.Value(0)).current;
@@ -236,10 +236,10 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
                 <SegmentedTabs tabs={scanTabs} activeTab={activeTab} onTabPress={setActiveTab} />
               </View>
               <Animated.View
-                style={[tabFade, minTabHeight > 0 && { minHeight: minTabHeight }]}
+                style={[{ opacity: tabOpacity }, minTabHeight > 0 && { minHeight: minTabHeight }]}
                 onLayout={handleTabContentLayout}
               >
-                {activeTab === 'actions' ? (
+                {visibleTab === 'actions' ? (
                   <View style={styles.checkboxList}>
                     <CheckboxOption
                       icon="camera"
