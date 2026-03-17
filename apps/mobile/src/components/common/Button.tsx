@@ -69,11 +69,13 @@ export function Button({
   const useGradient =
     !!gradientEnd && !isDisabled && (variant === 'primary' || variant === 'danger');
 
-  // Colored shadow for gradient buttons (iOS only — Android uses elevation)
+  // Colored shadow for gradient buttons (iOS only — Android uses elevation).
+  // backgroundColor is required for RN to use the fast shadow rasterization path.
   const coloredShadow = useMemo(
     () =>
       color && !isDisabled
         ? {
+            backgroundColor: color,
             shadowColor: color,
             shadowOpacity: 0.3,
             shadowRadius: 12,
@@ -136,7 +138,13 @@ export function Button({
     >
       {useGradient ? (
         <Animated.View
-          style={[flex && styles.flex, coloredShadow, style, { transform: [{ scale }] }]}
+          style={[
+            styles.gradientShadowHost,
+            flex && styles.flex,
+            coloredShadow,
+            style,
+            { transform: [{ scale }] },
+          ]}
         >
           <LinearGradient
             colors={[color!, gradientEnd]}
@@ -181,6 +189,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: spacing.xl,
     overflow: 'hidden',
+  },
+  gradientShadowHost: {
+    borderRadius: borderRadius.md,
   },
   flex: {
     flexGrow: 1,

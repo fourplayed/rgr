@@ -480,18 +480,20 @@ export default function HomeScreen() {
       .slice(0, 5);
   }, [scans, maintenanceData, defectData]);
 
+  const { openDefectDetail, openMaintenanceDetail } = modals;
+
   // Stable press handler dispatches to router/modal based on item type
   const handleActivityPress = useCallback(
     (item: DashboardActivityItem) => {
       if (item.type === 'scan') {
         router.navigate(`/(tabs)/assets/${item.data.assetId}`);
       } else if (item.type === 'defect') {
-        modals.openDefectDetail(item.data.id);
+        openDefectDetail(item.data.id);
       } else {
-        modals.openMaintenanceDetail(item.data.id);
+        openMaintenanceDetail(item.data.id);
       }
     },
-    [router, modals]
+    [router, openDefectDetail, openMaintenanceDetail]
   );
 
   // Thin wrapper delegates to memoized ActivityCard (passes index for stagger)
@@ -885,16 +887,16 @@ const styles = StyleSheet.create({
   offlineBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: '#F59E0B1A',
-    borderRadius: 8,
-    marginHorizontal: 16,
-    marginBottom: 8,
+    gap: spacing.sm,
+    paddingHorizontal: spacing.base,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.warning + '1A',
+    borderRadius: borderRadius.base,
+    marginHorizontal: spacing.base,
+    marginBottom: spacing.sm,
   },
   offlineBannerText: {
-    fontSize: 13,
-    color: '#F59E0B',
+    fontSize: fontSize.xs,
+    color: colors.warning,
   },
 });

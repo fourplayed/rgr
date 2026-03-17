@@ -60,12 +60,7 @@ export default function AssetListScreen() {
   const { status } = useLocalSearchParams<{ status?: string }>();
   const [searchInput, setSearchInput] = useState('');
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
-  const [filters, setFilters] = useState<AssetFilters>({
-    statuses: [],
-    categories: [],
-    subtypes: [],
-    depotIds: [],
-  });
+  const [filters, setFilters] = useState<AssetFilters>(EMPTY_FILTERS);
 
   // Modal + permission state
   type ModalState = { type: 'none' } | { type: 'createAsset' };

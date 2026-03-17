@@ -3,6 +3,8 @@ import { UserRole, UserRoleLevel } from '@rgr/shared';
 
 interface UserPermissions {
   role: UserRole | null;
+  /** Driver+ can report defects during scan */
+  canReportDefect: boolean;
   /** Mechanic+ can flag assets for maintenance during scan */
   canMarkMaintenance: boolean;
   /** Mechanic+ can select photo type (freight, damage, inspection, general) */
@@ -27,8 +29,11 @@ export function UserPermissionsProvider({ userRole, children }: UserPermissionsP
     const managerLevel = UserRoleLevel.manager;
     const superuserLevel = UserRoleLevel.superuser;
 
+    const driverLevel = UserRoleLevel.driver;
+
     return {
       role: userRole,
+      canReportDefect: level >= driverLevel,
       canMarkMaintenance: level >= mechanicLevel,
       canSelectPhotoType: level >= mechanicLevel,
       canViewAuditLog: level >= managerLevel,
@@ -54,6 +59,7 @@ export function useUserPermissions(): UserPermissions {
   if (!context) {
     return {
       role: null,
+      canReportDefect: false,
       canMarkMaintenance: false,
       canSelectPhotoType: false,
       canViewAuditLog: false,

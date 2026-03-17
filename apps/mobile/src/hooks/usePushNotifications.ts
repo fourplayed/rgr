@@ -4,6 +4,7 @@ import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { upsertPushToken, withRetry } from '@rgr/shared';
 import { useAuthStore } from '../store/authStore';
+import { logger } from '../utils/logger';
 
 /**
  * Lazily load native modules that may not exist in Expo Go.
@@ -138,7 +139,7 @@ export function usePushNotifications() {
         });
       }
     } catch (err: unknown) {
-      console.error('[Push] Registration error:', err);
+      logger.error('[Push] Registration error:', err);
     } finally {
       isRegisteringRef.current = false;
     }
