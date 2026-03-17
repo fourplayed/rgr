@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../src/store/authStore';
@@ -83,165 +84,167 @@ export default function SettingsScreen() {
     colors.userRole[user.role as keyof typeof colors.userRole] || colors.backgroundDark;
 
   return (
-    <View style={styles.container}>
-      <View style={styles.safeArea}>
-        <SheetHeader icon="settings" title="Settings" onClose={handleBack} />
+    <BottomSheetModalProvider>
+      <View style={styles.container}>
+        <View style={styles.safeArea}>
+          <SheetHeader icon="settings" title="Settings" onClose={handleBack} />
 
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={{
-            paddingHorizontal: spacing.lg,
-            paddingTop: spacing.base,
-            paddingBottom: spacing['2xl'],
-          }}
-        >
-          {/* Profile card */}
-          <View style={styles.section}>
-            <View style={styles.card}>
-              <View style={styles.profileHeader}>
-                <View style={styles.profileInfo}>
-                  <AppText style={styles.profileName}>{user.fullName}</AppText>
-                  <AppText style={styles.profileEmail}>{user.email}</AppText>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={{
+              paddingHorizontal: spacing.lg,
+              paddingTop: spacing.base,
+              paddingBottom: spacing['2xl'],
+            }}
+          >
+            {/* Profile card */}
+            <View style={styles.section}>
+              <View style={styles.card}>
+                <View style={styles.profileHeader}>
+                  <View style={styles.profileInfo}>
+                    <AppText style={styles.profileName}>{user.fullName}</AppText>
+                    <AppText style={styles.profileEmail}>{user.email}</AppText>
+                  </View>
+                  <PillBadge icon="person" label={roleLabel} color={roleColor} />
                 </View>
-                <PillBadge icon="person" label={roleLabel} color={roleColor} />
               </View>
             </View>
-          </View>
 
-          {/* Account */}
-          <View style={styles.section}>
-            <View style={styles.card}>
-              <SettingsItem
-                icon="person"
-                title="Edit Profile"
-                subtitle="Update your name and contact info"
-                onPress={() => setShowEditProfile(true)}
-              />
-              <View style={styles.divider} />
-              <SettingsItem
-                icon="notifications"
-                title="Notifications"
-                subtitle="Manage notification preferences"
-                onPress={() => setShowNotifications(true)}
-              />
-              <View style={styles.divider} />
-              <SettingsItem
-                icon="lock-closed"
-                title="Security"
-                subtitle="Password and authentication"
-                onPress={() => setShowSecurity(true)}
-              />
-            </View>
-          </View>
-
-          {/* Administration — Superuser */}
-          {canAccessAdmin && (
+            {/* Account */}
             <View style={styles.section}>
-              <CollapsibleSection title="Administration" variant="flat" defaultExpanded>
-                <View style={styles.card}>
-                  <SettingsItem
-                    icon="people"
-                    title="User Management"
-                    subtitle="Manage users, roles, and access"
-                    onPress={() => router.push('/(admin)/users')}
-                  />
-                  <View style={styles.divider} />
-                  <SettingsItem
-                    icon="business"
-                    title="Depot Management"
-                    subtitle="Create, edit, and remove depots"
-                    onPress={() => router.push('/(admin)/depots')}
-                  />
-                  <View style={styles.divider} />
-                  <SettingsItem
-                    icon="stats-chart"
-                    title="Data Dashboard"
-                    subtitle="Overview stats and data management"
-                    onPress={() => router.push('/(admin)/data-dashboard')}
-                  />
-                  <View style={styles.divider} />
-                  <SettingsItem
-                    icon="cube"
-                    title="Asset Administration"
-                    subtitle="Bulk operations and asset deletion"
-                    onPress={() => router.push('/(admin)/asset-admin')}
-                  />
-                  <View style={styles.divider} />
-                  <TouchableOpacity
-                    style={styles.settingsItem}
-                    onPress={() => setConsoleEnabled(!consoleEnabled)}
-                    accessibilityRole="checkbox"
-                    accessibilityState={{ checked: consoleEnabled }}
-                    accessibilityLabel="Enable Console"
-                  >
-                    <View style={styles.settingsItemIcon}>
-                      <Ionicons name="terminal" size={24} color={colors.electricBlue} />
-                    </View>
-                    <View style={styles.settingsItemContent}>
-                      <AppText style={styles.settingsItemTitle}>Enable Console</AppText>
-                      <AppText style={styles.settingsItemSubtitle}>
-                        Diagnostics and sync tools
-                      </AppText>
-                    </View>
-                    <Ionicons
-                      name={consoleEnabled ? 'checkbox' : 'square-outline'}
-                      size={24}
-                      color={consoleEnabled ? colors.electricBlue : colors.textSecondary}
-                    />
-                  </TouchableOpacity>
-                  {consoleEnabled && (
-                    <>
-                      <View style={styles.divider} />
-                      <SettingsItem
-                        icon="terminal"
-                        title="Console"
-                        subtitle="Connection status and sync info"
-                        onPress={() => router.push('/(admin)/debug')}
-                      />
-                    </>
-                  )}
-                </View>
-              </CollapsibleSection>
+              <View style={styles.card}>
+                <SettingsItem
+                  icon="person"
+                  title="Edit Profile"
+                  subtitle="Update your name and contact info"
+                  onPress={() => setShowEditProfile(true)}
+                />
+                <View style={styles.divider} />
+                <SettingsItem
+                  icon="notifications"
+                  title="Notifications"
+                  subtitle="Manage notification preferences"
+                  onPress={() => setShowNotifications(true)}
+                />
+                <View style={styles.divider} />
+                <SettingsItem
+                  icon="lock-closed"
+                  title="Security"
+                  subtitle="Password and authentication"
+                  onPress={() => setShowSecurity(true)}
+                />
+              </View>
             </View>
-          )}
-        </ScrollView>
 
-        <View
-          style={{
-            paddingHorizontal: spacing.lg,
-            paddingTop: spacing.base,
-            paddingBottom: sheetBottomPadding,
-          }}
-        >
-          <Button
-            onPress={() => setShowLogoutConfirm(true)}
-            color={colors.electricBlue}
-            icon="log-out"
+            {/* Administration — Superuser */}
+            {canAccessAdmin && (
+              <View style={styles.section}>
+                <CollapsibleSection title="Administration" variant="flat" defaultExpanded>
+                  <View style={styles.card}>
+                    <SettingsItem
+                      icon="people"
+                      title="User Management"
+                      subtitle="Manage users, roles, and access"
+                      onPress={() => router.push('/(admin)/users')}
+                    />
+                    <View style={styles.divider} />
+                    <SettingsItem
+                      icon="business"
+                      title="Depot Management"
+                      subtitle="Create, edit, and remove depots"
+                      onPress={() => router.push('/(admin)/depots')}
+                    />
+                    <View style={styles.divider} />
+                    <SettingsItem
+                      icon="stats-chart"
+                      title="Data Dashboard"
+                      subtitle="Overview stats and data management"
+                      onPress={() => router.push('/(admin)/data-dashboard')}
+                    />
+                    <View style={styles.divider} />
+                    <SettingsItem
+                      icon="cube"
+                      title="Asset Administration"
+                      subtitle="Bulk operations and asset deletion"
+                      onPress={() => router.push('/(admin)/asset-admin')}
+                    />
+                    <View style={styles.divider} />
+                    <TouchableOpacity
+                      style={styles.settingsItem}
+                      onPress={() => setConsoleEnabled(!consoleEnabled)}
+                      accessibilityRole="checkbox"
+                      accessibilityState={{ checked: consoleEnabled }}
+                      accessibilityLabel="Enable Console"
+                    >
+                      <View style={styles.settingsItemIcon}>
+                        <Ionicons name="terminal" size={24} color={colors.electricBlue} />
+                      </View>
+                      <View style={styles.settingsItemContent}>
+                        <AppText style={styles.settingsItemTitle}>Enable Console</AppText>
+                        <AppText style={styles.settingsItemSubtitle}>
+                          Diagnostics and sync tools
+                        </AppText>
+                      </View>
+                      <Ionicons
+                        name={consoleEnabled ? 'checkbox' : 'square-outline'}
+                        size={24}
+                        color={consoleEnabled ? colors.electricBlue : colors.textSecondary}
+                      />
+                    </TouchableOpacity>
+                    {consoleEnabled && (
+                      <>
+                        <View style={styles.divider} />
+                        <SettingsItem
+                          icon="terminal"
+                          title="Console"
+                          subtitle="Connection status and sync info"
+                          onPress={() => router.push('/(admin)/debug')}
+                        />
+                      </>
+                    )}
+                  </View>
+                </CollapsibleSection>
+              </View>
+            )}
+          </ScrollView>
+
+          <View
+            style={{
+              paddingHorizontal: spacing.lg,
+              paddingTop: spacing.base,
+              paddingBottom: sheetBottomPadding,
+            }}
           >
-            Sign Out
-          </Button>
+            <Button
+              onPress={() => setShowLogoutConfirm(true)}
+              color={colors.electricBlue}
+              icon="log-out"
+            >
+              Sign Out
+            </Button>
+          </View>
+
+          <EditProfileModal visible={showEditProfile} onClose={() => setShowEditProfile(false)} />
+
+          <NotificationsModal
+            visible={showNotifications}
+            onClose={() => setShowNotifications(false)}
+          />
+
+          <SecurityModal visible={showSecurity} onClose={() => setShowSecurity(false)} />
+
+          <ConfirmSheet
+            visible={showLogoutConfirm}
+            type="warning"
+            title="Sign Out"
+            message="Are you sure you want to sign out?"
+            confirmLabel="Sign Out"
+            onConfirm={handleLogoutConfirm}
+            onCancel={() => setShowLogoutConfirm(false)}
+          />
         </View>
-
-        <EditProfileModal visible={showEditProfile} onClose={() => setShowEditProfile(false)} />
-
-        <NotificationsModal
-          visible={showNotifications}
-          onClose={() => setShowNotifications(false)}
-        />
-
-        <SecurityModal visible={showSecurity} onClose={() => setShowSecurity(false)} />
-
-        <ConfirmSheet
-          visible={showLogoutConfirm}
-          type="warning"
-          title="Sign Out"
-          message="Are you sure you want to sign out?"
-          confirmLabel="Sign Out"
-          onConfirm={handleLogoutConfirm}
-          onCancel={() => setShowLogoutConfirm(false)}
-        />
       </View>
-    </View>
+    </BottomSheetModalProvider>
   );
 }
 
