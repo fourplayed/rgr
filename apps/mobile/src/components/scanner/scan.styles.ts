@@ -5,7 +5,6 @@ import {
   fontSize,
   fontWeight,
   borderRadius,
-  shadows,
   fontFamily as fonts,
 } from '../../theme/spacing';
 import { HEADER_STATUS_BAR_GAP, HEADER_HEIGHT } from '../../theme/layout';
@@ -205,7 +204,6 @@ export const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    ...shadows.md,
   },
   buttonText: {
     fontSize: fontSize.lg,

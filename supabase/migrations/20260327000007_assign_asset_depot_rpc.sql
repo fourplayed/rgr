@@ -19,19 +19,39 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
+DECLARE
+  v_asset_org UUID;
+  v_depot_org UUID;
 BEGIN
+  -- Resolve asset org
+  SELECT organisation_id INTO v_asset_org
+  FROM assets
+  WHERE id = p_asset_id AND deleted_at IS NULL;
+
+  IF v_asset_org IS NULL THEN
+    RAISE EXCEPTION 'Asset not found or deleted: %', p_asset_id;
+  END IF;
+
+  -- Resolve depot org and verify same organisation
+  SELECT organisation_id INTO v_depot_org
+  FROM depots
+  WHERE id = p_depot_id AND deleted_at IS NULL;
+
+  IF v_depot_org IS NULL THEN
+    RAISE EXCEPTION 'Depot not found or deleted: %', p_depot_id;
+  END IF;
+
+  IF v_asset_org <> v_depot_org THEN
+    RAISE EXCEPTION 'Cross-organisation assignment not allowed';
+  END IF;
+
   UPDATE assets
   SET
     assigned_depot_id = p_depot_id,
     updated_at = NOW()
-  WHERE id = p_asset_id
-    AND deleted_at IS NULL;
-
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'Asset not found or deleted: %', p_asset_id;
-  END IF;
+  WHERE id = p_asset_id;
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION assign_asset_depot(UUID, UUID)
-  TO authenticated;
+REVOKE EXECUTE ON FUNCTION assign_asset_depot(UUID, UUID) FROM anon, public;
+GRANT EXECUTE ON FUNCTION assign_asset_depot(UUID, UUID) TO authenticated;

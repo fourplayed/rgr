@@ -40,7 +40,7 @@ export function SheetHeader({
   children,
 }: SheetHeaderProps) {
   return (
-    <View style={[styles.headerShadowHost, { backgroundColor }]}>
+    <View style={[styles.headerContainer, { backgroundColor }]}>
       <View style={styles.header}>
         <View style={styles.headerRow}>
           <Ionicons name={icon} size={26} color={colors.textInverse} />
@@ -78,7 +78,7 @@ export function SheetHeader({
 }
 
 const styles = StyleSheet.create({
-  headerShadowHost: {
+  headerContainer: {
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
   },

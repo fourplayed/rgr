@@ -171,8 +171,6 @@ const styles = StyleSheet.create({
   },
   disabled: {
     backgroundColor: colors.border,
-    shadowOpacity: 0,
-    elevation: 0,
   },
   iconRow: {
     flexDirection: 'row',
