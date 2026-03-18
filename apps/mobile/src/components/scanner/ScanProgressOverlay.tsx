@@ -1,9 +1,10 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Animated, ActivityIndicator, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, fontFamily as fonts } from '../../theme/spacing';
-import { AppText } from '../common';
+import { AppText } from '../common/AppText';
 
 export type ScanStep = 'detected' | 'location' | 'lookup' | 'invalid';
 
@@ -15,12 +16,21 @@ const SCAN_STEPS = [
 
 const STEP_KEYS = SCAN_STEPS.map((s) => s.key);
 
+const LOCATION_MESSAGES = [
+  { after: 0, text: 'Acquiring location...' },
+  { after: 5000, text: 'Getting precise fix...' },
+  { after: 10000, text: 'Trying alternative signal...' },
+  { after: 18000, text: 'Almost there...' },
+] as const;
+
 interface ScanProgressOverlayProps {
   step: ScanStep;
 }
 
 function ScanProgressOverlayComponent({ step }: ScanProgressOverlayProps) {
   const opacity = useRef(new Animated.Value(0)).current;
+  const [locationSubText, setLocationSubText] = useState<string | null>(null);
+  const prevStepRef = useRef(step);
 
   useEffect(() => {
     Animated.timing(opacity, {
@@ -29,6 +39,27 @@ function ScanProgressOverlayComponent({ step }: ScanProgressOverlayProps) {
       useNativeDriver: true,
     }).start();
   }, [opacity]);
+
+  // Time-aware sub-text for location step
+  useEffect(() => {
+    if (step !== 'location') {
+      setLocationSubText(null);
+      return;
+    }
+    setLocationSubText(LOCATION_MESSAGES[0].text);
+    const timers = LOCATION_MESSAGES.slice(1).map(({ after, text }) =>
+      setTimeout(() => setLocationSubText(text), after)
+    );
+    return () => timers.forEach(clearTimeout);
+  }, [step]);
+
+  // Haptic on location → lookup transition
+  useEffect(() => {
+    if (prevStepRef.current === 'location' && step === 'lookup') {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+    prevStepRef.current = step;
+  }, [step]);
 
   const isError = step === 'invalid';
   const currentIndex = isError ? -1 : STEP_KEYS.indexOf(step);
@@ -49,15 +80,20 @@ function ScanProgressOverlayComponent({ step }: ScanProgressOverlayProps) {
               ) : (
                 <Ionicons name="ellipse-outline" size={22} color="rgba(255,255,255,0.3)" />
               )}
-              <AppText
-                style={[
-                  overlayStyles.label,
-                  isComplete && overlayStyles.labelComplete,
-                  isCurrent && overlayStyles.labelCurrent,
-                ]}
-              >
-                {s.label}
-              </AppText>
+              <View>
+                <AppText
+                  style={[
+                    overlayStyles.label,
+                    isComplete && overlayStyles.labelComplete,
+                    isCurrent && overlayStyles.labelCurrent,
+                  ]}
+                >
+                  {s.label}
+                </AppText>
+                {s.key === 'location' && locationSubText && (
+                  <AppText style={overlayStyles.locationSubText}>{locationSubText}</AppText>
+                )}
+              </View>
             </View>
           );
         })}
@@ -118,5 +154,11 @@ const overlayStyles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontFamily: fonts.bold,
     color: colors.error,
+  },
+  locationSubText: {
+    color: colors.textSecondary,
+    fontSize: fontSize.sm,
+    fontFamily: fonts.regular,
+    marginTop: spacing.xs,
   },
 });
