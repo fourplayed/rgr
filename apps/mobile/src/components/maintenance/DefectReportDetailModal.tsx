@@ -40,6 +40,14 @@ interface DefectReportDetailModalProps {
     title: string;
     description: string | null;
   }) => void;
+  /** Called when mechanic taps Quick Accept — parent creates task with smart defaults. */
+  onQuickAcceptPress?: (context: {
+    defectId: string;
+    assetId: string;
+    assetNumber: string | null;
+    title: string;
+    description: string | null;
+  }) => void;
   /** Called when user taps "View Task" on a linked maintenance record. */
   onViewTaskPress?: (maintenanceId: string) => void;
   /** Called after dismiss is confirmed, deleted, and scatter animation completes. */
@@ -56,6 +64,7 @@ export function DefectReportDetailModal({
   onClose,
   variant = 'full',
   onAcceptPress,
+  onQuickAcceptPress,
   onViewTaskPress,
   onDismissConfirmed,
   noBackdrop,
@@ -111,6 +120,25 @@ export function DefectReportDetailModal({
     });
   }, [defect, asset, onAcceptPress]);
 
+  const handleQuickAcceptPress = useCallback(() => {
+    Alert.alert('Quick Accept', 'Create maintenance task with default settings?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Accept',
+        onPress: () => {
+          if (!defect || !onQuickAcceptPress) return;
+          onQuickAcceptPress({
+            defectId: defect.id,
+            assetId: defect.assetId,
+            assetNumber: asset?.assetNumber ?? null,
+            title: defect.title,
+            description: defect.description ?? null,
+          });
+        },
+      },
+    ]);
+  }, [defect, asset, onQuickAcceptPress]);
+
   const handleViewLinkedTask = useCallback(() => {
     if (!defect?.maintenanceRecordId || !onViewTaskPress) return;
     onViewTaskPress(defect.maintenanceRecordId);
@@ -165,15 +193,22 @@ export function DefectReportDetailModal({
           >
             Dismiss
           </Button>
-          <Button
-            onPress={handleAccept}
-            disabled={!onAcceptPress || isScattering}
-            flex
-            color={colors.success}
-            style={styles.ctaButton}
-          >
-            Create Task
-          </Button>
+          {!!onQuickAcceptPress && (
+            <Button
+              onPress={handleQuickAcceptPress}
+              disabled={isScattering}
+              flex
+              color={colors.success}
+              style={styles.ctaButton}
+            >
+              Quick Accept
+            </Button>
+          )}
+          {!!onAcceptPress && (
+            <Button onPress={handleAccept} disabled={isScattering} flex variant="secondary">
+              Accept & Customise
+            </Button>
+          )}
         </View>
       );
     }

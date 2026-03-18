@@ -5,6 +5,27 @@ import { usePersistentBackdrop } from './usePersistentBackdrop';
 import { useAcceptDefect } from './useAcceptDefect';
 
 /**
+ * Builds smart defaults for a quick-accept maintenance task from a defect report context.
+ * Uses the first 45 characters of description (or title if no description) as the task title suffix,
+ * producing a total title of at most 50 characters (including the "Fix: " prefix).
+ */
+export function buildQuickAcceptDefaults(context: {
+  defectId: string;
+  assetId: string;
+  title: string;
+  description: string | null;
+}): CreateMaintenanceInput {
+  const truncatedNotes = context.description ? context.description.slice(0, 45) : context.title;
+  return {
+    assetId: context.assetId,
+    title: `Fix: ${truncatedNotes}`,
+    description: `Auto-created from defect report`,
+    priority: 'medium',
+    status: 'scheduled',
+  };
+}
+
+/**
  * Shared modal state for the defect-detail -> accept-defect -> maintenance-detail chain.
  *
  * Used by home, maintenance, and assets/[id] screens. Does NOT include the standalone
@@ -79,6 +100,29 @@ export function useDefectMaintenanceModals() {
     [modal, acceptDefect, closeModal]
   );
 
+  const handleQuickAcceptPress = useCallback(
+    async (context: {
+      defectId: string;
+      assetId: string;
+      assetNumber: string | null;
+      title: string;
+      description: string | null;
+    }) => {
+      try {
+        const defaults = buildQuickAcceptDefaults(context);
+        await acceptDefect({
+          defectReportId: context.defectId,
+          maintenanceInput: defaults,
+        });
+        closeModal();
+      } catch (error) {
+        // Error propagates to React Query's onError handler
+        console.warn('Quick-accept failed:', error);
+      }
+    },
+    [acceptDefect, closeModal]
+  );
+
   const handleDismissConfirmed = useCallback(() => {
     closeModal();
   }, [closeModal]);
@@ -108,6 +152,7 @@ export function useDefectMaintenanceModals() {
     transitionTo,
     handleExitComplete,
     handleAcceptPress,
+    handleQuickAcceptPress,
     handleViewTaskPress,
     handleAcceptSubmit,
     handleDismissConfirmed,
