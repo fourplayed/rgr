@@ -255,7 +255,7 @@ export async function cleanOrphanedPhotos(): Promise<void> {
     const queue = await getQueue();
     const referencedUris = new Set<string>();
     for (const e of queue) {
-      if (typeof e.payload.localUri === 'string') referencedUris.add(e.payload.localUri);
+      if (typeof e.payload['localUri'] === 'string') referencedUris.add(e.payload['localUri']);
       for (const uri of e.photoUris ?? []) referencedUris.add(uri);
     }
 
@@ -314,8 +314,8 @@ export async function replayQueue(
     if (staleEntries.length > 0) {
       // Delete photo files for stale mutations before discarding them
       for (const staleEntry of staleEntries) {
-        if (typeof staleEntry.payload.localUri === 'string') {
-          await deleteOfflinePhoto(staleEntry.payload.localUri);
+        if (typeof staleEntry.payload['localUri'] === 'string') {
+          await deleteOfflinePhoto(staleEntry.payload['localUri']);
         }
         for (const uri of staleEntry.photoUris ?? []) {
           await deleteOfflinePhoto(uri);

@@ -863,10 +863,10 @@ describe('offlineMutationQueue', () => {
       });
       const queue = await readRawQueue();
       expect(queue).toHaveLength(1);
-      expect(queue[0].type).toBe('photo');
-      expect(queue[0].payload.uploadedBy).toBe('user-1');
-      expect(queue[0].payload.mimeType).toBe('image/jpeg');
-      expect(queue[0].payload.photoType).toBe('freight');
+      expect(queue[0]!.type).toBe('photo');
+      expect(queue[0]!.payload['uploadedBy']).toBe('user-1');
+      expect(queue[0]!.payload['mimeType']).toBe('image/jpeg');
+      expect(queue[0]!.payload['photoType']).toBe('freight');
     });
 
     it('photo entries persist through getQueueLength (not filtered by isQueuedMutation)', async () => {
