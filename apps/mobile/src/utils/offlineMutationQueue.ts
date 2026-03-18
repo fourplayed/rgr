@@ -253,9 +253,11 @@ export async function cleanOrphanedPhotos(): Promise<void> {
     if (files.length === 0) return;
 
     const queue = await getQueue();
-    const referencedUris = new Set(
-      queue.filter((e) => e.type === 'photo').map((e) => String(e.payload.localUri))
-    );
+    const referencedUris = new Set<string>();
+    for (const e of queue) {
+      if (typeof e.payload.localUri === 'string') referencedUris.add(e.payload.localUri);
+      for (const uri of e.photoUris ?? []) referencedUris.add(uri);
+    }
 
     for (const file of files) {
       const fullPath = `${OFFLINE_PHOTOS_DIR}${file}`;
@@ -310,10 +312,13 @@ export async function replayQueue(
     }
     queue = freshEntries;
     if (staleEntries.length > 0) {
-      // Delete photo files for stale photo mutations before discarding them
+      // Delete photo files for stale mutations before discarding them
       for (const staleEntry of staleEntries) {
-        if (staleEntry.type === 'photo' && typeof staleEntry.payload.localUri === 'string') {
+        if (typeof staleEntry.payload.localUri === 'string') {
           await deleteOfflinePhoto(staleEntry.payload.localUri);
+        }
+        for (const uri of staleEntry.photoUris ?? []) {
+          await deleteOfflinePhoto(uri);
         }
       }
       logger.info(`Dropped ${staleEntries.length} stale queued mutation(s) (>48h old)`);
