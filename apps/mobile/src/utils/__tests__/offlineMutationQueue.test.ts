@@ -823,6 +823,46 @@ describe('offlineMutationQueue', () => {
     });
   });
 
+  // ── photo mutation support ─────────────────────────────────────────────────
+
+  describe('photo mutation support', () => {
+    it('enqueues a photo mutation with all required fields', async () => {
+      await enqueueMutation({
+        type: 'photo',
+        payload: {
+          assetId: 'asset-1',
+          scanEventId: 'scan-1',
+          localUri: '/path/to/photo.jpg',
+          photoType: 'freight',
+          uploadedBy: 'user-1',
+          mimeType: 'image/jpeg',
+          originalFilename: 'photo.jpg',
+        },
+      });
+      const queue = await readRawQueue();
+      expect(queue).toHaveLength(1);
+      expect(queue[0].type).toBe('photo');
+      expect(queue[0].payload.uploadedBy).toBe('user-1');
+      expect(queue[0].payload.mimeType).toBe('image/jpeg');
+      expect(queue[0].payload.photoType).toBe('freight');
+    });
+
+    it('photo entries persist through getQueueLength (not filtered by isQueuedMutation)', async () => {
+      await enqueueMutation({
+        type: 'photo',
+        payload: {
+          assetId: 'a-1',
+          uploadedBy: 'u-1',
+          photoType: 'freight',
+          localUri: '/x.jpg',
+          mimeType: 'image/jpeg',
+          originalFilename: 'x.jpg',
+        },
+      });
+      expect(await getQueueLength()).toBe(1);
+    });
+  });
+
   // ── Edge cases ─────────────────────────────────────────────────────────────
 
   describe('edge cases', () => {

@@ -9,7 +9,7 @@ const MAX_QUEUE_SIZE = 500;
 const TTL_MS = 48 * 60 * 60 * 1000; // 48 hours
 const MAX_RETRIES = 5;
 
-export type MutationType = 'scan' | 'defect_report' | 'maintenance';
+export type MutationType = 'scan' | 'defect_report' | 'maintenance' | 'photo';
 
 export type QueuedMutation = {
   id: string;
@@ -25,12 +25,14 @@ export type ReplayHandlers = {
   scan: (payload: Record<string, unknown>) => Promise<ServiceResult<unknown>>;
   defect_report: (payload: Record<string, unknown>) => Promise<ServiceResult<{ id: string }>>;
   maintenance: (payload: Record<string, unknown>) => Promise<ServiceResult<{ id: string }>>;
+  photo: (payload: Record<string, unknown>) => Promise<ServiceResult<unknown>>;
 };
 
 const VALID_MUTATION_TYPES: ReadonlySet<string> = new Set<MutationType>([
   'scan',
   'defect_report',
   'maintenance',
+  'photo',
 ]);
 
 function isQueuedMutation(item: unknown): item is QueuedMutation {
