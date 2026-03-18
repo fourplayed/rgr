@@ -41,17 +41,18 @@ type MutationType = 'scan' | 'defect_report' | 'maintenance' | 'photo';
   localUri: string;           // persistent copy in documentDirectory/offline-photos/
   photoType: PhotoType;       // matches UploadPhotoOptions field name
   uploadedBy: string;         // user ID, stored at enqueue time from useAuthStore
+  mimeType: string;           // stored at enqueue time (always 'image/jpeg' from camera)
   originalFilename: string;
   latitude?: number;
   longitude?: number;
 }
 
-// ReplayHandlers extension:
+// ReplayHandlers extension (must return ServiceResult — replayQueue checks .success):
 type ReplayHandlers = {
-  scan: (payload: Record<string, unknown>) => Promise<void>;
-  defect_report: (payload: Record<string, unknown>) => Promise<void>;
-  maintenance: (payload: Record<string, unknown>) => Promise<void>;
-  photo: (payload: Record<string, unknown>) => Promise<void>;
+  scan: (payload: Record<string, unknown>) => Promise<ServiceResult<unknown>>;
+  defect_report: (payload: Record<string, unknown>) => Promise<ServiceResult<unknown>>;
+  maintenance: (payload: Record<string, unknown>) => Promise<ServiceResult<unknown>>;
+  photo: (payload: Record<string, unknown>) => Promise<ServiceResult<unknown>>;
 };
 ```
 
@@ -83,7 +84,7 @@ Export a new `getQueueSummary()` function from `offlineMutationQueue.ts` (curren
 
 - Existing 48h TTL applies — stale photo entries cleaned on next replay
 - On TTL expiry: delete local file copy too (prevent storage bloat)
-- Startup sweep: on app launch, scan `documentDirectory/offline-photos/` for files not referenced by any queue entry and delete them (handles crash between file copy and enqueue)
+- Startup sweep: after initial render completes (via `InteractionManager.runAfterInteractions`), scan `documentDirectory/offline-photos/` for files not referenced by any queue entry and delete them (handles crash between file copy and enqueue, deferred to avoid cold-start latency)
 
 ### File Changes
 
@@ -116,7 +117,7 @@ Export a new `getQueueSummary()` function from `offlineMutationQueue.ts` (curren
 
 ### Implementation
 
-- Enhance existing `ScanProgressOverlay.tsx` — add `useEffect` timer that tracks elapsed time during `'location'` step and cycles sub-text
+- Enhance existing `ScanProgressOverlay.tsx` — add `useEffect` timer that tracks elapsed time during `'location'` step and cycles sub-text. Timer must clear on unmount and when step changes away from `'location'` (component is `React.memo` — cleanup is critical)
 - Add haptic trigger on step transition (`'location'` → `'lookup'`)
 - Uses actual `ScanStep` type values: `'detected' | 'location' | 'lookup' | 'invalid'`
 
@@ -155,7 +156,7 @@ depot_id:    asset's current depot
 
 ### Flow
 
-1. `DefectReportDetailModal` (which already has full defect data in scope) shows two buttons: **"Quick Accept"** and **"Accept & Customise"**
+1. `DefectReportDetailModal` (which already has full defect data in scope) splits the existing "Create Task" button into two: **"Quick Accept"** and **"Accept & Customise"**. This is an intentional label change — "Quick Accept" communicates the one-tap intent to field mechanics, while "Accept & Customise" replaces "Create Task" to clarify the two paths.
 2. **Quick Accept:** Confirmation bottom sheet — "Create maintenance task with default settings?" Yes/No
 3. On confirm: calls `handleAcceptSubmit` in `useDefectMaintenanceModals.ts` with pre-built defaults (the modal already has defect.notes, defect.asset_id, etc. — no additional query needed)
 4. Optimistic update fires (existing dual-snapshot pattern in `useAcceptDefect`)
