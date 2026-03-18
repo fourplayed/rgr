@@ -16,7 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { Asset, AssetWithRelations, AssetScanContext } from '@rgr/shared';
 import { formatRelativeTime } from '@rgr/shared';
 import { AssetInfoCard } from '../assets/AssetInfoCard';
-import { DefectStatusBadge } from '../maintenance/DefectStatusBadge';
+import { DefectStatusBadge, DEFECT_STATUS_CONFIG } from '../maintenance/DefectStatusBadge';
 import { cardStyles } from '../maintenance/maintenance.styles';
 import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
@@ -211,21 +211,6 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
           />
         </View>
 
-        {/* ── Location info ── */}
-        {matchedDepot && (
-          <View style={styles.locationRow}>
-            <Ionicons name="location" size={16} color={colors.success} />
-            <AppText style={styles.locationText}>
-              Location updated to{' '}
-              <AppText style={styles.locationName}>{matchedDepot.depot.name}</AppText> (
-              {matchedDepot.distanceKm < 1
-                ? `${Math.round(matchedDepot.distanceKm * 1000)}m away`
-                : `${matchedDepot.distanceKm.toFixed(1)}km away`}
-              )
-            </AppText>
-          </View>
-        )}
-
         {/* ── Tabbed layout (with open items) or flat actions ── */}
         <Animated.View
           style={{ opacity: actionsOpacity, transform: [{ translateY: actionsTranslateY }] }}
@@ -399,49 +384,54 @@ function OpenItemsSection({
       {isExpanded && (
         <View style={styles.openItemsCardList}>
           {/* Defect cards */}
-          {openDefects.map((defect) => (
-            <TouchableOpacity
-              key={defect.id}
-              style={[
-                cardStyles.containerInline,
-                {
-                  borderLeftColor: colors.defectYellow,
-                  backgroundColor: colors.defectYellow + '1A',
-                },
-              ]}
-              onPress={() => onDefectPress?.(defect.id)}
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel={`Defect: ${defect.title}`}
-            >
-              <View style={cardStyles.cardRow}>
-                <View style={cardStyles.cardIconContainer}>
-                  <Ionicons name="warning" size={32} color={colors.defectYellow} />
-                </View>
-                <View style={cardStyles.cardBody}>
-                  <View style={cardStyles.cardContentRow}>
-                    <AppText
-                      style={[cardStyles.cardTitle, { color: colors.defectYellow }]}
-                      numberOfLines={1}
-                    >
-                      Defect Report
-                    </AppText>
-                    <View style={cardStyles.cardBadges}>
-                      <DefectStatusBadge status={defect.status} color={colors.defectYellow} />
+          {openDefects.map((defect) => {
+            const defectColor = (
+              DEFECT_STATUS_CONFIG[defect.status] ?? DEFECT_STATUS_CONFIG.reported
+            ).color;
+            return (
+              <TouchableOpacity
+                key={defect.id}
+                style={[
+                  cardStyles.containerInline,
+                  {
+                    borderLeftColor: defectColor,
+                    backgroundColor: defectColor + '1A',
+                  },
+                ]}
+                onPress={() => onDefectPress?.(defect.id)}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={`Defect: ${defect.title}`}
+              >
+                <View style={cardStyles.cardRow}>
+                  <View style={cardStyles.cardIconContainer}>
+                    <Ionicons name="warning" size={32} color={defectColor} />
+                  </View>
+                  <View style={cardStyles.cardBody}>
+                    <View style={cardStyles.cardContentRow}>
+                      <AppText
+                        style={[cardStyles.cardTitle, { color: defectColor }]}
+                        numberOfLines={1}
+                      >
+                        Defect Report
+                      </AppText>
+                      <View style={cardStyles.cardBadges}>
+                        <DefectStatusBadge status={defect.status} />
+                      </View>
+                    </View>
+                    <View style={cardStyles.cardFooter}>
+                      <AppText style={cardStyles.cardSecondaryText} numberOfLines={1}>
+                        {defect.description ?? defect.title}
+                      </AppText>
+                      <AppText style={cardStyles.cardTime}>
+                        {formatRelativeTime(defect.createdAt)}
+                      </AppText>
                     </View>
                   </View>
-                  <View style={cardStyles.cardFooter}>
-                    <AppText style={cardStyles.cardSecondaryText} numberOfLines={1}>
-                      {defect.description ?? defect.title}
-                    </AppText>
-                    <AppText style={cardStyles.cardTime}>
-                      {formatRelativeTime(defect.createdAt)}
-                    </AppText>
-                  </View>
                 </View>
-              </View>
-            </TouchableOpacity>
-          ))}
+              </TouchableOpacity>
+            );
+          })}
           {/* Maintenance task cards */}
           {activeTasks.map((task) => (
             <TouchableOpacity
@@ -537,7 +527,7 @@ function CheckboxOption({
       styles.checkboxRow,
       isSelected && {
         borderColor: accentColor,
-        borderWidth: 1.5,
+        borderWidth: 2.5,
       },
       isUnselected && {
         borderColor: `${accentColor}66`,
@@ -635,14 +625,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   checkboxList: {
-    gap: spacing.md,
+    gap: spacing.lg,
   },
   checkboxRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
     borderRadius: borderRadius.md,
-    borderWidth: 1,
+    borderWidth: 2,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.base,
     overflow: 'hidden',

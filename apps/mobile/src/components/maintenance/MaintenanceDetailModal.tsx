@@ -440,12 +440,12 @@ export function MaintenanceDetailModal({
       onExitComplete={onExitComplete}
       noBackdrop={noBackdrop}
       {...(variant === 'compact'
-        ? { compact: true }
+        ? { snapPoint: '55%' }
         : isEditing || editingNotes
           ? { keyboardAware: true, snapPoint: '92%' }
-          : { snapPoint: '55%' })}
+          : { snapPoint: '65%' })}
     >
-      <View style={variant === 'compact' ? sheetLayout.containerCompact : sheetLayout.container}>
+      <View style={sheetLayout.container}>
         <SheetHeader
           icon="construct"
           title="Scheduled Task"

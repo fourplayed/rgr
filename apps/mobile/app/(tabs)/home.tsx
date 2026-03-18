@@ -179,20 +179,21 @@ const ActivityCard = memo(function ActivityCard({
 
   if (item.type === 'defect') {
     const defectConfig = DEFECT_STATUS_CONFIG[item.data.status] ?? DEFECT_STATUS_CONFIG.reported;
+    const defectColor = defectConfig.color;
     return (
       <Animated.View style={entranceStyle}>
         <TouchableOpacity
-          style={[styles.scanCard, DEFECT_CARD_BG_STYLE]}
+          style={[styles.scanCard, { backgroundColor: defectColor + '1A' }]}
           onPress={handlePress}
           activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel={`Defect report: ${item.data.title}`}
         >
-          <View style={[styles.cardAccent, DEFECT_ACCENT_STYLE]} />
+          <View style={[styles.cardAccent, { backgroundColor: defectColor }]} />
           <View style={styles.cardInner}>
             <View style={styles.cardRow}>
               <View style={styles.cardIconContainer}>
-                <Ionicons name={defectConfig.icon} size={32} color={colors.defectYellow} />
+                <Ionicons name="warning" size={32} color={defectColor} />
               </View>
               <View style={styles.cardBody}>
                 <View style={styles.cardContentRow}>

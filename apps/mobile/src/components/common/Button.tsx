@@ -174,6 +174,7 @@ const styles = StyleSheet.create({
   flex: {
     flexGrow: 1,
     flexShrink: 1,
+    flexBasis: 0,
   },
   disabled: {
     backgroundColor: colors.border,
@@ -205,17 +206,20 @@ const textStyles = StyleSheet.create({
     fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
+    textAlign: 'center',
   },
   secondary: {
     fontSize: fontSize.base,
     fontFamily: fonts.bold,
     color: colors.text,
     textTransform: 'uppercase',
+    textAlign: 'center',
   },
   danger: {
     fontSize: fontSize.base,
     fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
+    textAlign: 'center',
   },
 });

@@ -266,7 +266,7 @@ export function SheetModal({
 const SNAP_POINTS = ['90%'];
 
 const KEYBOARD_AWARE_PROPS = {
-  keyboardBehavior: 'interactive' as const,
+  keyboardBehavior: 'extend' as const,
   keyboardBlurBehavior: 'restore' as const,
   android_keyboardInputMode: 'adjustResize' as const,
 } as const;

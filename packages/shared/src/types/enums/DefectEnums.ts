@@ -18,7 +18,7 @@ export const DefectStatusSchema = z.enum(['reported', 'task_created', 'resolved'
 
 export const DefectStatusLabels: Record<DefectStatus, string> = {
   reported: 'Reported',
-  task_created: 'Escalated',
+  task_created: 'Accepted',
   resolved: 'Resolved',
   dismissed: 'Dismissed',
 };

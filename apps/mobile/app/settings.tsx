@@ -7,7 +7,7 @@ import { useAuthStore } from '../src/store/authStore';
 import { useUserPermissions } from '../src/contexts/UserPermissionsContext';
 import { colors } from '../src/theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../src/theme/spacing';
-import { AppText, ConfirmSheet, CollapsibleSection } from '../src/components/common';
+import { AppText, AlertSheet, CollapsibleSection } from '../src/components/common';
 import { useConsoleStore } from '../src/store/consoleStore';
 import { SheetHeader } from '../src/components/common/SheetHeader';
 import { EditProfileModal } from '../src/components/settings/EditProfileModal';
@@ -213,14 +213,16 @@ export default function SettingsScreen() {
 
           <SecurityModal visible={showSecurity} onClose={() => setShowSecurity(false)} />
 
-          <ConfirmSheet
+          <AlertSheet
             visible={showLogoutConfirm}
             type="warning"
             title="Sign Out"
             message="Are you sure you want to sign out?"
-            confirmLabel="Sign Out"
-            onConfirm={handleLogoutConfirm}
-            onCancel={() => setShowLogoutConfirm(false)}
+            buttonLabel="Cancel"
+            onDismiss={() => setShowLogoutConfirm(false)}
+            actionLabel="Sign Out"
+            onAction={handleLogoutConfirm}
+            buttonLayout="row"
           />
         </View>
       </View>

@@ -10,7 +10,7 @@ export const DEFECT_STATUS_CONFIG: Record<
   { icon: keyof typeof Ionicons.glyphMap; color: string }
 > = {
   reported: { icon: 'warning', color: colors.defectYellow },
-  task_created: { icon: 'construct', color: colors.neonViolet },
+  task_created: { icon: 'construct', color: colors.maintenanceStatus.in_progress },
   resolved: { icon: 'checkmark-circle', color: colors.success },
   dismissed: { icon: 'close-circle', color: colors.textSecondary },
 };

@@ -25,6 +25,8 @@ interface AlertSheetProps {
   buttonLabel?: string;
   actionLabel?: string;
   onAction?: () => void;
+  /** 'stacked' (default) or 'row' for side-by-side buttons. */
+  buttonLayout?: 'stacked' | 'row';
 }
 
 const alertConfig: Record<AlertType, { icon: keyof typeof Ionicons.glyphMap; color: string }> = {
@@ -43,6 +45,7 @@ export function AlertSheet({
   buttonLabel = 'OK',
   actionLabel,
   onAction,
+  buttonLayout = 'stacked',
 }: AlertSheetProps) {
   const config = alertConfig[type];
   const sheetBottomPadding = useSheetBottomPadding();
@@ -58,23 +61,41 @@ export function AlertSheet({
         </View>
         <AppText style={styles.message}>{message}</AppText>
 
-        <Button
-          onPress={onDismiss}
-          style={styles.fullWidth}
-          color={colors.electricBlue}
-          accessibilityLabel={buttonLabel}
-        >
-          {buttonLabel}
-        </Button>
-        {actionLabel && onAction && (
-          <Button
-            onPress={onAction}
-            variant="secondary"
-            style={styles.actionButton}
-            accessibilityLabel={actionLabel}
-          >
-            {actionLabel}
-          </Button>
+        {buttonLayout === 'row' && actionLabel && onAction ? (
+          <View style={styles.buttonRow}>
+            <Button onPress={onDismiss} variant="secondary" flex accessibilityLabel={buttonLabel}>
+              {buttonLabel}
+            </Button>
+            <Button
+              onPress={onAction}
+              color={colors.electricBlue}
+              flex
+              accessibilityLabel={actionLabel}
+            >
+              {actionLabel}
+            </Button>
+          </View>
+        ) : (
+          <>
+            <Button
+              onPress={onDismiss}
+              style={styles.fullWidth}
+              color={colors.electricBlue}
+              accessibilityLabel={buttonLabel}
+            >
+              {buttonLabel}
+            </Button>
+            {actionLabel && onAction && (
+              <Button
+                onPress={onAction}
+                variant="secondary"
+                style={styles.actionButton}
+                accessibilityLabel={actionLabel}
+              >
+                {actionLabel}
+              </Button>
+            )}
+          </>
         )}
       </View>
     </BottomSheet>
@@ -114,6 +135,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: spacing.xl,
     lineHeight: lineHeight.body,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    alignSelf: 'stretch',
   },
   fullWidth: {
     alignSelf: 'stretch',
