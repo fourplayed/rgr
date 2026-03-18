@@ -1172,6 +1172,10 @@ export type Database = {
         Args: { p_maintenance_id: string };
         Returns: undefined;
       };
+      assign_asset_depot: {
+        Args: { p_asset_id: string; p_depot_id: string };
+        Returns: undefined;
+      };
       hard_delete_assets: {
         Args: { p_ids: string[] };
         Returns: {

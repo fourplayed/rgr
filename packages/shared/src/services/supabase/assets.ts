@@ -1024,6 +1024,31 @@ export async function hardDeleteAssets(
   };
 }
 
+/**
+ * Assign an asset to a depot via narrow RPC (SECURITY DEFINER).
+ *
+ * Used during scan processing — drivers/mechanics lack UPDATE RLS on assets,
+ * so the generic `updateAsset()` fails with PGRST116. This RPC only touches
+ * `assigned_depot_id` and `updated_at`.
+ */
+export async function assignAssetDepot(
+  assetId: string,
+  depotId: string
+): Promise<ServiceResult<void>> {
+  const supabase = getSupabaseClient();
+
+  const { error } = await supabase.rpc('assign_asset_depot', {
+    p_asset_id: assetId,
+    p_depot_id: depotId,
+  });
+
+  if (error) {
+    return { success: false, data: null, error: `Failed to assign depot: ${error.message}` };
+  }
+
+  return { success: true, data: undefined, error: null };
+}
+
 // ── Helpers ──
 
 /**

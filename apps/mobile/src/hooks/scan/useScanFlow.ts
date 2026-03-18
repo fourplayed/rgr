@@ -1,4 +1,4 @@
-import { useReducer, useCallback, useRef, useState, useEffect, useMemo } from 'react';
+import { useReducer, useCallback, useRef, useEffect, useMemo } from 'react';
 import { BackHandler } from 'react-native';
 import type { AssetScanContext, PhotoType } from '@rgr/shared';
 import * as Haptics from 'expo-haptics';
@@ -16,7 +16,6 @@ import type { Asset } from '@rgr/shared';
 import type { BarcodeScanningResult } from 'expo-camera';
 import type { ScanStep } from '../../components/scanner/ScanProgressOverlay';
 import { useScanProcessing } from './useScanProcessing';
-import { useModalTransition } from '../useModalTransition';
 import { logger } from '../../utils/logger';
 import { scanFlowReducer, initialScanFlowState } from './scanFlowMachine';
 import type {
@@ -26,6 +25,7 @@ import type {
   ConfirmAction,
   CompletionSummary,
 } from './scanFlowMachine';
+import type { AlertSheetState } from './types';
 
 // Re-export types for consumers
 export type {
@@ -37,34 +37,7 @@ export type {
   CompletionSummary,
 } from './scanFlowMachine';
 export type { ScanStep } from '../../components/scanner/ScanProgressOverlay';
-
-// ── Context modal type ──
-
-export type ScanContextModal =
-  | { type: 'closed' }
-  | { type: 'defectDetail'; defectId: string }
-  | { type: 'maintenanceDetail'; maintenanceId: string }
-  | {
-      type: 'acceptDefect';
-      defectId: string;
-      assetId: string;
-      assetNumber: string | null;
-      title: string;
-      description: string | null;
-    };
-
-const CLOSED_MODAL: ScanContextModal = { type: 'closed' };
-
-// ── Alert sheet state ──
-
-export interface AlertSheetState {
-  visible: boolean;
-  type: 'error' | 'warning' | 'info';
-  title: string;
-  message: string;
-  actionLabel?: string;
-  onAction?: () => void;
-}
+export type { AlertSheetState } from './types';
 
 // ── Return type ──
 
@@ -132,19 +105,6 @@ export interface UseScanFlowReturn {
   contextError: Error | null;
   refetchContext: () => unknown;
 
-  // Context modals
-  contextModal: ScanContextModal;
-  isContextTransitioning: boolean;
-  openDefectDetail: (id: string) => void;
-  openMaintenanceDetail: (id: string) => void;
-  openAcceptDefect: (ctx: Extract<ScanContextModal, { type: 'acceptDefect' }>) => void;
-  closeContextModal: () => void;
-  handleContextExitComplete: () => void;
-
-  // Alert
-  alertSheet: AlertSheetState;
-  setAlertSheet: React.Dispatch<React.SetStateAction<AlertSheetState>>;
-
   // Location
   hasLocationPermission: boolean;
   requestLocationPermission: () => Promise<boolean>;
@@ -162,6 +122,16 @@ export interface UseScanFlowReturn {
 interface UseScanFlowOptions {
   canReportDefect: boolean;
   canMarkMaintenance: boolean;
+  /** React.useState setter for alert sheet state — owned by scan.tsx. */
+  setAlertSheet: React.Dispatch<React.SetStateAction<AlertSheetState>>;
+  /**
+   * Called immediately before dispatching UNDO. Use to close context modals
+   * so they don't animate over a stale scan.
+   *
+   * Must be a stable callback (from `useCallback` or a hook return) since it
+   * enters the `handleUndoPress` dependency chain which feeds the BackHandler effect.
+   */
+  onBeforeUndo?: () => void;
 }
 
 const SHEET_EXIT_SAFETY_TIMEOUT = 1500;
@@ -169,6 +139,8 @@ const SHEET_EXIT_SAFETY_TIMEOUT = 1500;
 export function useScanFlow({
   canReportDefect,
   canMarkMaintenance,
+  setAlertSheet,
+  onBeforeUndo,
 }: UseScanFlowOptions): UseScanFlowReturn {
   const [state, dispatch] = useReducer(scanFlowReducer, initialScanFlowState);
   const user = useAuthStore((s) => s.user);
@@ -183,14 +155,6 @@ export function useScanFlow({
   useEffect(() => {
     if (depots.length > 0) ensureFresh(depots);
   }, [depots, ensureFresh]);
-
-  // ── Alert sheet ──
-  const [alertSheet, setAlertSheet] = useState<AlertSheetState>({
-    visible: false,
-    type: 'error',
-    title: '',
-    message: '',
-  });
 
   // ── Debug logging ──
   const debugLogRef = useRef<string[]>([]);
@@ -243,30 +207,6 @@ export function useScanFlow({
   // ── QR Scanner ──
   const { handleBarCodeScanned, resetScanner } = useQRScanner(processScan, 2000, handleInvalidQR);
   resetScannerRef.current = resetScanner;
-
-  // ── Context modals ──
-  const {
-    modal: contextModal,
-    closeModal: closeContextModal,
-    transitionTo: transitionContextModal,
-    isTransitioning: isContextTransitioning,
-    handleExitComplete: handleContextExitComplete,
-  } = useModalTransition<ScanContextModal>(CLOSED_MODAL);
-
-  const openDefectDetail = useCallback(
-    (id: string) => transitionContextModal({ type: 'defectDetail', defectId: id }),
-    [transitionContextModal]
-  );
-
-  const openMaintenanceDetail = useCallback(
-    (id: string) => transitionContextModal({ type: 'maintenanceDetail', maintenanceId: id }),
-    [transitionContextModal]
-  );
-
-  const openAcceptDefect = useCallback(
-    (ctx: Extract<ScanContextModal, { type: 'acceptDefect' }>) => transitionContextModal(ctx),
-    [transitionContextModal]
-  );
 
   // ── Track latest active-phase IDs for undo ──
   const undoIdsRef = useRef<{ scanEventId: string; assetId: string } | null>(null);
@@ -325,16 +265,17 @@ export function useScanFlow({
 
   const handleUndoPress = useCallback(() => {
     if (state.phase === 'confirming') {
+      onBeforeUndo?.();
       dispatch({ type: 'UNDO' });
       return;
     }
     if (state.phase !== 'active') return;
     const ids = undoIdsRef.current;
     if (!ids) return;
-    closeContextModal();
+    onBeforeUndo?.();
     dispatch({ type: 'UNDO' });
     undoScanEvent(ids.scanEventId, ids.assetId, resetScanner);
-  }, [state.phase, undoScanEvent, resetScanner, closeContextModal]);
+  }, [state.phase, undoScanEvent, resetScanner, onBeforeUndo]);
 
   const handleCameraCaptured = useCallback((uri: string) => {
     dispatch({ type: 'CAMERA_CAPTURED', uri });
@@ -589,17 +530,6 @@ export function useScanFlow({
     isContextLoading: scanContextQuery.isLoading,
     contextError: scanContextQuery.error,
     refetchContext: scanContextQuery.refetch,
-
-    contextModal,
-    isContextTransitioning,
-    openDefectDetail,
-    openMaintenanceDetail,
-    openAcceptDefect,
-    closeContextModal,
-    handleContextExitComplete,
-
-    alertSheet,
-    setAlertSheet,
 
     hasLocationPermission,
     requestLocationPermission,

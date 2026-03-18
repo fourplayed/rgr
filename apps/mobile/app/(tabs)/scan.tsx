@@ -4,6 +4,8 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 
 import { useUserPermissions } from '../../src/contexts/UserPermissionsContext';
 import { useScanFlow } from '../../src/hooks/scan/useScanFlow';
+import type { AlertSheetState } from '../../src/hooks/scan/types';
+import { useDefectMaintenanceModals } from '../../src/hooks/useDefectMaintenanceModals';
 import { useAssetAssessment } from '../../src/hooks/useAssetAssessment';
 import { usePersistentBackdrop } from '../../src/hooks/usePersistentBackdrop';
 import { PersistentBackdrop } from '../../src/components/common/PersistentBackdrop';
@@ -16,13 +18,8 @@ import {
 import { SheetModal } from '../../src/components/common/SheetModal';
 import { DefectReportSheet } from '../../src/components/scanner/DefectReportSheet';
 import { CameraCapture, PhotoReviewSheet } from '../../src/components/photos';
-import {
-  CreateMaintenanceModal,
-  DefectReportDetailModal,
-  MaintenanceDetailModal,
-} from '../../src/components/maintenance';
-import { useAcceptDefect } from '../../src/hooks/useAcceptDefect';
-import type { CreateMaintenanceInput } from '@rgr/shared';
+import { CreateMaintenanceModal } from '../../src/components/maintenance';
+import { DefectMaintenanceModals } from '../../src/components/common/DefectMaintenanceModals';
 import { AlertSheet, ErrorBoundary } from '../../src/components/common';
 import { styles } from '../../src/components/scanner/scan.styles';
 
@@ -30,8 +27,34 @@ export default function ScanScreen() {
   const { canReportDefect, canMarkMaintenance } = useUserPermissions();
   const [permission, requestPermission] = useCameraPermissions();
 
+  // ── Context modals (shared hook — same as home, maintenance, assets/[id]) ──
+  const modals = useDefectMaintenanceModals();
+
+  // ── Alert sheet (owned here, passed down) ──
+  const [alertSheet, setAlertSheet] = useState<AlertSheetState>({
+    visible: false,
+    type: 'error',
+    title: '',
+    message: '',
+  });
+
   // ── Unified scan flow ──
-  const flow = useScanFlow({ canReportDefect, canMarkMaintenance });
+  const flow = useScanFlow({
+    canReportDefect,
+    canMarkMaintenance,
+    setAlertSheet,
+    onBeforeUndo: modals.closeModal,
+  });
+
+  // ── Reactive refetch: when a context modal closes, refetch scan context ──
+  const prevModalTypeRef = useRef(modals.modal.type);
+  useEffect(() => {
+    if (prevModalTypeRef.current !== 'none' && modals.modal.type === 'none') {
+      flow.refetchContext();
+    }
+    prevModalTypeRef.current = modals.modal.type;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- flow.refetchContext is a stable React Query refetch fn
+  }, [modals.modal.type, flow.refetchContext]);
 
   // ── Persistent backdrop (blur + fade) ──
   const backdrop = usePersistentBackdrop(flow.showOverlay);
@@ -70,45 +93,6 @@ export default function ScanScreen() {
     flow.requestLocationPermission,
     requestPermission,
   ]);
-
-  // ── Accept defect → create maintenance ──
-  const { mutateAsync: acceptDefect } = useAcceptDefect();
-
-  const handleAcceptPress = useCallback(
-    (ctx: {
-      defectId: string;
-      assetId: string;
-      assetNumber: string | null;
-      title: string;
-      description: string | null;
-    }) => {
-      flow.openAcceptDefect({ type: 'acceptDefect', ...ctx });
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- flow.openAcceptDefect is a stable useCallback; adding `flow` would recreate on every render
-    [flow.openAcceptDefect]
-  );
-
-  const acceptCtx = flow.contextModal.type === 'acceptDefect' ? flow.contextModal : null;
-
-  const handleAcceptSubmit = useCallback(
-    async (input: CreateMaintenanceInput) => {
-      if (!acceptCtx) return;
-      await acceptDefect({
-        defectReportId: acceptCtx.defectId,
-        maintenanceInput: input,
-      });
-      flow.closeContextModal();
-      flow.refetchContext();
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- flow.xxx accesses stable callbacks; adding `flow` would recreate on every render
-    [acceptCtx, acceptDefect, flow.closeContextModal, flow.refetchContext]
-  );
-
-  const handleDismissConfirmed = useCallback(() => {
-    flow.closeContextModal();
-    flow.refetchContext();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- flow.xxx accesses stable callbacks; adding `flow` would recreate on every render
-  }, [flow.closeContextModal, flow.refetchContext]);
 
   // ── Maintenance created callback ──
   const handleTaskCreated = useCallback(() => {
@@ -175,16 +159,19 @@ export default function ScanScreen() {
         onPress={handleBackdropPress}
       />
 
-      {/* Confirmation card (gorhom SheetModal, no backdrop — PersistentBackdrop handles it).
-         Unmount during camera to prevent stale gorhom provider stack entries — iOS native
-         Modals freeze the underlying display link, so the dismiss animation never completes
-         and the provider retains a stale entry that blocks future present() calls. */}
+      {/* Confirmation card mount guard — each condition prevents a specific gorhom conflict:
+       * displayAsset              — no asset scanned yet
+       * !flow.cameraOpen          — native Modal freezes display link, gorhom dismiss never completes
+       * !flow.activeSheet         — sub-sheet animating out would collide in gorhom provider stack
+       * modals.modal.type === 'none' — context modal occupies the same gorhom portal slot
+       *                               (subsumes old !acceptCtx condition)
+       * !modals.isTransitioning   — context modal A→B transition in progress
+       */}
       {displayAsset &&
         !flow.cameraOpen &&
         !flow.activeSheet &&
-        flow.contextModal.type === 'closed' &&
-        !flow.isContextTransitioning &&
-        !acceptCtx && (
+        modals.modal.type === 'none' &&
+        !modals.isTransitioning && (
           <SheetModal
             visible={flow.showCard}
             onClose={flow.handleUndoPress}
@@ -207,8 +194,8 @@ export default function ScanScreen() {
                 disabled={flow.buttonsDisabled}
                 assessment={assessment}
                 scanContext={flow.scanContext}
-                onDefectPress={flow.openDefectDetail}
-                onTaskPress={flow.openMaintenanceDetail}
+                onDefectPress={modals.openDefectDetail}
+                onTaskPress={modals.openMaintenanceDetail}
                 onDetailsExpandedChange={handleDetailsExpandedChange}
               />
             ) : (
@@ -224,7 +211,7 @@ export default function ScanScreen() {
                 disabled={flow.buttonsDisabled}
                 assessment={assessment}
                 scanContext={flow.scanContext}
-                onDefectPress={flow.openDefectDetail}
+                onDefectPress={modals.openDefectDetail}
                 onDetailsExpandedChange={handleDetailsExpandedChange}
               />
             )}
@@ -269,42 +256,10 @@ export default function ScanScreen() {
         />
       )}
 
-      {/* Context modals (orthogonal to scan flow) */}
-      <DefectReportDetailModal
-        visible={flow.contextModal.type === 'defectDetail'}
-        defectId={flow.contextModal.type === 'defectDetail' ? flow.contextModal.defectId : null}
-        onClose={flow.closeContextModal}
-        onAcceptPress={handleAcceptPress}
-        onDismissConfirmed={handleDismissConfirmed}
-        variant="compact"
-        noBackdrop
-        onExitComplete={flow.handleContextExitComplete}
-      />
-      <MaintenanceDetailModal
-        visible={flow.contextModal.type === 'maintenanceDetail'}
-        maintenanceId={
-          flow.contextModal.type === 'maintenanceDetail' ? flow.contextModal.maintenanceId : null
-        }
-        onClose={flow.closeContextModal}
-        variant="compact"
-        noBackdrop
-        onExitComplete={flow.handleContextExitComplete}
-      />
-      {acceptCtx && (
-        <CreateMaintenanceModal
-          visible
-          onClose={flow.closeContextModal}
-          assetId={acceptCtx.assetId}
-          assetNumber={acceptCtx.assetNumber}
-          defectReportId={acceptCtx.defectId}
-          defaultTitle={acceptCtx.description ?? acceptCtx.title}
-          defaultDescription={undefined}
-          defaultPriority="medium"
-          onExternalSubmit={handleAcceptSubmit}
-          noBackdrop
-          onExitComplete={flow.handleContextExitComplete}
-        />
-      )}
+      {/* SCAN-SPECIFIC: renderBackdrop={false} because the scan screen's own
+       * PersistentBackdrop (driven by flow.showOverlay) already covers context
+       * modals. Do NOT change to renderBackdrop={true} or use without this flag. */}
+      <DefectMaintenanceModals {...modals} variant="compact" renderBackdrop={false} />
 
       {/* Camera (native Modal — required for tab bar coverage) */}
       {flow.scannedAsset && (
@@ -336,13 +291,13 @@ export default function ScanScreen() {
 
       {/* Alert Sheet for errors */}
       <AlertSheet
-        visible={flow.alertSheet.visible}
-        type={flow.alertSheet.type}
-        title={flow.alertSheet.title}
-        message={flow.alertSheet.message}
-        onDismiss={() => flow.setAlertSheet((prev) => ({ ...prev, visible: false }))}
-        actionLabel={flow.alertSheet.actionLabel}
-        onAction={flow.alertSheet.onAction}
+        visible={alertSheet.visible}
+        type={alertSheet.type}
+        title={alertSheet.title}
+        message={alertSheet.message}
+        onDismiss={() => setAlertSheet((prev) => ({ ...prev, visible: false }))}
+        actionLabel={alertSheet.actionLabel}
+        onAction={alertSheet.onAction}
       />
     </View>
   );

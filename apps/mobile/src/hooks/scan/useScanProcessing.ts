@@ -1,14 +1,14 @@
 import { useCallback } from 'react';
 import * as Haptics from 'expo-haptics';
 import { useQueryClient, onlineManager } from '@tanstack/react-query';
-import { assetKeys, useCreateScanEvent, useUpdateAsset, useDeleteScanEvent } from '../useAssetData';
+import { assetKeys, useCreateScanEvent, useDeleteScanEvent } from '../useAssetData';
 import { useLocationStore, waitForLocationResolution } from '../../store/locationStore';
 import type { Asset } from '@rgr/shared';
-import { getAssetByQRCode, listAssets, extractAssetInfo } from '@rgr/shared';
+import { getAssetByQRCode, listAssets, extractAssetInfo, assignAssetDepot } from '@rgr/shared';
 import { logger } from '../../utils/logger';
 import { enqueueScan } from '../../utils/offlineMutationQueue';
 import type { ScanFlowAction, MatchedDepot } from './scanFlowMachine';
-import type { AlertSheetState } from './useScanFlow';
+import type { AlertSheetState } from './types';
 import type { Profile } from '@rgr/shared';
 
 export function useScanProcessing(
@@ -25,7 +25,6 @@ export function useScanProcessing(
 
   // ── Mutations ──
   const { mutateAsync: createScan } = useCreateScanEvent();
-  const { mutateAsync: updateAssetMutation } = useUpdateAsset();
   const { mutateAsync: doDeleteScan, isPending: isDeletingScan } = useDeleteScanEvent();
 
   // ── Asset lookup (via React Query cache) ──
@@ -143,14 +142,25 @@ export function useScanProcessing(
         addDebugLog('Scan created: ' + scanEvent.id.substring(0, 8));
         logger.scan('Scan event created successfully');
 
-        // 6. Update depot assignment if matched (non-blocking but error-aware)
+        // 6. Update depot assignment if matched (non-blocking but error-aware).
+        //    Uses assignAssetDepot RPC (SECURITY DEFINER) because drivers/mechanics
+        //    lack UPDATE RLS on assets — the generic updateAsset() would fail with PGRST116.
         if (nearestDepot) {
           logger.scan(`Updating asset depot to ${nearestDepot.depot.name}...`);
-          updateAssetMutation({
-            id: asset.id,
-            input: { assignedDepotId: nearestDepot.depot.id },
-          })
-            .then(() => logger.scan('Asset depot updated'))
+          assignAssetDepot(asset.id, nearestDepot.depot.id)
+            .then((result) => {
+              if (result.success) {
+                logger.scan('Asset depot updated');
+              } else {
+                logger.warn('Depot assignment RPC failed:', result.error);
+                setAlertSheet({
+                  visible: true,
+                  type: 'warning',
+                  title: 'Depot Update Failed',
+                  message: `Scan was recorded but the depot assignment to "${nearestDepot.depot.name}" could not be saved. It will be updated on the next scan.`,
+                });
+              }
+            })
             .catch((depotError: unknown) => {
               logger.warn('Depot update failed after successful scan:', depotError);
               setAlertSheet({
@@ -228,16 +238,7 @@ export function useScanProcessing(
         resetScannerRef.current();
       }
     },
-    [
-      user,
-      lookupAsset,
-      createScan,
-      updateAssetMutation,
-      addDebugLog,
-      setAlertSheet,
-      dispatch,
-      resetScannerRef,
-    ]
+    [user, lookupAsset, createScan, addDebugLog, setAlertSheet, dispatch, resetScannerRef]
   );
 
   // ── Debug: trigger scan with first asset from DB ──

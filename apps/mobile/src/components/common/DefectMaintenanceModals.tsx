@@ -11,6 +11,9 @@ interface DefectMaintenanceModalsProps extends DefectMaintenanceModalsReturn {
   /** Passed through to DefectReportDetailModal and MaintenanceDetailModal.
    *  Default 'full'. */
   variant?: 'full' | 'compact';
+  /** Whether to render the PersistentBackdrop. Default true.
+   *  Set to false when the consuming screen has its own backdrop (e.g. scan). */
+  renderBackdrop?: boolean;
 }
 
 /**
@@ -32,16 +35,19 @@ export function DefectMaintenanceModals({
   showBackdrop,
   backdropMounted,
   variant,
+  renderBackdrop = true,
 }: DefectMaintenanceModalsProps) {
   return (
     <>
       {/* Persistent backdrop — stays visible during A->B modal transitions */}
-      <PersistentBackdrop
-        opacity={backdropOpacity}
-        showBackdrop={showBackdrop}
-        mounted={backdropMounted}
-        onPress={closeModal}
-      />
+      {renderBackdrop && (
+        <PersistentBackdrop
+          opacity={backdropOpacity}
+          showBackdrop={showBackdrop}
+          mounted={backdropMounted}
+          onPress={closeModal}
+        />
+      )}
 
       {/* Chained modals — gorhom portal rendering (no wrapper needed) */}
       <DefectReportDetailModal

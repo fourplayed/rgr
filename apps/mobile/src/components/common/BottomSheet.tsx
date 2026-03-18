@@ -100,7 +100,7 @@ export function BottomSheet({
       onDismiss={handleDismiss}
       backdropComponent={renderBackdrop}
       backgroundStyle={styles.background}
-      handleIndicatorStyle={styles.handle}
+      handleIndicatorStyle={styles.hiddenHandle}
       {...(keyboardAware ? KEYBOARD_AWARE_PROPS : EMPTY_OBJ)}
       animationConfigs={GORHOM_SPRING}
     >
@@ -123,10 +123,9 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
   },
-  handle: {
-    width: 40,
-    height: 4,
-    backgroundColor: colors.border,
-    borderRadius: borderRadius.full,
+  hiddenHandle: {
+    width: 0,
+    height: 0,
+    opacity: 0,
   },
 });
