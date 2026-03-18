@@ -260,8 +260,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.chrome,
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
     overflow: 'hidden',
   },
   safeArea: {
