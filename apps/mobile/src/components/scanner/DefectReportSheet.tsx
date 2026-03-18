@@ -232,10 +232,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.chrome,
   },
   inputWrapperFocused: {
-    shadowColor: colors.defectYellow,
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 0 },
+    borderColor: colors.defectYellow,
+    borderWidth: 1.5,
   },
   textInput: {
     backgroundColor: colors.background,

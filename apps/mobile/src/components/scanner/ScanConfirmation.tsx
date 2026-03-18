@@ -22,7 +22,7 @@ import { Button } from '../common/Button';
 import { SheetHeader } from '../common/SheetHeader';
 import { SegmentedTabs } from '../common/SegmentedTabs';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius, shadows, fontFamily as fonts } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 import { sheetLayout } from '../../theme/sheetLayout';
 import { SHEET_SCROLL_PROPS } from '../../theme/sheetLayout';
 
@@ -334,7 +334,6 @@ function ScanConfirmationComponent(props: ScanConfirmationProps) {
           onPress={() => props.onConfirm(selectedAction)}
           disabled={disabled}
           isLoading={isLoading}
-          style={styles.confirmButton}
           color={buttonColor}
           accessibilityLabel={buttonLabel}
         >
@@ -539,10 +538,6 @@ function CheckboxOption({
       isSelected && {
         borderColor: accentColor,
         borderWidth: 1.5,
-        shadowColor: accentColor,
-        shadowOpacity: 0.15,
-        shadowRadius: 10,
-        shadowOffset: { width: 0, height: 0 },
       },
       isUnselected && {
         borderColor: `${accentColor}66`,
@@ -703,10 +698,5 @@ const styles = StyleSheet.create({
   },
   openItemsCardList: {
     gap: spacing.sm,
-  },
-
-  // Confirm button
-  confirmButton: {
-    ...shadows.sm,
   },
 });

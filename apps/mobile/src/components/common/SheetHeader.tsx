@@ -40,7 +40,7 @@ export function SheetHeader({
   children,
 }: SheetHeaderProps) {
   return (
-    <View style={[styles.headerShadowHost, { backgroundColor, shadowColor: backgroundColor }]}>
+    <View style={[styles.headerShadowHost, { backgroundColor }]}>
       <View style={styles.header}>
         <View style={styles.headerRow}>
           <Ionicons name={icon} size={26} color={colors.textInverse} />
@@ -81,10 +81,6 @@ const styles = StyleSheet.create({
   headerShadowHost: {
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
   },
   header: {
     paddingTop: spacing.base,
@@ -103,9 +99,6 @@ const styles = StyleSheet.create({
     color: colors.textInverse,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
   },
   actionButton: {
     width: 44,

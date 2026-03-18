@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useMemo } from 'react';
+import React, { useRef, useCallback } from 'react';
 import {
   View,
   Pressable,
@@ -12,7 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LoadingDots } from './LoadingDots';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, borderRadius, shadows, fontFamily as fonts } from '../../theme/spacing';
+import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
 import { AppText } from './AppText';
 
 // Reverse lookup: hex color → gradient endpoint
@@ -69,22 +69,6 @@ export function Button({
   const useGradient =
     !!gradientEnd && !isDisabled && (variant === 'primary' || variant === 'danger');
 
-  // Colored shadow for gradient buttons (iOS only — Android uses elevation).
-  // backgroundColor is required for RN to use the fast shadow rasterization path.
-  const coloredShadow = useMemo(
-    () =>
-      color && !isDisabled
-        ? {
-            backgroundColor: color,
-            shadowColor: color,
-            shadowOpacity: 0.3,
-            shadowRadius: 12,
-            shadowOffset: { width: 0, height: 4 },
-          }
-        : undefined,
-    [color, isDisabled]
-  );
-
   const bgOverride = !useGradient && color ? { backgroundColor: color } : undefined;
   const textColorOverride = textColor ? { color: textColor } : undefined;
 
@@ -137,15 +121,7 @@ export function Button({
       accessibilityLabel={accessibilityLabel ?? children}
     >
       {useGradient ? (
-        <Animated.View
-          style={[
-            styles.gradientShadowHost,
-            flex && styles.flex,
-            coloredShadow,
-            style,
-            { transform: [{ scale }] },
-          ]}
-        >
+        <Animated.View style={[flex && styles.flex, style, { transform: [{ scale }] }]}>
           <LinearGradient
             colors={[color!, gradientEnd]}
             start={{ x: 0, y: 0 }}
@@ -169,7 +145,6 @@ export function Button({
             bgOverride,
             flex && styles.flex,
             isDisabled && styles.disabled,
-            coloredShadow,
             style,
             { transform: [{ scale }] },
           ]}
@@ -190,9 +165,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     overflow: 'hidden',
   },
-  gradientShadowHost: {
-    borderRadius: borderRadius.md,
-  },
   flex: {
     flexGrow: 1,
     flexShrink: 1,
@@ -212,17 +184,14 @@ const styles = StyleSheet.create({
 const variantStyles = StyleSheet.create({
   primary: {
     backgroundColor: colors.primary,
-    ...shadows.md,
   },
   secondary: {
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    ...shadows.sm,
   },
   danger: {
     backgroundColor: colors.error,
-    ...shadows.md,
   },
 });
 
@@ -232,9 +201,6 @@ const textStyles = StyleSheet.create({
     fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   secondary: {
     fontSize: fontSize.base,
@@ -247,8 +213,5 @@ const textStyles = StyleSheet.create({
     fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
 });
