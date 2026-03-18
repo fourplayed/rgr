@@ -277,13 +277,20 @@ describe('useUpdateMaintenanceStatus', () => {
 // ---------------------------------------------------------------------------
 describe('optimistic: createMaintenance', () => {
   // gcTime must be > 0 so pre-seeded cache survives until async onMutate reads it
-  const createOptimisticClient = () =>
-    new QueryClient({
+  let activeClient: QueryClient | null = null;
+  const createOptimisticClient = () => {
+    activeClient = new QueryClient({
       defaultOptions: {
         queries: { retry: false, gcTime: 60_000 },
         mutations: { retry: false },
       },
     });
+    return activeClient;
+  };
+  afterEach(() => {
+    activeClient?.clear();
+    activeClient = null;
+  });
 
   const seedListCache = (queryClient: QueryClient) => {
     queryClient.setQueryData(maintenanceKeys.list({}), {
@@ -393,13 +400,20 @@ describe('optimistic: createMaintenance', () => {
 });
 
 describe('optimistic: updateMaintenanceStatus', () => {
-  const createOptimisticClient = () =>
-    new QueryClient({
+  let activeClient: QueryClient | null = null;
+  const createOptimisticClient = () => {
+    activeClient = new QueryClient({
       defaultOptions: {
         queries: { retry: false, gcTime: 60_000 },
         mutations: { retry: false },
       },
     });
+    return activeClient;
+  };
+  afterEach(() => {
+    activeClient?.clear();
+    activeClient = null;
+  });
 
   it('updates status in detail cache before server response', async () => {
     const { wrapper, queryClient } = createWrapper(createOptimisticClient());

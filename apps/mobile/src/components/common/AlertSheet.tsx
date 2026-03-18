@@ -63,13 +63,9 @@ export function AlertSheet({
     <BottomSheet visible={visible} onDismiss={onDismiss}>
       <View style={[styles.content, { paddingBottom: sheetBottomPadding }]}>
         <View style={styles.titleRow}>
-          {iconOverride ? (
-            <Ionicons name={iconOverride} size={28} color={iconColorOverride ?? config.color} />
-          ) : (
-            <View style={[styles.iconCircle, { backgroundColor: config.color }]}>
-              <Ionicons name={config.icon} size={20} color="#fff" />
-            </View>
-          )}
+          <View style={[styles.iconCircle, { backgroundColor: iconColorOverride ?? config.color }]}>
+            <Ionicons name={iconOverride ?? config.icon} size={20} color="#fff" />
+          </View>
           <AppText style={styles.title}>{title}</AppText>
         </View>
         <AppText style={styles.message}>{message}</AppText>

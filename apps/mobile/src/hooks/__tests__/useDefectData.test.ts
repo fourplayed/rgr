@@ -286,13 +286,20 @@ describe('useUpdateDefectReportStatus', () => {
 
 describe('optimistic: createDefectReport', () => {
   // gcTime must be > 0 so pre-seeded cache survives until async onMutate reads it
-  const createOptimisticClient = () =>
-    new QueryClient({
+  let activeClient: QueryClient | null = null;
+  const createOptimisticClient = () => {
+    activeClient = new QueryClient({
       defaultOptions: {
         queries: { retry: false, gcTime: 60_000 },
         mutations: { retry: false },
       },
     });
+    return activeClient;
+  };
+  afterEach(() => {
+    activeClient?.clear();
+    activeClient = null;
+  });
 
   const seedListCache = (queryClient: QueryClient) => {
     queryClient.setQueryData(defectKeys.list({}), {

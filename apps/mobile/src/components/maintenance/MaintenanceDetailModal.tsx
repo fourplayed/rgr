@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { View, TouchableOpacity, StyleSheet, Animated, Alert } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Animated, Alert, type ViewStyle } from 'react-native';
 import { AppTextInput } from '../common/AppTextInput';
 import { DatePickerField } from '../common/DatePickerField';
 import { Image } from 'expo-image';
@@ -45,7 +45,6 @@ import { MaintenancePriorityBadge } from './MaintenancePriorityBadge';
 import { MAINTENANCE_STATUS_CONFIG } from './MaintenanceListItem';
 
 const PRIORITY_ORDER: MaintenancePriority[] = ['low', 'medium', 'critical'];
-
 interface MaintenanceDetailModalProps {
   visible: boolean;
   maintenanceId: string | null;
@@ -92,11 +91,30 @@ export function MaintenanceDetailModal({
   const bottomPadding = useSheetBottomPadding();
   const { getEntryStyle } = useStaggeredEntrances(!isLoading && !!maintenance ? 7 : 0);
 
-  // Compose scatter-exit (opacity + translateX) with entrance (opacity + translateY) via multiply
-  const getAnimatedStyle = (index: number) => ({
-    opacity: Animated.multiply(getStyle(index).opacity, getEntryStyle(index).opacity),
-    transform: [...(getEntryStyle(index).transform ?? []), ...getStyle(index).transform],
-  });
+  // Pre-compose scatter-exit (opacity + translateX) with entrance (opacity + translateY).
+  // Memoized: Animated.multiply adds internal listeners to both input values.
+  // Creating new multiply nodes every render leaks listeners and causes
+  // "Sending onAnimatedValueUpdate with no listeners registered" warnings.
+  const composedStyles = useMemo(() => {
+    const styles: {
+      opacity: Animated.AnimatedMultiplication<number>;
+      transform: ViewStyle['transform'];
+    }[] = [];
+    for (let i = 0; i < 7; i++) {
+      const entry = getEntryStyle(i);
+      const exit = getStyle(i);
+      styles.push({
+        opacity: Animated.multiply(exit.opacity, entry.opacity),
+        transform: [...(entry.transform ?? []), ...exit.transform],
+      });
+    }
+    return styles;
+  }, [getEntryStyle, getStyle]);
+
+  const getAnimatedStyle = useCallback(
+    (index: number) => composedStyles[Math.min(index, composedStyles.length - 1)]!,
+    [composedStyles]
+  );
 
   useEffect(() => {
     if (visible) resetScatter();
@@ -258,6 +276,8 @@ export function MaintenanceDetailModal({
         <View style={styles.actionsContainer}>
           <Button
             variant="secondary"
+            textColor={colors.error}
+            style={{ borderColor: colors.error, backgroundColor: colors.error + '1A' }}
             onPress={handleCancelEdit}
             disabled={updateMutation.isPending}
             flex
@@ -265,13 +285,11 @@ export function MaintenanceDetailModal({
             Cancel
           </Button>
           <Button
-            color={colors.success}
-            icon="checkmark"
+            color={colors.electricBlue}
             onPress={handleSaveEdit}
             disabled={updateMutation.isPending}
             isLoading={updateMutation.isPending}
             flex
-            style={styles.ctaButton}
           >
             Save
           </Button>
@@ -285,7 +303,9 @@ export function MaintenanceDetailModal({
       return (
         <View style={styles.actionsContainer}>
           <Button
-            variant="danger"
+            variant="secondary"
+            textColor={colors.error}
+            style={{ borderColor: colors.error, backgroundColor: colors.error + '1A' }}
             onPress={handleCancelMaintenance}
             disabled={updateStatusMutation.isPending || cancelMutation.isPending || isScattering}
             flex
@@ -371,13 +391,11 @@ export function MaintenanceDetailModal({
       );
     }
 
-    if (!maintenance.description) return null;
-
     return (
       <View style={styles.detailRow}>
         <AppText style={styles.detailLabel}>Description</AppText>
         <AppText style={[styles.detailValue, { lineHeight: lineHeight.relaxed }]}>
-          {maintenance.description}
+          {maintenance.description || 'No description'}
         </AppText>
       </View>
     );
@@ -439,13 +457,13 @@ export function MaintenanceDetailModal({
       onClose={onClose}
       onExitComplete={onExitComplete}
       noBackdrop={noBackdrop}
-      {...(variant === 'compact'
-        ? { snapPoint: '55%' }
-        : isEditing || editingNotes
-          ? { keyboardAware: true, snapPoint: '92%' }
-          : { snapPoint: '65%' })}
+      compact={!isEditing && !editingNotes}
+      keyboardAware
+      {...(isEditing || editingNotes ? { snapPoint: '90%' } : {})}
     >
-      <View style={sheetLayout.container}>
+      <View
+        style={isEditing || editingNotes ? sheetLayout.container : sheetLayout.containerCompact}
+      >
         <SheetHeader
           icon="construct"
           title="Scheduled Task"
@@ -458,7 +476,7 @@ export function MaintenanceDetailModal({
           <View style={styles.loadingContainer}>
             <LoadingDots color={colors.textSecondary} size={10} />
           </View>
-        ) : (
+        ) : isEditing || editingNotes ? (
           <BottomSheetScrollView
             style={sheetLayout.scroll}
             contentContainerStyle={[
@@ -516,8 +534,8 @@ export function MaintenanceDetailModal({
                   <View style={styles.sectionCard}>
                     {renderTitleSection()}
                     {renderDescriptionSection()}
-                    {renderPrioritySection()}
                     {renderDueDateSection()}
+                    {renderPrioritySection()}
                   </View>
                 </View>
               </Animated.View>
@@ -525,14 +543,13 @@ export function MaintenanceDetailModal({
               <>
                 <Animated.View style={getAnimatedStyle(1)}>
                   <View style={styles.titleDueRow}>
-                    {renderTitleSection()}
+                    <View style={styles.detailRow}>
+                      <AppText style={styles.detailLabel}>Description</AppText>
+                      <AppText style={styles.detailValue}>{maintenance.title}</AppText>
+                    </View>
                     {renderDueDateSection()}
                   </View>
                 </Animated.View>
-                <Animated.View style={getAnimatedStyle(2)}>
-                  {renderDescriptionSection()}
-                </Animated.View>
-
                 {(maintenance.maintenanceType || maintenance.scheduledDate) && (
                   <Animated.View style={getAnimatedStyle(2)}>
                     <View style={styles.metadataGrid}>
@@ -665,18 +682,87 @@ export function MaintenanceDetailModal({
                 </View>
               </Animated.View>
             )}
+
+            {/* ── Action buttons — pushed to bottom of scroll content via marginTop: 'auto' ── */}
+            {statusActionsEl && (
+              <Animated.View style={[{ paddingTop: spacing.md }, getAnimatedStyle(6)]}>
+                {statusActionsEl}
+              </Animated.View>
+            )}
           </BottomSheetScrollView>
+        ) : (
+          <View
+            style={[
+              sheetLayout.scrollContent,
+              {
+                paddingTop: spacing.lg,
+                paddingBottom: bottomPadding,
+                gap: spacing.md,
+              },
+            ]}
+          >
+            {/* Info Row: Asset Number + Badges */}
+            <Animated.View style={getAnimatedStyle(0)}>
+              <View style={styles.infoRow}>
+                <View>
+                  <View style={styles.assetIdGroup}>
+                    {asset?.assetNumber && (
+                      <>
+                        <Ionicons name="cube" size={22} color={colors.text} />
+                        <AppText style={styles.assetNumberText}>
+                          {formatAssetNumber(asset.assetNumber)}
+                        </AppText>
+                      </>
+                    )}
+                  </View>
+                  {maintenance.reporterName && (
+                    <AppText style={styles.createdByText} numberOfLines={1}>
+                      {formatRelativeTime(maintenance.createdAt)} by {maintenance.reporterName}
+                    </AppText>
+                  )}
+                </View>
+                <View style={styles.badgeRow}>
+                  <View style={styles.badgeWrap}>
+                    <MaintenanceStatusBadge status={maintenance.status} />
+                  </View>
+                  <View style={styles.badgeWrap}>
+                    <MaintenancePriorityBadge priority={maintenance.priority} />
+                  </View>
+                </View>
+              </View>
+            </Animated.View>
+
+            <View style={styles.divider} />
+
+            <Animated.View style={getAnimatedStyle(1)}>
+              <View style={styles.titleDueRow}>
+                <View style={styles.detailRow}>
+                  <AppText style={styles.detailLabel}>Description</AppText>
+                  <AppText style={styles.detailValue}>{maintenance.title}</AppText>
+                </View>
+                {renderDueDateSection()}
+              </View>
+            </Animated.View>
+
+            {/* Notes */}
+            {variant === 'full' && (
+              <Animated.View style={getAnimatedStyle(2)}>
+                <View style={styles.sectionGroup}>
+                  <AppText style={styles.sectionTitle}>Notes</AppText>
+                  <AppText style={styles.notesText}>{maintenance.notes || 'No notes yet'}</AppText>
+                </View>
+              </Animated.View>
+            )}
+
+            {/* Action buttons */}
+            {statusActionsEl && (
+              <Animated.View style={[{ paddingTop: spacing.md }, getAnimatedStyle(3)]}>
+                {statusActionsEl}
+              </Animated.View>
+            )}
+          </View>
         )}
       </View>
-
-      {/* ── Fixed footer actions ── */}
-      {statusActionsEl && (
-        <Animated.View
-          style={[sheetLayout.footer, { paddingBottom: bottomPadding }, getAnimatedStyle(6)]}
-        >
-          {statusActionsEl}
-        </Animated.View>
-      )}
 
       {/* Alert Sheet for errors */}
       <AlertSheet
