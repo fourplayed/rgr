@@ -236,7 +236,9 @@ export function mapRowToProfile(row: ProfileRow): Profile {
     lastLoginAt: row.last_login_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    notificationPreferences: row.notification_preferences ?? { rego_expiry: true },
+    notificationPreferences: NotificationPreferencesSchema.catch({ rego_expiry: true }).parse(
+      row.notification_preferences ?? {}
+    ),
   };
 }
 

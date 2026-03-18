@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Switch, StyleSheet } from 'react-native';
 import { colors } from '../../theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../theme/spacing';
@@ -10,6 +10,7 @@ import { SheetModal, BottomSheetScrollView } from '../common/SheetModal';
 import { useSettingsStore } from '../../store/settingsStore';
 import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 import { AppText } from '../common';
+import { useAuthStore } from '../../store/authStore';
 
 interface NotificationsModalProps {
   visible: boolean;
@@ -47,6 +48,22 @@ function ToggleRow({ title, subtitle, value, onValueChange, disabled }: ToggleRo
 export function NotificationsModal({ visible, onClose }: NotificationsModalProps) {
   const { notifications, setNotificationSetting } = useSettingsStore();
   const sheetBottomPadding = useSheetBottomPadding();
+  const user = useAuthStore((s) => s.user);
+  const updateUserProfile = useAuthStore((s) => s.updateUserProfile);
+  const [regoNotifs, setRegoNotifs] = useState(user?.notificationPreferences?.rego_expiry ?? true);
+
+  const handleRegoToggle = useCallback(
+    async (value: boolean) => {
+      setRegoNotifs(value); // Optimistic
+      const result = await updateUserProfile({
+        notificationPreferences: { rego_expiry: value },
+      });
+      if (!result.success) {
+        setRegoNotifs(!value); // Rollback
+      }
+    },
+    [updateUserProfile]
+  );
 
   const isPushDisabled = !notifications.pushEnabled;
 
@@ -105,6 +122,15 @@ export function NotificationsModal({ visible, onClose }: NotificationsModalProps
               value={notifications.scanConfirmations && notifications.pushEnabled}
               onValueChange={(value) => setNotificationSetting('scanConfirmations', value)}
               disabled={isPushDisabled}
+            />
+
+            <View style={styles.divider} />
+
+            <ToggleRow
+              title="Registration Expiry Reminders"
+              subtitle="Get notified 7 days and 2 days before registration expires"
+              value={regoNotifs}
+              onValueChange={handleRegoToggle}
             />
           </View>
         </BottomSheetScrollView>
