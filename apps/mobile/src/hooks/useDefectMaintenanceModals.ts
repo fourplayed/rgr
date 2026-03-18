@@ -108,17 +108,12 @@ export function useDefectMaintenanceModals() {
       title: string;
       description: string | null;
     }) => {
-      try {
-        const defaults = buildQuickAcceptDefaults(context);
-        await acceptDefect({
-          defectReportId: context.defectId,
-          maintenanceInput: defaults,
-        });
-        closeModal();
-      } catch (error) {
-        // Re-throw so React Query's onError handler can surface the error
-        throw error;
-      }
+      const defaults = buildQuickAcceptDefaults(context);
+      await acceptDefect({
+        defectReportId: context.defectId,
+        maintenanceInput: defaults,
+      });
+      closeModal();
     },
     [acceptDefect, closeModal]
   );
