@@ -13,8 +13,10 @@ export function useCountUp(target: number, durationMs = 600): number {
   const rafRef = useRef<number | null>(null);
   const prevTarget = useRef(target);
   const displayRef = useRef(target);
+  const activeRef = useRef(true);
 
   useEffect(() => {
+    activeRef.current = true;
     // Skip animation if target hasn't changed
     if (target === prevTarget.current) return;
 
@@ -30,6 +32,7 @@ export function useCountUp(target: number, durationMs = 600): number {
     const startTime = Date.now();
 
     const animate = () => {
+      if (!activeRef.current) return;
       const elapsed = Date.now() - startTime;
       const progress = Math.min(elapsed / durationMs, 1);
       // Ease-out cubic for a natural deceleration
@@ -46,6 +49,7 @@ export function useCountUp(target: number, durationMs = 600): number {
     rafRef.current = requestAnimationFrame(animate);
 
     return () => {
+      activeRef.current = false;
       if (rafRef.current != null) {
         cancelAnimationFrame(rafRef.current);
       }

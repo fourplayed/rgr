@@ -126,11 +126,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
       return errorResponse('Unauthorized — service_role required', 403);
     }
 
-    const { title, body, data, targetRoles } = (await req.json()) as {
+    const { title, body, data, targetRoles, notificationType } = (await req.json()) as {
       title: string;
       body: string;
       data?: Record<string, unknown>;
       targetRoles: string[];
+      notificationType?: string;
     };
 
     if (!title || !body || !targetRoles || targetRoles.length === 0) {
@@ -139,12 +140,22 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     const serviceClient = getServiceClient();
 
-    // Step 1: Get active user IDs for target roles
-    const { data: profileRows, error: profileError } = await serviceClient
+    // Step 1: Get active user IDs for target roles, filtered by notification preference
+    let profileQuery = serviceClient
       .from('profiles')
       .select('id')
       .in('role', targetRoles)
       .eq('is_active', true);
+
+    if (notificationType) {
+      profileQuery = profileQuery.not(
+        `notification_preferences->>${notificationType}`,
+        'eq',
+        'false'
+      );
+    }
+
+    const { data: profileRows, error: profileError } = await profileQuery;
 
     if (profileError) {
       console.error('Error fetching profiles:', profileError);

@@ -5,13 +5,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../src/store/authStore';
 import { useUserPermissions } from '../src/contexts/UserPermissionsContext';
-import { UserRoleLabels } from '@rgr/shared';
 import { colors } from '../src/theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../src/theme/spacing';
-import { AppText, ConfirmSheet, CollapsibleSection, Badge } from '../src/components/common';
-import { DepotBadge } from '../src/components/common/DepotBadge';
-import { getDepotBadgeColors } from '@rgr/shared';
-import { useDepotLookup } from '../src/hooks/useDepots';
+import { AppText, AlertSheet, CollapsibleSection } from '../src/components/common';
 import { useConsoleStore } from '../src/store/consoleStore';
 import { SheetHeader } from '../src/components/common/SheetHeader';
 import { EditProfileModal } from '../src/components/settings/EditProfileModal';
@@ -70,27 +66,15 @@ export default function SettingsScreen() {
     router.back();
   };
 
-  const depotLookup = useDepotLookup();
-
   if (!user) {
     return null;
   }
-
-  const roleLabel = UserRoleLabels[user.role] || user.role;
-  const roleColor =
-    colors.userRole[user.role as keyof typeof colors.userRole] || colors.backgroundDark;
-  const userDepot = user.depot ? (depotLookup.byCode.get(user.depot.toLowerCase()) ?? null) : null;
-  const { bg: depotBg, text: depotText } = getDepotBadgeColors(
-    userDepot,
-    colors.chrome,
-    colors.text
-  );
 
   return (
     <BottomSheetModalProvider>
       <View style={styles.container}>
         <View style={styles.safeArea}>
-          <SheetHeader icon="settings" title="Settings" onClose={handleBack} />
+          <SheetHeader icon="settings" title="Settings" onClose={handleBack} borderRadius={0} />
 
           <ScrollView
             style={styles.scrollView}
@@ -108,29 +92,17 @@ export default function SettingsScreen() {
                     <AppText style={styles.profileName}>{user.fullName}</AppText>
                     <AppText style={styles.profileEmail}>{user.email}</AppText>
                   </View>
-                  <View style={styles.badgeColumn}>
-                    <Badge label={roleLabel} color={roleColor} />
-                    {user.depot && (
-                      <DepotBadge
-                        label={user.depot}
-                        bgColor={depotBg}
-                        textColor={depotText}
-                        showIcon
-                      />
-                    )}
-                  </View>
+                  <TouchableOpacity
+                    onPress={() => setShowLogoutConfirm(true)}
+                    activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel="Sign Out"
+                    style={styles.signOutButton}
+                  >
+                    <Ionicons name="log-out-outline" size={14} color="#fff" />
+                    <AppText style={styles.signOutButtonText}>Sign Out</AppText>
+                  </TouchableOpacity>
                 </View>
-                <View style={styles.divider} />
-                <TouchableOpacity
-                  style={styles.signOutRow}
-                  onPress={() => setShowLogoutConfirm(true)}
-                  activeOpacity={0.7}
-                  accessibilityRole="button"
-                  accessibilityLabel="Sign Out"
-                >
-                  <Ionicons name="log-out-outline" size={20} color={colors.error} />
-                  <AppText style={styles.signOutText}>Sign Out</AppText>
-                </TouchableOpacity>
               </View>
             </View>
 
@@ -241,14 +213,16 @@ export default function SettingsScreen() {
 
           <SecurityModal visible={showSecurity} onClose={() => setShowSecurity(false)} />
 
-          <ConfirmSheet
+          <AlertSheet
             visible={showLogoutConfirm}
             type="warning"
             title="Sign Out"
             message="Are you sure you want to sign out?"
-            confirmLabel="Sign Out"
-            onConfirm={handleLogoutConfirm}
-            onCancel={() => setShowLogoutConfirm(false)}
+            buttonLabel="Cancel"
+            onDismiss={() => setShowLogoutConfirm(false)}
+            actionLabel="Sign Out"
+            onAction={handleLogoutConfirm}
+            buttonLayout="row"
           />
         </View>
       </View>
@@ -260,8 +234,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.chrome,
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
     overflow: 'hidden',
   },
   safeArea: {
@@ -297,10 +269,6 @@ const styles = StyleSheet.create({
   },
   profileInfo: {
     flex: 1,
-  },
-  badgeColumn: {
-    alignItems: 'flex-end',
-    gap: spacing.xs,
   },
   profileName: {
     fontSize: fontSize.lg,
@@ -348,17 +316,20 @@ const styles = StyleSheet.create({
     backgroundColor: colors.border,
     marginLeft: spacing.base + 40 + spacing.md,
   },
-  signOutRow: {
+  signOutButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    padding: spacing.base,
+    gap: spacing.xs,
+    backgroundColor: colors.electricBlue,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.sm,
   },
-  signOutText: {
-    fontSize: fontSize.sm,
+  signOutButtonText: {
+    fontSize: fontSize.xs,
     fontFamily: fonts.bold,
-    color: colors.error,
+    color: '#fff',
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
 });

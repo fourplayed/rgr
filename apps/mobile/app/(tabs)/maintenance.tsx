@@ -21,8 +21,6 @@ import {
   DefectFilterPanel,
   CreateMaintenanceModal,
   DefectReportListItem,
-  MAINTENANCE_ITEM_HEIGHT,
-  DEFECT_ITEM_HEIGHT,
 } from '../../src/components/maintenance';
 import { useMaintenanceList } from '../../src/hooks/useMaintenanceData';
 import { useDefectReportList } from '../../src/hooks/useDefectData';
@@ -187,15 +185,6 @@ export default function MaintenanceScreen() {
 
   const maintenanceKeyExtractor = useCallback((item: MaintenanceListItemType) => item.id, []);
 
-  const getMaintenanceItemLayout = useCallback(
-    (_: unknown, index: number) => ({
-      length: MAINTENANCE_ITEM_HEIGHT,
-      offset: MAINTENANCE_ITEM_HEIGHT * index,
-      index,
-    }),
-    []
-  );
-
   // Defect list renderers
   const renderDefectItem = useCallback(
     ({ item }: { item: DefectReportListItemType }) => (
@@ -205,15 +194,6 @@ export default function MaintenanceScreen() {
   );
 
   const defectKeyExtractor = useCallback((item: DefectReportListItemType) => item.id, []);
-
-  const getDefectItemLayout = useCallback(
-    (_: unknown, index: number) => ({
-      length: DEFECT_ITEM_HEIGHT,
-      offset: DEFECT_ITEM_HEIGHT * index,
-      index,
-    }),
-    []
-  );
 
   const renderMaintenanceEmpty = useCallback(
     () => (
@@ -316,7 +296,6 @@ export default function MaintenanceScreen() {
               data={maintenance}
               renderItem={renderMaintenanceItem}
               keyExtractor={maintenanceKeyExtractor}
-              getItemLayout={getMaintenanceItemLayout}
               contentContainerStyle={
                 maintenance.length === 0 ? styles.emptyListContent : styles.listContent
               }
@@ -332,7 +311,6 @@ export default function MaintenanceScreen() {
               data={defects}
               renderItem={renderDefectItem}
               keyExtractor={defectKeyExtractor}
-              getItemLayout={getDefectItemLayout}
               contentContainerStyle={
                 defects.length === 0 ? styles.emptyListContent : styles.listContent
               }

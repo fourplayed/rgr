@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { AppState, View, StyleSheet, LogBox } from 'react-native';
+import { AppState, InteractionManager, View, StyleSheet, LogBox } from 'react-native';
 import * as Font from 'expo-font';
 
 // Suppress iOS shadow+gradient ADVICE warnings — Button's gradientShadowHost
@@ -41,6 +41,7 @@ import {
   createScanEvent,
   createDefectReport,
   createMaintenance,
+  uploadPhoto,
 } from '@rgr/shared';
 import { initializeMobileSupabase } from '../src/config/supabase';
 import { useAuthStore } from '../src/store/authStore';
@@ -59,7 +60,12 @@ import { useConsoleNetworkLogger } from '../src/hooks/useConsoleNetworkLogger';
 import { useConsoleStoreLogger } from '../src/hooks/useConsoleStoreLogger';
 import { DevConsole } from '../src/components/dev/DevConsole';
 import { usePushNotifications } from '../src/hooks/usePushNotifications';
-import { replayQueue, clearQueue } from '../src/utils/offlineMutationQueue';
+import {
+  replayQueue,
+  clearQueue,
+  deleteOfflinePhoto,
+  cleanOrphanedPhotos,
+} from '../src/utils/offlineMutationQueue';
 import { setUser as setErrorReportingUser } from '../src/utils/errorReporting';
 import { saveSession } from '../src/utils/secureStorage';
 import { colors } from '../src/theme/colors';
@@ -224,13 +230,28 @@ export default function RootLayout() {
               createDefectReport(payload as Parameters<typeof createDefectReport>[0]),
             maintenance: (payload) =>
               createMaintenance(payload as Parameters<typeof createMaintenance>[0]),
+            photo: async (payload) => {
+              const result = await uploadPhoto({
+                assetId: payload.assetId as string,
+                scanEventId: (payload.scanEventId as string) ?? undefined,
+                uploadedBy: payload.uploadedBy as string,
+                photoType: payload.photoType as string,
+                fileUri: payload.localUri as string,
+                mimeType: (payload.mimeType as string) ?? 'image/jpeg',
+              });
+              if (result.success) {
+                await deleteOfflinePhoto(payload.localUri as string);
+              }
+              return result;
+            },
           })
             .then(({ replayed }) => {
               if (replayed > 0) {
                 queryClient.invalidateQueries({ queryKey: ['scans'] });
                 queryClient.invalidateQueries({ queryKey: ['assets', 'list'] });
-                queryClient.invalidateQueries({ queryKey: ['defect-reports'] });
+                queryClient.invalidateQueries({ queryKey: ['defects'] });
                 queryClient.invalidateQueries({ queryKey: ['maintenance'] });
+                queryClient.invalidateQueries({ queryKey: ['photos'] });
               }
             })
             .catch(() => {
@@ -279,6 +300,14 @@ export default function RootLayout() {
     }
     wasAuthenticated.current = isAuthenticated;
   }, [isAuthenticated, queryClient]);
+
+  // Deferred orphan photo cleanup — runs after interactions settle on mount
+  useEffect(() => {
+    const task = InteractionManager.runAfterInteractions(() => {
+      cleanOrphanedPhotos().catch(() => {});
+    });
+    return () => task.cancel();
+  }, []);
 
   // Check if navigation state is ready
   const navigationState = useRootNavigationState();

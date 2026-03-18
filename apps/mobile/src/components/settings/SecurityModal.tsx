@@ -471,7 +471,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.base,
-    fontSize: fontSize.base,
+    fontSize: fontSize.sm,
     fontFamily: fonts.regular,
     color: colors.text,
   },

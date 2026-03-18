@@ -389,6 +389,7 @@ const styles = StyleSheet.create({
   },
   loginStripe: {
     flex: 1,
+    backgroundColor: colors.primary,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.4,
@@ -403,6 +404,8 @@ const styles = StyleSheet.create({
     marginTop: -12,
   },
   logoShadow: {
+    backgroundColor: colors.background,
+    borderRadius: 80,
     shadowColor: colors.navy,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.5,

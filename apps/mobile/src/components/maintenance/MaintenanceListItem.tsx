@@ -46,7 +46,10 @@ interface MaintenanceListItemProps {
 }
 
 function MaintenanceListItemComponent({ maintenance, onPress }: MaintenanceListItemProps) {
-  const { icon, color } = getMaintenanceVisualConfig(maintenance.status, maintenance.dueDate);
+  const isDefect = maintenance.maintenanceType === 'defect_report';
+  const statusConfig = getMaintenanceVisualConfig(maintenance.status, maintenance.dueDate);
+  const icon = isDefect ? 'warning' : statusConfig.icon;
+  const color = isDefect ? colors.defectYellow : statusConfig.color;
   const handlePress = useCallback(() => {
     onPress(maintenance);
   }, [onPress, maintenance]);

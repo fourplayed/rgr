@@ -25,6 +25,9 @@ import { useScatterExit } from '../../hooks/useScatterExit';
 import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 import { useStaggeredEntrances } from '../../hooks/useStaggeredEntrance';
 import { DefectStatusBadge, DEFECT_STATUS_CONFIG } from './DefectStatusBadge';
+import { MaintenanceStatusBadge } from './MaintenanceStatusBadge';
+import { getMaintenanceVisualConfig } from './MaintenanceListItem';
+import { cardStyles as maintenanceCardStyles } from './maintenance.styles';
 
 interface DefectReportDetailModalProps {
   visible: boolean;
@@ -34,6 +37,14 @@ interface DefectReportDetailModalProps {
   variant?: 'full' | 'compact';
   /** Called when mechanic taps Accept — parent opens CreateMaintenanceModal. */
   onAcceptPress?: (context: {
+    defectId: string;
+    assetId: string;
+    assetNumber: string | null;
+    title: string;
+    description: string | null;
+  }) => void;
+  /** Called when mechanic taps Quick Accept — parent creates task with smart defaults. */
+  onQuickAcceptPress?: (context: {
     defectId: string;
     assetId: string;
     assetNumber: string | null;
@@ -56,6 +67,7 @@ export function DefectReportDetailModal({
   onClose,
   variant = 'full',
   onAcceptPress,
+  onQuickAcceptPress,
   onViewTaskPress,
   onDismissConfirmed,
   noBackdrop,
@@ -111,6 +123,25 @@ export function DefectReportDetailModal({
     });
   }, [defect, asset, onAcceptPress]);
 
+  const handleQuickAcceptPress = useCallback(() => {
+    Alert.alert('Quick Accept', 'Create maintenance task with default settings?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Accept',
+        onPress: () => {
+          if (!defect || !onQuickAcceptPress) return;
+          onQuickAcceptPress({
+            defectId: defect.id,
+            assetId: defect.assetId,
+            assetNumber: asset?.assetNumber ?? null,
+            title: defect.title,
+            description: defect.description ?? null,
+          });
+        },
+      },
+    ]);
+  }, [defect, asset, onQuickAcceptPress]);
+
   const handleViewLinkedTask = useCallback(() => {
     if (!defect?.maintenanceRecordId || !onViewTaskPress) return;
     onViewTaskPress(defect.maintenanceRecordId);
@@ -156,29 +187,44 @@ export function DefectReportDetailModal({
     if (status === 'reported') {
       return (
         <View style={styles.actionsContainer}>
+          <View style={styles.actionsRow}>
+            {!!onQuickAcceptPress && (
+              <Button
+                onPress={handleQuickAcceptPress}
+                disabled={isScattering}
+                flex
+                color={colors.success}
+                style={styles.ctaButton}
+              >
+                Quick Accept
+              </Button>
+            )}
+            {!!onAcceptPress && (
+              <Button
+                onPress={handleAccept}
+                disabled={isScattering}
+                flex
+                color={colors.electricBlue}
+              >
+                Edit & Accept
+              </Button>
+            )}
+          </View>
           <Button
             onPress={handleDismissPress}
             disabled={isScattering}
             isLoading={isDeleting}
-            flex
-            variant="danger"
+            variant="secondary"
+            textColor={colors.error}
+            style={{ borderColor: colors.error, backgroundColor: colors.error + '1A' }}
           >
-            Dismiss
-          </Button>
-          <Button
-            onPress={handleAccept}
-            disabled={!onAcceptPress || isScattering}
-            flex
-            color={colors.success}
-            style={styles.ctaButton}
-          >
-            Create Task
+            Dismiss Report
           </Button>
         </View>
       );
     }
 
-    if (status === 'task_created' || status === 'resolved') {
+    if (status === 'resolved') {
       return (
         <View style={styles.actionsContainer}>
           <View style={styles.closedStatus}>
@@ -187,9 +233,7 @@ export function DefectReportDetailModal({
               size={20}
               color={DEFECT_STATUS_CONFIG[status]?.color ?? colors.textSecondary}
             />
-            <AppText style={styles.closedStatusText}>
-              {status === 'task_created' ? 'Maintenance Task Created' : 'Resolved'}
-            </AppText>
+            <AppText style={styles.closedStatusText}>Resolved</AppText>
           </View>
         </View>
       );
@@ -209,9 +253,13 @@ export function DefectReportDetailModal({
       <View style={sheetLayout.containerCompact}>
         <SheetHeader
           icon="warning"
-          title="Defect Report"
+          title={defect?.status === 'task_created' ? 'Accepted Defect Report' : 'Defect Report'}
           onClose={onClose}
-          backgroundColor={colors.defectYellow}
+          backgroundColor={
+            defect?.status === 'task_created'
+              ? colors.maintenanceStatus.in_progress
+              : colors.defectYellow
+          }
         />
 
         {isLoading || !defect ? (
@@ -257,11 +305,67 @@ export function DefectReportDetailModal({
 
             <View style={styles.divider} />
 
-            {/* Description */}
-            {defect.description && (
+            {/* Linked Maintenance Task (hidden in compact mode) */}
+            {variant === 'full' && defect.maintenanceRecordId && (
               <Animated.View style={getAnimatedStyle(1)}>
-                <AppText style={styles.detailLabel}>Description</AppText>
-                <AppText style={styles.descriptionText}>{defect.description}</AppText>
+                <View style={styles.sectionGroup}>
+                  <AppText style={styles.sectionTitle}>Linked Maintenance Task</AppText>
+                  {linkedMaintenance &&
+                    (() => {
+                      const visualConfig = getMaintenanceVisualConfig(
+                        linkedMaintenance.status,
+                        linkedMaintenance.dueDate
+                      );
+                      return (
+                        <TouchableOpacity
+                          style={[
+                            maintenanceCardStyles.containerInline,
+                            {
+                              borderLeftColor: visualConfig.color,
+                              backgroundColor: visualConfig.color + '1A',
+                            },
+                          ]}
+                          onPress={handleViewLinkedTask}
+                          activeOpacity={0.7}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Linked task ${linkedMaintenance.title}, status ${linkedMaintenance.status}`}
+                        >
+                          <View style={maintenanceCardStyles.cardRow}>
+                            <View style={maintenanceCardStyles.cardIconContainer}>
+                              <Ionicons
+                                name={visualConfig.icon}
+                                size={32}
+                                color={visualConfig.color}
+                              />
+                            </View>
+                            <View style={maintenanceCardStyles.cardBody}>
+                              <View style={maintenanceCardStyles.cardContentRow}>
+                                <AppText style={maintenanceCardStyles.cardTitle} numberOfLines={1}>
+                                  {asset?.assetNumber
+                                    ? formatAssetNumber(asset.assetNumber)
+                                    : 'Unknown Asset'}
+                                </AppText>
+                                <View style={maintenanceCardStyles.cardBadges}>
+                                  <MaintenanceStatusBadge status={linkedMaintenance.status} />
+                                </View>
+                              </View>
+                              <View style={maintenanceCardStyles.cardFooter}>
+                                <AppText
+                                  style={maintenanceCardStyles.cardSecondaryText}
+                                  numberOfLines={1}
+                                >
+                                  {linkedMaintenance.description || linkedMaintenance.title}
+                                </AppText>
+                                <AppText style={maintenanceCardStyles.cardTime}>
+                                  {formatRelativeTime(linkedMaintenance.createdAt)}
+                                </AppText>
+                              </View>
+                            </View>
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    })()}
+                </View>
               </Animated.View>
             )}
 
@@ -299,38 +403,45 @@ export function DefectReportDetailModal({
               </Animated.View>
             )}
 
-            {/* Linked Maintenance Task (hidden in compact mode) */}
-            {variant === 'full' && defect.maintenanceRecordId && (
+            {/* Description */}
+            {defect.description && (
               <Animated.View style={getAnimatedStyle(3)}>
-                <View style={styles.sectionGroup}>
-                  <AppText style={styles.sectionTitle}>Linked Maintenance Task</AppText>
-                  <TouchableOpacity
-                    style={styles.linkedTaskRow}
-                    onPress={handleViewLinkedTask}
-                    activeOpacity={0.7}
-                  >
-                    <View style={{ flex: 1 }}>
-                      {linkedMaintenance && (
-                        <AppText style={styles.detailValue}>{linkedMaintenance.title}</AppText>
-                      )}
-                      <AppText style={styles.linkedTaskHint}>Tap to view task details</AppText>
-                    </View>
-                    <Ionicons name="chevron-forward" size={18} color={colors.electricBlue} />
-                  </TouchableOpacity>
-                </View>
+                <AppText style={styles.detailLabel}>Description</AppText>
+                <AppText style={styles.descriptionText}>{defect.description}</AppText>
               </Animated.View>
             )}
 
             {/* Timeline (hidden in compact mode) */}
-            {variant === 'full' && (defect.acceptedAt || defect.resolvedAt) && (
+            {variant === 'full' && (
               <Animated.View style={getAnimatedStyle(4)}>
                 <View style={styles.sectionGroup}>
                   <AppText style={styles.sectionTitle}>Timeline</AppText>
                   <View style={styles.timelineContainer}>
+                    <View style={styles.timelineItem}>
+                      <View style={styles.timelineDotWrap}>
+                        <View
+                          style={[styles.timelineDot, { backgroundColor: colors.defectYellow }]}
+                        />
+                        {(defect.acceptedAt || defect.resolvedAt) && (
+                          <View style={styles.timelineLine} />
+                        )}
+                      </View>
+                      <View style={styles.timelineContent}>
+                        <AppText style={styles.timelineLabel}>Reported</AppText>
+                        <AppText style={styles.timelineValue}>
+                          {formatRelativeTime(defect.createdAt)}
+                        </AppText>
+                      </View>
+                    </View>
                     {defect.acceptedAt && (
                       <View style={styles.timelineItem}>
                         <View style={styles.timelineDotWrap}>
-                          <View style={[styles.timelineDot, { backgroundColor: colors.success }]} />
+                          <View
+                            style={[
+                              styles.timelineDot,
+                              { backgroundColor: colors.maintenanceStatus.in_progress },
+                            ]}
+                          />
                           {defect.resolvedAt && <View style={styles.timelineLine} />}
                         </View>
                         <View style={styles.timelineContent}>
@@ -344,7 +455,7 @@ export function DefectReportDetailModal({
                     {defect.resolvedAt && (
                       <View style={styles.timelineItem}>
                         <View style={styles.timelineDotWrap}>
-                          <View style={[styles.timelineDot, { backgroundColor: colors.info }]} />
+                          <View style={[styles.timelineDot, { backgroundColor: colors.success }]} />
                         </View>
                         <View style={styles.timelineContent}>
                           <AppText style={styles.timelineLabel}>Resolved</AppText>
@@ -465,22 +576,11 @@ const styles = StyleSheet.create({
     color: colors.text,
     lineHeight: lineHeight.relaxed,
   },
-  linkedTaskRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    padding: spacing.base,
-    backgroundColor: 'rgba(0, 168, 255, 0.06)',
-    borderRadius: borderRadius.md,
-    borderLeftWidth: 3,
-    borderLeftColor: colors.electricBlue,
-  },
-  linkedTaskHint: {
-    fontSize: fontSize.xs,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
   actionsContainer: {
+    flexDirection: 'column',
+    gap: spacing.md,
+  },
+  actionsRow: {
     flexDirection: 'row',
     gap: spacing.md,
   },
@@ -502,6 +602,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     overflow: 'hidden',
     aspectRatio: 4 / 3,
+    backgroundColor: colors.surface,
     shadowColor: '#000030',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,

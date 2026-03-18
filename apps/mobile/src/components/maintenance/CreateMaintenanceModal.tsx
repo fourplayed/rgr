@@ -73,7 +73,7 @@ export function CreateMaintenanceModal({
   const [dueDate, setDueDate] = useState('');
 
   const [error, setError] = useState<string | null>(null);
-  const [calendarExpanded, setCalendarExpanded] = useState(false);
+  const [_calendarExpanded, setCalendarExpanded] = useState(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally recompute `today` when modal becomes visible so the calendar always shows the current date
   const today = useMemo(() => new Date(), [visible]);
 
@@ -226,7 +226,7 @@ export function CreateMaintenanceModal({
       onExitComplete={onExitComplete}
       noBackdrop={noBackdrop}
       preventDismissWhileBusy={isPending}
-      snapPoint={calendarExpanded ? '95%' : '92%'}
+      snapPoint="85%"
     >
       <View style={sheetLayout.container}>
         <SheetHeader

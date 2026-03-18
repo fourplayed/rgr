@@ -152,7 +152,7 @@ export function ScanSuccessFlash({
             const loop = Animated.loop(
               Animated.sequence([
                 Animated.timing(hintOpacity, {
-                  toValue: 0.4,
+                  toValue: 0.5,
                   duration: 1200,
                   easing: Easing.inOut(Easing.ease),
                   useNativeDriver: true,
@@ -163,7 +163,8 @@ export function ScanSuccessFlash({
                   easing: Easing.inOut(Easing.ease),
                   useNativeDriver: true,
                 }),
-              ])
+              ]),
+              { resetBeforeIteration: false }
             );
             hintLoopRef.current = loop;
             loop.start();

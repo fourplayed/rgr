@@ -136,7 +136,14 @@ function PhotoReviewSheetComponent({
       {/* ── Fixed footer buttons ── */}
       <View style={[sheetLayout.footer, styles.buttonRow]}>
         <Animated.View style={[styles.flexOne, { opacity: retakeOpacity }]}>
-          <Button onPress={handleRetake} disabled={isUploading} flex color={colors.electricBlue}>
+          <Button
+            onPress={handleRetake}
+            disabled={isUploading}
+            flex
+            variant="secondary"
+            textColor={colors.error}
+            style={{ borderColor: colors.error, backgroundColor: colors.error + '1A' }}
+          >
             Recapture
           </Button>
         </Animated.View>
@@ -331,6 +338,7 @@ const styles = StyleSheet.create({
   flexOne: {
     flexGrow: 1,
     flexShrink: 1,
+    flexBasis: 0,
   },
   errorContainer: {
     marginBottom: spacing.md,

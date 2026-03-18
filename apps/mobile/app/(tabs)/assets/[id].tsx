@@ -349,8 +349,12 @@ export default function AssetDetailScreen() {
   // Assessment fetches all data sources unconditionally (not tab-gated)
   const assessment = useAssetAssessment(asset);
 
-  // Gate tab-specific queries: activity + maintenance tabs share scans/maintenance/defects
-  const activityOrMaint = activeTab === 'activity' || activeTab === 'maintenance';
+  // Gate tab-specific queries on visibleTab (not activeTab) so data stays alive during fade-out
+  const activityOrMaint =
+    visibleTab === 'activity' ||
+    visibleTab === 'maintenance' ||
+    activeTab === 'activity' ||
+    activeTab === 'maintenance';
 
   const { data: scans = [], isLoading: scansLoading } = useAssetScans(
     activityOrMaint ? id : undefined
@@ -361,7 +365,8 @@ export default function AssetDetailScreen() {
   const { data: defectReports = [] } = useAssetDefectReports(activityOrMaint ? id : undefined);
 
   // Photos tab only
-  const { data: photos = [] } = useAssetPhotos(activeTab === 'photos' ? id : undefined);
+  const photosNeeded = visibleTab === 'photos' || activeTab === 'photos';
+  const { data: photos = [] } = useAssetPhotos(photosNeeded ? id : undefined);
 
   // Maintenance IDs that are linked to defect reports (used by activity + maintenance tabs)
   const defectLinkedMaintenanceIds = useMemo(

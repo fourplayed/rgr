@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CameraView } from 'expo-camera';
 import * as FileSystem from 'expo-file-system';
+import { onlineManager } from '@tanstack/react-query';
 import { usePhotoCaptureStore } from '../store/photoCaptureStore';
 import { useUploadPhoto } from './usePhotos';
 import { useAuthStore } from '../store/authStore';
@@ -8,6 +9,7 @@ import { MAX_PHOTO_SIZE_BYTES } from '@rgr/shared';
 import type { PhotoType } from '@rgr/shared';
 import { generateThumbnail } from '../utils/imageUtils';
 import { logger } from '../utils/logger';
+import { enqueueMutation, copyPhotoToOfflineStorage } from '../utils/offlineMutationQueue';
 
 export type UploadStep = 'validating' | 'thumbnail' | 'uploading' | 'complete' | null;
 
@@ -146,6 +148,31 @@ export function usePhotoCapture() {
           setIsUploading(false);
           setUploadStep(null);
           return false;
+        }
+
+        // Offline path: persist photo locally and enqueue for later replay
+        if (!onlineManager.isOnline()) {
+          const userId = useAuthStore.getState().user?.id;
+          if (!userId) throw new Error('Not authenticated');
+          const mutationId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+          const persistentUri = await copyPhotoToOfflineStorage(capturedUri, mutationId);
+          await enqueueMutation({
+            type: 'photo',
+            payload: {
+              assetId,
+              scanEventId: scanEventId ?? null,
+              localUri: persistentUri,
+              photoType,
+              uploadedBy: userId,
+              mimeType: 'image/jpeg',
+              originalFilename: `${mutationId}.jpg`,
+              latitude: latitude ?? null,
+              longitude: longitude ?? null,
+            },
+          });
+          setUploadStep('complete');
+          reset();
+          return true;
         }
 
         setUploadStep('thumbnail');

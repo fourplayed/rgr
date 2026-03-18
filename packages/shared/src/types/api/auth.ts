@@ -2,6 +2,12 @@ import { z } from 'zod';
 import { UserRoleSchema, type UserRole } from '../enums/UserRole';
 import { safeParseEnum } from '../../utils/safeParseEnum';
 
+export const NotificationPreferencesSchema = z
+  .object({ rego_expiry: z.boolean() })
+  .catchall(z.boolean());
+
+export type NotificationPreferences = z.infer<typeof NotificationPreferencesSchema>;
+
 /**
  * User profile interface
  * Represents the profiles table data with TypeScript types
@@ -31,6 +37,8 @@ export interface Profile {
   createdAt: string;
   /** Last update timestamp */
   updatedAt: string;
+  /** Per-type notification delivery preferences */
+  notificationPreferences: NotificationPreferences;
 }
 
 /**
@@ -67,6 +75,7 @@ export interface ProfileRow {
   last_login_at: string | null;
   created_at: string;
   updated_at: string;
+  notification_preferences: Record<string, boolean>;
 }
 
 /**
@@ -144,6 +153,7 @@ export interface UpdateProfileInput {
   avatarUrl?: string | null;
   employeeId?: string | null;
   depot?: string | null;
+  notificationPreferences?: NotificationPreferences;
 }
 
 export const UpdateProfileInputSchema = z.object({
@@ -152,6 +162,7 @@ export const UpdateProfileInputSchema = z.object({
   avatarUrl: z.string().url().nullable().optional(),
   employeeId: z.string().max(50).nullable().optional(),
   depot: z.string().max(100).nullable().optional(),
+  notificationPreferences: NotificationPreferencesSchema.optional(),
 });
 
 /**
@@ -225,6 +236,9 @@ export function mapRowToProfile(row: ProfileRow): Profile {
     lastLoginAt: row.last_login_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    notificationPreferences: NotificationPreferencesSchema.catch({ rego_expiry: true }).parse(
+      row.notification_preferences ?? {}
+    ),
   };
 }
 
@@ -241,6 +255,9 @@ export function mapProfileToUpdate(profile: UpdateProfileInput): ProfileUpdateRo
   if (profile.avatarUrl !== undefined) updates['avatar_url'] = profile.avatarUrl;
   if (profile.employeeId !== undefined) updates['employee_id'] = profile.employeeId;
   if (profile.depot !== undefined) updates['depot'] = profile.depot;
+  if (profile.notificationPreferences !== undefined) {
+    updates['notification_preferences'] = profile.notificationPreferences;
+  }
 
   return updates;
 }

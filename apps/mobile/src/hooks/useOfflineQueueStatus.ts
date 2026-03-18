@@ -1,16 +1,23 @@
 import { useState, useEffect, useCallback } from 'react';
 import NetInfo from '@react-native-community/netinfo';
-import { getQueueLength } from '../utils/offlineMutationQueue';
+import { getQueueSummary, MutationType } from '../utils/offlineMutationQueue';
 
-/** Polls the offline mutation queue length every 10s and on NetInfo changes. */
-export function useOfflineQueueStatus(): number {
-  const [count, setCount] = useState(0);
+export type QueueSummary = Record<MutationType, number>;
+
+/** Polls the offline mutation queue grouped by type every 10s and on NetInfo changes. */
+export function useOfflineQueueStatus(): { total: number; summary: QueueSummary } {
+  const [summary, setSummary] = useState<QueueSummary>({
+    scan: 0,
+    defect_report: 0,
+    maintenance: 0,
+    photo: 0,
+  });
 
   const refresh = useCallback(async () => {
     try {
-      setCount(await getQueueLength());
+      setSummary(await getQueueSummary());
     } catch {
-      // AsyncStorage read failed — leave count as-is
+      // AsyncStorage read failed — leave summary as-is
     }
   }, []);
 
@@ -26,5 +33,6 @@ export function useOfflineQueueStatus(): number {
     };
   }, [refresh]);
 
-  return count;
+  const total = summary.scan + summary.defect_report + summary.maintenance + summary.photo;
+  return { total, summary };
 }

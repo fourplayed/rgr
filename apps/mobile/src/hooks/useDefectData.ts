@@ -64,7 +64,13 @@ export function useDefectReportList(filters: DefectFilters = {}) {
         limit: number;
         cursor?: DefectCursor;
         staleCutoffDays?: number;
-      } = { limit: 20, staleCutoffDays: 7 };
+      } = { limit: 20 };
+
+      // Only apply stale cutoff when user hasn't explicitly filtered for resolved
+      const explicitlyFiltersResolved = filters.status?.includes('resolved');
+      if (!explicitlyFiltersResolved) {
+        params.staleCutoffDays = 7;
+      }
 
       if (filters.status) params.status = filters.status;
       if (filters.assetId) params.assetId = filters.assetId;

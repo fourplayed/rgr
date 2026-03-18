@@ -28,6 +28,7 @@ export function DefectMaintenanceModals({
   closeModal,
   handleExitComplete,
   handleAcceptPress,
+  handleQuickAcceptPress,
   handleViewTaskPress,
   handleAcceptSubmit,
   handleDismissConfirmed,
@@ -55,6 +56,7 @@ export function DefectMaintenanceModals({
         defectId={modal.type === 'defectDetail' ? modal.defectId : null}
         onClose={closeModal}
         onAcceptPress={handleAcceptPress}
+        onQuickAcceptPress={handleQuickAcceptPress}
         onViewTaskPress={handleViewTaskPress}
         onDismissConfirmed={handleDismissConfirmed}
         noBackdrop

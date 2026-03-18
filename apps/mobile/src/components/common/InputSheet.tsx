@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     paddingHorizontal: spacing.base,
     paddingVertical: spacing.md,
-    fontSize: fontSize.base,
+    fontSize: fontSize.sm,
     fontFamily: fonts.regular,
     color: colors.text,
     marginBottom: spacing.lg,

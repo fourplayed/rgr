@@ -37,17 +37,37 @@ jest.mock('../logger', () => ({
   },
 }));
 
+jest.mock('expo-file-system', () => ({
+  documentDirectory: 'file:///documents/',
+  getInfoAsync: jest.fn(),
+  makeDirectoryAsync: jest.fn(() => Promise.resolve()),
+  copyAsync: jest.fn(() => Promise.resolve()),
+  deleteAsync: jest.fn(() => Promise.resolve()),
+  readDirectoryAsync: jest.fn(() => Promise.resolve([])),
+}));
+
 // ── Imports (after mocks are hoisted) ──────────────────────────────────────────
 
 const mockAsyncStorage = require('@react-native-async-storage/async-storage').default;
 const { logger } = require('../logger');
 const { onlineManager } = require('@tanstack/react-query');
 const mockIsOnline = onlineManager.isOnline as jest.Mock;
+const mockFileSystem = require('expo-file-system') as {
+  documentDirectory: string;
+  getInfoAsync: jest.Mock;
+  makeDirectoryAsync: jest.Mock;
+  copyAsync: jest.Mock;
+  deleteAsync: jest.Mock;
+  readDirectoryAsync: jest.Mock;
+};
 
 import {
   enqueueMutation,
   enqueueScan,
   getQueueLength,
+  getQueueSummary,
+  copyPhotoToOfflineStorage,
+  cleanOrphanedPhotos,
   replayQueue,
   clearQueue,
   abortReplay,
@@ -88,6 +108,7 @@ function makeHandlers(overrides?: Partial<ReplayHandlers>): ReplayHandlers {
     scan: jest.fn(() => Promise.resolve(okResult)),
     defect_report: jest.fn(() => Promise.resolve(okResult)),
     maintenance: jest.fn(() => Promise.resolve(okResult)),
+    photo: jest.fn(() => Promise.resolve(okResult)),
     ...overrides,
   };
 }
@@ -98,6 +119,7 @@ function makeFailingHandlers(overrides?: Partial<ReplayHandlers>): ReplayHandler
     scan: jest.fn(() => Promise.resolve(failResult)),
     defect_report: jest.fn(() => Promise.resolve(failResult)),
     maintenance: jest.fn(() => Promise.resolve(failResult)),
+    photo: jest.fn(() => Promise.resolve(failResult)),
     ...overrides,
   };
 }
@@ -820,6 +842,103 @@ describe('offlineMutationQueue', () => {
         ])
       );
       expect(await getQueueLength()).toBe(3);
+    });
+  });
+
+  // ── photo mutation support ─────────────────────────────────────────────────
+
+  describe('photo mutation support', () => {
+    it('enqueues a photo mutation with all required fields', async () => {
+      await enqueueMutation({
+        type: 'photo',
+        payload: {
+          assetId: 'asset-1',
+          scanEventId: 'scan-1',
+          localUri: '/path/to/photo.jpg',
+          photoType: 'freight',
+          uploadedBy: 'user-1',
+          mimeType: 'image/jpeg',
+          originalFilename: 'photo.jpg',
+        },
+      });
+      const queue = await readRawQueue();
+      expect(queue).toHaveLength(1);
+      expect(queue[0]!.type).toBe('photo');
+      expect(queue[0]!.payload['uploadedBy']).toBe('user-1');
+      expect(queue[0]!.payload['mimeType']).toBe('image/jpeg');
+      expect(queue[0]!.payload['photoType']).toBe('freight');
+    });
+
+    it('photo entries persist through getQueueLength (not filtered by isQueuedMutation)', async () => {
+      await enqueueMutation({
+        type: 'photo',
+        payload: {
+          assetId: 'a-1',
+          uploadedBy: 'u-1',
+          photoType: 'freight',
+          localUri: '/x.jpg',
+          mimeType: 'image/jpeg',
+          originalFilename: 'x.jpg',
+        },
+      });
+      expect(await getQueueLength()).toBe(1);
+    });
+  });
+
+  // ── getQueueSummary ────────────────────────────────────────────────────────
+
+  describe('getQueueSummary', () => {
+    it('returns counts grouped by mutation type', async () => {
+      await seedQueue([
+        makeEntry({ type: 'scan' }),
+        makeEntry({ type: 'scan' }),
+        makeEntry({ type: 'photo' }),
+        makeEntry({ type: 'defect_report' }),
+      ]);
+      const summary = await getQueueSummary();
+      expect(summary).toEqual({
+        scan: 2,
+        defect_report: 1,
+        maintenance: 0,
+        photo: 1,
+      });
+    });
+
+    it('returns all zeros for empty queue', async () => {
+      const summary = await getQueueSummary();
+      expect(summary).toEqual({
+        scan: 0,
+        defect_report: 0,
+        maintenance: 0,
+        photo: 0,
+      });
+    });
+  });
+
+  // ── photo file persistence ─────────────────────────────────────────────────
+
+  describe('photo file persistence', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      mockIsOnline.mockReturnValue(true);
+    });
+
+    it('copyPhotoToOfflineStorage copies file and returns persistent URI', async () => {
+      mockFileSystem.getInfoAsync.mockResolvedValue({ exists: true });
+      mockFileSystem.copyAsync.mockResolvedValue(undefined);
+
+      const persistentUri = await copyPhotoToOfflineStorage(
+        '/tmp/camera-photo.jpg',
+        'test-mutation-id'
+      );
+      expect(persistentUri).toContain('offline-photos/test-mutation-id.jpg');
+    });
+
+    it('cleanOrphanedPhotos removes files not in queue', async () => {
+      mockFileSystem.getInfoAsync.mockResolvedValue({ exists: true });
+      mockFileSystem.readDirectoryAsync.mockResolvedValue([]);
+
+      await expect(cleanOrphanedPhotos()).resolves.not.toThrow();
     });
   });
 

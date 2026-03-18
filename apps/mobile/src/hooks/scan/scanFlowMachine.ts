@@ -115,6 +115,7 @@ export function scanFlowReducer(state: ScanFlowState, action: ScanFlowAction): S
       return { phase: 'scanning', scanStep: action.scanStep };
 
     case 'INVALID_QR':
+      if (state.phase !== 'idle' && state.phase !== 'scanning') return state;
       return { phase: 'scanning', scanStep: 'invalid' };
 
     case 'CLEAR_INVALID_STATUS':

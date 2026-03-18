@@ -126,6 +126,7 @@ async function sendNotification(
         body,
         data,
         targetRoles: ['superuser', 'manager'],
+        notificationType: 'rego_expiry',
       }),
     });
 

@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing.base,
-    fontSize: fontSize.base,
+    fontSize: fontSize.sm,
     fontFamily: fonts.regular,
     color: colors.text,
     minHeight: 100,
