@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { onlineManager } from '@tanstack/react-query';
+import * as FileSystem from 'expo-file-system';
 import type { CreateScanEventInput, ServiceResult } from '@rgr/shared';
 import { logger } from './logger';
 
@@ -187,6 +188,86 @@ export async function getQueueLength(): Promise<number> {
   return queue.length;
 }
 
+/**
+ * Get a count of queued mutations grouped by type.
+ */
+export async function getQueueSummary(): Promise<Record<MutationType, number>> {
+  const queue = await getQueue();
+  const summary: Record<MutationType, number> = {
+    scan: 0,
+    defect_report: 0,
+    maintenance: 0,
+    photo: 0,
+  };
+  for (const entry of queue) {
+    if (entry.type in summary) {
+      summary[entry.type]++;
+    }
+  }
+  return summary;
+}
+
+const OFFLINE_PHOTOS_DIR = `${FileSystem.documentDirectory}offline-photos/`;
+
+/**
+ * Copy a temporary camera photo to a persistent offline storage directory.
+ * Returns the persistent URI that should be stored in the mutation payload.
+ */
+export async function copyPhotoToOfflineStorage(
+  tempUri: string,
+  mutationId: string
+): Promise<string> {
+  const dirInfo = await FileSystem.getInfoAsync(OFFLINE_PHOTOS_DIR);
+  if (!dirInfo.exists) {
+    await FileSystem.makeDirectoryAsync(OFFLINE_PHOTOS_DIR, { intermediates: true });
+  }
+  const persistentUri = `${OFFLINE_PHOTOS_DIR}${mutationId}.jpg`;
+  await FileSystem.copyAsync({ from: tempUri, to: persistentUri });
+  return persistentUri;
+}
+
+/**
+ * Delete a single offline photo file. Non-fatal if the file is already gone.
+ */
+export async function deleteOfflinePhoto(localUri: string): Promise<void> {
+  try {
+    const info = await FileSystem.getInfoAsync(localUri);
+    if (info.exists) {
+      await FileSystem.deleteAsync(localUri, { idempotent: true });
+    }
+  } catch {
+    // Non-fatal: file may already be gone
+  }
+}
+
+/**
+ * Remove any photo files in the offline-photos directory that are no longer
+ * referenced by a queued mutation. Runs as best-effort cleanup (errors are swallowed).
+ */
+export async function cleanOrphanedPhotos(): Promise<void> {
+  try {
+    const dirInfo = await FileSystem.getInfoAsync(OFFLINE_PHOTOS_DIR);
+    if (!dirInfo.exists) return;
+
+    const files = await FileSystem.readDirectoryAsync(OFFLINE_PHOTOS_DIR);
+    if (files.length === 0) return;
+
+    const queue = await getQueue();
+    const referencedUris = new Set(
+      queue.filter((e) => e.type === 'photo').map((e) => String(e.payload.localUri))
+    );
+
+    for (const file of files) {
+      const fullPath = `${OFFLINE_PHOTOS_DIR}${file}`;
+      if (!referencedUris.has(fullPath)) {
+        await FileSystem.deleteAsync(fullPath, { idempotent: true });
+      }
+    }
+  } catch {
+    // Non-fatal: cleanup is best-effort
+  }
+}
+
 // Concurrency guard: prevents duplicate submissions when NetInfo fires
 // rapid reconnect events (e.g., flaky cellular).
 let _isReplaying = false;
@@ -212,19 +293,30 @@ export async function replayQueue(
 
     // Filter out stale entries older than TTL
     const now = Date.now();
-    const before = queue.length;
-    queue = queue.filter((entry) => {
+    const staleEntries: QueuedMutation[] = [];
+    const freshEntries: QueuedMutation[] = [];
+    for (const entry of queue) {
       const queuedMs = new Date(entry.queuedAt).getTime();
       if (Number.isNaN(queuedMs)) {
         logger.warn(
           `Dropping queued mutation ${entry.id} with unparseable date: ${entry.queuedAt}`
         );
-        return false;
+        staleEntries.push(entry);
+      } else if (now - queuedMs >= TTL_MS) {
+        staleEntries.push(entry);
+      } else {
+        freshEntries.push(entry);
       }
-      return now - queuedMs < TTL_MS;
-    });
-    if (queue.length < before) {
-      logger.info(`Dropped ${before - queue.length} stale queued mutation(s) (>48h old)`);
+    }
+    queue = freshEntries;
+    if (staleEntries.length > 0) {
+      // Delete photo files for stale photo mutations before discarding them
+      for (const staleEntry of staleEntries) {
+        if (staleEntry.type === 'photo' && typeof staleEntry.payload.localUri === 'string') {
+          await deleteOfflinePhoto(staleEntry.payload.localUri);
+        }
+      }
+      logger.info(`Dropped ${staleEntries.length} stale queued mutation(s) (>48h old)`);
       await saveQueue(queue);
     }
 
