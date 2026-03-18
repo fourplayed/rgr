@@ -27,6 +27,12 @@ interface AlertSheetProps {
   onAction?: () => void;
   /** 'stacked' (default) or 'row' for side-by-side buttons. */
   buttonLayout?: 'stacked' | 'row';
+  /** Override the title-row icon (instead of the default for the alert type). */
+  iconOverride?: keyof typeof Ionicons.glyphMap;
+  /** Override the title-row icon color (instead of the default for the alert type). */
+  iconColorOverride?: string;
+  /** Style the dismiss/cancel button as destructive (red border + tinted background). */
+  destructiveCancel?: boolean;
 }
 
 const alertConfig: Record<AlertType, { icon: keyof typeof Ionicons.glyphMap; color: string }> = {
@@ -46,6 +52,9 @@ export function AlertSheet({
   actionLabel,
   onAction,
   buttonLayout = 'stacked',
+  iconOverride,
+  iconColorOverride,
+  destructiveCancel = false,
 }: AlertSheetProps) {
   const config = alertConfig[type];
   const sheetBottomPadding = useSheetBottomPadding();
@@ -54,16 +63,29 @@ export function AlertSheet({
     <BottomSheet visible={visible} onDismiss={onDismiss}>
       <View style={[styles.content, { paddingBottom: sheetBottomPadding }]}>
         <View style={styles.titleRow}>
-          <View style={[styles.iconCircle, { backgroundColor: config.color }]}>
-            <Ionicons name={config.icon} size={20} color="#fff" />
-          </View>
+          {iconOverride ? (
+            <Ionicons name={iconOverride} size={28} color={iconColorOverride ?? config.color} />
+          ) : (
+            <View style={[styles.iconCircle, { backgroundColor: config.color }]}>
+              <Ionicons name={config.icon} size={20} color="#fff" />
+            </View>
+          )}
           <AppText style={styles.title}>{title}</AppText>
         </View>
         <AppText style={styles.message}>{message}</AppText>
 
         {buttonLayout === 'row' && actionLabel && onAction ? (
           <View style={styles.buttonRow}>
-            <Button onPress={onDismiss} variant="secondary" flex accessibilityLabel={buttonLabel}>
+            <Button
+              onPress={onDismiss}
+              variant="secondary"
+              flex
+              {...(destructiveCancel && {
+                textColor: colors.error,
+                style: styles.destructiveCancel,
+              })}
+              accessibilityLabel={buttonLabel}
+            >
               {buttonLabel}
             </Button>
             <Button
@@ -147,5 +169,9 @@ const styles = StyleSheet.create({
   actionButton: {
     alignSelf: 'stretch',
     marginTop: spacing.sm,
+  },
+  destructiveCancel: {
+    borderColor: colors.error,
+    backgroundColor: colors.error + '1A',
   },
 });

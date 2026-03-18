@@ -223,6 +223,9 @@ export default function SettingsScreen() {
             actionLabel="Sign Out"
             onAction={handleLogoutConfirm}
             buttonLayout="row"
+            iconOverride="log-out-outline"
+            iconColorOverride={colors.electricBlue}
+            destructiveCancel
           />
         </View>
       </View>

@@ -40,9 +40,12 @@ export default defineConfig({
   },
   clearScreen: false,
   test: {
-    pool: process.env.CI ? 'forks' : 'threads',
+    pool: 'forks',
     poolOptions: {
-      forks: { maxForks: 2 },
+      forks: {
+        minForks: 1,
+        maxForks: process.env.CI ? 2 : undefined,
+      },
     },
     setupFiles: ['./src/test/setup.ts'],
     environment: 'jsdom',
