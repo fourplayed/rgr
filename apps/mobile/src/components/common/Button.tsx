@@ -121,7 +121,13 @@ export function Button({
       accessibilityLabel={accessibilityLabel ?? children}
     >
       {useGradient ? (
-        <Animated.View style={[flex && styles.flex, style, { transform: [{ scale }] }]}>
+        <Animated.View
+          style={[
+            flex && styles.flex,
+            style,
+            { backgroundColor: color, borderRadius: borderRadius.md, transform: [{ scale }] },
+          ]}
+        >
           <LinearGradient
             colors={[color!, gradientEnd]}
             start={{ x: 0, y: 0 }}

@@ -441,10 +441,9 @@ export function MaintenanceDetailModal({
       noBackdrop={noBackdrop}
       {...(variant === 'compact'
         ? { compact: true }
-        : {
-            keyboardAware: isEditing || editingNotes,
-            snapPoint: isEditing ? '92%' : '85%',
-          })}
+        : isEditing || editingNotes
+          ? { keyboardAware: true, snapPoint: '92%' }
+          : { snapPoint: '55%' })}
     >
       <View style={variant === 'compact' ? sheetLayout.containerCompact : sheetLayout.container}>
         <SheetHeader
@@ -672,7 +671,9 @@ export function MaintenanceDetailModal({
 
       {/* ── Fixed footer actions ── */}
       {statusActionsEl && (
-        <Animated.View style={[sheetLayout.footer, getAnimatedStyle(6)]}>
+        <Animated.View
+          style={[sheetLayout.footer, { paddingBottom: bottomPadding }, getAnimatedStyle(6)]}
+        >
           {statusActionsEl}
         </Animated.View>
       )}
@@ -808,6 +809,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     overflow: 'hidden',
     aspectRatio: 4 / 3,
+    backgroundColor: colors.surface,
     shadowColor: '#000030',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,

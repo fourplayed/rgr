@@ -184,31 +184,33 @@ export function DefectReportDetailModal({
     if (status === 'reported') {
       return (
         <View style={styles.actionsContainer}>
+          <View style={styles.actionsRow}>
+            {!!onQuickAcceptPress && (
+              <Button
+                onPress={handleQuickAcceptPress}
+                disabled={isScattering}
+                flex
+                color={colors.success}
+                style={styles.ctaButton}
+              >
+                Quick Accept
+              </Button>
+            )}
+            {!!onAcceptPress && (
+              <Button onPress={handleAccept} disabled={isScattering} flex variant="secondary">
+                Accept & Customise
+              </Button>
+            )}
+          </View>
           <Button
             onPress={handleDismissPress}
             disabled={isScattering}
             isLoading={isDeleting}
-            flex
-            variant="danger"
+            variant="secondary"
+            textColor={colors.error}
           >
-            Dismiss
+            Dismiss Report
           </Button>
-          {!!onQuickAcceptPress && (
-            <Button
-              onPress={handleQuickAcceptPress}
-              disabled={isScattering}
-              flex
-              color={colors.success}
-              style={styles.ctaButton}
-            >
-              Quick Accept
-            </Button>
-          )}
-          {!!onAcceptPress && (
-            <Button onPress={handleAccept} disabled={isScattering} flex variant="secondary">
-              Accept & Customise
-            </Button>
-          )}
         </View>
       );
     }
@@ -223,7 +225,7 @@ export function DefectReportDetailModal({
               color={DEFECT_STATUS_CONFIG[status]?.color ?? colors.textSecondary}
             />
             <AppText style={styles.closedStatusText}>
-              {status === 'task_created' ? 'Maintenance Task Created' : 'Resolved'}
+              {status === 'task_created' ? 'Escalated' : 'Resolved'}
             </AppText>
           </View>
         </View>
@@ -516,6 +518,10 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   actionsContainer: {
+    flexDirection: 'column',
+    gap: spacing.md,
+  },
+  actionsRow: {
     flexDirection: 'row',
     gap: spacing.md,
   },
@@ -537,6 +543,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     overflow: 'hidden',
     aspectRatio: 4 / 3,
+    backgroundColor: colors.surface,
     shadowColor: '#000030',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
