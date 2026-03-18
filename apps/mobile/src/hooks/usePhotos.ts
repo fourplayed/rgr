@@ -204,10 +204,8 @@ export function usePrefetchImages(photos: PhotoListItem[] | undefined) {
   useEffect(() => {
     if (!prefetchPaths.length) return;
 
-    const sortedKey = prefetchPaths.slice().sort().join(',');
-
     queryClient.prefetchQuery({
-      queryKey: [...photoKeys.all, 'signedUrls', sortedKey],
+      queryKey: [...photoKeys.all, 'signedUrls', pathsKey],
       queryFn: async () => {
         const result = await getSignedUrls(prefetchPaths);
         if (!result.success) throw new Error(result.error ?? 'Failed');

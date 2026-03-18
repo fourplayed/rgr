@@ -249,7 +249,7 @@ export default function RootLayout() {
               if (replayed > 0) {
                 queryClient.invalidateQueries({ queryKey: ['scans'] });
                 queryClient.invalidateQueries({ queryKey: ['assets', 'list'] });
-                queryClient.invalidateQueries({ queryKey: ['defect-reports'] });
+                queryClient.invalidateQueries({ queryKey: ['defects'] });
                 queryClient.invalidateQueries({ queryKey: ['maintenance'] });
                 queryClient.invalidateQueries({ queryKey: ['photos'] });
               }

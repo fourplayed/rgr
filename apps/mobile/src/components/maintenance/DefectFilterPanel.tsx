@@ -20,7 +20,7 @@ const STATUS_ORDER: DefectStatus[] = ['reported', 'task_created', 'resolved'];
 
 const DEFECT_STATUS_COLORS: Record<DefectStatus, string> = {
   reported: colors.defectYellow,
-  task_created: colors.info,
+  task_created: colors.neonViolet,
   resolved: colors.success,
   dismissed: colors.textSecondary,
 };

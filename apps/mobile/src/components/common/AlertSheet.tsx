@@ -2,10 +2,15 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
-import { spacing, fontSize, lineHeight, fontFamily as fonts } from '../../theme/spacing';
+import {
+  spacing,
+  fontSize,
+  lineHeight,
+  borderRadius,
+  fontFamily as fonts,
+} from '../../theme/spacing';
 import { BottomSheet } from './BottomSheet';
 import { Button } from './Button';
-import { SheetHeader } from './SheetHeader';
 import { AppText } from './AppText';
 import { useSheetBottomPadding } from '../../hooks/useSheetBottomPadding';
 
@@ -44,16 +49,21 @@ export function AlertSheet({
 
   return (
     <BottomSheet visible={visible} onDismiss={onDismiss}>
-      <SheetHeader
-        icon={config.icon}
-        title={title}
-        onClose={onDismiss}
-        backgroundColor={config.color}
-      />
       <View style={[styles.content, { paddingBottom: sheetBottomPadding }]}>
+        <View style={styles.titleRow}>
+          <View style={[styles.iconCircle, { backgroundColor: config.color }]}>
+            <Ionicons name={config.icon} size={20} color="#fff" />
+          </View>
+          <AppText style={styles.title}>{title}</AppText>
+        </View>
         <AppText style={styles.message}>{message}</AppText>
 
-        <Button onPress={onDismiss} style={styles.fullWidth} accessibilityLabel={buttonLabel}>
+        <Button
+          onPress={onDismiss}
+          style={styles.fullWidth}
+          color={colors.electricBlue}
+          accessibilityLabel={buttonLabel}
+        >
           {buttonLabel}
         </Button>
         {actionLabel && onAction && (
@@ -74,7 +84,28 @@ export function AlertSheet({
 const styles = StyleSheet.create({
   content: {
     paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xl,
     alignItems: 'center',
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  iconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: borderRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  title: {
+    fontSize: fontSize.lg,
+    fontFamily: fonts.bold,
+    color: colors.text,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   message: {
     fontSize: fontSize.base,

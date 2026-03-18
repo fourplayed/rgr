@@ -49,6 +49,11 @@ function isQueuedMutation(item: unknown): item is QueuedMutation {
   ) {
     return false;
   }
+  // photoStatus is required — reject entries missing it or with invalid values
+  const VALID_PHOTO_STATUSES = new Set(['pending', 'uploaded', 'failed']);
+  if (typeof o['photoStatus'] === 'string' && !VALID_PHOTO_STATUSES.has(o['photoStatus'])) {
+    return false;
+  }
   return true;
 }
 

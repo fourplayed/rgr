@@ -116,16 +116,19 @@ export function useDefectMaintenanceModals() {
         });
         closeModal();
       } catch (error) {
-        // Error propagates to React Query's onError handler
-        console.warn('Quick-accept failed:', error);
+        // Re-throw so React Query's onError handler can surface the error
+        throw error;
       }
     },
     [acceptDefect, closeModal]
   );
 
-  const handleDismissConfirmed = useCallback(() => {
-    closeModal();
-  }, [closeModal]);
+  const handleDismissConfirmed = useCallback(
+    (_defectId?: string) => {
+      closeModal();
+    },
+    [closeModal]
+  );
 
   // Convenience openers for screen-specific press handlers
   const openDefectDetail = useCallback(

@@ -200,26 +200,7 @@ export default function AssetListScreen() {
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.containerInner}>
-        <ScreenHeader
-          title="Fleet Assets"
-          compact
-          rightAction={
-            canAccessAdmin ? (
-              <TouchableOpacity
-                style={styles.addLink}
-                onPress={handleOpenCreate}
-                activeOpacity={0.6}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                accessibilityRole="button"
-                accessibilityLabel="Create new asset"
-                accessibilityHint="Double tap to add a new fleet asset"
-              >
-                <Ionicons name="add-circle-outline" size={16} color={colors.electricBlue} />
-                <AppText style={styles.addLinkText}>New Asset</AppText>
-              </TouchableOpacity>
-            ) : undefined
-          }
-        />
+        <ScreenHeader title="Fleet Assets" compact />
 
         <AssetFilterPanel
           statuses={filters.statuses}

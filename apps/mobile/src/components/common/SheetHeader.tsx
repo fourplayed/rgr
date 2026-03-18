@@ -23,6 +23,8 @@ interface SheetHeaderProps {
   headerAction?: HeaderAction | undefined;
   /** Override close button icon (e.g. 'arrow-back' for stacked screens). Default: 'close'. */
   closeIcon?: keyof typeof Ionicons.glyphMap;
+  /** Override top corner border radius (defaults to borderRadius.xl). */
+  borderRadius?: number;
   /** Optional content rendered below the header row, still within the colored background. */
   children?: React.ReactNode;
 }
@@ -36,11 +38,21 @@ export function SheetHeader({
   titleNumberOfLines = 1,
   titleStyle,
   headerAction,
+  borderRadius: borderRadiusOverride,
   closeIcon = 'close',
   children,
 }: SheetHeaderProps) {
   return (
-    <View style={[styles.headerContainer, { backgroundColor }]}>
+    <View
+      style={[
+        styles.headerContainer,
+        { backgroundColor },
+        borderRadiusOverride !== undefined && {
+          borderTopLeftRadius: borderRadiusOverride,
+          borderTopRightRadius: borderRadiusOverride,
+        },
+      ]}
+    >
       <View style={styles.header}>
         <View style={styles.headerRow}>
           <Ionicons name={icon} size={26} color={colors.textInverse} />
