@@ -8,6 +8,10 @@ import { Animated } from 'react-native';
  * Triggers on false→true edge of `visible`. Resets on close so
  * the next open plays the animation fresh.
  *
+ * ⚠️ Do not use inside BottomSheetScrollView — the Animated.View wrapper
+ * breaks gorhom's native keyboard scroll measurement. Use only for
+ * non-scrollable sheet content.
+ *
  * @param visible - whether the sheet is currently visible
  * @param delay - ms before animation starts (default 150)
  * @param duration - animation duration in ms (default 300)
