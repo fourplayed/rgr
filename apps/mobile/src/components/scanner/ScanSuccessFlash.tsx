@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useMemo } from 'react';
-import { StyleSheet, Animated, TouchableWithoutFeedback, View } from 'react-native';
+import { StyleSheet, Animated, TouchableWithoutFeedback, View, Easing } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { fontSize, spacing, fontFamily as fonts } from '../../theme/spacing';
@@ -152,13 +152,15 @@ export function ScanSuccessFlash({
             const loop = Animated.loop(
               Animated.sequence([
                 Animated.timing(hintOpacity, {
-                  toValue: 0.5,
-                  duration: 750,
+                  toValue: 0.4,
+                  duration: 1200,
+                  easing: Easing.inOut(Easing.ease),
                   useNativeDriver: true,
                 }),
                 Animated.timing(hintOpacity, {
-                  toValue: 0.9,
-                  duration: 750,
+                  toValue: 1.0,
+                  duration: 1200,
+                  easing: Easing.inOut(Easing.ease),
                   useNativeDriver: true,
                 }),
               ])
@@ -258,9 +260,6 @@ export function ScanSuccessFlash({
           end={{ x: 0.7, y: 1 }}
           style={styles.overlay}
         >
-          {/* Glow circle behind checkmark */}
-          <View style={styles.glowCircle} pointerEvents="none" />
-
           <Animated.View
             style={[
               styles.header,
@@ -315,16 +314,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  glowCircle: {
-    position: 'absolute',
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: '#34D399',
-    opacity: 0.25,
-    alignSelf: 'center',
-    top: 120,
   },
   header: {
     alignItems: 'center',
