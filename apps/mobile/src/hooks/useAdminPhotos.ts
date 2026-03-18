@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { adminListPhotos, bulkDeletePhotos, queryFromService } from '@rgr/shared';
-import type { AdminListPhotosParams } from '@rgr/shared';
+import { bulkDeletePhotos, queryFromService } from '@rgr/shared';
+import { adminListPhotos } from '@rgr/shared/admin';
+import type { AdminListPhotosParams } from '@rgr/shared/admin';
 import { photoKeys } from './usePhotos';
 import { useMutationFromService } from './useMutationFromService';
 

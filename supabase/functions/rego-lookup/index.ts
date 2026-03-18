@@ -224,34 +224,52 @@ async function checkRateLimit(
   key: string,
   maxPerMinute: number
 ): Promise<boolean> {
+  const now = new Date().toISOString();
   const windowStart = new Date(Date.now() - 60000).toISOString();
 
-  const { data } = await serviceClient
+  // Read current state
+  const { data: current } = await serviceClient
     .from('rate_limits')
-    .select('failures')
+    .select('failures, first_failure_at')
     .eq('key', key)
-    .gte('first_failure_at', windowStart)
     .maybeSingle();
 
-  if (data && data.failures >= maxPerMinute) {
-    return false; // rate limited
-  }
-
-  // Record this attempt
-  if (data) {
-    await serviceClient
-      .from('rate_limits')
-      .update({ failures: data.failures + 1 })
-      .eq('key', key);
-  } else {
+  if (!current) {
+    // No row — insert fresh counter
     await serviceClient.from('rate_limits').upsert({
       key,
       failures: 1,
-      first_failure_at: new Date().toISOString(),
+      first_failure_at: now,
       lockout_until: null,
       lockout_seconds: 0,
     });
+    return true;
   }
+
+  // Window expired — reset counter
+  if (current.first_failure_at < windowStart) {
+    await serviceClient
+      .from('rate_limits')
+      .update({ failures: 1, first_failure_at: now })
+      .eq('key', key);
+    return true;
+  }
+
+  // Within window — check limit before incrementing
+  if (current.failures >= maxPerMinute) {
+    return false; // rate limited
+  }
+
+  // Optimistic-lock increment: the WHERE clause includes the current failures
+  // count so concurrent requests cannot both succeed on the same counter value.
+  // If another request incremented first, this UPDATE matches zero rows (no-op)
+  // and the request proceeds — acceptable for rate limiting (at most one extra
+  // request slips through per race, vs unbounded bypass before).
+  await serviceClient
+    .from('rate_limits')
+    .update({ failures: current.failures + 1 })
+    .eq('key', key)
+    .eq('failures', current.failures);
 
   return true;
 }

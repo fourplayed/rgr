@@ -3,7 +3,8 @@ import { View, FlatList, TouchableOpacity, StyleSheet, useWindowDimensions } fro
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { formatAssetNumber } from '@rgr/shared';
-import type { AdminPhotoListItem, PhotoType } from '@rgr/shared';
+import type { PhotoType } from '@rgr/shared';
+import type { AdminPhotoListItem } from '@rgr/shared/admin';
 import { useAdminPhotoList, useAdminBulkDeletePhotos } from '../../src/hooks/useAdminPhotos';
 import { PhotoThumbnail } from '../../src/components/photos/PhotoThumbnail';
 import { SheetHeader } from '../../src/components/common/SheetHeader';

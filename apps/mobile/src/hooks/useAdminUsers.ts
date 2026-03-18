@@ -1,12 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import {
-  listProfiles,
-  adminUpdateProfile,
-  adminCreateUser,
-  fetchProfile,
-  queryFromService,
-} from '@rgr/shared';
-import type { UserRole, CreateUserInput, ListProfilesParams } from '@rgr/shared';
+import { fetchProfile, queryFromService } from '@rgr/shared';
+import type { UserRole, CreateUserInput } from '@rgr/shared';
+import { listProfiles, adminUpdateProfile, adminCreateUser } from '@rgr/shared/admin';
+import type { ListProfilesParams } from '@rgr/shared/admin';
 import { useMutationFromService } from './useMutationFromService';
 
 export const adminUserKeys = {

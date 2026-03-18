@@ -30,6 +30,19 @@ import { colors } from '../../src/theme/colors';
 import { spacing, fontSize, borderRadius, fontFamily as fonts } from '../../src/theme/spacing';
 import { AppText } from '../../src/components/common';
 
+/**
+ * Fixed height for FlatList optimization (getItemLayout)
+ * Must match renderItem rendered height:
+ * - Border: 2 * 2 = 4px
+ * - Padding: spacing.md * 2 = 24px
+ * - Content: ~40px (header row + footer row)
+ * - Margin bottom: spacing.sm = 8px
+ * Total: 76px
+ *
+ * If assetItem styles change, this must be updated to match!
+ */
+const ADMIN_ASSET_ITEM_HEIGHT = 76;
+
 const STATUS_VALUES: string[] = [
   AssetStatus.SERVICED,
   AssetStatus.MAINTENANCE,
@@ -135,6 +148,15 @@ export default function AssetAdminScreen() {
   );
 
   const keyExtractor = useCallback((item: AssetWithRelations) => item.id, []);
+
+  const getItemLayout = useCallback(
+    (_: unknown, index: number) => ({
+      length: ADMIN_ASSET_ITEM_HEIGHT,
+      offset: ADMIN_ASSET_ITEM_HEIGHT * index,
+      index,
+    }),
+    []
+  );
 
   const handleOpenPhotos = useCallback(
     (item: AssetWithRelations) => {
@@ -357,6 +379,7 @@ export default function AssetAdminScreen() {
           data={assets}
           renderItem={renderItem}
           keyExtractor={keyExtractor}
+          getItemLayout={getItemLayout}
           ListEmptyComponent={renderEmpty}
           removeClippedSubviews
           contentContainerStyle={

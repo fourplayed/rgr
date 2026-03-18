@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { adminListMaintenance, bulkCancelMaintenanceTasks, queryFromService } from '@rgr/shared';
-import type { AdminListMaintenanceParams } from '@rgr/shared';
+import { queryFromService } from '@rgr/shared';
+import { adminListMaintenance, bulkCancelMaintenanceTasks } from '@rgr/shared/admin';
+import type { AdminListMaintenanceParams } from '@rgr/shared/admin';
 import { useMutationFromService } from './useMutationFromService';
 import { maintenanceKeys } from './useMaintenanceData';
 import { defectKeys } from './useDefectData';

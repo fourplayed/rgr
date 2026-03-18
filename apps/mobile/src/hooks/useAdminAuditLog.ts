@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { listAuditLogs } from '@rgr/shared';
-import type { ListAuditLogsParams } from '@rgr/shared';
+import { listAuditLogs } from '@rgr/shared/admin';
+import type { ListAuditLogsParams } from '@rgr/shared/admin';
 
 interface AuditLogCursor {
   createdAt: string;

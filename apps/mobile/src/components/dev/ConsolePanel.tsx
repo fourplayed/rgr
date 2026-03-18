@@ -13,6 +13,7 @@ import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useConsoleStore } from '../../store/consoleStore';
 import type { ConsoleEntry, ConsoleNamespace } from '../../store/consoleStore';
+import { useShallow } from 'zustand/react/shallow';
 import { ConsoleEntryRow, ROW_HEIGHT } from './ConsoleEntryRow';
 import { SHEET_SPRING } from '../../theme/animation';
 import { colors } from '../../theme/colors';
@@ -44,15 +45,29 @@ const FILTER_LABELS: Record<string, string> = {
 };
 
 export function ConsolePanel() {
-  const isOpen = useConsoleStore((s) => s.isOpen);
-  const entries = useConsoleStore((s) => s.entries);
-  const activeFilter = useConsoleStore((s) => s.activeFilter);
-  const clearEntries = useConsoleStore((s) => s.clearEntries);
-  const toggleOpen = useConsoleStore((s) => s.toggleOpen);
-  const setFilter = useConsoleStore((s) => s.setFilter);
-  const growPanel = useConsoleStore((s) => s.growPanel);
-  const shrinkPanel = useConsoleStore((s) => s.shrinkPanel);
-  const heightOffset = useConsoleStore((s) => s.heightOffset);
+  const {
+    isOpen,
+    entries,
+    activeFilter,
+    clearEntries,
+    toggleOpen,
+    setFilter,
+    growPanel,
+    shrinkPanel,
+    heightOffset,
+  } = useConsoleStore(
+    useShallow((s) => ({
+      isOpen: s.isOpen,
+      entries: s.entries,
+      activeFilter: s.activeFilter,
+      clearEntries: s.clearEntries,
+      toggleOpen: s.toggleOpen,
+      setFilter: s.setFilter,
+      growPanel: s.growPanel,
+      shrinkPanel: s.shrinkPanel,
+      heightOffset: s.heightOffset,
+    }))
+  );
 
   const panelHeight = Math.round(SCREEN_HEIGHT * 0.45) + heightOffset;
 

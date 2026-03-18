@@ -258,7 +258,7 @@ export default function AssetListScreen() {
         ) : (
           <FlatList
             data={filteredAssets}
-            extraData={depotLookup}
+            extraData={depots.length}
             keyExtractor={(item) => item.id}
             renderItem={renderAssetItem}
             contentContainerStyle={styles.listContent}

@@ -3,7 +3,7 @@ import { View, FlatList, TouchableOpacity, StyleSheet, ScrollView } from 'react-
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { MaintenanceStatus, formatAssetNumber, formatRelativeTime } from '@rgr/shared';
-import type { AdminMaintenanceListItem } from '@rgr/shared';
+import type { AdminMaintenanceListItem } from '@rgr/shared/admin';
 import {
   useAdminMaintenanceList,
   useBulkCancelMaintenance,

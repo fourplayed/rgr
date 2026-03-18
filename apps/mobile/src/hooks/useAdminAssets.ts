@@ -1,12 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import {
-  createAsset,
-  deleteAsset,
-  bulkUpdateAssetStatus,
-  bulkSoftDeleteAssets,
-  hardDeleteAssets,
-  getAssetRelatedCounts,
-} from '@rgr/shared';
+import { createAsset, softDeleteAsset, bulkSoftDeleteAssets, hardDeleteAssets } from '@rgr/shared';
+import { bulkUpdateAssetStatus, getAssetRelatedCounts } from '@rgr/shared/admin';
 import type { AssetStatus, CreateAssetInput } from '@rgr/shared';
 import { assetKeys } from './useAssetData';
 import { useMutationFromService } from './useMutationFromService';
@@ -35,7 +29,7 @@ export function useCreateAsset() {
 
 export function useDeleteAsset() {
   return useMutationFromService({
-    serviceFn: (id: string) => deleteAsset(id),
+    serviceFn: (id: string) => softDeleteAsset(id),
     invalidates: (_data, id) => [
       assetKeys.lists(),
       assetKeys.countsByStatus(),

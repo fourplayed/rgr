@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AppState, View, StyleSheet, LogBox } from 'react-native';
+import * as Font from 'expo-font';
 
 // Suppress iOS shadow+gradient ADVICE warnings — Button's gradientShadowHost
 // already sets backgroundColor for the fast shadow path, but iOS still warns
@@ -67,18 +68,28 @@ import { colors } from '../src/theme/colors';
 initializeMobileSupabase();
 
 export default function RootLayout() {
+  // Critical fonts: block render until these are loaded
   const [fontsLoaded] = useFonts({
-    Lato_100Thin,
-    Lato_100Thin_Italic,
-    Lato_300Light,
-    Lato_300Light_Italic,
     Lato_400Regular,
-    Lato_400Regular_Italic,
     Lato_700Bold,
-    Lato_700Bold_Italic,
-    Lato_900Black,
-    Lato_900Black_Italic,
   });
+
+  // Deferred fonts: load after mount without blocking render
+  useEffect(() => {
+    if (!fontsLoaded) return;
+    Font.loadAsync({
+      Lato_100Thin,
+      Lato_100Thin_Italic,
+      Lato_300Light,
+      Lato_300Light_Italic,
+      Lato_400Regular_Italic,
+      Lato_700Bold_Italic,
+      Lato_900Black,
+      Lato_900Black_Italic,
+    }).catch(() => {
+      // Non-fatal: app falls back to 400/700 weights
+    });
+  }, [fontsLoaded]);
 
   // Create React Query client inside component to prevent HMR issues
   const [queryClient] = useState(
@@ -348,6 +359,11 @@ export default function RootLayout() {
 function RealtimeSubscriber() {
   useRealtimeInvalidation();
   usePushNotifications();
+  return <>{__DEV__ && <DevConsoleHooks />}</>;
+}
+
+/** Dev-only: subscribes to React Query cache and Zustand stores for console logging. */
+function DevConsoleHooks() {
   useConsoleQueryLogger();
   useConsoleNetworkLogger();
   useConsoleStoreLogger();

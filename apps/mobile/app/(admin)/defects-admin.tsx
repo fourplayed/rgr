@@ -3,7 +3,7 @@ import { View, FlatList, TouchableOpacity, StyleSheet, ScrollView } from 'react-
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { DefectStatus, formatAssetNumber, formatRelativeTime } from '@rgr/shared';
-import type { AdminDefectListItem } from '@rgr/shared';
+import type { AdminDefectListItem } from '@rgr/shared/admin';
 import { useAdminDefectList, useBulkDeleteDefects } from '../../src/hooks/useAdminDefects';
 import { SheetHeader } from '../../src/components/common/SheetHeader';
 import { FilterChip } from '../../src/components/common/FilterChip';

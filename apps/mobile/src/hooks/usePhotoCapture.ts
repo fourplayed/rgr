@@ -190,6 +190,11 @@ export function usePhotoCapture() {
         const message = error instanceof Error ? error.message : 'Failed to upload photo';
         setUploadError(message);
         setUploadStep(null);
+        // Clean up orphaned thumbnail file on upload failure
+        if (thumbnailUriRef.current) {
+          FileSystem.deleteAsync(thumbnailUriRef.current, { idempotent: true }).catch(() => {});
+          thumbnailUriRef.current = null;
+        }
         return false;
       } finally {
         isUploadingRef.current = false;

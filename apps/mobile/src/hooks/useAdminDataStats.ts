@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { getAdminDataStats, queryFromService } from '@rgr/shared';
+import { queryFromService } from '@rgr/shared';
+import { getAdminDataStats } from '@rgr/shared/admin';
 
 export const adminDataStatsKeys = {
   all: ['admin-data-stats'] as const,

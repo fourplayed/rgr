@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { listAllDepots, createDepot, updateDepot, deleteDepot } from '@rgr/shared';
 import type { CreateDepotInput, UpdateDepotInput } from '@rgr/shared';
+import { listAllDepots, createDepot, updateDepot, deleteDepot } from '@rgr/shared/admin';
 import { depotKeys } from './useDepots';
 import { useMutationFromService } from './useMutationFromService';
 

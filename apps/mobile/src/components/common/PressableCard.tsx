@@ -1,5 +1,6 @@
 import React, { useRef, useCallback } from 'react';
 import { Animated, Pressable, type ViewStyle, type StyleProp } from 'react-native';
+import * as Haptics from 'expo-haptics';
 
 interface PressableCardProps {
   onPress: () => void;
@@ -27,6 +28,7 @@ export function PressableCard({
   const scale = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Animated.spring(scale, {
       toValue: 0.97,
       friction: 8,

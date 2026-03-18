@@ -7,7 +7,6 @@ export * from './services/supabase/fleet';
 export * from './services/supabase/hazards';
 export * from './services/supabase/maintenance';
 export * from './services/supabase/defectReports';
-export * from './services/supabase/admin';
 export * from './services/supabase/pushTokens';
 export * from './services/supabase/fleetAnalysis';
 export * from './services/csrf.service';

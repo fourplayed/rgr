@@ -63,6 +63,10 @@ const FONT_SIZE_USERNAME = fontSize.display;
 const FONT_SIZE_STAT_VALUE = fontSize.hero;
 const FONT_SIZE_STAT_LABEL = fontSize.sm;
 
+// Static style objects for defect cards (color is constant, no need for useMemo)
+const DEFECT_CARD_BG_STYLE = { backgroundColor: colors.defectYellow + '1A' } as const;
+const DEFECT_ACCENT_STYLE = { backgroundColor: colors.defectYellow } as const;
+
 type DashboardActivityItem =
   | { type: 'scan'; data: ScanEventWithScanner; timestamp: string }
   | { type: 'maintenance'; data: MaintenanceListItemData; timestamp: string }
@@ -87,34 +91,57 @@ const ActivityCard = memo(function ActivityCard({
 }) {
   const handlePress = useCallback(() => onPress(item), [item, onPress]);
   const entranceOpacity = useStaggeredEntrance(index);
+  const entranceStyle = useMemo(() => ({ opacity: entranceOpacity }), [entranceOpacity]);
 
-  if (item.type === 'scan') {
-    const activityColor = getScanTypeColor(item.data.scanType);
+  // Derive the primary color for this card type (always computed to keep hooks unconditional)
+  const primaryColor = useMemo(() => {
+    if (item.type === 'scan') return getScanTypeColor(item.data.scanType);
+    if (item.type === 'defect') return colors.defectYellow;
+    // maintenance
+    return getMaintenanceVisualConfig(
+      (item.data as MaintenanceListItemData).status,
+      (item.data as MaintenanceListItemData).dueDate
+    ).color;
+  }, [item]);
+
+  // Memoize dynamic style objects keyed on primaryColor to preserve referential equality
+  const cardBgStyle = useMemo(() => ({ backgroundColor: primaryColor + '1A' }), [primaryColor]);
+  const accentStyle = useMemo(() => ({ backgroundColor: primaryColor }), [primaryColor]);
+
+  // Depot badge styles for scan cards (computed unconditionally, used conditionally)
+  const depotBadgeStyles = useMemo(() => {
+    if (item.type !== 'scan') return null;
     const matchedDepot = item.data.locationDescription
       ? findDepotByLocationString(item.data.locationDescription, depots)
       : null;
-    const badgeColors = matchedDepot
-      ? getDepotBadgeColors(matchedDepot, colors.chrome, colors.text)
-      : null;
+    if (!matchedDepot) return null;
+    const badgeColors = getDepotBadgeColors(matchedDepot, colors.chrome, colors.text);
+    return {
+      depot: matchedDepot,
+      bgStyle: { backgroundColor: badgeColors.bg },
+      textStyle: { color: badgeColors.text },
+    };
+  }, [item, depots]);
 
+  if (item.type === 'scan') {
     return (
-      <Animated.View style={{ opacity: entranceOpacity }}>
+      <Animated.View style={entranceStyle}>
         <TouchableOpacity
-          style={[styles.scanCard, { backgroundColor: activityColor + '1A' }]}
+          style={[styles.scanCard, cardBgStyle]}
           onPress={handlePress}
           activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel={`${formatScanTypeLabel(item.data.scanType)} scan for asset ${item.data.assetNumber ? formatAssetNumber(item.data.assetNumber) : 'Unknown'}`}
           accessibilityHint="Double tap to view asset details"
         >
-          <View style={[styles.cardAccent, { backgroundColor: activityColor }]} />
+          <View style={[styles.cardAccent, accentStyle]} />
           <View style={styles.cardInner}>
             <View style={styles.cardRow}>
               <View style={styles.cardIconContainer}>
                 <Ionicons
                   name={getScanTypeIcon(item.data.scanType)}
                   size={32}
-                  color={activityColor}
+                  color={primaryColor}
                 />
               </View>
               <View style={styles.cardBody}>
@@ -125,12 +152,10 @@ const ActivityCard = memo(function ActivityCard({
                       : 'Unknown Asset'}
                   </AppText>
                   <View style={styles.cardBadges}>
-                    {matchedDepot && badgeColors && (
-                      <View
-                        style={[styles.depotLocationBadge, { backgroundColor: badgeColors.bg }]}
-                      >
-                        <AppText style={[styles.depotLocationText, { color: badgeColors.text }]}>
-                          {matchedDepot.name}
+                    {depotBadgeStyles && (
+                      <View style={[styles.depotLocationBadge, depotBadgeStyles.bgStyle]}>
+                        <AppText style={[styles.depotLocationText, depotBadgeStyles.textStyle]}>
+                          {depotBadgeStyles.depot.name}
                         </AppText>
                       </View>
                     )}
@@ -155,15 +180,15 @@ const ActivityCard = memo(function ActivityCard({
   if (item.type === 'defect') {
     const defectConfig = DEFECT_STATUS_CONFIG[item.data.status] ?? DEFECT_STATUS_CONFIG.reported;
     return (
-      <Animated.View style={{ opacity: entranceOpacity }}>
+      <Animated.View style={entranceStyle}>
         <TouchableOpacity
-          style={[styles.scanCard, { backgroundColor: colors.defectYellow + '1A' }]}
+          style={[styles.scanCard, DEFECT_CARD_BG_STYLE]}
           onPress={handlePress}
           activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel={`Defect report: ${item.data.title}`}
         >
-          <View style={[styles.cardAccent, { backgroundColor: colors.defectYellow }]} />
+          <View style={[styles.cardAccent, DEFECT_ACCENT_STYLE]} />
           <View style={styles.cardInner}>
             <View style={styles.cardRow}>
               <View style={styles.cardIconContainer}>
@@ -198,15 +223,15 @@ const ActivityCard = memo(function ActivityCard({
   const maintConfig = getMaintenanceVisualConfig(item.data.status, item.data.dueDate);
 
   return (
-    <Animated.View style={{ opacity: entranceOpacity }}>
+    <Animated.View style={entranceStyle}>
       <TouchableOpacity
-        style={[styles.scanCard, { backgroundColor: maintConfig.color + '1A' }]}
+        style={[styles.scanCard, cardBgStyle]}
         onPress={handlePress}
         activeOpacity={0.7}
         accessibilityRole="button"
         accessibilityLabel={`Maintenance ${item.data.title}, status ${item.data.status}`}
       >
-        <View style={[styles.cardAccent, { backgroundColor: maintConfig.color }]} />
+        <View style={[styles.cardAccent, accentStyle]} />
         <View style={styles.cardInner}>
           <View style={styles.cardRow}>
             <View style={styles.cardIconContainer}>

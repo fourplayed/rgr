@@ -459,7 +459,9 @@ export async function getPhotoById(photoId: string): Promise<ServiceResult<Photo
       .maybeSingle(),
     supabase
       .from('hazard_alerts')
-      .select('*')
+      .select(
+        'id, photo_id, severity, description, status, acknowledge_required, acknowledged_at, acknowledged_by, created_at'
+      )
       .eq('photo_id', photoId)
       .order('severity', { ascending: true }),
   ]);

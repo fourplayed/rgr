@@ -126,9 +126,17 @@ export function useRealtimeInvalidation(): void {
         }
       });
 
+    // Assets channel: subscribe to INSERT and UPDATE only.
+    // INSERT covers new assets; UPDATE covers scan-driven status changes,
+    // registration updates, and admin edits. DELETE is omitted because it is
+    // admin-only, rare, and the web app handles it — mobile users will see
+    // stale entries until their next query refetch, which is acceptable.
     const assetChannel = supabase
       .channel('mobile-asset-updates')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'assets' }, () => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'assets' }, () => {
+        invalidateIfNotSuppressed('assets', ['assets']);
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'assets' }, () => {
         invalidateIfNotSuppressed('assets', ['assets']);
       })
       .subscribe((status) => {

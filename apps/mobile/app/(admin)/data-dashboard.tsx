@@ -2,7 +2,7 @@ import React from 'react';
 import { View, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import type { AdminDataStats } from '@rgr/shared';
+import type { AdminDataStats } from '@rgr/shared/admin';
 import { useAdminDataStats } from '../../src/hooks/useAdminDataStats';
 import { useCountUp } from '../../src/hooks/useCountUp';
 import { SheetHeader } from '../../src/components/common/SheetHeader';
