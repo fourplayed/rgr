@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { View, FlatList, StyleSheet, SafeAreaView, TouchableOpacity, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import type {
   MaintenanceStatus,
@@ -24,9 +25,12 @@ import {
   MAINTENANCE_ITEM_HEIGHT,
   DEFECT_ITEM_HEIGHT,
 } from '../../src/components/maintenance';
+import { BulkActionBar } from '../../src/components/maintenance/BulkActionBar';
 import { useMaintenanceList } from '../../src/hooks/useMaintenanceData';
 import { useDefectReportList } from '../../src/hooks/useDefectData';
 import { useDefectMaintenanceModals } from '../../src/hooks/useDefectMaintenanceModals';
+import { useMaintenanceSelection } from '../../src/hooks/useMaintenanceSelection';
+import { useBulkCompleteMaintenance } from '../../src/hooks/useBulkCompleteMaintenance';
 import { DefectMaintenanceModals } from '../../src/components/common/DefectMaintenanceModals';
 import { useTabFade } from '../../src/hooks/useTabFade';
 import { useUserPermissions } from '../../src/contexts/UserPermissionsContext';
@@ -111,6 +115,24 @@ export default function MaintenanceScreen() {
     [maintenanceData]
   );
 
+  // Bulk selection and completion
+  const selection = useMaintenanceSelection(maintenance);
+  const { bulkComplete, isProcessing, progress } = useBulkCompleteMaintenance();
+
+  const handleLongPress = useCallback(
+    (id: string) => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      selection.enterSelection(id);
+    },
+    [selection]
+  );
+
+  const handleBulkComplete = useCallback(async () => {
+    const ids = Array.from(selection.selectedIds);
+    await bulkComplete(ids);
+    selection.exitSelection();
+  }, [selection, bulkComplete]);
+
   // Fetch defect report list with filters — always exclude dismissed at the query level
   const defectFilters = useMemo(
     () => ({
@@ -180,9 +202,18 @@ export default function MaintenanceScreen() {
   // Maintenance list renderers
   const renderMaintenanceItem = useCallback(
     ({ item }: { item: MaintenanceListItemType }) => (
-      <MaintenanceListItem maintenance={item} onPress={handleMaintenancePress} />
+      <MaintenanceListItem
+        maintenance={item}
+        onPress={
+          selection.isSelecting ? () => selection.toggleItem(item.id) : handleMaintenancePress
+        }
+        isSelecting={selection.isSelecting}
+        isSelected={selection.selectedIds.has(item.id)}
+        isCompletable={selection.isCompletable(item.id)}
+        onLongPress={handleLongPress}
+      />
     ),
-    [handleMaintenancePress]
+    [handleMaintenancePress, selection, handleLongPress]
   );
 
   const maintenanceKeyExtractor = useCallback((item: MaintenanceListItemType) => item.id, []);
@@ -250,20 +281,59 @@ export default function MaintenanceScreen() {
         <ScreenHeader
           title="Maintenance"
           rightAction={
-            canMarkMaintenance ? (
-              <TouchableOpacity
-                style={styles.addLink}
-                onPress={handleOpenCreate}
-                activeOpacity={0.6}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                accessibilityRole="button"
-                accessibilityLabel="Create maintenance record"
-                accessibilityHint="Double tap to schedule new maintenance"
-              >
-                <Ionicons name="add-circle-outline" size={16} color={colors.electricBlue} />
-                <AppText style={styles.addLinkText}>New Task</AppText>
-              </TouchableOpacity>
-            ) : undefined
+            selection.isSelecting ? (
+              <View style={styles.selectionHeader}>
+                <AppText style={styles.selectionCount}>{selection.selectedCount} selected</AppText>
+                <TouchableOpacity
+                  onPress={selection.selectAll}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Select all completable items"
+                >
+                  <AppText style={styles.selectAllText}>All</AppText>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={selection.exitSelection}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Exit selection mode"
+                >
+                  <AppText style={styles.doneText}>Done</AppText>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.headerActions}>
+                {visibleTab === 'tasks' && maintenance.length > 0 && canMarkMaintenance && (
+                  <TouchableOpacity
+                    onPress={() => {
+                      const first = maintenance.find((m) =>
+                        ['scheduled', 'in_progress'].includes(m.status)
+                      );
+                      if (first) selection.enterSelection(first.id);
+                    }}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Enter selection mode"
+                  >
+                    <AppText style={styles.selectButtonText}>Select</AppText>
+                  </TouchableOpacity>
+                )}
+                {canMarkMaintenance && (
+                  <TouchableOpacity
+                    style={styles.addLink}
+                    onPress={handleOpenCreate}
+                    activeOpacity={0.6}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Create maintenance record"
+                    accessibilityHint="Double tap to schedule new maintenance"
+                  >
+                    <Ionicons name="add-circle-outline" size={16} color={colors.electricBlue} />
+                    <AppText style={styles.addLinkText}>New Task</AppText>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )
           }
         />
 
@@ -346,6 +416,17 @@ export default function MaintenanceScreen() {
           )}
         </Animated.View>
 
+        {/* Bulk action bar — visible when in selection mode on tasks tab */}
+        {selection.isSelecting && (
+          <BulkActionBar
+            selectedCount={selection.selectedCount}
+            onComplete={handleBulkComplete}
+            onCancel={selection.exitSelection}
+            isProcessing={isProcessing}
+            progress={progress}
+          />
+        )}
+
         {/* Shared defect/maintenance modal chain */}
         <DefectMaintenanceModals {...modals} />
 
@@ -416,5 +497,35 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bold,
     color: colors.textInverse,
     textTransform: 'uppercase',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  selectButtonText: {
+    fontSize: fontSize.sm,
+    fontFamily: fonts.bold,
+    color: colors.primary,
+  },
+  selectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  selectionCount: {
+    fontSize: fontSize.sm,
+    fontFamily: fonts.regular,
+    color: colors.textSecondary,
+  },
+  selectAllText: {
+    fontSize: fontSize.sm,
+    fontFamily: fonts.bold,
+    color: colors.primary,
+  },
+  doneText: {
+    fontSize: fontSize.sm,
+    fontFamily: fonts.bold,
+    color: colors.electricBlue,
   },
 });
