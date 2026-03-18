@@ -277,7 +277,7 @@ export default function HomeScreen() {
   const modals = useDefectMaintenanceModals();
 
   // Offline queue status for banner
-  const offlineQueueCount = useOfflineQueueStatus();
+  const { total: offlineQueueCount } = useOfflineQueueStatus();
 
   // Recent scans across all users (global activity)
   const {
