@@ -65,8 +65,12 @@ export async function getSession(): Promise<StoredSession | null> {
  * Called on logout or when session is invalid
  */
 export async function clearSession(): Promise<void> {
-  await SecureStore.deleteItemAsync(KEYS.SESSION);
-  await SecureStore.deleteItemAsync(KEYS.AUTO_LOGIN_ENABLED);
+  try {
+    await SecureStore.deleteItemAsync(KEYS.SESSION);
+    await SecureStore.deleteItemAsync(KEYS.AUTO_LOGIN_ENABLED);
+  } catch (err) {
+    logger.warn('SecureStore delete failed during session clear', err);
+  }
 }
 
 /**

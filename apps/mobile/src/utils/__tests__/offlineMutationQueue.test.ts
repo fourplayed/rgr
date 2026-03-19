@@ -320,9 +320,10 @@ describe('offlineMutationQueue', () => {
       await enqueueMutation({ type: 'maintenance', payload: { x: 3 } });
 
       await replayQueue(handlers);
-      expect(handlers.scan).toHaveBeenCalledWith({ x: 1 });
-      expect(handlers.defect_report).toHaveBeenCalledWith({ x: 2 });
-      expect(handlers.maintenance).toHaveBeenCalledWith({ x: 3 });
+      // Handlers receive payload with idempotencyKey injected from queue entry
+      expect(handlers.scan).toHaveBeenCalledWith(expect.objectContaining({ x: 1 }));
+      expect(handlers.defect_report).toHaveBeenCalledWith(expect.objectContaining({ x: 2 }));
+      expect(handlers.maintenance).toHaveBeenCalledWith(expect.objectContaining({ x: 3 }));
     });
 
     it('increments retryCount on failure and moves entry to back', async () => {

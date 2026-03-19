@@ -10,6 +10,7 @@ import { enqueueScan } from '../../utils/offlineMutationQueue';
 import type { ScanFlowAction, MatchedDepot } from './scanFlowMachine';
 import type { AlertSheetState } from './types';
 import type { Profile } from '@rgr/shared';
+import { useAuthStore } from '../../store/authStore';
 
 export function useScanProcessing(
   dispatch: React.Dispatch<ScanFlowAction>,
@@ -104,7 +105,8 @@ export function useScanProcessing(
         logger.scan(`Asset found: ${asset.assetNumber}`);
 
         // 3. Guard against expired session (before showing UI)
-        if (!user) {
+        const currentUser = useAuthStore.getState().user;
+        if (!currentUser) {
           dispatch({ type: 'RESET' });
           setAlertSheet({
             visible: true,
@@ -129,7 +131,7 @@ export function useScanProcessing(
         logger.scan('Submitting scan event...');
         const scanEvent = await createScan({
           assetId: asset.id,
-          scannedBy: user.id,
+          scannedBy: currentUser.id,
           scanType: 'qr_scan',
           latitude: scanLocation.latitude,
           longitude: scanLocation.longitude,
@@ -180,7 +182,8 @@ export function useScanProcessing(
         logger.error(`Scan error: ${message}`);
 
         // If offline and we have enough context, queue the scan for later replay
-        if (!onlineManager.isOnline() && user) {
+        const offlineUser = useAuthStore.getState().user;
+        if (!onlineManager.isOnline() && offlineUser) {
           const { lastLocation: loc, resolvedDepot: depot } = useLocationStore.getState();
           // We need at minimum the asset lookup to have succeeded (step 2 above).
           // If the error happened during createScan (step 5), the asset was already found.
@@ -192,7 +195,7 @@ export function useScanProcessing(
             try {
               await enqueueScan({
                 assetId: qrAssetId,
-                scannedBy: user.id,
+                scannedBy: offlineUser.id,
                 scanType: 'qr_scan',
                 latitude: loc?.latitude ?? null,
                 longitude: loc?.longitude ?? null,
@@ -238,7 +241,7 @@ export function useScanProcessing(
         resetScannerRef.current();
       }
     },
-    [user, lookupAsset, createScan, addDebugLog, setAlertSheet, dispatch, resetScannerRef]
+    [lookupAsset, createScan, addDebugLog, setAlertSheet, dispatch, resetScannerRef]
   );
 
   // ── Debug: trigger scan with first asset from DB ──

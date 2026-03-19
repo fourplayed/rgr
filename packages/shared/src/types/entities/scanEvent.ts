@@ -70,6 +70,8 @@ export interface CreateScanEventInput {
   locationDescription?: string | null | undefined;
   deviceInfo?: Record<string, unknown> | null | undefined;
   rawScanData?: string | null | undefined;
+  /** Optional idempotency key (UUID) for offline queue dedup */
+  idempotencyKey?: string | undefined;
 }
 
 export const CreateScanEventInputSchema = z.object({
@@ -85,6 +87,7 @@ export const CreateScanEventInputSchema = z.object({
   locationDescription: z.string().max(255).nullable().optional(),
   deviceInfo: z.record(z.string(), z.unknown()).nullable().optional(),
   rawScanData: z.string().nullable().optional(),
+  idempotencyKey: z.string().uuid().optional(),
 });
 
 // ── Mappers ──
@@ -108,10 +111,12 @@ export function mapRowToScanEvent(row: ScanEventRow): ScanEvent {
   };
 }
 
-export type ScanEventInsertRow = Omit<ScanEventRow, 'id' | 'created_at'>;
+export type ScanEventInsertRow = Omit<ScanEventRow, 'id' | 'created_at'> & {
+  idempotency_key?: string;
+};
 
 export function mapScanEventToInsert(input: CreateScanEventInput): ScanEventInsertRow {
-  return {
+  const row: ScanEventInsertRow = {
     asset_id: input.assetId,
     scanned_by: input.scannedBy ?? null,
     scan_type: input.scanType ?? 'qr_scan',
@@ -125,6 +130,10 @@ export function mapScanEventToInsert(input: CreateScanEventInput): ScanEventInse
     device_info: input.deviceInfo ?? null,
     raw_scan_data: input.rawScanData ?? null,
   };
+  if (input.idempotencyKey) {
+    row.idempotency_key = input.idempotencyKey;
+  }
+  return row;
 }
 
 // Compile-time schema <-> interface drift detection

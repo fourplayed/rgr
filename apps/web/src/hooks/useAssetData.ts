@@ -92,10 +92,10 @@ export function useAsset(id: string | null, enabled: boolean = true) {
 /**
  * Scan events for an asset
  */
-export function useAssetScans(assetId: string | null, page: number = 1, enabled: boolean = true) {
+export function useAssetScans(assetId: string | null, _page: number = 1, enabled: boolean = true) {
   return useQuery({
-    queryKey: ASSET_QUERY_KEYS.scans(assetId ?? '', page),
-    queryFn: queryFromService(() => getAssetScans(assetId!, page)),
+    queryKey: ASSET_QUERY_KEYS.scans(assetId ?? '', _page),
+    queryFn: queryFromService(() => getAssetScans(assetId!, 20)),
     enabled: enabled && !!assetId,
   });
 }
@@ -110,7 +110,7 @@ export function useAssetMaintenance(
 ) {
   return useQuery({
     queryKey: ASSET_QUERY_KEYS.maintenance(assetId ?? '', page),
-    queryFn: queryFromService(() => getAssetMaintenance(assetId!, page)),
+    queryFn: queryFromService(() => getAssetMaintenance(assetId!, 20)),
     enabled: enabled && !!assetId,
   });
 }

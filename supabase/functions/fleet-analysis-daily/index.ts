@@ -75,133 +75,47 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const serviceClient = getServiceClient();
     const today = new Date().toISOString().split('T')[0];
 
-    // ── 1. Gather fleet metrics ──
+    // ── 1. Gather fleet metrics (single RPC) ──
 
-    // Fleet statistics via existing RPC
-    const { data: fleetStats } = await serviceClient.rpc('get_fleet_statistics');
+    const { data: raw, error: rpcError } = await serviceClient.rpc('get_fleet_analysis_input');
 
-    // 24h scan volume
-    const { count: scanCount24h } = await serviceClient
-      .from('scan_events')
-      .select('*', { count: 'exact', head: true })
-      .gt('created_at', new Date(Date.now() - 86400000).toISOString());
+    if (rpcError || !raw) {
+      console.error('get_fleet_analysis_input RPC failed:', rpcError);
+      return errorResponse('Failed to gather fleet metrics', 500);
+    }
 
-    // Overdue maintenance
-    const { count: overdueMaintenanceCount } = await serviceClient
-      .from('maintenance_records')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'scheduled')
-      .lt('due_date', today);
-
-    // Open defects
-    const { count: openDefectCount } = await serviceClient
-      .from('defect_reports')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'reported');
-
-    // Overdue registrations
-    const { count: overdueRegoCount } = await serviceClient
-      .from('assets')
-      .select('*', { count: 'exact', head: true })
-      .eq('registration_overdue', true)
-      .is('deleted_at', null);
-
-    // Active depots
-    const { data: depotData } = await serviceClient
-      .from('depots')
-      .select('name')
-      .eq('is_active', true);
-
-    // Total scan count (all time)
-    const { count: totalScanCount } = await serviceClient
-      .from('scan_events')
-      .select('*', { count: 'exact', head: true });
-
-    // 7-day scan volume
-    const { count: scanCount7d } = await serviceClient
-      .from('scan_events')
-      .select('*', { count: 'exact', head: true })
-      .gt('created_at', new Date(Date.now() - 7 * 86400000).toISOString());
-
-    // Maintenance by status
-    const { count: scheduledMaintenanceCount } = await serviceClient
-      .from('maintenance_records')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'scheduled');
-
-    const { count: inProgressMaintenanceCount } = await serviceClient
-      .from('maintenance_records')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'in_progress');
-
-    const { count: completedMaintenanceCount } = await serviceClient
-      .from('maintenance_records')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'completed');
-
-    // Defects by status
-    const { count: acceptedDefectCount } = await serviceClient
-      .from('defect_reports')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'accepted');
-
-    const { count: resolvedDefectCount } = await serviceClient
-      .from('defect_reports')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'resolved');
-
-    // Asset categories
-    const { count: trailerCount } = await serviceClient
-      .from('assets')
-      .select('*', { count: 'exact', head: true })
-      .eq('category', 'trailer')
-      .is('deleted_at', null);
-
-    const { count: dollyCount } = await serviceClient
-      .from('assets')
-      .select('*', { count: 'exact', head: true })
-      .eq('category', 'dolly')
-      .is('deleted_at', null);
-
-    // Active users (scanned in last 7 days)
-    const { data: activeUsers } = await serviceClient
-      .from('scan_events')
-      .select('scanned_by')
-      .gt('created_at', new Date(Date.now() - 7 * 86400000).toISOString());
-    const uniqueActiveUsers = new Set(
-      (activeUsers ?? []).map((u: { scanned_by: string }) => u.scanned_by)
-    ).size;
+    const d = raw as Record<string, unknown>;
 
     const inputData = {
-      fleet: fleetStats ?? {
-        total_assets: 0,
-        serviced: 0,
-        maintenance: 0,
-        out_of_service: 0,
+      fleet: {
+        total_assets: d.total_assets ?? 0,
+        serviced: d.serviced ?? 0,
+        maintenance: d.maintenance ?? 0,
+        out_of_service: d.out_of_service ?? 0,
       },
       asset_breakdown: {
-        trailers: trailerCount ?? 0,
-        dollies: dollyCount ?? 0,
+        trailers: d.trailer_count ?? 0,
+        dollies: d.dolly_count ?? 0,
       },
       scans: {
-        last_24h: scanCount24h ?? 0,
-        last_7d: scanCount7d ?? 0,
-        all_time: totalScanCount ?? 0,
+        last_24h: d.scans_24h ?? 0,
+        last_7d: d.scans_7d ?? 0,
+        all_time: d.scans_all_time ?? 0,
       },
       maintenance: {
-        scheduled: scheduledMaintenanceCount ?? 0,
-        in_progress: inProgressMaintenanceCount ?? 0,
-        completed: completedMaintenanceCount ?? 0,
-        overdue: overdueMaintenanceCount ?? 0,
+        scheduled: d.maintenance_scheduled ?? 0,
+        in_progress: d.maintenance_in_progress ?? 0,
+        completed: d.maintenance_completed ?? 0,
+        overdue: d.maintenance_overdue ?? 0,
       },
       defects: {
-        open: openDefectCount ?? 0,
-        accepted: acceptedDefectCount ?? 0,
-        resolved: resolvedDefectCount ?? 0,
+        open: d.defects_open ?? 0,
+        accepted: d.defects_accepted ?? 0,
+        resolved: d.defects_resolved ?? 0,
       },
-      overdue_registrations: overdueRegoCount ?? 0,
-      depots: (depotData ?? []).map((d: { name: string }) => d.name),
-      active_users_7d: uniqueActiveUsers,
+      overdue_registrations: d.overdue_registrations ?? 0,
+      depots: (d.depots as string[]) ?? [],
+      active_users_7d: d.active_users_7d ?? 0,
     };
 
     // ── 2. Call Anthropic API ──

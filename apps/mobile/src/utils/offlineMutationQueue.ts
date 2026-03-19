@@ -4,6 +4,7 @@ import * as FileSystem from 'expo-file-system';
 import type { CreateScanEventInput, ServiceResult } from '@rgr/shared';
 import { logger } from './logger';
 import { eventBus } from './eventBus';
+import { placeholderId } from '../hooks/optimisticCache';
 
 const OLD_QUEUE_KEY = 'rgr:offline-scan-queue';
 const QUEUE_KEY = 'rgr:offline-mutation-queue';
@@ -21,6 +22,8 @@ export type QueuedMutation = {
   photoUris?: string[];
   photoStatus: 'pending' | 'uploaded' | 'failed';
   retryCount?: number;
+  /** UUID for server-side dedup — optional for backwards compat with pre-upgrade entries */
+  idempotencyKey?: string;
 };
 
 export type ReplayHandlers = {
@@ -165,6 +168,7 @@ export async function enqueueMutation(opts: {
     queuedAt: new Date().toISOString(),
     ...(opts.photoUris ? { photoUris: opts.photoUris } : {}),
     photoStatus: 'pending',
+    idempotencyKey: placeholderId(),
   };
   let queue = await getQueue();
   queue.push(entry);
@@ -358,7 +362,11 @@ export async function replayQueue(
 
       const entry = queue[0]!;
       const handler = handlers[entry.type];
-      const result = await handler(entry.payload);
+      // Inject idempotency key into payload so the service can dedup on replay
+      const payload = entry.idempotencyKey
+        ? { ...entry.payload, idempotencyKey: entry.idempotencyKey }
+        : entry.payload;
+      const result = await handler(payload);
 
       if (result.success) {
         replayed++;
@@ -367,8 +375,9 @@ export async function replayQueue(
         queue = queue.slice(1);
         await saveQueue(queue);
       } else {
-        // Brief pause before retrying to avoid hammering the server when all entries fail
-        await new Promise((r) => setTimeout(r, 1500));
+        // Exponential backoff: 500ms, 1000ms, 2000ms before circuit breaker
+        const backoffMs = Math.min(500 * Math.pow(2, consecutiveFailures), 2000);
+        await new Promise((r) => setTimeout(r, backoffMs));
         failed++;
         consecutiveFailures++;
         const retries = (entry.retryCount ?? 0) + 1;

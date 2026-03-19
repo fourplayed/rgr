@@ -201,7 +201,7 @@ export function useAsset(id: string | undefined) {
 export function useAssetScans(assetId: string | undefined) {
   return useQuery({
     queryKey: assetKeys.scans(assetId ?? ''),
-    queryFn: queryFromPaginatedService(() => getAssetScans(assetId!, 1, 20)),
+    queryFn: queryFromPaginatedService(() => getAssetScans(assetId!, 20)),
     enabled: !!assetId,
     staleTime: 30000,
   });
@@ -215,7 +215,7 @@ export function useAssetMaintenance(assetId: string | undefined) {
   return useQuery({
     queryKey: assetKeys.maintenance(assetId ?? ''),
     staleTime: 30_000,
-    queryFn: queryFromPaginatedService(() => getAssetMaintenance(assetId!, 1, 20)),
+    queryFn: queryFromPaginatedService(() => getAssetMaintenance(assetId!, 20)),
     enabled: !!assetId,
   });
 }

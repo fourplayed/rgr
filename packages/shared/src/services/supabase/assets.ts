@@ -465,47 +465,55 @@ export async function bulkSoftDeleteAssets(
 
 /**
  * Get scan events for an asset. Uses idx_scan_events_asset.
+ * Supports keyset pagination (cursor/cursorId) or legacy offset (page).
  */
 export async function getAssetScans(
   assetId: string,
-  page: number = 1,
-  pageSize: number = 20
+  pageSize: number = 20,
+  cursor?: string,
+  cursorId?: string
 ): Promise<ServiceResult<PaginatedResult<ScanEventWithScanner>>> {
   const supabase = getSupabaseClient();
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
+  const fetchLimit = pageSize + 1;
 
-  const { data, error, count } = await supabase
+  let query = supabase
     .from('scan_events')
     .select(
       `
       *,
       profiles(full_name),
       assets!inner(asset_number, category)
-    `,
-      { count: 'exact' }
+    `
     )
     .eq('asset_id', assetId)
     .order('created_at', { ascending: false })
-    .range(from, to);
+    .order('id', { ascending: false });
+
+  // Composite keyset cursor: (created_at < cursor) OR (created_at = cursor AND id < cursorId)
+  if (cursor && cursorId) {
+    query = query.or(`created_at.lt.${cursor},and(created_at.eq.${cursor},id.lt.${cursorId})`);
+  }
+
+  const { data, error } = await query.limit(fetchLimit);
 
   if (error) {
     return { success: false, data: null, error: `Failed to fetch scans: ${error.message}` };
   }
 
-  const total = count ?? 0;
-  const scans = ((data || []) as unknown as ScanEventRowWithJoins[]).map(
-    mapRowToScanEventWithScanner
-  );
+  const rows = data || [];
+  const hasMore = rows.length > pageSize;
+  const pageRows = hasMore ? rows.slice(0, pageSize) : rows;
+  const scans = (pageRows as unknown as ScanEventRowWithJoins[]).map(mapRowToScanEventWithScanner);
 
   return {
     success: true,
     data: {
       data: scans,
-      total,
-      page,
+      total: -1,
+      page: 1,
       pageSize,
-      totalPages: Math.ceil(total / pageSize),
+      totalPages: -1,
+      hasMore,
     },
     error: null,
   };
@@ -527,9 +535,46 @@ export async function createScanEvent(
   }
 
   const supabase = getSupabaseClient();
-  const dbData = mapScanEventToInsert(parsed.data as CreateScanEventInput);
+  const validInput = parsed.data as CreateScanEventInput;
+  const dbData = mapScanEventToInsert(validInput);
 
   type ScanEventInsert = Database['public']['Tables']['scan_events']['Insert'];
+
+  // If an idempotency key is provided (offline queue replay), use upsert with
+  // ignoreDuplicates to prevent duplicate rows when network drops mid-response.
+  if (validInput.idempotencyKey) {
+    const { data, error } = await supabase
+      .from('scan_events')
+      .upsert(dbData as ScanEventInsert, { onConflict: 'idempotency_key', ignoreDuplicates: true })
+      .select()
+      .maybeSingle();
+
+    if (error) {
+      return { success: false, data: null, error: `Failed to create scan event: ${error.message}` };
+    }
+
+    // When ignoreDuplicates fires, no row is returned — fetch the existing one
+    if (!data) {
+      const { data: existing, error: fetchError } = await supabase
+        .from('scan_events')
+        .select()
+        .eq('idempotency_key', validInput.idempotencyKey)
+        .single();
+
+      if (fetchError || !existing) {
+        return { success: false, data: null, error: 'Failed to retrieve deduplicated scan event' };
+      }
+      return {
+        success: true,
+        data: mapRowToScanEvent(existing as unknown as ScanEventRow),
+        error: null,
+      };
+    }
+
+    return { success: true, data: mapRowToScanEvent(data as unknown as ScanEventRow), error: null };
+  }
+
+  // Standard insert (no idempotency key — online scans)
   const { data, error } = await supabase
     .from('scan_events')
     .insert(dbData as ScanEventInsert)
@@ -664,17 +709,18 @@ export async function getMyRecentScans(
 
 /**
  * Get maintenance records for an asset. Uses idx_maintenance_history.
+ * Supports keyset pagination (cursor/cursorId) or legacy offset (page).
  */
 export async function getAssetMaintenance(
   assetId: string,
-  page: number = 1,
-  pageSize: number = 20
+  pageSize: number = 20,
+  cursor?: string,
+  cursorId?: string
 ): Promise<ServiceResult<PaginatedResult<MaintenanceRecordWithNames>>> {
   const supabase = getSupabaseClient();
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
+  const fetchLimit = pageSize + 1;
 
-  const { data, error, count } = await supabase
+  let query = supabase
     .from('maintenance_records')
     .select(
       `
@@ -682,18 +728,22 @@ export async function getAssetMaintenance(
       reporter:reported_by(full_name),
       assignee:assigned_to(full_name),
       completer:completed_by(full_name)
-    `,
-      { count: 'exact' }
+    `
     )
     .eq('asset_id', assetId)
     .order('created_at', { ascending: false })
-    .range(from, to);
+    .order('id', { ascending: false });
+
+  // Composite keyset cursor: (created_at < cursor) OR (created_at = cursor AND id < cursorId)
+  if (cursor && cursorId) {
+    query = query.or(`created_at.lt.${cursor},and(created_at.eq.${cursor},id.lt.${cursorId})`);
+  }
+
+  const { data, error } = await query.limit(fetchLimit);
 
   if (error) {
     return { success: false, data: null, error: `Failed to fetch maintenance: ${error.message}` };
   }
-
-  const total = count ?? 0;
 
   interface MaintenanceJoinRow extends MaintenanceRecordRow {
     reporter: { full_name: string } | null;
@@ -701,7 +751,11 @@ export async function getAssetMaintenance(
     completer: { full_name: string } | null;
   }
 
-  const validatedRows = validateQueryResult(data || [], MaintenanceWithNamesResponseSchema);
+  const rows = data || [];
+  const hasMore = rows.length > pageSize;
+  const pageRows = hasMore ? rows.slice(0, pageSize) : rows;
+
+  const validatedRows = validateQueryResult(pageRows, MaintenanceWithNamesResponseSchema);
   const records = (validatedRows as unknown as MaintenanceJoinRow[]).map((row) => {
     const { reporter, assignee, completer, ...maintenanceRow } = row;
     const record = mapRowToMaintenanceRecord(maintenanceRow as MaintenanceRecordRow);
@@ -717,10 +771,11 @@ export async function getAssetMaintenance(
     success: true,
     data: {
       data: records,
-      total,
-      page,
+      total: -1,
+      page: 1,
       pageSize,
-      totalPages: Math.ceil(total / pageSize),
+      totalPages: -1,
+      hasMore,
     },
     error: null,
   };

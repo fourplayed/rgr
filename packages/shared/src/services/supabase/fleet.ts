@@ -85,61 +85,40 @@ interface AssetLocationRow {
 // ── Fleet Statistics ──
 
 /**
- * Fetch fleet statistics via RPC with client-side fallback.
+ * Fetch fleet statistics via the get_fleet_statistics RPC.
  */
 export async function getFleetStatistics(): Promise<ServiceResult<FleetStatistics>> {
   const supabase = getSupabaseClient();
 
   const { data, error } = await supabase.rpc('get_fleet_statistics');
 
-  if (!error && data != null) {
-    const parsed = FleetStatisticsResultSchema.safeParse(data);
-    if (!parsed.success) {
-      return {
-        success: false,
-        data: null,
-        error: 'Unexpected RPC response shape for get_fleet_statistics',
-      };
-    }
-
-    const stats = parsed.data;
-    return {
-      success: true,
-      data: {
-        totalAssets: stats.total_assets,
-        activeAssets: stats.serviced,
-        inMaintenance: stats.maintenance,
-        outOfService: stats.out_of_service,
-        trailerCount: stats.trailer_count,
-        dollyCount: stats.dolly_count,
-      },
-      error: null,
-    };
-  }
-
-  // Fallback: client-side aggregation if RPC doesn't exist
-  const { data: assets, error: fallbackError } = await supabase
-    .from('assets')
-    .select('status, category')
-    .is('deleted_at', null);
-
-  if (fallbackError) {
+  if (error) {
     return {
       success: false,
       data: null,
-      error: `Failed to fetch fleet statistics: ${fallbackError.message}`,
+      error: `Failed to fetch fleet statistics: ${error.message}`,
     };
   }
 
+  const parsed = FleetStatisticsResultSchema.safeParse(data);
+  if (!parsed.success) {
+    return {
+      success: false,
+      data: null,
+      error: 'Unexpected RPC response shape for get_fleet_statistics',
+    };
+  }
+
+  const stats = parsed.data;
   return {
     success: true,
     data: {
-      totalAssets: assets.length,
-      activeAssets: assets.filter((a) => a.status === 'serviced').length,
-      inMaintenance: assets.filter((a) => a.status === 'maintenance').length,
-      outOfService: assets.filter((a) => a.status === 'out_of_service').length,
-      trailerCount: assets.filter((a) => a.category === 'trailer').length,
-      dollyCount: assets.filter((a) => a.category === 'dolly').length,
+      totalAssets: stats.total_assets,
+      activeAssets: stats.serviced,
+      inMaintenance: stats.maintenance,
+      outOfService: stats.out_of_service,
+      trailerCount: stats.trailer_count,
+      dollyCount: stats.dolly_count,
     },
     error: null,
   };
