@@ -14,6 +14,14 @@ export function escapeHtml(str: string): string {
 }
 
 /**
+ * Escape PostgREST filter metacharacters (%_\,().) to prevent query injection
+ * in ILIKE filters. Centralised to ensure consistent escaping across all search endpoints.
+ */
+export function escapePostgrestSearch(search: string): string {
+  return search.replace(/[%_\\,().]/g, (c) => `\\${c}`);
+}
+
+/**
  * Validate that a string is a valid hex color.
  * Accepts: #rgb, #rrggbb, #rrggbbaa (3, 6, or 8 hex digits).
  */

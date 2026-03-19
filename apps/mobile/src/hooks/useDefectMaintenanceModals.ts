@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import type { CreateMaintenanceInput } from '@rgr/shared';
 import { useModalTransition } from './useModalTransition';
 import { usePersistentBackdrop } from './usePersistentBackdrop';
@@ -15,7 +15,8 @@ export function buildQuickAcceptDefaults(context: {
   title: string;
   description: string | null;
 }): CreateMaintenanceInput {
-  const truncatedNotes = context.description ? context.description.slice(0, 45) : context.title;
+  const source = context.description || context.title;
+  const truncatedNotes = source.length > 45 ? source.slice(0, 42) + '...' : source;
   return {
     assetId: context.assetId,
     title: `Fix: ${truncatedNotes}`,
@@ -68,6 +69,13 @@ export function useDefectMaintenanceModals() {
 
   const { mutateAsync: acceptDefect } = useAcceptDefect();
 
+  // Ref captures the latest defectId so handleAcceptSubmit has a stable identity
+  // without closing over the entire modal state object.
+  const defectIdRef = useRef<string | null>(null);
+  if (modal.type === 'acceptDefect') {
+    defectIdRef.current = modal.defectId;
+  }
+
   const handleAcceptPress = useCallback(
     (context: {
       defectId: string;
@@ -90,14 +98,19 @@ export function useDefectMaintenanceModals() {
 
   const handleAcceptSubmit = useCallback(
     async (input: CreateMaintenanceInput) => {
-      if (modal.type !== 'acceptDefect') return;
-      await acceptDefect({
-        defectReportId: modal.defectId,
-        maintenanceInput: input,
-      });
+      const defectId = defectIdRef.current;
+      if (!defectId) return;
+      try {
+        await acceptDefect({
+          defectReportId: defectId,
+          maintenanceInput: input,
+        });
+      } catch {
+        // Error propagates to React Query mutation state; UI can read it there
+      }
       closeModal();
     },
-    [modal, acceptDefect, closeModal]
+    [acceptDefect, closeModal]
   );
 
   const handleQuickAcceptPress = useCallback(
@@ -109,10 +122,14 @@ export function useDefectMaintenanceModals() {
       description: string | null;
     }) => {
       const defaults = buildQuickAcceptDefaults(context);
-      await acceptDefect({
-        defectReportId: context.defectId,
-        maintenanceInput: defaults,
-      });
+      try {
+        await acceptDefect({
+          defectReportId: context.defectId,
+          maintenanceInput: defaults,
+        });
+      } catch {
+        // Error propagates to React Query mutation state
+      }
       closeModal();
     },
     [acceptDefect, closeModal]

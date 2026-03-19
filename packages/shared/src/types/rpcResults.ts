@@ -30,6 +30,7 @@ export const AssetScanContextResultSchema = z.object({
       title: z.string(),
       description: z.string().nullable(),
       status: z.string(),
+      maintenance_record_id: z.string().nullable(),
       created_at: z.string(),
     })
   ),

@@ -5,6 +5,7 @@ function logServiceError(context: string, err: unknown): void {
   const message = err instanceof Error ? err.message : String(err);
   console.error(`[admin] ${context}: ${message}`);
 }
+import { escapePostgrestSearch } from '../../utils/sanitize';
 import type { ServiceResult, PaginatedResult } from '../../types';
 import type { AssetStatus, PhotoType } from '../../types/enums';
 import { UserRoleSchema } from '../../types/enums';
@@ -76,7 +77,7 @@ export async function listProfiles(
     let query = supabase.from('profiles').select('*', { count: 'exact' });
 
     if (search) {
-      const safeSearch = search.replace(/[%_\\,().]/g, (c) => `\\${c}`);
+      const safeSearch = escapePostgrestSearch(search);
       query = query.or(`full_name.ilike.%${safeSearch}%,email.ilike.%${safeSearch}%`);
     }
 
@@ -605,7 +606,7 @@ export async function adminListMaintenance(
     }
 
     if (search) {
-      const safeSearch = search.replace(/[%_\\,().]/g, (c) => `\\${c}`);
+      const safeSearch = escapePostgrestSearch(search);
       query = query.ilike('title', `%${safeSearch}%`);
     }
 
@@ -693,7 +694,7 @@ export async function adminListDefectReports(
     }
 
     if (search) {
-      const safeSearch = search.replace(/[%_\\,().]/g, (c) => `\\${c}`);
+      const safeSearch = escapePostgrestSearch(search);
       query = query.ilike('title', `%${safeSearch}%`);
     }
 
@@ -772,7 +773,7 @@ export async function adminListPhotos(
     );
 
     if (search) {
-      const safeSearch = search.replace(/[%_\\,().]/g, (c) => `\\${c}`);
+      const safeSearch = escapePostgrestSearch(search);
       // PostgREST embedded filter — SDK doesn't type nested column references
       query = query.ilike('asset.asset_number' as string, `%${safeSearch}%`);
     }

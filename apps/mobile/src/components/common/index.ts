@@ -22,6 +22,7 @@ export { SheetHeader } from './SheetHeader';
 export { SheetModal } from './SheetModal';
 export { EmptyState } from './EmptyState';
 export { PressableCard } from './PressableCard';
+export { InteractiveLogo } from './InteractiveLogo';
 export { FilterChip } from './FilterChip';
 export { AppTextInput } from './AppTextInput';
 export { AppSearchInput } from './AppSearchInput';

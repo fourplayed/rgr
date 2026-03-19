@@ -110,7 +110,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const { data: depotData } = await serviceClient
       .from('depots')
       .select('name')
-      .is('deleted_at', null);
+      .eq('is_active', true);
 
     // Total scan count (all time)
     const { count: totalScanCount } = await serviceClient

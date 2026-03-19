@@ -1,10 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
-import NetInfo from '@react-native-community/netinfo';
 import { getQueueSummary, MutationType } from '../utils/offlineMutationQueue';
+import { eventBus } from '../utils/eventBus';
 
 export type QueueSummary = Record<MutationType, number>;
 
-/** Polls the offline mutation queue grouped by type every 10s and on NetInfo changes. */
+/**
+ * Subscribes to queue:changed events for immediate updates.
+ * Falls back to polling every 60s as a safety net (e.g., queue modified by another module
+ * that doesn't emit). On mount, reads the queue once to pick up any pre-existing entries.
+ */
 export function useOfflineQueueStatus(): { total: number; summary: QueueSummary } {
   const [summary, setSummary] = useState<QueueSummary>({
     scan: 0,
@@ -23,10 +27,8 @@ export function useOfflineQueueStatus(): { total: number; summary: QueueSummary 
 
   useEffect(() => {
     refresh();
-    const interval = setInterval(refresh, 10_000);
-    const unsubscribe = NetInfo.addEventListener(() => {
-      refresh();
-    });
+    const interval = setInterval(refresh, 60_000);
+    const unsubscribe = eventBus.on('queue:changed', refresh);
     return () => {
       clearInterval(interval);
       unsubscribe();

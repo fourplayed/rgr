@@ -1,5 +1,16 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { View, TouchableOpacity, StyleSheet, Animated, Alert, type ViewStyle } from 'react-native';
+import {
+  View,
+  TouchableOpacity,
+  StyleSheet,
+  Animated,
+  Alert,
+  Keyboard,
+  Platform,
+  type ViewStyle,
+  type NativeSyntheticEvent,
+  type NativeScrollEvent,
+} from 'react-native';
 import { AppTextInput } from '../common/AppTextInput';
 import { DatePickerField } from '../common/DatePickerField';
 import { Image } from 'expo-image';
@@ -13,6 +24,7 @@ import {
 } from '@rgr/shared';
 import { AppText, LoadingDots, AlertSheet, SheetModal } from '../common';
 import { BottomSheetScrollView } from '../common/SheetModal';
+import type { BottomSheetScrollViewMethods } from '@gorhom/bottom-sheet';
 import { SheetHeader } from '../common/SheetHeader';
 import { Button } from '../common/Button';
 import { FilterChip } from '../common/FilterChip';
@@ -89,6 +101,15 @@ export function MaintenanceDetailModal({
   const { getStyle, scatter, reset: resetScatter, isScattering } = useScatterExit();
 
   const bottomPadding = useSheetBottomPadding();
+
+  // ── Scroll-to-input on keyboard open ──
+  const scrollRef = useRef<BottomSheetScrollViewMethods>(null);
+  const scrollOffsetY = useRef(0);
+  const focusedInputWrapRef = useRef<View | null>(null);
+  const titleFieldRef = useRef<View>(null);
+  const descFieldRef = useRef<View>(null);
+  const notesFieldRef = useRef<View>(null);
+
   const { getEntryStyle } = useStaggeredEntrances(!isLoading && !!maintenance ? 7 : 0);
 
   // Pre-compose scatter-exit (opacity + translateX) with entrance (opacity + translateY).
@@ -131,6 +152,31 @@ export function MaintenanceDetailModal({
   const [editDueDate, setEditDueDate] = useState('');
 
   const canEdit = canMarkMaintenance && maintenance?.status === 'scheduled';
+
+  // ── Scroll-to-input on keyboard open ──
+  useEffect(() => {
+    if (!isEditing && !editingNotes) return;
+
+    const sub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => {
+        const node = focusedInputWrapRef.current;
+        if (!node) return;
+        const keyboardTop = e.endCoordinates.screenY;
+        node.measureInWindow((_x: number, y: number, _w: number, h: number) => {
+          const inputBottom = y + h + 40;
+          if (inputBottom > keyboardTop) {
+            scrollRef.current?.scrollTo({
+              y: scrollOffsetY.current + (inputBottom - keyboardTop),
+              animated: true,
+            });
+          }
+        });
+      }
+    );
+
+    return () => sub.remove();
+  }, [isEditing, editingNotes]);
 
   // Reset all editing state when the modal switches to a different record or closes.
   useEffect(() => {
@@ -350,12 +396,15 @@ export function MaintenanceDetailModal({
 
     if (isEditing) {
       return (
-        <View style={formStyles.inputGroup}>
+        <View ref={titleFieldRef} style={formStyles.inputGroup}>
           <AppText style={formStyles.label}>Title</AppText>
           <AppTextInput
             style={formStyles.input}
             value={editTitle}
             onChangeText={setEditTitle}
+            onFocus={() => {
+              focusedInputWrapRef.current = titleFieldRef.current;
+            }}
             placeholder="Task title"
             autoCapitalize="sentences"
             maxLength={200}
@@ -373,13 +422,16 @@ export function MaintenanceDetailModal({
 
     if (isEditing) {
       return (
-        <View style={formStyles.inputGroup}>
+        <View ref={descFieldRef} style={formStyles.inputGroup}>
           <AppText style={formStyles.label}>Description</AppText>
           <AppTextInput
             style={[formStyles.input, formStyles.textArea]}
             defaultValue={editDescriptionRef.current}
             onChangeText={(text) => {
               editDescriptionRef.current = text;
+            }}
+            onFocus={() => {
+              focusedInputWrapRef.current = descFieldRef.current;
             }}
             placeholder="Describe the maintenance work needed"
             multiline
@@ -478,6 +530,7 @@ export function MaintenanceDetailModal({
           </View>
         ) : isEditing || editingNotes ? (
           <BottomSheetScrollView
+            ref={scrollRef}
             style={sheetLayout.scroll}
             contentContainerStyle={[
               sheetLayout.scrollContent,
@@ -490,6 +543,9 @@ export function MaintenanceDetailModal({
             bounces={true}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
+            onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
+              scrollOffsetY.current = e.nativeEvent.contentOffset.y;
+            }}
           >
             {/* Info Row: Asset Number + Badges */}
             <Animated.View style={getAnimatedStyle(0)}>
@@ -640,6 +696,7 @@ export function MaintenanceDetailModal({
                       )}
                   </View>
                   <View
+                    ref={notesFieldRef}
                     style={[
                       editingNotes ? styles.sectionCard : styles.notesCardSubdued,
                       editingNotes && styles.notesCardEditing,
@@ -652,6 +709,9 @@ export function MaintenanceDetailModal({
                           defaultValue={notesRef.current}
                           onChangeText={(text) => {
                             notesRef.current = text;
+                          }}
+                          onFocus={() => {
+                            focusedInputWrapRef.current = notesFieldRef.current;
                           }}
                           placeholder="Add notes..."
                           placeholderTextColor={colors.textDisabled}

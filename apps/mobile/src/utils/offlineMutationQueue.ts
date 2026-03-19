@@ -3,6 +3,7 @@ import { onlineManager } from '@tanstack/react-query';
 import * as FileSystem from 'expo-file-system';
 import type { CreateScanEventInput, ServiceResult } from '@rgr/shared';
 import { logger } from './logger';
+import { eventBus } from './eventBus';
 
 const OLD_QUEUE_KEY = 'rgr:offline-scan-queue';
 const QUEUE_KEY = 'rgr:offline-mutation-queue';
@@ -51,7 +52,7 @@ function isQueuedMutation(item: unknown): item is QueuedMutation {
   }
   // photoStatus is required — reject entries missing it or with invalid values
   const VALID_PHOTO_STATUSES = new Set(['pending', 'uploaded', 'failed']);
-  if (typeof o['photoStatus'] === 'string' && !VALID_PHOTO_STATUSES.has(o['photoStatus'])) {
+  if (typeof o['photoStatus'] !== 'string' || !VALID_PHOTO_STATUSES.has(o['photoStatus'])) {
     return false;
   }
   return true;
@@ -172,6 +173,7 @@ export async function enqueueMutation(opts: {
     queue = queue.slice(queue.length - MAX_QUEUE_SIZE);
   }
   await saveQueue(queue);
+  eventBus.emit('queue:changed');
   logger.info(`${opts.type} mutation queued for offline replay (${queue.length} in queue)`);
 }
 
@@ -389,6 +391,7 @@ export async function replayQueue(
     return { replayed, failed };
   } finally {
     _isReplaying = false;
+    eventBus.emit('queue:changed');
   }
 }
 
@@ -399,6 +402,7 @@ export async function replayQueue(
 export async function clearQueue(): Promise<void> {
   _abortReplay = true;
   await AsyncStorage.removeItem(QUEUE_KEY);
+  eventBus.emit('queue:changed');
 }
 
 /**

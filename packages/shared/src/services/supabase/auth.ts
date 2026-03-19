@@ -27,6 +27,21 @@ const SecureAuthResponseSchema = z.object({
     .strip(),
 });
 
+/**
+ * Narrowed auth result derived from the Zod schema.
+ * Callers only need `.user.id`, `.session.access_token`, and `.session.refresh_token`,
+ * all of which are guaranteed by the schema. This avoids unsafe `as unknown as AuthUser`
+ * casts that paper over missing fields.
+ */
+export type SecureAuthUser = z.infer<typeof SecureAuthResponseSchema>['user'];
+export type SecureAuthSession = z.infer<typeof SecureAuthResponseSchema>['session'] & {
+  user: SecureAuthUser;
+};
+export type SecureAuthResult = {
+  user: SecureAuthUser;
+  session: SecureAuthSession;
+};
+
 // Singleton promise for deduplicating concurrent token refreshes
 let refreshPromise: Promise<{ data: { session: Session | null }; error: AuthError | null }> | null =
   null;
@@ -116,7 +131,7 @@ export async function signInWithEmail(
  */
 export async function signInWithEmailSecure(
   credentials: SignInCredentials
-): Promise<ServiceResult<{ user: AuthUser; session: Session }>> {
+): Promise<ServiceResult<SecureAuthResult>> {
   // Client-side rate limiting still runs as a first line of defense
   const rateLimit = checkRateLimit(credentials.email);
   if (!rateLimit.allowed) {
@@ -204,8 +219,7 @@ export async function signInWithEmailSecure(
     return {
       success: true,
       data: {
-        // Upstream Zod validation (SecureAuthResponseSchema) ensures shape
-        user: validatedUser as unknown as AuthUser,
+        user: validatedUser,
         session: {
           access_token: validatedSession.access_token,
           refresh_token: validatedSession.refresh_token,
@@ -213,7 +227,7 @@ export async function signInWithEmailSecure(
           expires_in: validatedSession.expires_in,
           token_type: validatedSession.token_type,
           user: validatedUser,
-        } as unknown as Session,
+        },
       },
       error: null,
     };

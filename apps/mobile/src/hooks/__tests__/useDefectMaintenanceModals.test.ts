@@ -1,14 +1,15 @@
 import { buildQuickAcceptDefaults } from '../useDefectMaintenanceModals';
 
 describe('buildQuickAcceptDefaults', () => {
-  it('generates title from first 50 chars of description', () => {
+  it('truncates long descriptions with ellipsis (max 50 chars total)', () => {
     const result = buildQuickAcceptDefaults({
       defectId: 'd-1',
       assetId: 'a-1',
       title: 'Defect',
       description: 'Cracked taillight on left side near the bumper connection point area',
     });
-    expect(result.title).toBe('Fix: Cracked taillight on left side near the bumpe');
+    expect(result.title).toBe('Fix: Cracked taillight on left side near the bu...');
+    expect(result.title.length).toBeLessThanOrEqual(50);
     expect(result.priority).toBe('medium');
     expect(result.status).toBe('scheduled');
     expect(result.assetId).toBe('a-1');

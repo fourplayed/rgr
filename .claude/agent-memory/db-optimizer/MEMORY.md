@@ -42,14 +42,24 @@
 - Keyset/cursor pagination in mobile; offset fallback in web
 - PostGIS not used; plain DOUBLE PRECISION lat/lng (correct for current patterns)
 
-## Known Issues (2026-03-06 audit)
+## Known Issues (2026-03-19 audit)
 See [audit-findings.md](audit-findings.md) for details.
-- cancel_maintenance_task: SECURITY DEFINER, insufficient ownership check
-- defect_reports/maintenance INSERT: no reported_by = auth.uid() enforcement
-- accept_defect_report: no JSONB status field validation
-- Missing cursor pagination indexes on defect_reports and maintenance_records
-- getTotalScanCount: full table COUNT(*) will degrade at scale
-- Web subscribes to scan_events realtime but table removed from publication
+### P0 Critical (runtime errors)
+- assign_asset_depot RPC: references nonexistent organisation_id + depots.deleted_at
+- Cron cleanup: rate_limits uses wrong column name (last_attempt_at vs first_failure_at)
+- Cron cleanup: rego_lookup_log uses wrong column name (looked_up_at vs created_at)
+- fleet-analysis-daily edge fn: queries depots.deleted_at (doesn't exist)
+### P1 High (performance)
+- fleet-analysis-daily: 15+ sequential COUNT(*) queries
+- getAssetScans/getAssetMaintenance: offset pagination + count:exact
+- listAssets search: no trigram indexes on asset_number, registration_number
+### Previously fixed
+- cancel_maintenance_task ownership check: FIXED (20260322000000)
+- INSERT reported_by enforcement: FIXED (20260322000000)
+- accept_defect_report status hardcoded: FIXED (20260322000000)
+- Cursor pagination indexes: FIXED (20260323000000)
+- Scan count estimate RPC: FIXED (20260323000000)
+- scan_events realtime: FIXED (20260322000001)
 
 ## Monorepo Structure
 - `rgr/packages/shared/` - types, services, Supabase client

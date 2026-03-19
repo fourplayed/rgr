@@ -48,9 +48,11 @@ import { mapRowToMaintenanceRecord } from '../../types/entities/maintenanceRecor
 import { mapRowToHazardAlert } from '../../types/entities/hazardAlert';
 import { mapRowToDepot } from '../../types/entities/depot';
 import { validateQueryResult } from '../../utils';
+import { escapePostgrestSearch } from '../../utils/sanitize';
 import {
   AssetWithJoinsResponseSchema,
   MaintenanceWithNamesResponseSchema,
+  ScanEventWithJoinsResponseSchema,
 } from '../../types/entities/responseSchemas';
 import type { Database } from '../../types/database.types';
 import {
@@ -72,6 +74,18 @@ interface AssetRowWithJoins extends AssetRow {
 interface ScanEventRowWithJoins extends ScanEventRow {
   profiles: { full_name: string } | null;
   assets: { asset_number: string; category: string } | null;
+}
+
+/** Maps a joined scan event row to a ScanEventWithScanner domain object. */
+function mapRowToScanEventWithScanner(row: ScanEventRowWithJoins): ScanEventWithScanner {
+  const { profiles, assets, ...scanRow } = row;
+  const scan = mapRowToScanEvent(scanRow as ScanEventRow);
+  return {
+    ...scan,
+    scannerName: profiles?.full_name ?? null,
+    assetNumber: assets?.asset_number ?? null,
+    assetCategory: safeParseEnum(AssetCategorySchema, assets?.category, null),
+  } as ScanEventWithScanner;
 }
 
 // ── Types ──
@@ -147,8 +161,7 @@ export async function listAssets(
 
   // Filters
   if (search) {
-    // Escape PostgREST filter metacharacters to prevent query injection
-    const safeSearch = search.replace(/[%_\\,().]/g, (c) => `\\${c}`);
+    const safeSearch = escapePostgrestSearch(search);
     query = query.or(
       `asset_number.ilike.%${safeSearch}%,make.ilike.%${safeSearch}%,model.ilike.%${safeSearch}%,registration_number.ilike.%${safeSearch}%,description.ilike.%${safeSearch}%`
     );
@@ -481,16 +494,9 @@ export async function getAssetScans(
   }
 
   const total = count ?? 0;
-  const scans = ((data || []) as unknown as ScanEventRowWithJoins[]).map((row) => {
-    const { profiles, assets, ...scanRow } = row;
-    const scan = mapRowToScanEvent(scanRow as ScanEventRow);
-    return {
-      ...scan,
-      scannerName: profiles?.full_name ?? null,
-      assetNumber: assets?.asset_number ?? null,
-      assetCategory: safeParseEnum(AssetCategorySchema, assets?.category, null),
-    } as ScanEventWithScanner;
-  });
+  const scans = ((data || []) as unknown as ScanEventRowWithJoins[]).map(
+    mapRowToScanEventWithScanner
+  );
 
   return {
     success: true,
@@ -612,16 +618,10 @@ export async function getRecentScans(
     return { success: false, data: null, error: `Failed to fetch recent scans: ${error.message}` };
   }
 
-  const scans = ((data || []) as unknown as ScanEventRowWithJoins[]).map((row) => {
-    const { profiles, assets, ...scanRow } = row;
-    const scan = mapRowToScanEvent(scanRow as ScanEventRow);
-    return {
-      ...scan,
-      scannerName: profiles?.full_name ?? null,
-      assetNumber: assets?.asset_number ?? null,
-      assetCategory: safeParseEnum(AssetCategorySchema, assets?.category, null),
-    } as ScanEventWithScanner;
-  });
+  const validatedRows = validateQueryResult(data || [], ScanEventWithJoinsResponseSchema);
+  const scans = (validatedRows as unknown as ScanEventRowWithJoins[]).map(
+    mapRowToScanEventWithScanner
+  );
 
   return { success: true, data: scans, error: null };
 }
@@ -653,16 +653,9 @@ export async function getMyRecentScans(
     return { success: false, data: null, error: `Failed to fetch recent scans: ${error.message}` };
   }
 
-  const scans = ((data || []) as unknown as ScanEventRowWithJoins[]).map((row) => {
-    const { profiles, assets, ...scanRow } = row;
-    const scan = mapRowToScanEvent(scanRow as ScanEventRow);
-    return {
-      ...scan,
-      scannerName: profiles?.full_name ?? null,
-      assetNumber: assets?.asset_number ?? null,
-      assetCategory: safeParseEnum(AssetCategorySchema, assets?.category, null),
-    } as ScanEventWithScanner;
-  });
+  const scans = ((data || []) as unknown as ScanEventRowWithJoins[]).map(
+    mapRowToScanEventWithScanner
+  );
 
   return { success: true, data: scans, error: null };
 }
@@ -857,6 +850,7 @@ export interface AssetScanContext {
     title: string;
     description: string | null;
     status: DefectStatus;
+    maintenanceRecordId: string | null;
     createdAt: string;
   }>;
   activeTasks: Array<{
@@ -905,6 +899,7 @@ export async function getAssetScanContext(
         title: d.title,
         description: d.description ?? null,
         status: safeParseEnum(DefectStatusSchema, d.status, 'reported'),
+        maintenanceRecordId: d.maintenance_record_id ?? null,
         createdAt: d.created_at,
       })),
       activeTasks: raw.active_tasks.map((t) => ({

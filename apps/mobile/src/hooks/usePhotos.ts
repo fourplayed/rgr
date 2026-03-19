@@ -11,8 +11,9 @@ import {
   getSignedUrls,
   queryFromService,
 } from '@rgr/shared';
-import type { UploadPhotoOptions, PhotoListItem } from '@rgr/shared';
+import type { PhotoListItem } from '@rgr/shared';
 import { assetKeys } from './useAssetData';
+import { useMutationFromService } from './useMutationFromService';
 
 /** Supabase signed URLs expire at 60 min — use 45 min for a safe buffer. */
 const SIGNED_URL_STALE_TIME = 2_700_000;
@@ -80,22 +81,12 @@ export function useSignedUrl(storagePath: string | undefined) {
  * Upload a photo
  */
 export function useUploadPhoto() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (options: UploadPhotoOptions) => {
-      const result = await uploadPhoto(options);
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
-      return result.data;
-    },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: photoKeys.asset(variables.assetId) });
-      queryClient.invalidateQueries({ queryKey: assetKeys.detail(variables.assetId) });
-    },
+  return useMutationFromService({
+    serviceFn: uploadPhoto,
+    invalidates: (_data, variables) => [
+      photoKeys.asset(variables.assetId),
+      assetKeys.detail(variables.assetId),
+    ],
   });
 }
 

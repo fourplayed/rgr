@@ -9,6 +9,7 @@ import {
   Animated,
   Easing,
 } from 'react-native';
+import { InteractiveLogo } from '../../src/components/common';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -69,7 +70,6 @@ export default function LoginScreen() {
       clearAuthError();
     }
   }, [authError, clearAuthError]);
-  const tiltAnim = useRef(new Animated.Value(-1)).current;
   const accentAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -92,28 +92,6 @@ export default function LoginScreen() {
     accentAnimation.start();
     return () => accentAnimation.stop();
   }, [accentAnim]);
-
-  useEffect(() => {
-    const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(tiltAnim, {
-          toValue: 1,
-          duration: 3000,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-        Animated.timing(tiltAnim, {
-          toValue: -1,
-          duration: 3000,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    animation.start();
-
-    return () => animation.stop();
-  }, [tiltAnim]);
 
   const isFormValid = email.trim().length > 0 && password.trim().length > 0;
 
@@ -250,28 +228,7 @@ export default function LoginScreen() {
               </View>
             </View>
             <View style={styles.logoContainer}>
-              <Animated.View
-                style={[
-                  styles.logoShadow,
-                  {
-                    transform: [
-                      { perspective: 1000 },
-                      {
-                        rotateY: tiltAnim.interpolate({
-                          inputRange: [-1, 1],
-                          outputRange: ['-4deg', '4deg'],
-                        }),
-                      },
-                    ],
-                  },
-                ]}
-              >
-                <Animated.Image
-                  source={require('../../src/assets/logo.png')}
-                  style={styles.logo}
-                  resizeMode="contain"
-                />
-              </Animated.View>
+              <InteractiveLogo />
             </View>
           </View>
 
@@ -375,7 +332,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: -spacing.xl,
     right: -spacing.xl,
-    top: 34,
+    top: 44,
     height: LOGIN_STRIPE_HEIGHT,
     zIndex: 1,
   },
@@ -402,20 +359,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 2,
     marginTop: -12,
-  },
-  logoShadow: {
-    backgroundColor: colors.background,
-    borderRadius: 80,
-    shadowColor: colors.navy,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.5,
-    shadowRadius: 8,
-    zIndex: 10,
-    elevation: 10,
-  },
-  logo: {
-    width: 360,
-    height: 180,
   },
   title: {
     fontSize: fontSize['4xl'],

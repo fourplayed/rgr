@@ -42,13 +42,15 @@ export function parseQRCode(value: string): ParseQRCodeResult {
   // TODO: Implement full parsing logic (e.g., support versioned URIs, query params)
   const trimmed = value.trim();
 
-  if (!trimmed.startsWith(QR_CODE_PREFIX)) {
-    return { assetId: null };
+  let uuidPart: string | null = null;
+
+  if (trimmed.startsWith(QR_CODE_PREFIX)) {
+    uuidPart = trimmed.slice(QR_CODE_PREFIX.length);
+  } else if (trimmed.startsWith(QR_CODE_SHORT_PREFIX)) {
+    uuidPart = trimmed.slice(QR_CODE_SHORT_PREFIX.length);
   }
 
-  const uuidPart = trimmed.slice(QR_CODE_PREFIX.length);
-
-  if (!UUID_REGEX.test(uuidPart)) {
+  if (!uuidPart || !UUID_REGEX.test(uuidPart)) {
     return { assetId: null };
   }
 
@@ -65,12 +67,15 @@ export function isValidQRCode(value: string): boolean {
   // TODO: Expand validation rules as the QR format evolves
   const trimmed = value.trim();
 
-  if (!trimmed.startsWith(QR_CODE_PREFIX)) {
-    return false;
+  let uuidPart: string | null = null;
+
+  if (trimmed.startsWith(QR_CODE_PREFIX)) {
+    uuidPart = trimmed.slice(QR_CODE_PREFIX.length);
+  } else if (trimmed.startsWith(QR_CODE_SHORT_PREFIX)) {
+    uuidPart = trimmed.slice(QR_CODE_SHORT_PREFIX.length);
   }
 
-  const uuidPart = trimmed.slice(QR_CODE_PREFIX.length);
-  return UUID_REGEX.test(uuidPart);
+  return uuidPart !== null && UUID_REGEX.test(uuidPart);
 }
 
 /**

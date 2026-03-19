@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   SafeAreaView,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { LoadingDots } from '../../../src/components/common/LoadingDots';
 import { RefreshLoadingDots } from '../../../src/components/common/RefreshLoadingDots';
 import { ScreenHeader } from '../../../src/components/common/ScreenHeader';
@@ -19,7 +18,6 @@ import type { AssetStatus, AssetCategory, AssetWithRelations } from '@rgr/shared
 import { useInfiniteAssetList, useDepots } from '../../../src/hooks/useAssetData';
 import { useDepotLookup } from '../../../src/hooks/useDepots';
 import { useDebounce } from '../../../src/hooks/useDebounce';
-import { useUserPermissions } from '../../../src/contexts/UserPermissionsContext';
 import { useModalTransition } from '../../../src/hooks/useModalTransition';
 import { usePersistentBackdrop } from '../../../src/hooks/usePersistentBackdrop';
 import { AssetListItem } from '../../../src/components/assets/AssetListItem';
@@ -65,18 +63,14 @@ export default function AssetListScreen() {
   // Modal + permission state
   type ModalState = { type: 'none' } | { type: 'createAsset' };
 
-  const { canAccessAdmin } = useUserPermissions();
-  const { modal, closeModal, transitionTo, isTransitioning, handleExitComplete } =
-    useModalTransition<ModalState>({ type: 'none' });
+  const { modal, closeModal, isTransitioning, handleExitComplete } = useModalTransition<ModalState>(
+    { type: 'none' }
+  );
   const {
     backdropOpacity,
     showBackdrop,
     mounted: backdropMounted,
   } = usePersistentBackdrop(modal.type !== 'none' || isTransitioning);
-
-  const handleOpenCreate = useCallback(() => {
-    transitionTo({ type: 'createAsset' });
-  }, [transitionTo]);
 
   // Apply status filter from route params (e.g. navigating from dashboard stat card)
   useEffect(() => {

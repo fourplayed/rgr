@@ -20,6 +20,7 @@ import { logger } from './logger';
  */
 type EventMap = {
   'user:logout': void;
+  'queue:changed': void;
 };
 
 type EventName = keyof EventMap;

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, useState } from 'react';
 import { AppState } from 'react-native';
 import type { BarcodeScanningResult } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
@@ -8,13 +8,7 @@ import { logger } from '../utils/logger';
 // Safety timeout to prevent permanently stuck scanner state
 const SCANNER_LOCK_TIMEOUT_MS = 30000;
 
-export interface QRScanResult {
-  data: string;
-  timestamp: number;
-}
-
 interface UseQRScannerResult {
-  scannedData: QRScanResult | null;
   isProcessing: boolean;
   handleBarCodeScanned: (result: BarcodeScanningResult) => void;
   resetScanner: () => void;
@@ -31,7 +25,6 @@ export function useQRScanner(
   debounceMs: number = 2000,
   onInvalidQR?: () => void
 ): UseQRScannerResult {
-  const [scannedData, setScannedData] = useState<QRScanResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const lastScanRef = useRef<{ data: string; timestamp: number } | null>(null);
   // Ref-based lock to prevent race conditions in async callback execution
@@ -118,13 +111,7 @@ export function useQRScanner(
       // Trigger haptic feedback
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-      const scanResult: QRScanResult = {
-        data,
-        timestamp: now,
-      };
-
       lastScanRef.current = { data, timestamp: now };
-      setScannedData(scanResult);
       setIsProcessing(true);
 
       // Call callback via ref to always use the latest version (avoids stale closures)
@@ -150,14 +137,12 @@ export function useQRScanner(
       clearTimeout(lockTimeoutRef.current);
       lockTimeoutRef.current = null;
     }
-    setScannedData(null);
     setIsProcessing(false);
     isProcessingRef.current = false;
     lastScanRef.current = null;
   }, []);
 
   return {
-    scannedData,
     isProcessing,
     handleBarCodeScanned,
     resetScanner,

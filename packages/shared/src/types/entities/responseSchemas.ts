@@ -53,6 +53,18 @@ export const MaintenanceWithNamesResponseSchema = z.array(
     .passthrough()
 );
 
+// ── assets.ts — getRecentScans / getMyRecentScans ──
+
+/** Matches: *, profiles(full_name), assets!inner(asset_number, category) — array result */
+export const ScanEventWithJoinsResponseSchema = z.array(
+  z
+    .object({
+      profiles: ProfileNameJoin,
+      assets: AssetNumberCategoryJoin,
+    })
+    .passthrough()
+);
+
 // ── maintenance.ts — listMaintenance ──
 
 /** Matches: id, asset_id, title, description, priority, status, maintenance_type,

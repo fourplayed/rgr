@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { isValidHexColor } from '../../utils/sanitize';
+import type { AssertTypesMatch, MustBeTrue } from '../typeAssert';
 
 /**
  * Depot — camelCase application interface
@@ -39,24 +40,24 @@ export interface DepotRow {
 export interface CreateDepotInput {
   name: string;
   code: string;
-  address?: string | null;
-  latitude?: number | null;
-  longitude?: number | null;
-  color?: string | null;
-  isActive?: boolean;
+  address?: string | null | undefined;
+  latitude?: number | null | undefined;
+  longitude?: number | null | undefined;
+  color?: string | null | undefined;
+  isActive?: boolean | undefined;
 }
 
 /**
  * Input for updating a depot
  */
 export interface UpdateDepotInput {
-  name?: string;
-  code?: string;
-  address?: string | null;
-  latitude?: number | null;
-  longitude?: number | null;
-  color?: string | null;
-  isActive?: boolean;
+  name?: string | undefined;
+  code?: string | undefined;
+  address?: string | null | undefined;
+  latitude?: number | null | undefined;
+  longitude?: number | null | undefined;
+  color?: string | null | undefined;
+  isActive?: boolean | undefined;
 }
 
 // ── Zod schemas ──
@@ -76,6 +77,14 @@ export const CreateDepotInputSchema = z.object({
 });
 
 export const UpdateDepotInputSchema = CreateDepotInputSchema.partial();
+
+// ── Compile-time drift guards ──
+type _CreateDepotCheck = MustBeTrue<
+  AssertTypesMatch<z.infer<typeof CreateDepotInputSchema>, CreateDepotInput>
+>;
+type _UpdateDepotCheck = MustBeTrue<
+  AssertTypesMatch<z.infer<typeof UpdateDepotInputSchema>, UpdateDepotInput>
+>;
 
 // ── Typed insert/update row types ──
 

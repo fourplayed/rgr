@@ -2,8 +2,8 @@ import type { QueryClient, InfiniteData } from '@tanstack/react-query';
 
 /**
  * React Native-safe placeholder ID for optimistic cache entries.
- * Hermes doesn't provide the Web Crypto API, so crypto.randomUUID() is unavailable.
- * These IDs are ephemeral — replaced by real server IDs when onSettled invalidates the cache.
+ * Uses Math.random() because expo-crypto isn't installed and Hermes lacks Web Crypto.
+ * Collision risk is acceptable: IDs are ephemeral (replaced by server IDs on onSettled).
  */
 export function placeholderId(): string {
   const s = () => Math.random().toString(16).slice(2, 10);
