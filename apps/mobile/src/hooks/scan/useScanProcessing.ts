@@ -21,7 +21,7 @@ export function useScanProcessing(
     resetScannerRef: React.MutableRefObject<() => void>;
   }
 ) {
-  const { user, setAlertSheet, addDebugLog, resetScannerRef } = helpers;
+  const { setAlertSheet, addDebugLog, resetScannerRef } = helpers;
   const queryClient = useQueryClient();
 
   // ── Mutations ──
