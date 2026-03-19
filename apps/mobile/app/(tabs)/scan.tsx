@@ -5,7 +5,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useUserPermissions } from '../../src/contexts/UserPermissionsContext';
 import { useScanFlow } from '../../src/hooks/scan/useScanFlow';
 import type { AlertSheetState } from '../../src/hooks/scan/types';
-import { useDefectMaintenanceModals } from '../../src/hooks/useDefectMaintenanceModals';
+import { useDefectMaintenanceModalsContext } from '../../src/contexts/DefectMaintenanceModalsContext';
 import { useAssetAssessment } from '../../src/hooks/useAssetAssessment';
 import { usePersistentBackdrop } from '../../src/hooks/usePersistentBackdrop';
 import { PersistentBackdrop } from '../../src/components/common/PersistentBackdrop';
@@ -19,7 +19,6 @@ import { SheetModal } from '../../src/components/common/SheetModal';
 import { DefectReportSheet } from '../../src/components/scanner/DefectReportSheet';
 import { CameraCapture, PhotoReviewSheet } from '../../src/components/photos';
 import { CreateMaintenanceModal } from '../../src/components/maintenance';
-import { DefectMaintenanceModals } from '../../src/components/common/DefectMaintenanceModals';
 import { AlertSheet, ErrorBoundary } from '../../src/components/common';
 import { styles } from '../../src/components/scanner/scan.styles';
 
@@ -27,8 +26,8 @@ export default function ScanScreen() {
   const { canReportDefect, canMarkMaintenance } = useUserPermissions();
   const [permission, requestPermission] = useCameraPermissions();
 
-  // ── Context modals (shared hook — same as home, maintenance, assets/[id]) ──
-  const modals = useDefectMaintenanceModals();
+  // ── Context modals (shared via layout provider — same instance across all tabs) ──
+  const modals = useDefectMaintenanceModalsContext();
 
   // ── Alert sheet (owned here, passed down) ──
   const [alertSheet, setAlertSheet] = useState<AlertSheetState>({
@@ -59,8 +58,8 @@ export default function ScanScreen() {
   // ── Persistent backdrop (blur + fade) ──
   const backdrop = usePersistentBackdrop(flow.showOverlay);
 
-  // ── Asset assessment ──
-  const assessment = useAssetAssessment(flow.scannedAsset, flow.matchedDepot);
+  // ── Asset assessment (scanContext provides openDefectCount, skips redundant defect query) ──
+  const assessment = useAssetAssessment(flow.scannedAsset, flow.matchedDepot, flow.scanContext);
 
   // ── Preserve asset during exit animation ──
   const lastAssetRef = useRef(flow.scannedAsset);
@@ -255,11 +254,6 @@ export default function ScanScreen() {
           onExitComplete={flow.handleSheetExitComplete}
         />
       )}
-
-      {/* SCAN-SPECIFIC: renderBackdrop={false} because the scan screen's own
-       * PersistentBackdrop (driven by flow.showOverlay) already covers context
-       * modals. Do NOT change to renderBackdrop={true} or use without this flag. */}
-      <DefectMaintenanceModals {...modals} variant="compact" renderBackdrop={false} />
 
       {/* Camera (native Modal — required for tab bar coverage) */}
       {flow.scannedAsset && (

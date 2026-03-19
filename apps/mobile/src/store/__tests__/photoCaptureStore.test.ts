@@ -44,26 +44,38 @@ describe('usePhotoCaptureStore', () => {
     expect(state.longitude).toBe(115.86);
   });
 
-  it('setCapturedUri updates URI', () => {
-    usePhotoCaptureStore.getState().setCapturedUri('file:///photo.jpg');
+  it('patch updates capturedUri', () => {
+    usePhotoCaptureStore.getState().patch({ capturedUri: 'file:///photo.jpg' });
     expect(usePhotoCaptureStore.getState().capturedUri).toBe('file:///photo.jpg');
   });
 
-  it('setIsUploading toggles uploading flag', () => {
-    usePhotoCaptureStore.getState().setIsUploading(true);
+  it('patch toggles uploading flag', () => {
+    usePhotoCaptureStore.getState().patch({ isUploading: true });
     expect(usePhotoCaptureStore.getState().isUploading).toBe(true);
-    usePhotoCaptureStore.getState().setIsUploading(false);
+    usePhotoCaptureStore.getState().patch({ isUploading: false });
     expect(usePhotoCaptureStore.getState().isUploading).toBe(false);
   });
 
-  it('setUploadError sets error while preserving capturedUri and assetId', () => {
+  it('patch sets error while preserving capturedUri and assetId', () => {
     usePhotoCaptureStore.getState().startCapture({ assetId: 'asset-1' });
-    usePhotoCaptureStore.getState().setCapturedUri('file:///photo.jpg');
-    usePhotoCaptureStore.getState().setUploadError('Network error');
+    usePhotoCaptureStore.getState().patch({ capturedUri: 'file:///photo.jpg' });
+    usePhotoCaptureStore.getState().patch({ uploadError: 'Network error' });
     const state = usePhotoCaptureStore.getState();
     expect(state.uploadError).toBe('Network error');
     expect(state.capturedUri).toBe('file:///photo.jpg');
     expect(state.assetId).toBe('asset-1');
+  });
+
+  it('patch batches multiple fields in a single update', () => {
+    usePhotoCaptureStore.getState().patch({
+      uploadError: 'Timeout',
+      isUploading: false,
+      capturedUri: null,
+    });
+    const state = usePhotoCaptureStore.getState();
+    expect(state.uploadError).toBe('Timeout');
+    expect(state.isUploading).toBe(false);
+    expect(state.capturedUri).toBeNull();
   });
 
   it('setImageDimensions sets width and height', () => {
@@ -75,8 +87,8 @@ describe('usePhotoCaptureStore', () => {
 
   it('reset returns to initial state', () => {
     usePhotoCaptureStore.getState().startCapture({ assetId: 'asset-1' });
-    usePhotoCaptureStore.getState().setCapturedUri('file:///photo.jpg');
-    usePhotoCaptureStore.getState().setIsUploading(true);
+    usePhotoCaptureStore.getState().patch({ capturedUri: 'file:///photo.jpg' });
+    usePhotoCaptureStore.getState().patch({ isUploading: true });
     usePhotoCaptureStore.getState().reset();
     const state = usePhotoCaptureStore.getState();
     expect(state.assetId).toBeNull();
@@ -86,7 +98,7 @@ describe('usePhotoCaptureStore', () => {
   });
 
   it('error then startCapture clears previous error', () => {
-    usePhotoCaptureStore.getState().setUploadError('Previous error');
+    usePhotoCaptureStore.getState().patch({ uploadError: 'Previous error' });
     expect(usePhotoCaptureStore.getState().uploadError).toBe('Previous error');
     usePhotoCaptureStore.getState().startCapture({ assetId: 'asset-2' });
     expect(usePhotoCaptureStore.getState().uploadError).toBeNull();

@@ -14,6 +14,7 @@ import {
   updateAsset,
   getAssetScanContext,
   queryFromService,
+  queryFromPaginatedService,
 } from '@rgr/shared';
 import type { AssetStatus, AssetCategory, AssetSortField, UpdateAssetInput } from '@rgr/shared';
 import { useMutationFromService } from './useMutationFromService';
@@ -200,19 +201,9 @@ export function useAsset(id: string | undefined) {
 export function useAssetScans(assetId: string | undefined) {
   return useQuery({
     queryKey: assetKeys.scans(assetId ?? ''),
-    queryFn: async () => {
-      if (!assetId) throw new Error('Asset ID is required');
-
-      const result = await getAssetScans(assetId, 1, 20);
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
-      return result.data.data;
-    },
+    queryFn: queryFromPaginatedService(() => getAssetScans(assetId!, 1, 20)),
     enabled: !!assetId,
-    staleTime: 30000, // Cache for 30 seconds - scans don't change frequently
+    staleTime: 30000,
   });
 }
 
@@ -224,17 +215,7 @@ export function useAssetMaintenance(assetId: string | undefined) {
   return useQuery({
     queryKey: assetKeys.maintenance(assetId ?? ''),
     staleTime: 30_000,
-    queryFn: async () => {
-      if (!assetId) throw new Error('Asset ID is required');
-
-      const result = await getAssetMaintenance(assetId, 1, 20);
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
-      return result.data.data;
-    },
+    queryFn: queryFromPaginatedService(() => getAssetMaintenance(assetId!, 1, 20)),
     enabled: !!assetId,
   });
 }
@@ -246,17 +227,7 @@ export function useAssetHazards(assetId: string | undefined) {
   return useQuery({
     queryKey: assetKeys.hazards(assetId ?? ''),
     staleTime: 30_000,
-    queryFn: async () => {
-      if (!assetId) throw new Error('Asset ID is required');
-
-      const result = await getAssetHazards(assetId);
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
-      return result.data.data;
-    },
+    queryFn: queryFromPaginatedService(() => getAssetHazards(assetId!)),
     enabled: !!assetId,
   });
 }

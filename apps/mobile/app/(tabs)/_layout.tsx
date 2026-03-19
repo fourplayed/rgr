@@ -9,6 +9,7 @@ import { UserProfileHeader } from '../../src/components/common/UserProfileHeader
 import { useLocationLifecycle } from '../../src/hooks/useLocationLifecycle';
 import { usePersistentBackdrop } from '../../src/hooks/usePersistentBackdrop';
 import { useIsOverlayActive } from '../../src/store/overlayStore';
+import { DefectMaintenanceModalsProvider } from '../../src/contexts/DefectMaintenanceModalsContext';
 import { colors } from '../../src/theme/colors';
 import {
   BACKDROP_COLOR,
@@ -203,22 +204,24 @@ export default function TabsLayout() {
   useLocationLifecycle();
 
   return (
-    <View style={tabStyles.layoutRoot}>
-      <Tabs
-        screenOptions={{ headerShown: false }}
-        tabBar={(props) => <AnimatedTabBar {...props} />}
-      >
-        <Tabs.Screen name="index" options={{ href: null }} />
-        <Tabs.Screen name="home" options={{ title: 'Home' }} />
-        <Tabs.Screen name="scan" options={{ title: 'Scan' }} />
-        <Tabs.Screen name="assets" options={{ title: 'Assets' }} />
-        <Tabs.Screen name="maintenance" options={{ title: 'Maintenance' }} />
-      </Tabs>
-      <View style={tabStyles.profileOverlay}>
-        <UserProfileHeader />
+    <DefectMaintenanceModalsProvider>
+      <View style={tabStyles.layoutRoot}>
+        <Tabs
+          screenOptions={{ headerShown: false }}
+          tabBar={(props) => <AnimatedTabBar {...props} />}
+        >
+          <Tabs.Screen name="index" options={{ href: null }} />
+          <Tabs.Screen name="home" options={{ title: 'Home' }} />
+          <Tabs.Screen name="scan" options={{ title: 'Scan' }} />
+          <Tabs.Screen name="assets" options={{ title: 'Assets' }} />
+          <Tabs.Screen name="maintenance" options={{ title: 'Maintenance' }} />
+        </Tabs>
+        <View style={tabStyles.profileOverlay}>
+          <UserProfileHeader />
+        </View>
+        <HeaderBlurOverlay />
       </View>
-      <HeaderBlurOverlay />
-    </View>
+    </DefectMaintenanceModalsProvider>
   );
 }
 

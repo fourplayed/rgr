@@ -44,8 +44,7 @@ import {
 } from '../../../src/utils/scanFormatters';
 import { findDepotByLocationString, getDepotBadgeColors } from '@rgr/shared';
 import { useDepotLookup } from '../../../src/hooks/useDepots';
-import { useDefectMaintenanceModals } from '../../../src/hooks/useDefectMaintenanceModals';
-import { DefectMaintenanceModals } from '../../../src/components/common/DefectMaintenanceModals';
+import { useDefectMaintenanceModalsContext } from '../../../src/contexts/DefectMaintenanceModalsContext';
 import { useTabFade } from '../../../src/hooks/useTabFade';
 import { EmptyState } from '../../../src/components/common/EmptyState';
 import { BottomSheet } from '../../../src/components/common/BottomSheet';
@@ -314,7 +313,7 @@ export default function AssetDetailScreen() {
   const [showPhotoDetail, setShowPhotoDetail] = useState(false);
 
   // Shared defect/maintenance modal chain (detail -> accept -> task detail)
-  const modals = useDefectMaintenanceModals();
+  const modals = useDefectMaintenanceModalsContext();
 
   const isSuperuser = !!user?.role && hasRoleLevel(user.role, UserRole.SUPERUSER);
   const { depots } = useDepotLookup();
@@ -329,18 +328,20 @@ export default function AssetDetailScreen() {
     setSelectedPhotoId(null);
   }, []);
 
+  const { openMaintenanceDetail, openDefectDetail } = modals;
+
   const handleMaintenancePress = useCallback(
     (item: MaintenanceRecord) => {
-      modals.openMaintenanceDetail(item.id);
+      openMaintenanceDetail(item.id);
     },
-    [modals]
+    [openMaintenanceDetail]
   );
 
   const handleDefectPress = useCallback(
     (defectId: string) => {
-      modals.openDefectDetail(defectId);
+      openDefectDetail(defectId);
     },
-    [modals]
+    [openDefectDetail]
   );
 
   // Always fetch (needed for header)
@@ -575,9 +576,6 @@ export default function AssetDetailScreen() {
           assetId={id}
           onClose={handleClosePhotoDetail}
         />
-
-        {/* Shared defect/maintenance modal chain */}
-        <DefectMaintenanceModals {...modals} />
       </SafeAreaView>
     </View>
   );

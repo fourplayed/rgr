@@ -25,3 +25,20 @@ export function queryFromService<T>(serviceFn: () => Promise<ServiceResult<T>>):
     return result.data;
   };
 }
+
+/**
+ * Like `queryFromService`, but for paginated endpoints that return
+ * `ServiceResult<{ data: T[]; ... }>` (e.g. PaginatedResult or cursor-based).
+ * Unwraps both layers and returns just `T[]` — eliminating `.data.data` boilerplate.
+ */
+export function queryFromPaginatedService<T>(
+  serviceFn: () => Promise<ServiceResult<{ data: T[] }>>
+): () => Promise<T[]> {
+  return async () => {
+    const result = await serviceFn();
+    if (!result.success) {
+      throw new ServiceError(result.error);
+    }
+    return result.data.data;
+  };
+}

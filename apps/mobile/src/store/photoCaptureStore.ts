@@ -8,6 +8,9 @@ export interface StartCaptureOptions {
   longitude?: number | null | undefined;
 }
 
+/** Fields settable via `patch()` — the public surface for individual updates. */
+type PatchableFields = Pick<PhotoCaptureState, 'capturedUri' | 'isUploading' | 'uploadError'>;
+
 interface PhotoCaptureState {
   // State
   capturedUri: string | null;
@@ -22,12 +25,7 @@ interface PhotoCaptureState {
   imageHeight: number | null;
 
   // Actions
-  setCapturedUri: (uri: string | null) => void;
-  setAssetId: (assetId: string | null) => void;
-  setScanEventId: (scanEventId: string | null) => void;
-  setLocationDescription: (location: string | null) => void;
-  setIsUploading: (isUploading: boolean) => void;
-  setUploadError: (error: string | null) => void;
+  patch: (partial: Partial<PatchableFields>) => void;
   setImageDimensions: (width: number, height: number) => void;
   startCapture: (options: StartCaptureOptions) => void;
   reset: () => void;
@@ -49,17 +47,7 @@ const initialState = {
 export const usePhotoCaptureStore = create<PhotoCaptureState>((set) => ({
   ...initialState,
 
-  setCapturedUri: (uri) => set({ capturedUri: uri }),
-
-  setAssetId: (assetId) => set({ assetId }),
-
-  setScanEventId: (scanEventId) => set({ scanEventId }),
-
-  setLocationDescription: (locationDescription) => set({ locationDescription }),
-
-  setIsUploading: (isUploading) => set({ isUploading }),
-
-  setUploadError: (error) => set({ uploadError: error }),
+  patch: (partial) => set(partial),
 
   setImageDimensions: (width, height) => set({ imageWidth: width, imageHeight: height }),
 

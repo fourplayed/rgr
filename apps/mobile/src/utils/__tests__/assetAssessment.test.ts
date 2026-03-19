@@ -238,6 +238,46 @@ describe('buildAssetAssessment', () => {
     expect(result).toContain('2 open defect reports');
   });
 
+  it('uses openDefectCount when provided (scan context shortcut)', () => {
+    const result = buildAssetAssessment({
+      asset: makeAsset(),
+      maintenance: [],
+      photos: [],
+      scans: [],
+      depots: [],
+      openDefectCount: 3,
+      now: NOW,
+    });
+    expect(result).toContain('3 open defect reports');
+  });
+
+  it('uses openDefectCount=1 for singular phrasing', () => {
+    const result = buildAssetAssessment({
+      asset: makeAsset(),
+      maintenance: [],
+      photos: [],
+      scans: [],
+      depots: [],
+      openDefectCount: 1,
+      now: NOW,
+    });
+    expect(result).toContain('open defect report');
+    expect(result).not.toContain('open defect reports');
+  });
+
+  it('openDefectCount=0 does not report defects', () => {
+    const result = buildAssetAssessment({
+      asset: makeAsset(),
+      maintenance: [],
+      photos: [],
+      scans: [],
+      depots: [],
+      openDefectCount: 0,
+      now: NOW,
+    });
+    expect(result).not.toContain('defect');
+  });
+
   it('reports overdue maintenance', () => {
     const result = buildAssetAssessment({
       asset: makeAsset(),

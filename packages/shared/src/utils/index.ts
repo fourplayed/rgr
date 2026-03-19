@@ -10,12 +10,12 @@ export * from './depots';
 export * from './authRateLimiter';
 export { MAX_PHOTO_SIZE_BYTES } from './constants';
 export { STORAGE_BUCKETS } from './constants';
-export { queryFromService, ServiceError } from './queryFromService';
+export { queryFromService, queryFromPaginatedService, ServiceError } from './queryFromService';
 export { safeParseEnum } from './safeParseEnum';
 export { formatAssetNumber } from './formatAssetNumber';
 export { withRetry } from './withRetry';
 export type { RetryOptions } from './withRetry';
-export { escapeHtml, isValidHexColor } from './sanitize';
+export { escapeHtml, escapePostgrestSearch, isValidHexColor } from './sanitize';
 
 import { type ZodType, ZodError } from 'zod';
 

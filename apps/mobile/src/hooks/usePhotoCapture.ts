@@ -30,9 +30,7 @@ export function usePhotoCapture() {
     uploadError,
     imageWidth,
     imageHeight,
-    setCapturedUri,
-    setIsUploading,
-    setUploadError,
+    patch,
     setImageDimensions,
     startCapture,
     reset,
@@ -82,7 +80,7 @@ export function usePhotoCapture() {
         });
 
         if (photo?.uri) {
-          setCapturedUri(photo.uri);
+          patch({ capturedUri: photo.uri });
           if (photo.width && photo.height) {
             setImageDimensions(photo.width, photo.height);
           }
@@ -98,7 +96,7 @@ export function usePhotoCapture() {
         setIsCapturing(false);
       }
     },
-    [setCapturedUri, setImageDimensions]
+    [patch, setImageDimensions]
   );
 
   /**
@@ -110,10 +108,9 @@ export function usePhotoCapture() {
       FileSystem.deleteAsync(thumbnailUriRef.current, { idempotent: true }).catch(() => {});
       thumbnailUriRef.current = null;
     }
-    setCapturedUri(null);
-    setUploadError(null);
+    patch({ capturedUri: null, uploadError: null });
     setUploadStep(null);
-  }, [setCapturedUri, setUploadError]);
+  }, [patch]);
 
   /**
    * Upload the captured photo.
@@ -123,29 +120,30 @@ export function usePhotoCapture() {
     async (photoType: PhotoType = 'freight'): Promise<boolean> => {
       if (isUploadingRef.current) return false;
       if (!capturedUri || !assetId || !user) {
-        setUploadError('Missing required data for upload');
+        patch({ uploadError: 'Missing required data for upload' });
         return false;
       }
 
       try {
         isUploadingRef.current = true;
-        setIsUploading(true);
-        setUploadError(null);
+        patch({ isUploading: true, uploadError: null });
         setUploadStep('validating');
 
         // Pre-check file existence and size before uploading
         const fileInfo = await FileSystem.getInfoAsync(capturedUri, { size: true });
         if (!fileInfo.exists) {
-          setUploadError('Photo file not found. Please try taking the photo again.');
-          setIsUploading(false);
+          patch({
+            uploadError: 'Photo file not found. Please try taking the photo again.',
+            isUploading: false,
+          });
           setUploadStep(null);
           return false;
         }
         if (fileInfo.size !== undefined && fileInfo.size > MAX_PHOTO_SIZE_BYTES) {
-          setUploadError(
-            `Photo is too large (max ${MAX_PHOTO_SIZE_BYTES / (1024 * 1024)}MB). Please retake the photo.`
-          );
-          setIsUploading(false);
+          patch({
+            uploadError: `Photo is too large (max ${MAX_PHOTO_SIZE_BYTES / (1024 * 1024)}MB). Please retake the photo.`,
+            isUploading: false,
+          });
           setUploadStep(null);
           return false;
         }
@@ -215,7 +213,7 @@ export function usePhotoCapture() {
         return true;
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : 'Failed to upload photo';
-        setUploadError(message);
+        patch({ uploadError: message });
         setUploadStep(null);
         // Clean up orphaned thumbnail file on upload failure
         if (thumbnailUriRef.current) {
@@ -225,7 +223,7 @@ export function usePhotoCapture() {
         return false;
       } finally {
         isUploadingRef.current = false;
-        setIsUploading(false);
+        patch({ isUploading: false });
       }
     },
     [
@@ -239,8 +237,7 @@ export function usePhotoCapture() {
       imageHeight,
       user,
       uploadPhotoMutation,
-      setIsUploading,
-      setUploadError,
+      patch,
       reset,
     ]
   );

@@ -17,6 +17,8 @@ export interface AssetAssessmentInput {
   scans: ScanEventWithScanner[];
   depots: Depot[];
   defectReports?: DefectReportListItem[];
+  /** When provided (e.g. from scan context RPC), used in place of filtering defectReports[]. */
+  openDefectCount?: number | undefined;
   now?: Date;
 }
 
@@ -140,6 +142,7 @@ export function buildAssetAssessment({
   scans,
   depots,
   defectReports = [],
+  openDefectCount,
   now = new Date(),
 }: AssetAssessmentInput): string {
   const type = asset.subtype?.toLowerCase() || (asset.category === 'dolly' ? 'dolly' : 'trailer');
@@ -157,9 +160,11 @@ export function buildAssetAssessment({
   }
 
   // ── Categorize defects and maintenance ──
-  const openDefects = defectReports.filter(
-    (d) => d.status === 'reported' || d.status === 'task_created'
-  );
+  // Prefer pre-computed count from scan context RPC; fall back to client-side filter.
+  const effectiveDefectCount =
+    openDefectCount != null
+      ? openDefectCount
+      : defectReports.filter((d) => d.status === 'reported' || d.status === 'task_created').length;
 
   const overdue = maintenance.filter(
     (m) => m.status === 'scheduled' && m.dueDate && new Date(m.dueDate).getTime() < nowMs
@@ -189,11 +194,11 @@ export function buildAssetAssessment({
   } else if (totalHazards > 0) {
     sentenceB = `${totalHazards} minor hazard${totalHazards !== 1 ? 's were' : ' was'} picked up in recent photos.`;
     isIssue = true;
-  } else if (openDefects.length > 0) {
+  } else if (effectiveDefectCount > 0) {
     sentenceB =
-      openDefects.length === 1
+      effectiveDefectCount === 1
         ? "there's an open defect report that needs attention."
-        : `there are ${openDefects.length} open defect reports that need attention.`;
+        : `there are ${effectiveDefectCount} open defect reports that need attention.`;
     isIssue = true;
   } else if (overdue.length > 0) {
     sentenceB = `there ${overdue.length === 1 ? 'is' : 'are'} ${overdue.length} overdue maintenance task${overdue.length !== 1 ? 's' : ''} that need${overdue.length === 1 ? 's' : ''} attention.`;

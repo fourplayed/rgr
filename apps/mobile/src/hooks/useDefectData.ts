@@ -9,6 +9,7 @@ import {
   getDefectReportStats,
   getAssetDefectReports,
   queryFromService,
+  queryFromPaginatedService,
 } from '@rgr/shared';
 import type {
   DefectStatus,
@@ -98,11 +99,7 @@ export function useRecentDefectReports(limit: number = 5) {
   return useQuery({
     queryKey: defectKeys.recent(limit),
     staleTime: 30_000,
-    queryFn: async () => {
-      const result = await listDefectReports({ limit });
-      if (!result.success) throw new Error(result.error ?? 'Failed to load');
-      return result.data.data;
-    },
+    queryFn: queryFromPaginatedService(() => listDefectReports({ limit })),
   });
 }
 
@@ -125,17 +122,7 @@ export function useAssetDefectReports(assetId: string | null) {
   return useQuery({
     queryKey: defectKeys.asset(assetId ?? ''),
     staleTime: 30_000,
-    queryFn: async () => {
-      if (!assetId) throw new Error('Asset ID is required');
-
-      const result = await getAssetDefectReports(assetId);
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
-      return result.data.data;
-    },
+    queryFn: queryFromPaginatedService(() => getAssetDefectReports(assetId!)),
     enabled: !!assetId,
   });
 }

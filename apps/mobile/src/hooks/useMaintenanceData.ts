@@ -8,6 +8,7 @@ import {
   cancelMaintenanceTask,
   getMaintenanceStats,
   queryFromService,
+  queryFromPaginatedService,
 } from '@rgr/shared';
 import type {
   MaintenanceStatus,
@@ -101,11 +102,7 @@ export function useRecentMaintenance(limit: number = 5) {
   return useQuery({
     queryKey: maintenanceKeys.recent(limit),
     staleTime: 30_000,
-    queryFn: async () => {
-      const result = await listMaintenance({ limit });
-      if (!result.success) throw new Error(result.error ?? 'Failed to load');
-      return result.data.data;
-    },
+    queryFn: queryFromPaginatedService(() => listMaintenance({ limit })),
   });
 }
 

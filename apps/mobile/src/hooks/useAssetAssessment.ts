@@ -13,11 +13,14 @@ import type { MatchedDepot } from './scan/scanFlowMachine';
  * then runs the pure `buildAssetAssessment` function.
  *
  * Accepts either a full `AssetWithRelations` or a plain `Asset` + `matchedDepot`.
+ * When `scanContext` is provided (scan screen), uses its `openDefectCount` instead
+ * of firing a separate defect reports query.
  * Returns `null` while loading or if asset is undefined.
  */
 export function useAssetAssessment(
   asset: Asset | AssetWithRelations | null | undefined,
-  matchedDepot?: MatchedDepot | null
+  matchedDepot?: MatchedDepot | null,
+  scanContext?: { openDefectCount: number } | null
 ) {
   const assetId = asset?.id;
 
@@ -25,7 +28,10 @@ export function useAssetAssessment(
   const { data: photos = [] } = useAssetPhotos(assetId);
   const { data: scans = [] } = useAssetScans(assetId);
   const { data: depots = [] } = useDepots();
-  const { data: defectReports = [] } = useAssetDefectReports(assetId ?? null);
+  // Skip the defect reports query when scan context already provides the count.
+  const { data: defectReports = [] } = useAssetDefectReports(
+    scanContext ? null : (assetId ?? null)
+  );
 
   return useMemo(() => {
     if (!asset) return null;
@@ -50,6 +56,7 @@ export function useAssetAssessment(
       scans,
       depots,
       defectReports,
+      openDefectCount: scanContext?.openDefectCount,
     });
-  }, [asset, matchedDepot, maintenance, photos, scans, depots, defectReports]);
+  }, [asset, matchedDepot, maintenance, photos, scans, depots, defectReports, scanContext]);
 }

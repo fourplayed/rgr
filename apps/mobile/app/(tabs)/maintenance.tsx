@@ -24,8 +24,7 @@ import {
 } from '../../src/components/maintenance';
 import { useMaintenanceList } from '../../src/hooks/useMaintenanceData';
 import { useDefectReportList } from '../../src/hooks/useDefectData';
-import { useDefectMaintenanceModals } from '../../src/hooks/useDefectMaintenanceModals';
-import { DefectMaintenanceModals } from '../../src/components/common/DefectMaintenanceModals';
+import { useDefectMaintenanceModalsContext } from '../../src/contexts/DefectMaintenanceModalsContext';
 import { useTabFade } from '../../src/hooks/useTabFade';
 import { useUserPermissions } from '../../src/contexts/UserPermissionsContext';
 import { AppText } from '../../src/components/common';
@@ -77,7 +76,7 @@ export default function MaintenanceScreen() {
   }, [tab, defectStatus, router]);
 
   // Shared defect/maintenance modal chain (detail -> accept -> task detail)
-  const modals = useDefectMaintenanceModals();
+  const modals = useDefectMaintenanceModalsContext();
 
   // Standalone "create maintenance" state — separate from the defect chain
   const [showCreateMaintenance, setShowCreateMaintenance] = useState(false);
@@ -323,9 +322,6 @@ export default function MaintenanceScreen() {
             />
           )}
         </Animated.View>
-
-        {/* Shared defect/maintenance modal chain */}
-        <DefectMaintenanceModals {...modals} />
 
         {/* Standalone "create maintenance" modal — separate from defect chain */}
         <CreateMaintenanceModal visible={showCreateMaintenance} onClose={handleCloseCreate} />

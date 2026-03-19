@@ -37,7 +37,6 @@ import { Badge } from '../../src/components/common/StatusBadge';
 import {
   MaintenanceStatusBadge,
   DefectStatusBadge,
-  DEFECT_STATUS_CONFIG,
   getMaintenanceVisualConfig,
 } from '../../src/components/maintenance';
 import {
@@ -47,10 +46,9 @@ import {
 } from '../../src/utils/scanFormatters';
 import { findDepotByLocationString, getDepotBadgeColors } from '@rgr/shared';
 import { useDepotLookup } from '../../src/hooks/useDepots';
-import { useDefectMaintenanceModals } from '../../src/hooks/useDefectMaintenanceModals';
-import { DefectMaintenanceModals } from '../../src/components/common/DefectMaintenanceModals';
+import { useDefectMaintenanceModalsContext } from '../../src/contexts/DefectMaintenanceModalsContext';
 import { useCountUp } from '../../src/hooks/useCountUp';
-import { useStaggeredEntrance } from '../../src/hooks/useStaggeredEntrance';
+import { useStaggeredEntrances } from '../../src/hooks/useStaggeredEntrance';
 import { useOfflineQueueStatus } from '../../src/hooks/useOfflineQueueStatus';
 import { AppText } from '../../src/components/common';
 import { LocationResolutionOverlay } from '../../src/components/common/LocationResolutionOverlay';
@@ -62,10 +60,6 @@ import { FLEET_ANALYSIS_ENABLED } from '../../src/config/featureFlags';
 const FONT_SIZE_USERNAME = fontSize.display;
 const FONT_SIZE_STAT_VALUE = fontSize.hero;
 const FONT_SIZE_STAT_LABEL = fontSize.sm;
-
-// Static style objects for defect cards (color is constant, no need for useMemo)
-const DEFECT_CARD_BG_STYLE = { backgroundColor: colors.defectYellow + '1A' } as const;
-const DEFECT_ACCENT_STYLE = { backgroundColor: colors.defectYellow } as const;
 
 type DashboardActivityItem =
   | { type: 'scan'; data: ScanEventWithScanner; timestamp: string }
@@ -82,16 +76,14 @@ const ActivityCard = memo(function ActivityCard({
   item,
   onPress,
   depots,
-  index,
+  entranceStyle,
 }: {
   item: DashboardActivityItem;
   onPress: (item: DashboardActivityItem) => void;
   depots: Depot[];
-  index: number;
+  entranceStyle: ReturnType<ReturnType<typeof useStaggeredEntrances>['getEntryStyle']>;
 }) {
   const handlePress = useCallback(() => onPress(item), [item, onPress]);
-  const entranceOpacity = useStaggeredEntrance(index);
-  const entranceStyle = useMemo(() => ({ opacity: entranceOpacity }), [entranceOpacity]);
 
   // Derive the primary color for this card type (always computed to keep hooks unconditional)
   const primaryColor = useMemo(() => {
@@ -178,22 +170,20 @@ const ActivityCard = memo(function ActivityCard({
   }
 
   if (item.type === 'defect') {
-    const defectConfig = DEFECT_STATUS_CONFIG[item.data.status] ?? DEFECT_STATUS_CONFIG.reported;
-    const defectColor = defectConfig.color;
     return (
       <Animated.View style={entranceStyle}>
         <TouchableOpacity
-          style={[styles.scanCard, { backgroundColor: defectColor + '1A' }]}
+          style={[styles.scanCard, cardBgStyle]}
           onPress={handlePress}
           activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel={`Defect report: ${item.data.title}`}
         >
-          <View style={[styles.cardAccent, { backgroundColor: defectColor }]} />
+          <View style={[styles.cardAccent, accentStyle]} />
           <View style={styles.cardInner}>
             <View style={styles.cardRow}>
               <View style={styles.cardIconContainer}>
-                <Ionicons name="warning" size={32} color={defectColor} />
+                <Ionicons name="warning" size={32} color={primaryColor} />
               </View>
               <View style={styles.cardBody}>
                 <View style={styles.cardContentRow}>
@@ -275,7 +265,7 @@ export default function HomeScreen() {
   const { depots } = useDepotLookup();
 
   // Shared defect/maintenance modal chain (detail -> accept -> task detail)
-  const modals = useDefectMaintenanceModals();
+  const modals = useDefectMaintenanceModalsContext();
 
   // Offline queue status for banner
   const { total: offlineQueueCount } = useOfflineQueueStatus();
@@ -508,6 +498,9 @@ export default function HomeScreen() {
 
   const { openDefectDetail, openMaintenanceDetail } = modals;
 
+  // Batch stagger: pre-allocates animated values for up to 8 items (avoids per-item hooks)
+  const { getEntryStyle } = useStaggeredEntrances(recentActivity.length);
+
   // Stable press handler dispatches to router/modal based on item type
   const handleActivityPress = useCallback(
     (item: DashboardActivityItem) => {
@@ -522,12 +515,17 @@ export default function HomeScreen() {
     [router, openDefectDetail, openMaintenanceDetail]
   );
 
-  // Thin wrapper delegates to memoized ActivityCard (passes index for stagger)
+  // Thin wrapper delegates to memoized ActivityCard (passes batch entrance style)
   const renderActivityItem = useCallback(
     ({ item, index }: { item: DashboardActivityItem; index: number }) => (
-      <ActivityCard item={item} onPress={handleActivityPress} depots={depots} index={index} />
+      <ActivityCard
+        item={item}
+        onPress={handleActivityPress}
+        depots={depots}
+        entranceStyle={getEntryStyle(index)}
+      />
     ),
-    [handleActivityPress, depots]
+    [handleActivityPress, depots, getEntryStyle]
   );
 
   const roleLabel = user ? UserRoleLabels[user.role] || user.role : '';
@@ -700,9 +698,6 @@ export default function HomeScreen() {
             />
           }
         />
-
-        {/* Shared defect/maintenance modal chain */}
-        <DefectMaintenanceModals {...modals} />
 
         {/* Location resolution overlay — first login only */}
         <LocationResolutionOverlay
