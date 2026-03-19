@@ -44,4 +44,5 @@ AS $$
 $$;
 
 -- Only service_role calls this (from the edge function via pg_cron)
+REVOKE ALL ON FUNCTION get_fleet_analysis_input() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION get_fleet_analysis_input() TO service_role;

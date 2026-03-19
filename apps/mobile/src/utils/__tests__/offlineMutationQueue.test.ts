@@ -320,10 +320,17 @@ describe('offlineMutationQueue', () => {
       await enqueueMutation({ type: 'maintenance', payload: { x: 3 } });
 
       await replayQueue(handlers);
-      // Handlers receive payload with idempotencyKey injected from queue entry
-      expect(handlers.scan).toHaveBeenCalledWith(expect.objectContaining({ x: 1 }));
-      expect(handlers.defect_report).toHaveBeenCalledWith(expect.objectContaining({ x: 2 }));
-      expect(handlers.maintenance).toHaveBeenCalledWith(expect.objectContaining({ x: 3 }));
+      // Scan handler receives payload with idempotencyKey injected; others get raw payload
+      const scanMock = handlers.scan as jest.Mock;
+      const scanCall = scanMock.mock.calls[0]![0] as Record<string, unknown>;
+      expect(scanCall['x']).toBe(1);
+      expect(typeof scanCall['idempotencyKey']).toBe('string');
+      expect(scanCall['idempotencyKey']).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}$/
+      );
+      // Non-scan handlers get raw payload (no idempotencyKey injected)
+      expect(handlers.defect_report).toHaveBeenCalledWith({ x: 2 });
+      expect(handlers.maintenance).toHaveBeenCalledWith({ x: 3 });
     });
 
     it('increments retryCount on failure and moves entry to back', async () => {

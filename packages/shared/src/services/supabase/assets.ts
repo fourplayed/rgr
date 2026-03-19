@@ -491,6 +491,9 @@ export async function getAssetScans(
 
   // Composite keyset cursor: (created_at < cursor) OR (created_at = cursor AND id < cursorId)
   if (cursor && cursorId) {
+    if (!isValidISOTimestamp(cursor) || !isValidUUID(cursorId)) {
+      return { success: false, data: null, error: 'Invalid cursor parameters' };
+    }
     query = query.or(`created_at.lt.${cursor},and(created_at.eq.${cursor},id.lt.${cursorId})`);
   }
 
@@ -736,6 +739,9 @@ export async function getAssetMaintenance(
 
   // Composite keyset cursor: (created_at < cursor) OR (created_at = cursor AND id < cursorId)
   if (cursor && cursorId) {
+    if (!isValidISOTimestamp(cursor) || !isValidUUID(cursorId)) {
+      return { success: false, data: null, error: 'Invalid cursor parameters' };
+    }
     query = query.or(`created_at.lt.${cursor},and(created_at.eq.${cursor},id.lt.${cursorId})`);
   }
 

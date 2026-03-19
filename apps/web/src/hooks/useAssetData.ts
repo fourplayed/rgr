@@ -93,9 +93,10 @@ export function useAsset(id: string | null, enabled: boolean = true) {
  * Scan events for an asset
  */
 export function useAssetScans(assetId: string | null, _page: number = 1, enabled: boolean = true) {
+  // Keyset pagination — load all scans for this asset (bounded per-asset, typically <100)
   return useQuery({
     queryKey: ASSET_QUERY_KEYS.scans(assetId ?? '', _page),
-    queryFn: queryFromService(() => getAssetScans(assetId!, 20)),
+    queryFn: queryFromService(() => getAssetScans(assetId!, 100)),
     enabled: enabled && !!assetId,
   });
 }
@@ -105,12 +106,13 @@ export function useAssetScans(assetId: string | null, _page: number = 1, enabled
  */
 export function useAssetMaintenance(
   assetId: string | null,
-  page: number = 1,
+  _page: number = 1,
   enabled: boolean = true
 ) {
+  // Keyset pagination — load all maintenance for this asset (bounded per-asset, typically <50)
   return useQuery({
-    queryKey: ASSET_QUERY_KEYS.maintenance(assetId ?? '', page),
-    queryFn: queryFromService(() => getAssetMaintenance(assetId!, 20)),
+    queryKey: ASSET_QUERY_KEYS.maintenance(assetId ?? '', _page),
+    queryFn: queryFromService(() => getAssetMaintenance(assetId!, 100)),
     enabled: enabled && !!assetId,
   });
 }

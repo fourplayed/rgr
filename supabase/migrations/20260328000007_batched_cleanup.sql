@@ -53,10 +53,10 @@ REVOKE ALL ON FUNCTION batch_cleanup(TEXT, TEXT, INTERVAL, INT) FROM PUBLIC;
 
 -- ─── Replace unbounded DELETE cron jobs with batched calls ───────────────
 
--- 1. Unschedule existing jobs
-SELECT cron.unschedule('audit-log-cleanup');
-SELECT cron.unschedule('notification-log-cleanup');
-SELECT cron.unschedule('rego-lookup-log-cleanup');
+-- 1. Unschedule existing jobs (safe: no-op if job doesn't exist on fresh DB)
+DO $$ BEGIN PERFORM cron.unschedule('audit-log-cleanup'); EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN PERFORM cron.unschedule('notification-log-cleanup'); EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN PERFORM cron.unschedule('rego-lookup-log-cleanup'); EXCEPTION WHEN OTHERS THEN NULL; END $$;
 
 -- 2. Reschedule with batch_cleanup
 

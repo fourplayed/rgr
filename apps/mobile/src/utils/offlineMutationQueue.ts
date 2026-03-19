@@ -362,10 +362,11 @@ export async function replayQueue(
 
       const entry = queue[0]!;
       const handler = handlers[entry.type];
-      // Inject idempotency key into payload so the service can dedup on replay
-      const payload = entry.idempotencyKey
-        ? { ...entry.payload, idempotencyKey: entry.idempotencyKey }
-        : entry.payload;
+      // Inject idempotency key into payload for scan dedup only (other handlers don't use it)
+      const payload =
+        entry.idempotencyKey && entry.type === 'scan'
+          ? { ...entry.payload, idempotencyKey: entry.idempotencyKey }
+          : entry.payload;
       const result = await handler(payload);
 
       if (result.success) {
