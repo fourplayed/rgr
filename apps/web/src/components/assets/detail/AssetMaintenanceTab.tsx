@@ -1,8 +1,8 @@
 /**
- * AssetMaintenanceTab — Maintenance records list, paginated
+ * AssetMaintenanceTab — Maintenance records list for an asset
  */
-import React, { useState } from 'react';
-import { Wrench, ChevronLeft, ChevronRight } from 'lucide-react';
+import React from 'react';
+import { Wrench } from 'lucide-react';
 import { useAssetMaintenance } from '@/hooks/useAssetData';
 import {
   MaintenanceStatusLabels,
@@ -17,8 +17,7 @@ interface AssetMaintenanceTabProps {
 }
 
 export const AssetMaintenanceTab = React.memo<AssetMaintenanceTabProps>(({ assetId, isDark }) => {
-  const [page, setPage] = useState(1);
-  const { data: result, isLoading } = useAssetMaintenance(assetId, page);
+  const { data: result, isLoading } = useAssetMaintenance(assetId);
 
   const textColor = isDark ? 'text-slate-200' : 'text-white';
   const mutedColor = isDark ? 'text-slate-400' : 'text-white/60';
@@ -33,7 +32,6 @@ export const AssetMaintenanceTab = React.memo<AssetMaintenanceTabProps>(({ asset
   }
 
   const records = result?.data ?? [];
-  const totalPages = result?.totalPages ?? 1;
 
   if (records.length === 0) {
     return <div className={`text-center py-16 text-sm ${mutedColor}`}>No maintenance records</div>;
@@ -84,28 +82,6 @@ export const AssetMaintenanceTab = React.memo<AssetMaintenanceTabProps>(({ asset
           );
         })}
       </div>
-
-      {totalPages > 1 && (
-        <div className={`flex items-center justify-center gap-3 px-4 py-3 border-t ${borderColor}`}>
-          <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page <= 1}
-            className={`p-1 rounded ${mutedColor} disabled:opacity-30 hover:text-white transition-colors`}
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <span className={`text-xs ${mutedColor}`}>
-            {page} / {totalPages}
-          </span>
-          <button
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page >= totalPages}
-            className={`p-1 rounded ${mutedColor} disabled:opacity-30 hover:text-white transition-colors`}
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-      )}
     </div>
   );
 });

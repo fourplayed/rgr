@@ -37,10 +37,8 @@ export const ASSET_QUERY_KEYS = {
     [...ASSET_QUERY_KEYS.lists(), filters, sort, pagination] as const,
   details: () => [...ASSET_QUERY_KEYS.all, 'detail'] as const,
   detail: (id: string) => [...ASSET_QUERY_KEYS.details(), id] as const,
-  scans: (assetId: string, page: number) =>
-    [...ASSET_QUERY_KEYS.all, 'scans', assetId, page] as const,
-  maintenance: (assetId: string, page: number) =>
-    [...ASSET_QUERY_KEYS.all, 'maintenance', assetId, page] as const,
+  scans: (assetId: string) => [...ASSET_QUERY_KEYS.all, 'scans', assetId] as const,
+  maintenance: (assetId: string) => [...ASSET_QUERY_KEYS.all, 'maintenance', assetId] as const,
   hazards: (assetId: string, page: number) =>
     [...ASSET_QUERY_KEYS.all, 'hazards', assetId, page] as const,
   depots: ['depots'] as const,
@@ -92,10 +90,9 @@ export function useAsset(id: string | null, enabled: boolean = true) {
 /**
  * Scan events for an asset
  */
-export function useAssetScans(assetId: string | null, _page: number = 1, enabled: boolean = true) {
-  // Keyset pagination — load all scans for this asset (bounded per-asset, typically <100)
+export function useAssetScans(assetId: string | null, enabled: boolean = true) {
   return useQuery({
-    queryKey: ASSET_QUERY_KEYS.scans(assetId ?? '', _page),
+    queryKey: ASSET_QUERY_KEYS.scans(assetId ?? ''),
     queryFn: queryFromService(() => getAssetScans(assetId!, 100)),
     enabled: enabled && !!assetId,
   });
@@ -104,14 +101,9 @@ export function useAssetScans(assetId: string | null, _page: number = 1, enabled
 /**
  * Maintenance records for an asset
  */
-export function useAssetMaintenance(
-  assetId: string | null,
-  _page: number = 1,
-  enabled: boolean = true
-) {
-  // Keyset pagination — load all maintenance for this asset (bounded per-asset, typically <50)
+export function useAssetMaintenance(assetId: string | null, enabled: boolean = true) {
   return useQuery({
-    queryKey: ASSET_QUERY_KEYS.maintenance(assetId ?? '', _page),
+    queryKey: ASSET_QUERY_KEYS.maintenance(assetId ?? ''),
     queryFn: queryFromService(() => getAssetMaintenance(assetId!, 100)),
     enabled: enabled && !!assetId,
   });

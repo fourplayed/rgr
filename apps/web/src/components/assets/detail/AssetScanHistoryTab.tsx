@@ -1,8 +1,8 @@
 /**
- * AssetScanHistoryTab — Timeline of scan events, paginated
+ * AssetScanHistoryTab — Timeline of scan events for an asset
  */
-import React, { useState } from 'react';
-import { Scan, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
+import React from 'react';
+import { Scan, MapPin } from 'lucide-react';
 import { useAssetScans } from '@/hooks/useAssetData';
 import { ScanTypeLabels } from '@rgr/shared';
 import type { ScanType } from '@rgr/shared';
@@ -13,8 +13,7 @@ interface AssetScanHistoryTabProps {
 }
 
 export const AssetScanHistoryTab = React.memo<AssetScanHistoryTabProps>(({ assetId, isDark }) => {
-  const [page, setPage] = useState(1);
-  const { data: result, isLoading } = useAssetScans(assetId, page);
+  const { data: result, isLoading } = useAssetScans(assetId);
 
   const textColor = isDark ? 'text-slate-200' : 'text-white';
   const mutedColor = isDark ? 'text-slate-400' : 'text-white/60';
@@ -29,7 +28,6 @@ export const AssetScanHistoryTab = React.memo<AssetScanHistoryTabProps>(({ asset
   }
 
   const scans = result?.data ?? [];
-  const totalPages = result?.totalPages ?? 1;
 
   if (scans.length === 0) {
     return <div className={`text-center py-16 text-sm ${mutedColor}`}>No scans recorded</div>;
@@ -82,29 +80,6 @@ export const AssetScanHistoryTab = React.memo<AssetScanHistoryTabProps>(({ asset
           </div>
         ))}
       </div>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className={`flex items-center justify-center gap-3 px-4 py-3 border-t ${borderColor}`}>
-          <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page <= 1}
-            className={`p-1 rounded ${mutedColor} disabled:opacity-30 hover:text-white transition-colors`}
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <span className={`text-xs ${mutedColor}`}>
-            {page} / {totalPages}
-          </span>
-          <button
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page >= totalPages}
-            className={`p-1 rounded ${mutedColor} disabled:opacity-30 hover:text-white transition-colors`}
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-      )}
     </div>
   );
 });

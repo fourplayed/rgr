@@ -195,44 +195,35 @@ export async function listAssets(
   // Secondary sort on id for deterministic ordering with ties
   query = query.order('id', { ascending });
 
+  // Validate a cursor value based on the sort field it represents
+  const isCursorValueSafe = (value: string, sortField: string): boolean =>
+    sortField === 'asset_number' ? /^[a-zA-Z0-9_-]+$/.test(value) : isValidISOTimestamp(value);
+
+  const emptyPage = {
+    success: true as const,
+    data: {
+      data: [] as AssetWithRelations[],
+      total: 0,
+      page: 1,
+      pageSize,
+      totalPages: 0,
+      hasMore: false,
+    },
+    error: null,
+  };
+
   // Pagination: cursor-based or offset-based
   if (useCursorPagination && cursorId) {
-    // Validate cursor values to prevent PostgREST injection
-    if (!isValidUUID(cursorId)) {
-      return {
-        success: true,
-        data: { data: [], total: 0, page: 1, pageSize, totalPages: 0, hasMore: false },
-        error: null,
-      };
+    if (!isValidUUID(cursorId) || !isCursorValueSafe(cursor!, resolvedSortField)) {
+      return emptyPage;
     }
-    // Validate cursor value based on sort field type
-    const isCursorSafe =
-      resolvedSortField === 'asset_number'
-        ? /^[a-zA-Z0-9_-]+$/.test(cursor!)
-        : isValidISOTimestamp(cursor!);
-    if (!isCursorSafe) {
-      return {
-        success: true,
-        data: { data: [], total: 0, page: 1, pageSize, totalPages: 0, hasMore: false },
-        error: null,
-      };
-    }
-    // Composite cursor on (sortField, id) to handle ties
     const op = ascending ? 'gt' : 'lt';
     query = query.or(
       `${resolvedSortField}.${op}.${cursor},and(${resolvedSortField}.eq.${cursor},id.${op}.${cursorId})`
     );
   } else if (useCursorPagination && cursor) {
-    const isCursorSafe =
-      resolvedSortField === 'asset_number'
-        ? /^[a-zA-Z0-9_-]+$/.test(cursor)
-        : isValidISOTimestamp(cursor);
-    if (!isCursorSafe) {
-      return {
-        success: true,
-        data: { data: [], total: 0, page: 1, pageSize, totalPages: 0, hasMore: false },
-        error: null,
-      };
+    if (!isCursorValueSafe(cursor, resolvedSortField)) {
+      return emptyPage;
     }
     const op = ascending ? 'gt' : 'lt';
     query = query.filter(resolvedSortField, op, cursor);
@@ -543,35 +534,39 @@ export async function createScanEvent(
 
   type ScanEventInsert = Database['public']['Tables']['scan_events']['Insert'];
 
-  // If an idempotency key is provided (offline queue replay), use upsert with
-  // ignoreDuplicates to prevent duplicate rows when network drops mid-response.
+  // If an idempotency key is provided (offline queue replay), attempt a normal
+  // insert. On the happy path (first replay), this returns the row in 1 trip.
+  // If a duplicate key conflict occurs (23505), fetch the existing row instead.
   if (validInput.idempotencyKey) {
     const { data, error } = await supabase
       .from('scan_events')
-      .upsert(dbData as ScanEventInsert, { onConflict: 'idempotency_key', ignoreDuplicates: true })
+      .insert(dbData as ScanEventInsert)
       .select()
-      .maybeSingle();
+      .single();
 
     if (error) {
-      return { success: false, data: null, error: `Failed to create scan event: ${error.message}` };
-    }
+      // Unique violation on idempotency_key — the scan was already created
+      if (error.code === '23505' && error.message?.includes('idempotency_key')) {
+        const { data: existing, error: fetchError } = await supabase
+          .from('scan_events')
+          .select()
+          .eq('idempotency_key', validInput.idempotencyKey)
+          .single();
 
-    // When ignoreDuplicates fires, no row is returned — fetch the existing one
-    if (!data) {
-      const { data: existing, error: fetchError } = await supabase
-        .from('scan_events')
-        .select()
-        .eq('idempotency_key', validInput.idempotencyKey)
-        .single();
-
-      if (fetchError || !existing) {
-        return { success: false, data: null, error: 'Failed to retrieve deduplicated scan event' };
+        if (fetchError || !existing) {
+          return {
+            success: false,
+            data: null,
+            error: 'Failed to retrieve deduplicated scan event',
+          };
+        }
+        return {
+          success: true,
+          data: mapRowToScanEvent(existing as unknown as ScanEventRow),
+          error: null,
+        };
       }
-      return {
-        success: true,
-        data: mapRowToScanEvent(existing as unknown as ScanEventRow),
-        error: null,
-      };
+      return { success: false, data: null, error: `Failed to create scan event: ${error.message}` };
     }
 
     return { success: true, data: mapRowToScanEvent(data as unknown as ScanEventRow), error: null };

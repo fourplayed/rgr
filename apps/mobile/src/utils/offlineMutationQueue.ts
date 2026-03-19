@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { onlineManager } from '@tanstack/react-query';
 import * as FileSystem from 'expo-file-system';
+import { backoffDelay } from '@rgr/shared';
 import type { CreateScanEventInput, ServiceResult } from '@rgr/shared';
 import { logger } from './logger';
 import { eventBus } from './eventBus';
@@ -39,6 +40,7 @@ const VALID_MUTATION_TYPES: ReadonlySet<string> = new Set<MutationType>([
   'maintenance',
   'photo',
 ]);
+const VALID_PHOTO_STATUSES: ReadonlySet<string> = new Set(['pending', 'uploaded', 'failed']);
 
 function isQueuedMutation(item: unknown): item is QueuedMutation {
   if (typeof item !== 'object' || item === null) return false;
@@ -54,7 +56,6 @@ function isQueuedMutation(item: unknown): item is QueuedMutation {
     return false;
   }
   // photoStatus is required — reject entries missing it or with invalid values
-  const VALID_PHOTO_STATUSES = new Set(['pending', 'uploaded', 'failed']);
   if (typeof o['photoStatus'] !== 'string' || !VALID_PHOTO_STATUSES.has(o['photoStatus'])) {
     return false;
   }
@@ -162,7 +163,7 @@ export async function enqueueMutation(opts: {
   photoUris?: string[];
 }): Promise<void> {
   const entry: QueuedMutation = {
-    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    id: placeholderId(),
     type: opts.type,
     payload: opts.payload,
     queuedAt: new Date().toISOString(),
@@ -377,8 +378,7 @@ export async function replayQueue(
         await saveQueue(queue);
       } else {
         // Exponential backoff: 500ms, 1000ms, 2000ms before circuit breaker
-        const backoffMs = Math.min(500 * Math.pow(2, consecutiveFailures), 2000);
-        await new Promise((r) => setTimeout(r, backoffMs));
+        await new Promise((r) => setTimeout(r, backoffDelay(consecutiveFailures + 1, 500, 2000)));
         failed++;
         consecutiveFailures++;
         const retries = (entry.retryCount ?? 0) + 1;

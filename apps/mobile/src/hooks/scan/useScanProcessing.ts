@@ -47,6 +47,9 @@ export function useScanProcessing(
   // ── Core scan processing ──
   const processScan = useCallback(
     async (qrData: string) => {
+      // Track resolved asset ID so the catch block can use it for offline queueing
+      let resolvedAssetId: string | null = null;
+
       try {
         logger.scan(`QR code detected: ${qrData.substring(0, 30)}...`);
         await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -102,6 +105,7 @@ export function useScanProcessing(
         logger.scan('Looking up asset...');
         dispatch({ type: 'UPDATE_SCAN_STEP', scanStep: 'lookup' });
         const asset = await lookupAsset(qrData);
+        resolvedAssetId = asset.id;
         logger.scan(`Asset found: ${asset.assetNumber}`);
 
         // 3. Guard against expired session (before showing UI)
@@ -185,11 +189,10 @@ export function useScanProcessing(
         const offlineUser = useAuthStore.getState().user;
         if (!onlineManager.isOnline() && offlineUser) {
           const { lastLocation: loc, resolvedDepot: depot } = useLocationStore.getState();
-          // We need at minimum the asset lookup to have succeeded (step 2 above).
-          // If the error happened during createScan (step 5), the asset was already found.
-          // Parse the assetId from the QR data to build the queued input.
-          const assetInfo = extractAssetInfo(qrData);
-          const qrAssetId = assetInfo?.assetId ?? null;
+          // Prefer the resolved asset ID (from step 2) over re-parsing the QR data,
+          // since lookup_asset_by_qr normalises both asset numbers and UUIDs.
+          // Fall back to QR parsing only if the lookup itself failed.
+          const qrAssetId = resolvedAssetId ?? extractAssetInfo(qrData)?.assetId ?? null;
 
           if (qrAssetId) {
             try {

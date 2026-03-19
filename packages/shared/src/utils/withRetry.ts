@@ -17,6 +17,11 @@ export interface RetryOptions {
   shouldRetry?: (error: unknown, attempt: number) => boolean;
 }
 
+/** Compute exponential backoff delay for a given attempt (1-indexed). */
+export function backoffDelay(attempt: number, baseDelayMs = 1000, maxDelayMs = 30000): number {
+  return Math.min(baseDelayMs * 2 ** (attempt - 1), maxDelayMs);
+}
+
 export async function withRetry<T>(fn: () => Promise<T>, options: RetryOptions = {}): Promise<T> {
   const { maxAttempts = 3, baseDelayMs = 1000, maxDelayMs = 30000, shouldRetry } = options;
   let lastError: unknown;
@@ -27,8 +32,9 @@ export async function withRetry<T>(fn: () => Promise<T>, options: RetryOptions =
       lastError = error;
       if (attempt === maxAttempts) break;
       if (shouldRetry && !shouldRetry(error, attempt)) break;
-      const delay = Math.min(baseDelayMs * 2 ** (attempt - 1), maxDelayMs);
-      await new Promise((resolve) => setTimeout(resolve, delay));
+      await new Promise((resolve) =>
+        setTimeout(resolve, backoffDelay(attempt, baseDelayMs, maxDelayMs))
+      );
     }
   }
   throw lastError;

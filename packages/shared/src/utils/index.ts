@@ -13,7 +13,7 @@ export { STORAGE_BUCKETS } from './constants';
 export { queryFromService, queryFromPaginatedService, ServiceError } from './queryFromService';
 export { safeParseEnum } from './safeParseEnum';
 export { formatAssetNumber } from './formatAssetNumber';
-export { withRetry } from './withRetry';
+export { withRetry, backoffDelay } from './withRetry';
 export type { RetryOptions } from './withRetry';
 export { escapeHtml, escapePostgrestSearch, isValidHexColor } from './sanitize';
 
