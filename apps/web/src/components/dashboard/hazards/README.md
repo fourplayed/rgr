@@ -128,10 +128,6 @@ All components support both dark and light themes via the `isDark` prop (default
 </div>
 ```
 
-## Example
-
-See `HazardReviewPanel.example.tsx` for a complete working example with mock data.
-
 ## Accessibility
 
 - Keyboard navigation supported
