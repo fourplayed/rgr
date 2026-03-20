@@ -82,7 +82,9 @@ export const NavLink = React.memo<NavLinkProps>(
     );
 
     if (borderGradient) {
-      const hoverTextColor = isHovered || active ? '#ffffff' : '#7da8ff';
+      // Chrome idle → white on hover/active
+      const isEngaged = isHovered || active;
+      const iconStroke = isEngaged ? '#ffffff' : '#cbd5e1';
       return (
         <button
           type="button"
@@ -98,27 +100,50 @@ export const NavLink = React.memo<NavLinkProps>(
           aria-current={active ? 'page' : undefined}
           aria-label={label}
         >
-          <span className="relative z-[1]" style={{ flexShrink: 0, transition: 'color 0.3s ease' }}>
+          <span
+            className={isEngaged ? '' : 'chrome-gradient-icon'}
+            style={{ flexShrink: 0, transition: 'color 0.3s ease', position: 'relative', zIndex: 1 }}
+          >
             <Icon
               width={20}
               height={20}
-              stroke={hoverTextColor}
+              stroke={iconStroke}
               strokeWidth={2}
               isHovered={isHovered}
             />
           </span>
           <span
+            data-nav-label="true"
             className="relative z-[1]"
             style={{
               fontFamily: "'Lato', sans-serif",
               fontWeight: 700,
               fontSize: '15px',
               letterSpacing: '0.06em',
-              color: hoverTextColor,
-              transition: 'color 0.3s ease',
             }}
           >
-            <span className="tracking-wide uppercase select-none">{label}</span>
+            {/* Plain white text — visible on hover/active */}
+            <span
+              className="tracking-wide uppercase select-none"
+              style={{
+                color: '#ffffff',
+                transition: 'opacity 0.4s ease',
+                opacity: isEngaged ? 1 : 0,
+              }}
+            >
+              {label}
+            </span>
+            {/* Chrome gradient text — visible when idle */}
+            <span
+              className="tracking-wide uppercase select-none chrome-gradient-text absolute inset-0"
+              aria-hidden="true"
+              style={{
+                transition: 'opacity 0.4s ease',
+                opacity: isEngaged ? 0 : 1,
+              }}
+            >
+              {label}
+            </span>
           </span>
         </button>
       );

@@ -42,7 +42,7 @@ export const CARD_STYLES = {
   },
   // Card styling - Dark (glassmorphism with black)
   dark: {
-    background: 'rgba(0, 0, 0, 0.35)',
+    background: 'rgba(0, 0, 0, 0.15)',
     backdropFilter: 'blur(100px)',
     WebkitBackdropFilter: 'blur(100px)',
     borderRadius: '0',

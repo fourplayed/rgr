@@ -47,10 +47,11 @@ export const TopNavBar = React.memo<TopNavBarProps>(
     animateIn,
   }) => {
     const navStyle = isDark ? NAV_BAR_STYLES.dark : NAV_BAR_STYLES.light;
-    const iconColor = '#7da8ff';
+    // Chrome palette for icons & text
+    const iconColor = '#cbd5e1';
     const iconHoverColor = '#ffffff';
-    const textColor = '#7da8ff';
-    const mutedColor = '#5b8af5';
+    const textColor = '#ebebeb';
+    const mutedColor = '#9ca3af';
 
     return (
       <>
@@ -108,14 +109,53 @@ export const TopNavBar = React.memo<TopNavBarProps>(
           {/* Spacer */}
           <div className="flex-1" />
 
-          {/* Right side: user info + actions */}
+          {/* Right side: actions + user info */}
           <div className="flex items-center gap-3">
+            {/* Notification Center */}
+            <NotificationCenter />
+
+            {/* Theme toggle */}
+            <button
+              type="button"
+              onClick={onToggleTheme}
+              className="group relative p-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 transition-all duration-200 chrome-gradient-icon"
+              style={{ color: iconColor }}
+              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = iconHoverColor;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = iconColor;
+              }}
+            >
+              <ThemeToggleIcon isDark={isDark} />
+            </button>
+
+            {/* Settings */}
+            <button
+              type="button"
+              onClick={() => onNavigate('/settings')}
+              className="group relative p-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 transition-all duration-200 chrome-gradient-icon"
+              aria-label="Settings"
+              onMouseEnter={(e) => {
+                (e.currentTarget.querySelector('svg') as SVGElement).style.color = iconHoverColor;
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget.querySelector('svg') as SVGElement).style.color = iconColor;
+              }}
+            >
+              <Settings
+                className="w-6 h-6 transition-all duration-500 ease-out group-hover:scale-125 group-hover:rotate-180"
+                style={{ color: iconColor }}
+              />
+            </button>
+
             {/* Admin (superuser only) */}
             {canAccessAdmin && (
               <button
                 type="button"
                 onClick={() => onNavigate('/admin')}
-                className="group relative p-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 transition-all duration-200"
+                className="group relative p-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 transition-all duration-200 chrome-gradient-icon"
                 aria-label="Admin"
                 onMouseEnter={(e) => {
                   (e.currentTarget.querySelector('svg') as SVGElement).style.color = iconHoverColor;
@@ -131,40 +171,51 @@ export const TopNavBar = React.memo<TopNavBarProps>(
               </button>
             )}
 
-            {/* User info */}
+            {/* Divider before user info */}
+            <div
+              className="h-8 w-px mx-1"
+              style={{
+                background: isDark
+                  ? 'linear-gradient(to bottom, transparent, rgba(203,213,225,0.3), transparent)'
+                  : 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.4), transparent)',
+              }}
+              aria-hidden="true"
+            />
+
+            {/* User info — prominent right-hand position */}
             {userName && (
               <div className="flex items-center gap-2.5">
+                {/* Name + Role */}
+                <div className="flex flex-col leading-tight text-right">
+                  <span
+                    className="text-[15px] font-semibold truncate max-w-[180px] chrome-gradient-text"
+                    style={{ fontFamily: "'Lato', sans-serif" }}
+                  >
+                    {userName}
+                  </span>
+                  {userRole && (
+                    <span
+                      className="text-[12px] truncate max-w-[180px] uppercase tracking-wider"
+                      style={{ color: mutedColor, fontFamily: "'Lato', sans-serif" }}
+                    >
+                      {formatRole(userRole)}
+                    </span>
+                  )}
+                </div>
                 {/* Avatar */}
                 <div
-                  className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0"
+                  className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0"
                   style={{
-                    border: `1.5px solid ${isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.4)'}`,
-                    background: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.15)',
+                    border: `1.5px solid ${isDark ? 'rgba(203,213,225,0.3)' : 'rgba(255,255,255,0.4)'}`,
+                    background: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.12)',
                   }}
                 >
                   {userAvatarUrl ? (
                     <img src={userAvatarUrl} alt="" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <User className="w-5 h-5" style={{ color: textColor }} />
+                      <User className="w-4 h-4" style={{ color: textColor }} />
                     </div>
-                  )}
-                </div>
-                {/* Name + Role */}
-                <div className="flex flex-col leading-tight">
-                  <span
-                    className="text-[15px] font-semibold truncate max-w-[180px]"
-                    style={{ color: textColor, fontFamily: "'Lato', sans-serif" }}
-                  >
-                    {userName}
-                  </span>
-                  {userRole && (
-                    <span
-                      className="text-[13px] truncate max-w-[180px]"
-                      style={{ color: mutedColor, fontFamily: "'Lato', sans-serif" }}
-                    >
-                      {formatRole(userRole)}
-                    </span>
                   )}
                 </div>
               </div>
@@ -184,58 +235,10 @@ export const TopNavBar = React.memo<TopNavBarProps>(
               }}
             >
               <LogOut
-                className="w-6 h-6 transition-all duration-500 ease-out group-hover:scale-125 group-hover:rotate-180"
+                className="w-5 h-5 transition-all duration-500 ease-out group-hover:scale-125 group-hover:rotate-180"
                 style={{ color: iconColor }}
               />
             </button>
-
-            {/* Divider */}
-            <div
-              className="h-5 w-px mx-1"
-              style={{
-                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.3)',
-              }}
-              aria-hidden="true"
-            />
-
-            {/* Settings */}
-            <button
-              type="button"
-              onClick={() => onNavigate('/settings')}
-              className="group relative p-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 transition-all duration-200"
-              aria-label="Settings"
-              onMouseEnter={(e) => {
-                (e.currentTarget.querySelector('svg') as SVGElement).style.color = iconHoverColor;
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget.querySelector('svg') as SVGElement).style.color = iconColor;
-              }}
-            >
-              <Settings
-                className="w-6 h-6 transition-all duration-500 ease-out group-hover:scale-125 group-hover:rotate-180"
-                style={{ color: iconColor }}
-              />
-            </button>
-
-            {/* Theme toggle */}
-            <button
-              type="button"
-              onClick={onToggleTheme}
-              className="group relative p-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 transition-all duration-200"
-              style={{ color: iconColor }}
-              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = iconHoverColor;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = iconColor;
-              }}
-            >
-              <ThemeToggleIcon isDark={isDark} />
-            </button>
-
-            {/* Notification Center */}
-            <NotificationCenter />
           </div>
         </nav>
       </>

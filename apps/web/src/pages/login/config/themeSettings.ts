@@ -33,11 +33,12 @@ export const DEFAULT_SETTINGS: ThemeSettings = {
 
 export const DARK_THEME_SETTINGS: ThemeSettings = {
   backgroundColors: [
-    '#010409', // Top - nearly black
-    '#0d1117', // Dark grey at 50%
-    '#172554', // Navy blue at 100%
+    '#265a92', // Top
+    '#010d6a', // Upper mid
+    '#021769', // Lower mid
+    '#031054', // Bottom
   ],
-  backgroundLocations: [0, 0.5, 1],
+  backgroundLocations: [0, 0.33, 0.66, 1],
   starColor: 'rgba(255, 255, 255, 0.4)',
   starSpeed: 1.0,
   starDirection: 'left',

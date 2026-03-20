@@ -6,7 +6,7 @@
  */
 export const NAV_BAR_STYLES = {
   dark: {
-    background: 'linear-gradient(to bottom, #080b3a, #050828)',
+    background: 'linear-gradient(to bottom, #080b3a, #021764)',
     backdropFilter: 'blur(24px) saturate(180%)',
     WebkitBackdropFilter: 'blur(24px) saturate(180%)',
     borderBottom: '1px solid rgba(148, 163, 184, 0.2)',
