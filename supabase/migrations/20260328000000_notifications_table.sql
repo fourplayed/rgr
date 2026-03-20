@@ -24,11 +24,6 @@ create policy "users_update_own_notifications"
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
--- Service role inserts (cron + edge functions run with service role)
-create policy "service_insert_notifications"
-  on public.notifications for insert
-  with check (true);
-
 -- Realtime
 alter publication supabase_realtime add table public.notifications;
 
