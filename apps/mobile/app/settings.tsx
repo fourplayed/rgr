@@ -59,7 +59,7 @@ export default function SettingsScreen() {
   const handleLogoutConfirm = async () => {
     setShowLogoutConfirm(false);
     await logout();
-    router.replace('/(auth)/login');
+    // Root layout auth gate handles navigation to login
   };
 
   const handleBack = () => {
