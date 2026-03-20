@@ -54,7 +54,7 @@ export const HazardTrendsChart: React.FC<HazardTrendsChartProps> = ({
           tick={AXIS_STYLE}
           stroke={GRID_COLOR}
           tickFormatter={(v: string) =>
-            new Date(v).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+            new Date(v).toLocaleDateString('en-AU', { month: 'short', day: 'numeric' })
           }
         />
         <YAxis tick={AXIS_STYLE} stroke={GRID_COLOR} />

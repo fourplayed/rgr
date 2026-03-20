@@ -1,7 +1,7 @@
 /**
  * TimeRangePicker component tests
  */
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TimeRangePicker } from '../TimeRangePicker';
@@ -9,6 +9,7 @@ import type { AnalyticsTimeRange } from '@/services/analyticsService';
 
 describe('TimeRangePicker', () => {
   const onChange = vi.fn();
+  beforeEach(() => onChange.mockClear());
 
   it('renders all four range buttons', () => {
     render(<TimeRangePicker value="30d" onChange={onChange} />);

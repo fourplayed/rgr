@@ -23,6 +23,26 @@ function formatDate(isoDate: string | null): string {
   });
 }
 
+const headerStyle: React.CSSProperties = {
+  color: RGR_COLORS.chrome.medium,
+  fontSize: 12,
+  fontWeight: 600,
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.05em',
+  padding: '10px 12px',
+  textAlign: 'left' as const,
+  borderBottom: `1px solid rgba(235,235,235,0.1)`,
+  whiteSpace: 'nowrap' as const,
+};
+
+const cellStyle: React.CSSProperties = {
+  padding: '10px 12px',
+  fontSize: 13,
+  color: RGR_COLORS.chrome.light,
+  borderBottom: `1px solid rgba(235,235,235,0.06)`,
+  whiteSpace: 'nowrap' as const,
+};
+
 export const OutstandingAssetsTable: React.FC<OutstandingAssetsTableProps> = ({
   data,
   isLoading = false,
@@ -37,26 +57,6 @@ export const OutstandingAssetsTable: React.FC<OutstandingAssetsTableProps> = ({
       }),
     [data]
   );
-
-  const headerStyle: React.CSSProperties = {
-    color: RGR_COLORS.chrome.medium,
-    fontSize: 12,
-    fontWeight: 600,
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.05em',
-    padding: '10px 12px',
-    textAlign: 'left' as const,
-    borderBottom: `1px solid rgba(235,235,235,0.1)`,
-    whiteSpace: 'nowrap' as const,
-  };
-
-  const cellStyle: React.CSSProperties = {
-    padding: '10px 12px',
-    fontSize: 13,
-    color: RGR_COLORS.chrome.light,
-    borderBottom: `1px solid rgba(235,235,235,0.06)`,
-    whiteSpace: 'nowrap' as const,
-  };
 
   return (
     <div>
@@ -97,11 +97,11 @@ export const OutstandingAssetsTable: React.FC<OutstandingAssetsTableProps> = ({
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
-                <th style={headerStyle}>Asset Number</th>
-                <th style={headerStyle}>Category</th>
-                <th style={headerStyle}>Status</th>
-                <th style={headerStyle}>Last Scanned</th>
-                <th style={headerStyle}>Days Overdue</th>
+                <th scope="col" style={headerStyle}>Asset Number</th>
+                <th scope="col" style={headerStyle}>Category</th>
+                <th scope="col" style={headerStyle}>Status</th>
+                <th scope="col" style={headerStyle}>Last Scanned</th>
+                <th scope="col" style={headerStyle}>Days Overdue</th>
               </tr>
             </thead>
             <tbody>

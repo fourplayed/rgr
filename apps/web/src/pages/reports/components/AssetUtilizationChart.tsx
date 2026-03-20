@@ -73,8 +73,8 @@ export const AssetUtilizationChart: React.FC<AssetUtilizationChartProps> = ({
             innerRadius={60}
             outerRadius={90}
           >
-            {segments.map((seg, idx) => (
-              <Cell key={`cell-${idx}`} fill={seg.color} />
+            {segments.map((seg) => (
+              <Cell key={seg.name} fill={seg.color} />
             ))}
           </Pie>
           <Tooltip
