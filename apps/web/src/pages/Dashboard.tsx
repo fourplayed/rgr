@@ -43,18 +43,17 @@ export default function Dashboard() {
     <DashboardPresenter
       state={state}
       actions={actions}
-      onNavigateToReports={actions.handleNavigateToReports}
     >
-      {/* Stat cards row */}
+      {/* Fleet Health header + Stat cards row */}
       <div
         style={{
           width: 'calc(100% - 48px)',
           maxWidth: '1360px',
           position: 'fixed',
-          top: '86px',
+          top: '76px',
           left: '50%',
           transform: 'translateX(-50%)',
-          padding: '20px 0',
+          padding: '10px 0',
           ...(fromLogin
             ? {
                 opacity: 0,
@@ -63,6 +62,28 @@ export default function Dashboard() {
             : {}),
         }}
       >
+        {/* Section header */}
+        <div className="flex items-center justify-between mb-3">
+          <h2
+            className="text-sm font-semibold uppercase tracking-wider"
+            style={{
+              color: state.isDark ? '#94a3b8' : '#475569',
+              fontFamily: "'Lato', sans-serif",
+            }}
+          >
+            Fleet Health
+          </h2>
+          <button
+            onClick={actions.handleNavigateToReports}
+            className="text-xs hover:opacity-80 transition-opacity duration-150"
+            style={{
+              color: state.isDark ? '#60a5fa' : '#3b82f6',
+              fontFamily: "'Lato', sans-serif",
+            }}
+          >
+            View Reports →
+          </button>
+        </div>
         <StatCards isDark={state.isDark} />
       </div>
       {/* Search/Filter bar — standalone row between stat cards and map */}
@@ -86,7 +107,7 @@ export default function Dashboard() {
           maxWidth: '1360px',
           border: 'none',
           position: 'fixed',
-          top: '342px',
+          top: '340px',
           bottom: '20px',
           left: '50%',
           transform: 'translateX(-50%)',

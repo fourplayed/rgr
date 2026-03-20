@@ -1,7 +1,7 @@
 /**
  * DashboardPresenter tests
  *
- * Tests that the Dashboard page wires in the FleetHealthScore widget correctly.
+ * Tests that the Dashboard presenter renders nav, content area, and children.
  */
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -9,11 +9,6 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { DashboardPresenter } from '../DashboardPresenter';
 import type { DashboardState, DashboardActions } from '../useDashboardLogic';
-
-// Mock FleetHealthScore so it doesn't call hooks internally
-vi.mock('@/components/FleetHealthScore', () => ({
-  FleetHealthScore: () => <div data-testid="fleet-health-score" />,
-}));
 
 // Mock TopNavBar to avoid complex nav rendering in unit tests
 vi.mock('../components/TopNavBar', () => ({
@@ -39,16 +34,10 @@ const mockActions: DashboardActions = {
   handleNavigateToReports: vi.fn(),
 };
 
-function renderPresenter(
-  props?: Partial<{ onNavigateToReports: () => void; children: React.ReactNode }>
-) {
+function renderPresenter(props?: Partial<{ children: React.ReactNode }>) {
   return render(
     <MemoryRouter>
-      <DashboardPresenter
-        state={mockState}
-        actions={mockActions}
-        onNavigateToReports={props?.onNavigateToReports ?? vi.fn()}
-      >
+      <DashboardPresenter state={mockState} actions={mockActions}>
         {props?.children}
       </DashboardPresenter>
     </MemoryRouter>
@@ -68,18 +57,6 @@ describe('DashboardPresenter', () => {
   it('renders the main content area', () => {
     renderPresenter();
     expect(screen.getByRole('main')).toBeInTheDocument();
-  });
-
-  it('renders FleetHealthScore widget on the dashboard', () => {
-    renderPresenter();
-    expect(screen.getByTestId('fleet-health-score')).toBeInTheDocument();
-  });
-
-  it('passes onNavigateToReports to FleetHealthScore', () => {
-    const onNavigateToReports = vi.fn();
-    renderPresenter({ onNavigateToReports });
-    // FleetHealthScore is rendered — the mock captures render but we verify it is present
-    expect(screen.getByTestId('fleet-health-score')).toBeInTheDocument();
   });
 
   it('renders children passed to the presenter', () => {

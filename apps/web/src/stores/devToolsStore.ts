@@ -40,10 +40,10 @@ const DEFAULT_LIGHT_GRADIENT: GradientColors = {
 };
 
 const DEFAULT_DARK_BG_GRADIENT: DarkBgGradient = {
-  top: '#000060',
-  upperMiddle: '#0a1040',
-  lowerMiddle: '#050c28',
-  bottom: '#020510',
+  top: '#002680',
+  upperMiddle: '#1461db',
+  lowerMiddle: '#0a0e43',
+  bottom: '#00114d',
 };
 
 const DEFAULT_PILLAR_SETTINGS: PillarSettings = {

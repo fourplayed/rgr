@@ -11,14 +11,11 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { DASHBOARD_CONSTANTS } from './types';
 import { TopNavBar } from './components/TopNavBar';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { FleetHealthScore } from '@/components/FleetHealthScore';
 import type { DashboardState, DashboardActions } from './useDashboardLogic';
 
 export interface DashboardPresenterProps {
   state: DashboardState;
   actions: DashboardActions;
-  /** Callback to navigate to the Reports page */
-  onNavigateToReports?: () => void;
   /** Optional children for page content (used by StubPage) */
   children?: React.ReactNode;
 }
@@ -26,7 +23,6 @@ export interface DashboardPresenterProps {
 export function DashboardPresenter({
   state,
   actions,
-  onNavigateToReports,
   children,
 }: DashboardPresenterProps) {
   const { isDark, activeSection, canAccessAdmin, user } = state;
@@ -139,7 +135,6 @@ export function DashboardPresenter({
           />
           <div className="relative mx-auto h-full" style={{ maxWidth: '1440px' }}>
             <ErrorBoundary>
-              <FleetHealthScore onNavigateToReports={onNavigateToReports ?? (() => {})} />
               {children}
             </ErrorBoundary>
           </div>

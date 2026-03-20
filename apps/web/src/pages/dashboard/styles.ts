@@ -6,14 +6,14 @@
  */
 export const NAV_BAR_STYLES = {
   dark: {
-    background: 'linear-gradient(to bottom, #080b3a, #021764)',
+    background: 'linear-gradient(to bottom, #163050, #0f1d3a, #0a1230, #060d24)',
     backdropFilter: 'blur(24px) saturate(180%)',
     WebkitBackdropFilter: 'blur(24px) saturate(180%)',
     borderBottom: '1px solid rgba(148, 163, 184, 0.2)',
     boxShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
   },
   light: {
-    background: 'linear-gradient(to bottom, #0000cc, #000099)',
+    background: 'linear-gradient(to bottom, #c5d8f5, #6ca6e8, #3580d6, #5da3f0)',
     backdropFilter: 'blur(24px)',
     WebkitBackdropFilter: 'blur(24px)',
     borderBottom: '1px solid rgba(148, 163, 184, 0.2)',
