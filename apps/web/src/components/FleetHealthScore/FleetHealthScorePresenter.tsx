@@ -89,7 +89,7 @@ export const FleetHealthScorePresenter: React.FC<FleetHealthScorePresenterProps>
 
   // ── Derived values ──
   const score = data?.overallScore ?? null;
-  const status = data?.status ?? 'healthy';
+  const status = data?.status ?? 'at_risk';
   const scoreColor = STATUS_COLORS[status];
   const scoreTextClass = STATUS_TEXT_CLASSES[status];
   const gaugeData = [{ value: score ?? 0 }];
