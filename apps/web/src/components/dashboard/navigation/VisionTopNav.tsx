@@ -16,6 +16,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuthStore } from '@/stores/authStore';
 import { ThemeToggleIcon } from '@/components/common';
+import { NotificationCenter } from '@/components/NotificationCenter';
 import { RGR_COLORS } from '@/styles/color-palette';
 import { SlidingNavIndicator } from './SlidingNavIndicator';
 import { UserInfoBadge } from './UserInfoBadge';
@@ -223,6 +224,9 @@ export const VisionTopNav = React.memo<VisionTopNavProps>(({ className = '' }) =
             >
               <ThemeToggleIcon isDark={isDark} />
             </button>
+
+            {/* Notification Center */}
+            <NotificationCenter />
 
             {/* Vertical Divider */}
             {user && (
