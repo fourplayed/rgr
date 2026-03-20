@@ -20,7 +20,7 @@ export const CARD_STYLES = {
   // Card styling - Light (chrome glassmorphism)
   light: {
     background:
-      'linear-gradient(160deg, rgba(120,130,145,0.48) 0%, rgba(100,110,125,0.38) 50%, rgba(110,120,135,0.43) 100%)',
+      'linear-gradient(160deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 100%)',
     backdropFilter: 'blur(100px)',
     WebkitBackdropFilter: 'blur(100px)',
     borderRadius: '0',
@@ -71,8 +71,8 @@ export const INPUT_STYLES = {
   // Light theme - simple border like dark theme (no fancy focus effects)
   light: {
     backgroundColor: 'rgba(120, 130, 145, 0.35)',
-    border: '1px solid rgba(255, 255, 255, 0.5)',
-    color: '#ffffff', // white
+    border: '1px solid rgba(200, 210, 220, 0.6)',
+    color: '#cbd5e1', // slate
     outline: 'none',
   },
   // Removed lightFocus - no longer used
