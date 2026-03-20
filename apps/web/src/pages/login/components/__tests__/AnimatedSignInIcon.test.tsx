@@ -78,9 +78,9 @@ describe('AnimatedSignInIcon', () => {
       const { container } = render(<AnimatedSignInIcon />);
       const svg = container.querySelector('svg');
 
-      // Fast-forward past initial delay + animation duration
+      // Fast-forward past initial delay + animation duration (1100ms)
       await act(async () => {
-        vi.advanceTimersByTime(500 + 600);
+        vi.advanceTimersByTime(500 + 1100);
       });
 
       expect(svg).not.toHaveClass('slide-active');
@@ -96,15 +96,15 @@ describe('AnimatedSignInIcon', () => {
       });
       expect(svg).toHaveClass('slide-active');
 
-      // Animation ends
+      // Animation ends (1100ms duration)
       await act(async () => {
-        vi.advanceTimersByTime(600);
+        vi.advanceTimersByTime(1100);
       });
       expect(svg).not.toHaveClass('slide-active');
 
       // Second animation at 6000ms from first
       await act(async () => {
-        vi.advanceTimersByTime(6000 - 600);
+        vi.advanceTimersByTime(6000 - 1100);
       });
       expect(svg).toHaveClass('slide-active');
     });
@@ -154,44 +154,17 @@ describe('AnimatedSignInIcon', () => {
     });
   });
 
-  describe('CSS Injection', () => {
-    it('should inject animation styles', () => {
-      render(<AnimatedSignInIcon />);
-      const styles = document.querySelectorAll('style');
-      const hasIconStyles = Array.from(styles).some((style) =>
-        style.textContent?.includes('sign-in-icon')
-      );
-      expect(hasIconStyles).toBe(true);
+  describe('CSS Classes', () => {
+    it('should use animated-icon base class', () => {
+      const { container } = render(<AnimatedSignInIcon />);
+      const svg = container.querySelector('svg');
+      expect(svg).toHaveClass('animated-icon');
     });
 
-    it('should include slideInFromLeft keyframes', () => {
-      render(<AnimatedSignInIcon />);
-      const styles = document.querySelectorAll('style');
-      const hasSlideAnimation = Array.from(styles).some((style) =>
-        style.textContent?.includes('@keyframes slideInFromLeft')
-      );
-      expect(hasSlideAnimation).toBe(true);
-    });
-
-    it('should include prefers-reduced-motion styles', () => {
-      render(<AnimatedSignInIcon />);
-      const styles = document.querySelectorAll('style');
-      const hasReducedMotion = Array.from(styles).some((style) =>
-        style.textContent?.includes('prefers-reduced-motion')
-      );
-      expect(hasReducedMotion).toBe(true);
-    });
-
-    it('should define CSS custom properties', () => {
-      render(<AnimatedSignInIcon />);
-      const styles = document.querySelectorAll('style');
-      const hasCssVars = Array.from(styles).some(
-        (style) =>
-          style.textContent?.includes('--icon-slide-duration') &&
-          style.textContent?.includes('--icon-rotate-duration') &&
-          style.textContent?.includes('--icon-position-left')
-      );
-      expect(hasCssVars).toBe(true);
+    it('should use animated-icon--sign-in variant class', () => {
+      const { container } = render(<AnimatedSignInIcon />);
+      const svg = container.querySelector('svg');
+      expect(svg).toHaveClass('animated-icon--sign-in');
     });
   });
 
@@ -202,38 +175,18 @@ describe('AnimatedSignInIcon', () => {
       expect(svg).toHaveAttribute('aria-hidden', 'true');
     });
 
-    it('should respect reduced motion preferences in CSS', () => {
-      render(<AnimatedSignInIcon />);
-      const styles = document.querySelectorAll('style');
-      const hasReducedMotionRules = Array.from(styles).some((style) => {
-        const content = style.textContent || '';
-        return (
-          content.includes('@media (prefers-reduced-motion: reduce)') &&
-          content.includes('animation: none !important')
-        );
-      });
-      expect(hasReducedMotionRules).toBe(true);
+    it('should have aria-hidden attribute', () => {
+      const { container } = render(<AnimatedSignInIcon />);
+      const svg = container.querySelector('svg');
+      expect(svg).toHaveAttribute('aria-hidden', 'true');
     });
   });
 
   describe('Performance', () => {
-    it('should use GPU-accelerated properties', () => {
-      render(<AnimatedSignInIcon />);
-      const styles = document.querySelectorAll('style');
-      const hasWillChange = Array.from(styles).some((style) =>
-        style.textContent?.includes('will-change: transform')
-      );
-      expect(hasWillChange).toBe(true);
-    });
-
-    it('should use transform for animations', () => {
-      render(<AnimatedSignInIcon />);
-      const styles = document.querySelectorAll('style');
-      const usesTransform = Array.from(styles).some((style) => {
-        const content = style.textContent || '';
-        return content.includes('transform: translateX') || content.includes('transform: rotate');
-      });
-      expect(usesTransform).toBe(true);
+    it('should apply animated-icon class for GPU acceleration', () => {
+      const { container } = render(<AnimatedSignInIcon />);
+      const svg = container.querySelector('svg');
+      expect(svg).toHaveClass('animated-icon');
     });
   });
 

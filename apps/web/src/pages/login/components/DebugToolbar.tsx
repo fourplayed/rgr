@@ -46,13 +46,20 @@ export function DebugToolbar() {
 
   // Persist panel state across remounts
   const [isOpen, setIsOpen] = useState(() => {
-    const stored = localStorage.getItem('debug-toolbar-open');
-    return stored ? JSON.parse(stored) : false;
+    try {
+      return JSON.parse(localStorage.getItem('debug-toolbar-open') ?? 'false');
+    } catch {
+      return false;
+    }
   });
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [activeTab, setActiveTab] = useState<'console' | 'workflow' | 'bg'>(() => {
-    const stored = localStorage.getItem('debug-toolbar-tab');
-    return stored === 'console' || stored === 'workflow' || stored === 'bg' ? stored : 'console';
+    try {
+      const stored = localStorage.getItem('debug-toolbar-tab');
+      return stored === 'console' || stored === 'workflow' || stored === 'bg' ? stored : 'console';
+    } catch {
+      return 'console';
+    }
   });
 
   // Persist panel state to localStorage so it doesn't auto-close

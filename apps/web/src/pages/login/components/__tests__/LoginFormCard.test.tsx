@@ -24,9 +24,6 @@ vi.mock('@/stores/devToolsStore', () => ({
   }),
 }));
 
-// Mock button component
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const MockButton = ({ children, ...props }: any) => <button {...props}>{children}</button>;
 
 describe('LoginFormCard', () => {
   let mockState: LoginLogicState;
@@ -60,7 +57,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -78,7 +75,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -94,7 +91,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={true}
         />
@@ -110,7 +107,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -124,7 +121,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -145,7 +142,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={stateWithEmail}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -165,7 +162,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={stateWithPassword}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -181,7 +178,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -199,7 +196,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -216,7 +213,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -235,7 +232,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -254,7 +251,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -274,7 +271,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -294,7 +291,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={stateWithRememberMe}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -310,7 +307,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -327,7 +324,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -346,7 +343,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -362,7 +359,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -379,7 +376,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -394,7 +391,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -409,7 +406,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={true}
         />
@@ -426,7 +423,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -441,7 +438,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -456,7 +453,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -473,7 +470,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={loadingState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -490,7 +487,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={loadingState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -507,7 +504,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={loadingState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -523,7 +520,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -533,22 +530,19 @@ describe('LoginFormCard', () => {
       expect(submitButton).toHaveClass('chrome-button');
     });
 
-    it('should inject chrome button styles', () => {
+    it('should apply light theme variant class', () => {
       render(
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
       );
 
-      const styles = document.querySelectorAll('style');
-      const hasChromeStyles = Array.from(styles).some((style) =>
-        style.textContent?.includes('chrome-button')
-      );
-      expect(hasChromeStyles).toBe(true);
+      const submitButton = screen.getByRole('button', { name: /sign in/i });
+      expect(submitButton).toHaveClass('chrome-button-light');
     });
   });
 
@@ -559,7 +553,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -576,7 +570,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -597,7 +591,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -620,7 +614,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -637,7 +631,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={loadingState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -654,7 +648,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -669,7 +663,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -679,22 +673,19 @@ describe('LoginFormCard', () => {
       expect(forgotButton).toHaveAttribute('aria-label', 'Forgot password?');
     });
 
-    it('should respect prefers-reduced-motion', () => {
+    it('should have chrome-button class on submit button', () => {
       render(
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
       );
 
-      const styles = document.querySelectorAll('style');
-      const hasReducedMotion = Array.from(styles).some((style) =>
-        style.textContent?.includes('prefers-reduced-motion')
-      );
-      expect(hasReducedMotion).toBe(true);
+      const submitButton = screen.getByRole('button', { name: /sign in/i });
+      expect(submitButton).toHaveClass('chrome-button');
     });
   });
 
@@ -704,7 +695,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -719,7 +710,7 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-          ButtonComponent={MockButton}
+
           onForgotPassword={mockOnForgotPassword}
           isDark={true}
         />

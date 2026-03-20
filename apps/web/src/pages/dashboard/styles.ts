@@ -1,11 +1,6 @@
 /**
  * Dashboard styles - Glassmorphic nav and panel tokens
  */
-import { BACKGROUND_STYLES } from '@/pages/login/styles';
-
-// Re-export background styles for dashboard use
-export { BACKGROUND_STYLES };
-
 /**
  * Glassmorphic nav bar styles for dark and light themes
  */

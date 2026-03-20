@@ -1,7 +1,6 @@
 /**
  * LoginFormCard - Login form component
  */
-import type { ComponentType } from 'react';
 import { useState, useCallback } from 'react';
 import { LOGIN_CONSTANTS } from '../types';
 import type { LoginLogicState, LoginLogicActions } from '../useLoginLogic';
@@ -10,22 +9,11 @@ import { ThemedInput } from './ThemedInput';
 import { LoadingSpinner } from './LoadingSpinner';
 import { AnimatedSignInIcon } from './AnimatedSignInIcon';
 import { useDevToolsStore, type WorkflowStep } from '@/stores/devToolsStore';
-
-export interface ButtonProps {
-  type?: 'button' | 'submit' | 'reset';
-  className?: string;
-  size?: 'sm' | 'md' | 'lg';
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
-  isLoading?: boolean;
-  disabled?: boolean;
-  children: React.ReactNode;
-  onClick?: React.MouseEventHandler<HTMLButtonElement>;
-}
+import '../login.css';
 
 export interface LoginFormCardProps {
   state: LoginLogicState;
   actions: LoginLogicActions;
-  ButtonComponent: ComponentType<ButtonProps>;
   onForgotPassword: () => void;
   isDark: boolean;
 }
@@ -36,7 +24,6 @@ export interface LoginFormCardProps {
 export function LoginFormCard({
   state,
   actions,
-  ButtonComponent: _ButtonComponent,
   onForgotPassword,
   isDark,
 }: LoginFormCardProps) {
@@ -194,7 +181,7 @@ export function LoginFormCard({
   );
 
   const textColor = isDark ? 'text-slate-200' : 'text-white';
-  const linkColor = isDark ? 'text-white/90 hover:text-white' : 'text-white/90 hover:text-white';
+  const linkColor = 'text-white/90 hover:text-white';
 
   return (
     <div style={isDark ? CARD_STYLES.dark : CARD_STYLES.light}>
@@ -271,141 +258,8 @@ export function LoginFormCard({
         </div>
       </form>
 
-      {/* Sign In button - at bottom of form */}
+      {/* Sign In button */}
       <div className="mt-6">
-        <style>{`
-          .chrome-button {
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
-          }
-
-          /* Light theme button - darker blue closer to #0000CC */
-          .chrome-button-light {
-            background: linear-gradient(135deg, #0000CC 0%, #0000AA 50%, #000088 100%);
-            border: none;
-            box-shadow: 0 2px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3), inset 0 -1px 2px rgba(0, 0, 0, 0.2);
-          }
-
-          .chrome-button-light:hover {
-            box-shadow: 0 3px 4px rgba(0, 0, 0, 0.5), 0 2px 3px rgba(0, 0, 0, 0.4), inset 0 -1px 2px rgba(0, 0, 0, 0.2);
-          }
-
-          .chrome-button-light:active {
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(0, 0, 0, 0.3);
-          }
-
-          .chrome-button-light::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, #0000FF 0%, #0000CC 50%, #0000AA 100%);
-            background-size: 200% 200%;
-            background-position: 0% 50%;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-          }
-
-          .chrome-button-light:hover::before {
-            opacity: 1;
-            animation: gradientMove 6s ease infinite;
-          }
-
-          .chrome-button-light::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.4) 50%, transparent 100%);
-            transform: translateX(-100%);
-          }
-
-          .chrome-button-light:hover::after {
-            animation: shimmerSweep 2s ease-in-out infinite;
-          }
-
-          /* Dark theme button - dark navy */
-          .chrome-button-dark {
-            background: linear-gradient(to bottom, #1e3a8a 0%, #1a2d5f 100%);
-            border: none;
-            box-shadow: 0 2px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4), inset 0 -1px 2px rgba(0, 0, 0, 0.3);
-          }
-
-          .chrome-button-dark:hover {
-            box-shadow: 0 3px 4px rgba(0, 0, 0, 0.6), 0 2px 3px rgba(0, 0, 0, 0.5), inset 0 -1px 2px rgba(0, 0, 0, 0.3);
-          }
-
-          .chrome-button-dark:active {
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(0, 0, 0, 0.4);
-          }
-
-          .chrome-button-dark::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(to bottom, #2a4e9e 0%, #1e4494 50%, #1a3a7a 100%);
-            background-size: 200% 200%;
-            background-position: 0% 50%;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-          }
-
-          .chrome-button-dark:hover::before {
-            opacity: 1;
-            animation: gradientMove 6s ease infinite;
-          }
-
-          .chrome-button-dark::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.4) 50%, transparent 100%);
-            transform: translateX(-100%);
-          }
-
-          .chrome-button-dark:hover::after {
-            animation: shimmerSweep 2s ease-in-out infinite;
-          }
-
-          @keyframes gradientMove {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-          }
-
-          @keyframes shimmerSweep {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-          }
-
-          .chrome-button-content {
-            position: relative;
-            z-index: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-          }
-
-          .chrome-button-text {
-            font-family: 'Lato', sans-serif;
-            font-size: 1rem;
-            font-weight: 500;
-            -webkit-text-stroke: 0.4px white;
-            text-transform: uppercase;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3);
-          }
-
-          /* Respect reduced motion */
-          @media (prefers-reduced-motion: reduce) {
-            .chrome-button,
-            .chrome-button::before,
-            .chrome-button::after,
-            .chrome-button-text {
-              animation: none !important;
-              transition-duration: 0.01ms !important;
-            }
-          }
-        `}</style>
         <button
           type="submit"
           form="login-form"

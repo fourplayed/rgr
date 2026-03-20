@@ -2,7 +2,7 @@
  * LoginPresenter - Pure UI component for Login page
  *
  * DESIGN: Based on RGR logo color palette
- * - Vertical gradient background (light blue top → dark navy bottom)
+ * - Vertical gradient background (light blue top -> dark navy bottom)
  * - Fixed height cards for login/forgot password
  * - Chrome/metallic accents matching logo aesthetic
  *
@@ -18,7 +18,7 @@
  * - Screen reader announcements for errors
  * - Required field indicators
  */
-import { useState, useEffect, type ComponentType } from 'react';
+import { useState, useEffect, useMemo, type ComponentType } from 'react';
 import type { LoginLogicState, LoginLogicActions } from './useLoginLogic';
 import { LOGIN_CONSTANTS } from './types';
 import { Logo } from '@/components/common';
@@ -86,25 +86,37 @@ export function LoginPresenter({
   }, [state.status]);
 
   // Collect all errors for display
-  const allErrors: string[] = [];
-  if (!showForgotPassword) {
-    if (state.errors.general) allErrors.push(state.errors.general);
-    if (state.errors.email) allErrors.push(state.errors.email);
-    if (state.errors.password) allErrors.push(state.errors.password);
-  } else {
-    if (forgotPasswordError) allErrors.push(forgotPasswordError);
-  }
-
-  // Handle forgot password link click - clear errors on flip
-  const handleForgotPasswordClick = () => {
-    handleFlipToForgotPassword();
-  };
+  const allErrors = useMemo(() => {
+    const errors: string[] = [];
+    if (!showForgotPassword) {
+      if (state.errors.general) errors.push(state.errors.general);
+      if (state.errors.email) errors.push(state.errors.email);
+      if (state.errors.password) errors.push(state.errors.password);
+    } else {
+      if (forgotPasswordError) errors.push(forgotPasswordError);
+    }
+    return errors;
+  }, [showForgotPassword, state.errors, forgotPasswordError]);
 
   // Handle back to login - clear forgot password errors
   const handleBackToLogin = () => {
     setForgotPasswordError(null);
     handleFlipToLogin();
   };
+
+  // Compute logo swipe transform
+  const logoTransform = (() => {
+    const base = 'translateX(-50%)';
+    if (swipePhase === 'swipe-out' || swipePhase === 'position-in') {
+      return `${base} translateY(-120vh)`;
+    }
+    return base;
+  })();
+
+  const logoTransition =
+    swipePhase === 'position-in'
+      ? 'none'
+      : `transform ${THEME_SWIPE_DURATION_MS}ms cubic-bezier(0.25, 0.1, 0.25, 1)`;
 
   return (
     <div
@@ -116,12 +128,11 @@ export function LoginPresenter({
         <ThemeToggle isDark={isDark} onToggle={handleThemeToggle} />
       </div>
 
-      {/* Exit slide wrapper — slides logo + card + errors left on auth success */}
+      {/* Exit slide wrapper - slides logo + card + errors left on auth success */}
       <div
         style={{
           transform: isExiting ? 'translateX(-120vw)' : 'none',
           transition: 'transform 600ms ease-in',
-          // Fill the full viewport so absolutely-positioned children stay put
           position: 'absolute',
           inset: 0,
           display: 'flex',
@@ -130,99 +141,37 @@ export function LoginPresenter({
           justifyContent: 'center',
         }}
         onTransitionEnd={(e) => {
-          // Only fire on the wrapper's own transform transition
           if (isExiting && e.target === e.currentTarget) {
             onNavigationReady?.();
           }
         }}
       >
-        {/* Dark theme logo */}
-        {isDark && (
-          <div
-            className="absolute flex justify-center w-full max-w-[400px] z-20 pointer-events-none"
-            style={{
-              top: `calc(50% - ${CARD_HEIGHT / 2}px - 17px)`,
-              left: '50%',
-              transform: (() => {
-                const baseTransform = 'translateX(-50%)';
-                if (swipePhase === 'idle' || swipePhase === 'swipe-in') {
-                  return baseTransform;
-                }
-                if (swipePhase === 'swipe-out') {
-                  return `${baseTransform} translateY(-120vh)`;
-                }
-                if (swipePhase === 'position-in') {
-                  return `${baseTransform} translateY(-120vh)`;
-                }
-                return baseTransform;
-              })(),
-              transition:
-                swipePhase === 'position-in'
-                  ? 'none'
-                  : `transform ${THEME_SWIPE_DURATION_MS}ms cubic-bezier(0.25, 0.1, 0.25, 1)`,
-            }}
+        {/* Logo - single block for both themes */}
+        <div
+          className={`absolute flex justify-center z-20 pointer-events-none ${isDark ? 'w-full max-w-[400px]' : ''}`}
+          style={{
+            top: `calc(50% - ${CARD_HEIGHT / 2}px - 17px)`,
+            left: '50%',
+            transform: logoTransform,
+            transition: logoTransition,
+          }}
+        >
+          <Hover3D
+            maxRotation={12}
+            perspective={1000}
+            scale={1.03}
+            className="pointer-events-auto"
+            style={{ display: 'inline-block' }}
           >
-            <Hover3D
-              maxRotation={12}
-              perspective={1000}
-              scale={1.03}
-              className="pointer-events-auto"
-              style={{ display: 'inline-block' }}
-            >
-              <Logo
-                variant="auto"
-                size="custom"
-                className="h-[185px] w-auto pointer-events-none"
-                isDark={true}
-                alt={LOGIN_CONSTANTS.UI.LOGO_LABEL}
-              />
-            </Hover3D>
-          </div>
-        )}
-
-        {/* Light theme logo - original dimensions */}
-        {!isDark && (
-          <div
-            className="absolute flex justify-center z-20 pointer-events-none"
-            style={{
-              top: `calc(50% - ${CARD_HEIGHT / 2}px - 17px)`,
-              left: '50%',
-              transform: (() => {
-                const baseTransform = 'translateX(-50%)';
-                if (swipePhase === 'idle' || swipePhase === 'swipe-in') {
-                  return baseTransform;
-                }
-                if (swipePhase === 'swipe-out') {
-                  return `${baseTransform} translateY(-120vh)`;
-                }
-                if (swipePhase === 'position-in') {
-                  return `${baseTransform} translateY(-120vh)`;
-                }
-                return baseTransform;
-              })(),
-              transition:
-                swipePhase === 'position-in'
-                  ? 'none'
-                  : `transform ${THEME_SWIPE_DURATION_MS}ms cubic-bezier(0.25, 0.1, 0.25, 1)`,
-            }}
-          >
-            <Hover3D
-              maxRotation={12}
-              perspective={1000}
-              scale={1.03}
-              className="pointer-events-auto"
-              style={{ display: 'inline-block' }}
-            >
-              <Logo
-                variant="auto"
-                size="custom"
-                className="h-[185px] w-auto pointer-events-none"
-                isDark={false}
-                alt={LOGIN_CONSTANTS.UI.LOGO_LABEL}
-              />
-            </Hover3D>
-          </div>
-        )}
+            <Logo
+              variant="auto"
+              size="custom"
+              className="h-[185px] w-auto pointer-events-none"
+              isDark={isDark}
+              alt={LOGIN_CONSTANTS.UI.LOGO_LABEL}
+            />
+          </Hover3D>
+        </div>
 
         {/* 3D Flip Container with cards */}
         <FlipCardContainer
@@ -233,8 +182,7 @@ export function LoginPresenter({
             <LoginFormCard
               state={state}
               actions={actions}
-              ButtonComponent={ButtonComponent}
-              onForgotPassword={handleForgotPasswordClick}
+              onForgotPassword={handleFlipToForgotPassword}
               isDark={isDark}
             />
           }

@@ -53,16 +53,10 @@ describe('ThemedInput', () => {
       expect(input).toHaveClass('themed-input');
     });
 
-    it('should inject focus styles', () => {
+    it('should apply themed-input-light class for light theme', () => {
       render(<ThemedInput name="test" isDark={false} />);
-
-      const styles = document.querySelectorAll('style');
-      const hasFocusStyles = Array.from(styles).some(
-        (style) =>
-          style.textContent?.includes('.themed-input-light:focus') ||
-          style.textContent?.includes('.themed-input-dark:focus')
-      );
-      expect(hasFocusStyles).toBe(true);
+      const input = screen.getByRole('textbox');
+      expect(input).toHaveClass('themed-input-light');
     });
   });
 
@@ -241,7 +235,7 @@ describe('ThemedInput', () => {
       render(<ThemedInput name="test" isDark={false} />);
 
       const input = screen.getByRole('textbox');
-      expect(input).toHaveClass('text-slate-900');
+      expect(input).toHaveClass('text-white');
     });
 
     it('should apply dark theme text color', () => {
@@ -269,28 +263,7 @@ describe('ThemedInput', () => {
       render(<ThemedInput name="test" isDark={false} />);
 
       const input = screen.getByRole('textbox');
-      // Light theme uses white, dark theme uses gray-500
-      expect(input).toHaveClass('placeholder:text-white');
-    });
-
-    it('should apply light theme focus background', () => {
-      render(<ThemedInput name="test" isDark={false} />);
-
-      const styles = document.querySelectorAll('style');
-      const hasFocusBg = Array.from(styles).some((style) =>
-        style.textContent?.includes('background-color: rgba(209, 213, 219, 0.3)')
-      );
-      expect(hasFocusBg).toBe(true);
-    });
-
-    it('should apply dark theme focus background', () => {
-      render(<ThemedInput name="test" isDark={true} />);
-
-      const styles = document.querySelectorAll('style');
-      const hasFocusBg = Array.from(styles).some((style) =>
-        style.textContent?.includes('background-color: rgba(0, 0, 0, 0.15)')
-      );
-      expect(hasFocusBg).toBe(true);
+      expect(input).toHaveClass('placeholder:text-white/60');
     });
   });
 

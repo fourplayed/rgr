@@ -2,7 +2,7 @@
  * ErrorContainer - Error display component positioned below card
  * Automatically fades out after 5 seconds
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { CARD_HEIGHT } from '../styles';
 
 export interface ErrorContainerProps {
@@ -16,36 +16,33 @@ export interface ErrorContainerProps {
  */
 export function ErrorContainer({ errors, onDismiss }: ErrorContainerProps) {
   const [isVisible, setIsVisible] = useState(true);
+  const onDismissRef = useRef(onDismiss);
+  onDismissRef.current = onDismiss;
 
   useEffect(() => {
     if (errors.length > 0) {
-      // Reset visibility when new errors appear
       setIsVisible(true);
 
-      // Set timer to fade out after 5 seconds
-      const timer = setTimeout(() => {
-        setIsVisible(false);
-        // Clear parent state after CSS transition completes (500ms)
-        setTimeout(() => onDismiss?.(), 500);
-      }, 5000);
+      const timers: ReturnType<typeof setTimeout>[] = [];
+      timers.push(
+        setTimeout(() => {
+          setIsVisible(false);
+          timers.push(setTimeout(() => onDismissRef.current?.(), 500));
+        }, 5000)
+      );
 
-      return () => clearTimeout(timer);
+      return () => timers.forEach(clearTimeout);
     }
-  }, [errors, onDismiss]);
+  }, [errors]);
 
   if (errors.length === 0) return null;
-
-  // Use dark theme styling for both themes
-  const bgColor = 'bg-red-900/30';
-  const borderColor = 'border-red-700';
-  const textColor = 'text-red-300';
 
   return (
     <div
       role="alert"
       aria-live="polite"
       aria-atomic="true"
-      className={`absolute ${bgColor} border ${borderColor} ${textColor} px-4 py-3 rounded-lg text-sm w-full max-w-[400px] transition-opacity duration-500`}
+      className="absolute bg-red-900/30 border border-red-700 text-red-300 px-4 py-3 rounded-lg text-sm w-full max-w-[400px] transition-opacity duration-500"
       style={{
         top: `calc(50% + ${CARD_HEIGHT / 2 + 16}px)`,
         transform: 'translateX(-50%)',
