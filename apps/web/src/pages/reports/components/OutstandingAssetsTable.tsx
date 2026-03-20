@@ -97,19 +97,27 @@ export const OutstandingAssetsTable: React.FC<OutstandingAssetsTableProps> = ({
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
-                <th scope="col" style={headerStyle}>Asset Number</th>
-                <th scope="col" style={headerStyle}>Category</th>
-                <th scope="col" style={headerStyle}>Status</th>
-                <th scope="col" style={headerStyle}>Last Scanned</th>
-                <th scope="col" style={headerStyle}>Days Overdue</th>
+                <th scope="col" style={headerStyle}>
+                  Asset Number
+                </th>
+                <th scope="col" style={headerStyle}>
+                  Category
+                </th>
+                <th scope="col" style={headerStyle}>
+                  Status
+                </th>
+                <th scope="col" style={headerStyle}>
+                  Last Scanned
+                </th>
+                <th scope="col" style={headerStyle}>
+                  Days Overdue
+                </th>
               </tr>
             </thead>
             <tbody>
               {sorted.map((asset) => {
                 const isOverdue = (asset.daysSinceLastScan ?? Infinity) > 60;
-                const rowBg = isOverdue
-                  ? 'rgba(245, 158, 11, 0.06)'
-                  : 'transparent';
+                const rowBg = isOverdue ? 'rgba(245, 158, 11, 0.06)' : 'transparent';
                 const overdueColor = isOverdue
                   ? RGR_COLORS.semantic.warning
                   : RGR_COLORS.chrome.light;
@@ -120,7 +128,13 @@ export const OutstandingAssetsTable: React.FC<OutstandingAssetsTableProps> = ({
                     <td style={cellStyle}>{asset.category}</td>
                     <td style={{ ...cellStyle, textTransform: 'capitalize' }}>{asset.status}</td>
                     <td style={cellStyle}>{formatDate(asset.lastScanDate)}</td>
-                    <td style={{ ...cellStyle, color: overdueColor, fontWeight: isOverdue ? 600 : 400 }}>
+                    <td
+                      style={{
+                        ...cellStyle,
+                        color: overdueColor,
+                        fontWeight: isOverdue ? 600 : 400,
+                      }}
+                    >
                       {asset.daysSinceLastScan == null ? '—' : asset.daysSinceLastScan}
                     </td>
                   </tr>

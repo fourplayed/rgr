@@ -71,35 +71,17 @@ describe('FleetHealthScorePresenter', () => {
 
   describe('Loading state', () => {
     it('shows skeleton when isLoading is true', () => {
-      render(
-        <FleetHealthScorePresenter
-          {...defaultProps}
-          isLoading={true}
-          data={undefined}
-        />
-      );
+      render(<FleetHealthScorePresenter {...defaultProps} isLoading={true} data={undefined} />);
       expect(screen.getByTestId('fleet-health-skeleton')).toBeInTheDocument();
     });
 
     it('does not render the score when loading', () => {
-      render(
-        <FleetHealthScorePresenter
-          {...defaultProps}
-          isLoading={true}
-          data={undefined}
-        />
-      );
+      render(<FleetHealthScorePresenter {...defaultProps} isLoading={true} data={undefined} />);
       expect(screen.queryByTestId('fleet-health-score-value')).not.toBeInTheDocument();
     });
 
     it('does not render the chart when loading', () => {
-      render(
-        <FleetHealthScorePresenter
-          {...defaultProps}
-          isLoading={true}
-          data={undefined}
-        />
-      );
+      render(<FleetHealthScorePresenter {...defaultProps} isLoading={true} data={undefined} />);
       expect(screen.queryByTestId('chart-container')).not.toBeInTheDocument();
     });
   });

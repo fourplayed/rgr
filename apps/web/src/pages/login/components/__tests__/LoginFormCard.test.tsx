@@ -24,7 +24,6 @@ vi.mock('@/stores/devToolsStore', () => ({
   }),
 }));
 
-
 describe('LoginFormCard', () => {
   let mockState: LoginLogicState;
   let mockActions: LoginLogicActions;
@@ -57,7 +56,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -75,7 +73,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -91,7 +88,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={true}
         />
@@ -107,7 +103,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -121,7 +116,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -142,7 +136,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={stateWithEmail}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -162,7 +155,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={stateWithPassword}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -178,7 +170,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -196,7 +187,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -213,7 +203,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -232,7 +221,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -251,7 +239,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -271,7 +258,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -291,7 +277,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={stateWithRememberMe}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -307,7 +292,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -324,7 +308,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -343,7 +326,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -359,7 +341,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -376,7 +357,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -391,7 +371,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -406,7 +385,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={true}
         />
@@ -423,7 +401,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -438,7 +415,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -453,7 +429,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -470,7 +445,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={loadingState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -487,7 +461,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={loadingState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -504,7 +477,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={loadingState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -520,7 +492,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -535,7 +506,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -553,7 +523,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -570,7 +539,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -591,7 +559,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -614,7 +581,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -631,7 +597,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={loadingState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -648,7 +613,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -663,7 +627,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -678,7 +641,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -695,7 +657,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={false}
         />
@@ -710,7 +671,6 @@ describe('LoginFormCard', () => {
         <LoginFormCard
           state={mockState}
           actions={mockActions}
-
           onForgotPassword={mockOnForgotPassword}
           isDark={true}
         />

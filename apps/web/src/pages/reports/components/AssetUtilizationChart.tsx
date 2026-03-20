@@ -2,13 +2,7 @@
  * AssetUtilizationChart — donut chart showing asset status breakdown.
  */
 import React from 'react';
-import {
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-} from 'recharts';
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import type { AssetUtilizationSnapshot } from '@/services/analyticsService';
 import { RGR_COLORS } from '@/styles/color-palette';
 
@@ -23,7 +17,11 @@ interface Segment {
   color: string;
 }
 
-const SEGMENT_CONFIG: { key: keyof Omit<AssetUtilizationSnapshot, 'total'>; label: string; color: string }[] = [
+const SEGMENT_CONFIG: {
+  key: keyof Omit<AssetUtilizationSnapshot, 'total'>;
+  label: string;
+  color: string;
+}[] = [
   { key: 'active', label: 'Active', color: RGR_COLORS.semantic.success },
   { key: 'idle', label: 'Idle', color: RGR_COLORS.bright.sky },
   { key: 'maintenance', label: 'Maintenance', color: RGR_COLORS.semantic.warning },
@@ -52,13 +50,11 @@ export const AssetUtilizationChart: React.FC<AssetUtilizationChartProps> = ({
     );
   }
 
-  const segments: Segment[] = SEGMENT_CONFIG
-    .filter((cfg) => data[cfg.key] > 0)
-    .map((cfg) => ({
-      name: cfg.label,
-      value: data[cfg.key],
-      color: cfg.color,
-    }));
+  const segments: Segment[] = SEGMENT_CONFIG.filter((cfg) => data[cfg.key] > 0).map((cfg) => ({
+    name: cfg.label,
+    value: data[cfg.key],
+    color: cfg.color,
+  }));
 
   return (
     <div>
@@ -88,10 +84,7 @@ export const AssetUtilizationChart: React.FC<AssetUtilizationChartProps> = ({
         </PieChart>
       </ResponsiveContainer>
       {/* Accessible legend rendered outside Recharts */}
-      <ul
-        className="flex flex-wrap gap-4 justify-center mt-2"
-        aria-label="Chart legend"
-      >
+      <ul className="flex flex-wrap gap-4 justify-center mt-2" aria-label="Chart legend">
         {segments.map((seg) => (
           <li key={seg.name} className="flex items-center gap-1.5">
             <span

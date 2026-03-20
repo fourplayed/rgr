@@ -72,9 +72,7 @@ async function getCurrentUserId(): Promise<string | null> {
  * Fetch notifications for the current user, newest first.
  * @param limit - Optional maximum number of notifications to return (default 50).
  */
-export async function getNotifications(
-  limit: number = 50
-): Promise<ServiceResult<Notification[]>> {
+export async function getNotifications(limit: number = 50): Promise<ServiceResult<Notification[]>> {
   const userId = await getCurrentUserId();
   if (!userId) {
     return { success: false, data: null, error: 'User not authenticated' };

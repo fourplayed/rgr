@@ -41,7 +41,9 @@ export const NotificationCenter: React.FC = () => {
     setIsOpen(false);
     switch (notification.type) {
       case 'hazard':
-        navigate(`/assets${notification.resourceId ? `?highlight=${notification.resourceId}` : ''}`);
+        navigate(
+          `/assets${notification.resourceId ? `?highlight=${notification.resourceId}` : ''}`
+        );
         break;
       case 'scan_overdue':
         navigate('/assets');
@@ -59,11 +61,7 @@ export const NotificationCenter: React.FC = () => {
 
   return (
     <>
-      <NotificationBell
-        unreadCount={unreadCount}
-        onClick={handleOpen}
-        isLoading={isLoadingCount}
-      />
+      <NotificationBell unreadCount={unreadCount} onClick={handleOpen} isLoading={isLoadingCount} />
       <NotificationPanel
         notifications={notifications}
         isOpen={isOpen}

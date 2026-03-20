@@ -21,12 +21,7 @@ export interface LoginFormCardProps {
 /**
  * Login Form Card
  */
-export function LoginFormCard({
-  state,
-  actions,
-  onForgotPassword,
-  isDark,
-}: LoginFormCardProps) {
+export function LoginFormCard({ state, actions, onForgotPassword, isDark }: LoginFormCardProps) {
   const setWorkflowSteps = useDevToolsStore((s) => s.setWorkflowSteps);
   const setWorkflowComplete = useDevToolsStore((s) => s.setWorkflowComplete);
   const { formData, status } = state;

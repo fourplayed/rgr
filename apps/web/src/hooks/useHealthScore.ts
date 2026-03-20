@@ -120,9 +120,7 @@ export function useFleetHealthScore() {
 
       const { total: totalRecords, overdue } = maintenanceResult.data!;
       const maintenanceCurrency =
-        totalRecords > 0
-          ? ((totalRecords - overdue) / totalRecords) * 100
-          : 100;
+        totalRecords > 0 ? ((totalRecords - overdue) / totalRecords) * 100 : 100;
 
       const overallScore = Math.round(
         scanCompliance * 0.4 + hazardClearance * 0.4 + maintenanceCurrency * 0.2

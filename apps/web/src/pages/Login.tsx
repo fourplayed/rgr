@@ -64,9 +64,7 @@ export default function Login() {
     <LoginPresenter
       state={state}
       actions={actions}
-      ButtonComponent={
-        Button as React.ComponentType<import('./login/LoginPresenter').ButtonProps>
-      }
+      ButtonComponent={Button as React.ComponentType<import('./login/LoginPresenter').ButtonProps>}
       onNavigationReady={handleNavigationReady}
     />
   );

@@ -39,9 +39,7 @@ export const TimeRangePicker: React.FC<TimeRangePickerProps> = ({ value, onChang
               ${isActive ? 'text-white' : 'text-slate-400 hover:text-slate-200'}
             `}
             style={{
-              backgroundColor: isActive
-                ? RGR_COLORS.bright.vibrant
-                : 'rgba(10, 38, 84, 0.6)',
+              backgroundColor: isActive ? RGR_COLORS.bright.vibrant : 'rgba(10, 38, 84, 0.6)',
               borderColor: 'rgba(235, 235, 235, 0.15)',
             }}
           >

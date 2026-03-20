@@ -23,7 +23,12 @@ export interface DashboardPresenterProps {
   children?: React.ReactNode;
 }
 
-export function DashboardPresenter({ state, actions, onNavigateToReports, children }: DashboardPresenterProps) {
+export function DashboardPresenter({
+  state,
+  actions,
+  onNavigateToReports,
+  children,
+}: DashboardPresenterProps) {
   const { isDark, activeSection, canAccessAdmin, user } = state;
   const { navigateTo, handleSignOut, toggleTheme } = actions;
 

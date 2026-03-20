@@ -135,10 +135,10 @@ describe('getAssetUtilization', () => {
     expect(result.success).toBe(true);
     expect(result.error).toBeNull();
     const snap = result.data!;
-    expect(snap.active).toBe(2);      // serviced
-    expect(snap.idle).toBe(1);        // out_of_service
+    expect(snap.active).toBe(2); // serviced
+    expect(snap.idle).toBe(1); // out_of_service
     expect(snap.maintenance).toBe(1);
-    expect(snap.retired).toBe(0);     // not a DB status
+    expect(snap.retired).toBe(0); // not a DB status
     expect(snap.total).toBe(4);
   });
 
@@ -240,16 +240,15 @@ describe('getHazardTrends', () => {
 describe('getTimeBetweenScans', () => {
   it('buckets assets by days since last scan (uses last_location_updated_at)', async () => {
     const now = new Date();
-    const daysAgo = (d: number) =>
-      new Date(now.getTime() - d * 24 * 60 * 60 * 1000).toISOString();
+    const daysAgo = (d: number) => new Date(now.getTime() - d * 24 * 60 * 60 * 1000).toISOString();
 
     const rows = [
-      { last_location_updated_at: daysAgo(3) },   // 0-7 bucket
-      { last_location_updated_at: daysAgo(5) },   // 0-7 bucket
-      { last_location_updated_at: daysAgo(10) },  // 7-14 bucket
-      { last_location_updated_at: daysAgo(20) },  // 14-30 bucket
-      { last_location_updated_at: daysAgo(45) },  // 30-60 bucket
-      { last_location_updated_at: daysAgo(75) },  // 60-90 bucket
+      { last_location_updated_at: daysAgo(3) }, // 0-7 bucket
+      { last_location_updated_at: daysAgo(5) }, // 0-7 bucket
+      { last_location_updated_at: daysAgo(10) }, // 7-14 bucket
+      { last_location_updated_at: daysAgo(20) }, // 14-30 bucket
+      { last_location_updated_at: daysAgo(45) }, // 30-60 bucket
+      { last_location_updated_at: daysAgo(75) }, // 60-90 bucket
       { last_location_updated_at: daysAgo(100) }, // 90+ bucket
     ];
     const chain = buildChain({ data: rows, error: null });

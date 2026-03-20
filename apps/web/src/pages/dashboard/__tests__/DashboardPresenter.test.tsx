@@ -39,7 +39,9 @@ const mockActions: DashboardActions = {
   handleNavigateToReports: vi.fn(),
 };
 
-function renderPresenter(props?: Partial<{ onNavigateToReports: () => void; children: React.ReactNode }>) {
+function renderPresenter(
+  props?: Partial<{ onNavigateToReports: () => void; children: React.ReactNode }>
+) {
   return render(
     <MemoryRouter>
       <DashboardPresenter

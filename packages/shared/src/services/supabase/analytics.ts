@@ -12,10 +12,10 @@ export interface ScanFrequencyPoint {
 }
 
 export interface AssetUtilizationSnapshot {
-  active: number;      // serviced assets
-  idle: number;        // out_of_service assets
+  active: number; // serviced assets
+  idle: number; // out_of_service assets
   maintenance: number; // maintenance assets
-  retired: number;     // not currently a DB status; always 0
+  retired: number; // not currently a DB status; always 0
   total: number;
 }
 
@@ -34,12 +34,12 @@ export interface TimeBetweenScansPoint {
 
 export interface AnalyticsOutstandingAsset {
   id: string;
-  assetNumber: string;          // maps from DB column 'asset_number'
+  assetNumber: string; // maps from DB column 'asset_number'
   category: string;
   status: string;
-  lastScanDate: string | null;  // maps from DB 'last_location_updated_at'
+  lastScanDate: string | null; // maps from DB 'last_location_updated_at'
   daysSinceLastScan: number | null;
-  lastLocation: string | null;  // not available in DB; always null
+  lastLocation: string | null; // not available in DB; always null
 }
 
 // ── Helpers ──
@@ -153,10 +153,7 @@ export async function getHazardTrends(
   }
 
   // Aggregate by date + severity in JavaScript
-  const byDate = new Map<
-    string,
-    { critical: number; high: number; medium: number; low: number }
-  >();
+  const byDate = new Map<string, { critical: number; high: number; medium: number; low: number }>();
 
   for (const row of data || []) {
     const date = toDateString(row.created_at as string);

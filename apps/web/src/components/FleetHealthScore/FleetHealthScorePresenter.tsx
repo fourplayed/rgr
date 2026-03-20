@@ -5,12 +5,7 @@
  * component breakdown rows, and a "By Depot" toggle.
  */
 import React, { useState } from 'react';
-import {
-  RadialBarChart,
-  RadialBar,
-  PolarAngleAxis,
-  ResponsiveContainer,
-} from 'recharts';
+import { RadialBarChart, RadialBar, PolarAngleAxis, ResponsiveContainer } from 'recharts';
 import type { HealthScoreData, DepotHealthScoreData } from '@/hooks/useHealthScore';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -25,9 +20,9 @@ export interface FleetHealthScorePresenterProps {
 // ── Constants ──────────────────────────────────────────────────────────────────
 
 const STATUS_COLORS = {
-  healthy: '#22c55e',   // green-500
+  healthy: '#22c55e', // green-500
   attention: '#f59e0b', // amber-500
-  at_risk: '#ef4444',   // red-500
+  at_risk: '#ef4444', // red-500
 } as const;
 
 const STATUS_TEXT_CLASSES = {

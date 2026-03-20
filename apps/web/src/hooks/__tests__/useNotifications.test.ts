@@ -269,7 +269,11 @@ describe('useMarkRead', () => {
 
   it('invalidates both notification query keys on success', async () => {
     mockMarkRead.mockResolvedValue({ success: true, data: undefined, error: null });
-    mockGetNotifications.mockResolvedValue({ success: true, data: SAMPLE_NOTIFICATIONS, error: null });
+    mockGetNotifications.mockResolvedValue({
+      success: true,
+      data: SAMPLE_NOTIFICATIONS,
+      error: null,
+    });
     mockGetUnreadCount.mockResolvedValue({ success: true, data: 1, error: null });
 
     const { wrapper, queryClient } = makeWrapper();
@@ -314,7 +318,9 @@ describe('useMarkRead', () => {
     });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
-    expect((result.current.error as Error).message).toContain('Failed to mark notification as read');
+    expect((result.current.error as Error).message).toContain(
+      'Failed to mark notification as read'
+    );
   });
 
   it('throws generic error when service returns failure with no error message', async () => {
@@ -422,7 +428,11 @@ describe('useMarkAllRead', () => {
 
 describe('Realtime subscription', () => {
   it('subscribes to the notifications channel on mount', async () => {
-    mockGetNotifications.mockResolvedValue({ success: true, data: SAMPLE_NOTIFICATIONS, error: null });
+    mockGetNotifications.mockResolvedValue({
+      success: true,
+      data: SAMPLE_NOTIFICATIONS,
+      error: null,
+    });
 
     const { wrapper } = makeWrapper();
     renderHook(() => useNotifications(), { wrapper });
@@ -446,7 +456,11 @@ describe('Realtime subscription', () => {
   });
 
   it('removes the channel on unmount', async () => {
-    mockGetNotifications.mockResolvedValue({ success: true, data: SAMPLE_NOTIFICATIONS, error: null });
+    mockGetNotifications.mockResolvedValue({
+      success: true,
+      data: SAMPLE_NOTIFICATIONS,
+      error: null,
+    });
 
     const { wrapper } = makeWrapper();
     const { unmount } = renderHook(() => useNotifications(), { wrapper });
@@ -461,7 +475,11 @@ describe('Realtime subscription', () => {
   });
 
   it('invalidates notifications queries when an INSERT event arrives', async () => {
-    mockGetNotifications.mockResolvedValue({ success: true, data: SAMPLE_NOTIFICATIONS, error: null });
+    mockGetNotifications.mockResolvedValue({
+      success: true,
+      data: SAMPLE_NOTIFICATIONS,
+      error: null,
+    });
 
     const { wrapper, queryClient } = makeWrapper();
     const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');

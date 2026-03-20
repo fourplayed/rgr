@@ -166,11 +166,7 @@ describe('NotificationRow', () => {
     const onNavigate = vi.fn();
     const notification = makeNotification();
     render(
-      <NotificationRow
-        notification={notification}
-        onMarkRead={vi.fn()}
-        onNavigate={onNavigate}
-      />
+      <NotificationRow notification={notification} onMarkRead={vi.fn()} onNavigate={onNavigate} />
     );
     fireEvent.click(screen.getByTestId('notification-row'));
     expect(onNavigate).toHaveBeenCalledWith(notification);
@@ -180,11 +176,7 @@ describe('NotificationRow', () => {
     const onMarkRead = vi.fn();
     const notification = makeNotification();
     render(
-      <NotificationRow
-        notification={notification}
-        onMarkRead={onMarkRead}
-        onNavigate={vi.fn()}
-      />
+      <NotificationRow notification={notification} onMarkRead={onMarkRead} onNavigate={vi.fn()} />
     );
     fireEvent.click(screen.getByTestId('mark-read-button'));
     expect(onMarkRead).toHaveBeenCalledWith('notif-1');

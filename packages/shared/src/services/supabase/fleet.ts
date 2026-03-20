@@ -424,7 +424,8 @@ export async function getDepotHealthScores(): Promise<ServiceResult<DepotHealthS
         ? 100
         : Math.round(
             (assets.filter(
-              (a) => a.last_location_updated_at != null && a.last_location_updated_at >= thirtyDaysAgo
+              (a) =>
+                a.last_location_updated_at != null && a.last_location_updated_at >= thirtyDaysAgo
             ).length /
               totalAssets) *
               1000
@@ -486,9 +487,7 @@ export async function getDepotHealthScores(): Promise<ServiceResult<DepotHealthS
         (m) => m.status === 'scheduled' && m.due_date != null && m.due_date < today
       ).length;
       maintenanceCurrency =
-        totalMaint === 0
-          ? 100
-          : Math.round(((totalMaint - overdueCount) / totalMaint) * 1000) / 10;
+        totalMaint === 0 ? 100 : Math.round(((totalMaint - overdueCount) / totalMaint) * 1000) / 10;
     } else {
       maintenanceCurrency = 100; // No assets → no maintenance records → fully current
     }

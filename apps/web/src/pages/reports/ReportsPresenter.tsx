@@ -107,10 +107,7 @@ export function ReportsPresenter({
       </div>
 
       {/* 2-column chart grid */}
-      <div
-        className="grid gap-6"
-        style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}
-      >
+      <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
         {/* Scan Frequency */}
         <div style={CARD_STYLE}>
           <p style={CARD_TITLE_STYLE}>Scan Frequency</p>

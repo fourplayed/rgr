@@ -281,10 +281,7 @@ export function useHazardAlertRealtime(
           }
 
           // Create a persistent notification row for critical/high severity alerts
-          if (
-            (alert.severity === 'critical' || alert.severity === 'high') &&
-            userIdRef.current
-          ) {
+          if ((alert.severity === 'critical' || alert.severity === 'high') && userIdRef.current) {
             createNotification({
               userId: userIdRef.current,
               type: 'hazard',

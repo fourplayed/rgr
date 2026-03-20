@@ -24,11 +24,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
     <button
       type="button"
       onClick={onClick}
-      aria-label={
-        showBadge
-          ? `Notifications — ${badgeLabel} unread`
-          : 'Notifications'
-      }
+      aria-label={showBadge ? `Notifications — ${badgeLabel} unread` : 'Notifications'}
       className={`relative p-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-white/10 transition-colors duration-150 ${
         isLoading ? 'opacity-60 cursor-wait' : ''
       }`}

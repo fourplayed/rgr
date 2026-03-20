@@ -68,9 +68,7 @@ export function ForgotPasswordCard({
       }}
     >
       <div style={{ marginTop: '15px' }}>
-        <h1 className="text-center text-2xl font-bold text-white mb-1">
-          Forgot your password?
-        </h1>
+        <h1 className="text-center text-2xl font-bold text-white mb-1">Forgot your password?</h1>
         <p className={`text-center text-sm ${textColor} mb-4`}>
           No worries! We can reset it for you.
         </p>

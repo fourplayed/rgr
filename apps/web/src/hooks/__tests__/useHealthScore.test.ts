@@ -57,11 +57,7 @@ function makeWrapper() {
 
 // ── Import hooks after mocks are set up ───────────────────────────────────────
 
-import {
-  useFleetHealthScore,
-  useDepotHealthScores,
-  HEALTH_QUERY_KEYS,
-} from '../useHealthScore';
+import { useFleetHealthScore, useDepotHealthScores, HEALTH_QUERY_KEYS } from '../useHealthScore';
 
 // ── Sample data ───────────────────────────────────────────────────────────────
 
@@ -132,7 +128,11 @@ beforeEach(() => {
 
 describe('useFleetHealthScore', () => {
   it('returns computed health score data on successful fetch', async () => {
-    mockGetFleetStatistics.mockResolvedValue({ success: true, data: FLEET_STATS_DATA, error: null });
+    mockGetFleetStatistics.mockResolvedValue({
+      success: true,
+      data: FLEET_STATS_DATA,
+      error: null,
+    });
     mockGetOutstandingAssets.mockResolvedValue({
       success: true,
       data: OUTSTANDING_ASSETS_DATA,
@@ -168,7 +168,11 @@ describe('useFleetHealthScore', () => {
   });
 
   it('calls getOutstandingAssets with 30 day window', async () => {
-    mockGetFleetStatistics.mockResolvedValue({ success: true, data: FLEET_STATS_DATA, error: null });
+    mockGetFleetStatistics.mockResolvedValue({
+      success: true,
+      data: FLEET_STATS_DATA,
+      error: null,
+    });
     mockGetOutstandingAssets.mockResolvedValue({ success: true, data: [], error: null });
     mockGetHazardClearanceRate.mockResolvedValue({ success: true, data: 100, error: null });
     mockGetMaintenanceStats.mockResolvedValue({
@@ -185,7 +189,11 @@ describe('useFleetHealthScore', () => {
   });
 
   it('returns status healthy when overallScore >= 90', async () => {
-    mockGetFleetStatistics.mockResolvedValue({ success: true, data: FLEET_STATS_DATA, error: null });
+    mockGetFleetStatistics.mockResolvedValue({
+      success: true,
+      data: FLEET_STATS_DATA,
+      error: null,
+    });
     // No outstanding assets → scanCompliance = 100
     mockGetOutstandingAssets.mockResolvedValue({ success: true, data: [], error: null });
     // hazardClearance = 100
@@ -206,11 +214,23 @@ describe('useFleetHealthScore', () => {
   });
 
   it('returns status at_risk when overallScore < 70', async () => {
-    mockGetFleetStatistics.mockResolvedValue({ success: true, data: FLEET_STATS_DATA, error: null });
+    mockGetFleetStatistics.mockResolvedValue({
+      success: true,
+      data: FLEET_STATS_DATA,
+      error: null,
+    });
     // 50 out of 100 outstanding → scanCompliance = 50
     mockGetOutstandingAssets.mockResolvedValue({
       success: true,
-      data: Array(50).fill({ id: 'x', assetNumber: 'X', category: 'trailer', status: 'serviced', lastScanDate: null, daysSinceLastScan: null, lastLocation: null }),
+      data: Array(50).fill({
+        id: 'x',
+        assetNumber: 'X',
+        category: 'trailer',
+        status: 'serviced',
+        lastScanDate: null,
+        daysSinceLastScan: null,
+        lastLocation: null,
+      }),
       error: null,
     });
     // hazardClearance = 50
@@ -232,7 +252,11 @@ describe('useFleetHealthScore', () => {
   });
 
   it('returns status healthy at exact boundary score of 90', async () => {
-    mockGetFleetStatistics.mockResolvedValue({ success: true, data: FLEET_STATS_DATA, error: null });
+    mockGetFleetStatistics.mockResolvedValue({
+      success: true,
+      data: FLEET_STATS_DATA,
+      error: null,
+    });
     // No outstanding assets → scanCompliance = 100
     mockGetOutstandingAssets.mockResolvedValue({ success: true, data: [], error: null });
     // hazardClearance = 75
@@ -254,7 +278,11 @@ describe('useFleetHealthScore', () => {
   });
 
   it('returns status attention at exact boundary score of 70', async () => {
-    mockGetFleetStatistics.mockResolvedValue({ success: true, data: FLEET_STATS_DATA, error: null });
+    mockGetFleetStatistics.mockResolvedValue({
+      success: true,
+      data: FLEET_STATS_DATA,
+      error: null,
+    });
     // No outstanding assets → scanCompliance = 100
     mockGetOutstandingAssets.mockResolvedValue({ success: true, data: [], error: null });
     // hazardClearance = 50
@@ -320,7 +348,11 @@ describe('useFleetHealthScore', () => {
   });
 
   it('enters error state when getOutstandingAssets fails', async () => {
-    mockGetFleetStatistics.mockResolvedValue({ success: true, data: FLEET_STATS_DATA, error: null });
+    mockGetFleetStatistics.mockResolvedValue({
+      success: true,
+      data: FLEET_STATS_DATA,
+      error: null,
+    });
     mockGetOutstandingAssets.mockResolvedValue({
       success: false,
       data: null,
@@ -341,7 +373,11 @@ describe('useFleetHealthScore', () => {
   });
 
   it('enters error state when getHazardClearanceRate fails', async () => {
-    mockGetFleetStatistics.mockResolvedValue({ success: true, data: FLEET_STATS_DATA, error: null });
+    mockGetFleetStatistics.mockResolvedValue({
+      success: true,
+      data: FLEET_STATS_DATA,
+      error: null,
+    });
     mockGetOutstandingAssets.mockResolvedValue({ success: true, data: [], error: null });
     mockGetHazardClearanceRate.mockResolvedValue({
       success: false,
@@ -364,7 +400,11 @@ describe('useFleetHealthScore', () => {
   });
 
   it('enters error state when getMaintenanceStats fails', async () => {
-    mockGetFleetStatistics.mockResolvedValue({ success: true, data: FLEET_STATS_DATA, error: null });
+    mockGetFleetStatistics.mockResolvedValue({
+      success: true,
+      data: FLEET_STATS_DATA,
+      error: null,
+    });
     mockGetOutstandingAssets.mockResolvedValue({ success: true, data: [], error: null });
     mockGetHazardClearanceRate.mockResolvedValue({ success: true, data: 100, error: null });
     mockGetMaintenanceStats.mockResolvedValue({
@@ -385,7 +425,11 @@ describe('useFleetHealthScore', () => {
   });
 
   it('uses staleTime of 2 minutes (120_000 ms)', async () => {
-    mockGetFleetStatistics.mockResolvedValue({ success: true, data: FLEET_STATS_DATA, error: null });
+    mockGetFleetStatistics.mockResolvedValue({
+      success: true,
+      data: FLEET_STATS_DATA,
+      error: null,
+    });
     mockGetOutstandingAssets.mockResolvedValue({ success: true, data: [], error: null });
     mockGetHazardClearanceRate.mockResolvedValue({ success: true, data: 100, error: null });
     mockGetMaintenanceStats.mockResolvedValue({
@@ -483,13 +527,28 @@ describe('useFleetHealthScore — notification triggers', () => {
   function setupLowFleetScore() {
     mockGetFleetStatistics.mockResolvedValue({
       success: true,
-      data: { totalAssets: 100, activeAssets: 50, inMaintenance: 25, outOfService: 25, trailerCount: 70, dollyCount: 30 },
+      data: {
+        totalAssets: 100,
+        activeAssets: 50,
+        inMaintenance: 25,
+        outOfService: 25,
+        trailerCount: 70,
+        dollyCount: 30,
+      },
       error: null,
     });
     // 50 outstanding → scanCompliance = 50
     mockGetOutstandingAssets.mockResolvedValue({
       success: true,
-      data: Array(50).fill({ id: 'x', assetNumber: 'X', category: 'trailer', status: 'serviced', lastScanDate: null, daysSinceLastScan: null, lastLocation: null }),
+      data: Array(50).fill({
+        id: 'x',
+        assetNumber: 'X',
+        category: 'trailer',
+        status: 'serviced',
+        lastScanDate: null,
+        daysSinceLastScan: null,
+        lastLocation: null,
+      }),
       error: null,
     });
     // hazardClearance = 50
@@ -506,10 +565,29 @@ describe('useFleetHealthScore — notification triggers', () => {
   function setupHighFleetScore() {
     mockGetFleetStatistics.mockResolvedValue({
       success: true,
-      data: { totalAssets: 100, activeAssets: 80, inMaintenance: 10, outOfService: 10, trailerCount: 70, dollyCount: 30 },
+      data: {
+        totalAssets: 100,
+        activeAssets: 80,
+        inMaintenance: 10,
+        outOfService: 10,
+        trailerCount: 70,
+        dollyCount: 30,
+      },
       error: null,
     });
-    mockGetOutstandingAssets.mockResolvedValue({ success: true, data: Array(2).fill({ id: 'x', assetNumber: 'X', category: 'trailer', status: 'serviced', lastScanDate: null, daysSinceLastScan: null, lastLocation: null }), error: null });
+    mockGetOutstandingAssets.mockResolvedValue({
+      success: true,
+      data: Array(2).fill({
+        id: 'x',
+        assetNumber: 'X',
+        category: 'trailer',
+        status: 'serviced',
+        lastScanDate: null,
+        daysSinceLastScan: null,
+        lastLocation: null,
+      }),
+      error: null,
+    });
     mockGetHazardClearanceRate.mockResolvedValue({ success: true, data: 80, error: null });
     mockGetMaintenanceStats.mockResolvedValue({
       success: true,
@@ -522,7 +600,11 @@ describe('useFleetHealthScore — notification triggers', () => {
     setupLowFleetScore();
     // No existing notifications today
     mockGetNotifications.mockResolvedValue({ success: true, data: [], error: null });
-    mockCreateNotification.mockResolvedValue({ success: true, data: { id: 'notif-1' }, error: null });
+    mockCreateNotification.mockResolvedValue({
+      success: true,
+      data: { id: 'notif-1' },
+      error: null,
+    });
 
     const { wrapper } = makeWrapper();
     const { result } = renderHook(() => useFleetHealthScore(), { wrapper });
@@ -543,7 +625,14 @@ describe('useFleetHealthScore — notification triggers', () => {
   it('does NOT call createNotification when fleet score is exactly 70', async () => {
     mockGetFleetStatistics.mockResolvedValue({
       success: true,
-      data: { totalAssets: 100, activeAssets: 80, inMaintenance: 10, outOfService: 10, trailerCount: 70, dollyCount: 30 },
+      data: {
+        totalAssets: 100,
+        activeAssets: 80,
+        inMaintenance: 10,
+        outOfService: 10,
+        trailerCount: 70,
+        dollyCount: 30,
+      },
       error: null,
     });
     // 0 outstanding → scanCompliance = 100
@@ -657,7 +746,11 @@ describe('useDepotHealthScores — notification triggers', () => {
       error: null,
     });
     mockGetNotifications.mockResolvedValue({ success: true, data: [], error: null });
-    mockCreateNotification.mockResolvedValue({ success: true, data: { id: 'notif-depot-1' }, error: null });
+    mockCreateNotification.mockResolvedValue({
+      success: true,
+      data: { id: 'notif-depot-1' },
+      error: null,
+    });
 
     const { wrapper } = makeWrapper();
     const { result } = renderHook(() => useDepotHealthScores(), { wrapper });
@@ -699,7 +792,11 @@ describe('useDepotHealthScores — notification triggers', () => {
       error: null,
     });
     mockGetNotifications.mockResolvedValue({ success: true, data: [], error: null });
-    mockCreateNotification.mockResolvedValue({ success: true, data: { id: 'notif-x' }, error: null });
+    mockCreateNotification.mockResolvedValue({
+      success: true,
+      data: { id: 'notif-x' },
+      error: null,
+    });
 
     const { wrapper } = makeWrapper();
     const { result } = renderHook(() => useDepotHealthScores(), { wrapper });

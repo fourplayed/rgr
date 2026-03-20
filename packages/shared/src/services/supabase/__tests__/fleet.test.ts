@@ -1,7 +1,4 @@
-import {
-  getHazardClearanceRate,
-  getDepotHealthScores,
-} from '../fleet';
+import { getHazardClearanceRate, getDepotHealthScores } from '../fleet';
 
 // ── Mock client ──
 
@@ -142,8 +139,30 @@ describe('getHazardClearanceRate', () => {
 describe('getDepotHealthScores', () => {
   // Minimal depot rows returned from the depots query
   const depotRows = [
-    { id: 'depot-1', name: 'Depot Alpha', code: 'DA', address: null, latitude: null, longitude: null, color: null, is_active: true, created_at: '2025-01-01T00:00:00.000Z', updated_at: '2025-01-01T00:00:00.000Z' },
-    { id: 'depot-2', name: 'Depot Beta', code: 'DB', address: null, latitude: null, longitude: null, color: null, is_active: true, created_at: '2025-01-01T00:00:00.000Z', updated_at: '2025-01-01T00:00:00.000Z' },
+    {
+      id: 'depot-1',
+      name: 'Depot Alpha',
+      code: 'DA',
+      address: null,
+      latitude: null,
+      longitude: null,
+      color: null,
+      is_active: true,
+      created_at: '2025-01-01T00:00:00.000Z',
+      updated_at: '2025-01-01T00:00:00.000Z',
+    },
+    {
+      id: 'depot-2',
+      name: 'Depot Beta',
+      code: 'DB',
+      address: null,
+      latitude: null,
+      longitude: null,
+      color: null,
+      is_active: true,
+      created_at: '2025-01-01T00:00:00.000Z',
+      updated_at: '2025-01-01T00:00:00.000Z',
+    },
   ];
 
   it('returns error when depot fetch fails', async () => {
@@ -224,11 +243,11 @@ describe('getDepotHealthScores', () => {
     const assets2Chain = buildChain({ data: [], error: null });
 
     mockClient.from
-      .mockReturnValueOnce(depotsChain)    // 1. depots
-      .mockReturnValueOnce(assets1Chain)   // 2. assets for depot-1
-      .mockReturnValueOnce(hazards1Chain)  // 3. hazards for depot-1
-      .mockReturnValueOnce(maint1Chain)    // 4. maintenance for depot-1
-      .mockReturnValueOnce(assets2Chain);  // 5. assets for depot-2
+      .mockReturnValueOnce(depotsChain) // 1. depots
+      .mockReturnValueOnce(assets1Chain) // 2. assets for depot-1
+      .mockReturnValueOnce(hazards1Chain) // 3. hazards for depot-1
+      .mockReturnValueOnce(maint1Chain) // 4. maintenance for depot-1
+      .mockReturnValueOnce(assets2Chain); // 5. assets for depot-2
 
     const result = await getDepotHealthScores();
 
@@ -259,9 +278,7 @@ describe('getDepotHealthScores', () => {
     const depotsChain = buildChain({ data: [depotRows[0]], error: null });
     const assetsErrorChain = buildChain({ data: null, error: { message: 'Assets query failed' } });
 
-    mockClient.from
-      .mockReturnValueOnce(depotsChain)
-      .mockReturnValueOnce(assetsErrorChain);
+    mockClient.from.mockReturnValueOnce(depotsChain).mockReturnValueOnce(assetsErrorChain);
 
     const result = await getDepotHealthScores();
 
@@ -299,7 +316,10 @@ describe('getDepotHealthScores', () => {
       error: null,
     });
     const hazardsChain = buildChain({ data: [], error: null });
-    const maintErrorChain = buildChain({ data: null, error: { message: 'Maintenance query failed' } });
+    const maintErrorChain = buildChain({
+      data: null,
+      error: { message: 'Maintenance query failed' },
+    });
 
     mockClient.from
       .mockReturnValueOnce(depotsChain)

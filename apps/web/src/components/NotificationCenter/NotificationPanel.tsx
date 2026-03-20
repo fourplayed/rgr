@@ -73,8 +73,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
 }) => {
   const groups = groupNotifications(notifications);
   const hasUnread = notifications.some((n) => !n.read);
-  const hasAny =
-    groups.today.length > 0 || groups.thisWeek.length > 0 || groups.older.length > 0;
+  const hasAny = groups.today.length > 0 || groups.thisWeek.length > 0 || groups.older.length > 0;
 
   return (
     <AnimatePresence>
@@ -112,7 +111,9 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-              <h2 id="notifications-panel-title" className="text-sm font-semibold text-slate-200">Notifications</h2>
+              <h2 id="notifications-panel-title" className="text-sm font-semibold text-slate-200">
+                Notifications
+              </h2>
               <div className="flex items-center gap-2">
                 <button
                   data-testid="mark-all-read-button"

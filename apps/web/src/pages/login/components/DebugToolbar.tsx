@@ -323,54 +323,106 @@ export function DebugToolbar() {
                 <>
                   {/* Dark BG gradient */}
                   <div>
-                    <div className="font-medium mb-2" style={{ color: textColor, opacity: 0.7 }}>Dark Background</div>
-                    {([
-                      { label: 'Top', key: 'top', val: darkBgGradient.top },
-                      { label: 'Upper Mid', key: 'upperMiddle', val: darkBgGradient.upperMiddle },
-                      { label: 'Lower Mid', key: 'lowerMiddle', val: darkBgGradient.lowerMiddle },
-                      { label: 'Bottom', key: 'bottom', val: darkBgGradient.bottom },
-                    ] as const).map(({ label, key, val }) => (
+                    <div className="font-medium mb-2" style={{ color: textColor, opacity: 0.7 }}>
+                      Dark Background
+                    </div>
+                    {(
+                      [
+                        { label: 'Top', key: 'top', val: darkBgGradient.top },
+                        { label: 'Upper Mid', key: 'upperMiddle', val: darkBgGradient.upperMiddle },
+                        { label: 'Lower Mid', key: 'lowerMiddle', val: darkBgGradient.lowerMiddle },
+                        { label: 'Bottom', key: 'bottom', val: darkBgGradient.bottom },
+                      ] as const
+                    ).map(({ label, key, val }) => (
                       <div key={key} className="flex items-center gap-2 mb-2">
-                        <label className="w-14 text-xs" style={{ color: textColor }}>{label}</label>
-                        <input type="color" value={val} onChange={(e) => setDarkBgGradient({ [key]: e.target.value })}
-                          className="w-8 h-8 rounded cursor-pointer border-0 p-0" style={{ background: 'transparent' }} />
-                        <input type="text" value={val} onChange={(e) => setDarkBgGradient({ [key]: e.target.value })}
+                        <label className="w-14 text-xs" style={{ color: textColor }}>
+                          {label}
+                        </label>
+                        <input
+                          type="color"
+                          value={val}
+                          onChange={(e) => setDarkBgGradient({ [key]: e.target.value })}
+                          className="w-8 h-8 rounded cursor-pointer border-0 p-0"
+                          style={{ background: 'transparent' }}
+                        />
+                        <input
+                          type="text"
+                          value={val}
+                          onChange={(e) => setDarkBgGradient({ [key]: e.target.value })}
                           className="flex-1 px-2 py-1 text-xs rounded font-mono outline-none"
-                          style={{ color: textColor, background: 'rgba(0,0,0,0.4)' }} />
+                          style={{ color: textColor, background: 'rgba(0,0,0,0.4)' }}
+                        />
                       </div>
                     ))}
                   </div>
 
                   {/* Light Pillar settings */}
                   <div>
-                    <div className="font-medium mb-2" style={{ color: textColor, opacity: 0.7 }}>Light Pillar</div>
-                    {([
-                      { label: 'Top Color', key: 'topColor', type: 'color', val: pillarSettings.topColor },
-                      { label: 'Bottom Color', key: 'bottomColor', type: 'color', val: pillarSettings.bottomColor },
-                    ] as const).map(({ label, key, val }) => (
+                    <div className="font-medium mb-2" style={{ color: textColor, opacity: 0.7 }}>
+                      Light Pillar
+                    </div>
+                    {(
+                      [
+                        {
+                          label: 'Top Color',
+                          key: 'topColor',
+                          type: 'color',
+                          val: pillarSettings.topColor,
+                        },
+                        {
+                          label: 'Bottom Color',
+                          key: 'bottomColor',
+                          type: 'color',
+                          val: pillarSettings.bottomColor,
+                        },
+                      ] as const
+                    ).map(({ label, key, val }) => (
                       <div key={key} className="flex items-center gap-2 mb-2">
-                        <label className="w-24 text-xs" style={{ color: textColor }}>{label}</label>
-                        <input type="color" value={val} onChange={(e) => setPillarSettings({ [key]: e.target.value })}
-                          className="w-8 h-8 rounded cursor-pointer border-0 p-0" style={{ background: 'transparent' }} />
-                        <input type="text" value={val} onChange={(e) => setPillarSettings({ [key]: e.target.value })}
+                        <label className="w-24 text-xs" style={{ color: textColor }}>
+                          {label}
+                        </label>
+                        <input
+                          type="color"
+                          value={val}
+                          onChange={(e) => setPillarSettings({ [key]: e.target.value })}
+                          className="w-8 h-8 rounded cursor-pointer border-0 p-0"
+                          style={{ background: 'transparent' }}
+                        />
+                        <input
+                          type="text"
+                          value={val}
+                          onChange={(e) => setPillarSettings({ [key]: e.target.value })}
                           className="flex-1 px-2 py-1 text-xs rounded font-mono outline-none"
-                          style={{ color: textColor, background: 'rgba(0,0,0,0.4)' }} />
+                          style={{ color: textColor, background: 'rgba(0,0,0,0.4)' }}
+                        />
                       </div>
                     ))}
-                    {([
-                      { label: 'Intensity', key: 'intensity', min: 0, max: 2, step: 0.05 },
-                      { label: 'Rot. Speed', key: 'rotationSpeed', min: 0, max: 1, step: 0.01 },
-                      { label: 'Glow', key: 'glowAmount', min: 0, max: 0.02, step: 0.0001 },
-                      { label: 'Width', key: 'pillarWidth', min: 0.5, max: 6, step: 0.1 },
-                      { label: 'Height', key: 'pillarHeight', min: 0.05, max: 1, step: 0.01 },
-                    ] as const).map(({ label, key, min, max, step }) => (
+                    {(
+                      [
+                        { label: 'Intensity', key: 'intensity', min: 0, max: 2, step: 0.05 },
+                        { label: 'Rot. Speed', key: 'rotationSpeed', min: 0, max: 1, step: 0.01 },
+                        { label: 'Glow', key: 'glowAmount', min: 0, max: 0.02, step: 0.0001 },
+                        { label: 'Width', key: 'pillarWidth', min: 0.5, max: 6, step: 0.1 },
+                        { label: 'Height', key: 'pillarHeight', min: 0.05, max: 1, step: 0.01 },
+                      ] as const
+                    ).map(({ label, key, min, max, step }) => (
                       <div key={key} className="flex items-center gap-2 mb-2">
-                        <label className="w-24 text-xs" style={{ color: textColor }}>{label}</label>
-                        <input type="range" min={min} max={max} step={step}
+                        <label className="w-24 text-xs" style={{ color: textColor }}>
+                          {label}
+                        </label>
+                        <input
+                          type="range"
+                          min={min}
+                          max={max}
+                          step={step}
                           value={pillarSettings[key] as number}
                           onChange={(e) => setPillarSettings({ [key]: parseFloat(e.target.value) })}
-                          className="flex-1" />
-                        <span className="w-12 text-xs text-right font-mono" style={{ color: textColor }}>
+                          className="flex-1"
+                        />
+                        <span
+                          className="w-12 text-xs text-right font-mono"
+                          style={{ color: textColor }}
+                        >
                           {(pillarSettings[key] as number).toFixed(key === 'glowAmount' ? 4 : 2)}
                         </span>
                       </div>
@@ -382,55 +434,117 @@ export function DebugToolbar() {
                 <>
                   {/* Light BG gradient */}
                   <div>
-                    <div className="font-medium mb-2" style={{ color: textColor, opacity: 0.7 }}>Light Background</div>
-                    {([
+                    <div className="font-medium mb-2" style={{ color: textColor, opacity: 0.7 }}>
+                      Light Background
+                    </div>
+                    {[
                       { label: 'Top', key: 'top' as const, val: lightGradient.top },
-                      { label: 'Upper Mid', key: 'upperMiddle' as const, val: lightGradient.upperMiddle },
-                      { label: 'Lower Mid', key: 'lowerMiddle' as const, val: lightGradient.lowerMiddle },
+                      {
+                        label: 'Upper Mid',
+                        key: 'upperMiddle' as const,
+                        val: lightGradient.upperMiddle,
+                      },
+                      {
+                        label: 'Lower Mid',
+                        key: 'lowerMiddle' as const,
+                        val: lightGradient.lowerMiddle,
+                      },
                       { label: 'Bottom', key: 'bottom' as const, val: lightGradient.bottom },
-                    ]).map(({ label, key, val }) => (
+                    ].map(({ label, key, val }) => (
                       <div key={key} className="flex items-center gap-2 mb-2">
-                        <label className="w-20 text-xs" style={{ color: textColor }}>{label}</label>
-                        <input type="color" value={val} onChange={(e) => setLightGradient({ [key]: e.target.value })}
-                          className="w-8 h-8 rounded cursor-pointer border-0 p-0" style={{ background: 'transparent' }} />
-                        <input type="text" value={val} onChange={(e) => setLightGradient({ [key]: e.target.value })}
+                        <label className="w-20 text-xs" style={{ color: textColor }}>
+                          {label}
+                        </label>
+                        <input
+                          type="color"
+                          value={val}
+                          onChange={(e) => setLightGradient({ [key]: e.target.value })}
+                          className="w-8 h-8 rounded cursor-pointer border-0 p-0"
+                          style={{ background: 'transparent' }}
+                        />
+                        <input
+                          type="text"
+                          value={val}
+                          onChange={(e) => setLightGradient({ [key]: e.target.value })}
                           className="flex-1 px-2 py-1 text-xs rounded font-mono outline-none"
-                          style={{ color: textColor, background: 'rgba(0,0,0,0.4)' }} />
+                          style={{ color: textColor, background: 'rgba(0,0,0,0.4)' }}
+                        />
                       </div>
                     ))}
                   </div>
 
                   {/* Light Pillar settings */}
                   <div>
-                    <div className="font-medium mb-2" style={{ color: textColor, opacity: 0.7 }}>Light Pillar</div>
-                    {([
-                      { label: 'Top Color', key: 'topColor', type: 'color', val: lightPillarSettings.topColor },
-                      { label: 'Bottom Color', key: 'bottomColor', type: 'color', val: lightPillarSettings.bottomColor },
-                    ] as const).map(({ label, key, val }) => (
+                    <div className="font-medium mb-2" style={{ color: textColor, opacity: 0.7 }}>
+                      Light Pillar
+                    </div>
+                    {(
+                      [
+                        {
+                          label: 'Top Color',
+                          key: 'topColor',
+                          type: 'color',
+                          val: lightPillarSettings.topColor,
+                        },
+                        {
+                          label: 'Bottom Color',
+                          key: 'bottomColor',
+                          type: 'color',
+                          val: lightPillarSettings.bottomColor,
+                        },
+                      ] as const
+                    ).map(({ label, key, val }) => (
                       <div key={key} className="flex items-center gap-2 mb-2">
-                        <label className="w-24 text-xs" style={{ color: textColor }}>{label}</label>
-                        <input type="color" value={val} onChange={(e) => setLightPillarSettings({ [key]: e.target.value })}
-                          className="w-8 h-8 rounded cursor-pointer border-0 p-0" style={{ background: 'transparent' }} />
-                        <input type="text" value={val} onChange={(e) => setLightPillarSettings({ [key]: e.target.value })}
+                        <label className="w-24 text-xs" style={{ color: textColor }}>
+                          {label}
+                        </label>
+                        <input
+                          type="color"
+                          value={val}
+                          onChange={(e) => setLightPillarSettings({ [key]: e.target.value })}
+                          className="w-8 h-8 rounded cursor-pointer border-0 p-0"
+                          style={{ background: 'transparent' }}
+                        />
+                        <input
+                          type="text"
+                          value={val}
+                          onChange={(e) => setLightPillarSettings({ [key]: e.target.value })}
                           className="flex-1 px-2 py-1 text-xs rounded font-mono outline-none"
-                          style={{ color: textColor, background: 'rgba(0,0,0,0.4)' }} />
+                          style={{ color: textColor, background: 'rgba(0,0,0,0.4)' }}
+                        />
                       </div>
                     ))}
-                    {([
-                      { label: 'Intensity', key: 'intensity', min: 0, max: 2, step: 0.05 },
-                      { label: 'Rot. Speed', key: 'rotationSpeed', min: 0, max: 1, step: 0.01 },
-                      { label: 'Glow', key: 'glowAmount', min: 0, max: 0.02, step: 0.0001 },
-                      { label: 'Width', key: 'pillarWidth', min: 0.5, max: 6, step: 0.1 },
-                      { label: 'Height', key: 'pillarHeight', min: 0.05, max: 1, step: 0.01 },
-                    ] as const).map(({ label, key, min, max, step }) => (
+                    {(
+                      [
+                        { label: 'Intensity', key: 'intensity', min: 0, max: 2, step: 0.05 },
+                        { label: 'Rot. Speed', key: 'rotationSpeed', min: 0, max: 1, step: 0.01 },
+                        { label: 'Glow', key: 'glowAmount', min: 0, max: 0.02, step: 0.0001 },
+                        { label: 'Width', key: 'pillarWidth', min: 0.5, max: 6, step: 0.1 },
+                        { label: 'Height', key: 'pillarHeight', min: 0.05, max: 1, step: 0.01 },
+                      ] as const
+                    ).map(({ label, key, min, max, step }) => (
                       <div key={key} className="flex items-center gap-2 mb-2">
-                        <label className="w-24 text-xs" style={{ color: textColor }}>{label}</label>
-                        <input type="range" min={min} max={max} step={step}
+                        <label className="w-24 text-xs" style={{ color: textColor }}>
+                          {label}
+                        </label>
+                        <input
+                          type="range"
+                          min={min}
+                          max={max}
+                          step={step}
                           value={lightPillarSettings[key] as number}
-                          onChange={(e) => setLightPillarSettings({ [key]: parseFloat(e.target.value) })}
-                          className="flex-1" />
-                        <span className="w-12 text-xs text-right font-mono" style={{ color: textColor }}>
-                          {(lightPillarSettings[key] as number).toFixed(key === 'glowAmount' ? 4 : 2)}
+                          onChange={(e) =>
+                            setLightPillarSettings({ [key]: parseFloat(e.target.value) })
+                          }
+                          className="flex-1"
+                        />
+                        <span
+                          className="w-12 text-xs text-right font-mono"
+                          style={{ color: textColor }}
+                        >
+                          {(lightPillarSettings[key] as number).toFixed(
+                            key === 'glowAmount' ? 4 : 2
+                          )}
                         </span>
                       </div>
                     ))}

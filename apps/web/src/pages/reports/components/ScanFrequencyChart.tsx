@@ -2,15 +2,7 @@
  * ScanFrequencyChart — bar chart showing scans per day.
  */
 import React from 'react';
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-} from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import type { ScanFrequencyPoint } from '@/services/analyticsService';
 import { RGR_COLORS } from '@/styles/color-palette';
 
@@ -63,12 +55,7 @@ export const ScanFrequencyChart: React.FC<ScanFrequencyChartProps> = ({
             color: RGR_COLORS.chrome.light,
           }}
         />
-        <Bar
-          dataKey="count"
-          name="Scans"
-          fill={RGR_COLORS.bright.vibrant}
-          radius={[4, 4, 0, 0]}
-        />
+        <Bar dataKey="count" name="Scans" fill={RGR_COLORS.bright.vibrant} radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );

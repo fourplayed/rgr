@@ -54,8 +54,7 @@ export interface ReportsLogicResult {
 export function useReportsLogic(): ReportsLogicResult {
   const [timeRange, setTimeRange] = useState<AnalyticsTimeRange>('30d');
 
-  const { data: scanFrequency = [], isLoading: scanFrequencyLoading } =
-    useScanFrequency(timeRange);
+  const { data: scanFrequency = [], isLoading: scanFrequencyLoading } = useScanFrequency(timeRange);
   const { data: assetUtilization, isLoading: assetUtilizationLoading } = useAssetUtilization();
   const { data: hazardTrends = [], isLoading: hazardTrendsLoading } = useHazardTrends(timeRange);
   const { data: timeBetweenScans = [], isLoading: timeBetweenScansLoading } =

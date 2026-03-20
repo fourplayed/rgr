@@ -81,9 +81,7 @@ export const NotificationRow: React.FC<NotificationRowProps> = ({
         if (e.key === 'Enter' || e.key === ' ') onNavigate(notification);
       }}
       className={`relative flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors duration-150 hover:bg-white/5 ${
-        isUnread
-          ? 'border-l-2 border-blue-500 bg-blue-500/5'
-          : 'border-l-2 border-transparent'
+        isUnread ? 'border-l-2 border-blue-500 bg-blue-500/5' : 'border-l-2 border-transparent'
       }`}
     >
       {/* Icon */}
@@ -93,18 +91,11 @@ export const NotificationRow: React.FC<NotificationRowProps> = ({
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <p
-          className={`text-sm font-medium truncate ${
-            isUnread ? 'text-white' : 'text-slate-300'
-          }`}
-        >
+        <p className={`text-sm font-medium truncate ${isUnread ? 'text-white' : 'text-slate-300'}`}>
           {notification.title}
         </p>
         <p className="text-xs text-slate-400 line-clamp-2 mt-0.5">{notification.body}</p>
-        <p
-          data-testid="notification-timestamp"
-          className="text-xs text-slate-500 mt-1"
-        >
+        <p data-testid="notification-timestamp" className="text-xs text-slate-500 mt-1">
           {formatRelativeTime(notification.createdAt)}
         </p>
       </div>

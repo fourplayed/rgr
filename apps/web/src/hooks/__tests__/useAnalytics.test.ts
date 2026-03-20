@@ -22,8 +22,7 @@ vi.mock('@rgr/shared', () => ({
   getAssetUtilization: (...args: unknown[]) => mockGetAssetUtilization(...args),
   getHazardTrends: (...args: unknown[]) => mockGetHazardTrends(...args),
   getTimeBetweenScans: (...args: unknown[]) => mockGetTimeBetweenScans(...args),
-  getOutstandingAnalyticsAssets: (...args: unknown[]) =>
-    mockGetOutstandingAnalyticsAssets(...args),
+  getOutstandingAnalyticsAssets: (...args: unknown[]) => mockGetOutstandingAnalyticsAssets(...args),
   queryFromService: (fn: () => Promise<{ success: boolean; data: unknown; error: string }>) => {
     return async () => {
       const result = await fn();
@@ -78,9 +77,7 @@ const ASSET_UTILIZATION_DATA = {
   total: 15,
 };
 
-const HAZARD_TRENDS_DATA = [
-  { date: '2026-03-01', critical: 1, high: 2, medium: 3, low: 4 },
-];
+const HAZARD_TRENDS_DATA = [{ date: '2026-03-01', critical: 1, high: 2, medium: 3, low: 4 }];
 
 const TIME_BETWEEN_SCANS_DATA = [
   { bucketDays: 0, count: 5 },
@@ -107,7 +104,11 @@ beforeEach(() => {
 
 describe('useScanFrequency', () => {
   it('returns data on successful fetch', async () => {
-    mockGetScanFrequency.mockResolvedValue({ success: true, data: SCAN_FREQUENCY_DATA, error: null });
+    mockGetScanFrequency.mockResolvedValue({
+      success: true,
+      data: SCAN_FREQUENCY_DATA,
+      error: null,
+    });
     const { wrapper } = makeWrapper();
 
     const { result } = renderHook(() => useScanFrequency('30d'), { wrapper });
@@ -133,12 +134,20 @@ describe('useScanFrequency', () => {
   });
 
   it('uses correct query key including timeRange', () => {
-    expect(ANALYTICS_QUERY_KEYS.scanFrequency('30d')).toEqual(['analytics', 'scanFrequency', '30d']);
+    expect(ANALYTICS_QUERY_KEYS.scanFrequency('30d')).toEqual([
+      'analytics',
+      'scanFrequency',
+      '30d',
+    ]);
     expect(ANALYTICS_QUERY_KEYS.scanFrequency('7d')).toEqual(['analytics', 'scanFrequency', '7d']);
   });
 
   it('uses staleTime of 5 minutes (300_000 ms)', async () => {
-    mockGetScanFrequency.mockResolvedValue({ success: true, data: SCAN_FREQUENCY_DATA, error: null });
+    mockGetScanFrequency.mockResolvedValue({
+      success: true,
+      data: SCAN_FREQUENCY_DATA,
+      error: null,
+    });
     const { wrapper, queryClient } = makeWrapper();
 
     const { result } = renderHook(() => useScanFrequency('30d'), { wrapper });
@@ -151,7 +160,11 @@ describe('useScanFrequency', () => {
   });
 
   it('refetches when timeRange changes', async () => {
-    mockGetScanFrequency.mockResolvedValue({ success: true, data: SCAN_FREQUENCY_DATA, error: null });
+    mockGetScanFrequency.mockResolvedValue({
+      success: true,
+      data: SCAN_FREQUENCY_DATA,
+      error: null,
+    });
     const { wrapper } = makeWrapper();
 
     const { result, rerender } = renderHook(
@@ -360,10 +373,7 @@ describe('useOutstandingAnalyticsAssets', () => {
   });
 
   it('uses correct static query key', () => {
-    expect(ANALYTICS_QUERY_KEYS.outstandingAssets()).toEqual([
-      'analytics',
-      'outstandingAssets',
-    ]);
+    expect(ANALYTICS_QUERY_KEYS.outstandingAssets()).toEqual(['analytics', 'outstandingAssets']);
   });
 
   it('uses staleTime of 5 minutes', async () => {

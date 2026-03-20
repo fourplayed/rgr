@@ -74,8 +74,20 @@ const LightPillar: React.FC<LightPillarProps> = ({
     if (isMobile && quality !== 'low') effectiveQuality = 'low';
 
     const qualitySettings = {
-      low: { iterations: 24, waveIterations: 1, pixelRatio: 0.5, precision: 'mediump', stepMultiplier: 1.5 },
-      medium: { iterations: 40, waveIterations: 2, pixelRatio: 0.65, precision: 'mediump', stepMultiplier: 1.2 },
+      low: {
+        iterations: 24,
+        waveIterations: 1,
+        pixelRatio: 0.5,
+        precision: 'mediump',
+        stepMultiplier: 1.5,
+      },
+      medium: {
+        iterations: 40,
+        waveIterations: 2,
+        pixelRatio: 0.65,
+        precision: 'mediump',
+        stepMultiplier: 1.2,
+      },
       high: {
         iterations: 80,
         waveIterations: 4,
@@ -330,8 +342,17 @@ const LightPillar: React.FC<LightPillarProps> = ({
     m.uniforms['uNoiseIntensity']!.value = noiseIntensity;
     m.uniforms['uPillarRotCos']!.value = Math.cos(pillarRotRad);
     m.uniforms['uPillarRotSin']!.value = Math.sin(pillarRotRad);
-  }, [topColor, bottomColor, intensity, interactive, glowAmount,
-      pillarWidth, pillarHeight, noiseIntensity, pillarRotation]);
+  }, [
+    topColor,
+    bottomColor,
+    intensity,
+    interactive,
+    glowAmount,
+    pillarWidth,
+    pillarHeight,
+    noiseIntensity,
+    pillarRotation,
+  ]);
 
   if (!webGLSupported) {
     return null;

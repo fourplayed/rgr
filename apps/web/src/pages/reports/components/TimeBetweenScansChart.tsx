@@ -2,15 +2,7 @@
  * TimeBetweenScansChart — histogram showing distribution of time between scans.
  */
 import React from 'react';
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-} from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import type { TimeBetweenScansPoint } from '@/services/analyticsService';
 import { RGR_COLORS } from '@/styles/color-palette';
 
@@ -24,13 +16,20 @@ const AXIS_STYLE = { fontSize: 11, fill: RGR_COLORS.chrome.medium };
 
 function bucketLabel(bucketDays: number): string {
   switch (bucketDays) {
-    case 0:  return '0–7d';
-    case 7:  return '7–14d';
-    case 14: return '14–30d';
-    case 30: return '30–60d';
-    case 60: return '60–90d';
-    case 90: return '90d+';
-    default: return `${bucketDays}d+`;
+    case 0:
+      return '0–7d';
+    case 7:
+      return '7–14d';
+    case 14:
+      return '14–30d';
+    case 30:
+      return '30–60d';
+    case 60:
+      return '60–90d';
+    case 90:
+      return '90d+';
+    default:
+      return `${bucketDays}d+`;
   }
 }
 
@@ -75,12 +74,7 @@ export const TimeBetweenScansChart: React.FC<TimeBetweenScansChartProps> = ({
             color: RGR_COLORS.chrome.light,
           }}
         />
-        <Bar
-          dataKey="count"
-          name="Assets"
-          fill={RGR_COLORS.bright.sky}
-          radius={[4, 4, 0, 0]}
-        />
+        <Bar dataKey="count" name="Assets" fill={RGR_COLORS.bright.sky} radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );
