@@ -41,7 +41,7 @@ as $$
 declare
   r             record;
   v_today       date := current_date;
-  v_cutoff_date date := current_date - interval '30 days';
+  v_cutoff_date date := current_date - 30;
 begin
 
   -- ============================================================
@@ -122,7 +122,7 @@ begin
       from public.notifications
       where user_id     = r.manager_id
         and type        = 'maintenance'
-        and resource_id = r.maintenance_id
+        and resource_id = r.asset_id
         and read        = false
         and created_at::date = v_today
     ) then
@@ -139,7 +139,7 @@ begin
           r.asset_number,
           r.due_date
         ),
-        r.maintenance_id,
+        r.asset_id,
         'asset',
         false,
         now()
@@ -155,7 +155,16 @@ $$;
 -- Register the nightly cron job (2 AM UTC every day).
 -- Uses the inline-SQL $$ pattern consistent with retention_cron_jobs.sql.
 -- ============================================================
-select cron.schedule(
+
+-- Idempotent: remove existing job if present (handles db reset in dev)
+do $$
+begin
+  perform cron.unschedule('notify-daily-checks');
+exception when others then null;
+end;
+$$;
+
+SELECT cron.schedule(
   'notify-daily-checks',
   '0 2 * * *',
   $$select public.notify_daily_checks();$$
