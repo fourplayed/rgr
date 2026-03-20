@@ -17,7 +17,6 @@ import {
   getMaintenanceStats,
   getDepotHealthScores,
 } from '@rgr/shared';
-import type { DepotHealthScoreData } from '@rgr/shared';
 
 // Re-export DepotHealthScoreData for consumer convenience
 export type { DepotHealthScoreData } from '@rgr/shared';
@@ -81,14 +80,14 @@ export function useFleetHealthScore() {
 
       const total = statsResult.data!.totalAssets;
       const outstanding = outstandingResult.data!.length;
-      const scanCompliance = total > 0 ? Math.round(((total - outstanding) / total) * 100) : 100;
+      const scanCompliance = total > 0 ? ((total - outstanding) / total) * 100 : 100;
 
-      const hazardClearance = Math.round(hazardResult.data!);
+      const hazardClearance = hazardResult.data!;
 
       const { total: totalRecords, overdue } = maintenanceResult.data!;
       const maintenanceCurrency =
         totalRecords > 0
-          ? Math.round(((totalRecords - overdue) / totalRecords) * 100)
+          ? ((totalRecords - overdue) / totalRecords) * 100
           : 100;
 
       const overallScore = Math.round(
@@ -98,7 +97,13 @@ export function useFleetHealthScore() {
       const status: HealthScoreData['status'] =
         overallScore >= 90 ? 'healthy' : overallScore >= 70 ? 'attention' : 'at_risk';
 
-      return { overallScore, scanCompliance, hazardClearance, maintenanceCurrency, status };
+      return {
+        overallScore,
+        scanCompliance: Math.round(scanCompliance),
+        hazardClearance: Math.round(hazardClearance),
+        maintenanceCurrency: Math.round(maintenanceCurrency),
+        status,
+      };
     },
     staleTime: HEALTH_STALE_TIME,
   });

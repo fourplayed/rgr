@@ -218,6 +218,50 @@ describe('useFleetHealthScore', () => {
     expect(result.current.data?.status).toBe('at_risk');
   });
 
+  it('returns status healthy at exact boundary score of 90', async () => {
+    mockGetFleetStatistics.mockResolvedValue({ success: true, data: FLEET_STATS_DATA, error: null });
+    // No outstanding assets → scanCompliance = 100
+    mockGetOutstandingAssets.mockResolvedValue({ success: true, data: [], error: null });
+    // hazardClearance = 75
+    mockGetHazardClearanceRate.mockResolvedValue({ success: true, data: 75, error: null });
+    // No overdue → maintenanceCurrency = 100
+    mockGetMaintenanceStats.mockResolvedValue({
+      success: true,
+      data: { total: 100, scheduled: 100, completed: 0, cancelled: 0, overdue: 0 },
+      error: null,
+    });
+
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useFleetHealthScore(), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    // overallScore = round(100 * 0.4 + 75 * 0.4 + 100 * 0.2) = round(40 + 30 + 20) = 90
+    expect(result.current.data?.overallScore).toBe(90);
+    expect(result.current.data?.status).toBe('healthy');
+  });
+
+  it('returns status attention at exact boundary score of 70', async () => {
+    mockGetFleetStatistics.mockResolvedValue({ success: true, data: FLEET_STATS_DATA, error: null });
+    // No outstanding assets → scanCompliance = 100
+    mockGetOutstandingAssets.mockResolvedValue({ success: true, data: [], error: null });
+    // hazardClearance = 50
+    mockGetHazardClearanceRate.mockResolvedValue({ success: true, data: 50, error: null });
+    // 5 overdue out of 10 → maintenanceCurrency = 50
+    mockGetMaintenanceStats.mockResolvedValue({
+      success: true,
+      data: { total: 10, scheduled: 5, completed: 0, cancelled: 0, overdue: 5 },
+      error: null,
+    });
+
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useFleetHealthScore(), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    // overallScore = round(100 * 0.4 + 50 * 0.4 + 50 * 0.2) = round(40 + 20 + 10) = 70
+    expect(result.current.data?.overallScore).toBe(70);
+    expect(result.current.data?.status).toBe('attention');
+  });
+
   it('handles zero total assets gracefully (scanCompliance = 100)', async () => {
     mockGetFleetStatistics.mockResolvedValue({
       success: true,
