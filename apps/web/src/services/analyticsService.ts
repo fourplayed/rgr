@@ -1,57 +1,59 @@
 /**
- * analyticsService - Analytics data types and service functions
+ * analyticsService — Re-export shim for backwards compatibility.
  *
- * TODO: Implement actual analytics service with Supabase queries.
- * This is a stub file providing type exports consumed by:
- * - AnalyticsCharts.tsx (ScanFrequencyData, AssetUtilizationData, TimeBetweenScansData, HazardTrendData)
- * - useFleetData.ts (AnalyticsTimeRange)
+ * All analytics logic lives in packages/shared/src/services/supabase/analytics.ts
+ * The old stub types (ScanFrequencyData, AssetUtilizationData, etc.) are kept as
+ * local aliases so existing consumers (AnalyticsCharts.tsx, useFleetData.ts) are
+ * not broken while the new canonical types from @rgr/shared are also re-exported.
  */
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// ── Canonical types from @rgr/shared ─────────────────────────────────────────
 
-/** Time range filter for analytics queries */
-export type AnalyticsTimeRange = '7d' | '30d' | '90d' | '1y' | 'all';
+export type {
+  AnalyticsTimeRange,
+  ScanFrequencyPoint,
+  AssetUtilizationSnapshot,
+  HazardTrendPoint,
+  TimeBetweenScansPoint,
+  AnalyticsOutstandingAsset,
+} from '@rgr/shared';
 
-/** Data point for scan frequency chart (bar/line chart) */
+export {
+  getScanFrequency,
+  getAssetUtilization,
+  getHazardTrends,
+  getTimeBetweenScans,
+  getOutstandingAnalyticsAssets,
+} from '@rgr/shared';
+
+// ── Legacy type aliases (kept for AnalyticsCharts.tsx compatibility) ──────────
+
+/** @deprecated Use ScanFrequencyPoint from @rgr/shared */
 export interface ScanFrequencyData {
-  /** Display label for the x-axis (e.g., date string) */
   label: string;
-  /** Number of scans in this period */
   count: number;
 }
 
-/** Data point for asset utilization pie chart */
+/** @deprecated Use AssetUtilizationSnapshot from @rgr/shared */
 export interface AssetUtilizationData {
-  /** Status category name (e.g., "Serviced", "In Maintenance") */
   status: string;
-  /** Number of assets in this status */
   count: number;
-  /** Percentage of total assets */
   percentage: number;
-  /** Display color for the pie slice */
   color: string;
 }
 
-/** Data point for time-between-scans histogram */
+/** @deprecated Use TimeBetweenScansPoint from @rgr/shared */
 export interface TimeBetweenScansData {
-  /** Bucket range label (e.g., "0-7 days", "8-14 days") */
   range: string;
-  /** Number of assets in this bucket */
   count: number;
 }
 
-/** Data point for hazard detection trend line chart */
+/** @deprecated Use HazardTrendPoint from @rgr/shared */
 export interface HazardTrendData {
-  /** ISO date string for the x-axis */
   date: string;
-  /** Total hazard count for this date */
   total: number;
-  /** Count of critical-severity hazards */
   criticalCount: number;
-  /** Count of high-severity hazards */
   highCount: number;
-  /** Count of medium-severity hazards */
   mediumCount: number;
-  /** Count of low-severity hazards */
   lowCount: number;
 }
