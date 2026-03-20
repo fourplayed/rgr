@@ -23,6 +23,7 @@ export interface DashboardActions {
   navigateTo: (path: string) => void;
   handleSignOut: () => Promise<void>;
   toggleTheme: () => void;
+  handleNavigateToReports: () => void;
 }
 
 function pathToSection(pathname: string): DashboardSection {
@@ -57,6 +58,10 @@ export function useDashboardLogic(): { state: DashboardState; actions: Dashboard
     navigate('/login');
   }, [logout, navigate]);
 
+  const handleNavigateToReports = useCallback(() => {
+    navigate('/reports');
+  }, [navigate]);
+
   return {
     state: {
       user,
@@ -68,6 +73,7 @@ export function useDashboardLogic(): { state: DashboardState; actions: Dashboard
       navigateTo,
       handleSignOut,
       toggleTheme,
+      handleNavigateToReports,
     },
   };
 }

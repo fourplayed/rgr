@@ -40,7 +40,7 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <DashboardPresenter state={state} actions={actions}>
+    <DashboardPresenter state={state} actions={actions} onNavigateToReports={actions.handleNavigateToReports}>
       {/* Stat cards row */}
       <div
         style={{

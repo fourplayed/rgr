@@ -11,16 +11,19 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { DASHBOARD_CONSTANTS } from './types';
 import { TopNavBar } from './components/TopNavBar';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { FleetHealthScore } from '@/components/FleetHealthScore';
 import type { DashboardState, DashboardActions } from './useDashboardLogic';
 
 export interface DashboardPresenterProps {
   state: DashboardState;
   actions: DashboardActions;
+  /** Callback to navigate to the Reports page */
+  onNavigateToReports: () => void;
   /** Optional children for page content (used by StubPage) */
   children?: React.ReactNode;
 }
 
-export function DashboardPresenter({ state, actions, children }: DashboardPresenterProps) {
+export function DashboardPresenter({ state, actions, onNavigateToReports, children }: DashboardPresenterProps) {
   const { isDark, activeSection, canAccessAdmin, user } = state;
   const { navigateTo, handleSignOut, toggleTheme } = actions;
 
@@ -130,7 +133,10 @@ export function DashboardPresenter({ state, actions, children }: DashboardPresen
             aria-hidden="true"
           />
           <div className="relative mx-auto h-full" style={{ maxWidth: '1440px' }}>
-            <ErrorBoundary>{children}</ErrorBoundary>
+            <ErrorBoundary>
+              <FleetHealthScore onNavigateToReports={onNavigateToReports} />
+              {children}
+            </ErrorBoundary>
           </div>
         </div>
       </main>
