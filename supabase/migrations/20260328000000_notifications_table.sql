@@ -32,6 +32,10 @@ create index notifications_user_unread_idx
   on public.notifications (user_id, read, created_at desc)
   where read = false;
 
+-- General index for fetching all notifications newest-first (inbox view)
+create index notifications_user_created_idx
+  on public.notifications (user_id, created_at desc);
+
 -- Deduplication index — prevent duplicate unread notifications for same resource
 create unique index notifications_dedup_idx
   on public.notifications (user_id, type, resource_id)
