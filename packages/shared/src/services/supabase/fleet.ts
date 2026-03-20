@@ -5,6 +5,8 @@ import { AssetCategorySchema, AssetStatusSchema } from '../../types/enums/AssetE
 import { ScanTypeSchema } from '../../types/enums/ScanEnums';
 import { safeParseEnum } from '../../utils/safeParseEnum';
 import { FleetStatisticsResultSchema } from '../../types/rpcResults';
+import type { DepotRow } from '../../types/entities/depot';
+import { mapRowToDepot } from '../../types/entities/depot';
 
 // ── Interfaces ──
 
@@ -297,4 +299,241 @@ export async function getAssetLocations(): Promise<ServiceResult<AssetLocation[]
   }
 
   return { success: true, data: locations, error: null };
+}
+
+// ── Hazard Clearance Rate ──
+
+/**
+ * Returns the global hazard clearance rate as a number 0–100.
+ * Clearance = (acknowledged + resolved + dismissed) / total * 100.
+ * Returns 100 if there are no alerts (all clear).
+ */
+export async function getHazardClearanceRate(): Promise<ServiceResult<number>> {
+  const supabase = getSupabaseClient();
+
+  const { data, error } = await supabase.from('hazard_alerts').select('status');
+
+  if (error) {
+    return {
+      success: false,
+      data: null,
+      error: `Failed to fetch hazard clearance rate: ${error.message}`,
+    };
+  }
+
+  const rows = (data || []) as Array<{ status: string }>;
+  const total = rows.length;
+
+  if (total === 0) {
+    return { success: true, data: 100, error: null };
+  }
+
+  const cleared = rows.filter((r) => r.status !== 'active').length;
+  const rate = Math.round((cleared / total) * 1000) / 10; // 1 decimal place
+
+  return { success: true, data: rate, error: null };
+}
+
+// ── Depot Health Scores ──
+
+export interface DepotHealthScoreData {
+  depotId: string;
+  depotName: string;
+  /** % assets scanned in last 30 days */
+  scanCompliance: number;
+  /** % hazard alerts reviewed/resolved for this depot */
+  hazardClearance: number;
+  /** % assets with no overdue maintenance */
+  maintenanceCurrency: number;
+  /** Weighted: 40% scan + 40% hazard + 20% maintenance */
+  overallScore: number;
+}
+
+interface AssetScanRow {
+  id: string;
+  last_location_updated_at: string | null;
+}
+
+interface HazardStatusRow {
+  status: string;
+}
+
+interface MaintenanceStatusRow {
+  id: string;
+  status: string;
+  due_date: string | null;
+}
+
+/**
+ * Returns per-depot health score data.
+ *
+ * NOTE: Uses N+1 queries (3 per depot) for simplicity given typical fleet size.
+ * TODO: replace with single aggregate query per metric.
+ *
+ * Join note: hazard_alerts has no depot_id column — it links to assets via
+ * asset_id. We fetch asset IDs for the depot first, then filter hazard_alerts
+ * by those asset IDs. Similarly, maintenance_records link to assets via asset_id.
+ */
+export async function getDepotHealthScores(): Promise<ServiceResult<DepotHealthScoreData[]>> {
+  const supabase = getSupabaseClient();
+
+  // 1. Fetch all active depots
+  const { data: depotData, error: depotError } = await supabase
+    .from('depots')
+    .select('*')
+    .eq('is_active', true)
+    .order('name')
+    .limit(200);
+
+  if (depotError) {
+    return {
+      success: false,
+      data: null,
+      error: `Failed to fetch depots: ${depotError.message}`,
+    };
+  }
+
+  const depots = (depotData || []).map((row: DepotRow) => mapRowToDepot(row));
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const today = new Date().toISOString();
+
+  const scores: DepotHealthScoreData[] = [];
+
+  for (const depot of depots) {
+    // 2. Fetch assets assigned to this depot
+    const { data: assetData, error: assetError } = await supabase
+      .from('assets')
+      .select('id, last_location_updated_at')
+      .eq('assigned_depot_id', depot.id)
+      .is('deleted_at', null);
+
+    if (assetError) {
+      return {
+        success: false,
+        data: null,
+        error: `Failed to fetch assets for depot ${depot.id}: ${assetError.message}`,
+      };
+    }
+
+    const assets = (assetData || []) as AssetScanRow[];
+    const totalAssets = assets.length;
+
+    // Scan compliance: % assets scanned in last 30 days
+    const scanCompliance =
+      totalAssets === 0
+        ? 100
+        : Math.round(
+            (assets.filter(
+              (a) => a.last_location_updated_at != null && a.last_location_updated_at >= thirtyDaysAgo
+            ).length /
+              totalAssets) *
+              1000
+          ) / 10;
+
+    const depotAssetIds = assets.map((a) => a.id);
+
+    // 3. Fetch hazard alerts for this depot's assets
+    // hazard_alerts has asset_id (nullable) linking to assets; no direct depot_id column.
+    // TODO: replace with single aggregate query
+    let hazardClearance = 100;
+    if (depotAssetIds.length > 0) {
+      const { data: hazardData, error: hazardError } = await supabase
+        .from('hazard_alerts')
+        .select('status')
+        .in('asset_id', depotAssetIds);
+
+      if (hazardError) {
+        return {
+          success: false,
+          data: null,
+          error: `Failed to fetch hazard alerts for depot ${depot.id}: ${hazardError.message}`,
+        };
+      }
+
+      const hazardRows = (hazardData || []) as HazardStatusRow[];
+      const totalHazards = hazardRows.length;
+      hazardClearance =
+        totalHazards === 0
+          ? 100
+          : Math.round(
+              (hazardRows.filter((h) => h.status !== 'active').length / totalHazards) * 1000
+            ) / 10;
+    } else {
+      // No assets → query hazard_alerts with empty filter to get depot-level data
+      // (there should be none since all hazard_alerts link to assets)
+      const { data: hazardData, error: hazardError } = await supabase
+        .from('hazard_alerts')
+        .select('status')
+        .in('asset_id', ['__no_match__']);
+
+      if (hazardError) {
+        return {
+          success: false,
+          data: null,
+          error: `Failed to fetch hazard alerts for depot ${depot.id}: ${hazardError.message}`,
+        };
+      }
+
+      hazardClearance = 100;
+    }
+
+    // 4. Fetch maintenance records for this depot's assets
+    // maintenance_records links to assets via asset_id; no direct depot_id column.
+    // TODO: replace with single aggregate query
+    let maintenanceCurrency = 100;
+    if (depotAssetIds.length > 0) {
+      const { data: maintData, error: maintError } = await supabase
+        .from('maintenance_records')
+        .select('id, status, due_date')
+        .in('asset_id', depotAssetIds);
+
+      if (maintError) {
+        return {
+          success: false,
+          data: null,
+          error: `Failed to fetch maintenance records for depot ${depot.id}: ${maintError.message}`,
+        };
+      }
+
+      const maintRows = (maintData || []) as MaintenanceStatusRow[];
+      const totalMaint = maintRows.length;
+      const overdueCount = maintRows.filter(
+        (m) => m.status === 'scheduled' && m.due_date != null && m.due_date < today
+      ).length;
+      maintenanceCurrency =
+        totalMaint === 0
+          ? 100
+          : Math.round(((totalMaint - overdueCount) / totalMaint) * 1000) / 10;
+    } else {
+      const { data: maintData, error: maintError } = await supabase
+        .from('maintenance_records')
+        .select('id, status, due_date')
+        .in('asset_id', ['__no_match__']);
+
+      if (maintError) {
+        return {
+          success: false,
+          data: null,
+          error: `Failed to fetch maintenance records for depot ${depot.id}: ${maintError.message}`,
+        };
+      }
+
+      maintenanceCurrency = 100;
+    }
+
+    const overallScore =
+      Math.round((scanCompliance * 0.4 + hazardClearance * 0.4 + maintenanceCurrency * 0.2) * 10) /
+      10;
+
+    scores.push({
+      depotId: depot.id,
+      depotName: depot.name,
+      scanCompliance,
+      hazardClearance,
+      maintenanceCurrency,
+      overallScore,
+    });
+  }
+
+  return { success: true, data: scores, error: null };
 }
