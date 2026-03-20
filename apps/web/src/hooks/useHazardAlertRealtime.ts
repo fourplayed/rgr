@@ -11,9 +11,10 @@
  * - Sound/notification on critical hazards
  */
 import { useEffect, useCallback, useRef, useState } from 'react';
-import { getSupabaseClient } from '@rgr/shared';
+import { getSupabaseClient, createNotification } from '@rgr/shared';
 import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@rgr/shared';
 import type { HazardSeverity, HazardStatus } from '@rgr/shared';
+import { useAuthStore } from '@/stores/authStore';
 
 // ============================================================================
 // Types
@@ -181,6 +182,8 @@ export function useHazardAlertRealtime(
     browserNotifications = false,
   } = options;
 
+  const userId = useAuthStore((s) => s.user?.id ?? null);
+
   const [isConnected, setIsConnected] = useState(false);
   const [recentEvents, setRecentEvents] = useState<HazardRealtimeEvent[]>([]);
   const [newAlertCount, setNewAlertCount] = useState(0);
@@ -188,6 +191,7 @@ export function useHazardAlertRealtime(
   const channelRef = useRef<RealtimeChannel | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const userIdRef = useRef(userId);
 
   // Use refs for all option values to prevent re-subscription thrashing.
   // Callbacks and filter arrays change identity on every parent render,
@@ -211,6 +215,7 @@ export function useHazardAlertRealtime(
     statusesRef.current = statuses;
     playSoundRef.current = playSound;
     browserNotificationsRef.current = browserNotifications;
+    userIdRef.current = userId;
   });
 
   // Handle incoming changes — stable callback (no deps that change per render)
@@ -273,6 +278,24 @@ export function useHazardAlertRealtime(
           // Show browser notification
           if (browserNotificationsRef.current) {
             showBrowserNotification(alert);
+          }
+
+          // Create a persistent notification row for critical/high severity alerts
+          if (
+            (alert.severity === 'critical' || alert.severity === 'high') &&
+            userIdRef.current
+          ) {
+            createNotification({
+              userId: userIdRef.current,
+              type: 'hazard',
+              title:
+                alert.severity === 'critical' ? 'Critical Hazard Alert' : 'High Severity Hazard',
+              body: `A ${alert.severity} severity hazard has been detected on asset ${alert.asset_id}`,
+              resourceId: alert.id,
+              resourceType: 'hazard_alert',
+            }).catch((err) => {
+              console.warn('[useHazardAlertRealtime] Failed to create notification:', err);
+            });
           }
         } else if (eventType === 'UPDATE' && alert) {
           onAlertUpdateRef.current?.(alert, oldAlert);
