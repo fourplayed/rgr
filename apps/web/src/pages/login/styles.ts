@@ -20,7 +20,7 @@ export const CARD_STYLES = {
   // Card styling - Light (chrome glassmorphism)
   light: {
     background:
-      'linear-gradient(160deg, rgba(60,70,85,0.38) 0%, rgba(40,50,65,0.28) 50%, rgba(50,60,75,0.33) 100%)',
+      'linear-gradient(160deg, rgba(120,130,145,0.48) 0%, rgba(100,110,125,0.38) 50%, rgba(110,120,135,0.43) 100%)',
     backdropFilter: 'blur(100px)',
     WebkitBackdropFilter: 'blur(100px)',
     borderRadius: '0',

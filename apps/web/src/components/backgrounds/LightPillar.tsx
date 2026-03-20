@@ -24,15 +24,15 @@ const parseColor = (hex: string): THREE.Vector3 => {
 };
 
 const LightPillar: React.FC<LightPillarProps> = ({
-  topColor = '#5227FF',
-  bottomColor = '#FF9FFC',
-  intensity = 1.0,
-  rotationSpeed = 0.3,
+  topColor = '#3697f2',
+  bottomColor = '#3a8fdf',
+  intensity = 0.5,
+  rotationSpeed = 0.1,
   interactive = false,
   className = '',
-  glowAmount = 0.005,
-  pillarWidth = 3.0,
-  pillarHeight = 0.4,
+  glowAmount = 0.001,
+  pillarWidth = 2.0,
+  pillarHeight = 0.25,
   noiseIntensity = 0.5,
   mixBlendMode = 'screen',
   pillarRotation = 0,
