@@ -206,9 +206,11 @@ describe('markRead', () => {
     const result = await markRead(NOTIF_ID);
 
     expect(result.success).toBe(true);
-    expect(result.data).toBeNull();
+    expect(result.data).toBeUndefined();
     expect(result.error).toBeNull();
     expect(mockUpdateFn).toHaveBeenCalledWith({ read: true });
+    expect(mockEqUser).toHaveBeenCalledWith('user_id', USER_ID);
+    expect(mockEqId).toHaveBeenCalledWith('id', NOTIF_ID);
   });
 
   it('returns error result when auth fails', async () => {
@@ -247,7 +249,7 @@ describe('markAllRead', () => {
     const result = await markAllRead();
 
     expect(result.success).toBe(true);
-    expect(result.data).toBeNull();
+    expect(result.data).toBeUndefined();
     expect(result.error).toBeNull();
     expect(mockUpdateFn).toHaveBeenCalledWith({ read: true });
     expect(mockEqUser).toHaveBeenCalledWith('user_id', USER_ID);

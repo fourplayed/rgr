@@ -157,7 +157,7 @@ export async function markRead(notificationId: string): Promise<ServiceResult<vo
     };
   }
 
-  return { success: true, data: null, error: null };
+  return { success: true, data: undefined, error: null };
 }
 
 /**
@@ -184,7 +184,7 @@ export async function markAllRead(): Promise<ServiceResult<void>> {
     };
   }
 
-  return { success: true, data: null, error: null };
+  return { success: true, data: undefined, error: null };
 }
 
 /**
