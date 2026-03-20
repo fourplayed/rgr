@@ -40,8 +40,8 @@ const DEFAULT_LIGHT_GRADIENT: GradientColors = {
 };
 
 const DEFAULT_DARK_BG_GRADIENT: DarkBgGradient = {
-  top: '#002680',
-  upperMiddle: '#1461db',
+  top: '#529dff',
+  upperMiddle: '#0469c8',
   lowerMiddle: '#0a0e43',
   bottom: '#00114d',
 };
