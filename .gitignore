@@ -28,6 +28,10 @@ new-secrets.txt
 # MCP config (contains access tokens)
 .mcp.json
 
+# Claude Code local settings
+.claude/
+**/.claude/
+
 # IDEs
 .vscode/
 .idea/
@@ -69,3 +73,6 @@ scripts/deploy-asc.sh
 
 # Tooling
 .superpowers/
+
+# Scratch/reference files
+light-theme-options.html
