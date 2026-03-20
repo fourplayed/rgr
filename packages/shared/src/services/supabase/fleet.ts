@@ -341,7 +341,7 @@ export interface DepotHealthScoreData {
   depotName: string;
   /** % assets scanned in last 30 days */
   scanCompliance: number;
-  /** % hazard alerts reviewed/resolved for this depot */
+  /** % hazard alerts acknowledged, resolved, or dismissed (not active) for this depot */
   hazardClearance: number;
   /** % assets with no overdue maintenance */
   maintenanceCurrency: number;
@@ -459,22 +459,7 @@ export async function getDepotHealthScores(): Promise<ServiceResult<DepotHealthS
               (hazardRows.filter((h) => h.status !== 'active').length / totalHazards) * 1000
             ) / 10;
     } else {
-      // No assets → query hazard_alerts with empty filter to get depot-level data
-      // (there should be none since all hazard_alerts link to assets)
-      const { data: hazardData, error: hazardError } = await supabase
-        .from('hazard_alerts')
-        .select('status')
-        .in('asset_id', ['__no_match__']);
-
-      if (hazardError) {
-        return {
-          success: false,
-          data: null,
-          error: `Failed to fetch hazard alerts for depot ${depot.id}: ${hazardError.message}`,
-        };
-      }
-
-      hazardClearance = 100;
+      hazardClearance = 100; // No assets → no possible hazard alerts → fully cleared
     }
 
     // 4. Fetch maintenance records for this depot's assets
@@ -505,20 +490,7 @@ export async function getDepotHealthScores(): Promise<ServiceResult<DepotHealthS
           ? 100
           : Math.round(((totalMaint - overdueCount) / totalMaint) * 1000) / 10;
     } else {
-      const { data: maintData, error: maintError } = await supabase
-        .from('maintenance_records')
-        .select('id, status, due_date')
-        .in('asset_id', ['__no_match__']);
-
-      if (maintError) {
-        return {
-          success: false,
-          data: null,
-          error: `Failed to fetch maintenance records for depot ${depot.id}: ${maintError.message}`,
-        };
-      }
-
-      maintenanceCurrency = 100;
+      maintenanceCurrency = 100; // No assets → no maintenance records → fully current
     }
 
     const overallScore =

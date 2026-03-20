@@ -44,7 +44,7 @@ function buildChain(resolvedValue: { data: unknown; error: unknown }) {
 }
 
 beforeEach(() => {
-  jest.clearAllMocks();
+  jest.resetAllMocks();
 });
 
 // ── getHazardClearanceRate ──
@@ -172,8 +172,7 @@ describe('getDepotHealthScores', () => {
     //   3. hazard_alerts query for depot-1 (hazardClearance)
     //   4. maintenance_records query for depot-1 (maintenanceCurrency)
     //   5. assets query for depot-2
-    //   6. hazard_alerts query for depot-2
-    //   7. maintenance_records query for depot-2
+    //   (depot-2 has 0 assets → hazard/maintenance queries skipped, scores default to 100)
 
     // All depots query result
     const depotsChain = buildChain({ data: depotRows, error: null });
@@ -219,18 +218,15 @@ describe('getDepotHealthScores', () => {
     });
 
     // depot-2: 0 assets → scanCompliance = 100, hazardClearance = 100, maintenanceCurrency = 100
+    // No hazard/maintenance queries issued for depot-2 (zero assets branch skips them)
     const assets2Chain = buildChain({ data: [], error: null });
-    const hazards2Chain = buildChain({ data: [], error: null });
-    const maint2Chain = buildChain({ data: [], error: null });
 
     mockClient.from
       .mockReturnValueOnce(depotsChain)    // 1. depots
       .mockReturnValueOnce(assets1Chain)   // 2. assets for depot-1
       .mockReturnValueOnce(hazards1Chain)  // 3. hazards for depot-1
       .mockReturnValueOnce(maint1Chain)    // 4. maintenance for depot-1
-      .mockReturnValueOnce(assets2Chain)   // 5. assets for depot-2
-      .mockReturnValueOnce(hazards2Chain)  // 6. hazards for depot-2
-      .mockReturnValueOnce(maint2Chain);   // 7. maintenance for depot-2
+      .mockReturnValueOnce(assets2Chain);  // 5. assets for depot-2
 
     const result = await getDepotHealthScores();
 
@@ -273,8 +269,12 @@ describe('getDepotHealthScores', () => {
   });
 
   it('returns error when hazard_alerts query fails for a depot', async () => {
+    // Hazard query is only issued when the depot has assets (depotAssetIds.length > 0)
     const depotsChain = buildChain({ data: [depotRows[0]], error: null });
-    const assetsChain = buildChain({ data: [], error: null });
+    const assetsChain = buildChain({
+      data: [{ id: 'a1', last_location_updated_at: null }],
+      error: null,
+    });
     const hazardsErrorChain = buildChain({ data: null, error: { message: 'Hazard query failed' } });
 
     mockClient.from
@@ -290,8 +290,12 @@ describe('getDepotHealthScores', () => {
   });
 
   it('returns error when maintenance_records query fails for a depot', async () => {
+    // Maintenance query is only issued when the depot has assets (depotAssetIds.length > 0)
     const depotsChain = buildChain({ data: [depotRows[0]], error: null });
-    const assetsChain = buildChain({ data: [], error: null });
+    const assetsChain = buildChain({
+      data: [{ id: 'a1', last_location_updated_at: null }],
+      error: null,
+    });
     const hazardsChain = buildChain({ data: [], error: null });
     const maintErrorChain = buildChain({ data: null, error: { message: 'Maintenance query failed' } });
 
