@@ -1,7 +1,7 @@
 /**
  * useReportsLogic — unit tests
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
@@ -182,7 +182,11 @@ describe('useReportsLogic', () => {
         }
         return new OriginalBlob(parts, options);
       });
-      Object.defineProperty(globalThis, 'Blob', { value: BlobSpy, writable: true, configurable: true });
+      Object.defineProperty(globalThis, 'Blob', {
+        value: BlobSpy,
+        writable: true,
+        configurable: true,
+      });
 
       const { createObjectURLSpy } = setupUrlMocks();
       const mockAnchor = { href: '', download: '', click: vi.fn() };
@@ -207,7 +211,11 @@ describe('useReportsLogic', () => {
       });
 
       createElementSpy.mockRestore();
-      Object.defineProperty(globalThis, 'Blob', { value: OriginalBlob, writable: true, configurable: true });
+      Object.defineProperty(globalThis, 'Blob', {
+        value: OriginalBlob,
+        writable: true,
+        configurable: true,
+      });
 
       expect(createObjectURLSpy).toHaveBeenCalledOnce();
       expect(capturedCsv).not.toBeNull();

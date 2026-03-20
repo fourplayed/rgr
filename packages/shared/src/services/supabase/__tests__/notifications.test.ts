@@ -14,8 +14,8 @@ const mockLimit = jest.fn();
 const mockOrder = jest.fn(() => ({ limit: mockLimit }));
 const mockEq = jest.fn();
 const mockSelect = jest.fn();
-const mockInsert = jest.fn();
-const mockUpdate = jest.fn();
+const _mockInsert = jest.fn();
+const _mockUpdate = jest.fn();
 
 // The mock client returned by getSupabaseClient
 const mockClient = {

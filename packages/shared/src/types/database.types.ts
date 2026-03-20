@@ -33,6 +33,50 @@ export type Database = {
   };
   public: {
     Tables: {
+      notifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          type: 'hazard' | 'scan_overdue' | 'health_score' | 'maintenance';
+          title: string;
+          body: string;
+          resource_id: string | null;
+          resource_type: 'asset' | 'depot' | 'hazard_alert' | 'fleet' | null;
+          read: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          type: 'hazard' | 'scan_overdue' | 'health_score' | 'maintenance';
+          title: string;
+          body: string;
+          resource_id?: string | null;
+          resource_type?: 'asset' | 'depot' | 'hazard_alert' | 'fleet' | null;
+          read?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          type?: 'hazard' | 'scan_overdue' | 'health_score' | 'maintenance';
+          title?: string;
+          body?: string;
+          resource_id?: string | null;
+          resource_type?: 'asset' | 'depot' | 'hazard_alert' | 'fleet' | null;
+          read?: boolean;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'notifications_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       asset_count_combination_metadata: {
         Row: {
           combination_id: string;
