@@ -180,6 +180,7 @@ describe('getHazardTrends', () => {
       { created_at: '2026-03-19T10:00:00.000Z', severity: 'critical' },
       { created_at: '2026-03-19T12:00:00.000Z', severity: 'high' },
       { created_at: '2026-03-19T15:00:00.000Z', severity: 'critical' },
+      { created_at: '2026-03-19T16:00:00.000Z', severity: 'medium' },
       { created_at: '2026-03-20T09:00:00.000Z', severity: 'low' },
     ];
     const chain = buildChain({ data: rows, error: null });
@@ -193,7 +194,7 @@ describe('getHazardTrends', () => {
     const march19 = data.find((p) => p.date === '2026-03-19');
     expect(march19?.critical).toBe(2);
     expect(march19?.high).toBe(1);
-    expect(march19?.medium).toBe(0);
+    expect(march19?.medium).toBe(1);
     expect(march19?.low).toBe(0);
     const march20 = data.find((p) => p.date === '2026-03-20');
     expect(march20?.low).toBe(1);
@@ -358,7 +359,7 @@ describe('getOutstandingAnalyticsAssets', () => {
 
     expect(mockClient.from).toHaveBeenCalledWith('assets');
     expect(chain.or).toHaveBeenCalledWith(
-      expect.stringContaining('last_location_updated_at')
+      expect.stringContaining('last_location_updated_at.is.null')
     );
   });
 
@@ -370,7 +371,7 @@ describe('getOutstandingAnalyticsAssets', () => {
 
     expect(result.success).toBe(true);
     expect(chain.or).toHaveBeenCalledWith(
-      expect.stringContaining('last_location_updated_at')
+      expect.stringContaining('last_location_updated_at.is.null')
     );
   });
 

@@ -67,8 +67,7 @@ export async function getScanFrequency(
   const supabase = getSupabaseClient();
   const cutoff = getCutoffDate(timeRange);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('scan_events')
     .select('created_at')
     .gte('created_at', cutoff)
@@ -105,6 +104,7 @@ export async function getScanFrequency(
 export async function getAssetUtilization(): Promise<ServiceResult<AssetUtilizationSnapshot>> {
   const supabase = getSupabaseClient();
 
+  // TODO: replace with DB-side aggregate/RPC once fleet size warrants it (full-table scan)
   const { data, error } = await supabase.from('assets').select('status');
 
   if (error) {
@@ -169,6 +169,10 @@ export async function getHazardTrends(
     else if (sev === 'high') entry.high++;
     else if (sev === 'medium') entry.medium++;
     else if (sev === 'low') entry.low++;
+    else {
+      // Unknown severity — DB enum may have expanded; log and skip
+      console.warn(`[analytics] Unknown hazard severity: ${sev}`);
+    }
   }
 
   const points: HazardTrendPoint[] = Array.from(byDate.entries())
@@ -201,6 +205,7 @@ export async function getTimeBetweenScans(
   // timeRange parameter reserved for future date-window filtering
   void timeRange;
 
+  // TODO: add timeRange filter cutoff once timeRange param is implemented (currently full-table scan)
   const { data, error } = await supabase
     .from('assets')
     .select('last_location_updated_at')
