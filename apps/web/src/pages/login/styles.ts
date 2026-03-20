@@ -19,7 +19,7 @@ export const CARD_HEIGHT = 565;
 export const CARD_STYLES = {
   // Card styling - Light (chrome glassmorphism)
   light: {
-    background: 'linear-gradient(160deg, rgba(220,232,245,0.22) 0%, rgba(160,185,210,0.12) 50%, rgba(200,218,235,0.18) 100%)',
+    background: 'linear-gradient(160deg, rgba(60,70,85,0.38) 0%, rgba(40,50,65,0.28) 50%, rgba(50,60,75,0.33) 100%)',
     backdropFilter: 'blur(100px)',
     WebkitBackdropFilter: 'blur(100px)',
     borderRadius: '0',
@@ -37,6 +37,7 @@ export const CARD_STYLES = {
     maskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)',
     WebkitMaskImage:
       'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)',
+    fontFamily: "'Lato', sans-serif",
   },
   // Card styling - Dark (glassmorphism with black)
   dark: {
@@ -58,6 +59,7 @@ export const CARD_STYLES = {
     maskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)',
     WebkitMaskImage:
       'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)',
+    fontFamily: "'Lato', sans-serif",
   },
 } as const;
 
@@ -67,7 +69,7 @@ export const CARD_STYLES = {
 export const INPUT_STYLES = {
   // Light theme - simple border like dark theme (no fancy focus effects)
   light: {
-    backgroundColor: 'rgba(209, 213, 219, 0.1)',
+    backgroundColor: 'rgba(120, 130, 145, 0.35)',
     border: '1px solid rgba(255, 255, 255, 0.5)',
     color: '#ffffff', // white
     outline: 'none',

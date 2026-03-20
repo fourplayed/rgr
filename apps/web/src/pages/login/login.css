@@ -143,7 +143,7 @@
 }
 
 .themed-input-light:focus {
-  background-color: rgba(209, 213, 219, 0.3) !important;
+  background-color: rgba(100, 110, 130, 0.45) !important;
 }
 
 /* Remove browser autocomplete background styling */
@@ -161,8 +161,8 @@
 .themed-input-light:-webkit-autofill:hover,
 .themed-input-light:-webkit-autofill:focus,
 .themed-input-light:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 1000px rgba(209, 213, 219, 0.1) inset !important;
-  box-shadow: 0 0 0 1000px rgba(209, 213, 219, 0.1) inset !important;
+  -webkit-box-shadow: 0 0 0 1000px rgba(120, 130, 145, 0.35) inset !important;
+  box-shadow: 0 0 0 1000px rgba(120, 130, 145, 0.35) inset !important;
   -webkit-text-fill-color: #ffffff !important;
   transition: background-color 5000s ease-in-out 0s;
 }
