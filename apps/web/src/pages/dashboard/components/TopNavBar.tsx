@@ -7,6 +7,7 @@
 import React from 'react';
 import { LogOut, Settings, ShieldCheck, User } from 'lucide-react';
 import { ThemeToggleIcon } from '@/components/common';
+import { NotificationCenter } from '@/components/NotificationCenter';
 import { NAV_ITEMS, DASHBOARD_CONSTANTS } from '../types';
 import { NAV_BAR_STYLES } from '../styles';
 import { NavLink } from './NavLink';
@@ -232,6 +233,9 @@ export const TopNavBar = React.memo<TopNavBarProps>(
             >
               <ThemeToggleIcon isDark={isDark} />
             </button>
+
+            {/* Notification Center */}
+            <NotificationCenter />
           </div>
         </nav>
       </>

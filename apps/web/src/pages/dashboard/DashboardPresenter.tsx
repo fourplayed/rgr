@@ -18,7 +18,7 @@ export interface DashboardPresenterProps {
   state: DashboardState;
   actions: DashboardActions;
   /** Callback to navigate to the Reports page */
-  onNavigateToReports: () => void;
+  onNavigateToReports?: () => void;
   /** Optional children for page content (used by StubPage) */
   children?: React.ReactNode;
 }
@@ -134,7 +134,7 @@ export function DashboardPresenter({ state, actions, onNavigateToReports, childr
           />
           <div className="relative mx-auto h-full" style={{ maxWidth: '1440px' }}>
             <ErrorBoundary>
-              <FleetHealthScore onNavigateToReports={onNavigateToReports} />
+              <FleetHealthScore onNavigateToReports={onNavigateToReports ?? (() => {})} />
               {children}
             </ErrorBoundary>
           </div>
