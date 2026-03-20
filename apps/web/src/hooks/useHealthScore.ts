@@ -7,8 +7,12 @@
  *   - Maintenance currency (20%): % of assets with no overdue maintenance
  *
  * staleTime is 2 minutes — health scores need to be reasonably fresh.
+ *
+ * When the fleet or depot health score drops below 70%, a notification is
+ * inserted (deduped by checking if a same-day notification already exists).
  */
 
+import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   getFleetStatistics,
@@ -16,7 +20,11 @@ import {
   getHazardClearanceRate,
   getMaintenanceStats,
   getDepotHealthScores,
+  createNotification,
+  getNotifications,
 } from '@rgr/shared';
+import type { DepotHealthScoreData, Notification, NotificationType } from '@rgr/shared';
+import { useAuthStore } from '@/stores/authStore';
 
 // Re-export DepotHealthScoreData for consumer convenience
 export type { DepotHealthScoreData } from '@rgr/shared';
@@ -46,6 +54,27 @@ export const HEALTH_QUERY_KEYS = {
   depots: () => ['health', 'depots'] as const,
 } as const;
 
+// ── Deduplication helper ──────────────────────────────────────────────────────
+
+/**
+ * Returns true if a same-day notification of the given type already exists.
+ * For fleet notifications (no resourceId), matches on resourceType === 'fleet'.
+ * For depot notifications, matches on resourceId === depotId.
+ */
+function isSameDayNotification(
+  notifications: Notification[],
+  type: NotificationType,
+  resourceId?: string
+): boolean {
+  const today = new Date().toISOString().slice(0, 10); // 'YYYY-MM-DD'
+  return notifications.some(
+    (n) =>
+      n.type === type &&
+      n.createdAt.slice(0, 10) === today &&
+      (resourceId ? n.resourceId === resourceId : n.resourceType === 'fleet')
+  );
+}
+
 // ── Hooks ─────────────────────────────────────────────────────────────────────
 
 /**
@@ -53,9 +82,14 @@ export const HEALTH_QUERY_KEYS = {
  *
  * Fetches fleet statistics, outstanding assets, hazard clearance rate, and
  * maintenance stats in parallel, then computes the weighted score.
+ *
+ * Side effect: when the score drops below 70, triggers a notification insert
+ * (fire-and-forget, deduped per calendar day).
  */
 export function useFleetHealthScore() {
-  return useQuery<HealthScoreData>({
+  const userId = useAuthStore((s) => s.user?.id ?? null);
+
+  const query = useQuery<HealthScoreData>({
     queryKey: HEALTH_QUERY_KEYS.fleet(),
     queryFn: async () => {
       const [statsResult, outstandingResult, hazardResult, maintenanceResult] = await Promise.all([
@@ -107,13 +141,47 @@ export function useFleetHealthScore() {
     },
     staleTime: HEALTH_STALE_TIME,
   });
+
+  // Fire-and-forget notification trigger when score drops below 70
+  useEffect(() => {
+    const data = query.data;
+    if (!data || data.overallScore >= 70 || !userId) return;
+
+    const { overallScore } = data;
+
+    void (async () => {
+      try {
+        const notifResult = await getNotifications();
+        if (!notifResult.success || !notifResult.data) return;
+
+        if (isSameDayNotification(notifResult.data, 'health_score')) return;
+
+        await createNotification({
+          userId,
+          type: 'health_score',
+          title: 'Fleet Health At Risk',
+          body: `Fleet health score has dropped to ${overallScore}%`,
+          resourceType: 'fleet',
+        });
+      } catch (err) {
+        console.warn('[useFleetHealthScore] Failed to create health score notification:', err);
+      }
+    })();
+  }, [query.data, userId]);
+
+  return query;
 }
 
 /**
  * Per-depot health score breakdown.
+ *
+ * Side effect: for each depot whose score drops below 70, triggers a
+ * notification insert (fire-and-forget, deduped per calendar day per depot).
  */
 export function useDepotHealthScores() {
-  return useQuery<DepotHealthScoreData[]>({
+  const userId = useAuthStore((s) => s.user?.id ?? null);
+
+  const query = useQuery<DepotHealthScoreData[]>({
     queryKey: HEALTH_QUERY_KEYS.depots(),
     queryFn: async () => {
       const result = await getDepotHealthScores();
@@ -124,4 +192,40 @@ export function useDepotHealthScores() {
     },
     staleTime: HEALTH_STALE_TIME,
   });
+
+  // Fire-and-forget notification triggers for depots below 70
+  useEffect(() => {
+    const depots = query.data;
+    if (!depots || depots.length === 0 || !userId) return;
+
+    const atRiskDepots = depots.filter((d) => d.overallScore < 70);
+    if (atRiskDepots.length === 0) return;
+
+    void (async () => {
+      try {
+        const notifResult = await getNotifications();
+        if (!notifResult.success || !notifResult.data) return;
+        const existingNotifications = notifResult.data;
+
+        for (const depot of atRiskDepots) {
+          if (isSameDayNotification(existingNotifications, 'health_score', depot.depotId)) {
+            continue;
+          }
+
+          await createNotification({
+            userId,
+            type: 'health_score',
+            title: `Depot Health At Risk: ${depot.depotName}`,
+            body: `${depot.depotName} health score has dropped to ${depot.overallScore}%`,
+            resourceId: depot.depotId,
+            resourceType: 'depot',
+          });
+        }
+      } catch (err) {
+        console.warn('[useDepotHealthScores] Failed to create health score notification:', err);
+      }
+    })();
+  }, [query.data, userId]);
+
+  return query;
 }

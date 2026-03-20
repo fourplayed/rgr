@@ -2,7 +2,8 @@
  * useHealthScore Hook Tests
  *
  * TDD tests for the fleet health score React Query hooks.
- * Covers: successful data fetch, error state, score computation, staleTime, query key structure.
+ * Covers: successful data fetch, error state, score computation, staleTime, query key structure,
+ *         and health score drop notification triggers.
  */
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -16,6 +17,8 @@ const mockGetOutstandingAssets = vi.fn();
 const mockGetHazardClearanceRate = vi.fn();
 const mockGetMaintenanceStats = vi.fn();
 const mockGetDepotHealthScores = vi.fn();
+const mockCreateNotification = vi.fn();
+const mockGetNotifications = vi.fn();
 
 vi.mock('@rgr/shared', () => ({
   getFleetStatistics: (...args: unknown[]) => mockGetFleetStatistics(...args),
@@ -23,6 +26,16 @@ vi.mock('@rgr/shared', () => ({
   getHazardClearanceRate: (...args: unknown[]) => mockGetHazardClearanceRate(...args),
   getMaintenanceStats: (...args: unknown[]) => mockGetMaintenanceStats(...args),
   getDepotHealthScores: (...args: unknown[]) => mockGetDepotHealthScores(...args),
+  createNotification: (...args: unknown[]) => mockCreateNotification(...args),
+  getNotifications: (...args: unknown[]) => mockGetNotifications(...args),
+}));
+
+// ── Mock useAuthStore ─────────────────────────────────────────────────────────
+
+vi.mock('@/stores/authStore', () => ({
+  useAuthStore: vi.fn((selector: (s: { user: { id: string } | null }) => unknown) =>
+    selector({ user: { id: 'user-test-123' } })
+  ),
 }));
 
 // ── Test wrapper with fresh QueryClient ───────────────────────────────────────
@@ -460,5 +473,285 @@ describe('useDepotHealthScores', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual([]);
+  });
+});
+
+// ── Notification trigger: useFleetHealthScore ─────────────────────────────────
+
+describe('useFleetHealthScore — notification triggers', () => {
+  /** Helper: sets up mocks for a fleet score below 70 (score = 50) */
+  function setupLowFleetScore() {
+    mockGetFleetStatistics.mockResolvedValue({
+      success: true,
+      data: { totalAssets: 100, activeAssets: 50, inMaintenance: 25, outOfService: 25, trailerCount: 70, dollyCount: 30 },
+      error: null,
+    });
+    // 50 outstanding → scanCompliance = 50
+    mockGetOutstandingAssets.mockResolvedValue({
+      success: true,
+      data: Array(50).fill({ id: 'x', assetNumber: 'X', category: 'trailer', status: 'serviced', lastScanDate: null, daysSinceLastScan: null, lastLocation: null }),
+      error: null,
+    });
+    // hazardClearance = 50
+    mockGetHazardClearanceRate.mockResolvedValue({ success: true, data: 50, error: null });
+    // maintenanceCurrency = 50
+    mockGetMaintenanceStats.mockResolvedValue({
+      success: true,
+      data: { total: 10, scheduled: 5, completed: 0, cancelled: 0, overdue: 5 },
+      error: null,
+    });
+  }
+
+  /** Helper: sets up mocks for a fleet score above 70 (score = 87) */
+  function setupHighFleetScore() {
+    mockGetFleetStatistics.mockResolvedValue({
+      success: true,
+      data: { totalAssets: 100, activeAssets: 80, inMaintenance: 10, outOfService: 10, trailerCount: 70, dollyCount: 30 },
+      error: null,
+    });
+    mockGetOutstandingAssets.mockResolvedValue({ success: true, data: Array(2).fill({ id: 'x', assetNumber: 'X', category: 'trailer', status: 'serviced', lastScanDate: null, daysSinceLastScan: null, lastLocation: null }), error: null });
+    mockGetHazardClearanceRate.mockResolvedValue({ success: true, data: 80, error: null });
+    mockGetMaintenanceStats.mockResolvedValue({
+      success: true,
+      data: { total: 50, scheduled: 30, completed: 15, cancelled: 5, overdue: 10 },
+      error: null,
+    });
+  }
+
+  it('calls createNotification when fleet score drops below 70', async () => {
+    setupLowFleetScore();
+    // No existing notifications today
+    mockGetNotifications.mockResolvedValue({ success: true, data: [], error: null });
+    mockCreateNotification.mockResolvedValue({ success: true, data: { id: 'notif-1' }, error: null });
+
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useFleetHealthScore(), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    // Wait for the async effect to fire
+    await waitFor(() => expect(mockCreateNotification).toHaveBeenCalled());
+
+    expect(mockCreateNotification).toHaveBeenCalledWith({
+      userId: 'user-test-123',
+      type: 'health_score',
+      title: 'Fleet Health At Risk',
+      body: 'Fleet health score has dropped to 50%',
+      resourceType: 'fleet',
+    });
+  });
+
+  it('does NOT call createNotification when fleet score is exactly 70', async () => {
+    mockGetFleetStatistics.mockResolvedValue({
+      success: true,
+      data: { totalAssets: 100, activeAssets: 80, inMaintenance: 10, outOfService: 10, trailerCount: 70, dollyCount: 30 },
+      error: null,
+    });
+    // 0 outstanding → scanCompliance = 100
+    mockGetOutstandingAssets.mockResolvedValue({ success: true, data: [], error: null });
+    // hazardClearance = 50
+    mockGetHazardClearanceRate.mockResolvedValue({ success: true, data: 50, error: null });
+    // 5 overdue out of 10 → maintenanceCurrency = 50
+    mockGetMaintenanceStats.mockResolvedValue({
+      success: true,
+      data: { total: 10, scheduled: 5, completed: 0, cancelled: 0, overdue: 5 },
+      error: null,
+    });
+
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useFleetHealthScore(), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    // score = round(100 * 0.4 + 50 * 0.4 + 50 * 0.2) = 70 → no notification
+    expect(result.current.data?.overallScore).toBe(70);
+
+    // Give async effects time to settle
+    await new Promise((r) => setTimeout(r, 50));
+    expect(mockCreateNotification).not.toHaveBeenCalled();
+  });
+
+  it('does NOT call createNotification when fleet score is above 70', async () => {
+    setupHighFleetScore();
+    mockGetNotifications.mockResolvedValue({ success: true, data: [], error: null });
+
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useFleetHealthScore(), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data?.overallScore).toBe(87);
+
+    await new Promise((r) => setTimeout(r, 50));
+    expect(mockCreateNotification).not.toHaveBeenCalled();
+  });
+
+  it('does NOT call createNotification when a same-day fleet notification already exists', async () => {
+    setupLowFleetScore();
+    const today = new Date().toISOString().slice(0, 10);
+    // Simulate an existing same-day health_score notification for fleet
+    mockGetNotifications.mockResolvedValue({
+      success: true,
+      data: [
+        {
+          id: 'existing-notif',
+          userId: 'user-test-123',
+          type: 'health_score',
+          title: 'Fleet Health At Risk',
+          body: 'Fleet health score has dropped to 45%',
+          resourceId: null,
+          resourceType: 'fleet',
+          read: false,
+          createdAt: `${today}T08:00:00Z`,
+        },
+      ],
+      error: null,
+    });
+
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useFleetHealthScore(), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    // Wait for async effect to run
+    await waitFor(() => expect(mockGetNotifications).toHaveBeenCalled());
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(mockCreateNotification).not.toHaveBeenCalled();
+  });
+});
+
+// ── Notification trigger: useDepotHealthScores ────────────────────────────────
+
+describe('useDepotHealthScores — notification triggers', () => {
+  const today = new Date().toISOString().slice(0, 10);
+
+  const LOW_DEPOT = {
+    depotId: 'depot-low',
+    depotName: 'Depot Low',
+    scanCompliance: 50,
+    hazardClearance: 50,
+    maintenanceCurrency: 50,
+    overallScore: 50,
+  };
+
+  const HIGH_DEPOT = {
+    depotId: 'depot-high',
+    depotName: 'Depot High',
+    scanCompliance: 95,
+    hazardClearance: 90,
+    maintenanceCurrency: 100,
+    overallScore: 93,
+  };
+
+  const LOW_DEPOT_2 = {
+    depotId: 'depot-low-2',
+    depotName: 'Depot Low 2',
+    scanCompliance: 40,
+    hazardClearance: 40,
+    maintenanceCurrency: 40,
+    overallScore: 40,
+  };
+
+  it('calls createNotification for a depot with score below 70', async () => {
+    mockGetDepotHealthScores.mockResolvedValue({
+      success: true,
+      data: [LOW_DEPOT],
+      error: null,
+    });
+    mockGetNotifications.mockResolvedValue({ success: true, data: [], error: null });
+    mockCreateNotification.mockResolvedValue({ success: true, data: { id: 'notif-depot-1' }, error: null });
+
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useDepotHealthScores(), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    await waitFor(() => expect(mockCreateNotification).toHaveBeenCalled());
+
+    expect(mockCreateNotification).toHaveBeenCalledWith({
+      userId: 'user-test-123',
+      type: 'health_score',
+      title: 'Depot Health At Risk: Depot Low',
+      body: 'Depot Low health score has dropped to 50%',
+      resourceId: 'depot-low',
+      resourceType: 'depot',
+    });
+  });
+
+  it('does NOT call createNotification for a depot with score >= 70', async () => {
+    mockGetDepotHealthScores.mockResolvedValue({
+      success: true,
+      data: [HIGH_DEPOT],
+      error: null,
+    });
+    mockGetNotifications.mockResolvedValue({ success: true, data: [], error: null });
+
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useDepotHealthScores(), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    await new Promise((r) => setTimeout(r, 50));
+    expect(mockCreateNotification).not.toHaveBeenCalled();
+  });
+
+  it('creates separate notifications for each depot below 70', async () => {
+    mockGetDepotHealthScores.mockResolvedValue({
+      success: true,
+      data: [LOW_DEPOT, HIGH_DEPOT, LOW_DEPOT_2],
+      error: null,
+    });
+    mockGetNotifications.mockResolvedValue({ success: true, data: [], error: null });
+    mockCreateNotification.mockResolvedValue({ success: true, data: { id: 'notif-x' }, error: null });
+
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useDepotHealthScores(), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    // Wait for both notifications to be created
+    await waitFor(() => expect(mockCreateNotification).toHaveBeenCalledTimes(2));
+
+    expect(mockCreateNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ resourceId: 'depot-low', resourceType: 'depot' })
+    );
+    expect(mockCreateNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ resourceId: 'depot-low-2', resourceType: 'depot' })
+    );
+    // High depot should NOT trigger notification
+    expect(mockCreateNotification).not.toHaveBeenCalledWith(
+      expect.objectContaining({ resourceId: 'depot-high' })
+    );
+  });
+
+  it('does NOT call createNotification for depot when same-day notification exists', async () => {
+    mockGetDepotHealthScores.mockResolvedValue({
+      success: true,
+      data: [LOW_DEPOT],
+      error: null,
+    });
+    // Existing same-day notification for this depot
+    mockGetNotifications.mockResolvedValue({
+      success: true,
+      data: [
+        {
+          id: 'existing-depot-notif',
+          userId: 'user-test-123',
+          type: 'health_score',
+          title: 'Depot Health At Risk: Depot Low',
+          body: 'Depot Low health score has dropped to 55%',
+          resourceId: 'depot-low',
+          resourceType: 'depot',
+          read: false,
+          createdAt: `${today}T09:00:00Z`,
+        },
+      ],
+      error: null,
+    });
+
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useDepotHealthScores(), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    await waitFor(() => expect(mockGetNotifications).toHaveBeenCalled());
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(mockCreateNotification).not.toHaveBeenCalled();
   });
 });
