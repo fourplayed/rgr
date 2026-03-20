@@ -16,7 +16,7 @@ export function ReportsContainer() {
   // can call onExportCsv() without needing to pass data back up.
   const handleExportCsv = useCallback(() => {
     logic.handleExportCsv(logic.outstandingAssets);
-  }, [logic]);
+  }, [logic.handleExportCsv, logic.outstandingAssets]);
 
   return (
     <ReportsPresenter
