@@ -165,7 +165,7 @@ export const VisionTopNav = React.memo<VisionTopNavProps>(({ className = '' }) =
   const bgStyle = {
     background: isDark
       ? 'linear-gradient(127.09deg, #060b28 19.41%, #0a0e23 76.65%)' // Original dark theme colors
-      : '#e5e7eb', // Light grey
+      : 'linear-gradient(to bottom, #0000CC, #000099)', // Blue gradient
     transition:
       'background 0.6s cubic-bezier(0.4, 0, 0.2, 1), border-bottom 0.6s cubic-bezier(0.4, 0, 0.2, 1), backdrop-filter 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
   };
@@ -309,41 +309,11 @@ export const VisionTopNav = React.memo<VisionTopNavProps>(({ className = '' }) =
           }
         }
 
-        /* A-Eye icon with color transitions */
+        /* A-Eye icon - static color */
         .a-eye-icon {
-          animation: iconColorFlow 8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+          color: #8a2be2;
           position: relative;
           z-index: 1;
-        }
-
-        @keyframes iconColorFlow {
-          0% {
-            color: #8a2be2;  /* Deep Purple */
-          }
-          12.5% {
-            color: #00bfff;  /* Deep Sky Blue */
-          }
-          25% {
-            color: #ff1493;  /* Deep Pink */
-          }
-          37.5% {
-            color: #00ffff;  /* Cyan */
-          }
-          50% {
-            color: #8a2be2;  /* Purple again */
-          }
-          62.5% {
-            color: #ff1493;  /* Pink again */
-          }
-          75% {
-            color: #00bfff;  /* Blue again */
-          }
-          87.5% {
-            color: #8a2be2;  /* Purple */
-          }
-          100% {
-            color: #8a2be2;  /* Complete cycle */
-          }
         }
 
         .a-eye-iridescent {

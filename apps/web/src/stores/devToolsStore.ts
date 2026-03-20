@@ -33,22 +33,22 @@ export interface PillarSettings {
 }
 
 const DEFAULT_LIGHT_GRADIENT: GradientColors = {
-  top: '#0f3a7a',
-  upperMiddle: '#1a4d9e',
-  lowerMiddle: '#2460b8',
-  bottom: '#0d3070',
+  top: '#0039bd',
+  upperMiddle: '#356ca7',
+  lowerMiddle: '#2380d7',
+  bottom: '#150578',
 };
 
 const DEFAULT_DARK_BG_GRADIENT: DarkBgGradient = {
-  top: '#529dff',
-  upperMiddle: '#0469c8',
-  lowerMiddle: '#0a0e43',
-  bottom: '#00114d',
+  top: '#023e7d',
+  upperMiddle: '#002855',
+  lowerMiddle: '#00122e',
+  bottom: '#001233',
 };
 
 const DEFAULT_PILLAR_SETTINGS: PillarSettings = {
-  topColor: '#3697f2',
-  bottomColor: '#3a8fdf',
+  topColor: '#979dac',
+  bottomColor: '#5c677d',
   intensity: 0.5,
   rotationSpeed: 0.1,
   glowAmount: 0.001,
@@ -58,7 +58,7 @@ const DEFAULT_PILLAR_SETTINGS: PillarSettings = {
 
 const DEFAULT_LIGHT_PILLAR_SETTINGS: PillarSettings = {
   topColor: '#ffffff',
-  bottomColor: '#d8eeff',
+  bottomColor: '#06bee1',
   intensity: 0.5,
   rotationSpeed: 0.1,
   glowAmount: 0.0005,

@@ -19,8 +19,7 @@ export const CARD_HEIGHT = 565;
 export const CARD_STYLES = {
   // Card styling - Light (chrome glassmorphism)
   light: {
-    background:
-      'linear-gradient(160deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 100%)',
+    background: 'rgba(0, 0, 0, 0.15)',
     backdropFilter: 'blur(100px)',
     WebkitBackdropFilter: 'blur(100px)',
     borderRadius: '0',

@@ -94,6 +94,16 @@ const LIGHT_THEME_COLORS: Record<string, string> = {
 
 const DEFAULT_DEPOT_COLOR = '#9ca3af';
 
+/** Log-scale mapping from cluster count → badge size + font size */
+function clusterSize(count: number): { size: number; fontSize: number } {
+  const MIN_SIZE = 28, MAX_SIZE = 52, MIN_FONT = 10, MAX_FONT = 16;
+  const t = Math.min(Math.log(count) / Math.log(50), 1);
+  return {
+    size: Math.round(MIN_SIZE + t * (MAX_SIZE - MIN_SIZE)),
+    fontSize: Math.round(MIN_FONT + t * (MAX_FONT - MIN_FONT)),
+  };
+}
+
 /** Convert Depot records to DepotLocation format for map rendering */
 function toDepotLocations(depots: Depot[]): DepotLocation[] {
   return depots
@@ -375,12 +385,12 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         string,
         { stem: number; anchor: 'west' | 'east' | 'center'; z: number }
       > = {
-        Perth: { stem: 45, anchor: 'east', z: 16 },
-        Wubin: { stem: 85, anchor: 'east', z: 14 },
-        Newman: { stem: 45, anchor: 'east', z: 12 },
-        Hedland: { stem: 48, anchor: 'east', z: 16 },
-        Karratha: { stem: 88, anchor: 'east', z: 14 },
-        Carnarvon: { stem: 45, anchor: 'east', z: 12 },
+        Perth: { stem: 55, anchor: 'east', z: 16 },
+        Wubin: { stem: 55, anchor: 'east', z: 14 },
+        Newman: { stem: 55, anchor: 'east', z: 12 },
+        Hedland: { stem: 55, anchor: 'east', z: 16 },
+        Karratha: { stem: 55, anchor: 'east', z: 14 },
+        Carnarvon: { stem: 55, anchor: 'east', z: 12 },
       };
 
       depotLocations.forEach((depot: DepotLocation) => {
@@ -389,7 +399,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         const safeName = escapeHtml(depot.name);
         const safeTrailers = escapeHtml(String(depot.trailers));
         const safeDollies = escapeHtml(String(depot.dollies));
-        const layout = depotLayout[depot.name] ?? { stem: 68, anchor: 'center', z: 10 };
+        const layout = depotLayout[depot.name] ?? { stem: 55, anchor: 'center', z: 10 };
 
         const offsetX =
           layout.anchor === 'west' ? '-100%' : layout.anchor === 'east' ? '0%' : '-50%';
@@ -409,12 +419,12 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         el.style.cssText = `margin: 0; padding: 0; line-height: 0; z-index: ${layout.z};`;
         el.innerHTML = `
         <div style="display: flex; flex-direction: column; align-items: center; position: relative; margin: 0; padding: 0; perspective: 400px;">
-          <div style="width: 2px; height: ${layout.stem}px; background: linear-gradient(to bottom, ${depotColor}cc, ${depotColor}44 70%, transparent); pointer-events: none;"></div>
-          <div style="position: absolute; top: 0; width: 4px; height: ${layout.stem}px; background: linear-gradient(to bottom, ${depotColor}25, ${depotColor}0a 60%, transparent); filter: blur(2px); pointer-events: none; left: 50%; transform: translateX(-50%);"></div>
-          <div class="depot-label-wrap" style="position: absolute; top: -7px; left: 50%; transform: translateX(${offsetX}); display: inline-flex; align-items: center; pointer-events: auto; cursor: pointer;">
-            <span class="depot-label" style="position: relative; z-index: 1; color: white; font-family: 'Lato', sans-serif; font-size: 14px; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; text-shadow: 0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.6); background: ${depotColor}cc; border: 1px solid ${depotColor}; padding: 8px 10px 12px 10px; border-radius: 8px; backdrop-filter: blur(4px);">${safeName}</span>
+          <div style="width: 2px; height: ${layout.stem}px; background: linear-gradient(to bottom, ${depotColor}dd, ${depotColor}99 25%, ${depotColor}55 55%, ${depotColor}22 80%, transparent); pointer-events: none;"></div>
+          <div style="position: absolute; top: 0; width: 6px; height: ${layout.stem}px; background: linear-gradient(to bottom, ${depotColor}20, ${depotColor}08 65%, transparent); filter: blur(3px); pointer-events: none; left: 50%; transform: translateX(-50%);"></div>
+          <div class="depot-label-wrap" style="position: absolute; top: -7px; left: 50%; transform: translateX(${offsetX}); display: none; align-items: center; pointer-events: auto; cursor: pointer;">
+            <span class="depot-label" style="position: relative; z-index: 1; color: white; font-family: 'Lato', sans-serif; font-size: 14px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,0.8); background: ${depotColor}d0; border: 1px solid ${depotColor}60; padding: 6px 12px 7px 12px; border-radius: 8px; backdrop-filter: blur(8px); box-shadow: 0 2px 8px rgba(0,0,0,0.3), 0 0 1px rgba(255,255,255,0.1) inset;">${safeName}</span>
           </div>
-          <div class="depot-tooltip" style="position: absolute; top: -7px; ${tipPosition} ${tipOrigin} ${tipHidden} line-height: 1.4; white-space: nowrap; color: white; font-family: 'Lato', sans-serif; font-size: 12px; font-weight: 600; background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: none; padding: 0; ${tipRadius} opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease; pointer-events: none; overflow: hidden;">
+          <div class="depot-tooltip" style="position: absolute; top: -7px; ${tipPosition} ${tipOrigin} ${tipHidden} line-height: 1.4; white-space: nowrap; color: white; font-family: 'Lato', sans-serif; font-size: 12px; font-weight: 600; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); padding: 0; ${tipRadius} opacity: 0; transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.3);">
             <div style="display: grid; grid-template-columns: auto auto; line-height: 1;">
               <div style="padding: 8px 10px; border-right: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1); color: ${tipTextColor};">TL</div>
               <div style="padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.1); color: ${tipTextColor}; font-weight: 800;">${safeTrailers}</div>
@@ -422,7 +432,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
               <div style="padding: 8px 10px; color: ${tipTextColor}; font-weight: 800;">${safeDollies}</div>
             </div>
           </div>
-          <div style="width: 5px; height: 5px; border-radius: 50%; background-color: ${depotColor}; box-shadow: 0 0 6px ${depotColor}, 0 0 12px ${depotColor}80; cursor: pointer; flex-shrink: 0;"></div>
+          <div style="width: 6px; height: 6px; border-radius: 50%; background: radial-gradient(circle, white 30%, ${depotColor} 70%); box-shadow: 0 0 4px ${depotColor}, 0 0 8px ${depotColor}80, 0 0 16px ${depotColor}40; cursor: pointer; flex-shrink: 0;"></div>
         </div>
       `;
 
@@ -459,11 +469,12 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         el.className = 'fleet-marker';
 
         if (isCluster) {
-          // Cluster marker
+          // Cluster marker - scale size by count
+          const cs = clusterSize(cluster.count);
           el.innerHTML = `
-          <div class="flex items-center justify-center w-8 h-8 rounded-full cursor-pointer transition-transform hover:scale-125"
-               style="background-color: ${statusColor}; box-shadow: 0 0 12px ${statusColor}80;">
-            <span class="text-white text-xs font-bold">${cluster.count}</span>
+          <div class="flex items-center justify-center rounded-full cursor-pointer transition-transform hover:scale-110"
+               style="width: ${cs.size}px; height: ${cs.size}px; background-color: ${statusColor}; box-shadow: 0 0 ${Math.round(cs.size * 0.4)}px ${statusColor}80;">
+            <span class="text-white font-bold" style="font-size: ${cs.fontSize}px;">${cluster.count}</span>
           </div>
         `;
         } else {
@@ -515,8 +526,9 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
           popupRoots.current.push({ root, asset: representativeAsset });
         }
 
+        const popupOffset = isCluster ? Math.round(clusterSize(cluster.count).size / 2 + 4) : 14;
         const popup = new mapboxgl.Popup({
-          offset: [0, -20],
+          offset: [0, -popupOffset],
           closeButton: false,
           closeOnClick: false,
           className: 'asset-hover-popup',
@@ -674,6 +686,10 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         }
         .depot-marker {
           z-index: 10;
+        }
+        .depot-label-wrap:hover .depot-label {
+          filter: brightness(1.15);
+          transition: filter 0.2s ease;
         }
         .depot-label-wrap:hover ~ .depot-tooltip,
         .depot-tooltip:hover {

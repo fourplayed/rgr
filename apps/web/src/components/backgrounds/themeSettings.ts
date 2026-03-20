@@ -21,10 +21,10 @@ export interface ThemeSettings {
 
 export const DEFAULT_SETTINGS: ThemeSettings = {
   backgroundColors: [
-    '#a7c3ec', // Soft blue top
-    '#90bbea', // Light sky upper mid
-    '#2460b8', // Bright blue lower mid
-    '#0d3070', // Deep blue bottom
+    '#0039bd', // Top
+    '#356ca7', // Upper mid
+    '#2380d7', // Lower mid
+    '#150578', // Bottom
   ],
   backgroundLocations: [0, 0.33, 0.66, 1],
   starColor: NORD_SNOW_STORM.nord4,
@@ -35,10 +35,10 @@ export const DEFAULT_SETTINGS: ThemeSettings = {
 
 export const DARK_THEME_SETTINGS: ThemeSettings = {
   backgroundColors: [
-    '#529dff', // Top
-    '#0469c8', // Upper mid
-    '#0a0e43', // Lower mid - deep navy
-    '#00114d', // Bottom - darkest navy
+    '#023e7d', // Top - regal navy
+    '#002855', // Upper mid - prussian blue
+    '#00122e', // Lower mid - deep navy
+    '#001233', // Bottom - prussian blue 3
   ],
   backgroundLocations: [0, 0.33, 0.66, 1],
   starColor: 'rgba(255, 255, 255, 0.4)',

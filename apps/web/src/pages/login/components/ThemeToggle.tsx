@@ -25,7 +25,7 @@ export function ThemeToggle({ isDark, onToggle }: ThemeToggleProps) {
       ) : (
         <>
           <style>{`
-            .moon-light-gray { color: #d1d5db; }
+            .moon-light-gray { color: #0a1a4a; }
             .group:hover .moon-light-gray {
               color: #0a1433;
               transform: scale(1.15) rotate(360deg);
