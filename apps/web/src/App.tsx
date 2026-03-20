@@ -12,6 +12,7 @@ import { PersistentBackground } from './components/backgrounds';
 const Login = lazy(() => import('./pages/Login'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Assets = lazy(() => import('./pages/Assets'));
+const Reports = lazy(() => import('./pages/Reports'));
 const StubPage = lazy(() => import('./pages/StubPage'));
 
 function createQueryClient() {
@@ -192,7 +193,7 @@ function App() {
                 path="/reports"
                 element={
                   <ProtectedRoute>
-                    <StubPage title="Reports" />
+                    <Reports />
                   </ProtectedRoute>
                 }
               />
