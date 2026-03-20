@@ -4,6 +4,7 @@
  */
 export { Stars } from './Stars';
 export { PersistentBackground } from './PersistentBackground';
+export { default as LightPillar } from './LightPillar';
 export {
   DEFAULT_SETTINGS,
   DARK_THEME_SETTINGS,

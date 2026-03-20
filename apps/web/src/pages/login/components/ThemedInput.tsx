@@ -24,8 +24,8 @@ export function ThemedInput({
 }: ThemedInputProps) {
   const inputId = id || name;
   const inputClasses = isDark
-    ? 'w-full px-4 py-3 rounded-lg text-white placeholder:text-gray-500 focus:outline-none transition-all duration-200 themed-input-dark themed-input'
-    : 'w-full px-4 py-3 rounded-lg text-slate-900 placeholder:text-white focus:outline-none transition-all duration-200 themed-input-light themed-input';
+    ? 'w-full px-4 py-3 rounded-lg text-white placeholder:text-white/60 focus:outline-none transition-all duration-200 themed-input-dark themed-input'
+    : 'w-full px-4 py-3 rounded-lg text-white placeholder:text-white/60 focus:outline-none transition-all duration-200 themed-input-light themed-input';
 
   // Use same simple border behavior for both themes
   const inputStyle = isDark ? INPUT_STYLES.dark : INPUT_STYLES.light;

@@ -1,11 +1,10 @@
 /**
  * DebugToolbar - Global debug toolbar
- * Contains console for error logging and gradient customizer.
+ * Contains console for error logging and workflow tracker.
  * Reads all state from useDevToolsStore — no props needed.
  * Rendered at the App level so it persists across route changes.
  */
 import { useState, useEffect } from 'react';
-import { GradientColorPicker } from './GradientColorPicker';
 import { useDevToolsStore } from '@/stores/devToolsStore';
 import { useTheme } from '@/hooks/useTheme';
 
@@ -22,22 +21,28 @@ interface LogEntry {
 export function DebugToolbar() {
   const { isDark } = useTheme();
 
-  // Gradient state from global store
-  const lightGradient = useDevToolsStore((s) => s.lightGradient);
-  const darkGradient = useDevToolsStore((s) => s.darkGradient);
-  const setLightGradient = useDevToolsStore((s) => s.setLightGradient);
-  const setDarkGradient = useDevToolsStore((s) => s.setDarkGradient);
-  const defaultLightGradient = useDevToolsStore((s) => s.defaultLightGradient);
-  const defaultDarkGradient = useDevToolsStore((s) => s.defaultDarkGradient);
-
   // Workflow state from global store
   const workflowSteps = useDevToolsStore((s) => s.workflowSteps);
   const workflowComplete = useDevToolsStore((s) => s.workflowComplete);
   const clearWorkflow = useDevToolsStore((s) => s.clearWorkflow);
 
-  const gradient = isDark ? darkGradient : lightGradient;
-  const setGradient = isDark ? setDarkGradient : setLightGradient;
-  const defaults = isDark ? defaultDarkGradient : defaultLightGradient;
+  // BG gradient state
+  const lightGradient = useDevToolsStore((s) => s.lightGradient);
+  const darkBgGradient = useDevToolsStore((s) => s.darkBgGradient);
+  const setLightGradient = useDevToolsStore((s) => s.setLightGradient);
+  const setDarkBgGradient = useDevToolsStore((s) => s.setDarkBgGradient);
+  const defaultLightGradient = useDevToolsStore((s) => s.defaultLightGradient);
+  const defaultDarkBgGradient = useDevToolsStore((s) => s.defaultDarkBgGradient);
+
+  // Pillar settings state
+  const pillarSettings = useDevToolsStore((s) => s.pillarSettings);
+  const setPillarSettings = useDevToolsStore((s) => s.setPillarSettings);
+  const defaultPillarSettings = useDevToolsStore((s) => s.defaultPillarSettings);
+
+  // Light pillar settings state
+  const lightPillarSettings = useDevToolsStore((s) => s.lightPillarSettings);
+  const setLightPillarSettings = useDevToolsStore((s) => s.setLightPillarSettings);
+  const defaultLightPillarSettings = useDevToolsStore((s) => s.defaultLightPillarSettings);
 
   // Persist panel state across remounts
   const [isOpen, setIsOpen] = useState(() => {
@@ -45,11 +50,9 @@ export function DebugToolbar() {
     return stored ? JSON.parse(stored) : false;
   });
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [activeTab, setActiveTab] = useState<'console' | 'gradient' | 'workflow'>(() => {
+  const [activeTab, setActiveTab] = useState<'console' | 'workflow' | 'bg'>(() => {
     const stored = localStorage.getItem('debug-toolbar-tab');
-    return stored === 'console' || stored === 'gradient' || stored === 'workflow'
-      ? stored
-      : 'console';
+    return stored === 'console' || stored === 'workflow' || stored === 'bg' ? stored : 'console';
   });
 
   // Persist panel state to localStorage so it doesn't auto-close
@@ -193,26 +196,6 @@ export function DebugToolbar() {
             Console ({logs.length})
           </button>
           <button
-            onClick={() => setActiveTab('gradient')}
-            className="px-3 py-1 rounded text-sm font-medium transition-colors"
-            style={{
-              background: activeTab === 'gradient' ? tabActiveBg : 'transparent',
-              color: textColor,
-            }}
-            onMouseEnter={(e) => {
-              if (activeTab !== 'gradient') {
-                e.currentTarget.style.background = tabHoverBg;
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (activeTab !== 'gradient') {
-                e.currentTarget.style.background = 'transparent';
-              }
-            }}
-          >
-            BG Gradient
-          </button>
-          <button
             onClick={() => setActiveTab('workflow')}
             className="px-3 py-1 rounded text-sm font-medium transition-colors"
             style={{
@@ -233,9 +216,33 @@ export function DebugToolbar() {
             Workflow {workflowSteps.length > 0 && `(${workflowSteps.length})`}
           </button>
           <button
+            onClick={() => setActiveTab('bg')}
+            className="px-3 py-1 rounded text-sm font-medium transition-colors"
+            style={{
+              background: activeTab === 'bg' ? tabActiveBg : 'transparent',
+              color: textColor,
+            }}
+            onMouseEnter={(e) => {
+              if (activeTab !== 'bg') e.currentTarget.style.background = tabHoverBg;
+            }}
+            onMouseLeave={(e) => {
+              if (activeTab !== 'bg') e.currentTarget.style.background = 'transparent';
+            }}
+          >
+            BG / Pillar
+          </button>
+          <button
             onClick={() => {
               if (activeTab === 'workflow') clearWorkflow();
-              else setLogs([]);
+              else if (activeTab === 'bg') {
+                if (isDark) {
+                  setDarkBgGradient({ ...defaultDarkBgGradient });
+                  setPillarSettings({ ...defaultPillarSettings });
+                } else {
+                  setLightGradient({ ...defaultLightGradient });
+                  setLightPillarSettings({ ...defaultLightPillarSettings });
+                }
+              } else setLogs([]);
             }}
             className="ml-auto px-3 py-1 rounded text-sm font-medium transition-colors"
             style={{
@@ -249,7 +256,7 @@ export function DebugToolbar() {
               e.currentTarget.style.background = 'transparent';
             }}
           >
-            Clear Logs
+            {activeTab === 'workflow' ? 'Clear' : activeTab === 'bg' ? 'Reset' : 'Clear Logs'}
           </button>
           <button
             onClick={() => setIsOpen(false)}
@@ -303,20 +310,126 @@ export function DebugToolbar() {
             </div>
           )}
 
-          {activeTab === 'gradient' && (
-            <div className="flex justify-center">
-              <GradientColorPicker
-                topColor={gradient.top}
-                upperMiddleColor={gradient.upperMiddle}
-                lowerMiddleColor={gradient.lowerMiddle}
-                bottomColor={gradient.bottom}
-                onTopColorChange={(c) => setGradient({ top: c })}
-                onUpperMiddleColorChange={(c) => setGradient({ upperMiddle: c })}
-                onLowerMiddleColorChange={(c) => setGradient({ lowerMiddle: c })}
-                onBottomColorChange={(c) => setGradient({ bottom: c })}
-                isDark={isDark}
-                defaultColors={defaults}
-              />
+          {activeTab === 'bg' && (
+            <div className="space-y-4 text-sm">
+              {isDark ? (
+                <>
+                  {/* Dark BG gradient */}
+                  <div>
+                    <div className="font-medium mb-2" style={{ color: textColor, opacity: 0.7 }}>Dark Background</div>
+                    {([
+                      { label: 'Top', key: 'top', val: darkBgGradient.top },
+                      { label: 'Upper Mid', key: 'upperMiddle', val: darkBgGradient.upperMiddle },
+                      { label: 'Lower Mid', key: 'lowerMiddle', val: darkBgGradient.lowerMiddle },
+                      { label: 'Bottom', key: 'bottom', val: darkBgGradient.bottom },
+                    ] as const).map(({ label, key, val }) => (
+                      <div key={key} className="flex items-center gap-2 mb-2">
+                        <label className="w-14 text-xs" style={{ color: textColor }}>{label}</label>
+                        <input type="color" value={val} onChange={(e) => setDarkBgGradient({ [key]: e.target.value })}
+                          className="w-8 h-8 rounded cursor-pointer border-0 p-0" style={{ background: 'transparent' }} />
+                        <input type="text" value={val} onChange={(e) => setDarkBgGradient({ [key]: e.target.value })}
+                          className="flex-1 px-2 py-1 text-xs rounded font-mono outline-none"
+                          style={{ color: textColor, background: 'rgba(0,0,0,0.4)' }} />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Light Pillar settings */}
+                  <div>
+                    <div className="font-medium mb-2" style={{ color: textColor, opacity: 0.7 }}>Light Pillar</div>
+                    {([
+                      { label: 'Top Color', key: 'topColor', type: 'color', val: pillarSettings.topColor },
+                      { label: 'Bottom Color', key: 'bottomColor', type: 'color', val: pillarSettings.bottomColor },
+                    ] as const).map(({ label, key, val }) => (
+                      <div key={key} className="flex items-center gap-2 mb-2">
+                        <label className="w-24 text-xs" style={{ color: textColor }}>{label}</label>
+                        <input type="color" value={val} onChange={(e) => setPillarSettings({ [key]: e.target.value })}
+                          className="w-8 h-8 rounded cursor-pointer border-0 p-0" style={{ background: 'transparent' }} />
+                        <input type="text" value={val} onChange={(e) => setPillarSettings({ [key]: e.target.value })}
+                          className="flex-1 px-2 py-1 text-xs rounded font-mono outline-none"
+                          style={{ color: textColor, background: 'rgba(0,0,0,0.4)' }} />
+                      </div>
+                    ))}
+                    {([
+                      { label: 'Intensity', key: 'intensity', min: 0, max: 2, step: 0.05 },
+                      { label: 'Rot. Speed', key: 'rotationSpeed', min: 0, max: 1, step: 0.01 },
+                      { label: 'Glow', key: 'glowAmount', min: 0, max: 0.02, step: 0.0001 },
+                      { label: 'Width', key: 'pillarWidth', min: 0.5, max: 6, step: 0.1 },
+                      { label: 'Height', key: 'pillarHeight', min: 0.05, max: 1, step: 0.01 },
+                    ] as const).map(({ label, key, min, max, step }) => (
+                      <div key={key} className="flex items-center gap-2 mb-2">
+                        <label className="w-24 text-xs" style={{ color: textColor }}>{label}</label>
+                        <input type="range" min={min} max={max} step={step}
+                          value={pillarSettings[key] as number}
+                          onChange={(e) => setPillarSettings({ [key]: parseFloat(e.target.value) })}
+                          className="flex-1" />
+                        <span className="w-12 text-xs text-right font-mono" style={{ color: textColor }}>
+                          {(pillarSettings[key] as number).toFixed(key === 'glowAmount' ? 4 : 2)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                /* Light theme controls */
+                <>
+                  {/* Light BG gradient */}
+                  <div>
+                    <div className="font-medium mb-2" style={{ color: textColor, opacity: 0.7 }}>Light Background</div>
+                    {([
+                      { label: 'Top', key: 'top' as const, val: lightGradient.top },
+                      { label: 'Upper Mid', key: 'upperMiddle' as const, val: lightGradient.upperMiddle },
+                      { label: 'Lower Mid', key: 'lowerMiddle' as const, val: lightGradient.lowerMiddle },
+                      { label: 'Bottom', key: 'bottom' as const, val: lightGradient.bottom },
+                    ]).map(({ label, key, val }) => (
+                      <div key={key} className="flex items-center gap-2 mb-2">
+                        <label className="w-20 text-xs" style={{ color: textColor }}>{label}</label>
+                        <input type="color" value={val} onChange={(e) => setLightGradient({ [key]: e.target.value })}
+                          className="w-8 h-8 rounded cursor-pointer border-0 p-0" style={{ background: 'transparent' }} />
+                        <input type="text" value={val} onChange={(e) => setLightGradient({ [key]: e.target.value })}
+                          className="flex-1 px-2 py-1 text-xs rounded font-mono outline-none"
+                          style={{ color: textColor, background: 'rgba(0,0,0,0.4)' }} />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Light Pillar settings */}
+                  <div>
+                    <div className="font-medium mb-2" style={{ color: textColor, opacity: 0.7 }}>Light Pillar</div>
+                    {([
+                      { label: 'Top Color', key: 'topColor', type: 'color', val: lightPillarSettings.topColor },
+                      { label: 'Bottom Color', key: 'bottomColor', type: 'color', val: lightPillarSettings.bottomColor },
+                    ] as const).map(({ label, key, val }) => (
+                      <div key={key} className="flex items-center gap-2 mb-2">
+                        <label className="w-24 text-xs" style={{ color: textColor }}>{label}</label>
+                        <input type="color" value={val} onChange={(e) => setLightPillarSettings({ [key]: e.target.value })}
+                          className="w-8 h-8 rounded cursor-pointer border-0 p-0" style={{ background: 'transparent' }} />
+                        <input type="text" value={val} onChange={(e) => setLightPillarSettings({ [key]: e.target.value })}
+                          className="flex-1 px-2 py-1 text-xs rounded font-mono outline-none"
+                          style={{ color: textColor, background: 'rgba(0,0,0,0.4)' }} />
+                      </div>
+                    ))}
+                    {([
+                      { label: 'Intensity', key: 'intensity', min: 0, max: 2, step: 0.05 },
+                      { label: 'Rot. Speed', key: 'rotationSpeed', min: 0, max: 1, step: 0.01 },
+                      { label: 'Glow', key: 'glowAmount', min: 0, max: 0.02, step: 0.0001 },
+                      { label: 'Width', key: 'pillarWidth', min: 0.5, max: 6, step: 0.1 },
+                      { label: 'Height', key: 'pillarHeight', min: 0.05, max: 1, step: 0.01 },
+                    ] as const).map(({ label, key, min, max, step }) => (
+                      <div key={key} className="flex items-center gap-2 mb-2">
+                        <label className="w-24 text-xs" style={{ color: textColor }}>{label}</label>
+                        <input type="range" min={min} max={max} step={step}
+                          value={lightPillarSettings[key] as number}
+                          onChange={(e) => setLightPillarSettings({ [key]: parseFloat(e.target.value) })}
+                          className="flex-1" />
+                        <span className="w-12 text-xs text-right font-mono" style={{ color: textColor }}>
+                          {(lightPillarSettings[key] as number).toFixed(key === 'glowAmount' ? 4 : 2)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           )}
 

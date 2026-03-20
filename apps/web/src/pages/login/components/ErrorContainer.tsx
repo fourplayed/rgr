@@ -7,14 +7,14 @@ import { CARD_HEIGHT } from '../styles';
 
 export interface ErrorContainerProps {
   errors: string[];
-  isDark?: boolean; // Optional - no longer used, kept for backward compatibility
+  onDismiss?: () => void;
 }
 
 /**
  * Error container displayed below card - absolutely positioned
  * Fades out automatically after 5 seconds
  */
-export function ErrorContainer({ errors }: ErrorContainerProps) {
+export function ErrorContainer({ errors, onDismiss }: ErrorContainerProps) {
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
@@ -25,11 +25,13 @@ export function ErrorContainer({ errors }: ErrorContainerProps) {
       // Set timer to fade out after 5 seconds
       const timer = setTimeout(() => {
         setIsVisible(false);
+        // Clear parent state after CSS transition completes (500ms)
+        setTimeout(() => onDismiss?.(), 500);
       }, 5000);
 
       return () => clearTimeout(timer);
     }
-  }, [errors]);
+  }, [errors, onDismiss]);
 
   if (errors.length === 0) return null;
 
@@ -52,25 +54,25 @@ export function ErrorContainer({ errors }: ErrorContainerProps) {
         pointerEvents: isVisible ? 'auto' : 'none',
       }}
     >
-      <div className="flex items-start gap-2">
-        <svg
-          className="h-5 w-5 flex-shrink-0 mt-0.5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-        <div className="space-y-1">
-          {errors.map((error, idx) => (
-            <p key={idx}>{error}</p>
-          ))}
-        </div>
+      <div className="space-y-1">
+        {errors.map((error, idx) => (
+          <div key={idx} className="flex items-start gap-2">
+            <svg
+              className="h-5 w-5 flex-shrink-0 mt-0.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <p>{error}</p>
+          </div>
+        ))}
       </div>
     </div>
   );

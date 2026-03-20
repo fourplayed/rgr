@@ -283,8 +283,6 @@ export function LoginFormCard({
           /* Light theme button - darker blue closer to #0000CC */
           .chrome-button-light {
             background: linear-gradient(135deg, #0000CC 0%, #0000AA 50%, #000088 100%);
-            background-size: 200% 200%;
-            background-position: 0% 50%;
             border: none;
             box-shadow: 0 2px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3), inset 0 -1px 2px rgba(0, 0, 0, 0.2);
           }
@@ -325,9 +323,9 @@ export function LoginFormCard({
             animation: shimmerSweep 2s ease-in-out infinite;
           }
 
-          /* Dark theme button - chrome gradient */
+          /* Dark theme button - dark navy */
           .chrome-button-dark {
-            background: #1e3a8a;
+            background: linear-gradient(to bottom, #1e3a8a 0%, #1a2d5f 100%);
             border: none;
             box-shadow: 0 2px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4), inset 0 -1px 2px rgba(0, 0, 0, 0.3);
           }
@@ -344,7 +342,7 @@ export function LoginFormCard({
             content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
+            background: linear-gradient(to bottom, #2a4e9e 0%, #1e4494 50%, #1a3a7a 100%);
             background-size: 200% 200%;
             background-position: 0% 50%;
             opacity: 0;
@@ -389,11 +387,12 @@ export function LoginFormCard({
           }
 
           .chrome-button-text {
-            transition: font-size 0.3s ease;
-          }
-
-          .chrome-button:hover .chrome-button-text {
-            font-size: 1.15rem;
+            font-family: 'Lato', sans-serif;
+            font-size: 1rem;
+            font-weight: 500;
+            -webkit-text-stroke: 0.4px white;
+            text-transform: uppercase;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3);
           }
 
           /* Respect reduced motion */
@@ -415,13 +414,12 @@ export function LoginFormCard({
           onMouseLeave={() => setIsButtonHovered(false)}
           className={`
             chrome-button ${isDark ? 'chrome-button-dark' : 'chrome-button-light'}
-            group w-full py-2 px-4 rounded-lg text-lg font-semibold text-white
+            group w-full py-2 px-4 rounded-lg text-base text-white
             ${isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:-translate-y-0.5 active:scale-y-75'}
             transition-all duration-300 ease-in-out
           `}
         >
           <span className="chrome-button-content">
-            {!isLoading && <AnimatedSignInIcon isHovered={isButtonHovered} size={24} />}
             <span className="chrome-button-text">
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2.5">
@@ -429,7 +427,10 @@ export function LoginFormCard({
                   {LOGIN_CONSTANTS.UI.LOADING_TEXT}
                 </span>
               ) : (
-                LOGIN_CONSTANTS.UI.SUBMIT_BUTTON_TEXT
+                <>
+                  {LOGIN_CONSTANTS.UI.SUBMIT_BUTTON_TEXT}
+                  <AnimatedSignInIcon isHovered={isButtonHovered} size={24} />
+                </>
               )}
             </span>
           </span>

@@ -39,13 +39,13 @@ export function AnimatedSignInIcon({
     // Initial animation after 500ms
     const initialTimer = setTimeout(() => {
       setShouldAnimate(true);
-      setTimeout(() => setShouldAnimate(false), 600); // Animation duration
+      setTimeout(() => setShouldAnimate(false), 1100); // Animation duration
     }, 500);
 
     // Repeat every 6 seconds
     const interval = setInterval(() => {
       setShouldAnimate(true);
-      setTimeout(() => setShouldAnimate(false), 600); // Animation duration
+      setTimeout(() => setShouldAnimate(false), 1100); // Animation duration
     }, 6000);
 
     return () => {
@@ -62,38 +62,45 @@ export function AnimatedSignInIcon({
          * ============================================================ */
 
         :root {
-          --icon-slide-duration: 0.6s;
+          --icon-slide-duration: 1.1s;
           --icon-rotate-duration: 0.5s;
-          --icon-position-left: calc(50% - 70px);
+          --icon-position-right: calc(50% - 70px);
         }
 
         /* Icon container - absolute positioning relative to button */
         .sign-in-icon {
           position: absolute;
-          left: var(--icon-position-left);
+          right: var(--icon-position-right);
+          top: 50%;
+          margin-top: -12px;
           transition: transform var(--icon-rotate-duration) cubic-bezier(0.34, 1.56, 0.64, 1);
           transform-origin: center;
           will-change: transform;
         }
 
-        /* Slide-in animation - GPU accelerated */
-        @keyframes slideInFromLeft {
+        /* Spin then slide-out animation */
+        @keyframes spinThenSlideOutSignIn {
           0% {
-            transform: translateX(-100px) scale(0.8);
-            opacity: 0;
+            transform: translateX(0) scale(1) rotate(0deg);
+            opacity: 1;
           }
-          50% {
+          55% {
+            transform: translateX(0) scale(1) rotate(360deg);
+            opacity: 1;
+          }
+          70% {
+            transform: translateX(10px) scale(1) rotate(360deg);
             opacity: 1;
           }
           100% {
-            transform: translateX(0) scale(1);
-            opacity: 1;
+            transform: translateX(70px) scale(0.8) rotate(360deg);
+            opacity: 0;
           }
         }
 
-        /* Apply slide-in animation when active */
+        /* Apply animation when active */
         .sign-in-icon.slide-active {
-          animation: slideInFromLeft var(--icon-slide-duration) cubic-bezier(0.34, 1.56, 0.64, 1);
+          animation: spinThenSlideOutSignIn 1.1s cubic-bezier(0.4, 0.0, 1, 1) forwards;
         }
 
         /* Hover rotation - 360° spin */

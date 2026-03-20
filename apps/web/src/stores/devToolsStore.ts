@@ -15,18 +15,55 @@ export interface GradientColors {
   bottom: string;
 }
 
+export interface DarkBgGradient {
+  top: string;
+  upperMiddle: string;
+  lowerMiddle: string;
+  bottom: string;
+}
+
+export interface PillarSettings {
+  topColor: string;
+  bottomColor: string;
+  intensity: number;
+  rotationSpeed: number;
+  glowAmount: number;
+  pillarWidth: number;
+  pillarHeight: number;
+}
+
 const DEFAULT_LIGHT_GRADIENT: GradientColors = {
-  top: '#4785ff',
-  upperMiddle: '#9eb1ff',
-  lowerMiddle: '#9ec8ff',
-  bottom: '#4e7adf',
+  top: '#0f3a7a',
+  upperMiddle: '#1a4d9e',
+  lowerMiddle: '#2460b8',
+  bottom: '#0d3070',
 };
 
-const DEFAULT_DARK_GRADIENT: GradientColors = {
-  top: '#5c69ff',
-  upperMiddle: '#1e2ea4',
-  lowerMiddle: '#15186f',
-  bottom: '#0d1359',
+const DEFAULT_DARK_BG_GRADIENT: DarkBgGradient = {
+  top: '#000060',
+  upperMiddle: '#0a1040',
+  lowerMiddle: '#050c28',
+  bottom: '#020510',
+};
+
+const DEFAULT_PILLAR_SETTINGS: PillarSettings = {
+  topColor: '#3697f2',
+  bottomColor: '#3a8fdf',
+  intensity: 0.5,
+  rotationSpeed: 0.1,
+  glowAmount: 0.001,
+  pillarWidth: 2,
+  pillarHeight: 0.25,
+};
+
+const DEFAULT_LIGHT_PILLAR_SETTINGS: PillarSettings = {
+  topColor: '#ffffff',
+  bottomColor: '#d8eeff',
+  intensity: 0.5,
+  rotationSpeed: 0.1,
+  glowAmount: 0.0005,
+  pillarWidth: 1.5,
+  pillarHeight: 0.25,
 };
 
 interface DevToolsState {
@@ -37,14 +74,25 @@ interface DevToolsState {
   setWorkflowComplete: (complete: boolean) => void;
   clearWorkflow: () => void;
 
-  // Gradient customizer
+  // Light background gradient
   lightGradient: GradientColors;
-  darkGradient: GradientColors;
   setLightGradient: (colors: Partial<GradientColors>) => void;
-  setDarkGradient: (colors: Partial<GradientColors>) => void;
-  resetGradient: (theme: 'light' | 'dark') => void;
   defaultLightGradient: GradientColors;
-  defaultDarkGradient: GradientColors;
+
+  // Dark background gradient
+  darkBgGradient: DarkBgGradient;
+  setDarkBgGradient: (colors: Partial<DarkBgGradient>) => void;
+  defaultDarkBgGradient: DarkBgGradient;
+
+  // Dark pillar settings
+  pillarSettings: PillarSettings;
+  setPillarSettings: (settings: Partial<PillarSettings>) => void;
+  defaultPillarSettings: PillarSettings;
+
+  // Light pillar settings
+  lightPillarSettings: PillarSettings;
+  setLightPillarSettings: (settings: Partial<PillarSettings>) => void;
+  defaultLightPillarSettings: PillarSettings;
 }
 
 export const useDevToolsStore = create<DevToolsState>((set) => ({
@@ -55,17 +103,26 @@ export const useDevToolsStore = create<DevToolsState>((set) => ({
   setWorkflowComplete: (complete) => set({ workflowComplete: complete }),
   clearWorkflow: () => set({ workflowSteps: [], workflowComplete: false }),
 
-  // Gradient
+  // Light gradient
   lightGradient: { ...DEFAULT_LIGHT_GRADIENT },
-  darkGradient: { ...DEFAULT_DARK_GRADIENT },
   setLightGradient: (colors) => set((s) => ({ lightGradient: { ...s.lightGradient, ...colors } })),
-  setDarkGradient: (colors) => set((s) => ({ darkGradient: { ...s.darkGradient, ...colors } })),
-  resetGradient: (theme) =>
-    set(
-      theme === 'light'
-        ? { lightGradient: { ...DEFAULT_LIGHT_GRADIENT } }
-        : { darkGradient: { ...DEFAULT_DARK_GRADIENT } }
-    ),
   defaultLightGradient: DEFAULT_LIGHT_GRADIENT,
-  defaultDarkGradient: DEFAULT_DARK_GRADIENT,
+
+  // Dark bg gradient
+  darkBgGradient: { ...DEFAULT_DARK_BG_GRADIENT },
+  setDarkBgGradient: (colors) =>
+    set((s) => ({ darkBgGradient: { ...s.darkBgGradient, ...colors } })),
+  defaultDarkBgGradient: DEFAULT_DARK_BG_GRADIENT,
+
+  // Dark pillar settings
+  pillarSettings: { ...DEFAULT_PILLAR_SETTINGS },
+  setPillarSettings: (settings) =>
+    set((s) => ({ pillarSettings: { ...s.pillarSettings, ...settings } })),
+  defaultPillarSettings: DEFAULT_PILLAR_SETTINGS,
+
+  // Light pillar settings
+  lightPillarSettings: { ...DEFAULT_LIGHT_PILLAR_SETTINGS },
+  setLightPillarSettings: (settings) =>
+    set((s) => ({ lightPillarSettings: { ...s.lightPillarSettings, ...settings } })),
+  defaultLightPillarSettings: DEFAULT_LIGHT_PILLAR_SETTINGS,
 }));

@@ -249,7 +249,16 @@ export function LoginPresenter({
         />
 
         {/* Error container below card */}
-        <ErrorContainer errors={allErrors} isDark={isDark} />
+        <ErrorContainer
+          errors={allErrors}
+          onDismiss={() => {
+            if (showForgotPassword) {
+              setForgotPasswordError(null);
+            } else {
+              actions.clearErrors();
+            }
+          }}
+        />
       </div>
     </div>
   );

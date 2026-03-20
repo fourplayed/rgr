@@ -17,14 +17,14 @@ export const CARD_HEIGHT = 565;
  * Background gradient styles for light and dark themes
  */
 export const BACKGROUND_STYLES = {
-  // Light theme - Four-color gradient
+  // Light theme - Royal
   light: {
     background: `linear-gradient(
       to bottom,
-      #4785ff 0%,
-      #9eb1ff 33%,
-      #9ec8ff 66%,
-      #4e7adf 100%
+      #0f3a7a 0%,
+      #1a4d9e 33%,
+      #2460b8 66%,
+      #0d3070 100%
     )`,
     minHeight: '100vh',
     transition: 'background 1.2s cubic-bezier(0.4, 0.0, 0.2, 1)',
@@ -47,9 +47,9 @@ export const BACKGROUND_STYLES = {
  * Card styles for light and dark themes
  */
 export const CARD_STYLES = {
-  // Card styling - Light (glassmorphism with white)
+  // Card styling - Light (chrome glassmorphism)
   light: {
-    background: 'rgba(255, 255, 255, 0.15)',
+    background: 'linear-gradient(160deg, rgba(220,232,245,0.22) 0%, rgba(160,185,210,0.12) 50%, rgba(200,218,235,0.18) 100%)',
     backdropFilter: 'blur(100px)',
     WebkitBackdropFilter: 'blur(100px)',
     borderRadius: '0',
@@ -70,7 +70,7 @@ export const CARD_STYLES = {
   },
   // Card styling - Dark (glassmorphism with black)
   dark: {
-    background: 'rgba(0, 0, 0, 0.15)',
+    background: 'rgba(0, 0, 0, 0.35)',
     backdropFilter: 'blur(100px)',
     WebkitBackdropFilter: 'blur(100px)',
     borderRadius: '0',
@@ -105,7 +105,7 @@ export const INPUT_STYLES = {
   // Removed lightFocus - no longer used
   dark: {
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    border: '1px solid rgba(235, 235, 235, 0.15)',
+    border: '1px solid rgba(255, 255, 255, 0.38)',
     color: '#f8fafc',
     outline: 'none',
   },
