@@ -6,6 +6,7 @@
  * - Marker clustering for 100+ assets
  * - Filter by asset type, status, last scan date
  * - Asset details on marker click
+ * - Unified pin markers via createPinElement
  * - Performance optimized for large datasets
  */
 
@@ -22,17 +23,21 @@ import { createRoot } from 'react-dom/client';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { AssetHoverCard } from './AssetHoverCard';
+import { DepotHoverCard } from './DepotHoverCard';
+import { createPinElement } from './createPinElement';
 import { RGR_COLORS } from '@/styles/color-palette';
 import type { DepotLocation } from '@/constants/fleetMap';
 import type { AssetLocation } from '@/hooks/useFleetData';
 import { useDepots } from '@/hooks/useAssetData';
-import { escapeHtml, isValidHexColor } from '@rgr/shared';
+import { isValidHexColor } from '@rgr/shared';
 import type { Depot } from '@rgr/shared';
 
 export interface FleetMapHandle {
   zoomIn: () => void;
   zoomOut: () => void;
   fitBounds: () => void;
+  /** Convert [lng, lat] to pixel coordinates relative to the map container */
+  project: (lngLat: [number, number]) => { x: number; y: number } | null;
 }
 
 // Validate and set Mapbox access token
@@ -66,6 +71,8 @@ export interface FleetMapWithDataProps {
   className?: string;
   onAssetClick?: (assetId: string) => void;
   onMapLoad?: () => void;
+  /** Fires on every map move/zoom so overlays can reproject */
+  onViewChange?: () => void;
   isDark?: boolean;
   focusAssetId?: string | null;
   onFocusComplete?: (found: boolean) => void;
@@ -93,16 +100,6 @@ const LIGHT_THEME_COLORS: Record<string, string> = {
 };
 
 const DEFAULT_DEPOT_COLOR = '#9ca3af';
-
-/** Log-scale mapping from cluster count → badge size + font size */
-function clusterSize(count: number): { size: number; fontSize: number } {
-  const MIN_SIZE = 28, MAX_SIZE = 52, MIN_FONT = 10, MAX_FONT = 16;
-  const t = Math.min(Math.log(count) / Math.log(50), 1);
-  return {
-    size: Math.round(MIN_SIZE + t * (MAX_SIZE - MIN_SIZE)),
-    fontSize: Math.round(MIN_FONT + t * (MAX_FONT - MIN_FONT)),
-  };
-}
 
 /** Convert Depot records to DepotLocation format for map rendering */
 function toDepotLocations(depots: Depot[]): DepotLocation[] {
@@ -159,7 +156,6 @@ function clusterAssets(
     nearby.forEach((a) => used.add(a.id));
 
     if (nearby.length === 1) {
-      // Single asset - no cluster
       clusters.push({
         id: asset.id,
         lng: asset.longitude,
@@ -168,7 +164,6 @@ function clusterAssets(
         assets: [asset],
       });
     } else {
-      // Multiple assets - create cluster
       const avgLng = nearby.reduce((sum, a) => sum + a.longitude, 0) / nearby.length;
       const avgLat = nearby.reduce((sum, a) => sum + a.latitude, 0) / nearby.length;
       clusters.push({
@@ -194,6 +189,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
       className = '',
       onAssetClick,
       onMapLoad,
+      onViewChange,
       isDark = true,
       focusAssetId,
       onFocusComplete,
@@ -285,6 +281,11 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
           if (bounds.isEmpty()) return;
           map.current.fitBounds(bounds, { padding: 50 });
         },
+        project: (lngLat: [number, number]) => {
+          if (!map.current) return null;
+          const pt = map.current.project(lngLat as mapboxgl.LngLatLike);
+          return { x: pt.x, y: pt.y };
+        },
       }),
       [filteredAssets, depotLocations]
     );
@@ -299,6 +300,12 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
     useEffect(() => {
       onAssetClickRef.current = onAssetClick;
     }, [onAssetClick]);
+
+    // Store onViewChange in ref and fire on map move
+    const onViewChangeRef = useRef(onViewChange);
+    useEffect(() => {
+      onViewChangeRef.current = onViewChange;
+    }, [onViewChange]);
 
     // Stable reference to asset click handler
     const handleAssetClick = useCallback((assetId: string) => {
@@ -339,6 +346,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
           if (!isMounted) return;
           setMapLoaded(true);
           onMapLoad?.();
+          onViewChangeRef.current?.();
         });
 
         // Track zoom level for clustering
@@ -346,6 +354,11 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
           if (isMounted) {
             setCurrentZoom(mapInstance.getZoom());
           }
+        });
+
+        // Notify parent on every move so overlays can reproject
+        mapInstance.on('move', () => {
+          if (isMounted) onViewChangeRef.current?.();
         });
       } catch (error) {
         if (isMounted) {
@@ -380,69 +393,58 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
 
       const mapInstance = map.current;
 
-      // Per-depot layout: stem height, anchor side, z-index
-      const depotLayout: Record<
-        string,
-        { stem: number; anchor: 'west' | 'east' | 'center'; z: number }
-      > = {
-        Perth: { stem: 55, anchor: 'east', z: 16 },
-        Wubin: { stem: 55, anchor: 'east', z: 14 },
-        Newman: { stem: 55, anchor: 'east', z: 12 },
-        Hedland: { stem: 55, anchor: 'east', z: 16 },
-        Karratha: { stem: 55, anchor: 'east', z: 14 },
-        Carnarvon: { stem: 55, anchor: 'east', z: 12 },
+      // Per-depot z-index stacking
+      const depotZIndex: Record<string, number> = {
+        Perth: 16,
+        Wubin: 14,
+        Newman: 12,
+        Hedland: 16,
+        Karratha: 14,
+        Carnarvon: 12,
       };
 
       depotLocations.forEach((depot: DepotLocation) => {
         const depotColor = isValidHexColor(depot.color) ? depot.color : DEFAULT_DEPOT_COLOR;
-        const tipTextColor = depot.name === 'Newman' ? '#6366f1' : depotColor;
-        const safeName = escapeHtml(depot.name);
-        const safeTrailers = escapeHtml(String(depot.trailers));
-        const safeDollies = escapeHtml(String(depot.dollies));
-        const layout = depotLayout[depot.name] ?? { stem: 55, anchor: 'center', z: 10 };
+        const z = depotZIndex[depot.name] ?? 10;
 
-        const offsetX =
-          layout.anchor === 'west' ? '-100%' : layout.anchor === 'east' ? '0%' : '-50%';
+        const el = createPinElement({
+          color: depotColor,
+          label: depot.name,
+          stemHeight: 55,
+          dotSize: 6,
+          showRings: true,
+          zIndex: z,
+          labelStyle: 'depot',
+        });
 
-        const tipOnRight = layout.anchor === 'west';
-        const tipOrigin = tipOnRight
-          ? 'transform-origin: left center;'
-          : 'transform-origin: right center;';
-        const tipHidden = tipOnRight ? 'transform: rotateY(-90deg);' : 'transform: rotateY(90deg);';
-        const tipRadius = tipOnRight
-          ? 'border-radius: 0 8px 8px 0;'
-          : 'border-radius: 8px 0 0 8px;';
-        const tipPosition = tipOnRight ? 'left: 50%;' : 'right: calc(50% - 1px);';
+        // Create DepotHoverCard popup
+        const popupContainer = document.createElement('div');
+        const root = createRoot(popupContainer);
+        root.render(
+          <DepotHoverCard depot={depot} isDark={isDark} />
+        );
+        depotPopupRoots.current.push({ root, depot });
 
-        const el = document.createElement('div');
-        el.className = 'depot-marker';
-        el.style.cssText = `margin: 0; padding: 0; line-height: 0; z-index: ${layout.z};`;
-        el.innerHTML = `
-        <div style="display: flex; flex-direction: column; align-items: center; position: relative; margin: 0; padding: 0; perspective: 400px;">
-          <div style="width: 2px; height: ${layout.stem}px; background: linear-gradient(to bottom, ${depotColor}dd, ${depotColor}99 25%, ${depotColor}55 55%, ${depotColor}22 80%, transparent); pointer-events: none;"></div>
-          <div style="position: absolute; top: 0; width: 6px; height: ${layout.stem}px; background: linear-gradient(to bottom, ${depotColor}20, ${depotColor}08 65%, transparent); filter: blur(3px); pointer-events: none; left: 50%; transform: translateX(-50%);"></div>
-          <div class="depot-label-wrap" style="position: absolute; top: -7px; left: 50%; transform: translateX(${offsetX}); display: none; align-items: center; pointer-events: auto; cursor: pointer;">
-            <span class="depot-label" style="position: relative; z-index: 1; color: white; font-family: 'Lato', sans-serif; font-size: 14px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,0.8); background: ${depotColor}d0; border: 1px solid ${depotColor}60; padding: 6px 12px 7px 12px; border-radius: 8px; backdrop-filter: blur(8px); box-shadow: 0 2px 8px rgba(0,0,0,0.3), 0 0 1px rgba(255,255,255,0.1) inset;">${safeName}</span>
-          </div>
-          <div class="depot-tooltip" style="position: absolute; top: -7px; ${tipPosition} ${tipOrigin} ${tipHidden} line-height: 1.4; white-space: nowrap; color: white; font-family: 'Lato', sans-serif; font-size: 12px; font-weight: 600; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); padding: 0; ${tipRadius} opacity: 0; transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.3);">
-            <div style="display: grid; grid-template-columns: auto auto; line-height: 1;">
-              <div style="padding: 8px 10px; border-right: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1); color: ${tipTextColor};">TL</div>
-              <div style="padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.1); color: ${tipTextColor}; font-weight: 800;">${safeTrailers}</div>
-              <div style="padding: 8px 10px; border-right: 1px solid rgba(255,255,255,0.1); color: ${tipTextColor};">DL</div>
-              <div style="padding: 8px 10px; color: ${tipTextColor}; font-weight: 800;">${safeDollies}</div>
-            </div>
-          </div>
-          <div style="width: 6px; height: 6px; border-radius: 50%; background: radial-gradient(circle, white 30%, ${depotColor} 70%); box-shadow: 0 0 4px ${depotColor}, 0 0 8px ${depotColor}80, 0 0 16px ${depotColor}40; cursor: pointer; flex-shrink: 0;"></div>
-        </div>
-      `;
+        const popup = new mapboxgl.Popup({
+          offset: [0, -70],
+          closeButton: false,
+          closeOnClick: false,
+          className: 'depot-hover-popup',
+          maxWidth: 'none',
+        }).setDOMContent(popupContainer);
 
         const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
           .setLngLat([depot.lng, depot.lat])
+          .setPopup(popup)
           .addTo(mapInstance);
+
+        // Show popup on hover
+        el.addEventListener('mouseenter', () => mapInstance && popup.addTo(mapInstance));
+        el.addEventListener('mouseleave', () => popup.remove());
 
         depotMarkers.current.push(marker);
       });
-    }, [mapLoaded, depotLocations]);
+    }, [mapLoaded, depotLocations, isDark]);
 
     // Update markers when clusters change
     useEffect(() => {
@@ -465,25 +467,26 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
           ? STATUS_COLORS[representativeAsset.status] || '#6b7280'
           : LIGHT_THEME_COLORS[representativeAsset.status] || '#4b5563';
 
-        const el = document.createElement('div');
-        el.className = 'fleet-marker';
+        let el: HTMLDivElement;
 
         if (isCluster) {
-          // Cluster marker - scale size by count
-          const cs = clusterSize(cluster.count);
-          el.innerHTML = `
-          <div class="flex items-center justify-center rounded-full cursor-pointer transition-transform hover:scale-110"
-               style="width: ${cs.size}px; height: ${cs.size}px; background-color: ${statusColor}; box-shadow: 0 0 ${Math.round(cs.size * 0.4)}px ${statusColor}80;">
-            <span class="text-white font-bold" style="font-size: ${cs.fontSize}px;">${cluster.count}</span>
-          </div>
-        `;
+          // Cluster pin — count badge, no stem
+          el = createPinElement({
+            color: statusColor,
+            stemHeight: 0,
+            clusterCount: cluster.count,
+            zIndex: 5,
+          });
         } else {
-          // Single asset marker
-          el.innerHTML = `
-          <div class="w-3 h-3 rounded-full shadow-lg cursor-pointer transition-transform hover:scale-150"
-               style="background-color: ${statusColor}; box-shadow: 0 0 8px ${statusColor}80;">
-          </div>
-        `;
+          // Single asset pin — short stem, small dot
+          el = createPinElement({
+            color: statusColor,
+            stemHeight: 20,
+            dotSize: 4,
+            showRings: false,
+            zIndex: 5,
+            labelStyle: 'asset',
+          });
           el.addEventListener('click', () => handleAssetClick(representativeAsset.id));
         }
 
@@ -492,7 +495,6 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         const root = createRoot(popupContainer);
 
         if (isCluster) {
-          // Cluster popup - show count and assets
           root.render(
             <div
               className="p-3 rounded-lg backdrop-blur-sm border"
@@ -516,7 +518,6 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
             </div>
           );
         } else {
-          // Single asset popup
           root.render(
             <AssetHoverCard
               asset={{ name: representativeAsset.assetNumber, status: representativeAsset.status }}
@@ -526,7 +527,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
           popupRoots.current.push({ root, asset: representativeAsset });
         }
 
-        const popupOffset = isCluster ? Math.round(clusterSize(cluster.count).size / 2 + 4) : 14;
+        const popupOffset = isCluster ? 14 : 28;
         const popup = new mapboxgl.Popup({
           offset: [0, -popupOffset],
           closeButton: false,
@@ -573,7 +574,12 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         );
       });
 
-      // Depot text labels don't need theme updates (white on both themes)
+      // Update depot popup themes
+      depotPopupRoots.current.forEach(({ root, depot }) => {
+        root.render(
+          <DepotHoverCard depot={depot} isDark={isDark} />
+        );
+      });
     }, [isDark, mapLoaded]);
 
     // Toggle depot marker visibility based on Flag button + location filters
@@ -684,18 +690,8 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         .depot-hover-popup .mapboxgl-popup-tip {
           display: none !important;
         }
-        .depot-marker {
+        .pin-marker-el {
           z-index: 10;
-        }
-        .depot-label-wrap:hover .depot-label {
-          filter: brightness(1.15);
-          transition: filter 0.2s ease;
-        }
-        .depot-label-wrap:hover ~ .depot-tooltip,
-        .depot-tooltip:hover {
-          opacity: 1 !important;
-          transform: rotateY(0deg) !important;
-          pointer-events: auto !important;
         }
         .fleet-marker {
           z-index: 5;
