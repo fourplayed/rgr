@@ -123,8 +123,7 @@ describe('useReportsLogic', () => {
           status: 'active',
           lastScanDate: '2026-02-01',
           daysSinceLastScan: 47,
-          depotId: 'depot-1',
-          depotName: 'Main Depot',
+          lastLocation: null,
         },
       ];
 
@@ -157,8 +156,7 @@ describe('useReportsLogic', () => {
           status: 'idle',
           lastScanDate: null,
           daysSinceLastScan: null,
-          depotId: 'depot-1',
-          depotName: 'Main Depot',
+          lastLocation: null,
         },
       ];
 
@@ -200,8 +198,7 @@ describe('useReportsLogic', () => {
           status: 'active',
           lastScanDate: '2026-02-01',
           daysSinceLastScan: 47,
-          depotId: 'depot-1',
-          depotName: 'Main Depot',
+          lastLocation: null,
         },
       ];
 

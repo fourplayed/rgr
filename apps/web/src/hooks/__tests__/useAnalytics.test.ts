@@ -147,7 +147,7 @@ describe('useScanFrequency', () => {
     const cache = queryClient.getQueryCache().find({
       queryKey: ANALYTICS_QUERY_KEYS.scanFrequency('30d'),
     });
-    expect(cache?.options.staleTime).toBe(300_000);
+    expect((cache?.options as { staleTime?: number })?.staleTime).toBe(300_000);
   });
 
   it('refetches when timeRange changes', async () => {
@@ -156,7 +156,7 @@ describe('useScanFrequency', () => {
 
     const { result, rerender } = renderHook(
       ({ range }: { range: '7d' | '30d' | '90d' | '1y' }) => useScanFrequency(range),
-      { wrapper, initialProps: { range: '7d' as const } }
+      { wrapper, initialProps: { range: '7d' as '7d' | '30d' | '90d' | '1y' } }
     );
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -216,7 +216,7 @@ describe('useAssetUtilization', () => {
     const cache = queryClient.getQueryCache().find({
       queryKey: ANALYTICS_QUERY_KEYS.assetUtilization(),
     });
-    expect(cache?.options.staleTime).toBe(300_000);
+    expect((cache?.options as { staleTime?: number })?.staleTime).toBe(300_000);
   });
 });
 
@@ -266,7 +266,7 @@ describe('useHazardTrends', () => {
     const cache = queryClient.getQueryCache().find({
       queryKey: ANALYTICS_QUERY_KEYS.hazardTrends('30d'),
     });
-    expect(cache?.options.staleTime).toBe(300_000);
+    expect((cache?.options as { staleTime?: number })?.staleTime).toBe(300_000);
   });
 });
 
@@ -324,7 +324,7 @@ describe('useTimeBetweenScans', () => {
     const cache = queryClient.getQueryCache().find({
       queryKey: ANALYTICS_QUERY_KEYS.timeBetweenScans('30d'),
     });
-    expect(cache?.options.staleTime).toBe(300_000);
+    expect((cache?.options as { staleTime?: number })?.staleTime).toBe(300_000);
   });
 });
 
@@ -380,6 +380,6 @@ describe('useOutstandingAnalyticsAssets', () => {
     const cache = queryClient.getQueryCache().find({
       queryKey: ANALYTICS_QUERY_KEYS.outstandingAssets(),
     });
-    expect(cache?.options.staleTime).toBe(300_000);
+    expect((cache?.options as { staleTime?: number })?.staleTime).toBe(300_000);
   });
 });

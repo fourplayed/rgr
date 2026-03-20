@@ -20,8 +20,10 @@ jest.mock('../client', () => ({
 // Builds a fluent mock chain where the last call in the chain resolves to `value`.
 // Every intermediate method returns `chain` so any ordering of calls works.
 // The final `await` is intercepted by making chain thenable.
-function buildChain(resolvedValue: { data: unknown; error: unknown }) {
-  const chain: Record<string, unknown> = {};
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function buildChain(resolvedValue: { data: unknown; error: unknown }): any {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const chain: any = {};
 
   // Make the chain thenable so `await chain` resolves to resolvedValue
   chain.then = (
@@ -38,7 +40,7 @@ function buildChain(resolvedValue: { data: unknown; error: unknown }) {
   chain.not = jest.fn(() => chain);
   chain.in = jest.fn(() => chain);
 
-  return chain as Record<string, jest.Mock>;
+  return chain;
 }
 
 beforeEach(() => {
@@ -68,7 +70,7 @@ describe('getScanFrequency', () => {
     expect(march20?.count).toBe(1);
     // Sorted ascending by date
     if (data.length >= 2) {
-      expect(data[0].date <= data[data.length - 1].date).toBe(true);
+      expect(data[0]!.date <= data[data.length - 1]!.date).toBe(true);
     }
   });
 
@@ -328,13 +330,13 @@ describe('getOutstandingAnalyticsAssets', () => {
     expect(result.error).toBeNull();
     const assets = result.data!;
     expect(assets.length).toBe(1);
-    expect(assets[0].id).toBe('asset-1');
-    expect(assets[0].assetNumber).toBe('TRL-001');
-    expect(assets[0].category).toBe('trailer');
-    expect(assets[0].status).toBe('serviced');
-    expect(assets[0].lastScanDate).toBe('2026-01-01T00:00:00.000Z');
-    expect(assets[0].lastLocation).toBeNull(); // not in DB schema
-    expect(typeof assets[0].daysSinceLastScan).toBe('number');
+    expect(assets[0]!.id).toBe('asset-1');
+    expect(assets[0]!.assetNumber).toBe('TRL-001');
+    expect(assets[0]!.category).toBe('trailer');
+    expect(assets[0]!.status).toBe('serviced');
+    expect(assets[0]!.lastScanDate).toBe('2026-01-01T00:00:00.000Z');
+    expect(assets[0]!.lastLocation).toBeNull(); // not in DB schema
+    expect(typeof assets[0]!.daysSinceLastScan).toBe('number');
   });
 
   it('handles assets with null last_location_updated_at', async () => {
@@ -345,7 +347,7 @@ describe('getOutstandingAnalyticsAssets', () => {
     const result = await getOutstandingAnalyticsAssets();
 
     expect(result.success).toBe(true);
-    const asset = result.data![0];
+    const asset = result.data![0]!;
     expect(asset.lastScanDate).toBeNull();
     expect(asset.daysSinceLastScan).toBeNull();
     expect(asset.lastLocation).toBeNull();

@@ -401,7 +401,7 @@ describe('useFleetHealthScore', () => {
     const cache = queryClient.getQueryCache().find({
       queryKey: HEALTH_QUERY_KEYS.fleet(),
     });
-    expect(cache?.options.staleTime).toBe(2 * 60 * 1000);
+    expect((cache?.options as { staleTime?: number })?.staleTime).toBe(2 * 60 * 1000);
   });
 });
 
@@ -458,7 +458,7 @@ describe('useDepotHealthScores', () => {
     const cache = queryClient.getQueryCache().find({
       queryKey: HEALTH_QUERY_KEYS.depots(),
     });
-    expect(cache?.options.staleTime).toBe(2 * 60 * 1000);
+    expect((cache?.options as { staleTime?: number })?.staleTime).toBe(2 * 60 * 1000);
   });
 
   it('returns empty array when no depots are configured', async () => {

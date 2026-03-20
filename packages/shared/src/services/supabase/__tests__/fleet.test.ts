@@ -17,8 +17,10 @@ jest.mock('../client', () => ({
 // Builds a fluent mock chain where the last call in the chain resolves to `value`.
 // Every intermediate method returns `chain` so any ordering of calls works.
 // The final `await` is intercepted by making chain thenable.
-function buildChain(resolvedValue: { data: unknown; error: unknown }) {
-  const chain: Record<string, unknown> = {};
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function buildChain(resolvedValue: { data: unknown; error: unknown }): any {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const chain: any = {};
 
   // Make the chain thenable so `await chain` resolves to resolvedValue
   chain.then = (
@@ -40,7 +42,7 @@ function buildChain(resolvedValue: { data: unknown; error: unknown }) {
   chain.limit = jest.fn(() => chain);
   chain.neq = jest.fn(() => chain);
 
-  return chain as Record<string, jest.Mock>;
+  return chain;
 }
 
 beforeEach(() => {

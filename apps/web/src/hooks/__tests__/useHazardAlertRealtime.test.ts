@@ -78,7 +78,7 @@ function makeAlertPayload(severity: string, id = 'hazard-1', assetId = 'asset-x'
 /** Fire the realtime callback with a given payload, advancing fake timers past debounce */
 async function fireRealtimeEvent(payload: ReturnType<typeof makeAlertPayload>) {
   // The handler is the 3rd argument passed to .on(...)
-  const onCall = mockOn.mock.calls[0];
+  const onCall = mockOn.mock.calls[0]!;
   const realtimeCallback = onCall[2] as (p: unknown) => void;
 
   act(() => {
@@ -166,7 +166,7 @@ describe('useHazardAlertRealtime — notification trigger', () => {
       old: { status: 'active' },
     };
 
-    const onCall = mockOn.mock.calls[0];
+    const onCall = mockOn.mock.calls[0]!;
     const realtimeCallback = onCall[2] as (p: unknown) => void;
 
     act(() => {

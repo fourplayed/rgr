@@ -168,7 +168,7 @@ describe('useNotifications', () => {
     const cache = queryClient.getQueryCache().find({
       queryKey: NOTIFICATIONS_QUERY_KEYS.list(),
     });
-    expect(cache?.options.staleTime).toBe(0);
+    expect((cache?.options as { staleTime?: number })?.staleTime).toBe(0);
   });
 
   it('returns empty array when user has no notifications', async () => {
@@ -246,7 +246,7 @@ describe('useUnreadCount', () => {
     const cache = queryClient.getQueryCache().find({
       queryKey: NOTIFICATIONS_QUERY_KEYS.unreadCount(),
     });
-    expect(cache?.options.staleTime).toBe(0);
+    expect((cache?.options as { staleTime?: number })?.staleTime).toBe(0);
   });
 });
 
@@ -473,7 +473,7 @@ describe('Realtime subscription', () => {
     });
 
     // Extract the callback passed to .on(...)
-    const onCall = mockOn.mock.calls[0];
+    const onCall = mockOn.mock.calls[0]!;
     const realtimeCallback = onCall[2] as () => void;
 
     // Simulate an incoming realtime event

@@ -136,8 +136,8 @@ describe('getNotifications', () => {
     const result = await getNotifications();
 
     expect(result.success).toBe(true);
-    expect(result.data![0].resourceId).toBeNull();
-    expect(result.data![0].resourceType).toBeNull();
+    expect(result.data![0]!.resourceId).toBeNull();
+    expect(result.data![0]!.resourceType).toBeNull();
   });
 });
 
