@@ -94,7 +94,7 @@ export function useTimeBetweenScans(timeRange: AnalyticsTimeRange) {
 export function useOutstandingAnalyticsAssets() {
   return useQuery<AnalyticsOutstandingAsset[]>({
     queryKey: ANALYTICS_QUERY_KEYS.outstandingAssets(),
-    queryFn: queryFromService(getOutstandingAnalyticsAssets),
+    queryFn: queryFromService(() => getOutstandingAnalyticsAssets()),
     staleTime: ANALYTICS_STALE_TIME,
   });
 }
