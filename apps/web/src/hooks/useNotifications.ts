@@ -76,7 +76,8 @@ export function useNotifications() {
       if (!result.success) {
         throw new Error(result.error ?? 'Failed to fetch notifications');
       }
-      return result.data!;
+      if (result.data == null) throw new Error('Service returned no data');
+      return result.data;
     },
     staleTime: 0,
   });
@@ -96,7 +97,8 @@ export function useUnreadCount() {
       if (!result.success) {
         throw new Error(result.error ?? 'Failed to fetch unread count');
       }
-      return result.data!;
+      if (result.data == null) throw new Error('Service returned no data');
+      return result.data;
     },
     staleTime: 0,
   });

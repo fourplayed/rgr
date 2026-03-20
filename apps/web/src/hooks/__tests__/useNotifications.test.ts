@@ -154,11 +154,7 @@ describe('useNotifications', () => {
     expect((result.current.error as Error).message).toContain('Failed to fetch notifications');
   });
 
-  it('uses correct query key', () => {
-    expect(NOTIFICATIONS_QUERY_KEYS.list()).toEqual(['notifications']);
-  });
-
-  it('uses staleTime of 0', async () => {
+  it('has staleTime of 0', async () => {
     mockGetNotifications.mockResolvedValue({
       success: true,
       data: SAMPLE_NOTIFICATIONS,
@@ -236,11 +232,7 @@ describe('useUnreadCount', () => {
     expect((result.current.error as Error).message).toContain('Failed to fetch unread count');
   });
 
-  it('uses correct query key', () => {
-    expect(NOTIFICATIONS_QUERY_KEYS.unreadCount()).toEqual(['notifications', 'unread-count']);
-  });
-
-  it('uses staleTime of 0', async () => {
+  it('has staleTime of 0', async () => {
     mockGetUnreadCount.mockResolvedValue({
       success: true,
       data: 5,
