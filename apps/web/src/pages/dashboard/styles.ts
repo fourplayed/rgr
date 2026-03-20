@@ -13,11 +13,11 @@ export const NAV_BAR_STYLES = {
     boxShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
   },
   light: {
-    background: 'linear-gradient(to bottom, #c5d8f5, #6ca6e8, #3580d6, #5da3f0)',
-    backdropFilter: 'blur(24px)',
-    WebkitBackdropFilter: 'blur(24px)',
-    borderBottom: '1px solid rgba(148, 163, 184, 0.2)',
-    boxShadow: '0 4px 30px rgba(0, 0, 0, 0.08)',
+    background: 'linear-gradient(to bottom, #1A1A99, #2929CC, #1A1A99)',
+    backdropFilter: 'blur(24px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+    borderBottom: '1px solid rgba(255, 255, 255, 0.15)',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25), 0 8px 24px rgba(26, 26, 153, 0.2)',
   },
 } as const;
 
