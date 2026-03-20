@@ -35,10 +35,10 @@ export const DEFAULT_SETTINGS: ThemeSettings = {
 
 export const DARK_THEME_SETTINGS: ThemeSettings = {
   backgroundColors: [
-    '#023e7d', // Top - regal navy
-    '#002855', // Upper mid - prussian blue
-    '#00122e', // Lower mid - deep navy
-    '#001233', // Bottom - prussian blue 3
+    '#011234', // Top - deep midnight
+    '#164374', // Upper mid - ocean navy
+    '#050d33', // Lower mid - dark indigo
+    '#000f2e', // Bottom - abyss blue
   ],
   backgroundLocations: [0, 0.33, 0.66, 1],
   starColor: 'rgba(255, 255, 255, 0.4)',

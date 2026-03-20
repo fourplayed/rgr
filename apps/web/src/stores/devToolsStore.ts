@@ -40,19 +40,19 @@ const DEFAULT_LIGHT_GRADIENT: GradientColors = {
 };
 
 const DEFAULT_DARK_BG_GRADIENT: DarkBgGradient = {
-  top: '#023e7d',
-  upperMiddle: '#002855',
-  lowerMiddle: '#00122e',
-  bottom: '#001233',
+  top: '#011234',
+  upperMiddle: '#164374',
+  lowerMiddle: '#050d33',
+  bottom: '#000f2e',
 };
 
 const DEFAULT_PILLAR_SETTINGS: PillarSettings = {
-  topColor: '#979dac',
-  bottomColor: '#5c677d',
-  intensity: 0.5,
-  rotationSpeed: 0.1,
-  glowAmount: 0.001,
-  pillarWidth: 2,
+  topColor: '#228fa5',
+  bottomColor: '#00d5ff',
+  intensity: 1.35,
+  rotationSpeed: 0.08,
+  glowAmount: 0.0004,
+  pillarWidth: 3.1,
   pillarHeight: 0.25,
 };
 
