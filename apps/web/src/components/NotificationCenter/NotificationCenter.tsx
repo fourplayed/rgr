@@ -37,6 +37,7 @@ export const NotificationCenter: React.FC = () => {
   };
 
   const handleNavigate = (notification: Notification) => {
+    markRead.mutate(notification.id);
     setIsOpen(false);
     switch (notification.type) {
       case 'hazard':

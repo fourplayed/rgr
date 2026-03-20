@@ -72,11 +72,35 @@ describe('NotificationPanel', () => {
     expect(screen.getByTestId('mark-all-read-button')).toBeInTheDocument();
   });
 
-  it('calls onMarkAllRead when "Mark all read" button is clicked', () => {
+  it('calls onMarkAllRead when "Mark all read" button is clicked and there are unread notifications', () => {
     const onMarkAllRead = vi.fn();
-    render(<NotificationPanel {...defaultProps} onMarkAllRead={onMarkAllRead} />);
+    const unreadNotif = makeNotification({ id: 'unread-1', read: false });
+    render(
+      <NotificationPanel
+        {...defaultProps}
+        notifications={[unreadNotif]}
+        onMarkAllRead={onMarkAllRead}
+      />
+    );
     fireEvent.click(screen.getByTestId('mark-all-read-button'));
     expect(onMarkAllRead).toHaveBeenCalledTimes(1);
+  });
+
+  it('"Mark all read" button is disabled when there are no unread notifications', () => {
+    render(<NotificationPanel {...defaultProps} notifications={[]} />);
+    expect(screen.getByTestId('mark-all-read-button')).toBeDisabled();
+  });
+
+  it('"Mark all read" button is disabled when all notifications are read', () => {
+    const readNotif = makeNotification({ id: 'read-1', read: true });
+    render(<NotificationPanel {...defaultProps} notifications={[readNotif]} />);
+    expect(screen.getByTestId('mark-all-read-button')).toBeDisabled();
+  });
+
+  it('"Mark all read" button is enabled when at least one notification is unread', () => {
+    const unreadNotif = makeNotification({ id: 'unread-1', read: false });
+    render(<NotificationPanel {...defaultProps} notifications={[unreadNotif]} />);
+    expect(screen.getByTestId('mark-all-read-button')).not.toBeDisabled();
   });
 
   it('shows the close button and calls onClose when clicked', () => {
@@ -124,6 +148,17 @@ describe('NotificationPanel', () => {
     render(<NotificationPanel {...defaultProps} onClose={onClose} />);
     fireEvent.click(screen.getByTestId('panel-backdrop'));
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('panel has role="dialog" and aria-labelledby pointing to the heading', () => {
+    render(<NotificationPanel {...defaultProps} />);
+    const panel = screen.getByTestId('notification-panel');
+    expect(panel).toHaveAttribute('role', 'dialog');
+    expect(panel).toHaveAttribute('aria-labelledby', 'notifications-panel-title');
+    expect(screen.getByRole('heading', { name: 'Notifications' })).toHaveAttribute(
+      'id',
+      'notifications-panel-title'
+    );
   });
 
   it('passes onMarkRead and onNavigate down to notification rows', () => {

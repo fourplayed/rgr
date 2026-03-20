@@ -149,6 +149,19 @@ describe('NotificationRow', () => {
     expect(timeEl.textContent).toMatch(/3\s*d(ays?)?\s*ago/i);
   });
 
+  it('shows "1 day ago" (not "1 days ago") for a 1-day-old notification', () => {
+    const oneDayAgo = new Date(now.getTime() - 25 * 60 * 60 * 1000).toISOString();
+    render(
+      <NotificationRow
+        notification={makeNotification({ createdAt: oneDayAgo })}
+        onMarkRead={vi.fn()}
+        onNavigate={vi.fn()}
+      />
+    );
+    const timeEl = screen.getByTestId('notification-timestamp');
+    expect(timeEl.textContent).toBe('1 day ago');
+  });
+
   it('calls onNavigate with the notification when the row is clicked', () => {
     const onNavigate = vi.fn();
     const notification = makeNotification();

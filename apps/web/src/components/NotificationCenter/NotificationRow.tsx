@@ -51,7 +51,7 @@ function formatRelativeTime(isoString: string): string {
   if (diffHours < 24) return `${diffHours}h ago`;
 
   const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays} days ago`;
+  return diffDays === 1 ? '1 day ago' : `${diffDays} days ago`;
 }
 
 // ── Component ──────────────────────────────────────────────────────────────────

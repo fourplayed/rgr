@@ -72,6 +72,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
   onNavigate,
 }) => {
   const groups = groupNotifications(notifications);
+  const hasUnread = notifications.some((n) => !n.read);
   const hasAny =
     groups.today.length > 0 || groups.thisWeek.length > 0 || groups.older.length > 0;
 
@@ -94,6 +95,8 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
           {/* Panel */}
           <motion.div
             data-testid="notification-panel"
+            role="dialog"
+            aria-labelledby="notifications-panel-title"
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
@@ -109,13 +112,14 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-              <h2 className="text-sm font-semibold text-slate-200">Notifications</h2>
+              <h2 id="notifications-panel-title" className="text-sm font-semibold text-slate-200">Notifications</h2>
               <div className="flex items-center gap-2">
                 <button
                   data-testid="mark-all-read-button"
                   type="button"
                   onClick={onMarkAllRead}
-                  className="text-xs text-blue-400 hover:text-blue-300 transition-colors duration-150"
+                  disabled={!hasUnread}
+                  className="text-xs text-blue-400 hover:text-blue-300 transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Mark all read
                 </button>
