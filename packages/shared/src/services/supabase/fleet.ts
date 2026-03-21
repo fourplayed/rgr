@@ -82,6 +82,7 @@ interface AssetLocationRow {
   last_longitude: number | null;
   last_location_accuracy: number | null;
   last_location_updated_at: string | null;
+  depots: { name: string } | null;
 }
 
 // ── Fleet Statistics ──
@@ -265,7 +266,8 @@ export async function getAssetLocations(): Promise<ServiceResult<AssetLocation[]
       last_latitude,
       last_longitude,
       last_location_accuracy,
-      last_location_updated_at
+      last_location_updated_at,
+      depots:assigned_depot_id ( name )
     `
     )
     .is('deleted_at', null)
@@ -294,6 +296,7 @@ export async function getAssetLocations(): Promise<ServiceResult<AssetLocation[]
         longitude: row.last_longitude,
         accuracy: row.last_location_accuracy,
         lastUpdated: row.last_location_updated_at || '',
+        depot: row.depots?.name ?? null,
       });
     }
   }

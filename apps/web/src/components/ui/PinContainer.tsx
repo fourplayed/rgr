@@ -10,6 +10,8 @@ export const PinContainer = ({
   className,
   containerClassName,
   color,
+  assetCount,
+  onHoverChange,
 }: {
   children?: React.ReactNode;
   title?: string;
@@ -18,8 +20,17 @@ export const PinContainer = ({
   containerClassName?: string;
   /** Accent color for the stem, dot, and rings (CSS color name or value) */
   color?: string;
+  /** Number of assets at this depot — shown as a badge on the label */
+  assetCount?: number;
+  /** Called when hover state changes */
+  onHoverChange?: (hovered: boolean) => void;
 }) => {
   const [hovered, setHovered] = useState(false);
+
+  const handleHoverChange = (v: boolean) => {
+    setHovered(v);
+    onHoverChange?.(v);
+  };
 
   const transform = hovered
     ? "translate(-50%,-50%) rotateX(40deg) scale(0.8)"
@@ -48,7 +59,7 @@ export const PinContainer = ({
           </div>
         </div>
       )}
-      <PinPerspective title={title} href={href} color={color} hovered={hovered} setHovered={setHovered} />
+      <PinPerspective title={title} href={href} color={color} assetCount={assetCount} hovered={hovered} setHovered={handleHoverChange} />
     </div>
   );
 };
@@ -57,12 +68,14 @@ export const PinPerspective = ({
   title,
   href,
   color,
+  assetCount,
   hovered,
   setHovered,
 }: {
   title?: string | undefined;
   href?: string | undefined;
   color?: string | undefined;
+  assetCount?: number | undefined;
   hovered: boolean;
   setHovered: (v: boolean) => void;
 }) => {
@@ -77,19 +90,32 @@ export const PinPerspective = ({
   return (
     <motion.div className="pointer-events-none w-96 h-80 flex items-center justify-center z-[60]">
       <div className="w-full h-full -mt-7 flex-none inset-0">
-        {/* Label pill */}
+        {/* Label pill + count badge */}
         <div
           className="absolute inset-x-0 flex justify-center z-10 transition-all duration-500 ease-out"
           style={{ bottom: "50%", marginBottom: "30px" }}
         >
           <span
             className={cn(
-              "text-white text-sm font-bold py-0.5 px-3 rounded-full ring-1 ring-white/10 whitespace-nowrap transition-all duration-500",
+              "relative whitespace-nowrap text-white text-base font-bold py-0.5 px-3.5 rounded-full ring-1 ring-white/10 transition-all duration-500",
               hovered && "-translate-y-16"
             )}
             style={{ backgroundColor: `${c}d0`, textShadow: "0 1px 3px rgba(0,0,0,0.8), 0 0 6px rgba(0,0,0,0.4)" }}
           >
             {title}
+            {assetCount != null && assetCount > 0 && (
+              <span
+                className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center min-w-[40px] h-[40px] px-2 text-[18px] font-bold rounded-full text-white ring-1 ring-white/20"
+                style={{
+                  top: "calc(100% + 4px)",
+                  backgroundColor: '#1e293b',
+                  border: `2px solid ${c}`,
+                  boxShadow: `0 0 8px ${c}88`,
+                }}
+              >
+                {assetCount >= 1000 ? `${Math.round(assetCount / 1000)}k` : assetCount}
+              </span>
+            )}
           </span>
         </div>
 
@@ -167,6 +193,17 @@ export const PinPerspective = ({
               height: hovered ? "96px" : "32px",
             }}
           />
+          {/* Outer glow bloom at base */}
+          <motion.div
+            className="absolute right-1/2 translate-x-[1.5px] bottom-1/2 translate-y-[14px] rounded-full z-39 blur-[8px] transition-all duration-300"
+            style={{
+              background: c,
+              width: hovered ? "16px" : "10px",
+              height: hovered ? "16px" : "10px",
+              opacity: hovered ? 0.7 : 0.45,
+            }}
+          />
+          {/* Mid glow at base */}
           <motion.div
             className="absolute right-1/2 translate-x-[1.5px] bottom-1/2 translate-y-[14px] rounded-full z-40 blur-[3px] transition-all duration-300"
             style={{
@@ -175,12 +212,14 @@ export const PinPerspective = ({
               height: hovered ? "6px" : "4px",
             }}
           />
+          {/* Core dot at base */}
           <motion.div
             className="absolute right-1/2 translate-x-[0.5px] bottom-1/2 translate-y-[14px] rounded-full z-40 transition-all duration-300"
             style={{
               background: c,
               width: hovered ? "3px" : "2px",
               height: hovered ? "3px" : "2px",
+              boxShadow: `0 0 6px 2px ${c}88`,
             }}
           />
         </>
