@@ -1,12 +1,12 @@
 /**
  * StatCards - Row of 5 colored stat cards for dashboard overview
  *
- * Cards: Total Assets, Serviced Assets, Maintenance Tasks, AI Image Analysis, Out of Service
+ * Cards: Total Assets, Serviced Assets, Maintenance Tasks, Defects Reported, Out of Service
  * Each has a distinct background color, icon, count, title, and subtitle.
  * Shows glassmorphic skeleton placeholders while data is loading.
  */
 import React, { useMemo } from 'react';
-import { Package, CheckCircle, Wrench, Camera, XCircle } from 'lucide-react';
+import { Package, CheckCircle, Wrench, AlertTriangle, XCircle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useFleetStatistics } from '@/hooks/useFleetData';
 
@@ -39,14 +39,14 @@ const STAT_CARD_DEFS: StatCardDef[] = [
     statKey: 'inMaintenance',
     title: 'Maintenance Tasks',
     subtitle: 'still pending',
-    bg: '#e8a020',
+    bg: '#e07020',
   },
   {
-    icon: Camera,
+    icon: AlertTriangle,
     statKey: null,
-    title: 'AI Image Analysis',
-    subtitle: 'awaiting review',
-    bg: '#e07020',
+    title: 'Defects Reported',
+    subtitle: 'awaiting resolution',
+    bg: '#e8a020',
   },
   {
     icon: XCircle,
@@ -99,7 +99,7 @@ export const StatCards = React.memo<StatCardsProps>(({ isDark: _isDark }) => {
 
   if (isLoading) {
     return (
-      <div className="flex flex-wrap gap-4">
+      <div className="flex gap-4 w-full">
         {STAT_CARD_DEFS.map((def) => (
           <StatCardSkeleton key={def.title} bg={def.bg} />
         ))}
@@ -108,7 +108,7 @@ export const StatCards = React.memo<StatCardsProps>(({ isDark: _isDark }) => {
   }
 
   return (
-    <div className="flex flex-wrap gap-4">
+    <div className="flex gap-4 w-full">
       {cards.map((card) => {
         const Icon = card.icon;
         return (

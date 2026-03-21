@@ -1,0 +1,18 @@
+.glass-cursor-container {
+  position: relative;
+  overflow: hidden;
+  cursor: none;
+}
+
+.glass-cursor-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.glass-cursor-overlay {
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+}

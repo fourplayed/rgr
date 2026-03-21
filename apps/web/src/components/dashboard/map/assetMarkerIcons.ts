@@ -74,4 +74,5 @@ export function registerAssetIcons(map: mapboxgl.Map, _isDark: boolean): void {
     if (map.hasImage(hoverName)) map.removeImage(hoverName);
     map.addImage(hoverName, hoverCanvas.getContext('2d')!.getImageData(0, 0, ICON_W, HOVER_H), { pixelRatio: 2 });
   }
+
 }

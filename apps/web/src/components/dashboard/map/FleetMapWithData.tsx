@@ -285,8 +285,8 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
 
       try {
         const styleUrl = initialIsDark.current
-          ? import.meta.env['VITE_MAPBOX_STYLE_DARK'] || 'mapbox://styles/mapbox/dark-v11'
-          : import.meta.env['VITE_MAPBOX_STYLE_LIGHT'] || 'mapbox://styles/mapbox/light-v11';
+          ? import.meta.env['VITE_MAPBOX_STYLE_DARK'] || 'mapbox://styles/mapbox/standard'
+          : import.meta.env['VITE_MAPBOX_STYLE_LIGHT'] || 'mapbox://styles/mapbox/standard';
 
         currentStyleUrl.current = styleUrl;
 
@@ -361,6 +361,18 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
       return counts;
     }, [filteredAssets]);
 
+    // Group asset numbers by depot (for hover card)
+    const depotAssetNumbers = useMemo(() => {
+      const groups: Record<string, string[]> = {};
+      for (const asset of filteredAssets) {
+        if (asset.depot) {
+          if (!groups[asset.depot]) groups[asset.depot] = [];
+          groups[asset.depot].push(asset.assetNumber);
+        }
+      }
+      return groups;
+    }, [filteredAssets]);
+
     // Add depot markers when map is loaded and depot data is available
     useEffect(() => {
       if (!map.current || !mapLoaded || depotLocations.length === 0) return;
@@ -388,6 +400,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         const depotColor = isValidHexColor(depot.color) ? depot.color : DEFAULT_DEPOT_COLOR;
         const z = depotZIndex[depot.name] ?? 10;
         const count = depotAssetCounts[depot.name] || 0;
+        const assetNums = depotAssetNumbers[depot.name] || [];
 
         // Render PinContainer (React 3D pin) into a DOM element for Mapbox
         const el = document.createElement('div');
@@ -399,6 +412,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
             title={depotName}
             color={depotColor}
             assetCount={count}
+            assetNumbers={assetNums}
             onHoverChange={(h) => h ? startDepotPulse.current?.(depotName) : stopDepotPulse.current?.()}
           />
         );
@@ -410,24 +424,26 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
 
         depotMarkers.current.push(marker);
       });
-    }, [mapLoaded, depotLocations, isDark, depotAssetCounts]);
+    }, [mapLoaded, depotLocations, isDark, depotAssetCounts, depotAssetNumbers]);
 
     // Keep badge counts in sync with filtered data
     useEffect(() => {
       depotPopupRoots.current.forEach(({ root, depot }) => {
         const depotColor = isValidHexColor(depot.color) ? depot.color : DEFAULT_DEPOT_COLOR;
         const count = depotAssetCounts[depot.name] || 0;
+        const assetNums = depotAssetNumbers[depot.name] || [];
         const depotName = depot.name;
         root.render(
           <PinContainer
             title={depotName}
             color={depotColor}
             assetCount={count}
+            assetNumbers={assetNums}
             onHoverChange={(h) => h ? startDepotPulse.current?.(depotName) : stopDepotPulse.current?.()}
           />
         );
       });
-    }, [depotAssetCounts]);
+    }, [depotAssetCounts, depotAssetNumbers]);
 
     // Compute max asset radius in meters per depot (for pulse wave)
     const depotRadiusData = useMemo(() => {
@@ -458,8 +474,8 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
     useEffect(() => {
       if (!map.current || !mapLoaded || depotLocations.length === 0) return;
       const mapInstance = map.current;
-      if (!mapInstance.isStyleLoaded()) return;
 
+      const setupDepotPulse = () => {
       const emptyGeo: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };
 
       // GeoJSON source for all depot points (used by hitbox layer)
@@ -484,6 +500,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
           id: 'depot-hitbox-layer',
           type: 'circle',
           source: 'depot-points',
+          slot: 'top',
           paint: {
             'circle-radius': 24,
             'circle-color': 'transparent',
@@ -506,6 +523,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
             id: layerId,
             type: 'circle',
             source: 'depot-pulse',
+            slot: 'top',
             paint: {
               'circle-pitch-alignment': 'map',
               'circle-radius': 8,
@@ -526,6 +544,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
             id: layerId,
             type: 'circle',
             source: 'depot-pulse',
+            slot: 'top',
             paint: {
               'circle-pitch-alignment': 'map',
               'circle-radius': 1,
@@ -668,32 +687,37 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         mapInstance.off('mouseenter', 'depot-hitbox-layer', onDepotEnter);
         mapInstance.off('mouseleave', 'depot-hitbox-layer', onDepotLeave);
       };
+      }; // end setupDepotPulse
+
+      return setupDepotPulse();
     }, [mapLoaded, depotLocations, depotRadiusData, isDark]);
 
-    // Build GeoJSON FeatureCollection from filtered assets
+    // Build GeoJSON FeatureCollection from filtered assets (exclude depot-counted assets)
     const assetGeoJson = useMemo<GeoJSON.FeatureCollection<GeoJSON.Point>>(() => ({
       type: 'FeatureCollection',
-      features: filteredAssets.map((asset) => ({
-        type: 'Feature' as const,
-        geometry: {
-          type: 'Point' as const,
-          coordinates: [asset.longitude, asset.latitude],
-        },
-        properties: {
-          id: asset.id,
-          assetNumber: asset.assetNumber,
-          status: asset.status,
-          category: asset.category,
-          subtype: asset.subtype,
-          depot: asset.depot ?? '',
-          lastUpdated: asset.lastUpdated ?? '',
-        },
-      })),
+      features: filteredAssets
+        .filter((asset) => !asset.depot)
+        .map((asset) => ({
+          type: 'Feature' as const,
+          geometry: {
+            type: 'Point' as const,
+            coordinates: [asset.longitude, asset.latitude],
+          },
+          properties: {
+            id: asset.id,
+            assetNumber: asset.assetNumber,
+            status: asset.status,
+            category: asset.category,
+            subtype: asset.subtype,
+            depot: asset.depot ?? '',
+            lastUpdated: asset.lastUpdated ?? '',
+          },
+        })),
     }), [filteredAssets]);
 
     // Helper: add the asset-dots source + circle layer + flag layer to the current map
     const addAssetLayer = useCallback((mapInstance: mapboxgl.Map, dark: boolean) => {
-      if (!mapInstance.isStyleLoaded()) return;
+      console.log('[FleetMap] addAssetLayer called', { dark, features: assetGeoJson.features.length });
       // Register flag icon for symbol layer
       registerAssetIcons(mapInstance, dark);
 
@@ -714,7 +738,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
           id: 'asset-dots-layer',
           type: 'circle',
           source: 'asset-dots',
-          minzoom: 10,
+          slot: 'top',
 
           paint: {
             'circle-pitch-alignment': 'map',
@@ -751,7 +775,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
           id: 'asset-flags-layer',
           type: 'symbol',
           source: 'asset-dots',
-          minzoom: 10,
+          slot: 'top',
 
           layout: {
             'icon-image': [
@@ -772,16 +796,15 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         });
       }
 
-      // Invisible hitbox layer on top for mouse events
+      // Invisible circle hitbox layer on top for mouse events (large radius for easy targeting)
       if (!mapInstance.getLayer('asset-hitbox-layer')) {
         mapInstance.addLayer({
           id: 'asset-hitbox-layer',
           type: 'circle',
           source: 'asset-dots',
-          minzoom: 10,
-
+          slot: 'top',
           paint: {
-            'circle-radius': 14,
+            'circle-radius': 20,
             'circle-color': 'transparent',
             'circle-opacity': 0,
           },
@@ -798,6 +821,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
           id: 'asset-hover-pin-layer',
           type: 'symbol',
           source: 'asset-hover-pin',
+          slot: 'top',
           layout: {
             'icon-image': [
               'match',
@@ -826,6 +850,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
           id: 'asset-pulse-layer',
           type: 'circle',
           source: 'asset-pulse',
+          slot: 'top',
           paint: {
             'circle-pitch-alignment': 'map',
             'circle-radius': 20,
@@ -845,41 +870,50 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
     useEffect(() => {
       if (!map.current || !mapLoaded) return;
       const mapInstance = map.current;
-      if (!mapInstance.isStyleLoaded()) return;
 
-      // If source already exists, just update the data
-      const existingSource = mapInstance.getSource('asset-dots') as mapboxgl.GeoJSONSource | undefined;
-      if (existingSource) {
-        existingSource.setData(assetGeoJson);
+      const applyAssetData = () => {
+        console.log('[FleetMap] applyAssetData called', {
+          featureCount: assetGeoJson.features.length,
+          styleLoaded: mapInstance.isStyleLoaded(),
+          hasSource: !!mapInstance.getSource('asset-dots'),
+          hasLayer: !!mapInstance.getLayer('asset-dots-layer'),
+        });
+        // If source already exists, just update the data
+        const existingSource = mapInstance.getSource('asset-dots') as mapboxgl.GeoJSONSource | undefined;
+        if (existingSource) {
+          existingSource.setData(assetGeoJson);
 
-        // Update paint properties for theme change
-        if (mapInstance.getLayer('asset-dots-layer')) {
-          const categoryColors = isDark ? CATEGORY_COLORS : LIGHT_CATEGORY_COLORS;
-          const defaultFill = isDark ? '#6b7280' : '#4b5563';
-          const defaultStroke = isDark ? '#6b7280' : '#4b5563';
+          // Update paint properties for theme change
+          if (mapInstance.getLayer('asset-dots-layer')) {
+            const categoryColors = isDark ? CATEGORY_COLORS : LIGHT_CATEGORY_COLORS;
+            const defaultFill = isDark ? '#6b7280' : '#4b5563';
+            const defaultStroke = isDark ? '#6b7280' : '#4b5563';
 
-          mapInstance.setPaintProperty('asset-dots-layer', 'circle-color', [
-            'match',
-            ['get', 'category'],
-            'trailer', categoryColors['trailer'],
-            'dolly', categoryColors['dolly'],
-            defaultFill,
-          ]);
-          mapInstance.setPaintProperty('asset-dots-layer', 'circle-stroke-color', [
-            'match',
-            ['get', 'category'],
-            'trailer', categoryColors['trailer'],
-            'dolly', categoryColors['dolly'],
-            defaultStroke,
-          ]);
+            mapInstance.setPaintProperty('asset-dots-layer', 'circle-color', [
+              'match',
+              ['get', 'category'],
+              'trailer', categoryColors['trailer'],
+              'dolly', categoryColors['dolly'],
+              defaultFill,
+            ]);
+            mapInstance.setPaintProperty('asset-dots-layer', 'circle-stroke-color', [
+              'match',
+              ['get', 'category'],
+              'trailer', categoryColors['trailer'],
+              'dolly', categoryColors['dolly'],
+              defaultStroke,
+            ]);
+          }
+
+          // Re-register flag icon with updated theme colors
+          registerAssetIcons(mapInstance, isDark);
+        } else {
+          // First time: create source + layer
+          addAssetLayer(mapInstance, isDark);
         }
+      };
 
-        // Re-register flag icon with updated theme colors
-        registerAssetIcons(mapInstance, isDark);
-      } else {
-        // First time: create source + layer
-        addAssetLayer(mapInstance, isDark);
-      }
+      applyAssetData();
     }, [assetGeoJson, mapLoaded, isDark, addAssetLayer]);
 
     // Interactive handlers for the circle layer (click, hover)
@@ -980,10 +1014,10 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
           if (mapInstance.getLayer('asset-pulse-layer')) {
             mapInstance.setPaintProperty('asset-pulse-layer', 'circle-radius', radius);
             mapInstance.setPaintProperty('asset-pulse-layer', 'circle-stroke-opacity', opacity * 0.8);
-            mapInstance.setPaintProperty('asset-pulse-layer', 'circle-stroke-color', pulseColor);
+            mapInstance.setPaintProperty('asset-pulse-layer', 'circle-stroke-color', 'rgba(255,255,255,0.9)');
             // Fill the circle — blooms in then fades out
             const fillOpacity = opacity * t * 0.4;
-            mapInstance.setPaintProperty('asset-pulse-layer', 'circle-color', pulseColor);
+            mapInstance.setPaintProperty('asset-pulse-layer', 'circle-color', 'rgba(255,255,255,0.9)');
             mapInstance.setPaintProperty('asset-pulse-layer', 'circle-opacity', fillOpacity);
           }
 
@@ -1047,8 +1081,8 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
       const mapInstance = map.current;
 
       const styleUrl = isDark
-        ? import.meta.env['VITE_MAPBOX_STYLE_DARK'] || 'mapbox://styles/mapbox/dark-v11'
-        : import.meta.env['VITE_MAPBOX_STYLE_LIGHT'] || 'mapbox://styles/mapbox/light-v11';
+        ? import.meta.env['VITE_MAPBOX_STYLE_DARK'] || 'mapbox://styles/mapbox/standard'
+        : import.meta.env['VITE_MAPBOX_STYLE_LIGHT'] || 'mapbox://styles/mapbox/standard';
 
       // Only call setStyle when the URL actually changes (skip on initial load)
       if (styleUrl !== currentStyleUrl.current) {

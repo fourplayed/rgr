@@ -11,6 +11,7 @@ export const PinContainer = ({
   containerClassName,
   color,
   assetCount,
+  assetNumbers,
   onHoverChange,
 }: {
   children?: React.ReactNode;
@@ -22,6 +23,8 @@ export const PinContainer = ({
   color?: string;
   /** Number of assets at this depot — shown as a badge on the label */
   assetCount?: number;
+  /** Asset numbers at this depot — shown in hover card */
+  assetNumbers?: string[];
   /** Called when hover state changes */
   onHoverChange?: (hovered: boolean) => void;
 }) => {
@@ -59,7 +62,7 @@ export const PinContainer = ({
           </div>
         </div>
       )}
-      <PinPerspective title={title} href={href} color={color} assetCount={assetCount} hovered={hovered} setHovered={handleHoverChange} />
+      <PinPerspective title={title} href={href} color={color} assetCount={assetCount} assetNumbers={assetNumbers} hovered={hovered} setHovered={handleHoverChange} />
     </div>
   );
 };
@@ -69,6 +72,7 @@ export const PinPerspective = ({
   href,
   color,
   assetCount,
+  assetNumbers,
   hovered,
   setHovered,
 }: {
@@ -76,6 +80,7 @@ export const PinPerspective = ({
   href?: string | undefined;
   color?: string | undefined;
   assetCount?: number | undefined;
+  assetNumbers?: string[] | undefined;
   hovered: boolean;
   setHovered: (v: boolean) => void;
 }) => {
@@ -118,6 +123,52 @@ export const PinPerspective = ({
             )}
           </span>
         </div>
+
+        {/* Asset list card — appears on hover */}
+        {hovered && assetNumbers && assetNumbers.length > 0 && (
+          <div
+            className="absolute inset-x-0 flex justify-center z-20"
+            style={{ bottom: "50%", marginBottom: "100px" }}
+          >
+            <div
+              className="rounded-xl border overflow-hidden"
+              style={{
+                background: "linear-gradient(to bottom, rgb(0, 0, 40) 0%, rgb(10, 38, 84) 100%)",
+                backdropFilter: "blur(20px)",
+                WebkitBackdropFilter: "blur(20px)",
+                boxShadow: `0 8px 24px rgba(0, 0, 0, 0.4), 0 0 12px ${c}33`,
+                borderColor: `${c}40`,
+                borderWidth: "1px",
+                minWidth: "140px",
+                maxWidth: "200px",
+                maxHeight: "220px",
+                animation: "depotCardPopUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)",
+              }}
+            >
+              {/* Header */}
+              <div
+                className="px-3 py-1.5 text-xs font-bold text-white/70 border-b"
+                style={{ borderColor: `${c}30` }}
+              >
+                {title} — {assetNumbers.length} asset{assetNumbers.length !== 1 ? "s" : ""}
+              </div>
+              {/* Scrollable asset list */}
+              <div
+                className="overflow-y-auto px-1 py-1 pointer-events-auto"
+                style={{ maxHeight: "176px" }}
+              >
+                {assetNumbers.map((num) => (
+                  <div
+                    key={num}
+                    className="px-2 py-0.5 text-sm font-mono text-white/90 rounded hover:bg-white/5 transition-colors"
+                  >
+                    {num}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Invisible 120px dome — sole hover target */}
         <div
@@ -223,6 +274,14 @@ export const PinPerspective = ({
             }}
           />
         </>
+
+        {/* Keyframes for depot card animation */}
+        <style>{`
+          @keyframes depotCardPopUp {
+            0% { opacity: 0; transform: translateY(12px) scale(0.9); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+          }
+        `}</style>
       </div>
     </motion.div>
   );

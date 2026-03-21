@@ -69,8 +69,8 @@
 
 /* Dark theme button */
 .chrome-button-dark {
-  background: linear-gradient(to bottom, #1e3a8a 0%, #1a327a 50%, #152a6b 100%);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  background: linear-gradient(to bottom, #152a6b 0%, #112260 50%, #0c1a4d 100%);
+  border: none;
   box-shadow:
     0 2px 4px rgba(0, 0, 0, 0.5),
     0 1px 2px rgba(0, 0, 0, 0.4),
@@ -94,7 +94,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, #2563eb 0%, #1e3a8a 50%, #172e73 100%);
+  background: linear-gradient(to bottom, #1e3a8a 0%, #152a6b 50%, #112260 100%);
   background-size: 200% 200%;
   background-position: 0% 50%;
   opacity: 0;

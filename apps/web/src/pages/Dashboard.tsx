@@ -44,16 +44,18 @@ export default function Dashboard() {
       state={state}
       actions={actions}
     >
-      {/* Fleet Health header + Stat cards row */}
+      {/* Stat cards row — centered between nav bar and search/filter bar */}
       <div
         style={{
           width: 'calc(100% - 48px)',
           maxWidth: '1360px',
           position: 'fixed',
-          top: '76px',
+          top: '66px',
+          height: '224px',
           left: '50%',
           transform: 'translateX(-50%)',
-          padding: '10px 0',
+          display: 'flex',
+          alignItems: 'center',
           ...(fromLogin
             ? {
                 opacity: 0,
@@ -62,28 +64,6 @@ export default function Dashboard() {
             : {}),
         }}
       >
-        {/* Section header */}
-        <div className="flex items-center justify-between mb-3">
-          <h2
-            className="text-sm font-semibold uppercase tracking-wider"
-            style={{
-              color: state.isDark ? '#94a3b8' : '#475569',
-              fontFamily: "'Lato', sans-serif",
-            }}
-          >
-            Fleet Health
-          </h2>
-          <button
-            onClick={actions.handleNavigateToReports}
-            className="text-xs hover:opacity-80 transition-opacity duration-150"
-            style={{
-              color: state.isDark ? '#60a5fa' : '#3b82f6',
-              fontFamily: "'Lato', sans-serif",
-            }}
-          >
-            View Reports →
-          </button>
-        </div>
         <StatCards isDark={state.isDark} />
       </div>
       {/* Search/Filter bar — standalone row between stat cards and map */}
