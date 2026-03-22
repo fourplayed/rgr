@@ -8,8 +8,8 @@ import type { HealthScoreData } from '@/hooks/useHealthScore';
 import type { DepotHealthScoreData } from '@/hooks/useHealthScore';
 
 vi.mock('recharts', () => ({
-  ResponsiveContainer: ({ children }: any) => <div data-testid="chart-container">{children}</div>,
-  RadialBarChart: ({ children }: any) => <div data-testid="radial-bar-chart">{children}</div>,
+  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div data-testid="chart-container">{children}</div>,
+  RadialBarChart: ({ children }: { children: React.ReactNode }) => <div data-testid="radial-bar-chart">{children}</div>,
   RadialBar: () => null,
   PolarAngleAxis: () => null,
 }));

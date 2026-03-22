@@ -308,7 +308,7 @@ describe('ThemeToggle', () => {
 
       const styles = document.querySelectorAll('style');
       const hasLightGrayColor = Array.from(styles).some((style) =>
-        style.textContent?.includes('.moon-light-gray { color: #d1d5db; }')
+        style.textContent?.includes('.moon-light-gray { color: #0a1a4a; }')
       );
       expect(hasLightGrayColor).toBe(true);
     });

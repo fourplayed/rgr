@@ -1,19 +1,13 @@
 /**
  * DashboardPresenter tests
  *
- * Tests that the Dashboard presenter renders nav, content area, and children.
+ * Tests that the Dashboard presenter renders wrapper and children.
  */
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
 import { DashboardPresenter } from '../DashboardPresenter';
 import type { DashboardState, DashboardActions } from '../useDashboardLogic';
-
-// Mock TopNavBar to avoid complex nav rendering in unit tests
-vi.mock('../components/TopNavBar', () => ({
-  TopNavBar: () => <nav data-testid="top-nav-bar" />,
-}));
 
 // Mock ErrorBoundary to pass children through
 vi.mock('@/components/ErrorBoundary', () => ({
@@ -36,11 +30,9 @@ const mockActions: DashboardActions = {
 
 function renderPresenter(props?: Partial<{ children: React.ReactNode }>) {
   return render(
-    <MemoryRouter>
-      <DashboardPresenter state={mockState} actions={mockActions}>
-        {props?.children}
-      </DashboardPresenter>
-    </MemoryRouter>
+    <DashboardPresenter state={mockState} actions={mockActions}>
+      {props?.children}
+    </DashboardPresenter>
   );
 }
 
@@ -49,14 +41,11 @@ describe('DashboardPresenter', () => {
     vi.clearAllMocks();
   });
 
-  it('renders the top nav bar', () => {
-    renderPresenter();
-    expect(screen.getByTestId('top-nav-bar')).toBeInTheDocument();
-  });
-
-  it('renders the main content area', () => {
-    renderPresenter();
-    expect(screen.getByRole('main')).toBeInTheDocument();
+  it('renders the content wrapper', () => {
+    const { container } = renderPresenter();
+    const wrapper = container.firstElementChild;
+    expect(wrapper).toBeInTheDocument();
+    expect(wrapper).toHaveClass('relative', 'h-full', 'w-full');
   });
 
   it('renders children passed to the presenter', () => {

@@ -16,6 +16,7 @@ export function ReportsContainer() {
   // can call onExportCsv() without needing to pass data back up.
   const handleExportCsv = useCallback(() => {
     logic.handleExportCsv(logic.outstandingAssets);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- destructuring `logic` would break the container pattern; specific fields are listed
   }, [logic.handleExportCsv, logic.outstandingAssets]);
 
   return (

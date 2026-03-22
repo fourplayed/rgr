@@ -187,8 +187,9 @@ export default function ManualEntry({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="relative">
-            <label className="text-sm font-medium text-foreground">QR Code or Asset Number</label>
+            <label htmlFor="manual-entry-input" className="text-sm font-medium text-foreground">QR Code or Asset Number</label>
             <Input
+              id="manual-entry-input"
               placeholder="rgr://asset/... or TL001"
               value={inputValue}
               onChange={handleInputChange}

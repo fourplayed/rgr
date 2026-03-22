@@ -7,10 +7,10 @@ import { AssetUtilizationChart } from '../AssetUtilizationChart';
 import type { AssetUtilizationSnapshot } from '@/services/analyticsService';
 
 vi.mock('recharts', () => ({
-  ResponsiveContainer: ({ children }: any) => <div data-testid="chart-container">{children}</div>,
-  BarChart: ({ children }: any) => <div>{children}</div>,
-  LineChart: ({ children }: any) => <div>{children}</div>,
-  PieChart: ({ children }: any) => <div>{children}</div>,
+  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div data-testid="chart-container">{children}</div>,
+  BarChart: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  LineChart: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  PieChart: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   Bar: () => null,
   Line: () => null,
   Pie: () => null,

@@ -322,6 +322,7 @@ const LightPillar: React.FC<LightPillarProps> = ({
       geometryRef.current = null;
       rafRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Three.js setup runs only on mount/quality change; other props are synced via refs
   }, [webGLSupported, quality]);
 
   useEffect(() => {
