@@ -1,4 +1,3 @@
-import { useSidebar } from "@/components/ui/sidebar"
 import { useFleetStatistics } from "@/hooks/useFleetData"
 
 const STATS = [
@@ -9,10 +8,9 @@ const STATS = [
 ] as const
 
 export function FloatingStatPills() {
-  const { state } = useSidebar()
   const { data: stats } = useFleetStatistics()
 
-  if (state !== "collapsed" || !stats) {
+  if (!stats) {
     return null
   }
 
