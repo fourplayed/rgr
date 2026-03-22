@@ -8,11 +8,9 @@ import { useAuthStore } from './stores/authStore';
 import { hasRoleLevel, onAuthStateChange } from '@rgr/shared';
 import type { UserRole } from '@rgr/shared';
 import { DebugToolbar } from './pages/login/components/DebugToolbar';
-import { PersistentBackground } from './components/backgrounds';
-import { DashboardLayout } from './components/dashboard-layout';
+import { AppShell } from './components/shell/AppShell';
 
 const Login = lazy(() => import('./pages/Login'));
-const Welcome = lazy(() => import('./pages/Welcome'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Assets = lazy(() => import('./pages/Assets'));
 const Reports = lazy(() => import('./pages/Reports'));
@@ -143,11 +141,11 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
+      <ThemeProvider defaultTheme="light">
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <TooltipProvider>
-            {/* Persistent background — gradient + Stars, never unmounts */}
-            <PersistentBackground />
+            {/* Chrome background */}
+            <div className="fixed inset-0 -z-10 bg-[#e8e8e8] dark:bg-[#1a1a1a]" />
 
             {/* Global dev tool panels — fixed to viewport, persist across routes */}
             {import.meta.env.DEV && <DebugToolbar />}
@@ -162,18 +160,10 @@ function App() {
               <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route
-                  path="/welcome"
-                  element={
-                    <ProtectedRoute>
-                      <DashboardLayout><Welcome /></DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
                   path="/dashboard"
                   element={
                     <ProtectedRoute>
-                      <DashboardLayout><Dashboard /></DashboardLayout>
+                      <AppShell><Dashboard /></AppShell>
                     </ProtectedRoute>
                   }
                 />
@@ -181,7 +171,7 @@ function App() {
                   path="/assets"
                   element={
                     <ProtectedRoute>
-                      <DashboardLayout><Assets /></DashboardLayout>
+                      <AppShell><Assets /></AppShell>
                     </ProtectedRoute>
                   }
                 />
@@ -189,15 +179,7 @@ function App() {
                   path="/maintenance"
                   element={
                     <ProtectedRoute>
-                      <DashboardLayout><StubPage title="Maintenance" /></DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/load-analyzer"
-                  element={
-                    <ProtectedRoute>
-                      <DashboardLayout><StubPage title="Load Analyzer" /></DashboardLayout>
+                      <AppShell><StubPage title="Maintenance" /></AppShell>
                     </ProtectedRoute>
                   }
                 />
@@ -205,7 +187,7 @@ function App() {
                   path="/reports"
                   element={
                     <ProtectedRoute>
-                      <DashboardLayout><Reports /></DashboardLayout>
+                      <AppShell><Reports /></AppShell>
                     </ProtectedRoute>
                   }
                 />
@@ -213,7 +195,7 @@ function App() {
                   path="/settings"
                   element={
                     <ProtectedRoute>
-                      <DashboardLayout><StubPage title="Settings" /></DashboardLayout>
+                      <AppShell><StubPage title="Settings" /></AppShell>
                     </ProtectedRoute>
                   }
                 />
@@ -221,7 +203,7 @@ function App() {
                   path="/admin"
                   element={
                     <ProtectedRoute requiredRole="superuser">
-                      <DashboardLayout><StubPage title="Admin" /></DashboardLayout>
+                      <AppShell><StubPage title="Admin" /></AppShell>
                     </ProtectedRoute>
                   }
                 />
