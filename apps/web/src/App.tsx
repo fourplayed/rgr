@@ -9,6 +9,7 @@ import { hasRoleLevel, onAuthStateChange } from '@rgr/shared';
 import type { UserRole } from '@rgr/shared';
 import { DebugToolbar } from './pages/login/components/DebugToolbar';
 import { PersistentBackground } from './components/backgrounds';
+import { DashboardLayout } from './components/dashboard-layout';
 
 const Login = lazy(() => import('./pages/Login'));
 const Welcome = lazy(() => import('./pages/Welcome'));
@@ -164,7 +165,7 @@ function App() {
                   path="/welcome"
                   element={
                     <ProtectedRoute>
-                      <Welcome />
+                      <DashboardLayout><Welcome /></DashboardLayout>
                     </ProtectedRoute>
                   }
                 />
@@ -172,7 +173,7 @@ function App() {
                   path="/dashboard"
                   element={
                     <ProtectedRoute>
-                      <Dashboard />
+                      <DashboardLayout><Dashboard /></DashboardLayout>
                     </ProtectedRoute>
                   }
                 />
@@ -180,7 +181,7 @@ function App() {
                   path="/assets"
                   element={
                     <ProtectedRoute>
-                      <Assets />
+                      <DashboardLayout><Assets /></DashboardLayout>
                     </ProtectedRoute>
                   }
                 />
@@ -188,7 +189,7 @@ function App() {
                   path="/maintenance"
                   element={
                     <ProtectedRoute>
-                      <StubPage title="Maintenance" />
+                      <DashboardLayout><StubPage title="Maintenance" /></DashboardLayout>
                     </ProtectedRoute>
                   }
                 />
@@ -196,7 +197,7 @@ function App() {
                   path="/load-analyzer"
                   element={
                     <ProtectedRoute>
-                      <StubPage title="Load Analyzer" />
+                      <DashboardLayout><StubPage title="Load Analyzer" /></DashboardLayout>
                     </ProtectedRoute>
                   }
                 />
@@ -204,7 +205,7 @@ function App() {
                   path="/reports"
                   element={
                     <ProtectedRoute>
-                      <Reports />
+                      <DashboardLayout><Reports /></DashboardLayout>
                     </ProtectedRoute>
                   }
                 />
@@ -212,7 +213,7 @@ function App() {
                   path="/settings"
                   element={
                     <ProtectedRoute>
-                      <StubPage title="Settings" />
+                      <DashboardLayout><StubPage title="Settings" /></DashboardLayout>
                     </ProtectedRoute>
                   }
                 />
@@ -220,7 +221,7 @@ function App() {
                   path="/admin"
                   element={
                     <ProtectedRoute requiredRole="superuser">
-                      <StubPage title="Admin" />
+                      <DashboardLayout><StubPage title="Admin" /></DashboardLayout>
                     </ProtectedRoute>
                   }
                 />
