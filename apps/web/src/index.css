@@ -1,4 +1,8 @@
+@import "tailwindcss";
 @import "@fontsource-variable/geist";
+@import "tw-animate-css";
+
+@custom-variant dark (&:where(.dark, .dark *));
 
 @font-face {
   font-family: 'Code-Bold';
@@ -16,30 +20,134 @@
   font-display: swap;
 }
 
-@font-face {
-  font-family: 'EncampTest';
-  src: url('/fonts/EncampTest-Regular.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.141 0.005 285.823);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.141 0.005 285.823);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.141 0.005 285.823);
+  --primary: oklch(0.623 0.214 259.815);
+  --primary-foreground: oklch(0.97 0.014 254.604);
+  --secondary: oklch(0.967 0.001 286.375);
+  --secondary-foreground: oklch(0.21 0.006 285.885);
+  --muted: oklch(0.967 0.001 286.375);
+  --muted-foreground: oklch(0.552 0.016 285.938);
+  --accent: oklch(0.967 0.001 286.375);
+  --accent-foreground: oklch(0.21 0.006 285.885);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.92 0.004 286.32);
+  --input: oklch(0.92 0.004 286.32);
+  --ring: oklch(0.623 0.214 259.815);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --radius: 0.5rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.141 0.005 285.823);
+  --sidebar-primary: oklch(0.623 0.214 259.815);
+  --sidebar-primary-foreground: oklch(0.97 0.014 254.604);
+  --sidebar-accent: oklch(0.967 0.001 286.375);
+  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
+  --sidebar-border: oklch(0.92 0.004 286.32);
+  --sidebar-ring: oklch(0.623 0.214 259.815);
+  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
-@font-face {
-  font-family: 'EncampTest';
-  src: url('/fonts/EncampTest-ExtraBold.ttf') format('truetype');
-  font-weight: 800;
-  font-style: normal;
-  font-display: swap;
+.dark {
+  --background: oklch(0.141 0.005 285.823);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.21 0.006 285.885);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.21 0.006 285.885);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.546 0.245 262.881);
+  --primary-foreground: oklch(0.379 0.146 265.522);
+  --secondary: oklch(0.274 0.006 286.033);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.274 0.006 286.033);
+  --muted-foreground: oklch(0.705 0.015 286.067);
+  --accent: oklch(0.274 0.006 286.033);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.488 0.243 264.376);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.21 0.006 285.885);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.546 0.245 262.881);
+  --sidebar-primary-foreground: oklch(0.379 0.146 265.522);
+  --sidebar-accent: oklch(0.274 0.006 286.033);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.488 0.243 264.376);
 }
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+
+  @keyframes accordion-down {
+    from { height: 0; }
+    to { height: var(--radix-accordion-content-height, var(--accordion-panel-height, auto)); }
+  }
+  @keyframes accordion-up {
+    from { height: var(--radix-accordion-content-height, var(--accordion-panel-height, auto)); }
+    to { height: 0; }
+  }
+}
 
 @layer base {
   html {
     height: 100%;
-    font-family: 'Geist Variable', system-ui, sans-serif;
     margin: 0;
     padding: 0;
   }
@@ -57,895 +165,10 @@
   #root {
     height: 100%;
   }
-  .theme {
-    --font-heading: var(--font-sans);
-    --font-sans: 'Geist Variable', sans-serif;
-  }
-  :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.488 0.243 264.376);
-    --primary-foreground: oklch(0.97 0.014 254.604);
-    --secondary: oklch(0.967 0.001 286.375);
-    --secondary-foreground: oklch(0.21 0.006 285.885);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.865 0.127 207.078);
-    --chart-2: oklch(0.715 0.143 215.221);
-    --chart-3: oklch(0.609 0.126 221.723);
-    --chart-4: oklch(0.52 0.105 223.128);
-    --chart-5: oklch(0.45 0.085 224.283);
-    --radius: 0.45rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.546 0.245 262.881);
-    --sidebar-primary-foreground: oklch(0.97 0.014 254.604);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
-  }
-  .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.424 0.199 265.638);
-    --primary-foreground: oklch(0.97 0.014 254.604);
-    --secondary: oklch(0.274 0.006 286.033);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.865 0.127 207.078);
-    --chart-2: oklch(0.715 0.143 215.221);
-    --chart-3: oklch(0.609 0.126 221.723);
-    --chart-4: oklch(0.52 0.105 223.128);
-    --chart-5: oklch(0.45 0.085 224.283);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.623 0.214 259.815);
-    --sidebar-primary-foreground: oklch(0.97 0.014 254.604);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
-  }
+
   * {
     border-color: var(--border);
     outline-color: var(--ring);
-  }
-}
-
-/* Aggressive shimmer animation for button hover effect */
-@keyframes shimmer {
-  0% {
-    transform: translateX(-150%) skewX(-15deg);
-  }
-  100% {
-    transform: translateX(150%) skewX(-15deg);
-  }
-}
-
-.animate-shimmer::before {
-  animation: shimmer 0.8s ease-in-out infinite;
-  width: 30%;
-}
-
-/* Holographic gradient animation */
-@keyframes holographic {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-/* Border light chase animation */
-@keyframes borderChase {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-/* Glow pulse animation */
-@keyframes glowPulse {
-  0%,
-  100% {
-    box-shadow:
-      0 0 20px rgba(96, 165, 250, 0.4),
-      0 0 40px rgba(96, 165, 250, 0.2),
-      0 0 60px rgba(96, 165, 250, 0.1);
-  }
-  50% {
-    box-shadow:
-      0 0 30px rgba(96, 165, 250, 0.6),
-      0 0 60px rgba(96, 165, 250, 0.4),
-      0 0 90px rgba(96, 165, 250, 0.2);
-  }
-}
-
-/* Particle sparkle animation */
-@keyframes sparkle {
-  0%,
-  100% {
-    opacity: 0;
-    transform: scale(0) rotate(0deg);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1) rotate(180deg);
-  }
-}
-
-/* =========================================================================
- * COSMIC ENERGY GATEWAY BUTTON ANIMATIONS
- * ========================================================================= */
-
-/* Nebula core swirl - Multi-layer galaxy gradient animation */
-@keyframes nebulaDrift {
-  0% {
-    background-position:
-      0% 50%,
-      100% 50%,
-      50% 0%;
-  }
-  33% {
-    background-position:
-      50% 100%,
-      0% 50%,
-      100% 50%;
-  }
-  66% {
-    background-position:
-      100% 0%,
-      50% 100%,
-      0% 50%;
-  }
-  100% {
-    background-position:
-      0% 50%,
-      100% 50%,
-      50% 0%;
-  }
-}
-
-/* Aurora borealis flowing gradients */
-@keyframes auroraFlow {
-  0%,
-  100% {
-    transform: translateY(0%) translateX(-50%) rotate(0deg);
-    opacity: 0.6;
-  }
-  25% {
-    transform: translateY(-10%) translateX(-40%) rotate(5deg);
-    opacity: 0.8;
-  }
-  50% {
-    transform: translateY(-20%) translateX(-50%) rotate(-5deg);
-    opacity: 0.7;
-  }
-  75% {
-    transform: translateY(-10%) translateX(-60%) rotate(3deg);
-    opacity: 0.9;
-  }
-}
-
-/* Orbital constellation particles */
-@keyframes orbitConstellation {
-  from {
-    transform: rotate(0deg) translateX(80px) rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg) translateX(80px) rotate(-360deg);
-  }
-}
-
-/* Counter-rotating outer orbit */
-@keyframes orbitReverse {
-  from {
-    transform: rotate(0deg) translateX(95px) rotate(0deg);
-  }
-  to {
-    transform: rotate(-360deg) translateX(95px) rotate(360deg);
-  }
-}
-
-/* Pulsing star glow */
-@keyframes starPulse {
-  0%,
-  100% {
-    opacity: 0.8;
-    transform: scale(1);
-    filter: blur(0px) brightness(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.3);
-    filter: blur(1px) brightness(1.5);
-  }
-}
-
-/* Gravitational warp effect */
-@keyframes gravitationalWarp {
-  0%,
-  100% {
-    border-radius: 0.75rem;
-    transform: perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1);
-  }
-  25% {
-    border-radius: 1rem 0.5rem 1rem 0.5rem;
-    transform: perspective(1000px) rotateX(2deg) rotateY(-2deg) scale(1.02);
-  }
-  50% {
-    border-radius: 0.5rem 1rem 0.5rem 1rem;
-    transform: perspective(1000px) rotateX(-2deg) rotateY(2deg) scale(1.02);
-  }
-  75% {
-    border-radius: 1rem 0.5rem 1rem 0.5rem;
-    transform: perspective(1000px) rotateX(2deg) rotateY(-2deg) scale(1.02);
-  }
-}
-
-/* Hyperspace tunnel depth */
-@keyframes hyperspaceDepth {
-  0% {
-    box-shadow:
-      0 0 40px rgba(96, 165, 250, 0.4),
-      0 0 80px rgba(139, 92, 246, 0.3),
-      inset 0 0 60px rgba(59, 130, 246, 0.2);
-  }
-  50% {
-    box-shadow:
-      0 0 80px rgba(96, 165, 250, 0.6),
-      0 0 120px rgba(139, 92, 246, 0.5),
-      inset 0 0 80px rgba(59, 130, 246, 0.4);
-  }
-  100% {
-    box-shadow:
-      0 0 40px rgba(96, 165, 250, 0.4),
-      0 0 80px rgba(139, 92, 246, 0.3),
-      inset 0 0 60px rgba(59, 130, 246, 0.2);
-  }
-}
-
-/* Quantum shimmer layers */
-@keyframes quantumShimmer1 {
-  0% {
-    transform: translateX(-200%) translateY(-50%) skewX(-20deg);
-    opacity: 0;
-  }
-  50% {
-    opacity: 0.8;
-  }
-  100% {
-    transform: translateX(200%) translateY(-50%) skewX(-20deg);
-    opacity: 0;
-  }
-}
-
-@keyframes quantumShimmer2 {
-  0% {
-    transform: translateX(200%) translateY(-50%) skewX(20deg);
-    opacity: 0;
-  }
-  50% {
-    opacity: 0.6;
-  }
-  100% {
-    transform: translateX(-200%) translateY(-50%) skewX(20deg);
-    opacity: 0;
-  }
-}
-
-/* Stellar orbital rings */
-@keyframes stellarRing {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Comet trail effect */
-@keyframes cometTrail {
-  0% {
-    opacity: 0;
-    transform: rotate(0deg) translateY(-120px) scale(0);
-  }
-  50% {
-    opacity: 1;
-    transform: rotate(180deg) translateY(-120px) scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: rotate(360deg) translateY(-120px) scale(0);
-  }
-}
-
-/* Energy field charging effect */
-@keyframes energyCharge {
-  0%,
-  100% {
-    opacity: 0.3;
-    filter: brightness(1) saturate(1);
-  }
-  50% {
-    opacity: 0.7;
-    filter: brightness(1.5) saturate(1.5);
-  }
-}
-
-/* Starfield animation - horizontal movement with upward drift */
-@keyframes animStarFast {
-  from {
-    transform: translateX(0px) translateY(0px);
-  }
-  to {
-    transform: translateX(-260vw) translateY(-80vh);
-  }
-}
-
-@keyframes animStarMedium {
-  from {
-    transform: translateX(0px) translateY(0px);
-  }
-  to {
-    transform: translateX(-260vw) translateY(-60vh);
-  }
-}
-
-@keyframes animStarSlow {
-  from {
-    transform: translateX(0px) translateY(0px);
-  }
-  to {
-    transform: translateX(-260vw) translateY(-40vh);
-  }
-}
-
-#stars,
-#stars2,
-#stars3 {
-  position: absolute;
-  top: 200px;
-  left: calc(105vw - 500px); /* Start off-screen right with buffer */
-  width: 1px;
-  height: 1px;
-  pointer-events: none;
-  overflow: visible;
-}
-
-/* Small stars - fastest horizontal movement */
-#stars {
-  width: 1px;
-  height: 1px;
-  background: transparent;
-  animation: animStarSlow 145.75s linear infinite;
-  opacity: 0.7;
-  filter: blur(0px);
-  z-index: 1;
-}
-
-/* Seamless loop handled by inline child divs in Stars.tsx */
-
-/* Medium stars - medium horizontal speed */
-#stars2 {
-  background: transparent;
-  animation: animStarMedium 188.75s linear infinite;
-  opacity: 0.85;
-  filter: blur(0px);
-  z-index: 2;
-}
-
-/* Seamless loop handled by inline child divs in Stars.tsx */
-
-/* Large stars - slowest horizontal movement */
-#stars3 {
-  background: transparent;
-  animation: animStarFast 248.6s linear infinite;
-  opacity: 1;
-  filter: blur(0px);
-  z-index: 3;
-}
-
-/* Seamless loop handled by inline child div in ExplodingStars.tsx */
-
-/* Light theme star styles - more prominent */
-.light-stars {
-  opacity: 1;
-  filter: brightness(1.2);
-}
-
-/* Optional: Add subtle twinkle to some light stars */
-.light-stars:nth-child(odd) {
-  animation: twinkleStar 3s ease-in-out infinite;
-}
-
-@keyframes twinkleStar {
-  0%,
-  100% {
-    opacity: 0.9;
-    filter: brightness(1);
-  }
-  50% {
-    opacity: 0.6;
-    filter: brightness(1.5);
-  }
-}
-
-/* Ensure stars respect reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  .light-stars {
-    animation: none !important;
-  }
-}
-
-/* Fireballs / meteors */
-.shooting-star {
-  position: fixed;
-  width: 12px;
-  height: 12px;
-  background: radial-gradient(circle, #fff 0%, #ffeb3b 30%, #ff9800 60%, #ff5722 100%);
-  border-radius: 50%;
-  box-shadow:
-    0 0 0 8px rgba(255, 152, 0, 0.5),
-    0 0 0 16px rgba(255, 87, 34, 0.4),
-    0 0 50px rgba(255, 152, 0, 1),
-    0 0 80px rgba(255, 87, 34, 0.9);
-  opacity: 0;
-  pointer-events: none;
-  z-index: 9999;
-}
-
-.shooting-star::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  right: 0;
-  transform: translateY(-50%);
-  width: 150px;
-  height: 40px;
-  background: radial-gradient(
-    ellipse at left,
-    rgba(255, 255, 255, 1) 0%,
-    rgba(255, 235, 59, 0.9) 15%,
-    rgba(255, 152, 0, 0.7) 35%,
-    rgba(255, 87, 34, 0.4) 60%,
-    rgba(255, 87, 34, 0) 100%
-  );
-  box-shadow:
-    0 0 20px 8px rgba(255, 152, 0, 0.8),
-    0 0 40px 12px rgba(255, 87, 34, 0.5);
-  filter: blur(3px);
-  border-radius: 50%;
-}
-
-.fireball-1 {
-  top: 20%;
-  right: 0;
-  animation: shootingStar1 2s ease-in infinite;
-  animation-delay: 0s;
-}
-
-.fireball-2 {
-  top: 40%;
-  right: 0;
-  animation: shootingStar2 1.8s ease-in infinite;
-  animation-delay: 1.5s;
-}
-
-.fireball-3 {
-  top: 60%;
-  right: 0;
-  animation: shootingStar3 2.2s ease-in infinite;
-  animation-delay: 3s;
-}
-
-.fireball-4 {
-  top: 15%;
-  right: 0;
-  animation: shootingStar4 2s ease-in infinite;
-  animation-delay: 4s;
-}
-
-.fireball-5 {
-  top: 70%;
-  right: 0;
-  animation: shootingStar5 2.1s ease-in infinite;
-  animation-delay: 5s;
-}
-
-@keyframes shootingStar1 {
-  0% {
-    transform: translateX(0) translateY(0) rotate(-45deg);
-    opacity: 1;
-  }
-  70% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(-100vw) translateY(50vh) rotate(-45deg);
-    opacity: 0;
-  }
-}
-
-@keyframes shootingStar2 {
-  0% {
-    transform: translateX(0) translateY(0) rotate(-40deg);
-    opacity: 1;
-  }
-  70% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(-120vw) translateY(60vh) rotate(-40deg);
-    opacity: 0;
-  }
-}
-
-@keyframes shootingStar3 {
-  0% {
-    transform: translateX(0) translateY(0) rotate(-50deg);
-    opacity: 1;
-  }
-  70% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(-110vw) translateY(55vh) rotate(-50deg);
-    opacity: 0;
-  }
-}
-
-@keyframes shootingStar4 {
-  0% {
-    transform: translateX(0) translateY(0) rotate(-42deg);
-    opacity: 1;
-  }
-  70% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(-105vw) translateY(52vh) rotate(-42deg);
-    opacity: 0;
-  }
-}
-
-@keyframes shootingStar5 {
-  0% {
-    transform: translateX(0) translateY(0) rotate(-48deg);
-    opacity: 1;
-  }
-  70% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(-115vw) translateY(58vh) rotate(-48deg);
-    opacity: 0;
-  }
-}
-
-/* =============================================================================
- * RGR FLEET MANAGER - THEME SYSTEM CSS VARIABLES
- * =============================================================================
- *
- * This file defines CSS custom properties for the RGR theme system.
- * Colors are extracted from the RGR logo (splash_logo.png).
- *
- * Theme switching is handled by adding/removing the 'dark' class on <html>
- * =============================================================================
- */
-
-/* -----------------------------------------------------------------------------
- * BASE COLOR PALETTE - RGR Logo Colors
- * -------------------------------------------------------------------------- */
-:root {
-  /* Navy Blues (Logo Interior) */
-  --rgr-navy-darkest: #0a1433;
-  --rgr-navy-dark: #0f1f4d;
-  --rgr-navy-base: #1a2d5f;
-  --rgr-navy-medium: #1e3a8a;
-
-  /* Chrome Metallics (Logo Borders) */
-  --rgr-chrome-highlight: #f8fafc;
-  --rgr-chrome-light: #e2e8f0;
-  --rgr-chrome-medium: #94a3b8;
-  --rgr-chrome-dark: #475569;
-  --rgr-chrome-darkest: #1e293b;
-
-  /* Bright Blues (Logo Highlights) */
-  --rgr-bright-blue: #60a5fa;
-  --rgr-bright-vibrant: #3b82f6;
-  --rgr-bright-electric: #2dd4bf;
-  --rgr-bright-sky: #38bdf8;
-
-  /* Semantic Colors */
-  --rgr-success: #2dd4bf;
-  --rgr-warning: #f59e0b;
-  --rgr-error: #ef4444;
-  --rgr-info: #3b82f6;
-
-  /* Focus Indicator Colors */
-  --focus-color: #3b82f6;
-  --focus-offset: 2px;
-  --focus-width: 2px;
-
-  /* Animation Durations */
-  --animation-spin-in-duration: 0.5s;
-  --animation-spin-out-duration: 0.25s;
-  --animation-transition-duration: 0.5s;
-  --animation-transition-fast: 0.15s;
-  --animation-transition-medium: 0.3s;
-}
-
-/* -----------------------------------------------------------------------------
- * LIGHT THEME - Semantic Theme Tokens
- * -------------------------------------------------------------------------- */
-:root,
-:root.light {
-  /* Backgrounds */
-  --theme-bg-primary: #ffffff;
-  --theme-bg-secondary: #f8fafc;
-  --theme-bg-tertiary: #f1f5f9;
-
-  /* Text Colors */
-  --theme-text-primary: #0a1433;
-  --theme-text-secondary: #0f1f4d;
-  --theme-text-muted: #64748b;
-  --theme-text-accent: #3b82f6;
-  --theme-text-inverse: #f8fafc;
-
-  /* Border Colors */
-  --theme-border-default: #e2e8f0;
-  --theme-border-light: rgba(148, 163, 184, 0.4);
-  --theme-border-accent: #3b82f6;
-
-  /* Card Colors */
-  --theme-card-bg: rgba(255, 255, 255, 0.95);
-  --theme-card-border: #e2e8f0;
-  --theme-card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-
-  /* Button Colors */
-  --theme-btn-primary-bg: #1e3a8a;
-  --theme-btn-primary-hover: #3b82f6;
-  --theme-btn-primary-text: #ffffff;
-  --theme-btn-secondary-bg: #e2e8f0;
-  --theme-btn-secondary-hover: #94a3b8;
-  --theme-btn-secondary-text: #0a1433;
-}
-
-/* -----------------------------------------------------------------------------
- * DARK THEME - Semantic Theme Tokens
- * -------------------------------------------------------------------------- */
-:root.dark {
-  /* Backgrounds */
-  --theme-bg-primary: #0a1433;
-  --theme-bg-secondary: #0f1f4d;
-  --theme-bg-tertiary: #1a2d5f;
-
-  /* Text Colors */
-  --theme-text-primary: #f8fafc;
-  --theme-text-secondary: #e2e8f0;
-  --theme-text-muted: #94a3b8;
-  --theme-text-accent: #60a5fa;
-  --theme-text-inverse: #0a1433;
-
-  /* Border Colors */
-  --theme-border-default: #475569;
-  --theme-border-light: rgba(148, 163, 184, 0.2);
-  --theme-border-accent: rgba(59, 130, 246, 0.2);
-
-  /* Card Colors */
-  --theme-card-bg: linear-gradient(
-    127.09deg,
-    rgba(30, 58, 138, 0.75) 0%,
-    rgba(6, 11, 40, 0.94) 40%,
-    rgba(10, 14, 35, 0.49) 100%
-  );
-  --theme-card-border: rgba(59, 130, 246, 0.2);
-  --theme-card-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(59, 130, 246, 0.1);
-
-  /* Button Colors */
-  --theme-btn-primary-bg: #1e3a8a;
-  --theme-btn-primary-hover: #3b82f6;
-  --theme-btn-primary-text: #f8fafc;
-  --theme-btn-secondary-bg: #475569;
-  --theme-btn-secondary-hover: #94a3b8;
-  --theme-btn-secondary-text: #f8fafc;
-
-  /* Focus Indicator Colors - Dark Theme */
-  --focus-color: #60a5fa;
-}
-
-/* -----------------------------------------------------------------------------
- * GLOBAL FOCUS INDICATORS (WCAG AAA Keyboard Navigation)
- * -------------------------------------------------------------------------- */
-*:focus {
-  outline: none;
-}
-
-*:focus-visible {
-  outline: var(--focus-width) solid var(--focus-color);
-  outline-offset: var(--focus-offset);
-  transition: outline-color 0.15s ease-in-out;
-}
-
-/* Skip to content link - visible on focus */
-.skip-to-content:focus {
-  position: fixed;
-  top: 1rem;
-  left: 1rem;
-  z-index: 9999;
-  padding: 0.75rem 1.5rem;
-  background-color: var(--rgr-bright-vibrant);
-  color: white;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  outline: 2px solid white;
-  outline-offset: 2px;
-}
-
-@layer base {
-  html {
-    @apply h-full bg-gray-50;
-    /* Smooth theme transitions for background and colors */
-    transition: background-color 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  body {
-    @apply h-full antialiased;
-    /* Smooth theme transitions for background and colors */
-    transition: background-color 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  #root {
-    @apply h-full;
-  }
-}
-
-@layer components {
-  .btn-primary {
-    @apply bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500;
-  }
-
-  .btn-secondary {
-    @apply bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-primary-500;
-  }
-
-  .input-field {
-    @apply block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm;
-  }
-}
-
-@layer utilities {
-  /* Theme transition utilities - opt-in smooth theme transitions */
-  .theme-transition-colors {
-    transition:
-      background-color 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-      border-color 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-      color 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .theme-transition-bg {
-    transition:
-      background 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-      background-color 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .theme-transition-all {
-    transition:
-      background 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-      background-color 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-      border-color 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-      color 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-      box-shadow 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  /* Hidden scrollbar — scroll without visible bar */
-  .scrollbar-hidden {
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* IE/Edge */
-  }
-  .scrollbar-hidden::-webkit-scrollbar {
-    display: none; /* Chrome/Safari */
-  }
-
-  /* Custom scrollbar styles - Dark theme (default) */
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 10px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: linear-gradient(to bottom, #9ca3af, #6b7280);
-    border-radius: 10px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(to bottom, #d1d5db, #9ca3af);
-  }
-
-  /* Firefox scrollbar - Dark theme */
-  .custom-scrollbar {
-    scrollbar-width: thin;
-    scrollbar-color: #9ca3af rgba(255, 255, 255, 0.05);
-  }
-
-  /* Light theme scrollbar styles - Chrome/metallic on dark blue background */
-  .light-theme .custom-scrollbar::-webkit-scrollbar-track {
-    background: rgba(30, 64, 175, 0.3); /* Dark blue transparent */
-    border-radius: 10px;
-  }
-
-  .light-theme .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: linear-gradient(
-      to bottom,
-      rgba(255, 255, 255, 0.7),
-      rgba(203, 213, 225, 0.8)
-    ); /* Chrome/gray gradient */
-    border-radius: 10px;
-  }
-
-  .light-theme .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(
-      to bottom,
-      rgba(255, 255, 255, 0.9),
-      rgba(226, 232, 240, 0.9)
-    ); /* Brighter chrome on hover */
-  }
-
-  /* Firefox scrollbar - Light theme */
-  .light-theme .custom-scrollbar {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.7) rgba(30, 64, 175, 0.3);
-  }
-
-  /* Gradient text helper */
-  .gradient-text {
-    @apply bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent;
-  }
-
-  /* Glass card helper */
-  .glass-card {
-    @apply backdrop-blur-xl border border-white/10 bg-white/5;
-  }
-
-  .glass-card-dark {
-    @apply backdrop-blur-xl border border-slate-700/50 bg-slate-900/80;
-  }
-
-  .glass-card-light {
-    @apply border border-slate-200 bg-white; /* Solid white (100% opacity) for light theme */
   }
 }
 
@@ -957,56 +180,5 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-  }
-}
-
-/* VisionTopNav spin animations */
-@keyframes spin-in {
-  from {
-    transform: rotate(0deg) scale(1);
-  }
-  to {
-    transform: rotate(360deg) scale(1.2);
-  }
-}
-
-@keyframes spin-out {
-  from {
-    transform: rotate(360deg) scale(1.2);
-  }
-  to {
-    transform: rotate(0deg) scale(1);
-  }
-}
-
-.animate-spin-icon {
-  animation: spin-out var(--animation-spin-out-duration) ease-in-out forwards;
-}
-
-.group:hover .animate-spin-icon {
-  animation: spin-in var(--animation-spin-in-duration) ease-in-out forwards;
-}
-
-/* ThemedInput placeholder and autofill styles */
-.themed-input::placeholder {
-  font-style: italic;
-}
-
-.themed-input-dark:-webkit-autofill,
-.themed-input-dark:-webkit-autofill:hover,
-.themed-input-dark:-webkit-autofill:focus,
-.themed-input-dark:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 30px rgb(30 41 59 / 0.5) inset !important;
-  -webkit-text-fill-color: white !important;
-  background-color: rgb(30 41 59 / 0.5) !important;
-  caret-color: white !important;
-  transition: background-color 5000s ease-in-out 0s;
-}
-
-/* Reduced motion support for spin animations */
-@media (prefers-reduced-motion: reduce) {
-  .animate-spin-icon,
-  .group:hover .animate-spin-icon {
-    animation: none !important;
   }
 }

@@ -1,0 +1,125 @@
+<h2>Design: Animations & Transitions</h2>
+<p class="subtitle">How the ring appears, how dots enter, and how states transition</p>
+
+<div class="mockup">
+  <div class="mockup-header">Animation Choreography</div>
+  <div class="mockup-body" style="padding: 24px;">
+
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+
+      <!-- Ring appear -->
+      <div style="display: flex; gap: 16px; align-items: flex-start;">
+        <div style="width: 60px; flex-shrink: 0; text-align: center;">
+          <div style="width: 48px; height: 48px; margin: 0 auto; border-radius: 50%; border: 1px solid rgba(59,130,246,0.2); display: flex; align-items: center; justify-content: center;">
+            <div style="width: 20px; height: 20px; border-radius: 50%; border: 1px dashed rgba(59,130,246,0.3); animation: pulse-demo 2s infinite;"></div>
+          </div>
+          <span style="font-size: 9px; color: rgba(255,255,255,0.3); margin-top: 4px; display: block;">0ms</span>
+        </div>
+        <div style="flex: 1; padding: 12px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px;">
+          <strong style="color: rgba(255,255,255,0.8);">Ring Track Appears</strong>
+          <p style="margin: 4px 0 0; font-size: 13px; opacity: 0.6;">Ring scales from 0 → full size with opacity 0 → 1. Duration: 300ms. Easing: cubic-bezier(0.34, 1.56, 0.64, 1) — the same snappy overshoot used by the current depot card.</p>
+        </div>
+      </div>
+
+      <!-- Dots stagger in -->
+      <div style="display: flex; gap: 16px; align-items: flex-start;">
+        <div style="width: 60px; flex-shrink: 0; text-align: center;">
+          <div style="width: 48px; height: 48px; margin: 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center; gap: 3px;">
+            <div style="width: 8px; height: 8px; border-radius: 50%; background: #39ffce; opacity: 0.9;"></div>
+            <div style="width: 8px; height: 8px; border-radius: 50%; background: #ffe14d; opacity: 0.6;"></div>
+            <div style="width: 8px; height: 8px; border-radius: 50%; background: #39ffce; opacity: 0.3;"></div>
+          </div>
+          <span style="font-size: 9px; color: rgba(255,255,255,0.3); margin-top: 4px; display: block;">100ms</span>
+        </div>
+        <div style="flex: 1; padding: 12px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px;">
+          <strong style="color: rgba(255,255,255,0.8);">Dots Stagger In</strong>
+          <p style="margin: 4px 0 0; font-size: 13px; opacity: 0.6;">Each dot scales from 0 → 1 and fades in, staggered 30ms apart starting from 12 o'clock going clockwise. Creates a "popcorn" ripple effect. Duration per dot: 250ms. Easing: spring(0.6, 0.8, 0).</p>
+        </div>
+      </div>
+
+      <!-- Hover dot -->
+      <div style="display: flex; gap: 16px; align-items: flex-start;">
+        <div style="width: 60px; flex-shrink: 0; text-align: center;">
+          <div style="width: 48px; height: 48px; margin: 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+            <div style="width: 24px; height: 24px; border-radius: 50%; background: rgba(0,20,50,0.95); border: 2px solid #39ffce; box-shadow: 0 0 12px rgba(57,255,206,0.5); transform: scale(1.2);"></div>
+          </div>
+          <span style="font-size: 9px; color: rgba(255,255,255,0.3); margin-top: 4px; display: block;">hover</span>
+        </div>
+        <div style="flex: 1; padding: 12px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px;">
+          <strong style="color: rgba(255,255,255,0.8);">Dot Hover</strong>
+          <p style="margin: 4px 0 0; font-size: 13px; opacity: 0.6;">Hovered dot scales 1.3x, glow intensifies. Tooltip fades in (150ms) positioned radially outward from center. Other dots dim to 60% opacity to focus attention.</p>
+        </div>
+      </div>
+
+      <!-- Fly-to -->
+      <div style="display: flex; gap: 16px; align-items: flex-start;">
+        <div style="width: 60px; flex-shrink: 0; text-align: center;">
+          <div style="width: 48px; height: 48px; margin: 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+            <div style="font-size: 20px;">✈</div>
+          </div>
+          <span style="font-size: 9px; color: rgba(255,255,255,0.3); margin-top: 4px; display: block;">click</span>
+        </div>
+        <div style="flex: 1; padding: 12px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px;">
+          <strong style="color: rgba(255,255,255,0.8);">Click Dot → Fly To Asset</strong>
+          <p style="margin: 4px 0 0; font-size: 13px; opacity: 0.6;">Clicked dot pulses bright, then the ring collapses: dots scatter inward to center (200ms), ring shrinks to 0. Simultaneously, the minimized pill fades in at the depot location. Map flies to asset at zoom 14.</p>
+        </div>
+      </div>
+
+      <!-- Minimize/Restore -->
+      <div style="display: flex; gap: 16px; align-items: flex-start;">
+        <div style="width: 60px; flex-shrink: 0; text-align: center;">
+          <div style="width: 48px; height: 48px; margin: 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+            <div style="display: flex; align-items: center; gap: 3px; padding: 3px 8px; border-radius: 999px; background: rgba(0,20,50,0.9); border: 1px solid rgba(59,130,246,0.3);">
+              <div style="width: 10px; height: 10px; border-radius: 50%; background: #3b82f6; font-size: 5px; color: white; text-align: center; line-height: 10px;">S</div>
+              <span style="font-size: 7px; color: rgba(255,255,255,0.6);">12</span>
+            </div>
+          </div>
+          <span style="font-size: 9px; color: rgba(255,255,255,0.3); margin-top: 4px; display: block;">restore</span>
+        </div>
+        <div style="flex: 1; padding: 12px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px;">
+          <strong style="color: rgba(255,255,255,0.8);">Restore from Minimized</strong>
+          <p style="margin: 4px 0 0; font-size: 13px; opacity: 0.6;">Click pill → pill morphs into center hub (expand animation), ring and dots replay their enter animations. Map flies back to depot to re-center the ring.</p>
+        </div>
+      </div>
+
+      <!-- Dismiss -->
+      <div style="display: flex; gap: 16px; align-items: flex-start;">
+        <div style="width: 60px; flex-shrink: 0; text-align: center;">
+          <div style="width: 48px; height: 48px; margin: 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+            <span style="font-size: 18px; color: rgba(255,255,255,0.3);">✕</span>
+          </div>
+          <span style="font-size: 9px; color: rgba(255,255,255,0.3); margin-top: 4px; display: block;">esc</span>
+        </div>
+        <div style="flex: 1; padding: 12px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px;">
+          <strong style="color: rgba(255,255,255,0.8);">Dismiss</strong>
+          <p style="margin: 4px 0 0; font-size: 13px; opacity: 0.6;">Esc or click map → all dots fade out simultaneously (150ms), ring shrinks to 0 (200ms). Returns to idle state. No lingering elements.</p>
+        </div>
+      </div>
+    </div>
+
+    <style>
+      @keyframes pulse-demo {
+        0%, 100% { transform: scale(1); opacity: 0.3; }
+        50% { transform: scale(1.3); opacity: 0.8; }
+      }
+    </style>
+  </div>
+</div>
+
+<h3 style="margin-top: 20px;">Animation choreography look good?</h3>
+<div class="options">
+  <div class="option" data-choice="approve-anim" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Love it, let's finalize</h3>
+      <p>The stagger, hover focus, and collapse/restore all make sense</p>
+    </div>
+  </div>
+  <div class="option" data-choice="tweak-anim" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>I'd change something</h3>
+      <p>I'll share in the terminal</p>
+    </div>
+  </div>
+</div>

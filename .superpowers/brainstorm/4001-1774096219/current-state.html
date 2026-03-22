@@ -1,0 +1,116 @@
+<h2>Current Cluster Popup — What bugs you most?</h2>
+<p class="subtitle">Here's a wireframe of what the depot hover popup looks like today. What's the biggest pain point?</p>
+
+<div class="split">
+  <!-- Current mockup -->
+  <div class="mockup">
+    <div class="mockup-header">Current: Depot Hover Popup</div>
+    <div class="mockup-body" style="background: linear-gradient(135deg, #0a1628 0%, #0f2847 100%); padding: 24px; min-height: 340px; display: flex; align-items: flex-end; justify-content: center; position: relative;">
+
+      <!-- The popup card -->
+      <div style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); width: 160px; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.25); background: linear-gradient(to bottom, rgb(0, 0, 40), rgb(10, 38, 84)); overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.4);">
+        <!-- Header -->
+        <div style="padding: 6px 12px; font-size: 11px; font-weight: bold; color: rgba(255,255,255,0.7); border-bottom: 1px solid rgba(59,130,246,0.2);">
+          SYD — 12 assets
+        </div>
+        <!-- Scrollable list -->
+        <div style="max-height: 140px; overflow-y: auto; padding: 4px;">
+          <div style="padding: 2px 8px; font-size: 13px; font-family: monospace; color: rgba(255,255,255,0.9);">RGR-T-0042</div>
+          <div style="padding: 2px 8px; font-size: 13px; font-family: monospace; color: rgba(255,255,255,0.9);">RGR-T-0108</div>
+          <div style="padding: 2px 8px; font-size: 13px; font-family: monospace; color: rgba(255,255,255,0.9);">RGR-T-0215</div>
+          <div style="padding: 2px 8px; font-size: 13px; font-family: monospace; color: rgba(255,255,255,0.9);">RGR-D-0033</div>
+          <div style="padding: 2px 8px; font-size: 13px; font-family: monospace; color: rgba(255,255,255,0.9);">RGR-T-0077</div>
+          <div style="padding: 2px 8px; font-size: 13px; font-family: monospace; color: rgba(255,255,255,0.9); opacity: 0.4;">RGR-T-0091</div>
+          <div style="padding: 2px 8px; font-size: 13px; font-family: monospace; color: rgba(255,255,255,0.9); opacity: 0.2;">RGR-D-0012</div>
+        </div>
+      </div>
+
+      <!-- Pin stem -->
+      <div style="position: absolute; bottom: 60px; left: 50%; width: 2px; height: 80px; background: linear-gradient(to bottom, transparent, #3b82f6); transform: translateX(-50%);"></div>
+
+      <!-- Pin dot -->
+      <div style="position: absolute; bottom: 56px; left: 50%; width: 8px; height: 8px; border-radius: 50%; background: #3b82f6; box-shadow: 0 0 12px #3b82f6; transform: translateX(-50%);"></div>
+
+      <!-- Label pill -->
+      <div style="position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%); background: rgba(59,130,246,0.82); color: white; font-size: 13px; font-weight: bold; padding: 2px 14px; border-radius: 999px; white-space: nowrap;">
+        SYD
+        <span style="position: absolute; top: calc(100% + 4px); left: 50%; transform: translateX(-50%); background: #1e293b; border: 2px solid #3b82f6; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; box-shadow: 0 0 8px rgba(59,130,246,0.5);">12</span>
+      </div>
+
+      <!-- Annotations -->
+      <div style="position: absolute; top: 25px; right: 16px; color: rgba(255,255,255,0.4); font-size: 11px; text-align: right; line-height: 1.6;">
+        <div>↑ plain text list</div>
+        <div>↑ no status info</div>
+        <div>↑ browser scrollbar</div>
+        <div>↑ no click actions</div>
+        <div>↑ 176px max height</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Issues summary -->
+  <div style="padding: 20px;">
+    <h3 style="margin-bottom: 16px;">Known Limitations</h3>
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      <div style="padding: 12px 16px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px;">
+        <strong style="color: #f87171;">Plain text only</strong>
+        <p style="margin: 4px 0 0; font-size: 13px; opacity: 0.8;">Just asset numbers — no status, category, or last-scanned info</p>
+      </div>
+      <div style="padding: 12px 16px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px;">
+        <strong style="color: #f87171;">No interactivity</strong>
+        <p style="margin: 4px 0 0; font-size: 13px; opacity: 0.8;">Can't click an asset to fly to it or see details</p>
+      </div>
+      <div style="padding: 12px 16px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px;">
+        <strong style="color: #f87171;">Default scrollbar</strong>
+        <p style="margin: 4px 0 0; font-size: 13px; opacity: 0.8;">Browser default — doesn't match glassmorphism theme</p>
+      </div>
+      <div style="padding: 12px 16px; background: rgba(251, 191, 36, 0.08); border: 1px solid rgba(251, 191, 36, 0.2); border-radius: 8px;">
+        <strong style="color: #fbbf24;">Hover-only</strong>
+        <p style="margin: 4px 0 0; font-size: 13px; opacity: 0.8;">Popup disappears when mouse leaves the 120px dome</p>
+      </div>
+      <div style="padding: 12px 16px; background: rgba(251, 191, 36, 0.08); border: 1px solid rgba(251, 191, 36, 0.2); border-radius: 8px;">
+        <strong style="color: #fbbf24;">Fixed size</strong>
+        <p style="margin: 4px 0 0; font-size: 13px; opacity: 0.8;">140–200px wide, 220px tall — cramped for depots with many assets</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h3 style="margin-top: 24px;">What's the biggest pain point for you?</h3>
+<div class="options">
+  <div class="option" data-choice="info-density" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Not enough info per asset</h3>
+      <p>I want to see status, category, last scanned — not just the number</p>
+    </div>
+  </div>
+  <div class="option" data-choice="interactivity" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>No click/tap actions</h3>
+      <p>I want to click an asset in the list and fly to it or open its detail view</p>
+    </div>
+  </div>
+  <div class="option" data-choice="visual-polish" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>It looks basic / unpolished</h3>
+      <p>Scrollbar, layout, and visual style don't match the rest of the map UI</p>
+    </div>
+  </div>
+  <div class="option" data-choice="hover-ux" onclick="toggleSelect(this)">
+    <div class="letter">D</div>
+    <div class="content">
+      <h3>Hover-only is frustrating</h3>
+      <p>Too easy to lose the popup — want click-to-pin or a more stable trigger</p>
+    </div>
+  </div>
+  <div class="option" data-choice="all-of-it" onclick="toggleSelect(this)">
+    <div class="letter">E</div>
+    <div class="content">
+      <h3>All of the above</h3>
+      <p>Whole thing needs a rethink — it's a placeholder that stuck around</p>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,258 @@
+<h2>Dashboard Layout Options</h2>
+<p class="subtitle">5 layout configurations for the RGR Fleet Manager dashboard. Click your favourite — I've marked my recommendation.</p>
+
+<style>
+  .layout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+  .layout-grid .card:last-child { grid-column: 1 / -1; max-width: 50%; margin: 0 auto; }
+  .card { cursor: pointer; border: 2px solid rgba(255,255,255,0.06); border-radius: 12px; overflow: hidden; transition: all 0.2s; }
+  .card:hover { border-color: rgba(96, 165, 250, 0.3); }
+  .card.selected { border-color: #60a5fa !important; box-shadow: 0 0 20px rgba(96,165,250,0.15); }
+  .card-image { padding: 16px; background: rgba(0,0,0,0.2); }
+  .card-body { padding: 16px; }
+  .card-body h3 { margin: 0 0 6px; font-size: 1rem; }
+  .card-body p { margin: 0; font-size: 0.85rem; opacity: 0.65; line-height: 1.5; }
+
+  /* Mockup colors — RGR light logo palette */
+  .m { font-family: monospace; font-size: 10px; line-height: 1; }
+  .m-container { background: #0d1526; border-radius: 8px; overflow: hidden; min-height: 240px; display: flex; flex-direction: column; }
+  .m-nav { background: linear-gradient(90deg, #1a1a99, #2929cc); color: #e2e8f0; padding: 8px 12px; font-size: 10px; display: flex; align-items: center; gap: 8px; }
+  .m-nav .logo { font-weight: bold; color: #60a5fa; font-size: 12px; }
+  .m-nav .links { display: flex; gap: 10px; font-size: 9px; opacity: 0.7; }
+  .m-nav .user { margin-left: auto; font-size: 9px; opacity: 0.6; }
+  .m-sidebar { background: rgba(26, 26, 153, 0.15); min-width: 100px; padding: 10px 8px; display: flex; flex-direction: column; gap: 6px; border-right: 1px solid rgba(255,255,255,0.06); }
+  .m-sidebar .item { font-size: 9px; color: #94a3b8; padding: 4px 6px; border-radius: 4px; }
+  .m-sidebar .item.active { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+  .m-content { flex: 1; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .m-stats { display: flex; gap: 6px; }
+  .m-stat { flex: 1; border-radius: 6px; padding: 8px 6px; text-align: center; }
+  .m-stat .num { font-size: 14px; font-weight: bold; color: #fff; }
+  .m-stat .lbl { font-size: 7px; color: rgba(255,255,255,0.6); margin-top: 2px; }
+  .m-map { flex: 1; background: rgba(30, 58, 138, 0.15); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #475569; font-size: 10px; min-height: 80px; position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.04); }
+  .m-map::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 60% 40%, rgba(59,130,246,0.08) 0%, transparent 60%); }
+  .m-panel { background: rgba(0,0,0,0.25); border-radius: 6px; padding: 8px; border: 1px solid rgba(255,255,255,0.06); }
+  .m-search { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 4px 8px; font-size: 9px; color: #64748b; width: 100%; }
+  .m-pills { display: flex; gap: 4px; }
+  .m-pill { font-size: 7px; padding: 2px 6px; border-radius: 10px; background: rgba(59,130,246,0.15); color: #60a5fa; }
+  .m-chart { background: rgba(0,0,0,0.2); border-radius: 6px; padding: 8px; height: 60px; display: flex; align-items: flex-end; gap: 3px; border: 1px solid rgba(255,255,255,0.04); }
+  .m-bar { width: 8px; border-radius: 2px 2px 0 0; }
+  .m-list { display: flex; flex-direction: column; gap: 4px; }
+  .m-list-item { font-size: 8px; color: #94a3b8; padding: 4px 6px; background: rgba(0,0,0,0.15); border-radius: 4px; display: flex; justify-content: space-between; }
+  .m-badge { font-size: 7px; padding: 1px 5px; border-radius: 8px; }
+  .m-tab-bar { display: flex; gap: 0; background: rgba(0,0,0,0.3); border-radius: 6px; overflow: hidden; margin-bottom: 8px; }
+  .m-tab { flex: 1; text-align: center; padding: 5px; font-size: 8px; color: #64748b; }
+  .m-tab.active { background: rgba(59,130,246,0.2); color: #60a5fa; }
+  .recommend { position: absolute; top: 8px; right: 8px; background: #2dd4bf; color: #0d1526; font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 10px; z-index: 2; }
+</style>
+
+<div class="layout-grid">
+
+  <!-- OPTION A: Current layout (baseline) -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="m-container">
+        <div class="m-nav">
+          <span class="logo">RGR</span>
+          <div class="links"><span>Dashboard</span><span>Assets</span><span>Maintenance</span><span>Reports</span></div>
+          <span class="user">User</span>
+        </div>
+        <div class="m-content">
+          <div class="m-stats">
+            <div class="m-stat" style="background:#2a8a9e"><div class="num">142</div><div class="lbl">Total</div></div>
+            <div class="m-stat" style="background:#2bbb6e"><div class="num">98</div><div class="lbl">Active</div></div>
+            <div class="m-stat" style="background:#e07020"><div class="num">12</div><div class="lbl">Maint.</div></div>
+            <div class="m-stat" style="background:#e8a020"><div class="num">8</div><div class="lbl">Defects</div></div>
+            <div class="m-stat" style="background:#d43050"><div class="num">3</div><div class="lbl">OOS</div></div>
+          </div>
+          <div class="m-search" style="margin-bottom:2px">Search assets...</div>
+          <div class="m-map">Fleet Map (full width)</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A. Full-Width Stack (Current)</h3>
+      <p>Top nav → stat cards row → search bar → full-width map. Everything stacks vertically, map gets maximum space. Simple but all content competes for the same vertical axis.</p>
+    </div>
+  </div>
+
+  <!-- OPTION B: Sidebar + Map -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="m-container">
+        <div class="m-nav">
+          <span class="logo">RGR</span>
+          <span class="user" style="margin-left:auto">User</span>
+        </div>
+        <div style="display:flex; flex:1;">
+          <div class="m-sidebar">
+            <div class="item active">Dashboard</div>
+            <div class="item">Assets</div>
+            <div class="item">Maintenance</div>
+            <div class="item">Reports</div>
+            <div class="item">Settings</div>
+            <div style="border-top:1px solid rgba(255,255,255,0.06); margin:6px 0;"></div>
+            <div style="font-size:8px; color:#64748b; padding:0 6px;">Quick Stats</div>
+            <div style="display:flex; flex-direction:column; gap:4px; padding:0 6px;">
+              <div style="font-size:9px; color:#2dd4bf;">142 Total</div>
+              <div style="font-size:9px; color:#2bbb6e;">98 Active</div>
+              <div style="font-size:9px; color:#e07020;">12 Maint.</div>
+              <div style="font-size:9px; color:#d43050;">3 OOS</div>
+            </div>
+          </div>
+          <div class="m-content" style="padding:10px;">
+            <div class="m-search">Search assets...</div>
+            <div class="m-map" style="flex:1;">Fleet Map (main area)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B. Sidebar Navigation + Map</h3>
+      <p>Persistent left sidebar with nav links and compact stats. Map fills the entire remaining area. Nav moves out of the top bar, giving the map more vertical space. Stats become secondary.</p>
+    </div>
+  </div>
+
+  <!-- OPTION C: Map-dominant with floating panels -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)" style="position:relative;">
+    <span class="recommend">Recommended</span>
+    <div class="card-image">
+      <div class="m-container" style="position:relative;">
+        <div class="m-nav" style="position:absolute; top:0; left:0; right:0; z-index:2; background:linear-gradient(90deg, rgba(26,26,153,0.85), rgba(41,41,204,0.85)); backdrop-filter:blur(8px);">
+          <span class="logo">RGR</span>
+          <div class="links"><span>Dashboard</span><span>Assets</span><span>Reports</span></div>
+          <span class="user">User</span>
+        </div>
+        <!-- Map fills entire container -->
+        <div class="m-map" style="position:absolute; inset:0; border-radius:0; min-height:240px;">
+          Fleet Map (edge-to-edge)
+        </div>
+        <!-- Floating stat pills top-left -->
+        <div style="position:absolute; top:38px; left:10px; display:flex; gap:4px; z-index:2;">
+          <div style="background:rgba(0,0,0,0.55); backdrop-filter:blur(8px); border-radius:8px; padding:4px 8px; font-size:8px; color:#2dd4bf; border:1px solid rgba(255,255,255,0.08);">142 assets</div>
+          <div style="background:rgba(0,0,0,0.55); backdrop-filter:blur(8px); border-radius:8px; padding:4px 8px; font-size:8px; color:#2bbb6e; border:1px solid rgba(255,255,255,0.08);">98 active</div>
+          <div style="background:rgba(0,0,0,0.55); backdrop-filter:blur(8px); border-radius:8px; padding:4px 8px; font-size:8px; color:#e07020; border:1px solid rgba(255,255,255,0.08);">12 maint</div>
+        </div>
+        <!-- Floating search bottom-center -->
+        <div style="position:absolute; bottom:10px; left:50%; transform:translateX(-50%); z-index:2; width:60%;">
+          <div style="background:rgba(0,0,0,0.6); backdrop-filter:blur(12px); border-radius:24px; padding:6px 14px; font-size:9px; color:#94a3b8; border:1px solid rgba(255,255,255,0.1); text-align:center;">Search assets, depots, or locations...</div>
+        </div>
+        <!-- Floating filter panel right -->
+        <div style="position:absolute; top:38px; right:10px; z-index:2; width:80px;">
+          <div style="background:rgba(0,0,0,0.55); backdrop-filter:blur(8px); border-radius:8px; padding:6px; border:1px solid rgba(255,255,255,0.08);">
+            <div style="font-size:7px; color:#64748b; margin-bottom:4px;">FILTERS</div>
+            <div class="m-pills" style="flex-wrap:wrap; gap:3px;">
+              <span class="m-pill">All</span>
+              <span class="m-pill">Trailers</span>
+              <span class="m-pill">Dollies</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C. Map-First with Floating Panels</h3>
+      <p>Map fills edge-to-edge behind everything. Nav, stats, search, and filters float as glassmorphic overlays. Maximum spatial awareness. Feels like a real-time operations center. Stats as compact pills, not cards.</p>
+    </div>
+  </div>
+
+  <!-- OPTION D: Split-panel command center -->
+  <div class="card" data-choice="d" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="m-container">
+        <div class="m-nav">
+          <span class="logo">RGR</span>
+          <div class="links"><span>Dashboard</span><span>Assets</span><span>Reports</span></div>
+          <span class="user">User</span>
+        </div>
+        <div style="display:flex; flex:1; gap:8px; padding:8px;">
+          <!-- Left: Map -->
+          <div style="flex:2; display:flex; flex-direction:column; gap:6px;">
+            <div class="m-map" style="flex:1;">Fleet Map</div>
+          </div>
+          <!-- Right: Info panels -->
+          <div style="flex:1; display:flex; flex-direction:column; gap:6px; min-width:130px;">
+            <div class="m-panel">
+              <div style="font-size:7px; color:#64748b; margin-bottom:4px;">FLEET HEALTH</div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
+                <div style="text-align:center;"><div style="font-size:14px; font-weight:bold; color:#2dd4bf;">142</div><div style="font-size:7px; color:#64748b;">Total</div></div>
+                <div style="text-align:center;"><div style="font-size:14px; font-weight:bold; color:#2bbb6e;">98</div><div style="font-size:7px; color:#64748b;">Active</div></div>
+                <div style="text-align:center;"><div style="font-size:14px; font-weight:bold; color:#e07020;">12</div><div style="font-size:7px; color:#64748b;">Maint.</div></div>
+                <div style="text-align:center;"><div style="font-size:14px; font-weight:bold; color:#d43050;">3</div><div style="font-size:7px; color:#64748b;">OOS</div></div>
+              </div>
+            </div>
+            <div class="m-panel" style="flex:1;">
+              <div style="font-size:7px; color:#64748b; margin-bottom:4px;">RECENT ACTIVITY</div>
+              <div class="m-list">
+                <div class="m-list-item">Scan #4821 <span class="m-badge" style="background:rgba(45,212,191,0.2); color:#2dd4bf;">OK</span></div>
+                <div class="m-list-item">Maint. Task <span class="m-badge" style="background:rgba(245,158,11,0.2); color:#f59e0b;">Pending</span></div>
+                <div class="m-list-item">Defect #12 <span class="m-badge" style="background:rgba(239,68,68,0.2); color:#ef4444;">Open</span></div>
+              </div>
+            </div>
+            <div class="m-panel">
+              <div style="font-size:7px; color:#64748b; margin-bottom:4px;">ALERTS</div>
+              <div style="font-size:8px; color:#2dd4bf;">All clear</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>D. Split-Panel Command Center</h3>
+      <p>Map takes ~65% width, right panel has stacked info cards: fleet health grid, recent activity feed, and alerts. Everything visible at once without scrolling. Information-dense but organized.</p>
+    </div>
+  </div>
+
+  <!-- OPTION E: Tabbed dashboard with map as one view -->
+  <div class="card" data-choice="e" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="m-container">
+        <div class="m-nav">
+          <span class="logo">RGR</span>
+          <div class="links"><span>Assets</span><span>Maintenance</span><span>Reports</span></div>
+          <span class="user">User</span>
+        </div>
+        <div class="m-content">
+          <div class="m-tab-bar">
+            <div class="m-tab active">Map</div>
+            <div class="m-tab">Overview</div>
+            <div class="m-tab">Activity</div>
+          </div>
+          <div style="display:flex; gap:8px; flex:1;">
+            <div style="flex:1; display:flex; flex-direction:column; gap:6px;">
+              <div class="m-stats">
+                <div class="m-stat" style="background:#2a8a9e; padding:6px 4px;"><div class="num" style="font-size:12px;">142</div><div class="lbl">Total</div></div>
+                <div class="m-stat" style="background:#2bbb6e; padding:6px 4px;"><div class="num" style="font-size:12px;">98</div><div class="lbl">Active</div></div>
+                <div class="m-stat" style="background:#e07020; padding:6px 4px;"><div class="num" style="font-size:12px;">12</div><div class="lbl">Maint</div></div>
+                <div class="m-stat" style="background:#d43050; padding:6px 4px;"><div class="num" style="font-size:12px;">3</div><div class="lbl">OOS</div></div>
+              </div>
+              <div class="m-map" style="flex:1;">Fleet Map</div>
+            </div>
+            <div style="width:120px; display:flex; flex-direction:column; gap:6px;">
+              <div class="m-panel" style="flex:1;">
+                <div style="font-size:7px; color:#64748b; margin-bottom:4px;">QUICK ACTIONS</div>
+                <div class="m-list">
+                  <div class="m-list-item" style="color:#60a5fa;">New Scan</div>
+                  <div class="m-list-item" style="color:#60a5fa;">Add Asset</div>
+                  <div class="m-list-item" style="color:#60a5fa;">Run Report</div>
+                </div>
+              </div>
+              <div class="m-chart">
+                <div class="m-bar" style="background:#2bbb6e; height:70%;"></div>
+                <div class="m-bar" style="background:#2bbb6e; height:85%;"></div>
+                <div class="m-bar" style="background:#2bbb6e; height:60%;"></div>
+                <div class="m-bar" style="background:#e07020; height:30%;"></div>
+                <div class="m-bar" style="background:#2bbb6e; height:90%;"></div>
+                <div class="m-bar" style="background:#2bbb6e; height:75%;"></div>
+                <div class="m-bar" style="background:#d43050; height:20%;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>E. Tabbed Views + Side Panel</h3>
+      <p>Secondary tabs (Map / Overview / Activity) switch the main content area. Side panel shows quick actions and a mini chart. More structured than C, less dense than D. Tabs let future views slot in cleanly.</p>
+    </div>
+  </div>
+
+</div>

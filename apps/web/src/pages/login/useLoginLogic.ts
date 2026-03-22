@@ -22,6 +22,7 @@
 import { useState, useCallback, useMemo, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
+import { hasOnboarded } from '@/utils/onboarding';
 import { validateEmail, validatePassword } from './types';
 import type { LoginStatus, LoginFormData, LoginFormErrors } from './types';
 import DOMPurify from 'dompurify';
@@ -159,7 +160,11 @@ export function useLoginLogic(deps?: LoginLogicDeps): UseLoginLogicResult {
       try {
         await login(formData.email, formData.password);
         setStatus('success');
-        navigate('/dashboard', { state: { fromLogin: true } });
+
+        // First-time users go to welcome/onboarding, returning users go to dashboard
+        const profile = useAuthStore.getState().user;
+        const target = profile && !hasOnboarded(profile.id) ? '/welcome' : '/dashboard';
+        navigate(target, { state: { fromLogin: true } });
       } catch (err) {
         setStatus('error');
 

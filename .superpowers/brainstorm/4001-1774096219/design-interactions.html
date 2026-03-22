@@ -1,0 +1,106 @@
+<h2>Design: Interaction Model & States</h2>
+<p class="subtitle">How the radial ring behaves across its lifecycle</p>
+
+<div class="mockup">
+  <div class="mockup-header">State Machine</div>
+  <div class="mockup-body" style="padding: 24px;">
+    <div style="display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;">
+
+      <!-- State 1: Idle -->
+      <div style="flex: 1; min-width: 180px; max-width: 220px; padding: 16px; border-radius: 12px; background: rgba(59,130,246,0.05); border: 1px solid rgba(59,130,246,0.15);">
+        <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.4); margin-bottom: 8px;">1. Idle</div>
+        <div style="text-align: center; margin: 12px 0;">
+          <div style="display: inline-block; width: 32px; height: 32px; border-radius: 50%; background: #3b82f6; box-shadow: 0 0 12px rgba(59,130,246,0.4); line-height: 32px; font-size: 10px; font-weight: bold; color: white;">SYD</div>
+        </div>
+        <div style="font-size: 12px; color: rgba(255,255,255,0.7); text-align: center;">
+          Normal depot pin + label + count badge. No ring visible.
+        </div>
+      </div>
+
+      <!-- Arrow -->
+      <div style="display: flex; align-items: center; color: rgba(255,255,255,0.3); font-size: 20px;">→</div>
+
+      <!-- State 2: Hover Preview -->
+      <div style="flex: 1; min-width: 180px; max-width: 220px; padding: 16px; border-radius: 12px; background: rgba(59,130,246,0.05); border: 1px solid rgba(59,130,246,0.15);">
+        <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.4); margin-bottom: 8px;">2. Hover Preview</div>
+        <div style="text-align: center; margin: 12px 0; position: relative; height: 80px;">
+          <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 70px; height: 70px; border-radius: 50%; border: 1px solid rgba(59,130,246,0.15);"></div>
+          <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 24px; height: 24px; border-radius: 50%; background: #3b82f6; line-height: 24px; font-size: 8px; font-weight: bold; color: white;">SYD</div>
+          <div style="position: absolute; top: 4px; left: 50%; transform: translateX(-50%); width: 10px; height: 10px; border-radius: 50%; background: rgba(0,30,60,0.9); border: 2px solid #39ffce;"></div>
+          <div style="position: absolute; top: 50%; right: 10px; width: 10px; height: 10px; border-radius: 50%; background: rgba(0,30,60,0.9); border: 2px solid #ffe14d;"></div>
+          <div style="position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 10px; height: 10px; border-radius: 50%; background: rgba(0,30,60,0.9); border: 2px solid #ff5577;"></div>
+        </div>
+        <div style="font-size: 12px; color: rgba(255,255,255,0.7); text-align: center;">
+          Ring fades in with dots. Quick status glance. Disappears on mouse leave (200ms delay).
+        </div>
+      </div>
+
+      <!-- Arrow -->
+      <div style="display: flex; align-items: center; color: rgba(255,255,255,0.3); font-size: 20px;">→</div>
+
+      <!-- State 3: Pinned -->
+      <div style="flex: 1; min-width: 180px; max-width: 220px; padding: 16px; border-radius: 12px; background: rgba(57,255,206,0.05); border: 1px solid rgba(57,255,206,0.2);">
+        <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: rgba(57,255,206,0.6); margin-bottom: 8px;">3. Pinned (clicked)</div>
+        <div style="text-align: center; margin: 12px 0; position: relative; height: 80px;">
+          <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 70px; height: 70px; border-radius: 50%; border: 1px solid rgba(59,130,246,0.25);"></div>
+          <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 24px; height: 24px; border-radius: 50%; background: #3b82f6; line-height: 24px; font-size: 8px; font-weight: bold; color: white; box-shadow: 0 0 0 2px rgba(57,255,206,0.3);">SYD</div>
+          <div style="position: absolute; top: 2px; left: 50%; transform: translateX(-50%); width: 14px; height: 14px; border-radius: 50%; background: rgba(0,30,60,0.9); border: 2px solid #39ffce; cursor: pointer;"></div>
+          <div style="position: absolute; top: 50%; right: 6px; width: 14px; height: 14px; border-radius: 50%; background: rgba(0,30,60,0.9); border: 2px solid #ffe14d; cursor: pointer;"></div>
+          <div style="position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 14px; height: 14px; border-radius: 50%; background: rgba(0,30,60,0.9); border: 2px solid #ff5577; cursor: pointer;"></div>
+        </div>
+        <div style="font-size: 12px; color: rgba(255,255,255,0.7); text-align: center;">
+          Ring locked open. Dots are clickable (fly-to). Hover dot for tooltip. Esc or click-away dismisses.
+        </div>
+      </div>
+
+      <!-- Arrow -->
+      <div style="display: flex; align-items: center; color: rgba(255,255,255,0.3); font-size: 20px;">→</div>
+
+      <!-- State 4: Minimized -->
+      <div style="flex: 1; min-width: 180px; max-width: 220px; padding: 16px; border-radius: 12px; background: rgba(251,191,36,0.05); border: 1px solid rgba(251,191,36,0.15);">
+        <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: rgba(251,191,36,0.6); margin-bottom: 8px;">4. Minimized</div>
+        <div style="text-align: center; margin: 12px 0;">
+          <div style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: rgba(0,20,50,0.9); border: 1px solid rgba(59,130,246,0.3);">
+            <div style="width: 16px; height: 16px; border-radius: 50%; background: #3b82f6; line-height: 16px; font-size: 7px; font-weight: bold; color: white; text-align: center;">S</div>
+            <span style="font-size: 10px; color: rgba(255,255,255,0.7);">12</span>
+            <span style="font-size: 10px; color: rgba(255,255,255,0.3);">↗</span>
+          </div>
+        </div>
+        <div style="font-size: 12px; color: rgba(255,255,255,0.7); text-align: center;">
+          After fly-to-asset. Tiny pill with depot initial + count. Click to re-expand ring.
+        </div>
+      </div>
+    </div>
+
+    <!-- Transition rules -->
+    <div style="margin-top: 24px; padding: 16px; border-radius: 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);">
+      <div style="font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.6); margin-bottom: 8px;">Transition Rules</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px; color: rgba(255,255,255,0.5);">
+        <div><strong style="color: rgba(255,255,255,0.7);">Hover depot →</strong> Show ring preview</div>
+        <div><strong style="color: rgba(255,255,255,0.7);">Click depot →</strong> Pin ring open</div>
+        <div><strong style="color: rgba(255,255,255,0.7);">Click asset dot →</strong> Fly to asset, minimize ring</div>
+        <div><strong style="color: rgba(255,255,255,0.7);">Click minimized pill →</strong> Re-expand ring (pinned)</div>
+        <div><strong style="color: rgba(255,255,255,0.7);">Esc / click map →</strong> Dismiss entirely (back to idle)</div>
+        <div><strong style="color: rgba(255,255,255,0.7);">Click other depot →</strong> Close current, open new</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h3 style="margin-top: 20px;">Does this interaction flow feel right?</h3>
+<div class="options">
+  <div class="option" data-choice="approve" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Looks good, move on</h3>
+      <p>The state machine and transitions make sense</p>
+    </div>
+  </div>
+  <div class="option" data-choice="tweak" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Mostly right, but I have feedback</h3>
+      <p>I'll share what I'd change in the terminal</p>
+    </div>
+  </div>
+</div>

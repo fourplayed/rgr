@@ -243,9 +243,8 @@ const NavUser = ({ name, email, avatarUrl }: NavUserProps) => {
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
-              <SidebarMenuButton
-                size="lg"
-                className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              <button
+                className="flex w-full items-center gap-2 rounded-md p-2 text-left text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
               />
             }
           >
@@ -415,6 +414,7 @@ const AppSidebar = ({
   const navigate = useNavigate();
   const activeGroup = navGroups[activeGroupIndex];
   const { isMobile } = useSidebar();
+  const { isDark } = useTheme();
 
   if (!activeGroup) return null;
 
@@ -434,13 +434,12 @@ const AppSidebar = ({
             >
               <div className="flex aspect-square size-6 items-center justify-center rounded-sm bg-primary">
                 <img
-                  src="/logo_light.png"
+                  src="/logo_dark.png"
                   alt="RGR Fleet"
                   className="size-4 text-primary-foreground"
                 />
               </div>
-              <span className="text-sm font-medium">RGR Fleet</span>
-            </button>
+                          </button>
           ) : (
             <span className="px-2 text-sm font-medium group-data-[collapsible=icon]:hidden">
               {activeGroup.title}
@@ -522,6 +521,7 @@ export const ApplicationShell5 = ({ className, children }: ApplicationShell5Prop
   const { user } = useAuthStore();
   const location = useLocation();
   const navigate = useNavigate();
+  const { isDark } = useTheme();
 
   const pathname = location.pathname;
 
@@ -649,26 +649,24 @@ export const ApplicationShell5 = ({ className, children }: ApplicationShell5Prop
             >
               <div className="flex aspect-square size-8 items-center justify-center rounded-sm bg-primary">
                 <img
-                  src="/logo_light.png"
+                  src="/logo_dark.png"
                   alt="RGR Fleet"
                   className="size-6 text-primary-foreground"
                 />
               </div>
-              <span className="font-semibold">RGR Fleet</span>
-            </button>
+                          </button>
           </div>
 
           {/* Desktop: logo */}
           <div className="hidden items-center gap-3 md:flex">
             <div className="flex aspect-square size-8 items-center justify-center rounded-sm bg-primary">
               <img
-                src="/logo_light.png"
+                src="/logo_dark.png"
                 alt="RGR Fleet"
                 className="size-6 text-primary-foreground"
               />
             </div>
-            <span className="font-semibold">RGR Fleet</span>
-          </div>
+                      </div>
 
           <ModuleTabs
             groups={navGroups}

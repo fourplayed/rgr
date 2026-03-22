@@ -1,0 +1,49 @@
+<h2>What should each asset row show?</h2>
+<p class="subtitle">Currently it's just the asset number (e.g. RGR-T-0042). When the popup is pinned open, you have time to read more. What info matters?</p>
+
+<div class="options" data-multiselect>
+  <div class="option" data-choice="status-dot" onclick="toggleSelect(this)">
+    <div class="letter">1</div>
+    <div class="content">
+      <h3>Status indicator</h3>
+      <p>Colored dot — green (serviced), amber (maintenance), red (out of service). Quick visual scan.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="category-icon" onclick="toggleSelect(this)">
+    <div class="letter">2</div>
+    <div class="content">
+      <h3>Category icon</h3>
+      <p>Small trailer/dolly icon next to the number so you can tell asset types apart at a glance.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="last-scanned" onclick="toggleSelect(this)">
+    <div class="letter">3</div>
+    <div class="content">
+      <h3>Last scanned timestamp</h3>
+      <p>Relative time like "2h ago" or "3d ago" — helps spot stale GPS data.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="click-to-fly" onclick="toggleSelect(this)">
+    <div class="letter">4</div>
+    <div class="content">
+      <h3>Click row → fly to asset</h3>
+      <p>Clicking an asset in the list flies the map to its location and highlights it.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="subtype" onclick="toggleSelect(this)">
+    <div class="letter">5</div>
+    <div class="content">
+      <h3>Subtype label</h3>
+      <p>Show the asset subtype (e.g. "Flat Top", "Skeletal") as a small tag.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="keep-minimal" onclick="toggleSelect(this)">
+    <div class="letter">6</div>
+    <div class="content">
+      <h3>Keep it minimal</h3>
+      <p>Just the number is fine — the popup should stay compact. Add info elsewhere.</p>
+    </div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top: 16px;">Select all that apply — you can pick multiple.</p>

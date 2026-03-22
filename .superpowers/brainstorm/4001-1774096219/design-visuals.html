@@ -1,0 +1,154 @@
+<h2>Design: Visual Layout & Dot Styling</h2>
+<p class="subtitle">How the ring renders, how dots look, and what happens on hover</p>
+
+<div class="split">
+  <!-- Ring layout -->
+  <div class="mockup">
+    <div class="mockup-header">Ring Layout — Pinned State (12 assets)</div>
+    <div class="mockup-body" style="background: linear-gradient(135deg, #0a1628 0%, #0f2847 100%); padding: 20px; min-height: 340px; display: flex; align-items: center; justify-content: center; position: relative;">
+      <div style="position: relative; width: 260px; height: 260px;">
+
+        <!-- Orbit ring track -->
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 210px; height: 210px; border-radius: 50%; border: 1px solid rgba(59,130,246,0.1);"></div>
+
+        <!-- Subtle glow behind ring -->
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(circle, rgba(59,130,246,0.04) 0%, transparent 70%);"></div>
+
+        <!-- Center depot hub -->
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); z-index: 3;">
+          <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #1e3a6e, #3b82f6); box-shadow: 0 0 24px rgba(59,130,246,0.5), inset 0 1px 0 rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; flex-direction: column;">
+            <span style="font-size: 12px; font-weight: 800; color: white; letter-spacing: 0.5px;">SYD</span>
+            <span style="font-size: 8px; color: rgba(255,255,255,0.5); margin-top: -1px;">12</span>
+          </div>
+        </div>
+
+        <!-- Asset dots distributed around ring — 12 assets -->
+        <!-- 0° (top) -->
+        <div style="position: absolute; top: 4px; left: 50%; transform: translateX(-50%);">
+          <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(0,20,50,0.95); border: 2px solid #39ffce; box-shadow: 0 0 8px rgba(57,255,206,0.3); display: flex; align-items: center; justify-content: center; font-size: 8px; color: white; font-weight: 700; font-family: monospace; cursor: pointer; transition: all 0.2s;">42</div>
+        </div>
+        <!-- 30° -->
+        <div style="position: absolute; top: 18px; right: 36px;">
+          <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(0,20,50,0.95); border: 2px solid #39ffce; box-shadow: 0 0 8px rgba(57,255,206,0.3); display: flex; align-items: center; justify-content: center; font-size: 8px; color: white; font-weight: 700; font-family: monospace; cursor: pointer;">08</div>
+        </div>
+        <!-- 60° -->
+        <div style="position: absolute; top: 66px; right: 8px;">
+          <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(0,20,50,0.95); border: 2px solid #ffe14d; box-shadow: 0 0 8px rgba(255,225,77,0.3); display: flex; align-items: center; justify-content: center; font-size: 8px; color: white; font-weight: 700; font-family: monospace; cursor: pointer;">15</div>
+        </div>
+        <!-- 90° (right) -->
+        <div style="position: absolute; top: 50%; right: 2px; transform: translateY(-50%);">
+          <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(0,20,50,0.95); border: 2px solid #39ffce; box-shadow: 0 0 8px rgba(57,255,206,0.3); display: flex; align-items: center; justify-content: center; font-size: 8px; color: white; font-weight: 700; font-family: monospace; cursor: pointer;">77</div>
+        </div>
+        <!-- 120° -->
+        <div style="position: absolute; bottom: 66px; right: 8px;">
+          <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(0,20,50,0.95); border: 2px solid #ff5577; box-shadow: 0 0 8px rgba(255,85,119,0.3); display: flex; align-items: center; justify-content: center; font-size: 8px; color: white; font-weight: 700; font-family: monospace; cursor: pointer;">33</div>
+        </div>
+        <!-- 150° -->
+        <div style="position: absolute; bottom: 18px; right: 36px;">
+          <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(0,20,50,0.95); border: 2px solid #39ffce; box-shadow: 0 0 8px rgba(57,255,206,0.3); display: flex; align-items: center; justify-content: center; font-size: 8px; color: white; font-weight: 700; font-family: monospace; cursor: pointer;">91</div>
+        </div>
+        <!-- 180° (bottom) -->
+        <div style="position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);">
+          <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(0,20,50,0.95); border: 2px solid #39ffce; box-shadow: 0 0 8px rgba(57,255,206,0.3); display: flex; align-items: center; justify-content: center; font-size: 8px; color: white; font-weight: 700; font-family: monospace; cursor: pointer;">12</div>
+        </div>
+        <!-- 210° -->
+        <div style="position: absolute; bottom: 18px; left: 36px;">
+          <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(0,20,50,0.95); border: 2px solid #ffe14d; box-shadow: 0 0 8px rgba(255,225,77,0.3); display: flex; align-items: center; justify-content: center; font-size: 8px; color: white; font-weight: 700; font-family: monospace; cursor: pointer;">56</div>
+        </div>
+        <!-- 240° -->
+        <div style="position: absolute; bottom: 66px; left: 8px;">
+          <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(0,20,50,0.95); border: 2px solid #39ffce; box-shadow: 0 0 8px rgba(57,255,206,0.3); display: flex; align-items: center; justify-content: center; font-size: 8px; color: white; font-weight: 700; font-family: monospace; cursor: pointer;">03</div>
+        </div>
+        <!-- 270° (left) -->
+        <div style="position: absolute; top: 50%; left: 2px; transform: translateY(-50%);">
+          <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(0,20,50,0.95); border: 2px solid #ff5577; box-shadow: 0 0 8px rgba(255,85,119,0.3); display: flex; align-items: center; justify-content: center; font-size: 8px; color: white; font-weight: 700; font-family: monospace; cursor: pointer;">88</div>
+        </div>
+        <!-- 300° -->
+        <div style="position: absolute; top: 66px; left: 8px;">
+          <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(0,20,50,0.95); border: 2px solid #39ffce; box-shadow: 0 0 8px rgba(57,255,206,0.3); display: flex; align-items: center; justify-content: center; font-size: 8px; color: white; font-weight: 700; font-family: monospace; cursor: pointer;">24</div>
+        </div>
+        <!-- 330° -->
+        <div style="position: absolute; top: 18px; left: 36px;">
+          <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(0,20,50,0.95); border: 2px solid #39ffce; box-shadow: 0 0 8px rgba(57,255,206,0.3); display: flex; align-items: center; justify-content: center; font-size: 8px; color: white; font-weight: 700; font-family: monospace; cursor: pointer;">67</div>
+        </div>
+
+        <!-- Hovered dot tooltip example -->
+        <div style="position: absolute; top: -10px; right: -80px; z-index: 10;">
+          <div style="background: rgba(0,15,40,0.95); border: 1px solid rgba(57,255,206,0.25); border-radius: 10px; padding: 8px 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); min-width: 120px;">
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+              <div style="width: 6px; height: 6px; border-radius: 50%; background: #39ffce;"></div>
+              <span style="font-size: 12px; font-weight: 700; font-family: monospace; color: white;">RGR-T-0108</span>
+            </div>
+            <div style="font-size: 10px; color: rgba(255,255,255,0.5);">Serviced</div>
+            <div style="margin-top: 6px; font-size: 9px; color: rgba(57,255,206,0.5); text-align: center;">click to fly →</div>
+          </div>
+          <!-- Connector line -->
+          <div style="position: absolute; bottom: 50%; left: -14px; width: 14px; height: 1px; background: rgba(57,255,206,0.2);"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Design specs -->
+  <div style="padding: 20px;">
+    <h3 style="margin-bottom: 16px;">Visual Specs</h3>
+
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      <div style="padding: 12px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px;">
+        <strong style="color: rgba(255,255,255,0.8);">Ring Track</strong>
+        <p style="margin: 4px 0 0; font-size: 13px; opacity: 0.6;">1px solid line at 10% depot color opacity. Subtle radial glow behind. Ring radius scales: base 100px, +4px per asset (capped at 140px).</p>
+      </div>
+
+      <div style="padding: 12px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px;">
+        <strong style="color: rgba(255,255,255,0.8);">Asset Dots</strong>
+        <p style="margin: 4px 0 0; font-size: 13px; opacity: 0.6;">26px circles. Dark navy fill (#001432). 2px border = status color. Glow shadow matching status. Shows last 2 digits of asset number. Evenly spaced around 360°.</p>
+      </div>
+
+      <div style="padding: 12px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px;">
+        <strong style="color: rgba(255,255,255,0.8);">Center Hub</strong>
+        <p style="margin: 4px 0 0; font-size: 13px; opacity: 0.6;">44px circle with gradient fill. Shows depot abbreviation + asset count. Pinned state adds a subtle ring indicator (e.g. green ring glow).</p>
+      </div>
+
+      <div style="padding: 12px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px;">
+        <strong style="color: rgba(255,255,255,0.8);">Hover Tooltip</strong>
+        <p style="margin: 4px 0 0; font-size: 13px; opacity: 0.6;">Glassmorphic card appears next to hovered dot. Shows full asset number, status text, and "click to fly →" hint. Connected by a thin line.</p>
+      </div>
+
+      <div style="padding: 12px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px;">
+        <strong style="color: rgba(255,255,255,0.8);">Status Colors</strong>
+        <div style="display: flex; gap: 16px; margin-top: 8px;">
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <div style="width: 12px; height: 12px; border-radius: 50%; background: #39ffce; box-shadow: 0 0 6px rgba(57,255,206,0.4);"></div>
+            <span style="font-size: 12px; color: rgba(255,255,255,0.7);">Serviced</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <div style="width: 12px; height: 12px; border-radius: 50%; background: #ffe14d; box-shadow: 0 0 6px rgba(255,225,77,0.4);"></div>
+            <span style="font-size: 12px; color: rgba(255,255,255,0.7);">Maintenance</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <div style="width: 12px; height: 12px; border-radius: 50%; background: #ff5577; box-shadow: 0 0 6px rgba(255,85,119,0.4);"></div>
+            <span style="font-size: 12px; color: rgba(255,255,255,0.7);">Out of Service</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h3 style="margin-top: 20px;">Does this visual direction feel right?</h3>
+<div class="options">
+  <div class="option" data-choice="approve-visuals" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Looks great, move on</h3>
+      <p>The ring, dots, hub, and tooltip design work for me</p>
+    </div>
+  </div>
+  <div class="option" data-choice="tweak-visuals" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Feedback on the visuals</h3>
+      <p>I'll share what I'd change in the terminal</p>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,33 @@
+<h2>How should the popup stay open?</h2>
+<p class="subtitle">The current 120px hover dome means the popup vanishes the moment your cursor drifts. What trigger model would work best?</p>
+
+<div class="options">
+  <div class="option" data-choice="click-to-pin" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Click to pin, click elsewhere to dismiss</h3>
+      <p>Hover still previews, but clicking the depot locks the popup open. Click anywhere else (or press Esc) to close. Most desktop-friendly — familiar from tooltips and map info windows.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="click-only" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Click-only (no hover preview)</h3>
+      <p>Remove hover popup entirely. Click depot to open, click elsewhere to close. Simpler, more predictable — but you lose the quick-glance preview on hover.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="hover-sticky" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Sticky hover with generous hitbox</h3>
+      <p>Keep hover-based, but expand the dome to cover the popup itself so moving into the list doesn't dismiss it. Add a short delay (200ms) before closing. Lowest-effort fix.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="sidebar-panel" onclick="toggleSelect(this)">
+    <div class="letter">D</div>
+    <div class="content">
+      <h3>Slide-out side panel</h3>
+      <p>Click depot → a panel slides in from the right/left with full asset details. Popup becomes just a brief hover label. Best for information-dense views but takes more screen space.</p>
+    </div>
+  </div>
+</div>

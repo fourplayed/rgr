@@ -1,0 +1,213 @@
+<h2>Layout B — shadcn/ui Styling</h2>
+<p class="subtitle">Same layout with shadcn's base-nova aesthetic: clean borders, neutral tones, refined spacing, subtle accents.</p>
+
+<style>
+  /* shadcn/ui base-nova palette */
+  :root {
+    --background: #09090b;
+    --foreground: #fafafa;
+    --card: #09090b;
+    --card-foreground: #fafafa;
+    --muted: #27272a;
+    --muted-foreground: #a1a1aa;
+    --border: #27272a;
+    --input: #27272a;
+    --ring: #d4d4d8;
+    --accent: #27272a;
+    --accent-foreground: #fafafa;
+    --primary: #fafafa;
+    --primary-foreground: #18181b;
+    --secondary: #27272a;
+    --secondary-foreground: #fafafa;
+    --destructive: #7f1d1d;
+    --radius: 0.625rem;
+  }
+
+  .split { display: flex; gap: 24px; margin-top: 20px; }
+  .split > div { flex: 1; }
+  .mockup { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .mockup-header { background: var(--muted); padding: 8px 12px; font-size: 11px; color: var(--muted-foreground); border-bottom: 1px solid var(--border); }
+  .mockup-body { background: var(--background); min-height: 360px; display: flex; flex-direction: column; }
+
+  /* Top bar — clean, minimal */
+  .top-bar { background: var(--background); border-bottom: 1px solid var(--border); padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; }
+  .top-bar .logo { font-weight: 700; color: var(--foreground); font-size: 14px; font-family: system-ui, -apple-system, sans-serif; letter-spacing: -0.02em; }
+  .top-bar .logo span { color: #3b82f6; }
+  .top-bar .user-area { display: flex; align-items: center; gap: 10px; }
+  .top-bar .avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--muted); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 9px; color: var(--muted-foreground); font-weight: 600; }
+  .top-bar .username { font-size: 10px; color: var(--muted-foreground); }
+  .top-bar .btn-ghost { font-size: 9px; color: var(--muted-foreground); padding: 4px 8px; border-radius: calc(var(--radius) - 2px); border: 1px solid transparent; }
+  .top-bar .btn-ghost:hover { background: var(--muted); }
+  .top-bar .icon-btn { width: 26px; height: 26px; border-radius: calc(var(--radius) - 2px); background: transparent; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--muted-foreground); }
+
+  .main-area { display: flex; flex: 1; }
+
+  /* Sidebar — expanded */
+  .sidebar-exp { width: 200px; background: var(--background); border-right: 1px solid var(--border); padding: 12px 8px; display: flex; flex-direction: column; gap: 1px; }
+  .sidebar-exp .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: calc(var(--radius) - 2px); font-size: 11.5px; color: var(--muted-foreground); transition: all 0.15s; font-weight: 450; }
+  .sidebar-exp .nav-item:hover { background: var(--muted); color: var(--foreground); }
+  .sidebar-exp .nav-item.active { background: var(--muted); color: var(--foreground); font-weight: 550; }
+  .sidebar-exp .nav-item .icon { width: 16px; text-align: center; font-size: 12px; opacity: 0.7; }
+  .sidebar-exp .nav-item.active .icon { opacity: 1; }
+  .sidebar-exp .section-label { font-size: 9px; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 0.08em; padding: 16px 12px 6px; font-weight: 600; opacity: 0.5; }
+  .sidebar-exp .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 12px; font-size: 10.5px; }
+  .sidebar-exp .stat-label { color: var(--muted-foreground); }
+  .sidebar-exp .stat-val { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .sidebar-exp .collapse-btn { margin: auto 4px 0; padding: 7px 12px; border-radius: calc(var(--radius) - 2px); background: transparent; border: 1px solid var(--border); font-size: 10px; color: var(--muted-foreground); text-align: center; font-weight: 500; }
+
+  /* Sidebar — collapsed */
+  .sidebar-col { width: 52px; background: var(--background); border-right: 1px solid var(--border); padding: 12px 0; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .sidebar-col .nav-item { width: 36px; height: 36px; border-radius: calc(var(--radius) - 2px); display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--muted-foreground); transition: all 0.15s; }
+  .sidebar-col .nav-item:hover { background: var(--muted); color: var(--foreground); }
+  .sidebar-col .nav-item.active { background: var(--muted); color: var(--foreground); }
+  .sidebar-col .divider { width: 24px; height: 1px; background: var(--border); margin: 8px 0; }
+  .sidebar-col .expand-btn { margin-top: auto; width: 36px; height: 36px; border-radius: calc(var(--radius) - 2px); background: transparent; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--muted-foreground); }
+
+  /* Map area */
+  .map-area { flex: 1; position: relative; background: #0c0c0f; overflow: hidden; }
+  .map-area::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 55% 45%, rgba(59,130,246,0.04) 0%, transparent 60%); }
+  .map-label { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: var(--muted-foreground); font-size: 11px; opacity: 0.3; }
+
+  /* Floating top row — search left, depots right */
+  .map-top-bar { position: absolute; top: 12px; left: 12px; right: 12px; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+  /* Search group — shadcn input style */
+  .search-group { display: flex; align-items: center; background: var(--background); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; flex-shrink: 0; box-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+  .search-group .search-input { padding: 7px 4px 7px 12px; font-size: 10.5px; color: var(--muted-foreground); border: none; background: none; width: 140px; font-family: system-ui, sans-serif; }
+  .search-group .search-btn { width: 28px; height: 28px; border-radius: calc(var(--radius) - 3px); background: var(--foreground); display: flex; align-items: center; justify-content: center; margin: 2px 3px 2px 0; flex-shrink: 0; }
+  .search-group .search-btn svg { width: 12px; height: 12px; stroke: var(--primary-foreground); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* Depot pills — shadcn badge style */
+  .depot-pills { display: flex; gap: 5px; flex-shrink: 0; }
+  .depot-pill { background: var(--background); border: 1px solid var(--border); border-radius: 9999px; padding: 5px 12px; font-size: 9.5px; color: var(--muted-foreground); cursor: pointer; transition: all 0.15s; white-space: nowrap; font-weight: 500; box-shadow: 0 1px 2px rgba(0,0,0,0.3); font-family: system-ui, sans-serif; }
+  .depot-pill:hover { border-color: #3f3f46; color: var(--foreground); }
+  .depot-pill.active { background: var(--foreground); border-color: var(--foreground); color: var(--primary-foreground); font-weight: 600; }
+  .depot-pill .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+  .depot-pill.active .dot { opacity: 0.7; }
+
+  /* Map controls — shadcn button style */
+  .map-controls { position: absolute; bottom: 12px; right: 12px; z-index: 2; display: flex; flex-direction: column; gap: 1px; background: var(--background); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.4); }
+  .map-controls .ctrl-btn { width: 32px; height: 32px; background: transparent; display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--muted-foreground); border-bottom: 1px solid var(--border); }
+  .map-controls .ctrl-btn:last-child { border-bottom: none; }
+
+  /* Stat pills — bottom left */
+  .stat-pills { position: absolute; bottom: 12px; left: 12px; z-index: 2; display: flex; gap: 6px; }
+  .stat-pill { background: var(--background); border: 1px solid var(--border); border-radius: 9999px; padding: 5px 10px; font-size: 9.5px; display: flex; align-items: center; gap: 5px; color: var(--muted-foreground); font-weight: 500; box-shadow: 0 1px 2px rgba(0,0,0,0.3); font-variant-numeric: tabular-nums; }
+  .stat-pill .dot { width: 6px; height: 6px; border-radius: 50%; }
+</style>
+
+<div class="split">
+
+  <!-- EXPANDED STATE -->
+  <div>
+    <div class="mockup">
+      <div class="mockup-header">Expanded — shadcn/ui base-nova</div>
+      <div class="mockup-body">
+        <div class="top-bar">
+          <span class="logo"><span>RGR</span> Fleet</span>
+          <div class="user-area">
+            <div class="icon-btn">&#9790;</div>
+            <div class="avatar">JD</div>
+            <span class="username">John Doe</span>
+            <span class="btn-ghost">Sign out</span>
+          </div>
+        </div>
+        <div class="main-area">
+          <div class="sidebar-exp">
+            <div class="nav-item active"><span class="icon">&#9632;</span> Dashboard</div>
+            <div class="nav-item"><span class="icon">&#9646;</span> Assets</div>
+            <div class="nav-item"><span class="icon">&#9874;</span> Maintenance</div>
+            <div class="nav-item"><span class="icon">&#9783;</span> Load Analyzer</div>
+            <div class="nav-item"><span class="icon">&#9776;</span> Reports</div>
+            <div class="nav-item"><span class="icon">&#9881;</span> Settings</div>
+            <div class="section-label">Fleet Health</div>
+            <div class="stat-row"><span class="stat-label">Total Assets</span> <span class="stat-val" style="color:#3b82f6;">142</span></div>
+            <div class="stat-row"><span class="stat-label">Active</span> <span class="stat-val" style="color:#22c55e;">98</span></div>
+            <div class="stat-row"><span class="stat-label">Maintenance</span> <span class="stat-val" style="color:#f59e0b;">12</span></div>
+            <div class="stat-row"><span class="stat-label">Out of Service</span> <span class="stat-val" style="color:#ef4444;">3</span></div>
+            <div class="collapse-btn">&laquo; Collapse</div>
+          </div>
+          <div class="map-area">
+            <div class="map-top-bar">
+              <div class="search-group">
+                <div class="search-input">Search assets...</div>
+                <div class="search-btn"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+              </div>
+              <div class="depot-pills">
+                <div class="depot-pill active"><span class="dot" style="background:#3b82f6;"></span>All</div>
+                <div class="depot-pill"><span class="dot" style="background:#22c55e;"></span>Brisbane</div>
+                <div class="depot-pill"><span class="dot" style="background:#a78bfa;"></span>Sydney</div>
+                <div class="depot-pill"><span class="dot" style="background:#f59e0b;"></span>Melbourne</div>
+                <div class="depot-pill"><span class="dot" style="background:#f87171;"></span>Perth</div>
+              </div>
+            </div>
+            <span class="map-label">Fleet Map</span>
+            <div class="map-controls">
+              <div class="ctrl-btn">+</div>
+              <div class="ctrl-btn">&minus;</div>
+              <div class="ctrl-btn">&#9635;</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COLLAPSED STATE -->
+  <div>
+    <div class="mockup">
+      <div class="mockup-header">Collapsed — shadcn/ui base-nova</div>
+      <div class="mockup-body">
+        <div class="top-bar">
+          <span class="logo"><span>RGR</span> Fleet</span>
+          <div class="user-area">
+            <div class="icon-btn">&#9790;</div>
+            <div class="avatar">JD</div>
+            <span class="username">John Doe</span>
+            <span class="btn-ghost">Sign out</span>
+          </div>
+        </div>
+        <div class="main-area">
+          <div class="sidebar-col">
+            <div class="nav-item active">&#9632;</div>
+            <div class="nav-item">&#9646;</div>
+            <div class="nav-item">&#9874;</div>
+            <div class="nav-item">&#9783;</div>
+            <div class="nav-item">&#9776;</div>
+            <div class="nav-item">&#9881;</div>
+            <div class="divider"></div>
+            <div class="expand-btn">&raquo;</div>
+          </div>
+          <div class="map-area">
+            <div class="map-top-bar">
+              <div class="search-group">
+                <div class="search-input">Search assets...</div>
+                <div class="search-btn"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+              </div>
+              <div class="depot-pills">
+                <div class="depot-pill active"><span class="dot" style="background:#3b82f6;"></span>All</div>
+                <div class="depot-pill"><span class="dot" style="background:#22c55e;"></span>Brisbane</div>
+                <div class="depot-pill"><span class="dot" style="background:#a78bfa;"></span>Sydney</div>
+                <div class="depot-pill"><span class="dot" style="background:#f59e0b;"></span>Melbourne</div>
+                <div class="depot-pill"><span class="dot" style="background:#f87171;"></span>Perth</div>
+              </div>
+            </div>
+            <span class="map-label">Fleet Map (more space)</span>
+            <div class="stat-pills">
+              <div class="stat-pill"><div class="dot" style="background:#3b82f6;"></div> 142</div>
+              <div class="stat-pill"><div class="dot" style="background:#22c55e;"></div> 98</div>
+              <div class="stat-pill"><div class="dot" style="background:#f59e0b;"></div> 12</div>
+              <div class="stat-pill"><div class="dot" style="background:#ef4444;"></div> 3</div>
+            </div>
+            <div class="map-controls">
+              <div class="ctrl-btn">+</div>
+              <div class="ctrl-btn">&minus;</div>
+              <div class="ctrl-btn">&#9635;</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

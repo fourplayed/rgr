@@ -1,0 +1,160 @@
+<h2>Three Approaches — Cluster Popup Redesign</h2>
+<p class="subtitle">Each includes: click-to-pin, status dots, click-to-fly, minimize-to-badge. The difference is the visual shape and feel.</p>
+
+<div class="cards">
+  <!-- Approach A -->
+  <div class="card" data-choice="radial-ring" onclick="toggleSelect(this)">
+    <div class="card-image" style="background: linear-gradient(135deg, #0a1628 0%, #0f2847 100%); padding: 20px; min-height: 280px; position: relative; display: flex; align-items: center; justify-content: center;">
+      <!-- Radial ring mockup -->
+      <div style="position: relative; width: 220px; height: 220px;">
+        <!-- Center depot dot -->
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 36px; height: 36px; border-radius: 50%; background: #3b82f6; box-shadow: 0 0 20px rgba(59,130,246,0.6); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; color: white; z-index: 2;">SYD</div>
+        <!-- Orbit ring -->
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 180px; height: 180px; border-radius: 50%; border: 1px solid rgba(59,130,246,0.15);"></div>
+        <!-- Asset dots on ring -->
+        <div style="position: absolute; top: 8px; left: 50%; transform: translateX(-50%);">
+          <div style="width: 22px; height: 22px; border-radius: 50%; background: rgba(0,30,60,0.9); border: 2px solid #39ffce; display: flex; align-items: center; justify-content: center; font-size: 7px; color: white; font-weight: bold;">42</div>
+        </div>
+        <div style="position: absolute; top: 30px; right: 14px;">
+          <div style="width: 22px; height: 22px; border-radius: 50%; background: rgba(0,30,60,0.9); border: 2px solid #39ffce; display: flex; align-items: center; justify-content: center; font-size: 7px; color: white; font-weight: bold;">08</div>
+        </div>
+        <div style="position: absolute; top: 90px; right: 2px;">
+          <div style="width: 22px; height: 22px; border-radius: 50%; background: rgba(0,30,60,0.9); border: 2px solid #ffe14d; display: flex; align-items: center; justify-content: center; font-size: 7px; color: white; font-weight: bold;">15</div>
+        </div>
+        <div style="position: absolute; bottom: 30px; right: 18px;">
+          <div style="width: 22px; height: 22px; border-radius: 50%; background: rgba(0,30,60,0.9); border: 2px solid #ff5577; display: flex; align-items: center; justify-content: center; font-size: 7px; color: white; font-weight: bold;">33</div>
+        </div>
+        <div style="position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);">
+          <div style="width: 22px; height: 22px; border-radius: 50%; background: rgba(0,30,60,0.9); border: 2px solid #39ffce; display: flex; align-items: center; justify-content: center; font-size: 7px; color: white; font-weight: bold;">77</div>
+        </div>
+        <div style="position: absolute; top: 30px; left: 14px;">
+          <div style="width: 22px; height: 22px; border-radius: 50%; background: rgba(0,30,60,0.9); border: 2px solid #39ffce; display: flex; align-items: center; justify-content: center; font-size: 7px; color: white; font-weight: bold;">91</div>
+        </div>
+        <!-- Hover tooltip -->
+        <div style="position: absolute; top: -8px; right: -60px; background: rgba(0,20,50,0.95); border: 1px solid rgba(57,255,206,0.3); border-radius: 8px; padding: 6px 10px; font-size: 10px; color: white; white-space: nowrap;">
+          <span style="color: #39ffce;">●</span> RGR-T-0108<br>
+          <span style="font-size: 9px; opacity: 0.6;">Serviced</span>
+        </div>
+      </div>
+      <div style="position: absolute; bottom: 8px; left: 12px; font-size: 10px; color: rgba(255,255,255,0.3);">★ Recommended</div>
+    </div>
+    <div class="card-body">
+      <h3>A: Radial Ring</h3>
+      <p>Assets orbit the depot as dots on a ring. Status = border color. Hover a dot for details, click to fly. Scales visually — ring grows with count. Minimizes to just the center depot dot.</p>
+      <div class="pros-cons" style="margin-top: 8px;">
+        <div class="pros"><h4>Pros</h4><ul><li>Unique, map-native feel</li><li>Status visible at a glance</li><li>No scrollbar needed (≤20 assets)</li><li>Gorgeous with neon theme</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Gets crowded past ~20 assets</li><li>Needs overflow list for large depots</li><li>More complex to implement</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Approach B -->
+  <div class="card" data-choice="compact-drawer" onclick="toggleSelect(this)">
+    <div class="card-image" style="background: linear-gradient(135deg, #0a1628 0%, #0f2847 100%); padding: 20px; min-height: 280px; position: relative; display: flex; align-items: flex-start; justify-content: center;">
+      <!-- Drawer mockup -->
+      <div style="width: 220px; border-radius: 14px; border: 1px solid rgba(59,130,246,0.2); background: linear-gradient(to bottom, rgba(0,10,40,0.95), rgba(10,30,70,0.95)); backdrop-filter: blur(20px); overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,0.5);">
+        <!-- Header with depot info -->
+        <div style="padding: 10px 14px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(59,130,246,0.15);">
+          <div style="width: 28px; height: 28px; border-radius: 50%; background: #3b82f6; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; color: white; flex-shrink: 0;">SYD</div>
+          <div>
+            <div style="font-size: 12px; font-weight: 600; color: white;">Sydney Depot</div>
+            <div style="font-size: 10px; color: rgba(255,255,255,0.5);">12 assets</div>
+          </div>
+          <div style="margin-left: auto; font-size: 14px; color: rgba(255,255,255,0.3); cursor: pointer;">×</div>
+        </div>
+        <!-- Status summary bar -->
+        <div style="padding: 6px 14px; display: flex; gap: 12px; border-bottom: 1px solid rgba(59,130,246,0.1); font-size: 10px;">
+          <span><span style="color: #39ffce;">●</span> <span style="color: rgba(255,255,255,0.6);">8</span></span>
+          <span><span style="color: #ffe14d;">●</span> <span style="color: rgba(255,255,255,0.6);">3</span></span>
+          <span><span style="color: #ff5577;">●</span> <span style="color: rgba(255,255,255,0.6);">1</span></span>
+        </div>
+        <!-- Asset rows -->
+        <div style="padding: 4px 6px;">
+          <div style="display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; background: rgba(255,255,255,0.03);">
+            <div style="width: 6px; height: 6px; border-radius: 50%; background: #39ffce; flex-shrink: 0;"></div>
+            <span style="font-size: 12px; font-family: monospace; color: rgba(255,255,255,0.9);">RGR-T-0042</span>
+            <span style="margin-left: auto; font-size: 9px; color: rgba(255,255,255,0.3);">→</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px;">
+            <div style="width: 6px; height: 6px; border-radius: 50%; background: #ffe14d; flex-shrink: 0;"></div>
+            <span style="font-size: 12px; font-family: monospace; color: rgba(255,255,255,0.9);">RGR-T-0215</span>
+            <span style="margin-left: auto; font-size: 9px; color: rgba(255,255,255,0.3);">→</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px;">
+            <div style="width: 6px; height: 6px; border-radius: 50%; background: #ff5577; flex-shrink: 0;"></div>
+            <span style="font-size: 12px; font-family: monospace; color: rgba(255,255,255,0.9);">RGR-D-0033</span>
+            <span style="margin-left: auto; font-size: 9px; color: rgba(255,255,255,0.3);">→</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; opacity: 0.4;">
+            <div style="width: 6px; height: 6px; border-radius: 50%; background: #39ffce; flex-shrink: 0;"></div>
+            <span style="font-size: 12px; font-family: monospace; color: rgba(255,255,255,0.9);">RGR-T-0077</span>
+            <span style="margin-left: auto; font-size: 9px; color: rgba(255,255,255,0.3);">→</span>
+          </div>
+        </div>
+        <!-- Scroll fade -->
+        <div style="height: 20px; background: linear-gradient(to top, rgba(10,30,70,0.95), transparent);"></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B: Polished Floating Drawer</h3>
+      <p>Evolution of the current card — but with a proper header, status summary bar, styled rows with status dots and fly-to arrows, custom scroll, and close button. Minimizes to a small pill.</p>
+      <div class="pros-cons" style="margin-top: 8px;">
+        <div class="pros"><h4>Pros</h4><ul><li>Familiar pattern — easy to use</li><li>Handles any asset count</li><li>Easiest to implement</li><li>Status summary at top</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Less visually distinctive</li><li>Still a scrolling list</li><li>Takes more vertical space</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Approach C -->
+  <div class="card" data-choice="hybrid" onclick="toggleSelect(this)">
+    <div class="card-image" style="background: linear-gradient(135deg, #0a1628 0%, #0f2847 100%); padding: 20px; min-height: 280px; position: relative; display: flex; align-items: center; justify-content: center;">
+      <!-- Hybrid mockup: radial + expandable panel -->
+      <div style="position: relative; width: 260px; height: 240px;">
+        <!-- Center depot -->
+        <div style="position: absolute; top: 50%; left: 35%; transform: translate(-50%,-50%); width: 36px; height: 36px; border-radius: 50%; background: #3b82f6; box-shadow: 0 0 20px rgba(59,130,246,0.6); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; color: white; z-index: 2;">SYD</div>
+        <!-- Partial ring (left side) -->
+        <div style="position: absolute; top: 50%; left: 35%; transform: translate(-50%,-50%); width: 140px; height: 140px; border-radius: 50%; border: 1px solid rgba(59,130,246,0.12); border-right-color: transparent;"></div>
+        <!-- A few orbital dots -->
+        <div style="position: absolute; top: 18px; left: 22%;">
+          <div style="width: 20px; height: 20px; border-radius: 50%; background: rgba(0,30,60,0.9); border: 2px solid #39ffce; font-size: 7px; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;">42</div>
+        </div>
+        <div style="position: absolute; bottom: 20px; left: 18%;">
+          <div style="width: 20px; height: 20px; border-radius: 50%; background: rgba(0,30,60,0.9); border: 2px solid #ffe14d; font-size: 7px; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;">15</div>
+        </div>
+        <div style="position: absolute; top: 50%; left: 6%; transform: translateY(-50%);">
+          <div style="width: 20px; height: 20px; border-radius: 50%; background: rgba(0,30,60,0.9); border: 2px solid #ff5577; font-size: 7px; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;">33</div>
+        </div>
+        <!-- Expandable panel on right -->
+        <div style="position: absolute; top: 10px; right: 0; width: 120px; border-radius: 10px; background: rgba(0,15,45,0.95); border: 1px solid rgba(59,130,246,0.15); overflow: hidden; font-size: 10px;">
+          <div style="padding: 6px 8px; border-bottom: 1px solid rgba(59,130,246,0.1); font-weight: 600; color: rgba(255,255,255,0.7); font-size: 9px;">12 assets</div>
+          <div style="padding: 3px 6px;">
+            <div style="display: flex; align-items: center; gap: 4px; padding: 3px 4px; border-radius: 4px; background: rgba(57,255,206,0.08);">
+              <div style="width: 4px; height: 4px; border-radius: 50%; background: #39ffce;"></div>
+              <span style="font-family: monospace; color: rgba(255,255,255,0.9); font-size: 10px;">T-0042</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 4px; padding: 3px 4px;">
+              <div style="width: 4px; height: 4px; border-radius: 50%; background: #ffe14d;"></div>
+              <span style="font-family: monospace; color: rgba(255,255,255,0.9); font-size: 10px;">T-0215</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 4px; padding: 3px 4px;">
+              <div style="width: 4px; height: 4px; border-radius: 50%; background: #ff5577;"></div>
+              <span style="font-family: monospace; color: rgba(255,255,255,0.9); font-size: 10px;">D-0033</span>
+            </div>
+          </div>
+        </div>
+        <!-- Connection line -->
+        <div style="position: absolute; top: 50%; right: 118px; width: 30px; height: 1px; background: linear-gradient(to right, rgba(59,130,246,0.3), rgba(59,130,246,0.1));"></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C: Hybrid — Ring + Side Panel</h3>
+      <p>Radial ring for the visual preview (≤6 dots), connected to a compact side panel that expands for the full list. Best of both worlds — visual impact + scrollable fallback for large depots.</p>
+      <div class="pros-cons" style="margin-top: 8px;">
+        <div class="pros"><h4>Pros</h4><ul><li>Visual wow factor of the ring</li><li>Scales to any depot size</li><li>Ring shows status at a glance</li><li>Panel handles overflow</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Most complex to build</li><li>Takes more horizontal space</li><li>Two interaction zones to manage</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top: 16px;">My recommendation: <strong>A (Radial Ring)</strong> — it's the most map-native and visually distinctive. For depots with >20 assets, it can gracefully degrade to stacked rings or show a count badge that opens a mini-list. But B is the safest bet if you want something solid fast.</p>

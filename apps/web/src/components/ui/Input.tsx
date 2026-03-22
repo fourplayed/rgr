@@ -1,50 +1,20 @@
-import { InputHTMLAttributes, forwardRef } from 'react';
+import * as React from "react"
+import { Input as InputPrimitive } from "@base-ui/react/input"
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
-  error?: string;
-  helperText?: string;
+import { cn } from "@/lib/utils"
+
+function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+  return (
+    <InputPrimitive
+      type={type}
+      data-slot="input"
+      className={cn(
+        "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
+        className
+      )}
+      {...props}
+    />
+  )
 }
 
-const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className = '', label, error, helperText, id, ...props }, ref) => {
-    const inputId = id || label?.toLowerCase().replace(/\s+/g, '-');
-
-    return (
-      <div className="w-full">
-        {label && (
-          <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 mb-1">
-            {label}
-          </label>
-        )}
-        <input
-          ref={ref}
-          id={inputId}
-          className={`
-            block w-full rounded-md shadow-sm sm:text-sm
-            ${
-              error
-                ? 'border-red-300 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-500'
-                : 'border-gray-300 focus:border-primary-500 focus:ring-primary-500'
-            }
-            disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed
-            ${className}
-          `}
-          aria-invalid={error ? 'true' : 'false'}
-          aria-describedby={error ? `${inputId}-error` : undefined}
-          {...props}
-        />
-        {error && (
-          <p className="mt-1 text-sm text-red-600" id={`${inputId}-error`}>
-            {error}
-          </p>
-        )}
-        {helperText && !error && <p className="mt-1 text-sm text-gray-500">{helperText}</p>}
-      </div>
-    );
-  }
-);
-
-Input.displayName = 'Input';
-
-export default Input;
+export { Input }

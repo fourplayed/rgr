@@ -1,0 +1,94 @@
+<h2>Design: Overflow — Large Depots (20+ assets)</h2>
+<p class="subtitle">The ring works great up to ~16 assets. Beyond that, dots start overlapping. How should it scale?</p>
+
+<div class="cards">
+  <!-- Option A: Concentric rings -->
+  <div class="card" data-choice="concentric" onclick="toggleSelect(this)">
+    <div class="card-image" style="background: linear-gradient(135deg, #0a1628 0%, #0f2847 100%); padding: 20px; min-height: 240px; display: flex; align-items: center; justify-content: center; position: relative;">
+      <div style="position: relative; width: 220px; height: 220px;">
+        <!-- Outer ring -->
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 200px; height: 200px; border-radius: 50%; border: 1px solid rgba(59,130,246,0.08);"></div>
+        <!-- Inner ring -->
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 130px; height: 130px; border-radius: 50%; border: 1px solid rgba(59,130,246,0.12);"></div>
+        <!-- Center -->
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #1e3a6e, #3b82f6); box-shadow: 0 0 20px rgba(59,130,246,0.4); display: flex; align-items: center; justify-content: center; flex-direction: column; z-index: 2;">
+          <span style="font-size: 10px; font-weight: 800; color: white;">MEL</span>
+          <span style="font-size: 7px; color: rgba(255,255,255,0.5);">28</span>
+        </div>
+        <!-- Inner ring dots (smaller, 8 dots) -->
+        <div style="position: absolute; top: 19px; left: 50%; transform: translateX(-50%); width: 18px; height: 18px; border-radius: 50%; background: rgba(0,20,50,0.95); border: 2px solid #39ffce; box-shadow: 0 0 6px rgba(57,255,206,0.2);"></div>
+        <div style="position: absolute; top: 50%; right: 33px; transform: translateY(-50%); width: 18px; height: 18px; border-radius: 50%; background: rgba(0,20,50,0.95); border: 2px solid #ffe14d; box-shadow: 0 0 6px rgba(255,225,77,0.2);"></div>
+        <div style="position: absolute; bottom: 19px; left: 50%; transform: translateX(-50%); width: 18px; height: 18px; border-radius: 50%; background: rgba(0,20,50,0.95); border: 2px solid #39ffce; box-shadow: 0 0 6px rgba(57,255,206,0.2);"></div>
+        <div style="position: absolute; top: 50%; left: 33px; transform: translateY(-50%); width: 18px; height: 18px; border-radius: 50%; background: rgba(0,20,50,0.95); border: 2px solid #ff5577; box-shadow: 0 0 6px rgba(255,85,119,0.2);"></div>
+        <!-- Outer ring dots (12 dots, slightly larger) -->
+        <div style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 20px; height: 20px; border-radius: 50%; background: rgba(0,20,50,0.95); border: 2px solid #39ffce; box-shadow: 0 0 6px rgba(57,255,206,0.2);"></div>
+        <div style="position: absolute; top: 14px; right: 14px; width: 20px; height: 20px; border-radius: 50%; background: rgba(0,20,50,0.95); border: 2px solid #39ffce; box-shadow: 0 0 6px rgba(57,255,206,0.2);"></div>
+        <div style="position: absolute; top: 50%; right: 0; transform: translateY(-50%); width: 20px; height: 20px; border-radius: 50%; background: rgba(0,20,50,0.95); border: 2px solid #ffe14d; box-shadow: 0 0 6px rgba(255,225,77,0.2);"></div>
+        <div style="position: absolute; bottom: 14px; right: 14px; width: 20px; height: 20px; border-radius: 50%; background: rgba(0,20,50,0.95); border: 2px solid #39ffce; box-shadow: 0 0 6px rgba(57,255,206,0.2);"></div>
+        <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 20px; height: 20px; border-radius: 50%; background: rgba(0,20,50,0.95); border: 2px solid #ff5577; box-shadow: 0 0 6px rgba(255,85,119,0.2);"></div>
+        <div style="position: absolute; bottom: 14px; left: 14px; width: 20px; height: 20px; border-radius: 50%; background: rgba(0,20,50,0.95); border: 2px solid #39ffce; box-shadow: 0 0 6px rgba(57,255,206,0.2);"></div>
+        <div style="position: absolute; top: 50%; left: 0; transform: translateY(-50%); width: 20px; height: 20px; border-radius: 50%; background: rgba(0,20,50,0.95); border: 2px solid #39ffce; box-shadow: 0 0 6px rgba(57,255,206,0.2);"></div>
+        <div style="position: absolute; top: 14px; left: 14px; width: 20px; height: 20px; border-radius: 50%; background: rgba(0,20,50,0.95); border: 2px solid #ffe14d; box-shadow: 0 0 6px rgba(255,225,77,0.2);"></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A: Concentric Rings</h3>
+      <p>Add a second (and third) ring as count grows. Inner ring = first 8, outer = next 16. Dots shrink slightly on outer rings. Scales to ~40 before needing a fallback.</p>
+    </div>
+  </div>
+
+  <!-- Option B: Ring + overflow badge -->
+  <div class="card" data-choice="overflow-badge" onclick="toggleSelect(this)">
+    <div class="card-image" style="background: linear-gradient(135deg, #0a1628 0%, #0f2847 100%); padding: 20px; min-height: 240px; display: flex; align-items: center; justify-content: center; position: relative;">
+      <div style="position: relative; width: 220px; height: 220px;">
+        <!-- Single ring -->
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 180px; height: 180px; border-radius: 50%; border: 1px solid rgba(59,130,246,0.1);"></div>
+        <!-- Center -->
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #1e3a6e, #3b82f6); box-shadow: 0 0 20px rgba(59,130,246,0.4); display: flex; align-items: center; justify-content: center; flex-direction: column; z-index: 2;">
+          <span style="font-size: 10px; font-weight: 800; color: white;">MEL</span>
+          <span style="font-size: 7px; color: rgba(255,255,255,0.5);">28</span>
+        </div>
+        <!-- 12 dots on ring -->
+        <div style="position: absolute; top: 6px; left: 50%; transform: translateX(-50%); width: 22px; height: 22px; border-radius: 50%; background: rgba(0,20,50,0.95); border: 2px solid #39ffce; box-shadow: 0 0 6px rgba(57,255,206,0.2);"></div>
+        <div style="position: absolute; top: 20px; right: 22px; width: 22px; height: 22px; border-radius: 50%; background: rgba(0,20,50,0.95); border: 2px solid #39ffce; box-shadow: 0 0 6px rgba(57,255,206,0.2);"></div>
+        <div style="position: absolute; top: 50%; right: 6px; transform: translateY(-50%); width: 22px; height: 22px; border-radius: 50%; background: rgba(0,20,50,0.95); border: 2px solid #ffe14d; box-shadow: 0 0 6px rgba(255,225,77,0.2);"></div>
+        <div style="position: absolute; bottom: 20px; right: 22px; width: 22px; height: 22px; border-radius: 50%; background: rgba(0,20,50,0.95); border: 2px solid #ff5577; box-shadow: 0 0 6px rgba(255,85,119,0.2);"></div>
+        <div style="position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); width: 22px; height: 22px; border-radius: 50%; background: rgba(0,20,50,0.95); border: 2px solid #39ffce; box-shadow: 0 0 6px rgba(57,255,206,0.2);"></div>
+        <div style="position: absolute; bottom: 20px; left: 22px; width: 22px; height: 22px; border-radius: 50%; background: rgba(0,20,50,0.95); border: 2px solid #39ffce; box-shadow: 0 0 6px rgba(57,255,206,0.2);"></div>
+        <div style="position: absolute; top: 50%; left: 6px; transform: translateY(-50%); width: 22px; height: 22px; border-radius: 50%; background: rgba(0,20,50,0.95); border: 2px solid #39ffce; box-shadow: 0 0 6px rgba(57,255,206,0.2);"></div>
+        <div style="position: absolute; top: 20px; left: 22px; width: 22px; height: 22px; border-radius: 50%; background: rgba(0,20,50,0.95); border: 2px solid #ffe14d; box-shadow: 0 0 6px rgba(255,225,77,0.2);"></div>
+
+        <!-- +16 overflow badge -->
+        <div style="position: absolute; bottom: -4px; right: -4px; z-index: 5;">
+          <div style="width: 34px; height: 34px; border-radius: 50%; background: rgba(0,15,40,0.95); border: 2px solid rgba(59,130,246,0.4); box-shadow: 0 0 12px rgba(59,130,246,0.2); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.8); cursor: pointer;">
+            +16
+          </div>
+        </div>
+      </div>
+      <!-- Expanded list hint -->
+      <div style="position: absolute; bottom: 16px; right: 16px; font-size: 10px; color: rgba(255,255,255,0.3);">click +16 → scrollable list</div>
+    </div>
+    <div class="card-body">
+      <h3>B: Ring + Overflow Badge</h3>
+      <p>Show first 12 on the ring. A "+N" badge in the corner opens a compact scrollable list for the rest. Keeps the ring clean, gives access to everything. Badge click toggles a mini-drawer.</p>
+    </div>
+  </div>
+</div>
+
+<h3 style="margin-top: 20px;">Which overflow strategy?</h3>
+<div class="options">
+  <div class="option" data-choice="pick-concentric" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Concentric rings</h3>
+      <p>Keep everything visual — no fallback list needed</p>
+    </div>
+  </div>
+  <div class="option" data-choice="pick-overflow" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Ring + overflow badge</h3>
+      <p>Clean ring with a "+N" fallback for large depots</p>
+    </div>
+  </div>
+</div>

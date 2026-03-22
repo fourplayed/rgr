@@ -1,7 +1,10 @@
 "use client";
-import React, { useState } from "react";
-import { motion } from "motion/react";
+import React, { useState, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
+import type { DepotAsset } from "@/components/dashboard/map/depotTypes";
+import { DepotAssetPanel } from "@/components/dashboard/map/DepotAssetPanel";
+import { MinimizedPill } from "@/components/dashboard/map/MinimizedPill";
 
 export const PinContainer = ({
   children,
@@ -11,22 +14,28 @@ export const PinContainer = ({
   containerClassName,
   color,
   assetCount,
-  assetNumbers,
+  assets,
+  isDark,
   onHoverChange,
+  onAssetClick,
+  activeDepot,
+  onPin,
+  onDismiss,
 }: {
   children?: React.ReactNode;
   title?: string;
   href?: string;
   className?: string;
   containerClassName?: string;
-  /** Accent color for the stem, dot, and rings (CSS color name or value) */
   color?: string;
-  /** Number of assets at this depot — shown as a badge on the label */
   assetCount?: number;
-  /** Asset numbers at this depot — shown in hover card */
-  assetNumbers?: string[];
-  /** Called when hover state changes */
+  assets?: DepotAsset[];
+  isDark?: boolean;
   onHoverChange?: (hovered: boolean) => void;
+  onAssetClick?: (asset: DepotAsset) => void;
+  activeDepot?: string | null;
+  onPin?: () => void;
+  onDismiss?: () => void;
 }) => {
   const [hovered, setHovered] = useState(false);
 
@@ -62,7 +71,7 @@ export const PinContainer = ({
           </div>
         </div>
       )}
-      <PinPerspective title={title} href={href} color={color} assetCount={assetCount} assetNumbers={assetNumbers} hovered={hovered} setHovered={handleHoverChange} />
+      <PinPerspective title={title} href={href} color={color} assetCount={assetCount} assets={assets} isDark={isDark} hovered={hovered} setHovered={handleHoverChange} onAssetClick={onAssetClick} activeDepot={activeDepot} onPin={onPin} onDismiss={onDismiss} />
     </div>
   );
 };
@@ -72,18 +81,30 @@ export const PinPerspective = ({
   href,
   color,
   assetCount,
-  assetNumbers,
+  assets,
+  isDark = true,
   hovered,
   setHovered,
+  onAssetClick,
+  activeDepot,
+  onPin,
+  onDismiss,
 }: {
   title?: string | undefined;
   href?: string | undefined;
   color?: string | undefined;
   assetCount?: number | undefined;
-  assetNumbers?: string[] | undefined;
+  assets?: DepotAsset[] | undefined;
+  isDark?: boolean | undefined;
   hovered: boolean;
   setHovered: (v: boolean) => void;
+  onAssetClick?: ((asset: DepotAsset) => void) | undefined;
+  activeDepot?: string | null | undefined;
+  onPin?: (() => void) | undefined;
+  onDismiss?: (() => void) | undefined;
 }) => {
+  const [pinned, setPinned] = useState(false);
+  const [minimized, setMinimized] = useState(false);
   const c = color || "cyan";
   const isCyan = !color || color === "cyan";
 
@@ -91,6 +112,59 @@ export const PinPerspective = ({
   const stemGradient = isCyan
     ? "linear-gradient(to bottom, transparent, rgb(6, 182, 212))"
     : `linear-gradient(to bottom, transparent, ${c})`;
+
+  const showPanel = pinned && !minimized;
+  const showPreview = hovered && !pinned && !minimized && (assets?.length ?? 0) > 0;
+  const showMinimized = minimized;
+  const isActive = hovered || pinned || minimized;
+
+  // Auto-dismiss when another depot becomes active
+  useEffect(() => {
+    if (activeDepot !== null && activeDepot !== title && (pinned || minimized)) {
+      setPinned(false);
+      setMinimized(false);
+    }
+  }, [activeDepot, title, pinned, minimized]);
+
+  // Esc key dismiss
+  useEffect(() => {
+    if (!pinned && !minimized) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setPinned(false);
+        setMinimized(false);
+        onDismiss?.();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [pinned, minimized, onDismiss]);
+
+  const handleDomeClick = useCallback(() => {
+    if (!pinned && !minimized) {
+      setPinned(true);
+      setMinimized(false);
+      onPin?.();
+    }
+  }, [pinned, minimized, onPin]);
+
+  const handleClose = useCallback(() => {
+    setPinned(false);
+    setMinimized(false);
+    onDismiss?.();
+  }, [onDismiss]);
+
+  const handleAssetClick = useCallback((asset: DepotAsset) => {
+    // Fly to asset and minimize
+    onAssetClick?.(asset);
+    setMinimized(true);
+  }, [onAssetClick]);
+
+  const handlePillClick = useCallback(() => {
+    setMinimized(false);
+    setPinned(true);
+    onPin?.();
+  }, [onPin]);
 
   return (
     <motion.div className="pointer-events-none w-96 h-80 flex items-center justify-center z-[60]">
@@ -103,7 +177,7 @@ export const PinPerspective = ({
           <span
             className={cn(
               "relative whitespace-nowrap text-white text-base font-bold py-0.5 px-3.5 rounded-full ring-1 ring-white/10 transition-all duration-500",
-              hovered && "-translate-y-16"
+              isActive && "-translate-y-16"
             )}
             style={{ backgroundColor: `${c}d0`, textShadow: "0 1px 3px rgba(0,0,0,0.8), 0 0 6px rgba(0,0,0,0.4)" }}
           >
@@ -124,62 +198,73 @@ export const PinPerspective = ({
           </span>
         </div>
 
-        {/* Asset list card — appears on hover */}
-        {hovered && assetNumbers && assetNumbers.length > 0 && (
-          <div
-            className="absolute inset-x-0 flex justify-center z-20"
-            style={{ bottom: "50%", marginBottom: "100px" }}
-          >
+        {/* Hover preview — compact panel (status bar only, no list) */}
+        <AnimatePresence>
+          {showPreview && assets && assets.length > 0 && (
             <div
-              className="rounded-xl border overflow-hidden"
-              style={{
-                background: "linear-gradient(to bottom, rgb(0, 0, 40) 0%, rgb(10, 38, 84) 100%)",
-                backdropFilter: "blur(20px)",
-                WebkitBackdropFilter: "blur(20px)",
-                boxShadow: `0 8px 24px rgba(0, 0, 0, 0.4), 0 0 12px ${c}33`,
-                borderColor: `${c}40`,
-                borderWidth: "1px",
-                minWidth: "140px",
-                maxWidth: "200px",
-                maxHeight: "220px",
-                animation: "depotCardPopUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)",
-              }}
+              className="absolute inset-x-0 flex justify-center z-20"
+              style={{ bottom: "50%", marginBottom: "100px" }}
             >
-              {/* Header */}
-              <div
-                className="px-3 py-1.5 text-xs font-bold text-white/70 border-b"
-                style={{ borderColor: `${c}30` }}
-              >
-                {title} — {assetNumbers.length} asset{assetNumbers.length !== 1 ? "s" : ""}
-              </div>
-              {/* Scrollable asset list */}
-              <div
-                className="overflow-y-auto px-1 py-1 pointer-events-auto"
-                style={{ maxHeight: "176px" }}
-              >
-                {assetNumbers.map((num) => (
-                  <div
-                    key={num}
-                    className="px-2 py-0.5 text-sm font-mono text-white/90 rounded hover:bg-white/5 transition-colors"
-                  >
-                    {num}
-                  </div>
-                ))}
-              </div>
+              <DepotAssetPanel
+                assets={assets}
+                depotName={title || ''}
+                depotColor={c}
+                isDark={isDark}
+                compact
+              />
             </div>
-          </div>
-        )}
+          )}
+        </AnimatePresence>
 
-        {/* Invisible 120px dome — sole hover target */}
+        {/* Full panel — pinned open */}
+        <AnimatePresence>
+          {showPanel && assets && assets.length > 0 && (
+            <div
+              className="absolute inset-x-0 flex justify-center z-20"
+              style={{ bottom: "50%", marginBottom: "100px" }}
+            >
+              <DepotAssetPanel
+                assets={assets}
+                depotName={title || ''}
+                depotColor={c}
+                isDark={isDark}
+                onAssetClick={handleAssetClick}
+                onClose={handleClose}
+              />
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Minimized pill */}
+        <AnimatePresence>
+          {showMinimized && (
+            <div
+              className="absolute inset-x-0 flex justify-center z-20"
+              style={{ bottom: "50%", marginBottom: "100px" }}
+            >
+              <MinimizedPill
+                depotName={title || ''}
+                depotColor={c}
+                assetCount={assets?.length ?? 0}
+                isDark={isDark}
+                onClick={handlePillClick}
+              />
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Invisible dome — hover + click target */}
         <div
           onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
+          onMouseLeave={() => { if (!pinned && !minimized) setHovered(false); }}
+          onClick={handleDomeClick}
           className="absolute left-1/2 bottom-1/2 rounded-full pointer-events-auto cursor-pointer"
           style={{
             zIndex: 51,
-            width: "120px",
-            height: "120px",
+            width: pinned ? "300px" : "120px",
+            height: pinned ? "400px" : "120px",
             transform: "translate(-50%, 50%)",
+            transition: "width 0.3s, height 0.3s",
           }}
         />
 

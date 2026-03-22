@@ -31,6 +31,7 @@ import type { AssetLocation } from '@/hooks/useFleetData';
 import { useDepots } from '@/hooks/useAssetData';
 import { isValidHexColor } from '@rgr/shared';
 import type { Depot } from '@rgr/shared';
+import type { DepotAsset } from './depotTypes';
 
 export interface FleetMapHandle {
   zoomIn: () => void;
@@ -197,6 +198,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
     const initialIsDark = useRef(isDark);
     const [mapLoaded, setMapLoaded] = useState(false);
     const [mapError, setMapError] = useState<string | null>(null);
+    const [activeDepot, setActiveDepot] = useState<string | null>(null);
 
 
     // eslint-disable-next-line react-hooks/exhaustive-deps -- stable default object; externalFilters identity is controlled by parent
@@ -361,13 +363,21 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
       return counts;
     }, [filteredAssets]);
 
-    // Group asset numbers by depot (for hover card)
-    const depotAssetNumbers = useMemo(() => {
-      const groups: Record<string, string[]> = {};
+    // Group full asset data by depot (for depot popup panel)
+    const depotAssets = useMemo(() => {
+      const groups: Record<string, DepotAsset[]> = {};
       for (const asset of filteredAssets) {
-        if (asset.depot) {
-          if (!groups[asset.depot]) groups[asset.depot] = [];
-          groups[asset.depot].push(asset.assetNumber);
+        if (asset.depot && asset.latitude != null && asset.longitude != null) {
+          const key = asset.depot;
+          if (!groups[key]) groups[key] = [];
+          groups[key]!.push({
+            id: asset.id,
+            assetNumber: asset.assetNumber,
+            category: asset.category,
+            status: asset.status,
+            latitude: asset.latitude,
+            longitude: asset.longitude,
+          });
         }
       }
       return groups;
@@ -400,7 +410,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         const depotColor = isValidHexColor(depot.color) ? depot.color : DEFAULT_DEPOT_COLOR;
         const z = depotZIndex[depot.name] ?? 10;
         const count = depotAssetCounts[depot.name] || 0;
-        const assetNums = depotAssetNumbers[depot.name] || [];
+        const assets = depotAssets[depot.name] || [];
 
         // Render PinContainer (React 3D pin) into a DOM element for Mapbox
         const el = document.createElement('div');
@@ -412,8 +422,15 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
             title={depotName}
             color={depotColor}
             assetCount={count}
-            assetNumbers={assetNums}
+            assets={assets}
+            isDark={isDark}
+            activeDepot={activeDepot}
             onHoverChange={(h) => h ? startDepotPulse.current?.(depotName) : stopDepotPulse.current?.()}
+            onAssetClick={(asset) => {
+              map.current?.flyTo({ center: [asset.longitude, asset.latitude], zoom: 14, duration: 1500 });
+            }}
+            onPin={() => setActiveDepot(depotName)}
+            onDismiss={() => { if (activeDepot === depotName) setActiveDepot(null); }}
           />
         );
         depotPopupRoots.current.push({ root: pinRoot, depot });
@@ -424,26 +441,33 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
 
         depotMarkers.current.push(marker);
       });
-    }, [mapLoaded, depotLocations, isDark, depotAssetCounts, depotAssetNumbers]);
+    }, [mapLoaded, depotLocations, isDark, depotAssetCounts, depotAssets]);
 
     // Keep badge counts in sync with filtered data
     useEffect(() => {
       depotPopupRoots.current.forEach(({ root, depot }) => {
         const depotColor = isValidHexColor(depot.color) ? depot.color : DEFAULT_DEPOT_COLOR;
         const count = depotAssetCounts[depot.name] || 0;
-        const assetNums = depotAssetNumbers[depot.name] || [];
+        const assets = depotAssets[depot.name] || [];
         const depotName = depot.name;
         root.render(
           <PinContainer
             title={depotName}
             color={depotColor}
             assetCount={count}
-            assetNumbers={assetNums}
+            assets={assets}
+            isDark={isDark}
+            activeDepot={activeDepot}
             onHoverChange={(h) => h ? startDepotPulse.current?.(depotName) : stopDepotPulse.current?.()}
+            onAssetClick={(asset) => {
+              map.current?.flyTo({ center: [asset.longitude, asset.latitude], zoom: 14, duration: 1500 });
+            }}
+            onPin={() => setActiveDepot(depotName)}
+            onDismiss={() => { if (activeDepot === depotName) setActiveDepot(null); }}
           />
         );
       });
-    }, [depotAssetCounts, depotAssetNumbers]);
+    }, [depotAssetCounts, depotAssets, activeDepot, isDark]);
 
     // Compute max asset radius in meters per depot (for pulse wave)
     const depotRadiusData = useMemo(() => {
