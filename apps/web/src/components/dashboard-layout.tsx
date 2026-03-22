@@ -3,7 +3,7 @@ import { AppSidebar } from "@/components/app-sidebar"
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={true}>
       <AppSidebar />
       <SidebarInset>{children}</SidebarInset>
     </SidebarProvider>
