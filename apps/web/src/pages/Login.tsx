@@ -11,6 +11,7 @@
 import { useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { PersistentBackground } from '@/components/backgrounds';
 import { useLoginLogic } from './login/useLoginLogic';
 import { LoginPresenter } from './login/LoginPresenter';
 
@@ -61,11 +62,14 @@ export default function Login() {
   });
 
   return (
-    <LoginPresenter
-      state={state}
-      actions={actions}
-      ButtonComponent={Button as React.ComponentType<import('./login/LoginPresenter').ButtonProps>}
-      onNavigationReady={handleNavigationReady}
-    />
+    <>
+      <PersistentBackground />
+      <LoginPresenter
+        state={state}
+        actions={actions}
+        ButtonComponent={Button as React.ComponentType<import('./login/LoginPresenter').ButtonProps>}
+        onNavigationReady={handleNavigationReady}
+      />
+    </>
   );
 }
