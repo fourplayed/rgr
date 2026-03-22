@@ -1,8 +1,4 @@
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,32 +7,32 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { CircleUserRoundIcon, LogOutIcon } from "lucide-react"
-import { useAuthStore } from "@/stores/authStore"
-import { useNavigate } from "react-router-dom"
+} from '@/components/ui/dropdown-menu';
+import { CircleUserRoundIcon, LogOutIcon } from 'lucide-react';
+import { useAuthStore } from '@/stores/authStore';
+import { useNavigate } from 'react-router-dom';
 
 interface UserMenuProps {
-  expanded?: boolean
+  expanded?: boolean;
 }
 
 export function UserMenu({ expanded = false }: UserMenuProps) {
-  const { user, logout } = useAuthStore()
-  const navigate = useNavigate()
+  const { user, logout } = useAuthStore();
+  const navigate = useNavigate();
 
-  if (!user) return null
+  if (!user) return null;
 
   const initials = user.fullName
-    .split(" ")
+    .split(' ')
     .map((n) => n[0])
-    .join("")
+    .join('');
 
   const avatarElement = (
     <Avatar className="size-8 rounded-lg grayscale">
       {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt={user.fullName} />}
       <AvatarFallback className="rounded-lg text-xs">{initials}</AvatarFallback>
     </Avatar>
-  )
+  );
 
   return (
     <DropdownMenu>
@@ -53,12 +49,7 @@ export function UserMenu({ expanded = false }: UserMenuProps) {
           {avatarElement}
         </DropdownMenuTrigger>
       )}
-      <DropdownMenuContent
-        className="min-w-56"
-        side="right"
-        align="end"
-        sideOffset={8}
-      >
+      <DropdownMenuContent className="min-w-56" side="right" align="end" sideOffset={8}>
         <DropdownMenuLabel className="p-0 font-normal">
           <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
             {avatarElement}
@@ -70,7 +61,7 @@ export function UserMenu({ expanded = false }: UserMenuProps) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem onClick={() => navigate("/settings")}>
+          <DropdownMenuItem onClick={() => navigate('/settings')}>
             <CircleUserRoundIcon />
             Account
           </DropdownMenuItem>
@@ -82,5 +73,5 @@ export function UserMenu({ expanded = false }: UserMenuProps) {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }

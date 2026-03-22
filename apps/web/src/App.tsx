@@ -159,7 +159,9 @@ function App() {
                   path="/dashboard"
                   element={
                     <ProtectedRoute>
-                      <AppShell><Dashboard /></AppShell>
+                      <AppShell>
+                        <Dashboard />
+                      </AppShell>
                     </ProtectedRoute>
                   }
                 />
@@ -167,7 +169,9 @@ function App() {
                   path="/assets"
                   element={
                     <ProtectedRoute>
-                      <AppShell><Assets /></AppShell>
+                      <AppShell>
+                        <Assets />
+                      </AppShell>
                     </ProtectedRoute>
                   }
                 />
@@ -175,7 +179,9 @@ function App() {
                   path="/maintenance"
                   element={
                     <ProtectedRoute>
-                      <AppShell><StubPage title="Maintenance" /></AppShell>
+                      <AppShell>
+                        <StubPage title="Maintenance" />
+                      </AppShell>
                     </ProtectedRoute>
                   }
                 />
@@ -183,7 +189,9 @@ function App() {
                   path="/reports"
                   element={
                     <ProtectedRoute>
-                      <AppShell><Reports /></AppShell>
+                      <AppShell>
+                        <Reports />
+                      </AppShell>
                     </ProtectedRoute>
                   }
                 />
@@ -191,7 +199,9 @@ function App() {
                   path="/settings"
                   element={
                     <ProtectedRoute>
-                      <AppShell><StubPage title="Settings" /></AppShell>
+                      <AppShell>
+                        <StubPage title="Settings" />
+                      </AppShell>
                     </ProtectedRoute>
                   }
                 />
@@ -199,7 +209,9 @@ function App() {
                   path="/admin"
                   element={
                     <ProtectedRoute requiredRole="superuser">
-                      <AppShell><StubPage title="Admin" /></AppShell>
+                      <AppShell>
+                        <StubPage title="Admin" />
+                      </AppShell>
                     </ProtectedRoute>
                   }
                 />

@@ -1,24 +1,24 @@
-import { useDepots } from "@/hooks/useAssetData"
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import { CheckIcon } from "lucide-react"
+import { useDepots } from '@/hooks/useAssetData';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { CheckIcon } from 'lucide-react';
 
 interface DepotFilterPillsProps {
-  activeDepots: string[]
-  onDepotChange: (depots: string[]) => void
+  activeDepots: string[];
+  onDepotChange: (depots: string[]) => void;
 }
 
 export function DepotFilterPills({ activeDepots, onDepotChange }: DepotFilterPillsProps) {
-  const { data: depots = [] } = useDepots()
+  const { data: depots = [] } = useDepots();
 
-  const allSelected = activeDepots.length === 0
+  const allSelected = activeDepots.length === 0;
 
   const handleToggleDepot = (depotCode: string) => {
     if (activeDepots.includes(depotCode)) {
-      onDepotChange(activeDepots.filter((d) => d !== depotCode))
+      onDepotChange(activeDepots.filter((d) => d !== depotCode));
     } else {
-      onDepotChange([...activeDepots, depotCode])
+      onDepotChange([...activeDepots, depotCode]);
     }
-  }
+  };
 
   return (
     <ToggleGroup
@@ -41,7 +41,7 @@ export function DepotFilterPills({ activeDepots, onDepotChange }: DepotFilterPil
       </ToggleGroupItem>
 
       {depots.map((depot) => {
-        const isActive = activeDepots.includes(depot.code)
+        const isActive = activeDepots.includes(depot.code);
         return (
           <ToggleGroupItem
             key={depot.code}
@@ -57,8 +57,8 @@ export function DepotFilterPills({ activeDepots, onDepotChange }: DepotFilterPil
             )}
             {depot.name}
           </ToggleGroupItem>
-        )
+        );
       })}
     </ToggleGroup>
-  )
+  );
 }

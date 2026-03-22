@@ -207,8 +207,12 @@ export function createPinElement(opts: PinElementOptions): HTMLDivElement {
       transition: transform 0.15s ease;
     `;
     badge.textContent = String(clusterCount);
-    badge.addEventListener('mouseenter', () => { badge.style.transform = 'scale(1.1)'; });
-    badge.addEventListener('mouseleave', () => { badge.style.transform = ''; });
+    badge.addEventListener('mouseenter', () => {
+      badge.style.transform = 'scale(1.1)';
+    });
+    badge.addEventListener('mouseleave', () => {
+      badge.style.transform = '';
+    });
     root.appendChild(badge);
   } else {
     const dot = document.createElement('div');
@@ -218,8 +222,12 @@ export function createPinElement(opts: PinElementOptions): HTMLDivElement {
       cursor: pointer; flex-shrink: 0; pointer-events: auto;
       transition: transform 0.15s ease;
     `;
-    dot.addEventListener('mouseenter', () => { dot.style.transform = 'scale(1.5)'; });
-    dot.addEventListener('mouseleave', () => { dot.style.transform = ''; });
+    dot.addEventListener('mouseenter', () => {
+      dot.style.transform = 'scale(1.5)';
+    });
+    dot.addEventListener('mouseleave', () => {
+      dot.style.transform = '';
+    });
     root.appendChild(dot);
   }
 
@@ -229,7 +237,10 @@ export function createPinElement(opts: PinElementOptions): HTMLDivElement {
 
 /** Log-scale cluster badge sizing (mirrors original clusterSize) */
 function clusterBadgeSize(count: number): { size: number; fontSize: number } {
-  const MIN_SIZE = 28, MAX_SIZE = 52, MIN_FONT = 10, MAX_FONT = 16;
+  const MIN_SIZE = 28,
+    MAX_SIZE = 52,
+    MIN_FONT = 10,
+    MAX_FONT = 16;
   const t = Math.min(Math.log(count) / Math.log(50), 1);
   return {
     size: Math.round(MIN_SIZE + t * (MAX_SIZE - MIN_SIZE)),

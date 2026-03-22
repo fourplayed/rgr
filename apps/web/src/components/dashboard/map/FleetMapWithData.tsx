@@ -77,48 +77,22 @@ export interface FleetMapWithDataProps {
   showDepotLabels?: boolean;
 }
 
-/**
- * Status colors for markers
- */
-const STATUS_COLORS: Record<string, string> = {
-  serviced: '#10b981', // emerald-500
-  maintenance: '#f59e0b', // amber-500
-  out_of_service: '#ef4444', // red-500
-};
-
-/**
- * Light theme colors for better visibility
- */
-const LIGHT_THEME_COLORS: Record<string, string> = {
-  serviced: '#059669', // emerald-600
-  maintenance: '#d97706', // amber-600
-  out_of_service: '#dc2626', // red-600
-};
-
-/**
- * Neon-bright pulse ring colors per status (more vivid for the expanding ring effect)
- */
-const PULSE_COLORS: Record<string, string> = {
-  serviced: '#39ffce',      // bright neon green
-  maintenance: '#ffe14d',   // bright neon yellow-amber
-  out_of_service: '#ff5577', // bright neon red-pink
-};
-const LIGHT_PULSE_COLORS: Record<string, string> = {
-  serviced: '#00ffaa',      // bright neon green (light bg)
-  maintenance: '#ffc400',   // bright neon amber (light bg)
-  out_of_service: '#ff4466', // bright neon red (light bg)
+const _STATUS_COLORS: Record<string, string> = {
+  serviced: '#10b981',
+  maintenance: '#f59e0b',
+  out_of_service: '#ef4444',
 };
 
 /**
  * Category colors for dot fill (trailer vs dolly)
  */
 const CATEGORY_COLORS: Record<string, string> = {
-  trailer: '#00e5ff',   // neon cyan
-  dolly:   '#e040fb',   // neon purple
+  trailer: '#00e5ff', // neon cyan
+  dolly: '#e040fb', // neon purple
 };
 const LIGHT_CATEGORY_COLORS: Record<string, string> = {
-  trailer: '#00bcd4',   // neon cyan (slightly deeper for light bg)
-  dolly:   '#d500f9',   // neon purple (slightly deeper for light bg)
+  trailer: '#00bcd4', // neon cyan (slightly deeper for light bg)
+  dolly: '#d500f9', // neon purple (slightly deeper for light bg)
 };
 
 const DEFAULT_DEPOT_COLOR = '#9ca3af';
@@ -137,7 +111,6 @@ function toDepotLocations(depots: Depot[]): DepotLocation[] {
       color: d.color || DEFAULT_DEPOT_COLOR,
     }));
 }
-
 
 /**
  * FleetMapWithData component
@@ -177,8 +150,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
     const initialIsDark = useRef(isDark);
     const [mapLoaded, setMapLoaded] = useState(false);
     const [mapError, setMapError] = useState<string | null>(null);
-    const [activeDepot, setActiveDepot] = useState<string | null>(null);
-
+    const [activeDepot, _setActiveDepot] = useState<string | null>(null);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps -- stable default object; externalFilters identity is controlled by parent
     const filters = useMemo(
@@ -306,7 +278,6 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
           const originalCleanup = () => resizeObserver.disconnect();
           mapInstance.on('remove', originalCleanup);
         }
-
       } catch (error) {
         if (isMounted) {
           setMapError(error instanceof Error ? error.message : 'Failed to initialize map');
@@ -393,7 +364,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         const depotColor = isValidHexColor(depot.color) ? depot.color : DEFAULT_DEPOT_COLOR;
         const z = depotZIndex[depot.name] ?? 10;
         const count = depotAssetCounts[depot.name] || 0;
-        const assets = depotAssets[depot.name] || [];
+        const _assets = depotAssets[depot.name] || [];
 
         // Render PinContainer (React 3D pin) into a DOM element for Mapbox
         const el = document.createElement('div');
@@ -458,7 +429,8 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
       if (!canvas) {
         canvas = document.createElement('canvas');
         canvas.className = 'depot-pulse-overlay';
-        canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:100;';
+        canvas.style.cssText =
+          'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:100;';
         container.appendChild(canvas);
       }
       const ctx = canvas.getContext('2d');
@@ -477,13 +449,21 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         for (let j = 0; j <= SEGMENTS; j++) {
           const angle = (j / SEGMENTS) * Math.PI * 2;
           const dLat = (radiusKm / R) * Math.cos(angle) * (180 / Math.PI);
-          const dLng = (radiusKm / R) * Math.sin(angle) * (180 / Math.PI) / Math.cos(lat * Math.PI / 180);
+          const dLng =
+            ((radiusKm / R) * Math.sin(angle) * (180 / Math.PI)) / Math.cos((lat * Math.PI) / 180);
           points.push([lng + dLng, lat + dLat]);
         }
         return points;
       };
 
-      const drawRing = (depot: DepotLocation, color: string, radiusKm: number, strokeAlpha: number, fillAlpha: number, lineWidth: number) => {
+      const drawRing = (
+        depot: DepotLocation,
+        color: string,
+        radiusKm: number,
+        strokeAlpha: number,
+        fillAlpha: number,
+        lineWidth: number
+      ) => {
         if (radiusKm < 0.1) return;
         const geoPoints = geoCircle(depot.lat, depot.lng, radiusKm);
         const screenPoints = geoPoints.map((p) => mapInstance.project(p as [number, number]));
@@ -535,7 +515,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
               // Pulse ring — smooth fade in
               if (!anim.pulseStartTime) anim.pulseStartTime = now;
               const pulseFadeT = Math.min((now - anim.pulseStartTime) / PULSE_FADE_IN, 1);
-              const pulseT = (Math.sin(now * 1.0 * Math.PI * 2 / 1000) + 1) / 2;
+              const pulseT = (Math.sin((now * 1.0 * Math.PI * 2) / 1000) + 1) / 2;
               const pulseRadius = MAX_RADIUS_KM + pulseT * 8;
               const pulseAlpha = pulseFadeT * (0.3 + pulseT * 0.4);
               drawRing(depot, color, pulseRadius, pulseAlpha, 0, STROKE_WIDTH * 1.5);
@@ -597,19 +577,27 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         for (let j = 0; j <= SEGMENTS; j++) {
           const angle = (j / SEGMENTS) * Math.PI * 2;
           const dLat = (radiusKm / R) * Math.cos(angle) * (180 / Math.PI);
-          const dLng = (radiusKm / R) * Math.sin(angle) * (180 / Math.PI) / Math.cos(lat * Math.PI / 180);
+          const dLng =
+            ((radiusKm / R) * Math.sin(angle) * (180 / Math.PI)) / Math.cos((lat * Math.PI) / 180);
           points.push([lng + dLng, lat + dLat]);
         }
         return points;
       };
 
       // Ray casting point-in-polygon
-      const pointInPolygon = (px: number, py: number, polygon: { x: number; y: number }[]): boolean => {
+      const pointInPolygon = (
+        px: number,
+        py: number,
+        polygon: { x: number; y: number }[]
+      ): boolean => {
         let inside = false;
         for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
           const pi = polygon[i]!;
           const pj = polygon[j]!;
-          if (((pi.y > py) !== (pj.y > py)) && (px < (pj.x - pi.x) * (py - pi.y) / (pj.y - pi.y) + pi.x)) {
+          if (
+            pi.y > py !== pj.y > py &&
+            px < ((pj.x - pi.x) * (py - pi.y)) / (pj.y - pi.y) + pi.x
+          ) {
             inside = !inside;
           }
         }
@@ -639,7 +627,8 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
             if (my >= minTopY && my <= maxBotY) {
               // Between top and bottom — check if mouse x is within the horizontal extent
               // Find min/max x of the bottom polygon (wider since it's geo-projected)
-              let minX = Infinity, maxX = -Infinity;
+              let minX = Infinity,
+                maxX = -Infinity;
               for (const p of bottomPoly) {
                 if (p.x < minX) minX = p.x;
                 if (p.x > maxX) maxX = p.x;
@@ -711,178 +700,188 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
     }, [hoveredDepot, depotLocations]);
 
     // Build GeoJSON FeatureCollection from filtered assets (exclude depot-counted assets)
-    const assetGeoJson = useMemo<GeoJSON.FeatureCollection<GeoJSON.Point>>(() => ({
-      type: 'FeatureCollection',
-      features: filteredAssets
-        .filter((asset) => !asset.depot)
-        .map((asset) => ({
-          type: 'Feature' as const,
-          geometry: {
-            type: 'Point' as const,
-            coordinates: [asset.longitude, asset.latitude],
-          },
-          properties: {
-            id: asset.id,
-            assetNumber: asset.assetNumber,
-            status: asset.status,
-            category: asset.category,
-            subtype: asset.subtype,
-            depot: asset.depot ?? '',
-            lastUpdated: asset.lastUpdated ?? '',
-          },
-        })),
-    }), [filteredAssets]);
+    const assetGeoJson = useMemo<GeoJSON.FeatureCollection<GeoJSON.Point>>(
+      () => ({
+        type: 'FeatureCollection',
+        features: filteredAssets
+          .filter((asset) => !asset.depot)
+          .map((asset) => ({
+            type: 'Feature' as const,
+            geometry: {
+              type: 'Point' as const,
+              coordinates: [asset.longitude, asset.latitude],
+            },
+            properties: {
+              id: asset.id,
+              assetNumber: asset.assetNumber,
+              status: asset.status,
+              category: asset.category,
+              subtype: asset.subtype,
+              depot: asset.depot ?? '',
+              lastUpdated: asset.lastUpdated ?? '',
+            },
+          })),
+      }),
+      [filteredAssets]
+    );
 
     // Helper: add the asset-dots source + circle layer + flag layer to the current map
-    const addAssetLayer = useCallback((mapInstance: mapboxgl.Map, dark: boolean) => {
-      console.log('[FleetMap] addAssetLayer called', { dark, features: assetGeoJson.features.length });
-      // Register flag icon for symbol layer
-      registerAssetIcons(mapInstance, dark);
-
-      const statusColors = dark ? STATUS_COLORS : LIGHT_THEME_COLORS;
-      const categoryColors = dark ? CATEGORY_COLORS : LIGHT_CATEGORY_COLORS;
-      const defaultFill = dark ? '#6b7280' : '#4b5563';
-      const defaultStroke = dark ? '#6b7280' : '#4b5563';
-
-      if (!mapInstance.getSource('asset-dots')) {
-        mapInstance.addSource('asset-dots', {
-          type: 'geojson',
-          data: assetGeoJson,
+    const addAssetLayer = useCallback(
+      (mapInstance: mapboxgl.Map, dark: boolean) => {
+        console.log('[FleetMap] addAssetLayer called', {
+          dark,
+          features: assetGeoJson.features.length,
         });
-      }
+        // Register flag icon for symbol layer
+        registerAssetIcons(mapInstance, dark);
 
-      if (!mapInstance.getLayer('asset-dots-layer')) {
-        mapInstance.addLayer({
-          id: 'asset-dots-layer',
-          type: 'circle',
-          source: 'asset-dots',
-          slot: 'top',
+        const categoryColors = dark ? CATEGORY_COLORS : LIGHT_CATEGORY_COLORS;
+        const defaultFill = dark ? '#6b7280' : '#4b5563';
+        const defaultStroke = dark ? '#6b7280' : '#4b5563';
 
-          paint: {
-            'circle-pitch-alignment': 'map',
-            'circle-radius': [
-              'match',
-              ['get', 'category'],
-              'trailer', 7,
-              'dolly', 5.5,
-              6,
-            ],
-            'circle-color': [
-              'match',
-              ['get', 'category'],
-              'trailer', categoryColors['trailer'],
-              'dolly', categoryColors['dolly'],
-              defaultFill,
-            ],
-            'circle-stroke-width': 1.5,
-            'circle-stroke-color': [
-              'match',
-              ['get', 'category'],
-              'trailer', categoryColors['trailer'],
-              'dolly', categoryColors['dolly'],
-              defaultStroke,
-            ],
-            'circle-opacity': 1,
-          },
-        });
-      }
+        if (!mapInstance.getSource('asset-dots')) {
+          mapInstance.addSource('asset-dots', {
+            type: 'geojson',
+            data: assetGeoJson,
+          });
+        }
 
-      // Flag pennant extending upward from each dot
-      if (!mapInstance.getLayer('asset-flags-layer')) {
-        mapInstance.addLayer({
-          id: 'asset-flags-layer',
-          type: 'symbol',
-          source: 'asset-dots',
-          slot: 'top',
+        if (!mapInstance.getLayer('asset-dots-layer')) {
+          mapInstance.addLayer({
+            id: 'asset-dots-layer',
+            type: 'circle',
+            source: 'asset-dots',
+            slot: 'top',
 
-          layout: {
-            'icon-image': [
-              'match',
-              ['get', 'category'],
-              'trailer', 'trailer-pin',
-              'dolly', 'dolly-pin',
-              'trailer-pin',
-            ],
-            'icon-size': 0.9,
-            'icon-anchor': 'bottom',
-            'icon-offset': [0, -4],
-            'icon-allow-overlap': true,
-            'icon-ignore-placement': true,
-            'icon-pitch-alignment': 'viewport',
-            'icon-rotation-alignment': 'viewport',
-          },
-        });
-      }
+            paint: {
+              'circle-pitch-alignment': 'map',
+              'circle-radius': ['match', ['get', 'category'], 'trailer', 7, 'dolly', 5.5, 6],
+              'circle-color': [
+                'match',
+                ['get', 'category'],
+                'trailer',
+                categoryColors['trailer'],
+                'dolly',
+                categoryColors['dolly'],
+                defaultFill,
+              ],
+              'circle-stroke-width': 1.5,
+              'circle-stroke-color': [
+                'match',
+                ['get', 'category'],
+                'trailer',
+                categoryColors['trailer'],
+                'dolly',
+                categoryColors['dolly'],
+                defaultStroke,
+              ],
+              'circle-opacity': 1,
+            },
+          });
+        }
 
-      // Invisible circle hitbox layer on top for mouse events (large radius for easy targeting)
-      if (!mapInstance.getLayer('asset-hitbox-layer')) {
-        mapInstance.addLayer({
-          id: 'asset-hitbox-layer',
-          type: 'circle',
-          source: 'asset-dots',
-          slot: 'top',
-          paint: {
-            'circle-radius': 20,
-            'circle-color': 'transparent',
-            'circle-opacity': 0,
-          },
-        });
-      }
+        // Flag pennant extending upward from each dot
+        if (!mapInstance.getLayer('asset-flags-layer')) {
+          mapInstance.addLayer({
+            id: 'asset-flags-layer',
+            type: 'symbol',
+            source: 'asset-dots',
+            slot: 'top',
 
-      // Hover pin layer — shows tall needle for hovered asset
-      const emptyGeoJson: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };
-      if (!mapInstance.getSource('asset-hover-pin')) {
-        mapInstance.addSource('asset-hover-pin', { type: 'geojson', data: emptyGeoJson });
-      }
-      if (!mapInstance.getLayer('asset-hover-pin-layer')) {
-        mapInstance.addLayer({
-          id: 'asset-hover-pin-layer',
-          type: 'symbol',
-          source: 'asset-hover-pin',
-          slot: 'top',
-          layout: {
-            'icon-image': [
-              'match',
-              ['get', 'category'],
-              'trailer', 'trailer-pin-hover',
-              'dolly', 'dolly-pin-hover',
-              'trailer-pin-hover',
-            ],
-            'icon-size': 0.9,
-            'icon-anchor': 'bottom',
-            'icon-offset': [0, -4],
-            'icon-allow-overlap': true,
-            'icon-ignore-placement': true,
-            'icon-pitch-alignment': 'viewport',
-            'icon-rotation-alignment': 'viewport',
-          },
-        });
-      }
+            layout: {
+              'icon-image': [
+                'match',
+                ['get', 'category'],
+                'trailer',
+                'trailer-pin',
+                'dolly',
+                'dolly-pin',
+                'trailer-pin',
+              ],
+              'icon-size': 0.9,
+              'icon-anchor': 'bottom',
+              'icon-offset': [0, -4],
+              'icon-allow-overlap': true,
+              'icon-ignore-placement': true,
+              'icon-pitch-alignment': 'viewport',
+              'icon-rotation-alignment': 'viewport',
+            },
+          });
+        }
 
-      // Pulse ring layer for hovered asset
-      if (!mapInstance.getSource('asset-pulse')) {
-        mapInstance.addSource('asset-pulse', { type: 'geojson', data: emptyGeoJson });
-      }
-      if (!mapInstance.getLayer('asset-pulse-layer')) {
-        mapInstance.addLayer({
-          id: 'asset-pulse-layer',
-          type: 'circle',
-          source: 'asset-pulse',
-          slot: 'top',
-          paint: {
-            'circle-pitch-alignment': 'map',
-            'circle-radius': 20,
-            'circle-color': 'transparent',
-            'circle-stroke-width': 2,
-            'circle-stroke-color': dark
-              ? 'rgba(255,255,255,0.6)'
-              : 'rgba(0,0,0,0.4)',
-            'circle-stroke-opacity': 0.8,
-          },
-        }, 'asset-dots-layer'); // render below dots
-      }
+        // Invisible circle hitbox layer on top for mouse events (large radius for easy targeting)
+        if (!mapInstance.getLayer('asset-hitbox-layer')) {
+          mapInstance.addLayer({
+            id: 'asset-hitbox-layer',
+            type: 'circle',
+            source: 'asset-dots',
+            slot: 'top',
+            paint: {
+              'circle-radius': 20,
+              'circle-color': 'transparent',
+              'circle-opacity': 0,
+            },
+          });
+        }
 
-    }, [assetGeoJson]);
+        // Hover pin layer — shows tall needle for hovered asset
+        const emptyGeoJson: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };
+        if (!mapInstance.getSource('asset-hover-pin')) {
+          mapInstance.addSource('asset-hover-pin', { type: 'geojson', data: emptyGeoJson });
+        }
+        if (!mapInstance.getLayer('asset-hover-pin-layer')) {
+          mapInstance.addLayer({
+            id: 'asset-hover-pin-layer',
+            type: 'symbol',
+            source: 'asset-hover-pin',
+            slot: 'top',
+            layout: {
+              'icon-image': [
+                'match',
+                ['get', 'category'],
+                'trailer',
+                'trailer-pin-hover',
+                'dolly',
+                'dolly-pin-hover',
+                'trailer-pin-hover',
+              ],
+              'icon-size': 0.9,
+              'icon-anchor': 'bottom',
+              'icon-offset': [0, -4],
+              'icon-allow-overlap': true,
+              'icon-ignore-placement': true,
+              'icon-pitch-alignment': 'viewport',
+              'icon-rotation-alignment': 'viewport',
+            },
+          });
+        }
+
+        // Pulse ring layer for hovered asset
+        if (!mapInstance.getSource('asset-pulse')) {
+          mapInstance.addSource('asset-pulse', { type: 'geojson', data: emptyGeoJson });
+        }
+        if (!mapInstance.getLayer('asset-pulse-layer')) {
+          mapInstance.addLayer(
+            {
+              id: 'asset-pulse-layer',
+              type: 'circle',
+              source: 'asset-pulse',
+              slot: 'top',
+              paint: {
+                'circle-pitch-alignment': 'map',
+                'circle-radius': 20,
+                'circle-color': 'transparent',
+                'circle-stroke-width': 2,
+                'circle-stroke-color': dark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.4)',
+                'circle-stroke-opacity': 0.8,
+              },
+            },
+            'asset-dots-layer'
+          ); // render below dots
+        }
+      },
+      [assetGeoJson]
+    );
 
     // Update asset dots source + layer when data or theme changes
     useEffect(() => {
@@ -897,7 +896,9 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
           hasLayer: !!mapInstance.getLayer('asset-dots-layer'),
         });
         // If source already exists, just update the data
-        const existingSource = mapInstance.getSource('asset-dots') as mapboxgl.GeoJSONSource | undefined;
+        const existingSource = mapInstance.getSource('asset-dots') as
+          | mapboxgl.GeoJSONSource
+          | undefined;
         if (existingSource) {
           existingSource.setData(assetGeoJson);
 
@@ -910,15 +911,19 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
             mapInstance.setPaintProperty('asset-dots-layer', 'circle-color', [
               'match',
               ['get', 'category'],
-              'trailer', categoryColors['trailer'],
-              'dolly', categoryColors['dolly'],
+              'trailer',
+              categoryColors['trailer'],
+              'dolly',
+              categoryColors['dolly'],
               defaultFill,
             ]);
             mapInstance.setPaintProperty('asset-dots-layer', 'circle-stroke-color', [
               'match',
               ['get', 'category'],
-              'trailer', categoryColors['trailer'],
-              'dolly', categoryColors['dolly'],
+              'trailer',
+              categoryColors['trailer'],
+              'dolly',
+              categoryColors['dolly'],
               defaultStroke,
             ]);
           }
@@ -969,7 +974,9 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         });
       };
 
-      const onMouseEnter = (e: mapboxgl.MapMouseEvent & { features?: mapboxgl.GeoJSONFeature[] }) => {
+      const onMouseEnter = (
+        e: mapboxgl.MapMouseEvent & { features?: mapboxgl.GeoJSONFeature[] }
+      ) => {
         mapInstance.getCanvas().style.cursor = 'pointer';
 
         const feature = e.features?.[0];
@@ -977,8 +984,6 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
 
         const coords = (feature.geometry as GeoJSON.Point).coordinates as [number, number];
         const props = feature.properties!;
-        const pulseColor = (isDark ? PULSE_COLORS : LIGHT_PULSE_COLORS)[props['status'] as string] || '#6b7280';
-
         hoverPopupRoot.current?.render(
           <AssetHoverCard
             asset={{ name: props['assetNumber'] as string, status: props['status'] as string }}
@@ -986,34 +991,40 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
           />
         );
 
-        hoverPopup.current!
-          .setLngLat(coords)
-          .addTo(mapInstance);
+        hoverPopup.current!.setLngLat(coords).addTo(mapInstance);
 
         // Show tall hover pin for this feature (start at zero size for grow animation)
-        const hoverPinSource = mapInstance.getSource('asset-hover-pin') as mapboxgl.GeoJSONSource | undefined;
+        const hoverPinSource = mapInstance.getSource('asset-hover-pin') as
+          | mapboxgl.GeoJSONSource
+          | undefined;
         if (hoverPinSource) {
           mapInstance.setLayoutProperty('asset-hover-pin-layer', 'icon-size', 0.01);
           hoverPinSource.setData({
             type: 'FeatureCollection',
-            features: [{
-              type: 'Feature',
-              geometry: { type: 'Point', coordinates: coords },
-              properties: { category: props['category'] as string },
-            }],
+            features: [
+              {
+                type: 'Feature',
+                geometry: { type: 'Point', coordinates: coords },
+                properties: { category: props['category'] as string },
+              },
+            ],
           });
         }
 
         // Set pulse source to hovered feature
-        const pulseSource = mapInstance.getSource('asset-pulse') as mapboxgl.GeoJSONSource | undefined;
+        const pulseSource = mapInstance.getSource('asset-pulse') as
+          | mapboxgl.GeoJSONSource
+          | undefined;
         if (pulseSource) {
           pulseSource.setData({
             type: 'FeatureCollection',
-            features: [{
-              type: 'Feature',
-              geometry: { type: 'Point', coordinates: coords },
-              properties: {},
-            }],
+            features: [
+              {
+                type: 'Feature',
+                geometry: { type: 'Point', coordinates: coords },
+                properties: {},
+              },
+            ],
           });
         }
 
@@ -1031,11 +1042,23 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
 
           if (mapInstance.getLayer('asset-pulse-layer')) {
             mapInstance.setPaintProperty('asset-pulse-layer', 'circle-radius', radius);
-            mapInstance.setPaintProperty('asset-pulse-layer', 'circle-stroke-opacity', opacity * 0.8);
-            mapInstance.setPaintProperty('asset-pulse-layer', 'circle-stroke-color', 'rgba(255,255,255,0.9)');
+            mapInstance.setPaintProperty(
+              'asset-pulse-layer',
+              'circle-stroke-opacity',
+              opacity * 0.8
+            );
+            mapInstance.setPaintProperty(
+              'asset-pulse-layer',
+              'circle-stroke-color',
+              'rgba(255,255,255,0.9)'
+            );
             // Fill the circle — blooms in then fades out
             const fillOpacity = opacity * t * 0.4;
-            mapInstance.setPaintProperty('asset-pulse-layer', 'circle-color', 'rgba(255,255,255,0.9)');
+            mapInstance.setPaintProperty(
+              'asset-pulse-layer',
+              'circle-color',
+              'rgba(255,255,255,0.9)'
+            );
             mapInstance.setPaintProperty('asset-pulse-layer', 'circle-opacity', fillOpacity);
           }
 
@@ -1045,7 +1068,11 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
             const gt = Math.min(growElapsed / pinGrowDuration, 1);
             // Ease-out cubic: decelerates into final position
             const eased = 1 - Math.pow(1 - gt, 3);
-            mapInstance.setLayoutProperty('asset-hover-pin-layer', 'icon-size', eased * targetPinSize);
+            mapInstance.setLayoutProperty(
+              'asset-hover-pin-layer',
+              'icon-size',
+              eased * targetPinSize
+            );
           } else if (growElapsed >= pinGrowDuration && growElapsed < pinGrowDuration + 20) {
             // Snap to final size once
             mapInstance.setLayoutProperty('asset-hover-pin-layer', 'icon-size', targetPinSize);
@@ -1061,7 +1088,9 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         hoverPopup.current?.remove();
 
         // Clear hover pin
-        const hoverPinSource = mapInstance.getSource('asset-hover-pin') as mapboxgl.GeoJSONSource | undefined;
+        const hoverPinSource = mapInstance.getSource('asset-hover-pin') as
+          | mapboxgl.GeoJSONSource
+          | undefined;
         if (hoverPinSource) {
           hoverPinSource.setData({ type: 'FeatureCollection', features: [] });
         }
@@ -1071,7 +1100,9 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
           cancelAnimationFrame(pulseAnimFrame.current);
           pulseAnimFrame.current = null;
         }
-        const pulseSource = mapInstance.getSource('asset-pulse') as mapboxgl.GeoJSONSource | undefined;
+        const pulseSource = mapInstance.getSource('asset-pulse') as
+          | mapboxgl.GeoJSONSource
+          | undefined;
         if (pulseSource) {
           pulseSource.setData({ type: 'FeatureCollection', features: [] });
         }
@@ -1115,7 +1146,6 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         };
         mapInstance.on('style.load', onStyleLoad);
       }
-
     }, [isDark, mapLoaded, addAssetLayer]);
 
     // Toggle depot marker visibility based on Flag button + location filters
@@ -1171,13 +1201,22 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
                 <>
                   <div
                     className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto mb-3"
-                    style={{ borderColor: RGR_COLORS.bright.vibrant, borderTopColor: 'transparent' }}
+                    style={{
+                      borderColor: RGR_COLORS.bright.vibrant,
+                      borderTopColor: 'transparent',
+                    }}
                   />
                   <p className="text-sm">Loading map...</p>
                 </>
               ) : (
                 <>
-                  <svg className="w-12 h-12 mx-auto mb-3 opacity-30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <svg
+                    className="w-12 h-12 mx-auto mb-3 opacity-30"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  >
                     <path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                   </svg>
                   <p className="text-sm opacity-60">Map unavailable</p>

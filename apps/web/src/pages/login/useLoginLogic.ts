@@ -161,7 +161,7 @@ export function useLoginLogic(deps?: LoginLogicDeps): UseLoginLogicResult {
         setStatus('success');
 
         // First-time users go to welcome/onboarding, returning users go to dashboard
-        const profile = useAuthStore.getState().user;
+        const _profile = useAuthStore.getState().user;
         const target = '/dashboard';
         navigate(target, { state: { fromLogin: true } });
       } catch (err) {

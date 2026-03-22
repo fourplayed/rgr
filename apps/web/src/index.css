@@ -1,8 +1,8 @@
-@import "tailwindcss";
-@import "@fontsource-variable/geist";
-@import "@fontsource/lato/400.css";
-@import "@fontsource/lato/700.css";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import '@fontsource-variable/geist';
+@import '@fontsource/lato/400.css';
+@import '@fontsource/lato/700.css';
+@import 'tw-animate-css';
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -51,7 +51,7 @@
   --sidebar-foreground: oklch(0.141 0.005 285.823);
   --sidebar-primary: oklch(0.623 0.214 259.815);
   --sidebar-primary-foreground: oklch(0.97 0.014 254.604);
-  --sidebar-accent: oklch(0.90 0.002 286);
+  --sidebar-accent: oklch(0.9 0.002 286);
   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
   --sidebar-border: oklch(0.86 0.004 286.32);
   --sidebar-ring: oklch(0.623 0.214 259.815);
@@ -66,7 +66,7 @@
   --card-foreground: #e8eaed;
   --popover: #0e1220;
   --popover-foreground: #e8eaed;
-  --primary: #00A8FF;
+  --primary: #00a8ff;
   --primary-foreground: #ffffff;
   --secondary: #141828;
   --secondary-foreground: #e8eaed;
@@ -77,20 +77,20 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: rgba(0, 168, 255, 0.1);
   --input: rgba(255, 255, 255, 0.08);
-  --ring: #00A8FF;
-  --chart-1: #00A8FF;
+  --ring: #00a8ff;
+  --chart-1: #00a8ff;
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
   --sidebar: #060810;
   --sidebar-foreground: #e8eaed;
-  --sidebar-primary: #00A8FF;
+  --sidebar-primary: #00a8ff;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #111524;
   --sidebar-accent-foreground: #e8eaed;
   --sidebar-border: rgba(0, 168, 255, 0.08);
-  --sidebar-ring: #00A8FF;
+  --sidebar-ring: #00a8ff;
 }
 
 @theme inline {
@@ -138,18 +138,30 @@
   --animate-accordion-up: accordion-up 0.2s ease-out;
 
   @keyframes accordion-down {
-    from { height: 0; }
-    to { height: var(--radix-accordion-content-height, var(--accordion-panel-height, auto)); }
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-accordion-content-height, var(--accordion-panel-height, auto));
+    }
   }
   @keyframes accordion-up {
-    from { height: var(--radix-accordion-content-height, var(--accordion-panel-height, auto)); }
-    to { height: 0; }
+    from {
+      height: var(--radix-accordion-content-height, var(--accordion-panel-height, auto));
+    }
+    to {
+      height: 0;
+    }
   }
 }
 
 @keyframes spin-once {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @layer base {

@@ -31,21 +31,22 @@ export default function Dashboard() {
     setFocusAssetId(null);
   }, []);
 
-  const handleSearch = useCallback((query: string) => {
-    if (!query.trim()) {
-      setFocusAssetId(null);
-      return;
-    }
-    const q = query.toLowerCase();
-    const match = assets.find(
-      (a) =>
-        a.assetNumber?.toLowerCase().includes(q) ||
-        a.id?.toLowerCase().includes(q)
-    );
-    if (match) {
-      setFocusAssetId(match.id);
-    }
-  }, [assets]);
+  const handleSearch = useCallback(
+    (query: string) => {
+      if (!query.trim()) {
+        setFocusAssetId(null);
+        return;
+      }
+      const q = query.toLowerCase();
+      const match = assets.find(
+        (a) => a.assetNumber?.toLowerCase().includes(q) || a.id?.toLowerCase().includes(q)
+      );
+      if (match) {
+        setFocusAssetId(match.id);
+      }
+    },
+    [assets]
+  );
 
   const handleDepotChange = useCallback((depots: string[]) => {
     setActiveDepots(depots);

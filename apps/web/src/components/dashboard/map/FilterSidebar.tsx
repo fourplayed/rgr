@@ -1,45 +1,21 @@
-import { useState, useCallback, useRef, useEffect, type ReactNode } from "react"
-import { SearchIcon, FilterIcon, GripVerticalIcon, ChevronUpIcon, ZoomInIcon, ZoomOutIcon, HomeIcon } from "lucide-react"
-import { useDepots } from "@/hooks/useAssetData"
+import { useState, useCallback, useRef, useEffect } from 'react';
+import {
+  SearchIcon,
+  GripVerticalIcon,
+  ChevronUpIcon,
+  ZoomInIcon,
+  ZoomOutIcon,
+  HomeIcon,
+} from 'lucide-react';
+import { useDepots } from '@/hooks/useAssetData';
 
 interface FilterSidebarProps {
-  onSearch: (query: string) => void
-  activeDepots: string[]
-  onDepotChange: (depots: string[]) => void
-  onZoomIn?: () => void
-  onZoomOut?: () => void
-  onFitBounds?: () => void
-}
-
-function SpinButton({ children, onClick }: { children: ReactNode; onClick: () => void }) {
-  const [spinning, setSpinning] = useState(false)
-  const animating = useRef(false)
-
-  const handleMouseEnter = () => {
-    if (animating.current) return
-    animating.current = true
-    setSpinning(true)
-  }
-
-  const handleAnimationEnd = () => {
-    setSpinning(false)
-    animating.current = false
-  }
-
-  return (
-    <button
-      onClick={onClick}
-      onMouseEnter={handleMouseEnter}
-      className="flex items-center justify-center size-6 text-white/60 hover:text-white transition-colors duration-200 cursor-pointer"
-    >
-      <span
-        className={spinning ? "animate-[spin-once_0.5s_ease-in-out]" : ""}
-        onAnimationEnd={handleAnimationEnd}
-      >
-        {children}
-      </span>
-    </button>
-  )
+  onSearch: (query: string) => void;
+  activeDepots: string[];
+  onDepotChange: (depots: string[]) => void;
+  onZoomIn?: () => void;
+  onZoomOut?: () => void;
+  onFitBounds?: () => void;
 }
 
 function FilterPill({
@@ -48,10 +24,10 @@ function FilterPill({
   color,
   onClick,
 }: {
-  active: boolean
-  label: string
-  color: string
-  onClick: () => void
+  active: boolean;
+  label: string;
+  color: string;
+  onClick: () => void;
 }) {
   return (
     <button
@@ -64,14 +40,16 @@ function FilterPill({
         background: active ? color : `${color}20`,
         border: `1px solid ${active ? color : `${color}50`}`,
         color: active ? '#fff' : `${color}90`,
-        textShadow: active ? '0 0 6px rgba(0,0,0,0.8), 0 1px 3px rgba(0,0,0,0.5)' : '0 1px 3px rgba(0,0,0,0.5)',
+        textShadow: active
+          ? '0 0 6px rgba(0,0,0,0.8), 0 1px 3px rgba(0,0,0,0.5)'
+          : '0 1px 3px rgba(0,0,0,0.5)',
         ['--pill-hover-bg' as string]: `${color}80`,
       }}
       onMouseEnter={(e) => {
-        if (!active) e.currentTarget.style.background = `${color}4d`
+        if (!active) e.currentTarget.style.background = `${color}4d`;
       }}
       onMouseLeave={(e) => {
-        if (!active) e.currentTarget.style.background = `${color}20`
+        if (!active) e.currentTarget.style.background = `${color}20`;
       }}
     >
       <span
@@ -90,80 +68,90 @@ function FilterPill({
       </span>
       {label}
     </button>
-  )
+  );
 }
 
-export function FilterSidebar({ onSearch, activeDepots, onDepotChange, onZoomIn, onZoomOut, onFitBounds }: FilterSidebarProps) {
-  const [query, setQuery] = useState("")
-  const [collapsed, setCollapsed] = useState(false)
-  const { data: depots = [] } = useDepots()
+export function FilterSidebar({
+  onSearch,
+  activeDepots,
+  onDepotChange,
+  onZoomIn,
+  onZoomOut,
+  onFitBounds,
+}: FilterSidebarProps) {
+  const [query, setQuery] = useState('');
+  const [collapsed, setCollapsed] = useState(false);
+  const { data: depots = [] } = useDepots();
 
   // Drag state
-  const [position, setPosition] = useState({ x: 0, y: 0 })
-  const [isDragging, setIsDragging] = useState(false)
-  const dragRef = useRef<HTMLDivElement>(null)
-  const dragStart = useRef({ x: 0, y: 0, posX: 0, posY: 0 })
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragRef = useRef<HTMLDivElement>(null);
+  const dragStart = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    setIsDragging(true)
-    dragStart.current = {
-      x: e.clientX,
-      y: e.clientY,
-      posX: position.x,
-      posY: position.y,
-    }
-  }, [position])
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      setIsDragging(true);
+      dragStart.current = {
+        x: e.clientX,
+        y: e.clientY,
+        posX: position.x,
+        posY: position.y,
+      };
+    },
+    [position]
+  );
 
   useEffect(() => {
-    if (!isDragging) return
+    if (!isDragging) return;
 
     const handleMouseMove = (e: MouseEvent) => {
       setPosition({
         x: dragStart.current.posX + (e.clientX - dragStart.current.x),
         y: dragStart.current.posY + (e.clientY - dragStart.current.y),
-      })
-    }
+      });
+    };
 
-    const handleMouseUp = () => setIsDragging(false)
+    const handleMouseUp = () => setIsDragging(false);
 
-    document.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('mouseup', handleMouseUp)
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleMouseUp)
-    }
-  }, [isDragging])
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging]);
 
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value
-      setQuery(value)
-      onSearch(value)
+      const value = e.target.value;
+      setQuery(value);
+      onSearch(value);
     },
-    [onSearch],
-  )
+    [onSearch]
+  );
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
-      e.preventDefault()
-      onSearch(query)
+      e.preventDefault();
+      onSearch(query);
     },
-    [query, onSearch],
-  )
+    [query, onSearch]
+  );
 
   const handleToggleDepot = useCallback(
     (depotName: string) => {
       if (activeDepots.includes(depotName)) {
-        onDepotChange(activeDepots.filter((d) => d !== depotName))
+        onDepotChange(activeDepots.filter((d) => d !== depotName));
       } else {
-        onDepotChange([...activeDepots, depotName])
+        onDepotChange([...activeDepots, depotName]);
       }
     },
-    [activeDepots, onDepotChange],
-  )
+    [activeDepots, onDepotChange]
+  );
 
-  const activeCount = activeDepots.length
+  const activeCount = activeDepots.length;
 
   // Collapsed: small icon button
   if (collapsed) {
@@ -175,10 +163,13 @@ export function FilterSidebar({ onSearch, activeDepots, onDepotChange, onZoomIn,
       >
         <button
           onMouseDown={handleMouseDown}
-          onClick={(e) => {
+          onClick={(_e) => {
             // Only open if it wasn't a drag
-            if (Math.abs(position.x - dragStart.current.posX) < 3 && Math.abs(position.y - dragStart.current.posY) < 3) {
-              setCollapsed(false)
+            if (
+              Math.abs(position.x - dragStart.current.posX) < 3 &&
+              Math.abs(position.y - dragStart.current.posY) < 3
+            ) {
+              setCollapsed(false);
             }
           }}
           className="relative flex items-center justify-center size-10 rounded-xl bg-[rgba(6,6,42,0.75)] backdrop-blur-xl border border-white/[0.08] shadow-lg text-white/60 hover:text-white transition-all duration-200 cursor-grab active:cursor-grabbing"
@@ -191,7 +182,7 @@ export function FilterSidebar({ onSearch, activeDepots, onDepotChange, onZoomIn,
           )}
         </button>
       </div>
-    )
+    );
   }
 
   return (
@@ -208,27 +199,42 @@ export function FilterSidebar({ onSearch, activeDepots, onDepotChange, onZoomIn,
         >
           <div className="flex items-center gap-1.5">
             <GripVerticalIcon className="size-4 text-white/40" />
-            <span className="text-xs font-bold uppercase tracking-[0.1em] text-white/60" style={{ fontFamily: "'Lato', sans-serif" }}>
+            <span
+              className="text-xs font-bold uppercase tracking-[0.1em] text-white/60"
+              style={{ fontFamily: "'Lato', sans-serif" }}
+            >
               Search & Filters
             </span>
           </div>
           <div className="flex items-center gap-2">
             {onZoomIn && (
-              <button onClick={onZoomIn} className="flex items-center justify-center size-8 text-white/60 hover:text-white transition-colors duration-200 cursor-pointer">
+              <button
+                onClick={onZoomIn}
+                className="flex items-center justify-center size-8 text-white/60 hover:text-white transition-colors duration-200 cursor-pointer"
+              >
                 <ZoomInIcon className="size-5" />
               </button>
             )}
             {onZoomOut && (
-              <button onClick={onZoomOut} className="flex items-center justify-center size-8 text-white/60 hover:text-white transition-colors duration-200 cursor-pointer">
+              <button
+                onClick={onZoomOut}
+                className="flex items-center justify-center size-8 text-white/60 hover:text-white transition-colors duration-200 cursor-pointer"
+              >
                 <ZoomOutIcon className="size-5" />
               </button>
             )}
             {onFitBounds && (
-              <button onClick={onFitBounds} className="flex items-center justify-center size-8 text-white/60 hover:text-white transition-colors duration-200 cursor-pointer">
+              <button
+                onClick={onFitBounds}
+                className="flex items-center justify-center size-8 text-white/60 hover:text-white transition-colors duration-200 cursor-pointer"
+              >
                 <HomeIcon className="size-5" />
               </button>
             )}
-            <button onClick={() => setCollapsed(true)} className="flex items-center justify-center size-8 text-white/60 hover:text-white transition-colors duration-200 cursor-pointer">
+            <button
+              onClick={() => setCollapsed(true)}
+              className="flex items-center justify-center size-8 text-white/60 hover:text-white transition-colors duration-200 cursor-pointer"
+            >
               <ChevronUpIcon className="size-6" />
             </button>
           </div>
@@ -261,8 +267,8 @@ export function FilterSidebar({ onSearch, activeDepots, onDepotChange, onZoomIn,
         {/* Depot pills */}
         <div className="flex flex-wrap items-center gap-2">
           {depots.map((depot) => {
-            const isActive = activeDepots.includes(depot.name)
-            const depotColor = depot.color || "#00A8FF"
+            const isActive = activeDepots.includes(depot.name);
+            const depotColor = depot.color || '#00A8FF';
             return (
               <FilterPill
                 key={depot.code}
@@ -271,10 +277,10 @@ export function FilterSidebar({ onSearch, activeDepots, onDepotChange, onZoomIn,
                 color={depotColor}
                 onClick={() => handleToggleDepot(depot.name)}
               />
-            )
+            );
           })}
         </div>
       </div>
     </div>
-  )
+  );
 }

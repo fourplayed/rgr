@@ -1,17 +1,17 @@
-import { useFleetStatistics } from "@/hooks/useFleetData"
+import { useFleetStatistics } from '@/hooks/useFleetData';
 
 const STATS = [
-  { key: "totalAssets", label: "Total", color: "#3b82f6" },
-  { key: "activeAssets", label: "Active", color: "#22c55e" },
-  { key: "inMaintenance", label: "Maint.", color: "#f59e0b" },
-  { key: "outOfService", label: "OOS", color: "#ef4444" },
-] as const
+  { key: 'totalAssets', label: 'Total', color: '#3b82f6' },
+  { key: 'activeAssets', label: 'Active', color: '#22c55e' },
+  { key: 'inMaintenance', label: 'Maint.', color: '#f59e0b' },
+  { key: 'outOfService', label: 'OOS', color: '#ef4444' },
+] as const;
 
 export function FloatingStatPills() {
-  const { data: stats } = useFleetStatistics()
+  const { data: stats } = useFleetStatistics();
 
   if (!stats) {
-    return null
+    return null;
   }
 
   return (
@@ -32,5 +32,5 @@ export function FloatingStatPills() {
         </div>
       ))}
     </div>
-  )
+  );
 }
