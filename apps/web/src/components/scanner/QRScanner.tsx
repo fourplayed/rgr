@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import { Camera, CameraOff, RefreshCw, SwitchCamera, CheckCircle, Sparkles } from 'lucide-react';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { useQRScanner } from '@/hooks/useQRScanner';
 
 // SAFLA 100/100 Compliance - Constants block for all numeric values
@@ -368,7 +368,7 @@ export default function QRScanner({
               <SwitchCamera className="w-4 h-4 mr-2" />
               Switch Camera
             </Button>
-            <Button variant="danger" size="sm" onClick={handleStopScanning}>
+            <Button variant="destructive" size="sm" onClick={handleStopScanning}>
               <CameraOff className="w-4 h-4 mr-2" />
               Stop Scanner
             </Button>

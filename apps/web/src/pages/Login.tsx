@@ -10,7 +10,7 @@
  */
 import { useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { useLoginLogic } from './login/useLoginLogic';
 import { LoginPresenter } from './login/LoginPresenter';
 

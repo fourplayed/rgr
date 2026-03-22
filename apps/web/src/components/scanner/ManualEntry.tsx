@@ -1,7 +1,7 @@
 import { useState, useCallback, FormEvent } from 'react';
 import { Search, QrCode, AlertCircle, CheckCircle } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import Card from '@/components/ui/Card';
 import { isValidQRCode, extractAssetInfo, isAssetNumber } from '@rgr/shared';
 
@@ -187,19 +187,18 @@ export default function ManualEntry({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="relative">
+            <label className="text-sm font-medium text-foreground">QR Code or Asset Number</label>
             <Input
-              label="QR Code or Asset Number"
               placeholder="rgr://asset/... or TL001"
               value={inputValue}
               onChange={handleInputChange}
-              {...(displayError ? { error: displayError } : {})}
-              {...(!displayError && getFormatHint()
-                ? { helperText: getFormatHint() as unknown as string }
-                : {})}
               disabled={isLoading}
-              className="pr-10"
+              className="pr-10 mt-1"
+              aria-invalid={!!displayError}
             />
             <div className="absolute right-3 top-8">{getStatusIcon()}</div>
+            {displayError && <p className="text-sm text-destructive mt-1">{displayError}</p>}
+            {!displayError && getFormatHint() && <p className="text-sm text-muted-foreground mt-1">{getFormatHint()}</p>}
           </div>
 
           {/* Format Examples */}
@@ -226,8 +225,7 @@ export default function ManualEntry({
           <div className="flex gap-3">
             <Button
               type="submit"
-              isLoading={isLoading}
-              disabled={!parseResult?.isValid}
+              disabled={isLoading || !parseResult?.isValid}
               className="flex-1"
             >
               <Search className="w-4 h-4 mr-2" />
@@ -306,10 +304,10 @@ export function CompactManualEntry({
           }}
           placeholder={placeholder}
           disabled={isLoading}
-          {...(error ? { error } : {})}
+          aria-invalid={!!error}
           className="flex-1"
         />
-        <Button type="submit" isLoading={isLoading} disabled={!value.trim()}>
+        <Button type="submit" disabled={isLoading || !value.trim()}>
           <Search className="w-4 h-4" />
         </Button>
       </div>
