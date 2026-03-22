@@ -1,11 +1,5 @@
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
-import { AppSidebar } from "@/components/app-sidebar"
+import { ApplicationShell5 } from "@/components/application-shell5"
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <SidebarProvider defaultOpen={true}>
-      <AppSidebar />
-      <SidebarInset>{children}</SidebarInset>
-    </SidebarProvider>
-  )
+  return <ApplicationShell5>{children}</ApplicationShell5>
 }
