@@ -6,11 +6,10 @@
  * - Navigation, fleet stats, and user controls are now handled by DashboardLayout/sidebar
  */
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import type { DashboardState, DashboardActions } from './useDashboardLogic';
 
 export interface DashboardPresenterProps {
-  state: DashboardState;
-  actions: DashboardActions;
+  state?: any;
+  actions?: any;
   children?: React.ReactNode;
 }
 
