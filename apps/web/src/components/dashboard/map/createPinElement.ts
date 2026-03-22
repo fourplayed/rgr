@@ -117,16 +117,23 @@ export function createPinElement(opts: PinElementOptions): HTMLDivElement {
     if (labelStyle === 'depot') {
       pill.style.cssText = `
         position: relative; z-index: 1; color: white;
-        font-family: 'Lato', sans-serif; font-size: 14px; font-weight: 800;
-        letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-        background: ${color}d0; border: 1px solid ${color}60;
-        padding: 6px 12px 7px 12px; border-radius: 8px;
-        backdrop-filter: blur(8px);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.3), 0 0 1px rgba(255,255,255,0.1) inset;
+        font-family: 'Lato', sans-serif; font-size: 12px; font-weight: 700;
+        letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap;
+        text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        background: ${color}; border: 1px solid ${color};
+        padding: 6px 16px; border-radius: 8px;
         margin-bottom: 4px; cursor: pointer; pointer-events: auto;
-        transition: filter 0.2s ease;
+        transition: background 0.2s ease, color 0.2s ease, filter 0.2s ease;
+        overflow: visible;
       `;
+
+      // Hover: slightly brighten
+      pill.addEventListener('mouseenter', () => {
+        pill.style.filter = 'brightness(1.2)';
+      });
+      pill.addEventListener('mouseleave', () => {
+        pill.style.filter = 'brightness(1)';
+      });
     } else {
       // asset label — dark translucent bg
       pill.style.cssText = `

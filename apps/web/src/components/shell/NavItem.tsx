@@ -19,13 +19,13 @@ export function NavItem({ icon, label, href, expanded = false }: NavItemProps) {
       <Link
         to={href}
         className={cn(
-          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+          "relative flex items-center gap-3 rounded-r-md py-2.5 text-sm font-bold uppercase tracking-wide transition-all duration-150 cursor-pointer",
           isActive
-            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium border border-sidebar-border"
-            : "text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+            ? "bg-[#00A8FF]/[0.08] text-[#00A8FF] border-l-2 border-l-[#00A8FF] pl-[10px] pr-3"
+            : "text-white/50 hover:text-white/75 hover:bg-white/[0.03] border-l-2 border-l-transparent pl-[10px] pr-3"
         )}
       >
-        <span className="size-4 shrink-0 [&>svg]:size-4">{icon}</span>
+        <span className="size-5 shrink-0 [&>svg]:size-5">{icon}</span>
         {label}
       </Link>
     )
@@ -37,11 +37,11 @@ export function NavItem({ icon, label, href, expanded = false }: NavItemProps) {
       className={cn(
         "flex size-9 items-center justify-center rounded-lg transition-colors",
         isActive
-          ? "bg-sidebar-accent text-sidebar-accent-foreground border border-sidebar-border"
-          : "text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+          ? "bg-[#00A8FF]/10 text-[#00A8FF] border border-[#00A8FF]/20"
+          : "text-sidebar-foreground/50 hover:bg-white/[0.04] hover:text-sidebar-foreground"
       )}
     >
-      <span className="size-4 [&>svg]:size-4">{icon}</span>
+      <span className="size-5 [&>svg]:size-5">{icon}</span>
     </Link>
   )
 

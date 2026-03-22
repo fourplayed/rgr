@@ -11,15 +11,13 @@ import { DashboardPresenter } from './dashboard/DashboardPresenter';
 import { FleetMapWithData } from '@/components/dashboard/map';
 import type { FleetMapHandle, AssetFilters } from '@/components/dashboard/map';
 import { useAssetLocations } from '@/hooks/useFleetData';
-import { FloatingSearch } from '@/components/dashboard/map/FloatingSearch';
-import { DepotFilterPills } from '@/components/dashboard/map/DepotFilterPills';
-import { FloatingStatPills } from '@/components/dashboard/map/FloatingStatPills';
+import { FilterSidebar } from '@/components/dashboard/map/FilterSidebar';
 
 export default function Dashboard() {
   const { state, actions } = useDashboardLogic();
   const { data: assets = [] } = useAssetLocations();
   const [focusAssetId, setFocusAssetId] = useState<string | null>(null);
-  const [activeDepot, setActiveDepot] = useState<string | null>(null);
+  const [activeDepots, setActiveDepots] = useState<string[]>([]);
   const [filters, setFilters] = useState<AssetFilters>({
     category: 'all',
     subtype: 'all',
@@ -49,9 +47,9 @@ export default function Dashboard() {
     }
   }, [assets]);
 
-  const handleDepotChange = useCallback((depotCode: string | null) => {
-    setActiveDepot(depotCode);
-    setFilters((prev) => ({ ...prev, depot: depotCode ? [depotCode] : 'all' }));
+  const handleDepotChange = useCallback((depots: string[]) => {
+    setActiveDepots(depots);
+    setFilters((prev) => ({ ...prev, depot: depots.length > 0 ? depots : 'all' }));
   }, []);
 
   return (
@@ -69,10 +67,15 @@ export default function Dashboard() {
             onFocusComplete={handleFocusComplete}
           />
         </div>
-        {/* Floating overlays */}
-        <FloatingSearch onSearch={handleSearch} />
-        <DepotFilterPills activeDepot={activeDepot} onDepotChange={handleDepotChange} />
-        <FloatingStatPills />
+        {/* Filter sidebar - right panel */}
+        <FilterSidebar
+          onSearch={handleSearch}
+          activeDepots={activeDepots}
+          onDepotChange={handleDepotChange}
+          onZoomIn={() => mapRef.current?.zoomIn()}
+          onZoomOut={() => mapRef.current?.zoomOut()}
+          onFitBounds={() => mapRef.current?.fitBounds()}
+        />
       </div>
     </DashboardPresenter>
   );

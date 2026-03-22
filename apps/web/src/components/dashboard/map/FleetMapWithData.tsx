@@ -32,7 +32,6 @@ import { useDepots } from '@/hooks/useAssetData';
 import { isValidHexColor } from '@rgr/shared';
 import type { Depot } from '@rgr/shared';
 import type { DepotAsset } from './depotTypes';
-
 export interface FleetMapHandle {
   zoomIn: () => void;
   zoomOut: () => void;
@@ -125,27 +124,6 @@ const LIGHT_CATEGORY_COLORS: Record<string, string> = {
 const DEFAULT_DEPOT_COLOR = '#9ca3af';
 
 /** Haversine distance in km between two lat/lng points */
-function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-
-/** Brighten a hex color by mixing toward white. amount 0-1 (0 = unchanged, 1 = white) */
-function brightenHex(hex: string, amount: number): string {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  const br = Math.round(r + (255 - r) * amount);
-  const bg = Math.round(g + (255 - g) * amount);
-  const bb = Math.round(b + (255 - b) * amount);
-  return `#${br.toString(16).padStart(2, '0')}${bg.toString(16).padStart(2, '0')}${bb.toString(16).padStart(2, '0')}`;
-}
-
 /** Convert Depot records to DepotLocation format for map rendering */
 function toDepotLocations(depots: Depot[]): DepotLocation[] {
   return depots
@@ -191,6 +169,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
     const hoverPopupRoot = useRef<ReturnType<typeof createRoot> | null>(null);
     const pulseAnimFrame = useRef<number | null>(null);
     const depotPulseAnimFrame = useRef<number | null>(null);
+    const [hoveredDepot, setHoveredDepot] = useState<string | null>(null);
     const depotPopupRoots = useRef<
       Array<{ root: ReturnType<typeof createRoot>; depot: DepotLocation }>
     >([]);
@@ -311,10 +290,22 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
 
         mapInstance.on('load', () => {
           if (!isMounted) return;
+
           setMapLoaded(true);
           onMapLoad?.();
         });
 
+        // Resize map when container dimensions change (e.g. sidebar toggle)
+        const container = mapContainer.current;
+        if (container) {
+          const resizeObserver = new ResizeObserver(() => {
+            mapInstance.resize();
+          });
+          resizeObserver.observe(container);
+          // Clean up observer on unmount
+          const originalCleanup = () => resizeObserver.disconnect();
+          mapInstance.on('remove', originalCleanup);
+        }
 
       } catch (error) {
         if (isMounted) {
@@ -338,14 +329,6 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         depotMarkers.current = [];
         hoverPopup.current?.remove();
         hoverPopup.current = null;
-        if (depotPulseAnimFrame.current) {
-          cancelAnimationFrame(depotPulseAnimFrame.current);
-          depotPulseAnimFrame.current = null;
-        }
-        if (depotRadiusPulseRef.current) {
-          cancelAnimationFrame(depotRadiusPulseRef.current);
-          depotRadiusPulseRef.current = null;
-        }
         if (map.current) {
           map.current.remove();
           map.current = null;
@@ -422,15 +405,8 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
             title={depotName}
             color={depotColor}
             assetCount={count}
-            assets={assets}
             isDark={isDark}
-            activeDepot={activeDepot}
-            onHoverChange={(h) => h ? startDepotPulse.current?.(depotName) : stopDepotPulse.current?.()}
-            onAssetClick={(asset) => {
-              map.current?.flyTo({ center: [asset.longitude, asset.latitude], zoom: 14, duration: 1500 });
-            }}
-            onPin={() => setActiveDepot(depotName)}
-            onDismiss={() => { if (activeDepot === depotName) setActiveDepot(null); }}
+            isHovered={false}
           />
         );
         depotPopupRoots.current.push({ root: pinRoot, depot });
@@ -443,278 +419,296 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
       });
     }, [mapLoaded, depotLocations, isDark, depotAssetCounts, depotAssets]);
 
-    // Keep badge counts in sync with filtered data
+    // Keep badge counts and hover state in sync
     useEffect(() => {
       depotPopupRoots.current.forEach(({ root, depot }) => {
         const depotColor = isValidHexColor(depot.color) ? depot.color : DEFAULT_DEPOT_COLOR;
         const count = depotAssetCounts[depot.name] || 0;
-        const assets = depotAssets[depot.name] || [];
         const depotName = depot.name;
         root.render(
           <PinContainer
             title={depotName}
             color={depotColor}
             assetCount={count}
-            assets={assets}
             isDark={isDark}
-            activeDepot={activeDepot}
-            onHoverChange={(h) => h ? startDepotPulse.current?.(depotName) : stopDepotPulse.current?.()}
-            onAssetClick={(asset) => {
-              map.current?.flyTo({ center: [asset.longitude, asset.latitude], zoom: 14, duration: 1500 });
-            }}
-            onPin={() => setActiveDepot(depotName)}
-            onDismiss={() => { if (activeDepot === depotName) setActiveDepot(null); }}
+            isHovered={hoveredDepot === depotName}
           />
         );
       });
-    }, [depotAssetCounts, depotAssets, activeDepot, isDark]);
+    }, [depotAssetCounts, depotAssets, activeDepot, isDark, hoveredDepot]);
 
-    // Compute max asset radius in meters per depot (for pulse wave)
-    const depotRadiusData = useMemo(() => {
-      const data: Array<{ depot: DepotLocation; radiusM: number; color: string }> = [];
-      for (const depot of depotLocations) {
-        const depotColor = isValidHexColor(depot.color) ? depot.color : DEFAULT_DEPOT_COLOR;
-        const depotAssets = filteredAssets.filter((a) => a.depot === depot.name);
-        if (depotAssets.length === 0) continue;
+    // DOM-overlay pulsing rings — supports multiple simultaneous animations
+    interface DepotAnim {
+      depot: DepotLocation;
+      color: string;
+      phase: 'expanding' | 'steady' | 'collapsing';
+      startTime: number;
+      collapseStartTime: number;
+      collapseFromRadius: number;
+      pulseStartTime: number | null;
+    }
+    const depotAnimsRef = useRef<Map<string, DepotAnim>>(new Map());
 
-        let maxDist = 5; // min 5km
-        for (const asset of depotAssets) {
-          const d = haversineKm(depot.lat, depot.lng, asset.latitude, asset.longitude);
-          if (d > maxDist) maxDist = d;
-        }
-        data.push({ depot, radiusM: maxDist * 1100, color: depotColor }); // km * 1.1 padding * 1000 = meters
-      }
-      return data;
-    }, [filteredAssets, depotLocations]);
-
-    // Depot radius pulse ref (started/stopped on depot hover)
-    const depotRadiusPulseRef = useRef<number | null>(null);
-
-    // Stable refs for depot pulse start/stop — callable from both Mapbox hitbox and PinContainer DOM hover
-    const startDepotPulse = useRef<((depotName: string) => void) | null>(null);
-    const stopDepotPulse = useRef<(() => void) | null>(null);
-
-    // Depot pulse rings — hover-triggered pulsating circles flat on the map
     useEffect(() => {
-      if (!map.current || !mapLoaded || depotLocations.length === 0) return;
+      if (!map.current || !mapLoaded || !mapContainer.current) return;
       const mapInstance = map.current;
+      const container = mapContainer.current;
 
-      const setupDepotPulse = () => {
-      const emptyGeo: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };
+      let canvas = container.querySelector('.depot-pulse-overlay') as HTMLCanvasElement | null;
+      if (!canvas) {
+        canvas = document.createElement('canvas');
+        canvas.className = 'depot-pulse-overlay';
+        canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:100;';
+        container.appendChild(canvas);
+      }
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
 
-      // GeoJSON source for all depot points (used by hitbox layer)
-      const depotPointsGeoJson: GeoJSON.FeatureCollection<GeoJSON.Point> = {
-        type: 'FeatureCollection',
-        features: depotLocations.map((depot) => ({
-          type: 'Feature' as const,
-          geometry: { type: 'Point' as const, coordinates: [depot.lng, depot.lat] },
-          properties: { color: isValidHexColor(depot.color) ? depot.color : DEFAULT_DEPOT_COLOR },
-        })),
+      const MAX_RADIUS_KM = 60;
+      const EXPAND_DURATION = 600;
+      const COLLAPSE_DURATION = 800;
+      const PULSE_FADE_IN = 600;
+      const SEGMENTS = 64;
+      const STROKE_WIDTH = 1.2;
+
+      const geoCircle = (lat: number, lng: number, radiusKm: number): [number, number][] => {
+        const points: [number, number][] = [];
+        const R = 6371;
+        for (let j = 0; j <= SEGMENTS; j++) {
+          const angle = (j / SEGMENTS) * Math.PI * 2;
+          const dLat = (radiusKm / R) * Math.cos(angle) * (180 / Math.PI);
+          const dLng = (radiusKm / R) * Math.sin(angle) * (180 / Math.PI) / Math.cos(lat * Math.PI / 180);
+          points.push([lng + dLng, lat + dLat]);
+        }
+        return points;
       };
 
-      if (!mapInstance.getSource('depot-points')) {
-        mapInstance.addSource('depot-points', { type: 'geojson', data: depotPointsGeoJson });
-      } else {
-        (mapInstance.getSource('depot-points') as mapboxgl.GeoJSONSource).setData(depotPointsGeoJson);
-      }
-
-      // Invisible hitbox for depot hover detection
-      if (!mapInstance.getLayer('depot-hitbox-layer')) {
-        mapInstance.addLayer({
-          id: 'depot-hitbox-layer',
-          type: 'circle',
-          source: 'depot-points',
-          slot: 'top',
-          paint: {
-            'circle-radius': 24,
-            'circle-color': 'transparent',
-            'circle-opacity': 0,
-          },
+      const drawRing = (depot: DepotLocation, color: string, radiusKm: number, strokeAlpha: number, fillAlpha: number, lineWidth: number) => {
+        if (radiusKm < 0.1) return;
+        const geoPoints = geoCircle(depot.lat, depot.lng, radiusKm);
+        const screenPoints = geoPoints.map((p) => mapInstance.project(p as [number, number]));
+        ctx.beginPath();
+        screenPoints.forEach((sp, idx) => {
+          if (idx === 0) ctx.moveTo(sp.x, sp.y);
+          else ctx.lineTo(sp.x, sp.y);
         });
-      }
-
-      // Single-point source for the hovered depot pulse
-      if (!mapInstance.getSource('depot-pulse')) {
-        mapInstance.addSource('depot-pulse', { type: 'geojson', data: emptyGeo });
-      }
-
-      const beforeLayer = mapInstance.getLayer('asset-dots-layer') ? 'asset-dots-layer' : undefined;
-
-      // Two staggered small pulse rings (base of pin)
-      for (const layerId of ['depot-pulse-ring-1', 'depot-pulse-ring-2']) {
-        if (!mapInstance.getLayer(layerId)) {
-          mapInstance.addLayer({
-            id: layerId,
-            type: 'circle',
-            source: 'depot-pulse',
-            slot: 'top',
-            paint: {
-              'circle-pitch-alignment': 'map',
-              'circle-radius': 8,
-              'circle-color': ['coalesce', ['get', 'color'], '#9ca3af'],
-              'circle-opacity': 0,
-              'circle-stroke-width': 2,
-              'circle-stroke-color': ['coalesce', ['get', 'color'], '#9ca3af'],
-              'circle-stroke-opacity': 0,
-            },
-          }, beforeLayer);
+        ctx.closePath();
+        if (fillAlpha > 0) {
+          ctx.fillStyle = color;
+          ctx.globalAlpha = fillAlpha;
+          ctx.fill();
         }
-      }
-
-      // Two staggered radius wave rings (expand to asset boundary)
-      for (const layerId of ['depot-radius-wave-1', 'depot-radius-wave-2']) {
-        if (!mapInstance.getLayer(layerId)) {
-          mapInstance.addLayer({
-            id: layerId,
-            type: 'circle',
-            source: 'depot-pulse',
-            slot: 'top',
-            paint: {
-              'circle-pitch-alignment': 'map',
-              'circle-radius': 1,
-              'circle-color': ['coalesce', ['get', 'color'], '#9ca3af'],
-              'circle-opacity': 0,
-              'circle-stroke-width': 2,
-              'circle-stroke-color': ['coalesce', ['get', 'color'], '#9ca3af'],
-              'circle-stroke-opacity': 0,
-            },
-          }, beforeLayer);
-        }
-      }
-
-      /** Convert meters to pixels at a given lat/zoom */
-      const metersToPixels = (meters: number, lat: number, zoom: number) => {
-        const metersPerPixel = (156543.03392 * Math.cos(lat * Math.PI / 180)) / Math.pow(2, zoom);
-        return meters / metersPerPixel;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = lineWidth;
+        ctx.globalAlpha = strokeAlpha;
+        ctx.stroke();
       };
 
-      // Shared start/stop pulse logic — callable from Mapbox hitbox OR PinContainer DOM hover
-      const triggerPulseForDepot = (depotName: string) => {
-        const depotData = depotRadiusData.find((d) => d.depot.name === depotName);
-        if (!depotData) return;
+      const animate = () => {
+        if (!map.current || !canvas) return;
+        const anims = depotAnimsRef.current;
+        const rect = canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, rect.width, rect.height);
 
-        const { depot, radiusM, color: rawColor } = depotData;
-        const coords: [number, number] = [depot.lng, depot.lat];
-        const color = brightenHex(rawColor, 0.8);
-        const depotLat = depot.lat;
+        const now = performance.now();
+        const toDelete: string[] = [];
 
-        const pulseSource = mapInstance.getSource('depot-pulse') as mapboxgl.GeoJSONSource | undefined;
-        if (pulseSource) {
-          pulseSource.setData({
-            type: 'FeatureCollection',
-            features: [{
-              type: 'Feature',
-              geometry: { type: 'Point', coordinates: coords },
-              properties: { color },
-            }],
-          });
-        }
+        anims.forEach((anim, name) => {
+          const { depot, color } = anim;
 
-        // Start both animations
-        if (depotPulseAnimFrame.current) cancelAnimationFrame(depotPulseAnimFrame.current);
-        if (depotRadiusPulseRef.current) cancelAnimationFrame(depotRadiusPulseRef.current);
-        const startTime = performance.now();
+          if (anim.phase === 'expanding' || anim.phase === 'steady') {
+            const elapsed = now - anim.startTime;
+            const expandT = Math.min(elapsed / EXPAND_DURATION, 1);
+            const easedT = 1 - Math.pow(1 - expandT, 3);
+            const currentRadius = easedT * MAX_RADIUS_KM;
 
-        // Small base pulse
-        const baseDuration = 2500;
-        const baseMaxRadius = 75;
-        const baseMinRadius = 8;
+            // Main circle
+            drawRing(depot, color, currentRadius, easedT, easedT * 0.08, STROKE_WIDTH);
 
-        const animateBase = () => {
-          const now = performance.now();
-          for (let i = 0; i < 2; i++) {
-            const lid = `depot-pulse-ring-${i + 1}`;
-            if (!mapInstance.getLayer(lid)) continue;
-            const t = (((now - startTime) / baseDuration + i * 0.5) % 1);
-            const radius = baseMinRadius + t * (baseMaxRadius - baseMinRadius);
-            const fadeOut = 1 - t;
+            if (expandT >= 1) {
+              anim.phase = 'steady';
 
-            mapInstance.setPaintProperty(lid, 'circle-radius', radius);
-            mapInstance.setPaintProperty(lid, 'circle-stroke-opacity', fadeOut * 0.6);
-            mapInstance.setPaintProperty(lid, 'circle-stroke-width', 2 - t * 1.2);
-            const fillOpacity = fadeOut * t * 0.35;
-            mapInstance.setPaintProperty(lid, 'circle-opacity', fillOpacity);
+              // Pulse ring — smooth fade in
+              if (!anim.pulseStartTime) anim.pulseStartTime = now;
+              const pulseFadeT = Math.min((now - anim.pulseStartTime) / PULSE_FADE_IN, 1);
+              const pulseT = (Math.sin(now * 1.0 * Math.PI * 2 / 1000) + 1) / 2;
+              const pulseRadius = MAX_RADIUS_KM + pulseT * 8;
+              const pulseAlpha = pulseFadeT * (0.3 + pulseT * 0.4);
+              drawRing(depot, color, pulseRadius, pulseAlpha, 0, STROKE_WIDTH * 1.5);
+
+              // Sweep ring
+              const sweepDuration = 2500;
+              const sweepElapsed = elapsed - EXPAND_DURATION;
+              const sweepLinear = (sweepElapsed % sweepDuration) / sweepDuration;
+              const sweepT = 1 - Math.pow(1 - sweepLinear, 3); // ease-out: fast start, slow finish
+              const sweepRadius = sweepT * MAX_RADIUS_KM;
+              const sweepAlpha = (1 - sweepT) * 0.6;
+              drawRing(depot, color, sweepRadius, sweepAlpha, 0, STROKE_WIDTH * 1.5);
+            }
+          } else if (anim.phase === 'collapsing') {
+            const collapseElapsed = now - anim.collapseStartTime;
+            const collapseT = Math.min(collapseElapsed / COLLAPSE_DURATION, 1);
+            const easedCollapse = collapseT * collapseT;
+            const currentRadius = anim.collapseFromRadius * (1 - easedCollapse);
+            const alpha = 1 - easedCollapse;
+
+            drawRing(depot, color, currentRadius, alpha, alpha * 0.08, STROKE_WIDTH);
+
+            if (collapseT >= 1) {
+              toDelete.push(name);
+            }
           }
-          depotPulseAnimFrame.current = requestAnimationFrame(animateBase);
-        };
-        depotPulseAnimFrame.current = requestAnimationFrame(animateBase);
+        });
 
-        // Radius wave expanding to asset boundary
-        const waveDuration = 3000;
-        const animateWave = () => {
-          if (!map.current) return;
-          const now = performance.now();
-          const zoom = mapInstance.getZoom();
-          const maxRadiusPx = metersToPixels(radiusM, depotLat, zoom);
+        toDelete.forEach((name) => anims.delete(name));
 
-          for (let i = 0; i < 2; i++) {
-            const lid = `depot-radius-wave-${i + 1}`;
-            if (!mapInstance.getLayer(lid)) continue;
-            const t = (((now - startTime) / waveDuration + i * 0.5) % 1);
-            const radius = t * maxRadiusPx;
-            const fadeOut = 1 - t;
-
-            mapInstance.setPaintProperty(lid, 'circle-radius', radius);
-            mapInstance.setPaintProperty(lid, 'circle-stroke-opacity', fadeOut * 0.85);
-            mapInstance.setPaintProperty(lid, 'circle-stroke-width', 3 - t * 1.5);
-            mapInstance.setPaintProperty(lid, 'circle-opacity', fadeOut * t * 0.3);
-          }
-          depotRadiusPulseRef.current = requestAnimationFrame(animateWave);
-        };
-        depotRadiusPulseRef.current = requestAnimationFrame(animateWave);
+        ctx.globalAlpha = 1;
+        depotPulseAnimFrame.current = requestAnimationFrame(animate);
       };
 
-      const clearPulse = () => {
-        if (depotPulseAnimFrame.current) {
-          cancelAnimationFrame(depotPulseAnimFrame.current);
-          depotPulseAnimFrame.current = null;
-        }
-        if (depotRadiusPulseRef.current) {
-          cancelAnimationFrame(depotRadiusPulseRef.current);
-          depotRadiusPulseRef.current = null;
-        }
-        const pulseSource = mapInstance.getSource('depot-pulse') as mapboxgl.GeoJSONSource | undefined;
-        if (pulseSource) {
-          pulseSource.setData(emptyGeo);
-        }
-      };
+      if (!depotPulseAnimFrame.current) {
+        depotPulseAnimFrame.current = requestAnimationFrame(animate);
+      }
 
-      // Expose to PinContainer DOM hover via refs
-      startDepotPulse.current = triggerPulseForDepot;
-      stopDepotPulse.current = clearPulse;
-
-      // Mapbox hitbox handlers — resolve depot name from coordinates
-      const onDepotEnter = (e: mapboxgl.MapMouseEvent & { features?: mapboxgl.GeoJSONFeature[] }) => {
-        const feature = e.features?.[0];
-        if (!feature || feature.geometry.type !== 'Point') return;
-        const coords = (feature.geometry as GeoJSON.Point).coordinates as [number, number];
-        const match = depotRadiusData.find(
-          (d) => Math.abs(d.depot.lng - coords[0]) < 0.001 && Math.abs(d.depot.lat - coords[1]) < 0.001
-        );
-        if (match) triggerPulseForDepot(match.depot.name);
-      };
-
-      const onDepotLeave = () => clearPulse();
-
-      mapInstance.on('mouseenter', 'depot-hitbox-layer', onDepotEnter);
-      mapInstance.on('mouseleave', 'depot-hitbox-layer', onDepotLeave);
+      const onMove = () => mapInstance.triggerRepaint();
+      mapInstance.on('move', onMove);
 
       return () => {
-        if (depotPulseAnimFrame.current) {
-          cancelAnimationFrame(depotPulseAnimFrame.current);
-          depotPulseAnimFrame.current = null;
-        }
-        if (depotRadiusPulseRef.current) {
-          cancelAnimationFrame(depotRadiusPulseRef.current);
-          depotRadiusPulseRef.current = null;
-        }
-        mapInstance.off('mouseenter', 'depot-hitbox-layer', onDepotEnter);
-        mapInstance.off('mouseleave', 'depot-hitbox-layer', onDepotLeave);
+        mapInstance.off('move', onMove);
       };
-      }; // end setupDepotPulse
+    }, [mapLoaded, depotLocations]);
 
-      return setupDepotPulse();
-    }, [mapLoaded, depotLocations, depotRadiusData, isDark]);
+    // Cylinder hover detection — screen-space point-in-polygon against projected geo circles
+    const HOVER_RADIUS_KM = 45;
+    const CYLINDER_HOVER_HEIGHT = 80; // must match CYLINDER_HEIGHT_PX in debug draw
+    useEffect(() => {
+      if (!map.current || !mapLoaded) return;
+      const mapInstance = map.current;
+
+      const R = 6371;
+      const SEGMENTS = 32; // fewer segments for hover check (perf)
+
+      const geoCircleHover = (lat: number, lng: number, radiusKm: number): [number, number][] => {
+        const points: [number, number][] = [];
+        for (let j = 0; j <= SEGMENTS; j++) {
+          const angle = (j / SEGMENTS) * Math.PI * 2;
+          const dLat = (radiusKm / R) * Math.cos(angle) * (180 / Math.PI);
+          const dLng = (radiusKm / R) * Math.sin(angle) * (180 / Math.PI) / Math.cos(lat * Math.PI / 180);
+          points.push([lng + dLng, lat + dLat]);
+        }
+        return points;
+      };
+
+      // Ray casting point-in-polygon
+      const pointInPolygon = (px: number, py: number, polygon: { x: number; y: number }[]): boolean => {
+        let inside = false;
+        for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+          const pi = polygon[i]!;
+          const pj = polygon[j]!;
+          if (((pi.y > py) !== (pj.y > py)) && (px < (pj.x - pi.x) * (py - pi.y) / (pj.y - pi.y) + pi.x)) {
+            inside = !inside;
+          }
+        }
+        return inside;
+      };
+
+      const onMouseMove = (e: mapboxgl.MapMouseEvent) => {
+        const mx = e.point.x;
+        const my = e.point.y;
+        let closest: string | null = null;
+        let closestDist = Infinity;
+
+        for (const depot of depotLocations) {
+          const geoPoints = geoCircleHover(depot.lat, depot.lng, HOVER_RADIUS_KM);
+          const bottomPoly = geoPoints.map((p) => mapInstance.project(p as [number, number]));
+          const topPoly = bottomPoly.map((p) => ({ x: p.x, y: p.y - CYLINDER_HOVER_HEIGHT }));
+
+          // Check: inside bottom ellipse, top ellipse, or between them (cylinder walls)
+          const inBottom = pointInPolygon(mx, my, bottomPoly);
+          const inTop = pointInPolygon(mx, my, topPoly);
+
+          // For walls: check if mouse is between top and bottom y-range and within horizontal bounds
+          let inWalls = false;
+          if (!inBottom && !inTop) {
+            const minTopY = Math.min(...topPoly.map((p) => p.y));
+            const maxBotY = Math.max(...bottomPoly.map((p) => p.y));
+            if (my >= minTopY && my <= maxBotY) {
+              // Between top and bottom — check if mouse x is within the horizontal extent
+              // Find min/max x of the bottom polygon (wider since it's geo-projected)
+              let minX = Infinity, maxX = -Infinity;
+              for (const p of bottomPoly) {
+                if (p.x < minX) minX = p.x;
+                if (p.x > maxX) maxX = p.x;
+              }
+              inWalls = mx >= minX && mx <= maxX;
+            }
+          }
+
+          if (inBottom || inTop || inWalls) {
+            // Use screen distance to depot center for closest pick
+            const center = mapInstance.project([depot.lng, depot.lat]);
+            const dist = Math.sqrt((mx - center.x) ** 2 + (my - center.y) ** 2);
+            if (dist < closestDist) {
+              closest = depot.name;
+              closestDist = dist;
+            }
+          }
+        }
+
+        setHoveredDepot(closest);
+      };
+
+      mapInstance.on('mousemove', onMouseMove);
+      return () => {
+        mapInstance.off('mousemove', onMouseMove);
+      };
+    }, [mapLoaded, depotLocations]);
+
+    // React to hoveredDepot changes — manage per-depot animations
+    useEffect(() => {
+      const anims = depotAnimsRef.current;
+      const now = performance.now();
+
+      // Start collapsing any depots that are no longer hovered
+      anims.forEach((anim, name) => {
+        if (name !== hoveredDepot && anim.phase !== 'collapsing') {
+          const elapsed = now - anim.startTime;
+          const expandT = Math.min(elapsed / 600, 1);
+          const easedT = 1 - Math.pow(1 - expandT, 3);
+          anim.collapseFromRadius = easedT * 60;
+          anim.collapseStartTime = now;
+          anim.phase = 'collapsing';
+        }
+      });
+
+      // Start expanding the newly hovered depot
+      if (hoveredDepot && !anims.has(hoveredDepot)) {
+        const depot = depotLocations.find((d) => d.name === hoveredDepot);
+        if (depot) {
+          anims.set(hoveredDepot, {
+            depot,
+            color: isValidHexColor(depot.color) ? depot.color : DEFAULT_DEPOT_COLOR,
+            phase: 'expanding',
+            startTime: now,
+            collapseStartTime: 0,
+            collapseFromRadius: 0,
+            pulseStartTime: null,
+          });
+        }
+      } else if (hoveredDepot && anims.has(hoveredDepot)) {
+        // Re-hovering a depot that's collapsing — restart expand
+        const anim = anims.get(hoveredDepot)!;
+        if (anim.phase === 'collapsing') {
+          anim.phase = 'expanding';
+          anim.startTime = now;
+          anim.pulseStartTime = null;
+        }
+      }
+    }, [hoveredDepot, depotLocations]);
 
     // Build GeoJSON FeatureCollection from filtered assets (exclude depot-counted assets)
     const assetGeoJson = useMemo<GeoJSON.FeatureCollection<GeoJSON.Point>>(() => ({

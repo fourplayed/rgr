@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react"
-import { IconSearch } from "@tabler/icons-react"
+import { SearchIcon } from "lucide-react"
+import { Input } from "@/components/ui/Input"
 
 interface FloatingSearchProps {
   onSearch: (query: string) => void
@@ -16,24 +17,21 @@ export function FloatingSearch({ onSearch }: FloatingSearchProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="absolute top-3 left-3 z-10 flex items-center bg-card border border-border rounded-md shadow-md overflow-hidden"
+      className="w-80"
     >
-      <input
-        type="text"
-        value={query}
-        onChange={(e) => {
-          setQuery(e.target.value)
-          onSearch(e.target.value)
-        }}
-        placeholder="Search assets..."
-        className="w-36 px-3 py-1.5 text-sm bg-transparent text-foreground placeholder:text-muted-foreground outline-none"
-      />
-      <button
-        type="submit"
-        className="w-7 h-7 flex items-center justify-center bg-primary rounded-sm m-0.5 flex-shrink-0"
-      >
-        <IconSearch size={14} className="text-primary-foreground" />
-      </button>
+      <div className="relative">
+        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none z-10" />
+        <Input
+          type="text"
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value)
+            onSearch(e.target.value)
+          }}
+          placeholder="Search assets..."
+          className="pl-9 bg-card shadow-md shadow-black/15 focus-visible:ring-0 focus-visible:border-input dark:bg-card"
+        />
+      </div>
     </form>
   )
 }

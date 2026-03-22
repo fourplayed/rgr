@@ -15,18 +15,20 @@ export function FloatingStatPills() {
   }
 
   return (
-    <div className="absolute bottom-3 left-3 z-10 flex items-center gap-1.5">
+    <div className="flex flex-col gap-1 px-3">
       {STATS.map(({ key, label, color }) => (
         <div
           key={key}
-          className="flex items-center gap-1.5 px-2.5 py-1 bg-card border border-border rounded-full text-xs font-medium text-foreground"
+          className="flex items-center justify-between py-1 text-sm text-sidebar-foreground"
         >
-          <span
-            className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-            style={{ backgroundColor: color }}
-          />
-          <span>{stats[key]}</span>
-          <span className="text-muted-foreground">{label}</span>
+          <div className="flex items-center gap-2">
+            <span
+              className="w-2 h-2 rounded-full flex-shrink-0"
+              style={{ backgroundColor: color }}
+            />
+            <span className="text-sidebar-foreground/60">{label}</span>
+          </div>
+          <span className="font-medium tabular-nums">{stats[key]}</span>
         </div>
       ))}
     </div>

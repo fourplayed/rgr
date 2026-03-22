@@ -1,68 +1,64 @@
 import { useDepots } from "@/hooks/useAssetData"
-
-const DEPOT_COLORS = [
-  "#22c55e",
-  "#a78bfa",
-  "#f59e0b",
-  "#f87171",
-  "#38bdf8",
-  "#fb923c",
-  "#e879f9",
-  "#34d399",
-]
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { CheckIcon } from "lucide-react"
 
 interface DepotFilterPillsProps {
-  activeDepot: string | null
-  onDepotChange: (depotCode: string | null) => void
+  activeDepots: string[]
+  onDepotChange: (depots: string[]) => void
 }
 
-export function DepotFilterPills({ activeDepot, onDepotChange }: DepotFilterPillsProps) {
+export function DepotFilterPills({ activeDepots, onDepotChange }: DepotFilterPillsProps) {
   const { data: depots = [] } = useDepots()
 
-  const handleDepotClick = (depotCode: string) => {
-    if (activeDepot === depotCode) {
-      onDepotChange(null)
+  const allSelected = activeDepots.length === 0
+
+  const handleToggleDepot = (depotCode: string) => {
+    if (activeDepots.includes(depotCode)) {
+      onDepotChange(activeDepots.filter((d) => d !== depotCode))
     } else {
-      onDepotChange(depotCode)
+      onDepotChange([...activeDepots, depotCode])
     }
   }
 
   return (
-    <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 flex-wrap justify-end max-w-xs">
-      {/* All pill */}
-      <button
-        onClick={() => onDepotChange(null)}
-        className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium border rounded-full transition-colors ${
-          activeDepot === null
-            ? "bg-foreground text-background border-foreground"
-            : "bg-card text-muted-foreground border-border hover:border-foreground/40"
-        }`}
+    <ToggleGroup
+      variant="outline"
+      size="sm"
+      className="shadow-md shadow-black/15 overflow-visible bg-card"
+    >
+      <ToggleGroupItem
+        value="all"
+        pressed={allSelected}
+        onClick={() => onDepotChange([])}
+        className="relative text-xs font-medium"
       >
+        {allSelected && (
+          <span className="absolute -top-1.5 right-1 z-10 flex size-4 items-center justify-center rounded-full bg-green-500 text-white shadow-sm">
+            <CheckIcon className="size-2.5" strokeWidth={3} />
+          </span>
+        )}
         All
-      </button>
+      </ToggleGroupItem>
 
-      {/* One pill per depot */}
-      {depots.map((depot, index) => {
-        const color = DEPOT_COLORS[index % DEPOT_COLORS.length]
-        const isActive = activeDepot === depot.code
+      {depots.map((depot) => {
+        const isActive = activeDepots.includes(depot.code)
         return (
-          <button
+          <ToggleGroupItem
             key={depot.code}
-            onClick={() => handleDepotClick(depot.code)}
-            className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium border rounded-full transition-colors ${
-              isActive
-                ? "bg-foreground text-background border-foreground"
-                : "bg-card text-muted-foreground border-border hover:border-foreground/40"
-            }`}
+            value={depot.code}
+            pressed={isActive}
+            onClick={() => handleToggleDepot(depot.code)}
+            className="relative text-xs font-medium"
           >
-            <span
-              className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-              style={{ backgroundColor: color }}
-            />
+            {isActive && (
+              <span className="absolute -top-1.5 right-1 z-10 flex size-4 items-center justify-center rounded-full bg-green-500 text-white shadow-sm">
+                <CheckIcon className="size-2.5" strokeWidth={3} />
+              </span>
+            )}
             {depot.name}
-          </button>
+          </ToggleGroupItem>
         )
       })}
-    </div>
+    </ToggleGroup>
   )
 }

@@ -7,7 +7,6 @@ import { initializeSupabase } from './config/supabase';
 import { useAuthStore } from './stores/authStore';
 import { hasRoleLevel, onAuthStateChange } from '@rgr/shared';
 import type { UserRole } from '@rgr/shared';
-import { DebugToolbar } from './pages/login/components/DebugToolbar';
 import { AppShell } from './components/shell/AppShell';
 
 const Login = lazy(() => import('./pages/Login'));
@@ -145,10 +144,7 @@ function App() {
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <TooltipProvider>
             {/* Chrome background */}
-            <div className="fixed inset-0 -z-10 bg-[#e8e8e8] dark:bg-[#1a1a1a]" />
-
-            {/* Global dev tool panels — fixed to viewport, persist across routes */}
-            {import.meta.env.DEV && <DebugToolbar />}
+            <div className="fixed inset-0 -z-10 bg-background" />
 
             <Suspense
               fallback={

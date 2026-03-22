@@ -12,7 +12,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { CircleUserRoundIcon, LogOutIcon } from "lucide-react"
 import { useAuthStore } from "@/stores/authStore"
 import { useNavigate } from "react-router-dom"
@@ -50,18 +49,9 @@ export function UserMenu({ expanded = false }: UserMenuProps) {
           </div>
         </DropdownMenuTrigger>
       ) : (
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <DropdownMenuTrigger className="flex size-9 items-center justify-center rounded-lg hover:bg-sidebar-accent/50 transition-colors outline-none" />
-            }
-          >
-            {avatarElement}
-          </TooltipTrigger>
-          <TooltipContent side="right" sideOffset={8}>
-            {user.fullName}
-          </TooltipContent>
-        </Tooltip>
+        <DropdownMenuTrigger className="flex size-9 items-center justify-center rounded-lg hover:bg-sidebar-accent/50 transition-colors outline-none">
+          {avatarElement}
+        </DropdownMenuTrigger>
       )}
       <DropdownMenuContent
         className="min-w-56"

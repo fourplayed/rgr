@@ -9,7 +9,6 @@ import {
   BarChart3Icon,
   ShieldIcon,
   Settings2Icon,
-  PanelLeftIcon,
   SunIcon,
   MoonIcon,
 } from "lucide-react"
@@ -31,35 +30,19 @@ export function SidebarRail({ onToggleExpand }: SidebarRailProps) {
     : false
 
   return (
-    <div className="flex h-full w-14 flex-col items-center border-r border-sidebar-border bg-sidebar py-3 gap-1">
+    <div className="relative z-40 flex h-full w-14 flex-col items-center border-r border-sidebar-border bg-sidebar py-3 gap-1">
+
       {/* Logo */}
       <button
         onClick={() => navigate("/dashboard")}
         className="mb-1 flex size-9 items-center justify-center rounded-lg hover:bg-sidebar-accent/50 transition-colors"
       >
         <img
-          src={isDark ? "/logo_dark.png" : "/logo_light.png"}
+          src={isDark ? "/logo_light_electric.png" : "/logo_light.png"}
           alt="RGR Fleet"
           className="size-7 object-contain"
         />
       </button>
-
-      {/* Expand toggle */}
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <button
-              onClick={onToggleExpand}
-              className="mb-2 flex size-9 items-center justify-center rounded-lg text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground transition-colors"
-            />
-          }
-        >
-          <PanelLeftIcon className="size-5" />
-        </TooltipTrigger>
-        <TooltipContent side="right" sideOffset={8}>
-          Expand sidebar
-        </TooltipContent>
-      </Tooltip>
 
       {/* Primary nav */}
       <nav className="flex flex-col items-center gap-1">
