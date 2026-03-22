@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { initializeSupabase } from './config/supabase';
 import { useAuthStore } from './stores/authStore';
 import { hasRoleLevel, onAuthStateChange } from '@rgr/shared';
@@ -10,6 +11,7 @@ import { DebugToolbar } from './pages/login/components/DebugToolbar';
 import { PersistentBackground } from './components/backgrounds';
 
 const Login = lazy(() => import('./pages/Login'));
+const Welcome = lazy(() => import('./pages/Welcome'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Assets = lazy(() => import('./pages/Assets'));
 const Reports = lazy(() => import('./pages/Reports'));
@@ -142,94 +144,104 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <BrowserRouter>
-          {/* Persistent background — gradient + Stars, never unmounts */}
-          <PersistentBackground />
+          <TooltipProvider>
+            {/* Persistent background — gradient + Stars, never unmounts */}
+            <PersistentBackground />
 
-          {/* Global dev tool panels — fixed to viewport, persist across routes */}
-          {import.meta.env.DEV && <DebugToolbar />}
+            {/* Global dev tool panels — fixed to viewport, persist across routes */}
+            {import.meta.env.DEV && <DebugToolbar />}
 
-          <Suspense
-            fallback={
-              <div className="relative z-10 flex items-center justify-center min-h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
-              </div>
-            }
-          >
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/assets"
-                element={
-                  <ProtectedRoute>
-                    <Assets />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/maintenance"
-                element={
-                  <ProtectedRoute>
-                    <StubPage title="Maintenance" />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/load-analyzer"
-                element={
-                  <ProtectedRoute>
-                    <StubPage title="Load Analyzer" />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/reports"
-                element={
-                  <ProtectedRoute>
-                    <Reports />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/settings"
-                element={
-                  <ProtectedRoute>
-                    <StubPage title="Settings" />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute requiredRole="superuser">
-                    <StubPage title="Admin" />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route
-                path="*"
-                element={
-                  <div className="flex items-center justify-center min-h-screen">
-                    <div className="text-center">
-                      <h1 className="text-4xl font-bold mb-4">404</h1>
-                      <p className="text-lg mb-4">Page not found</p>
-                      <a href="/dashboard" className="text-blue-400 hover:underline">
-                        Go to Dashboard
-                      </a>
+            <Suspense
+              fallback={
+                <div className="relative z-10 flex items-center justify-center min-h-screen">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
+                </div>
+              }
+            >
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route
+                  path="/welcome"
+                  element={
+                    <ProtectedRoute>
+                      <Welcome />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/assets"
+                  element={
+                    <ProtectedRoute>
+                      <Assets />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/maintenance"
+                  element={
+                    <ProtectedRoute>
+                      <StubPage title="Maintenance" />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/load-analyzer"
+                  element={
+                    <ProtectedRoute>
+                      <StubPage title="Load Analyzer" />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/reports"
+                  element={
+                    <ProtectedRoute>
+                      <Reports />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings"
+                  element={
+                    <ProtectedRoute>
+                      <StubPage title="Settings" />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedRoute requiredRole="superuser">
+                      <StubPage title="Admin" />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route
+                  path="*"
+                  element={
+                    <div className="flex items-center justify-center min-h-screen">
+                      <div className="text-center">
+                        <h1 className="text-4xl font-bold mb-4">404</h1>
+                        <p className="text-lg mb-4">Page not found</p>
+                        <a href="/dashboard" className="text-blue-400 hover:underline">
+                          Go to Dashboard
+                        </a>
+                      </div>
                     </div>
-                  </div>
-                }
-              />
-            </Routes>
-          </Suspense>
+                  }
+                />
+              </Routes>
+            </Suspense>
+          </TooltipProvider>
         </BrowserRouter>
       </ThemeProvider>
     </QueryClientProvider>
