@@ -1,7 +1,7 @@
 import { memo, type ReactNode } from 'react';
 import { Camera, AlertTriangle, CheckCircle, XCircle, Settings, LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import Card from '@/components/ui/Card';
+import { Card } from '@/components/ui/card';
 
 /**
  * Permission states for camera access
@@ -18,7 +18,7 @@ interface ErrorFallbackProps {
 
 function ErrorFallback({ error, onRetry }: ErrorFallbackProps): ReactNode {
   return (
-    <Card padding="lg" role="alert" aria-live="assertive">
+    <Card className="p-6" role="alert" aria-live="assertive">
       <div className="text-center">
         <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
           <AlertTriangle className="w-8 h-8 text-red-600" aria-hidden="true" />
@@ -262,7 +262,7 @@ export default function CameraPermission({
   const Icon = config.icon;
 
   return (
-    <Card className={className} padding="lg" role="region" aria-label="Camera permission">
+    <Card className={`p-6 ${className ?? ''}`} role="region" aria-label="Camera permission">
       <div className="text-center">
         <StatusIcon icon={Icon} bgColor={config.iconBgColor} iconColor={config.iconColor} />
 

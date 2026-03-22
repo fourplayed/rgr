@@ -2,7 +2,7 @@ import { useState, useCallback, FormEvent } from 'react';
 import { Search, QrCode, AlertCircle, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import Card from '@/components/ui/Card';
+import { Card } from '@/components/ui/card';
 import { isValidQRCode, extractAssetInfo, isAssetNumber } from '@rgr/shared';
 
 interface ManualEntryProps {
@@ -173,7 +173,7 @@ export default function ManualEntry({
   const displayError = externalError || inputError;
 
   return (
-    <Card className={className} padding="md">
+    <Card className={`p-4 ${className ?? ''}`}>
       <div className="space-y-4">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary-100 rounded-lg">

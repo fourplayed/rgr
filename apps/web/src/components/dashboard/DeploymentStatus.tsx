@@ -25,7 +25,7 @@ import {
   Minus,
 } from 'lucide-react';
 import { VisionCard } from './vision/VisionCard';
-import Badge from '../ui/Badge';
+import { Badge } from '@/components/ui/badge';
 import { useDeploymentStatus } from '@/hooks/useDeploymentStatus';
 import type { WorkflowRun, WorkflowFilter } from './types/deployment';
 
@@ -89,7 +89,7 @@ export const DeploymentStatus = React.memo<DeploymentStatusProps>(
       if (status === 'in_progress') {
         return (
           <Badge
-            variant="info"
+            variant="outline"
             className="flex items-center gap-1 bg-blue-100 text-blue-800 border border-blue-300"
           >
             <Loader2 className="w-3 h-3 animate-spin" />
@@ -102,7 +102,7 @@ export const DeploymentStatus = React.memo<DeploymentStatusProps>(
         if (conclusion === 'success') {
           return (
             <Badge
-              variant="success"
+              variant="outline"
               className="flex items-center gap-1 bg-emerald-100 text-emerald-800 border border-emerald-300"
             >
               <CheckCircle2 className="w-3 h-3" />
@@ -113,7 +113,7 @@ export const DeploymentStatus = React.memo<DeploymentStatusProps>(
         if (conclusion === 'failure') {
           return (
             <Badge
-              variant="danger"
+              variant="destructive"
               className="flex items-center gap-1 bg-rose-100 text-rose-800 border border-rose-300"
             >
               <XCircle className="w-3 h-3" />
@@ -137,7 +137,7 @@ export const DeploymentStatus = React.memo<DeploymentStatusProps>(
 
       return (
         <Badge
-          variant="warning"
+          variant="outline"
           className="flex items-center gap-1 bg-amber-100 text-amber-800 border border-amber-300"
         >
           <AlertCircle className="w-3 h-3" />
