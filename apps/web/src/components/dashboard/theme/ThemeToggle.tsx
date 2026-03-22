@@ -20,6 +20,7 @@ export const ThemeToggle = React.memo<ThemeToggleProps>(({ className = '' }) => 
         bg-white/10 hover:bg-white/20
         backdrop-blur-sm
         transition-all duration-200
+        cursor-pointer
         focus:outline-none focus:ring-2 focus:ring-blue-500
         ${className}
       `}

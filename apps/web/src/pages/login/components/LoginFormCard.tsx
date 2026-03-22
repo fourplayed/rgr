@@ -264,7 +264,7 @@ export function LoginFormCard({ state, actions, onForgotPassword, isDark }: Logi
           className={`
             chrome-button ${isDark ? 'chrome-button-dark' : 'chrome-button-light'}
             group w-full py-2 px-4 rounded-lg text-base text-white
-            ${isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:-translate-y-0.5 active:scale-y-75'}
+            ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:-translate-y-0.5 active:scale-y-75'}
             transition-all duration-300 ease-in-out
           `}
         >

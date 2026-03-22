@@ -485,7 +485,7 @@ export const AssetsToolbar = React.memo<AssetsToolbarProps>(
                   fontSize: '12px',
                   fontFamily: "'Lato', sans-serif",
                   fontWeight: 600,
-                  background: isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(209, 213, 219, 0.1)',
+                  backgroundColor: isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(209, 213, 219, 0.1)',
                   border: `1px solid ${isDark ? 'rgba(235, 235, 235, 0.15)' : 'rgba(255, 255, 255, 0.5)'}`,
                   color: isDark ? '#f8fafc' : '#ffffff',
                   cursor: 'pointer',

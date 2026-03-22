@@ -113,7 +113,7 @@ export function ForgotPasswordCard({
                 type="button"
                 onClick={onBack}
                 disabled={isLoading}
-                className={`flex items-center gap-1 text-sm ${linkColor} font-medium transition-colors ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`flex items-center gap-1 text-sm ${linkColor} font-medium transition-colors ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                 aria-label="Return to login form"
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -140,7 +140,7 @@ export function ForgotPasswordCard({
               className={`
                 chrome-button ${isDark ? 'chrome-button-dark' : 'chrome-button-light'}
                 group w-full py-2 px-4 rounded-lg text-base text-white
-                ${isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:-translate-y-0.5 active:scale-y-75'}
+                ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:-translate-y-0.5 active:scale-y-75'}
                 transition-all duration-300 ease-in-out
               `}
             >

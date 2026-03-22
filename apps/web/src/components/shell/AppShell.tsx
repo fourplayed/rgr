@@ -5,8 +5,8 @@ import { LogOut, Menu, Moon, Sun, User } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import {
-  IoMapOutline,
-  IoMap,
+  IoDesktopOutline,
+  IoDesktop,
   IoCubeOutline,
   IoCube,
   IoConstructOutline,
@@ -36,7 +36,7 @@ interface NavGroup {
 const navGroups: NavGroup[] = [
   {
     title: 'Dashboard',
-    items: [{ label: 'Dashboard', href: '/dashboard', icon: IoMapOutline, iconFilled: IoMap }],
+    items: [{ label: 'Dashboard', href: '/dashboard', icon: IoDesktopOutline, iconFilled: IoDesktop }],
   },
   {
     title: 'Assets',
@@ -129,7 +129,7 @@ function DesktopNav() {
                   icon={item.icon}
                   iconFilled={item.iconFilled}
                   filled={isActive || isHovered}
-                  className={cn('size-5', isActive || isHovered ? 'text-white' : 'text-white/50')}
+                  className={cn('size-3.5', isActive || isHovered ? 'text-white' : 'text-white/50')}
                 />
                 <span>{item.label}</span>
 

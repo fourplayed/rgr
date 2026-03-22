@@ -6,6 +6,13 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* View Transitions: disable default crossfade so our circle-reveal works */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
 @font-face {
   font-family: 'Code-Bold';
   src: url('/fonts/CODE-Bold.otf') format('opentype');

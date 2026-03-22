@@ -22,7 +22,7 @@ import { useState, useEffect, useMemo, type ComponentType } from 'react';
 import type { LoginLogicState, LoginLogicActions } from './useLoginLogic';
 import { LOGIN_CONSTANTS } from './types';
 import { Logo } from '@/components/common';
-import { CARD_HEIGHT, THEME_SWIPE_DURATION_MS } from './styles';
+import { CARD_HEIGHT } from './styles';
 import { ThemeToggle } from './components/ThemeToggle';
 import { ErrorContainer } from './components/ErrorContainer';
 import { LoginFormCard } from './components/LoginFormCard';
@@ -31,7 +31,6 @@ import { FlipCardContainer } from './components/FlipCardContainer';
 import { useTheme } from '@/hooks/useTheme';
 import { Hover3D } from '@/components/ui/Hover3D';
 import { useFlipAnimation } from './hooks/useFlipAnimation';
-import { useSwipeAnimation } from './hooks/useSwipeAnimation';
 
 /**
  * Props for button component - allows dependency injection
@@ -57,7 +56,6 @@ export interface LoginPresenterProps {
 
 /**
  * Main LoginPresenter - orchestrates login page UI
- * Reduced from 773 lines to ~150 lines through component extraction
  */
 export function LoginPresenter({
   state,
@@ -70,9 +68,6 @@ export function LoginPresenter({
 
   // Flip animation for form switching
   const { showForgotPassword, handleFlipToForgotPassword, handleFlipToLogin } = useFlipAnimation();
-
-  // Swipe animation for theme changes (integrated with unified theme context)
-  const { swipePhase, swipeDirection, handleThemeToggle } = useSwipeAnimation();
 
   // Local state for forgot password errors
   const [forgotPasswordError, setForgotPasswordError] = useState<string | null>(null);
@@ -104,20 +99,6 @@ export function LoginPresenter({
     handleFlipToLogin();
   };
 
-  // Compute logo swipe transform
-  const logoTransform = (() => {
-    const base = 'translateX(-50%)';
-    if (swipePhase === 'swipe-out' || swipePhase === 'position-in') {
-      return `${base} translateY(-120vh)`;
-    }
-    return base;
-  })();
-
-  const logoTransition =
-    swipePhase === 'position-in'
-      ? 'none'
-      : `transform ${THEME_SWIPE_DURATION_MS}ms cubic-bezier(0.25, 0.1, 0.25, 1)`;
-
   return (
     <div
       className="relative min-h-screen h-screen flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 overflow-hidden"
@@ -125,7 +106,7 @@ export function LoginPresenter({
     >
       {/* Theme toggle button - positioned at top-right of screen */}
       <div className="absolute top-6 right-6 z-30">
-        <ThemeToggle isDark={isDark} onToggle={handleThemeToggle} />
+        <ThemeToggle isDark={isDark} />
       </div>
 
       {/* Exit slide wrapper - slides logo + card + errors left on auth success */}
@@ -152,8 +133,7 @@ export function LoginPresenter({
           style={{
             top: `calc(50% - ${CARD_HEIGHT / 2}px - 17px)`,
             left: '50%',
-            transform: logoTransform,
-            transition: logoTransition,
+            transform: 'translateX(-50%)',
           }}
         >
           <Hover3D
@@ -176,8 +156,8 @@ export function LoginPresenter({
         {/* 3D Flip Container with cards */}
         <FlipCardContainer
           showBack={showForgotPassword}
-          swipePhase={swipePhase}
-          swipeDirection={swipeDirection}
+          swipePhase="idle"
+          swipeDirection="right"
           frontFace={
             <LoginFormCard
               state={state}

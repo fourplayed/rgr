@@ -22,6 +22,17 @@ import { createRoot } from 'react-dom/client';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { AssetHoverCard } from './AssetHoverCard';
+
+/** Shared route animation state — written by FleetMapWithData, read by FilterSidebar */
+export const routeAnimState = {
+  totalDistanceKm: 0,
+  /** Current distance covered by the dot (km) — live counting */
+  currentDistanceKm: 0,
+  /** Whether animation is active */
+  active: false,
+  /** Whether on return leg */
+  returning: false,
+};
 import { PinContainer } from '@/components/ui/PinContainer';
 
 import { registerAssetIcons } from './assetMarkerIcons';
@@ -391,22 +402,24 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
     }, [mapLoaded, depotLocations, isDark, depotAssetCounts, depotAssets]);
 
     // Keep badge counts and hover state in sync
+    const filteredDepotNames = Array.isArray(filters.depot) ? filters.depot : [];
     useEffect(() => {
       depotPopupRoots.current.forEach(({ root, depot }) => {
         const depotColor = isValidHexColor(depot.color) ? depot.color : DEFAULT_DEPOT_COLOR;
         const count = depotAssetCounts[depot.name] || 0;
         const depotName = depot.name;
+        const isFiltered = filteredDepotNames.includes(depotName);
         root.render(
           <PinContainer
             title={depotName}
             color={depotColor}
             assetCount={count}
             isDark={isDark}
-            isHovered={hoveredDepot === depotName}
+            isHovered={isFiltered || hoveredDepot === depotName}
           />
         );
       });
-    }, [depotAssetCounts, depotAssets, activeDepot, isDark, hoveredDepot]);
+    }, [depotAssetCounts, depotAssets, activeDepot, isDark, hoveredDepot, filteredDepotNames]);
 
     // DOM-overlay pulsing rings — supports multiple simultaneous animations
     interface DepotAnim {
@@ -438,7 +451,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
 
       const MAX_RADIUS_KM = 60;
       const EXPAND_DURATION = 600;
-      const COLLAPSE_DURATION = 800;
+      const COLLAPSE_DURATION = 350;
       const PULSE_FADE_IN = 600;
       const SEGMENTS = 64;
       const STROKE_WIDTH = 1.2;
@@ -512,22 +525,15 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
             if (expandT >= 1) {
               anim.phase = 'steady';
 
-              // Pulse ring — smooth fade in
-              if (!anim.pulseStartTime) anim.pulseStartTime = now;
-              const pulseFadeT = Math.min((now - anim.pulseStartTime) / PULSE_FADE_IN, 1);
-              const pulseT = (Math.sin((now * 1.0 * Math.PI * 2) / 1000) + 1) / 2;
-              const pulseRadius = MAX_RADIUS_KM + pulseT * 8;
-              const pulseAlpha = pulseFadeT * (0.3 + pulseT * 0.4);
-              drawRing(depot, color, pulseRadius, pulseAlpha, 0, STROKE_WIDTH * 1.5);
-
-              // Sweep ring
-              const sweepDuration = 2500;
-              const sweepElapsed = elapsed - EXPAND_DURATION;
-              const sweepLinear = (sweepElapsed % sweepDuration) / sweepDuration;
-              const sweepT = 1 - Math.pow(1 - sweepLinear, 3); // ease-out: fast start, slow finish
-              const sweepRadius = sweepT * MAX_RADIUS_KM;
-              const sweepAlpha = (1 - sweepT) * 0.6;
-              drawRing(depot, color, sweepRadius, sweepAlpha, 0, STROKE_WIDTH * 1.5);
+              // Single pulse ring: expands outward from base, fades, then repeats
+              const PULSE_CYCLE = 1600;
+              const steadyElapsed = elapsed - EXPAND_DURATION;
+              const cycleT = (steadyElapsed % PULSE_CYCLE) / PULSE_CYCLE;
+              const easedCycleT = 1 - Math.pow(1 - cycleT, 2);
+              const pulseRadius = MAX_RADIUS_KM + easedCycleT * 25;
+              const pulseAlpha = (1 - easedCycleT) * 0.55;
+              const pulseWidth = 2.5 - easedCycleT * 1.0;
+              drawRing(depot, color, pulseRadius, pulseAlpha, 0, pulseWidth);
             }
           } else if (anim.phase === 'collapsing') {
             const collapseElapsed = now - anim.collapseStartTime;
@@ -561,6 +567,223 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         mapInstance.off('move', onMove);
       };
     }, [mapLoaded, depotLocations]);
+
+    // Driving route between filtered depots — canvas-rendered glowing dot with tail
+    const routeAnimFrame = useRef<number | null>(null);
+    const routeCoordsRef = useRef<[number, number][]>([]);
+    useEffect(() => {
+      if (!map.current || !mapLoaded || !mapContainer.current) return;
+      const mapInstance = map.current;
+      const container = mapContainer.current;
+      // Clean up animation
+      if (routeAnimFrame.current) {
+        cancelAnimationFrame(routeAnimFrame.current);
+        routeAnimFrame.current = null;
+      }
+
+      // Clean up canvas
+      const oldCanvas = container.querySelector('.route-dot-overlay') as HTMLCanvasElement | null;
+      if (oldCanvas) oldCanvas.remove();
+
+      const orderedDepots = filteredDepotNames
+        .map((name) => depotLocations.find((d) => d.name === name))
+        .filter(Boolean) as DepotLocation[];
+
+      if (orderedDepots.length < 2) {
+        routeCoordsRef.current = [];
+        return;
+      }
+
+      const waypoints = orderedDepots.map((d) => `${d.lng},${d.lat}`).join(';');
+      const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${waypoints}?geometries=geojson&overview=full&access_token=${MAPBOX_TOKEN}`;
+
+      let cancelled = false;
+
+      fetch(url)
+        .then((res) => res.json())
+        .then((data) => {
+          if (cancelled || !map.current) return;
+          const routeData = data.routes?.[0];
+          const route = routeData?.geometry as GeoJSON.LineString | undefined;
+          if (!route) return;
+
+          const totalDistKm = (routeData.distance || 0) / 1000;
+          routeAnimState.totalDistanceKm = totalDistKm;
+          routeAnimState.active = true;
+          routeAnimState.returning = false;
+          routeAnimState.currentDistanceKm = 0;
+
+          const coords = route.coordinates as [number, number][];
+          routeCoordsRef.current = coords;
+
+          // Wait for style if needed
+          const setup = () => {
+            if (cancelled || !map.current) return;
+
+            // Canvas overlay for glowing dot + tail + route trail (renders ABOVE the map)
+            const canvas = document.createElement('canvas');
+            canvas.className = 'route-dot-overlay';
+            canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:101;';
+            container.appendChild(canvas);
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            // Pre-compute cumulative distances for interpolation
+            const screenPts = () => coords.map((c) => mapInstance.project(c as [number, number]));
+            const cumDist = (pts: { x: number; y: number }[]) => {
+              const d = [0];
+              for (let i = 1; i < pts.length; i++) {
+                const dx = pts[i]!.x - pts[i - 1]!.x;
+                const dy = pts[i]!.y - pts[i - 1]!.y;
+                d.push(d[i - 1]! + Math.sqrt(dx * dx + dy * dy));
+              }
+              return d;
+            };
+
+            const lerpOnPath = (pts: { x: number; y: number }[], dists: number[], t: number) => {
+              if (pts.length === 0) return { x: 0, y: 0 };
+              if (pts.length === 1) return { x: pts[0]!.x, y: pts[0]!.y };
+              const totalLen = dists[dists.length - 1]!;
+              if (totalLen <= 0) return { x: pts[0]!.x, y: pts[0]!.y };
+              const clampedT = Math.max(0, Math.min(1, t));
+              const target = clampedT * totalLen;
+              for (let i = 1; i < dists.length; i++) {
+                if (dists[i]! >= target) {
+                  const segLen = dists[i]! - dists[i - 1]!;
+                  const f = segLen > 0 ? (target - dists[i - 1]!) / segLen : 0;
+                  return {
+                    x: pts[i - 1]!.x + (pts[i]!.x - pts[i - 1]!.x) * f,
+                    y: pts[i - 1]!.y + (pts[i]!.y - pts[i - 1]!.y) * f,
+                  };
+                }
+              }
+              return pts[pts.length - 1]!;
+            };
+
+            const SWEEP_DURATION = 12000;
+            const startTime = performance.now();
+            let tripDone = false;
+
+            const animate = () => {
+              if (!map.current || cancelled || !canvas.parentNode) return;
+
+              const rect = canvas.getBoundingClientRect();
+              const dpr = window.devicePixelRatio || 1;
+              canvas.width = rect.width * dpr;
+              canvas.height = rect.height * dpr;
+              ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+              ctx.clearRect(0, 0, rect.width, rect.height);
+
+              // Out and back — stop after return trip completes
+              if (tripDone) return;
+
+              const pts = screenPts();
+              if (pts.length < 2) { routeAnimFrame.current = requestAnimationFrame(animate); return; }
+              const dists = cumDist(pts);
+
+              const elapsed = performance.now() - startTime;
+              const totalDuration = SWEEP_DURATION * 2; // out + return
+              const rawT = elapsed / totalDuration;
+              if (rawT >= 1) {
+                // Return trip complete — done
+                tripDone = true;
+                routeAnimState.active = false;
+                routeAnimState.currentDistanceKm = 0;
+                return;
+              }
+              // 0→0.5 = outbound (t: 0→1), 0.5→1 = return (t: 1→0)
+              const halfT = Math.min(rawT, 1.0);
+              const outbound = halfT <= 0.5;
+              const t = outbound ? halfT * 2 : 2 - halfT * 2;
+
+              // Update shared route state for live distance counter
+              routeAnimState.returning = !outbound;
+              // Always count up: outbound t goes 0→1, return t goes 1→0 so invert
+              routeAnimState.currentDistanceKm = outbound ? t * totalDistKm : (1 - t) * totalDistKm;
+
+              // Draw the route line behind the dot (traced path so far)
+              // Outbound: draw from start to head. Return: draw from end to head.
+              ctx.beginPath();
+              if (outbound) {
+                // Draw route from 0 to t
+                for (let i = 0; i <= 200; i++) {
+                  const pt = lerpOnPath(pts, dists, (i / 200) * t);
+                  if (i === 0) ctx.moveTo(pt.x, pt.y);
+                  else ctx.lineTo(pt.x, pt.y);
+                }
+              } else {
+                // Draw route from 1 down to t
+                for (let i = 0; i <= 200; i++) {
+                  const pt = lerpOnPath(pts, dists, 1 - (i / 200) * (1 - t));
+                  if (i === 0) ctx.moveTo(pt.x, pt.y);
+                  else ctx.lineTo(pt.x, pt.y);
+                }
+              }
+              ctx.strokeStyle = '#bf00ff';
+              ctx.lineWidth = 2.5;
+              ctx.shadowColor = '#bf00ff';
+              ctx.shadowBlur = 6;
+              ctx.stroke();
+              ctx.shadowBlur = 0;
+
+              // Draw neon purple head dot with glow — no tail
+              const headPos = lerpOnPath(pts, dists, t);
+
+              // Outer glow
+              const grad = ctx.createRadialGradient(headPos.x, headPos.y, 0, headPos.x, headPos.y, 16);
+              grad.addColorStop(0, 'rgba(191, 0, 255, 0.8)');
+              grad.addColorStop(0.3, 'rgba(191, 0, 255, 0.35)');
+              grad.addColorStop(1, 'rgba(191, 0, 255, 0)');
+              ctx.beginPath();
+              ctx.arc(headPos.x, headPos.y, 16, 0, Math.PI * 2);
+              ctx.fillStyle = grad;
+              ctx.fill();
+
+              // Bright core
+              ctx.beginPath();
+              ctx.arc(headPos.x, headPos.y, 4.5, 0, Math.PI * 2);
+              ctx.fillStyle = '#e040ff';
+              ctx.shadowColor = '#bf00ff';
+              ctx.shadowBlur = 14;
+              ctx.fill();
+              ctx.shadowBlur = 0;
+
+              // Hot center
+              ctx.beginPath();
+              ctx.arc(headPos.x, headPos.y, 1.5, 0, Math.PI * 2);
+              ctx.fillStyle = '#f0b0ff';
+              ctx.fill();
+
+              routeAnimFrame.current = requestAnimationFrame(animate);
+            };
+
+            routeAnimFrame.current = requestAnimationFrame(animate);
+
+            // Repaint on map move
+            const onMove = () => mapInstance.triggerRepaint();
+            mapInstance.on('move', onMove);
+          };
+
+          if (mapInstance.isStyleLoaded()) {
+            setup();
+          } else {
+            mapInstance.once('style.load', setup);
+          }
+        })
+        .catch(() => { /* route is a visual enhancement */ });
+
+      return () => {
+        cancelled = true;
+        routeAnimState.active = false;
+        routeAnimState.currentDistanceKm = 0;
+        if (routeAnimFrame.current) {
+          cancelAnimationFrame(routeAnimFrame.current);
+          routeAnimFrame.current = null;
+        }
+        const c = container.querySelector('.route-dot-overlay');
+        if (c) c.remove();
+      };
+    }, [mapLoaded, filteredDepotNames, depotLocations]);
 
     // Cylinder hover detection — screen-space point-in-polygon against projected geo circles
     const HOVER_RADIUS_KM = 45;
@@ -610,7 +833,12 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         let closest: string | null = null;
         let closestDist = Infinity;
 
-        for (const depot of depotLocations) {
+        for (let idx = 0; idx < depotLocations.length; idx++) {
+          // Skip depots whose marker is hidden
+          const marker = depotMarkers.current[idx];
+          if (marker && marker.getElement().style.display === 'none') continue;
+
+          const depot = depotLocations[idx]!;
           const geoPoints = geoCircleHover(depot.lat, depot.lng, HOVER_RADIUS_KM);
           const bottomPoly = geoPoints.map((p) => mapInstance.project(p as [number, number]));
           const topPoly = bottomPoly.map((p) => ({ x: p.x, y: p.y - CYLINDER_HOVER_HEIGHT }));
@@ -657,14 +885,19 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
       };
     }, [mapLoaded, depotLocations]);
 
-    // React to hoveredDepot changes — manage per-depot animations
+    // React to hoveredDepot / filtered depot changes — manage per-depot animations
     useEffect(() => {
       const anims = depotAnimsRef.current;
       const now = performance.now();
 
-      // Start collapsing any depots that are no longer hovered
+      // A depot is "active" if it's mouse-hovered OR filtered
+      const activeDepotNames = new Set<string>();
+      if (hoveredDepot) activeDepotNames.add(hoveredDepot);
+      filteredDepotNames.forEach((name) => activeDepotNames.add(name));
+
+      // Start collapsing any depots that are no longer active
       anims.forEach((anim, name) => {
-        if (name !== hoveredDepot && anim.phase !== 'collapsing') {
+        if (!activeDepotNames.has(name) && anim.phase !== 'collapsing') {
           const elapsed = now - anim.startTime;
           const expandT = Math.min(elapsed / 600, 1);
           const easedT = 1 - Math.pow(1 - expandT, 3);
@@ -674,30 +907,32 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         }
       });
 
-      // Start expanding the newly hovered depot
-      if (hoveredDepot && !anims.has(hoveredDepot)) {
-        const depot = depotLocations.find((d) => d.name === hoveredDepot);
-        if (depot) {
-          anims.set(hoveredDepot, {
-            depot,
-            color: isValidHexColor(depot.color) ? depot.color : DEFAULT_DEPOT_COLOR,
-            phase: 'expanding',
-            startTime: now,
-            collapseStartTime: 0,
-            collapseFromRadius: 0,
-            pulseStartTime: null,
-          });
+      // Start expanding any newly active depots
+      activeDepotNames.forEach((name) => {
+        if (!anims.has(name)) {
+          const depot = depotLocations.find((d) => d.name === name);
+          if (depot) {
+            anims.set(name, {
+              depot,
+              color: isValidHexColor(depot.color) ? depot.color : DEFAULT_DEPOT_COLOR,
+              phase: 'expanding',
+              startTime: now,
+              collapseStartTime: 0,
+              collapseFromRadius: 0,
+              pulseStartTime: null,
+            });
+          }
+        } else {
+          // Re-activating a depot that's collapsing — restart expand
+          const anim = anims.get(name)!;
+          if (anim.phase === 'collapsing') {
+            anim.phase = 'expanding';
+            anim.startTime = now;
+            anim.pulseStartTime = null;
+          }
         }
-      } else if (hoveredDepot && anims.has(hoveredDepot)) {
-        // Re-hovering a depot that's collapsing — restart expand
-        const anim = anims.get(hoveredDepot)!;
-        if (anim.phase === 'collapsing') {
-          anim.phase = 'expanding';
-          anim.startTime = now;
-          anim.pulseStartTime = null;
-        }
-      }
-    }, [hoveredDepot, depotLocations]);
+      });
+    }, [hoveredDepot, filteredDepotNames, depotLocations]);
 
     // Build GeoJSON FeatureCollection from filtered assets (exclude depot-counted assets)
     const assetGeoJson = useMemo<GeoJSON.FeatureCollection<GeoJSON.Point>>(
@@ -895,6 +1130,8 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
           hasSource: !!mapInstance.getSource('asset-dots'),
           hasLayer: !!mapInstance.getLayer('asset-dots-layer'),
         });
+        // Guard: don't touch sources/layers while style is loading
+        if (!mapInstance.isStyleLoaded()) return;
         // If source already exists, just update the data
         const existingSource = mapInstance.getSource('asset-dots') as
           | mapboxgl.GeoJSONSource

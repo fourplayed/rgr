@@ -40,6 +40,67 @@ const FILTER_STATUSES = [
   { value: 'out_of_service', label: 'Out of Service', color: '#ef4444' },
 ] as const;
 
+// Row order for depot location pills
+const DEPOT_ROW1_NAMES = ['Perth', 'Wubin', 'Carnarvon'];
+const DEPOT_ROW2_NAMES = ['Newman', 'Hedland', 'Karratha'];
+
+function DepotFilterRows({
+  depots,
+  filters,
+  onFiltersChange,
+  showDepotLabels,
+  onToggleDepotLabels,
+  FilterPill,
+  pillDefaultColor,
+}: {
+  depots: Depot[];
+  filters: AssetFilters;
+  onFiltersChange: (filters: AssetFilters) => void;
+  showDepotLabels: boolean;
+  onToggleDepotLabels: () => void;
+  FilterPill: React.FC<{ active: boolean; label: string; color?: string; onClick: () => void }>;
+  pillDefaultColor: string;
+}) {
+  const currentDepots = Array.isArray(filters.depot) ? filters.depot : [];
+
+  const renderPill = (depot: Depot) => {
+    const isActive = currentDepots.includes(depot.name);
+    return (
+      <FilterPill
+        key={depot.id}
+        active={isActive}
+        label={depot.name}
+        color={depot.color || DEFAULT_DEPOT_COLOR}
+        onClick={() => {
+          const next = isActive
+            ? currentDepots.filter((v) => v !== depot.name)
+            : [...currentDepots, depot.name];
+          onFiltersChange({ ...filters, depot: next.length === 0 ? 'all' : next });
+          if (!showDepotLabels && next.length > 0) onToggleDepotLabels();
+        }}
+      />
+    );
+  };
+
+  const row1 = DEPOT_ROW1_NAMES.map((name) => depots.find((d) => d.name === name)).filter(Boolean) as Depot[];
+  const row2 = DEPOT_ROW2_NAMES.map((name) => depots.find((d) => d.name === name)).filter(Boolean) as Depot[];
+  // Any depots not in either row go into row2
+  const assigned = new Set([...DEPOT_ROW1_NAMES, ...DEPOT_ROW2_NAMES]);
+  const extras = depots.filter((d) => !assigned.has(d.name));
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+      <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+        {row1.map(renderPill)}
+      </div>
+      <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+        {row2.map(renderPill)}
+        {extras.map(renderPill)}
+      </div>
+    </div>
+  );
+}
+
 export const SearchFilterBar = React.memo<SearchFilterBarProps>(
   ({
     isDark,
@@ -516,35 +577,15 @@ export const SearchFilterBar = React.memo<SearchFilterBarProps>(
                 >
                   Location
                 </span>
-                <div
-                  className="filter-grid-locations"
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '5px',
-                    alignItems: 'flex-start',
-                  }}
-                >
-                  {depots.map((depot) => {
-                    const currentDepots = Array.isArray(filters.depot) ? filters.depot : [];
-                    const isActive = currentDepots.includes(depot.name);
-                    return (
-                      <FilterPill
-                        key={depot.id}
-                        active={isActive}
-                        label={depot.name}
-                        color={depot.color || DEFAULT_DEPOT_COLOR}
-                        onClick={() => {
-                          const next = isActive
-                            ? currentDepots.filter((v) => v !== depot.name)
-                            : [...currentDepots, depot.name];
-                          onFiltersChange({ ...filters, depot: next.length === 0 ? 'all' : next });
-                          if (!showDepotLabels && next.length > 0) onToggleDepotLabels();
-                        }}
-                      />
-                    );
-                  })}
-                </div>
+                <DepotFilterRows
+                  depots={depots}
+                  filters={filters}
+                  onFiltersChange={onFiltersChange}
+                  showDepotLabels={showDepotLabels}
+                  onToggleDepotLabels={onToggleDepotLabels}
+                  FilterPill={FilterPill}
+                  pillDefaultColor={pillDefaultColor}
+                />
               </div>
 
               {/* Divider */}
