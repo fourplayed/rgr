@@ -8,6 +8,7 @@ export const PinContainer = ({
   color,
   assetCount,
   isHovered = false,
+  hideLabel = false,
 }: {
   children?: React.ReactNode;
   title?: string;
@@ -19,6 +20,7 @@ export const PinContainer = ({
   assets?: DepotAsset[];
   isDark?: boolean;
   isHovered?: boolean;
+  hideLabel?: boolean;
   onHoverChange?: (hovered: boolean) => void;
   onAssetClick?: (asset: DepotAsset) => void;
   activeDepot?: string | null;
@@ -29,7 +31,7 @@ export const PinContainer = ({
 
   return (
     <div className="relative group/pin z-50 pointer-events-none">
-      <PinPerspective title={title} color={c} assetCount={assetCount} hovered={isHovered} />
+      <PinPerspective title={title} color={c} assetCount={assetCount} hovered={isHovered} hideLabel={hideLabel} />
     </div>
   );
 };
@@ -39,11 +41,13 @@ const PinPerspective = ({
   color,
   assetCount,
   hovered,
+  hideLabel = false,
 }: {
   title?: string | undefined;
   color: string;
   assetCount?: number | undefined;
   hovered: boolean;
+  hideLabel?: boolean;
 }) => {
   return (
     <motion.div className="pointer-events-none w-96 h-80 flex items-center justify-center z-[30]">
@@ -51,7 +55,13 @@ const PinPerspective = ({
         {/* Label + count badge — positioned at top of stem */}
         <div
           className="absolute inset-x-0 flex justify-center transition-all duration-200 ease-out"
-          style={{ bottom: '50%', marginBottom: hovered ? '64px' : '38px' }}
+          style={{
+            bottom: '50%',
+            marginBottom: hovered ? '64px' : '38px',
+            opacity: hideLabel ? 0 : 1,
+            transform: hideLabel ? 'scale(0.85)' : 'scale(1)',
+            transition: 'opacity 0.25s ease-out, transform 0.25s ease-out, margin-bottom 0.5s ease-out',
+          }}
         >
           <div className="relative inline-flex flex-col items-center">
             <div

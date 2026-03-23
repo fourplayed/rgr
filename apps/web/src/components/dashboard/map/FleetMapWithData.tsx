@@ -44,6 +44,7 @@ import { isValidHexColor } from '@rgr/shared';
 import type { Depot } from '@rgr/shared';
 import type { DepotAsset } from './depotTypes';
 import { DepotClusterTooltip } from './DepotClusterTooltip';
+import { AnimatePresence } from 'motion/react';
 import { DepotExplorePanel } from './DepotExplorePanel';
 import { AssetDetailSlideout } from '@/components/assets/detail/AssetDetailSlideout';
 import type { AssetDetailTab } from '@/pages/assets/types';
@@ -260,7 +261,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
           depotLocations.forEach((depot) => bounds.extend([depot.lng, depot.lat]));
           filteredAssets.forEach((asset) => bounds.extend([asset.longitude, asset.latitude]));
           if (bounds.isEmpty()) return;
-          map.current.fitBounds(bounds, { padding: 50 });
+          map.current.fitBounds(bounds, { padding: 50, maxZoom: 13 });
         },
       }),
       [filteredAssets, depotLocations]
@@ -324,7 +325,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
           center: [122, -25], // Center of WA
           zoom: 4.5,
           minZoom: 3,
-          maxZoom: 18,
+          maxZoom: 13,
           maxBounds: [
             [105, -40], // SW corner (Western Australia + padding)
             [135, -8],  // NE corner
@@ -533,6 +534,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
           ? scannedCounts[depotName]
           : depotAssetCounts[depot.name] || 0;
         const isFiltered = filteredDepotNames.includes(depotName);
+        const tooltipActive = tooltipDepot?.name === depotName;
         root.render(
           <PinContainer
             title={depotName}
@@ -540,10 +542,11 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
             assetCount={count}
             isDark={isDark}
             isHovered={isFiltered || hoveredDepot === depotName}
+            hideLabel={tooltipActive}
           />
         );
       });
-    }, [depotAssetCounts, depotAssets, activeDepot, isDark, hoveredDepot, filteredDepotNames, scannedCounts]);
+    }, [depotAssetCounts, depotAssets, activeDepot, isDark, hoveredDepot, filteredDepotNames, scannedCounts, tooltipDepot?.name]);
 
     // DOM-overlay pulsing rings — supports multiple simultaneous animations
     interface DepotAnim {
@@ -956,6 +959,8 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
 
               // Draw neon purple head dot with glow — no tail
               const headPos = lerpOnPath(pts, dists, t);
+
+              if (!isFinite(headPos.x) || !isFinite(headPos.y)) return;
 
               // Outer glow
               const grad = ctx.createRadialGradient(headPos.x, headPos.y, 0, headPos.x, headPos.y, 16);
@@ -1391,6 +1396,8 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         const categoryColors = isDark ? CATEGORY_COLORS : LIGHT_CATEGORY_COLORS;
         const defaultFill = isDark ? '#6b7280' : '#4b5563';
 
+        if (!mapInstance.isStyleLoaded()) return cleanup;
+
         if (mapInstance.getSource(SRC)) {
           (mapInstance.getSource(SRC) as mapboxgl.GeoJSONSource).setData(data);
         } else {
@@ -1450,29 +1457,32 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
           });
         }
 
-        // Asset ID label above active pin only
+        // Asset ID labels on all depot assets
         if (!mapInstance.getLayer(LAYERS[2]!)) {
           mapInstance.addLayer({
             id: LAYERS[2]!,
             type: 'symbol',
             source: SRC,
             slot: 'top',
-            filter: ['==', ['get', 'active'], 1],
             layout: {
               'text-field': ['get', 'assetNumber'],
               'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
-              'text-size': 12,
+              'text-size': ['case', ['==', ['get', 'active'], 1], 13, 12],
               'text-anchor': 'bottom',
               'text-offset': [0, -3.2],
               'text-allow-overlap': true,
               'text-ignore-placement': true,
+              'symbol-sort-key': ['case', ['==', ['get', 'active'], 1], 0, 1],
               'text-pitch-alignment': 'viewport',
               'text-rotation-alignment': 'viewport',
             },
             paint: {
-              'text-color': '#ffffff',
-              'text-halo-color': 'rgba(0,0,0,0.7)',
-              'text-halo-width': 1.5,
+              'text-color': ['case', ['==', ['get', 'active'], 1], '#000000', '#ffffff'],
+              'text-color-transition': { duration: 400, delay: 0 },
+              'text-halo-color': ['case', ['==', ['get', 'active'], 1], 'rgba(191,0,255,0.8)', 'rgba(0,0,0,0.7)'],
+              'text-halo-color-transition': { duration: 400, delay: 0 },
+              'text-halo-width': ['case', ['==', ['get', 'active'], 1], 3, 1.5],
+              'text-halo-width-transition': { duration: 400, delay: 0 },
             },
           });
         }
@@ -1484,13 +1494,14 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
             type: 'circle',
             source: SRC,
             slot: 'top',
-            filter: ['==', ['get', 'active'], 1],
             paint: {
               'circle-pitch-alignment': 'map',
-              'circle-radius': 16,
+              'circle-radius': ['case', ['==', ['get', 'active'], 1], 16, 0],
+              'circle-radius-transition': { duration: 400, delay: 0 },
               'circle-color': '#ff1744',
               'circle-blur': 1,
-              'circle-opacity': 0.4,
+              'circle-opacity': ['case', ['==', ['get', 'active'], 1], 0.4, 0],
+              'circle-opacity-transition': { duration: 400, delay: 0 },
             },
           });
         }
@@ -1502,14 +1513,16 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
             type: 'circle',
             source: SRC,
             slot: 'top',
-            filter: ['==', ['get', 'active'], 1],
             paint: {
               'circle-pitch-alignment': 'map',
-              'circle-radius': 8,
+              'circle-radius': ['case', ['==', ['get', 'active'], 1], 8, 0],
+              'circle-radius-transition': { duration: 400, delay: 0 },
               'circle-color': '#ff1744',
-              'circle-stroke-width': 2,
+              'circle-stroke-width': ['case', ['==', ['get', 'active'], 1], 2, 0],
+              'circle-stroke-width-transition': { duration: 400, delay: 0 },
               'circle-stroke-color': '#ffffff',
-              'circle-opacity': 1,
+              'circle-opacity': ['case', ['==', ['get', 'active'], 1], 1, 0],
+              'circle-opacity-transition': { duration: 400, delay: 0 },
             },
           });
         }
@@ -1610,7 +1623,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         handleAssetClick(assetId);
         mapInstance.flyTo({
           center: coords,
-          zoom: 14,
+          zoom: 13,
           duration: 1500,
           essential: true,
         });
@@ -2010,40 +2023,44 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
       `}</style>
 
         {/* Depot cluster tooltip */}
-        {tooltipDepot && !exploreMode && (
-          <DepotClusterTooltip
-            depotName={tooltipDepot.name}
-            depotColor={tooltipDepot.color}
-            assets={tooltipDepot.assets}
-            position={tooltipDepot.position}
-            onDismiss={() => setTooltipDepot(null)}
-            onExplore={() => {
-              const firstAsset = tooltipDepot.assets[0];
-              const depotData = {
-                name: tooltipDepot.name,
-                color: tooltipDepot.color,
-                assets: tooltipDepot.assets,
-              };
-              // Enter explore mode
-              setExploreMode(true);
-              setExplorePanelDepot(depotData);
-              setTooltipDepot(null);
-              if (firstAsset && map.current) {
-                map.current.flyTo({
-                  center: [firstAsset.longitude, firstAsset.latitude],
-                  zoom: 16,
-                  duration: 1800,
-                  essential: true,
-                });
-                setExploreAsset({ id: firstAsset.id, depotColor: tooltipDepot.color });
-                setExploreAssetTab('overview');
-              }
-            }}
-          />
-        )}
+        <AnimatePresence>
+          {tooltipDepot && !exploreMode && (
+            <DepotClusterTooltip
+              key="depot-tooltip"
+              depotName={tooltipDepot.name}
+              depotColor={tooltipDepot.color}
+              assets={tooltipDepot.assets}
+              position={tooltipDepot.position}
+              onDismiss={() => setTooltipDepot(null)}
+              onExplore={() => {
+                const firstAsset = tooltipDepot.assets[0];
+                const depotData = {
+                  name: tooltipDepot.name,
+                  color: tooltipDepot.color,
+                  assets: tooltipDepot.assets,
+                };
+                // Enter explore mode
+                setExploreMode(true);
+                setExplorePanelDepot(depotData);
+                setTooltipDepot(null);
+                if (firstAsset && map.current) {
+                  map.current.flyTo({
+                    center: [firstAsset.longitude, firstAsset.latitude],
+                    zoom: 13,
+                    duration: 1800,
+                    essential: true,
+                  });
+                  setExploreAsset({ id: firstAsset.id, depotColor: tooltipDepot.color });
+                  setExploreAssetTab('overview');
+                }
+              }}
+            />
+          )}
+        </AnimatePresence>
 
         {/* Depot explore panel (left side) */}
-        {explorePanelDepot && exploreMode && (
+        <AnimatePresence>
+          {explorePanelDepot && exploreMode && (
             <DepotExplorePanel
               key="explore-panel"
               assets={explorePanelDepot.assets}
@@ -2055,7 +2072,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
 
                   map.current.flyTo({
                     center: [asset.longitude, asset.latitude],
-                    zoom: 16,
+                    zoom: 13,
                     duration: 1200,
                     essential: true,
                   });
@@ -2070,7 +2087,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
                 const prev = assets[(idx - 1 + assets.length) % assets.length];
                 if (prev && map.current) {
 
-                  map.current.flyTo({ center: [prev.longitude, prev.latitude], zoom: 16, duration: 1000, essential: true });
+                  map.current.flyTo({ center: [prev.longitude, prev.latitude], zoom: 13, duration: 1200, essential: true });
                     setExploreAsset({ id: prev.id, depotColor: explorePanelDepot.color });
                   setExploreAssetTab('overview');
                 }
@@ -2082,7 +2099,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
                 const next = assets[(idx + 1) % assets.length];
                 if (next && map.current) {
 
-                  map.current.flyTo({ center: [next.longitude, next.latitude], zoom: 16, duration: 1000, essential: true });
+                  map.current.flyTo({ center: [next.longitude, next.latitude], zoom: 13, duration: 1200, essential: true });
                     setExploreAsset({ id: next.id, depotColor: explorePanelDepot.color });
                   setExploreAssetTab('overview');
                 }
@@ -2095,6 +2112,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
               }}
             />
           )}
+        </AnimatePresence>
 
         {/* Asset detail slideout (right side, no backdrop blur in explore mode) */}
         {exploreAsset && (

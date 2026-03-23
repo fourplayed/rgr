@@ -95,33 +95,25 @@ export const AssetHoverCard = React.memo<AssetHoverCardProps>(({ asset, isDark =
         {formatStatus(asset.status)}
       </p>
 
-      {/* Inline animation styles - preserved gun target flip-up */}
+      {/* Inline animation styles - smooth slide up */}
       <style>{`
-        @keyframes targetPopUp {
+        @keyframes smoothSlideUp {
           0% {
             opacity: 0;
-            transform: translateY(50px) rotateX(90deg) scale(0.8);
-          }
-          60% {
-            opacity: 1;
-            transform: translateY(-5px) rotateX(-5deg) scale(1.05);
-          }
-          80% {
-            transform: translateY(2px) rotateX(2deg) scale(0.98);
+            transform: translateY(12px) scale(0.96);
           }
           100% {
             opacity: 1;
-            transform: translateY(0) rotateX(0deg) scale(1);
+            transform: translateY(0) scale(1);
           }
         }
 
         .asset-hover-card {
           transform-origin: bottom center;
-          transform-style: preserve-3d;
         }
 
         .animate-fade-in {
-          animation: targetPopUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+          animation: smoothSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
       `}</style>
     </div>

@@ -17,8 +17,10 @@
  * Rendered as an overlay on the map canvas when a depot cluster is clicked
  */
 import React, { useMemo } from 'react';
-import { X, ZoomIn } from 'lucide-react';
+import { motion } from 'motion/react';
+import { X } from 'lucide-react';
 import type { DepotAsset } from './depotTypes';
+import { FlipButton, FlipButtonFront, FlipButtonBack } from '@/components/animate-ui/components/buttons/flip';
 
 export interface DepotClusterTooltipProps {
   depotName: string;
@@ -57,25 +59,29 @@ export const DepotClusterTooltip = React.memo<DepotClusterTooltipProps>(
       [assets],
     );
 
-    const containerStyle: React.CSSProperties = {
-      position: 'absolute',
-      left: position.x,
-      top: position.y,
-      transform: 'translate(-50%, -110%)',
-      zIndex: 100,
-      width: 220,
-      background: 'rgba(0, 0, 0, 0.55)',
-      backdropFilter: 'blur(24px)',
-      WebkitBackdropFilter: 'blur(24px)',
-      border: `1px solid ${depotColor}33`,
-      borderRadius: 16,
-      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
-      fontFamily: "'Lato', sans-serif",
-      overflow: 'hidden',
-    };
-
     return (
-      <div style={containerStyle}>
+      <motion.div
+        initial={{ opacity: 0, x: 30, scale: 0.92 }}
+        animate={{ opacity: 1, x: 0, scale: 1 }}
+        exit={{ opacity: 0, x: 20, scale: 0.95 }}
+        transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+        style={{
+          position: 'absolute',
+          left: position.x,
+          top: position.y - 66,
+          transform: 'translate(-50%, -100%)',
+          zIndex: 100,
+          width: 220,
+          background: 'rgba(0, 0, 0, 0.55)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          border: `1px solid ${depotColor}33`,
+          borderRadius: 16,
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+          fontFamily: "'Lato', sans-serif",
+          overflow: 'hidden',
+        }}
+      >
         {/* Header row */}
         <div
           style={{
@@ -181,38 +187,60 @@ export const DepotClusterTooltip = React.memo<DepotClusterTooltipProps>(
 
         {/* Explore button */}
         <div style={{ padding: '6px 12px 10px' }}>
-          <button
-            onClick={onExplore}
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 6,
-              padding: '7px 0',
-              borderRadius: 10,
-              border: `1px solid ${depotColor}55`,
-              background: `${depotColor}40`,
-              color: depotColor,
-              fontFamily: "'Lato', sans-serif",
-              fontSize: 13,
-              fontWeight: 700,
-              letterSpacing: '0.04em',
-              cursor: 'pointer',
-              transition: 'background 0.15s ease',
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background = `${depotColor}60`;
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background = `${depotColor}40`;
-            }}
-          >
-            <ZoomIn size={14} />
-            Explore
-          </button>
+          <FlipButton onClick={onExplore} className="w-full explore-flip-btn" style={{ pointerEvents: 'auto' }}>
+            <FlipButtonFront
+              className="w-full"
+              style={{
+                borderRadius: 10,
+                border: `1px solid ${depotColor}55`,
+                background: `${depotColor}40`,
+                color: depotColor,
+                fontFamily: "'Lato', sans-serif",
+                fontSize: 13,
+                fontWeight: 700,
+                letterSpacing: '0.04em',
+              }}
+            >
+              EXPLORE
+            </FlipButtonFront>
+            <FlipButtonBack
+              className="w-full explore-flip-back"
+              style={{
+                borderRadius: 10,
+                border: `1px solid ${depotColor}`,
+                background: depotColor,
+                color: '#000000',
+                fontFamily: "'Lato', sans-serif",
+                fontSize: 13,
+                fontWeight: 700,
+                letterSpacing: '0.04em',
+                overflow: 'hidden',
+                position: 'relative',
+              }}
+            >
+              EXPLORE
+            </FlipButtonBack>
+          </FlipButton>
+          <style>{`
+            @keyframes shimmer {
+              0% { transform: translateX(-100%); }
+              100% { transform: translateX(100%); }
+            }
+            .explore-flip-btn:hover .explore-flip-back::after {
+              content: '';
+              position: absolute;
+              inset: 0;
+              background: linear-gradient(
+                90deg,
+                transparent 0%,
+                rgba(255,255,255,0.35) 50%,
+                transparent 100%
+              );
+              animation: shimmer 1.2s ease-in-out infinite;
+            }
+          `}</style>
         </div>
-      </div>
+      </motion.div>
     );
   },
 );

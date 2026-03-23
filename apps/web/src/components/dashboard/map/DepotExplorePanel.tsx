@@ -67,10 +67,10 @@ export const DepotExplorePanel = React.memo<DepotExplorePanelProps>(
         drag
         dragMomentum={false}
         dragElastic={0}
-        initial={{ opacity: 0, scale: 0.92 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.92 }}
-        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+        initial={{ opacity: 0, x: -30, scale: 0.95 }}
+        animate={{ opacity: 1, x: 0, scale: 1 }}
+        exit={{ opacity: 0, x: -20, scale: 0.95 }}
+        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         style={{
           position: 'absolute',
           left: '25%',
