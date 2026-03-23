@@ -32,7 +32,7 @@ AS $$
 
     -- Defects by status
     'defects_open',     (SELECT COUNT(*) FROM defect_reports WHERE status = 'reported'),
-    'defects_accepted', (SELECT COUNT(*) FROM defect_reports WHERE status = 'accepted'),
+    'defects_accepted', (SELECT COUNT(*) FROM defect_reports WHERE status = 'task_created'),
     'defects_resolved', (SELECT COUNT(*) FROM defect_reports WHERE status = 'resolved'),
 
     -- Overdue registrations
