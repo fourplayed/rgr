@@ -8,6 +8,7 @@ export const PinContainer = ({
   color,
   assetCount,
   isHovered = false,
+  onClusterClick,
 }: {
   children?: React.ReactNode;
   title?: string;
@@ -24,12 +25,13 @@ export const PinContainer = ({
   activeDepot?: string | null;
   onPin?: () => void;
   onDismiss?: () => void;
+  onClusterClick?: () => void;
 }) => {
   const c = color || '#06b6d4';
 
   return (
     <div className="relative group/pin z-50 pointer-events-none">
-      <PinPerspective title={title} color={c} assetCount={assetCount} hovered={isHovered} />
+      <PinPerspective title={title} color={c} assetCount={assetCount} hovered={isHovered} onClusterClick={onClusterClick} />
     </div>
   );
 };
@@ -39,11 +41,13 @@ const PinPerspective = ({
   color,
   assetCount,
   hovered,
+  onClusterClick,
 }: {
   title?: string | undefined;
   color: string;
   assetCount?: number | undefined;
   hovered: boolean;
+  onClusterClick?: () => void;
 }) => {
   return (
     <motion.div className="pointer-events-none w-96 h-80 flex items-center justify-center z-[60]">
@@ -54,31 +58,24 @@ const PinPerspective = ({
           style={{ bottom: '50%', marginBottom: hovered ? '64px' : '38px' }}
         >
           <div className="relative inline-flex flex-col items-center">
-            {assetCount != null && assetCount > 0 && (
+            {/* Label hidden temporarily */}
+            {(
               <span
-                className={`flex items-center justify-center px-1.5 font-bold rounded-full text-white mb-[-4px] transition-all duration-300 ease-out ${hovered ? 'min-w-[58px] h-[58px] text-[30px]' : 'min-w-[39px] h-[39px] text-[22px]'}`}
+                className={`flex items-center justify-center px-1.5 font-bold rounded-full text-white mt-[-4px] z-20 transition-all duration-300 ease-out ${hovered ? 'min-w-[58px] h-[58px] text-[30px]' : 'min-w-[39px] h-[39px] text-[22px]'}`}
                 style={{
-                  backgroundColor: '#1e293b',
-                  border: `2px solid ${color}`,
-                  boxShadow: `0 0 8px ${color}88`,
+                  backgroundColor: 'rgba(0, 0, 0, 0.55)',
+                  backdropFilter: 'blur(16px)',
+                  WebkitBackdropFilter: 'blur(16px)',
+                  border: `1.5px solid ${color}66`,
+                  boxShadow: `0 0 10px ${color}44, 0 4px 12px rgba(0,0,0,0.4)`,
+                  pointerEvents: 'auto',
+                  cursor: 'pointer',
                 }}
+                onClick={(e) => { e.stopPropagation(); onClusterClick?.(); }}
               >
-                {assetCount >= 1000 ? `${Math.round(assetCount / 1000)}k` : assetCount}
+                {(assetCount ?? 0) >= 1000 ? `${Math.round((assetCount ?? 0) / 1000)}k` : (assetCount ?? 0)}
               </span>
             )}
-            <span
-              className="relative z-10 whitespace-nowrap text-xs font-bold uppercase tracking-wide py-0.5 px-2 rounded-md leading-tight"
-              style={{
-                fontFamily: "'Lato', sans-serif",
-                backgroundColor: color,
-                border: `1px solid ${color}`,
-                color: '#fff',
-                textShadow: `0 0 8px rgba(0,0,0,0.9), 0 0 16px rgba(0,0,0,0.7), 0 1px 3px rgba(0,0,0,0.8), 0 0 12px ${color}66`,
-                filter: hovered ? 'brightness(1.2)' : 'brightness(1)',
-              }}
-            >
-              {title}
-            </span>
           </div>
         </div>
 

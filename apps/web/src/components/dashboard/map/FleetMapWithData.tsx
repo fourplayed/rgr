@@ -43,6 +43,8 @@ import { useDepots } from '@/hooks/useAssetData';
 import { isValidHexColor } from '@rgr/shared';
 import type { Depot } from '@rgr/shared';
 import type { DepotAsset } from './depotTypes';
+import { DepotClusterTooltip } from './DepotClusterTooltip';
+import { DepotAssetPanel } from './DepotAssetPanel';
 export interface FleetMapHandle {
   zoomIn: () => void;
   zoomOut: () => void;
@@ -162,6 +164,17 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
     const [mapLoaded, setMapLoaded] = useState(false);
     const [mapError, setMapError] = useState<string | null>(null);
     const [activeDepot, _setActiveDepot] = useState<string | null>(null);
+    const [tooltipDepot, setTooltipDepot] = useState<{
+      name: string;
+      color: string;
+      assets: DepotAsset[];
+      position: { x: number; y: number };
+    } | null>(null);
+    const [explorePanelDepot, setExplorePanelDepot] = useState<{
+      name: string;
+      color: string;
+      assets: DepotAsset[];
+    } | null>(null);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps -- stable default object; externalFilters identity is controlled by parent
     const filters = useMemo(
@@ -371,7 +384,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         Carnarvon: 12,
       };
 
-      depotLocations.forEach((depot: DepotLocation) => {
+      depotLocations.forEach((depot: DepotLocation, idx) => {
         const depotColor = isValidHexColor(depot.color) ? depot.color : DEFAULT_DEPOT_COLOR;
         const z = depotZIndex[depot.name] ?? 10;
         const count = depotAssetCounts[depot.name] || 0;
@@ -389,6 +402,17 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
             assetCount={count}
             isDark={isDark}
             isHovered={false}
+            onClusterClick={() => {
+              const marker = depotMarkers.current[idx];
+              if (!marker || !map.current) return;
+              const pos = map.current.project(marker.getLngLat());
+              setTooltipDepot({
+                name: depotName,
+                color: depotColor,
+                assets: depotAssets[depotName] || [],
+                position: { x: pos.x, y: pos.y },
+              });
+            }}
           />
         );
         depotPopupRoots.current.push({ root: pinRoot, depot });
@@ -404,7 +428,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
     // Keep badge counts and hover state in sync
     const filteredDepotNames = Array.isArray(filters.depot) ? filters.depot : [];
     useEffect(() => {
-      depotPopupRoots.current.forEach(({ root, depot }) => {
+      depotPopupRoots.current.forEach(({ root, depot }, idx) => {
         const depotColor = isValidHexColor(depot.color) ? depot.color : DEFAULT_DEPOT_COLOR;
         const count = depotAssetCounts[depot.name] || 0;
         const depotName = depot.name;
@@ -416,6 +440,17 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
             assetCount={count}
             isDark={isDark}
             isHovered={isFiltered || hoveredDepot === depotName}
+            onClusterClick={() => {
+              const marker = depotMarkers.current[idx];
+              if (!marker || !map.current) return;
+              const pos = map.current.project(marker.getLngLat());
+              setTooltipDepot({
+                name: depotName,
+                color: depotColor,
+                assets: depotAssets[depotName] || [],
+                position: { x: pos.x, y: pos.y },
+              });
+            }}
           />
         );
       });
@@ -1419,6 +1454,28 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
       }
     }, [focusAssetId, mapLoaded, assets, onFocusComplete]);
 
+    // Dismiss tooltip on map click
+    useEffect(() => {
+      if (!map.current || !mapLoaded) return;
+      const handler = () => { setTooltipDepot(null); };
+      map.current.on('click', handler);
+      return () => { map.current?.off('click', handler); };
+    }, [mapLoaded]);
+
+    // Update tooltip position on map move
+    useEffect(() => {
+      if (!map.current || !mapLoaded || !tooltipDepot) return;
+      const depot = depotLocations.find(d => d.name === tooltipDepot.name);
+      if (!depot) return;
+      const mapInstance = map.current;
+      const handler = () => {
+        const pos = mapInstance.project([depot.lng, depot.lat]);
+        setTooltipDepot(prev => prev ? { ...prev, position: { x: pos.x, y: pos.y } } : null);
+      };
+      mapInstance.on('move', handler);
+      return () => { mapInstance.off('move', handler); };
+    }, [mapLoaded, tooltipDepot?.name, depotLocations]);
+
     return (
       <div
         className={`relative w-full h-full ${className}`}
@@ -1500,6 +1557,42 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
           z-index: 5;
         }
       `}</style>
+
+        {/* Depot cluster tooltip */}
+        {tooltipDepot && (
+          <DepotClusterTooltip
+            depotName={tooltipDepot.name}
+            depotColor={tooltipDepot.color}
+            assets={tooltipDepot.assets}
+            position={tooltipDepot.position}
+            onDismiss={() => setTooltipDepot(null)}
+            onExplore={() => {
+              const depot = depotLocations.find(d => d.name === tooltipDepot.name);
+              if (depot && map.current) {
+                map.current.flyTo({ center: [depot.lng, depot.lat], zoom: 10, duration: 1500 });
+              }
+              setExplorePanelDepot({
+                name: tooltipDepot.name,
+                color: tooltipDepot.color,
+                assets: tooltipDepot.assets,
+              });
+              setTooltipDepot(null);
+            }}
+          />
+        )}
+
+        {/* Depot explore panel */}
+        {explorePanelDepot && (
+          <div className="absolute top-4 left-4 z-[200] w-[340px] max-h-[80vh] overflow-auto">
+            <DepotAssetPanel
+              assets={explorePanelDepot.assets}
+              depotName={explorePanelDepot.name}
+              depotColor={explorePanelDepot.color}
+              isDark={isDark}
+              onClose={() => setExplorePanelDepot(null)}
+            />
+          </div>
+        )}
       </div>
     );
   }
