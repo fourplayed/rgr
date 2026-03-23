@@ -62,14 +62,14 @@ export const DepotClusterTooltip = React.memo<DepotClusterTooltipProps>(
       left: position.x,
       top: position.y,
       transform: 'translate(-50%, -110%)',
-      zIndex: 2000,
+      zIndex: 100,
       width: 220,
       background: 'rgba(0, 0, 0, 0.55)',
       backdropFilter: 'blur(24px)',
       WebkitBackdropFilter: 'blur(24px)',
       border: `1px solid ${depotColor}33`,
       borderRadius: 16,
-      boxShadow: `0 0 20px ${depotColor}40, 0 8px 32px rgba(0, 0, 0, 0.5)`,
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
       fontFamily: "'Lato', sans-serif",
       overflow: 'hidden',
     };
@@ -83,22 +83,19 @@ export const DepotClusterTooltip = React.memo<DepotClusterTooltipProps>(
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '10px 12px 8px',
-            borderBottom: `1px solid ${depotColor}22`,
+            borderBottom: 'none',
           }}
         >
           <span
             style={{
               color: depotColor,
               fontFamily: "'Lato', sans-serif",
-              fontWeight: 700,
-              fontSize: 13,
-              letterSpacing: '0.08em',
+              fontWeight: 800,
+              fontSize: 16,
+              letterSpacing: '0.1em',
               textTransform: 'uppercase',
+              textAlign: 'center',
               flex: 1,
-              minWidth: 0,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
             }}
           >
             {depotName}
@@ -107,20 +104,47 @@ export const DepotClusterTooltip = React.memo<DepotClusterTooltipProps>(
             onClick={onDismiss}
             aria-label="Dismiss"
             style={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
               background: 'transparent',
               border: 'none',
               cursor: 'pointer',
-              padding: '2px 0 2px 8px',
-              color: 'rgba(255,255,255,0.5)',
+              padding: 2,
+              color: 'rgba(255,255,255,0.4)',
               display: 'flex',
               alignItems: 'center',
-              flexShrink: 0,
               lineHeight: 1,
             }}
           >
-            <X size={14} />
+            <X size={12} />
           </button>
         </div>
+
+        {/* Category counts — primary info */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'baseline',
+            gap: 16,
+            padding: '10px 12px 8px',
+            fontFamily: "'Lato', sans-serif",
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <span style={{ color: '#fff', fontSize: 24, fontWeight: 800, lineHeight: 1 }}>{trailerCount}</span>
+            <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 2 }}>Trailers</span>
+          </div>
+          <span style={{ color: 'rgba(255,255,255,0.15)', fontSize: 20, alignSelf: 'center' }}>|</span>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <span style={{ color: '#fff', fontSize: 24, fontWeight: 800, lineHeight: 1 }}>{dollyCount}</span>
+            <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 2 }}>Dollies</span>
+          </div>
+        </div>
+
+        {/* Separator */}
+        <div style={{ margin: '0 12px', height: 1, background: 'rgba(255,255,255,0.08)' }} />
 
         {/* Status breakdown */}
         <div style={{ padding: '8px 12px 6px' }}>
@@ -135,58 +159,24 @@ export const DepotClusterTooltip = React.memo<DepotClusterTooltipProps>(
                 fontFamily: "'Lato', sans-serif",
               }}
             >
-              {/* Colored dot */}
               <span
                 style={{
-                  width: 8,
-                  height: 8,
+                  width: 7,
+                  height: 7,
                   borderRadius: '50%',
                   background: color,
                   flexShrink: 0,
                   boxShadow: `0 0 6px ${color}99`,
                 }}
               />
-              {/* Label */}
-              <span
-                style={{
-                  flex: 1,
-                  color: 'rgba(255,255,255,0.75)',
-                  fontSize: 12,
-                  fontFamily: "'Lato', sans-serif",
-                }}
-              >
+              <span style={{ flex: 1, color: 'rgba(255,255,255,0.55)', fontSize: 11 }}>
                 {label}
               </span>
-              {/* Count */}
-              <span
-                style={{
-                  color: '#ffffff',
-                  fontSize: 12,
-                  fontWeight: 700,
-                  fontFamily: "'Lato', sans-serif",
-                }}
-              >
+              <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11, fontWeight: 700 }}>
                 {statusCounts[key]}
               </span>
             </div>
           ))}
-        </div>
-
-        {/* Category split */}
-        <div
-          style={{
-            borderTop: '1px solid rgba(255,255,255,0.08)',
-            padding: '6px 12px',
-            textAlign: 'center',
-            color: 'rgba(255,255,255,0.6)',
-            fontSize: 12,
-            fontFamily: "'Lato', sans-serif",
-            letterSpacing: '0.04em',
-          }}
-        >
-          <span style={{ color: 'rgba(255,255,255,0.9)', fontWeight: 700 }}>{trailerCount} TL</span>
-          <span style={{ margin: '0 6px', color: 'rgba(255,255,255,0.3)' }}>|</span>
-          <span style={{ color: 'rgba(255,255,255,0.9)', fontWeight: 700 }}>{dollyCount} DL</span>
         </div>
 
         {/* Explore button */}

@@ -385,7 +385,7 @@ export function FilterSidebar({
     return (
       <div
         ref={dragRef}
-        className="absolute top-4 right-4 z-50 pointer-events-auto"
+        className="absolute bottom-4 right-4 z-[40] pointer-events-auto"
         style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
       >
         <button
@@ -399,7 +399,7 @@ export function FilterSidebar({
               setCollapsed(false);
             }
           }}
-          className="relative flex items-center justify-center size-10 rounded-xl bg-[rgba(0,0,0,0.55)] backdrop-blur-2xl border border-white/[0.12] shadow-2xl text-white/60 hover:text-white transition-all duration-200 cursor-grab active:cursor-grabbing"
+          className="relative flex items-center justify-center size-10 rounded-xl bg-[rgba(0,0,0,0.55)] backdrop-blur-xl border border-white/[0.12] shadow-[0_8px_32px_rgba(0,0,0,0.5)] text-white/60 hover:text-white transition-all duration-200 cursor-grab active:cursor-grabbing"
         >
           <MousePointerClickIcon className="size-5" />
           {activeCount > 0 && (
@@ -415,10 +415,10 @@ export function FilterSidebar({
   return (
     <div
       ref={dragRef}
-      className="absolute top-4 right-4 z-50 pointer-events-auto"
+      className="absolute bottom-4 right-4 z-[40] pointer-events-auto"
       style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
     >
-      <div className="flex flex-col gap-3 bg-[rgba(0,0,0,0.55)] backdrop-blur-2xl rounded-xl border border-white/[0.12] px-3 py-3 shadow-2xl min-w-[340px]">
+      <div className="flex flex-col gap-3 bg-[rgba(0,0,0,0.55)] backdrop-blur-xl rounded-xl border border-white/[0.12] px-3 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.5)] min-w-[340px]">
         {/* Header — draggable area */}
         <div
           onMouseDown={handleMouseDown}

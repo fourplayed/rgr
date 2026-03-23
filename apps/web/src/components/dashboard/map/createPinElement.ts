@@ -218,7 +218,8 @@ export function createPinElement(opts: PinElementOptions): HTMLDivElement {
     const dot = document.createElement('div');
     dot.style.cssText = `
       width: ${dotSize}px; height: ${dotSize}px; border-radius: 50%;
-      background: ${color};
+      background: #ff1744;
+      box-shadow: 0 0 6px #ff1744, 0 0 14px #ff174488;
       cursor: pointer; flex-shrink: 0; pointer-events: auto;
       transition: transform 0.15s ease;
     `;

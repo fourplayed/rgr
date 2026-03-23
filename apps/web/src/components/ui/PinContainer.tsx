@@ -8,7 +8,6 @@ export const PinContainer = ({
   color,
   assetCount,
   isHovered = false,
-  onClusterClick,
 }: {
   children?: React.ReactNode;
   title?: string;
@@ -25,13 +24,12 @@ export const PinContainer = ({
   activeDepot?: string | null;
   onPin?: () => void;
   onDismiss?: () => void;
-  onClusterClick?: () => void;
 }) => {
   const c = color || '#06b6d4';
 
   return (
     <div className="relative group/pin z-50 pointer-events-none">
-      <PinPerspective title={title} color={c} assetCount={assetCount} hovered={isHovered} onClusterClick={onClusterClick} />
+      <PinPerspective title={title} color={c} assetCount={assetCount} hovered={isHovered} />
     </div>
   );
 };
@@ -41,16 +39,14 @@ const PinPerspective = ({
   color,
   assetCount,
   hovered,
-  onClusterClick,
 }: {
   title?: string | undefined;
   color: string;
   assetCount?: number | undefined;
   hovered: boolean;
-  onClusterClick?: () => void;
 }) => {
   return (
-    <motion.div className="pointer-events-none w-96 h-80 flex items-center justify-center z-[60]">
+    <motion.div className="pointer-events-none w-96 h-80 flex items-center justify-center z-[30]">
       <div className="w-full h-full -mt-7 flex-none inset-0">
         {/* Label + count badge — positioned at top of stem */}
         <div
@@ -58,24 +54,33 @@ const PinPerspective = ({
           style={{ bottom: '50%', marginBottom: hovered ? '64px' : '38px' }}
         >
           <div className="relative inline-flex flex-col items-center">
-            {/* Label hidden temporarily */}
-            {(
+            <div
+              className={`flex items-center gap-1.5 z-20 transition-all duration-300 ease-out ${hovered ? 'px-3 py-1.5' : 'px-2 py-1'}`}
+              style={{
+                backgroundColor: 'rgba(0, 0, 0, 0.55)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                border: `1.5px solid ${color}66`,
+                boxShadow: `0 0 10px ${color}44, 0 4px 12px rgba(0,0,0,0.4)`,
+                borderRadius: 20,
+                marginTop: -4,
+              }}
+            >
+              {title && (
+                <span
+                  className={`font-bold text-white/70 uppercase transition-all duration-300 ease-out ${hovered ? 'text-[14px] tracking-[0.08em]' : 'text-[11px] tracking-[0.06em]'}`}
+                  style={{ fontFamily: "'Lato', sans-serif", whiteSpace: 'nowrap' }}
+                >
+                  {title}
+                </span>
+              )}
               <span
-                className={`flex items-center justify-center px-1.5 font-bold rounded-full text-white mt-[-4px] z-20 transition-all duration-300 ease-out ${hovered ? 'min-w-[58px] h-[58px] text-[30px]' : 'min-w-[39px] h-[39px] text-[22px]'}`}
-                style={{
-                  backgroundColor: 'rgba(0, 0, 0, 0.55)',
-                  backdropFilter: 'blur(16px)',
-                  WebkitBackdropFilter: 'blur(16px)',
-                  border: `1.5px solid ${color}66`,
-                  boxShadow: `0 0 10px ${color}44, 0 4px 12px rgba(0,0,0,0.4)`,
-                  pointerEvents: 'auto',
-                  cursor: 'pointer',
-                }}
-                onClick={(e) => { e.stopPropagation(); onClusterClick?.(); }}
+                className={`font-bold text-white transition-all duration-300 ease-out ${hovered ? 'text-[22px]' : 'text-[16px]'}`}
+                style={{ lineHeight: 1 }}
               >
                 {(assetCount ?? 0) >= 1000 ? `${Math.round((assetCount ?? 0) / 1000)}k` : (assetCount ?? 0)}
               </span>
-            )}
+            </div>
           </div>
         </div>
 

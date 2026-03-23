@@ -44,7 +44,9 @@ import { isValidHexColor } from '@rgr/shared';
 import type { Depot } from '@rgr/shared';
 import type { DepotAsset } from './depotTypes';
 import { DepotClusterTooltip } from './DepotClusterTooltip';
-import { DepotAssetPanel } from './DepotAssetPanel';
+import { DepotExplorePanel } from './DepotExplorePanel';
+import { AssetDetailSlideout } from '@/components/assets/detail/AssetDetailSlideout';
+import type { AssetDetailTab } from '@/pages/assets/types';
 export interface FleetMapHandle {
   zoomIn: () => void;
   zoomOut: () => void;
@@ -156,6 +158,12 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
     const pulseAnimFrame = useRef<number | null>(null);
     const depotPulseAnimFrame = useRef<number | null>(null);
     const [hoveredDepot, setHoveredDepot] = useState<string | null>(null);
+    // Track assets revealed by the scan sweep — keyed by depot name → Set of asset IDs
+    const scannedAssetIdsRef = useRef<Map<string, Set<string>>>(new Map());
+    // Ref-mirror of depotAssets so the animation frame can access current data
+    const depotAssetsRef = useRef<Record<string, DepotAsset[]>>({});
+    // Scanned asset counts per depot — drives the badge recount animation
+    const [scannedCounts, setScannedCounts] = useState<Record<string, number>>({});
     const depotPopupRoots = useRef<
       Array<{ root: ReturnType<typeof createRoot>; depot: DepotLocation }>
     >([]);
@@ -164,6 +172,13 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
     const [mapLoaded, setMapLoaded] = useState(false);
     const [mapError, setMapError] = useState<string | null>(null);
     const [activeDepot, _setActiveDepot] = useState<string | null>(null);
+    const [loadingStatus, setLoadingStatus] = useState<{
+      loading: boolean;
+      source: string;
+      tilesLoaded: number;
+      tilesTotal: number;
+    }>({ loading: true, source: 'Initializing map...', tilesLoaded: 0, tilesTotal: 0 });
+    const tileCountRef = useRef({ loaded: 0, pending: 0 });
     const [tooltipDepot, setTooltipDepot] = useState<{
       name: string;
       color: string;
@@ -175,6 +190,14 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
       color: string;
       assets: DepotAsset[];
     } | null>(null);
+    // Asset detail slideout state (triggered from Explore)
+    const [exploreAsset, setExploreAsset] = useState<{ id: string; depotColor: string } | null>(null);
+    const [exploreAssetTab, setExploreAssetTab] = useState<AssetDetailTab>('overview');
+    // Whether explore mode is active (disables radar, shows asset dots)
+    const [exploreMode, setExploreMode] = useState(false);
+    const exploreModeRef = useRef(false);
+    // Map interaction lock — when true, all navigation is disabled
+    const mapLockedRef = useRef(false);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps -- stable default object; externalFilters identity is controlled by parent
     const filters = useMemo(
@@ -254,6 +277,34 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
       onAssetClickRef.current?.(assetId);
     }, []);
 
+    /** Disable all map navigation (pan, zoom, rotate, pitch) */
+    const lockMap = useCallback(() => {
+      const m = map.current;
+      if (!m) return;
+      mapLockedRef.current = true;
+      m.dragPan.disable();
+      m.scrollZoom.disable();
+      m.boxZoom.disable();
+      m.dragRotate.disable();
+      m.keyboard.disable();
+      m.doubleClickZoom.disable();
+      m.touchZoomRotate.disable();
+    }, []);
+
+    /** Re-enable all map navigation */
+    const unlockMap = useCallback(() => {
+      const m = map.current;
+      if (!m) return;
+      mapLockedRef.current = false;
+      m.dragPan.enable();
+      m.scrollZoom.enable();
+      m.boxZoom.enable();
+      m.dragRotate.enable();
+      m.keyboard.enable();
+      m.doubleClickZoom.enable();
+      m.touchZoomRotate.enable();
+    }, []);
+
     // Initialize map
     useEffect(() => {
       if (!MAPBOX_TOKEN || !mapContainer.current || map.current) return;
@@ -272,6 +323,12 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
           style: styleUrl,
           center: [122, -25], // Center of WA
           zoom: 4.5,
+          minZoom: 3,
+          maxZoom: 18,
+          maxBounds: [
+            [105, -40], // SW corner (Western Australia + padding)
+            [135, -8],  // NE corner
+          ],
           attributionControl: false,
         });
 
@@ -284,8 +341,56 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
           }
         });
 
+        // Track tile loading progress
+        const sourceLabels: Record<string, string> = {
+          'mapbox-dem': 'Terrain elevation',
+          'asset-dots': 'Asset markers',
+          composite: 'Map tiles',
+        };
+
+        mapInstance.on('dataloading', (e) => {
+          if (!isMounted) return;
+          tileCountRef.current.pending++;
+          const label = (e.sourceId && sourceLabels[e.sourceId]) || e.dataType || 'Map data';
+          setLoadingStatus({
+            loading: true,
+            source: `Loading ${label}...`,
+            tilesLoaded: tileCountRef.current.loaded,
+            tilesTotal: tileCountRef.current.loaded + tileCountRef.current.pending,
+          });
+        });
+
+        mapInstance.on('data', (e) => {
+          if (!isMounted) return;
+          if (tileCountRef.current.pending > 0) tileCountRef.current.pending--;
+          tileCountRef.current.loaded++;
+          const total = tileCountRef.current.loaded + tileCountRef.current.pending;
+          const label = (e.sourceId && sourceLabels[e.sourceId]) || e.dataType || 'Map data';
+          setLoadingStatus({
+            loading: tileCountRef.current.pending > 0,
+            source: tileCountRef.current.pending > 0 ? `Loading ${label}...` : 'Ready',
+            tilesLoaded: tileCountRef.current.loaded,
+            tilesTotal: total,
+          });
+        });
+
+        mapInstance.on('idle', () => {
+          if (!isMounted) return;
+          tileCountRef.current = { loaded: 0, pending: 0 };
+          setLoadingStatus({ loading: false, source: 'Ready', tilesLoaded: 0, tilesTotal: 0 });
+        });
+
         mapInstance.on('load', () => {
           if (!isMounted) return;
+
+          // 3D terrain disabled for now
+          // if (!mapInstance.getSource('mapbox-dem')) {
+          //   mapInstance.addSource('mapbox-dem', { type: 'raster-dem', url: 'mapbox://mapbox.mapbox-terrain-dem-v1', tileSize: 512, maxzoom: 14 });
+          // }
+          // mapInstance.setTerrain({ source: 'mapbox-dem', exaggeration: 2.5 });
+          // if (!mapInstance.getLayer('sky')) {
+          //   mapInstance.addLayer({ id: 'sky', type: 'sky', paint: { 'sky-type': 'atmosphere', 'sky-atmosphere-sun': [0, 0], 'sky-atmosphere-sun-intensity': 15 } });
+          // }
 
           setMapLoaded(true);
           onMapLoad?.();
@@ -360,6 +465,8 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
       }
       return groups;
     }, [filteredAssets]);
+    depotAssetsRef.current = depotAssets;
+    exploreModeRef.current = exploreMode;
 
     // Add depot markers when map is loaded and depot data is available
     useEffect(() => {
@@ -402,17 +509,6 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
             assetCount={count}
             isDark={isDark}
             isHovered={false}
-            onClusterClick={() => {
-              const marker = depotMarkers.current[idx];
-              if (!marker || !map.current) return;
-              const pos = map.current.project(marker.getLngLat());
-              setTooltipDepot({
-                name: depotName,
-                color: depotColor,
-                assets: depotAssets[depotName] || [],
-                position: { x: pos.x, y: pos.y },
-              });
-            }}
           />
         );
         depotPopupRoots.current.push({ root: pinRoot, depot });
@@ -430,8 +526,12 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
     useEffect(() => {
       depotPopupRoots.current.forEach(({ root, depot }, idx) => {
         const depotColor = isValidHexColor(depot.color) ? depot.color : DEFAULT_DEPOT_COLOR;
-        const count = depotAssetCounts[depot.name] || 0;
         const depotName = depot.name;
+        const isActive = filteredDepotNames.includes(depotName) || hoveredDepot === depotName;
+        // While scanning, show the live scanned count; otherwise show the full count
+        const count = isActive && scannedCounts[depotName] != null
+          ? scannedCounts[depotName]
+          : depotAssetCounts[depot.name] || 0;
         const isFiltered = filteredDepotNames.includes(depotName);
         root.render(
           <PinContainer
@@ -440,21 +540,10 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
             assetCount={count}
             isDark={isDark}
             isHovered={isFiltered || hoveredDepot === depotName}
-            onClusterClick={() => {
-              const marker = depotMarkers.current[idx];
-              if (!marker || !map.current) return;
-              const pos = map.current.project(marker.getLngLat());
-              setTooltipDepot({
-                name: depotName,
-                color: depotColor,
-                assets: depotAssets[depotName] || [],
-                position: { x: pos.x, y: pos.y },
-              });
-            }}
           />
         );
       });
-    }, [depotAssetCounts, depotAssets, activeDepot, isDark, hoveredDepot, filteredDepotNames]);
+    }, [depotAssetCounts, depotAssets, activeDepot, isDark, hoveredDepot, filteredDepotNames, scannedCounts]);
 
     // DOM-overlay pulsing rings — supports multiple simultaneous animations
     interface DepotAnim {
@@ -478,7 +567,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         canvas = document.createElement('canvas');
         canvas.className = 'depot-pulse-overlay';
         canvas.style.cssText =
-          'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:100;';
+          'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:10;';
         container.appendChild(canvas);
       }
       const ctx = canvas.getContext('2d');
@@ -487,9 +576,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
       const MAX_RADIUS_KM = 60;
       const EXPAND_DURATION = 600;
       const COLLAPSE_DURATION = 350;
-      const PULSE_FADE_IN = 600;
       const SEGMENTS = 64;
-      const STROKE_WIDTH = 1.2;
 
       const geoCircle = (lat: number, lng: number, radiusKm: number): [number, number][] => {
         const points: [number, number][] = [];
@@ -504,33 +591,99 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         return points;
       };
 
-      const drawRing = (
+      /** Resolve the screen-space center for a depot marker */
+      const getDepotCenter = (depot: DepotLocation, depotIdx: number) => {
+        const marker = depotMarkers.current[depotIdx];
+        let centerScreen: { x: number; y: number };
+        if (marker) {
+          const el = marker.getElement();
+          const rect = el.getBoundingClientRect();
+          const containerRect = container.getBoundingClientRect();
+          centerScreen = {
+            x: rect.left + rect.width / 2 - containerRect.left,
+            y: rect.top + rect.height / 2 - containerRect.top,
+          };
+        } else {
+          const p = mapInstance.project([depot.lng, depot.lat]);
+          centerScreen = { x: p.x, y: p.y };
+        }
+        const geoCenter = mapInstance.project([depot.lng, depot.lat]);
+        return {
+          center: centerScreen,
+          offsetX: centerScreen.x - geoCenter.x,
+          offsetY: centerScreen.y - geoCenter.y,
+        };
+      };
+
+      /** Project a geo-circle to screen points with offset */
+      const projectGeoRing = (
         depot: DepotLocation,
-        color: string,
         radiusKm: number,
-        strokeAlpha: number,
-        fillAlpha: number,
-        lineWidth: number
+        offsetX: number,
+        offsetY: number
       ) => {
-        if (radiusKm < 0.1) return;
         const geoPoints = geoCircle(depot.lat, depot.lng, radiusKm);
-        const screenPoints = geoPoints.map((p) => mapInstance.project(p as [number, number]));
+        return geoPoints.map((p) => {
+          const sp = mapInstance.project(p as [number, number]);
+          return { x: sp.x + offsetX, y: sp.y + offsetY };
+        });
+      };
+
+
+      /** Trace a geo-projected ring path (no stroke/fill — caller decides) */
+      const traceGeoPath = (pts: { x: number; y: number }[]) => {
         ctx.beginPath();
-        screenPoints.forEach((sp, idx) => {
-          if (idx === 0) ctx.moveTo(sp.x, sp.y);
+        pts.forEach((sp, i) => {
+          if (i === 0) ctx.moveTo(sp.x, sp.y);
           else ctx.lineTo(sp.x, sp.y);
         });
         ctx.closePath();
-        if (fillAlpha > 0) {
-          ctx.fillStyle = color;
-          ctx.globalAlpha = fillAlpha;
-          ctx.fill();
-        }
-        ctx.strokeStyle = color;
-        ctx.lineWidth = lineWidth;
-        ctx.globalAlpha = strokeAlpha;
-        ctx.stroke();
       };
+
+
+      /** Draw hi-tech scan overlay — all geometry geo-projected so it lies flat on the map. */
+      const drawScanOverlay = (
+        depot: DepotLocation,
+        depotIdx: number,
+        color: string,
+        radiusKm: number,
+        baseAlpha: number,
+        now: number,
+        startTime: number,
+      ) => {
+        if (radiusKm < 0.5) return;
+        const { center, offsetX, offsetY } = getDepotCenter(depot, depotIdx);
+        const outerPts = projectGeoRing(depot, radiusKm, offsetX, offsetY);
+        if (outerPts.length < 3) return;
+
+        ctx.save();
+
+        // --- Segmented outer ring (dashed) — primary boundary ---
+        traceGeoPath(outerPts);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.2;
+        ctx.globalAlpha = baseAlpha * 0.55;
+        ctx.setLineDash([8, 4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // --- Concentric inner rings (geo-projected at 25%, 50%, 75%) ---
+        for (const frac of [0.25, 0.5, 0.75]) {
+          const innerPts = projectGeoRing(depot, radiusKm * frac, offsetX, offsetY);
+          traceGeoPath(innerPts);
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 0.5;
+          ctx.globalAlpha = baseAlpha * 0.15;
+          ctx.setLineDash([3, 6]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+
+        ctx.restore();
+      };
+
+
 
       const animate = () => {
         if (!map.current || !canvas) return;
@@ -544,9 +697,18 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
 
         const now = performance.now();
         const toDelete: string[] = [];
+        let scanDirty = false;
+
+        // Skip all scan rendering during explore mode
+        if (exploreModeRef.current) {
+          ctx.globalAlpha = 1;
+          depotPulseAnimFrame.current = requestAnimationFrame(animate);
+          return;
+        }
 
         anims.forEach((anim, name) => {
           const { depot, color } = anim;
+          const depotIdx = depotLocations.findIndex(d => d.name === name);
 
           if (anim.phase === 'expanding' || anim.phase === 'steady') {
             const elapsed = now - anim.startTime;
@@ -554,22 +716,35 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
             const easedT = 1 - Math.pow(1 - expandT, 3);
             const currentRadius = easedT * MAX_RADIUS_KM;
 
-            // Main circle
-            drawRing(depot, color, currentRadius, easedT, easedT * 0.08, STROKE_WIDTH);
-
             if (expandT >= 1) {
               anim.phase = 'steady';
-
-              // Single pulse ring: expands outward from base, fades, then repeats
-              const PULSE_CYCLE = 1600;
-              const steadyElapsed = elapsed - EXPAND_DURATION;
-              const cycleT = (steadyElapsed % PULSE_CYCLE) / PULSE_CYCLE;
-              const easedCycleT = 1 - Math.pow(1 - cycleT, 2);
-              const pulseRadius = MAX_RADIUS_KM + easedCycleT * 25;
-              const pulseAlpha = (1 - easedCycleT) * 0.55;
-              const pulseWidth = 2.5 - easedCycleT * 1.0;
-              drawRing(depot, color, pulseRadius, pulseAlpha, 0, pulseWidth);
             }
+
+            // --- Radius-based asset detection: reveal assets as the circle reaches them ---
+            const assets = depotAssetsRef.current[name];
+            if (assets && assets.length > 0) {
+              if (!scannedAssetIdsRef.current.has(name)) {
+                scannedAssetIdsRef.current.set(name, new Set());
+              }
+              const scanned = scannedAssetIdsRef.current.get(name)!;
+              let added = false;
+              for (const asset of assets) {
+                if (scanned.has(asset.id)) continue;
+                const dLat = asset.latitude - depot.lat;
+                const dLng = asset.longitude - depot.lng;
+                const distKm = Math.sqrt(
+                  (dLat * 111.32) ** 2 +
+                  (dLng * 111.32 * Math.cos((depot.lat * Math.PI) / 180)) ** 2
+                );
+                if (distKm <= currentRadius) {
+                  scanned.add(asset.id);
+                  added = true;
+                }
+              }
+              if (added) scanDirty = true;
+            }
+
+            drawScanOverlay(depot, depotIdx, color, currentRadius, easedT, now, anim.startTime);
           } else if (anim.phase === 'collapsing') {
             const collapseElapsed = now - anim.collapseStartTime;
             const collapseT = Math.min(collapseElapsed / COLLAPSE_DURATION, 1);
@@ -577,7 +752,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
             const currentRadius = anim.collapseFromRadius * (1 - easedCollapse);
             const alpha = 1 - easedCollapse;
 
-            drawRing(depot, color, currentRadius, alpha, alpha * 0.08, STROKE_WIDTH);
+            drawScanOverlay(depot, depotIdx, color, currentRadius, alpha, now, anim.startTime);
 
             if (collapseT >= 1) {
               toDelete.push(name);
@@ -585,7 +760,25 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
           }
         });
 
-        toDelete.forEach((name) => anims.delete(name));
+        toDelete.forEach((name) => {
+          anims.delete(name);
+          scannedAssetIdsRef.current.delete(name);
+          // Remove scanned count so badge reverts to full count
+          setScannedCounts((prev) => {
+            const next = { ...prev };
+            delete next[name];
+            return next;
+          });
+        });
+
+        // Push scanned counts to React state for badge recount
+        if (scanDirty) {
+          const counts: Record<string, number> = {};
+          scannedAssetIdsRef.current.forEach((ids, depotName) => {
+            counts[depotName] = ids.size;
+          });
+          setScannedCounts(counts);
+        }
 
         ctx.globalAlpha = 1;
         depotPulseAnimFrame.current = requestAnimationFrame(animate);
@@ -658,7 +851,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
             // Canvas overlay for glowing dot + tail + route trail (renders ABOVE the map)
             const canvas = document.createElement('canvas');
             canvas.className = 'route-dot-overlay';
-            canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:101;';
+            canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:35;';
             container.appendChild(canvas);
             const ctx = canvas.getContext('2d');
             if (!ctx) return;
@@ -911,6 +1104,8 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
           }
         }
 
+        // Don't trigger radar hover while in explore mode
+        if (exploreModeRef.current) return;
         setHoveredDepot(closest);
       };
 
@@ -956,6 +1151,9 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
               collapseFromRadius: 0,
               pulseStartTime: null,
             });
+            // Reset scanned assets — badge will recount from 0
+            scannedAssetIdsRef.current.set(name, new Set());
+              setScannedCounts((prev) => ({ ...prev, [name]: 0 }));
           }
         } else {
           // Re-activating a depot that's collapsing — restart expand
@@ -964,6 +1162,9 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
             anim.phase = 'expanding';
             anim.startTime = now;
             anim.pulseStartTime = null;
+            // Reset scan for recount
+            scannedAssetIdsRef.current.set(name, new Set());
+              setScannedCounts((prev) => ({ ...prev, [name]: 0 }));
           }
         }
       });
@@ -1152,6 +1353,175 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
       },
       [assetGeoJson]
     );
+
+    // Show depot assets as full pins on map during explore mode
+    useEffect(() => {
+      if (!map.current || !mapLoaded) return;
+      const mapInstance = map.current;
+      const SRC = 'explore-depot-assets';
+      const LAYERS = [
+        'explore-depot-assets-dots',
+        'explore-depot-assets-flags',
+        'explore-depot-assets-labels',
+        'explore-depot-assets-active-glow',
+        'explore-depot-assets-active',
+      ];
+
+      const cleanup = () => {
+        for (const id of LAYERS) {
+          if (mapInstance.getLayer(id)) mapInstance.removeLayer(id);
+        }
+        if (mapInstance.getSource(SRC)) mapInstance.removeSource(SRC);
+      };
+
+      if (exploreMode && explorePanelDepot) {
+        const features: GeoJSON.Feature<GeoJSON.Point>[] = explorePanelDepot.assets.map((a) => ({
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [a.longitude, a.latitude] },
+          properties: {
+            id: a.id,
+            category: a.category,
+            status: a.status,
+            assetNumber: a.assetNumber,
+            active: a.id === exploreAsset?.id ? 1 : 0,
+          },
+        }));
+        const data: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features };
+
+        const categoryColors = isDark ? CATEGORY_COLORS : LIGHT_CATEGORY_COLORS;
+        const defaultFill = isDark ? '#6b7280' : '#4b5563';
+
+        if (mapInstance.getSource(SRC)) {
+          (mapInstance.getSource(SRC) as mapboxgl.GeoJSONSource).setData(data);
+        } else {
+          mapInstance.addSource(SRC, { type: 'geojson', data });
+        }
+
+        // Category-colored dots (same style as main asset layer)
+        if (!mapInstance.getLayer(LAYERS[0]!)) {
+          mapInstance.addLayer({
+            id: LAYERS[0]!,
+            type: 'circle',
+            source: SRC,
+            slot: 'top',
+            paint: {
+              'circle-pitch-alignment': 'map',
+              'circle-radius': ['match', ['get', 'category'], 'trailer', 7, 'dolly', 5.5, 6],
+              'circle-color': [
+                'match', ['get', 'category'],
+                'trailer', categoryColors['trailer'],
+                'dolly', categoryColors['dolly'],
+                defaultFill,
+              ],
+              'circle-stroke-width': 1.5,
+              'circle-stroke-color': [
+                'match', ['get', 'category'],
+                'trailer', categoryColors['trailer'],
+                'dolly', categoryColors['dolly'],
+                defaultFill,
+              ],
+              'circle-opacity': 1,
+            },
+          });
+        }
+
+        // Flag pennants (same style as main asset layer)
+        if (!mapInstance.getLayer(LAYERS[1]!)) {
+          mapInstance.addLayer({
+            id: LAYERS[1]!,
+            type: 'symbol',
+            source: SRC,
+            slot: 'top',
+            layout: {
+              'icon-image': [
+                'match', ['get', 'category'],
+                'trailer', 'trailer-pin',
+                'dolly', 'dolly-pin',
+                'trailer-pin',
+              ],
+              'icon-size': 0.9,
+              'icon-anchor': 'bottom',
+              'icon-offset': [0, -4],
+              'icon-allow-overlap': true,
+              'icon-ignore-placement': true,
+              'icon-pitch-alignment': 'viewport',
+              'icon-rotation-alignment': 'viewport',
+            },
+          });
+        }
+
+        // Asset ID label above active pin only
+        if (!mapInstance.getLayer(LAYERS[2]!)) {
+          mapInstance.addLayer({
+            id: LAYERS[2]!,
+            type: 'symbol',
+            source: SRC,
+            slot: 'top',
+            filter: ['==', ['get', 'active'], 1],
+            layout: {
+              'text-field': ['get', 'assetNumber'],
+              'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
+              'text-size': 12,
+              'text-anchor': 'bottom',
+              'text-offset': [0, -3.2],
+              'text-allow-overlap': true,
+              'text-ignore-placement': true,
+              'text-pitch-alignment': 'viewport',
+              'text-rotation-alignment': 'viewport',
+            },
+            paint: {
+              'text-color': '#ffffff',
+              'text-halo-color': 'rgba(0,0,0,0.7)',
+              'text-halo-width': 1.5,
+            },
+          });
+        }
+
+        // Active asset glow ring
+        if (!mapInstance.getLayer(LAYERS[3]!)) {
+          mapInstance.addLayer({
+            id: LAYERS[3]!,
+            type: 'circle',
+            source: SRC,
+            slot: 'top',
+            filter: ['==', ['get', 'active'], 1],
+            paint: {
+              'circle-pitch-alignment': 'map',
+              'circle-radius': 16,
+              'circle-color': '#ff1744',
+              'circle-blur': 1,
+              'circle-opacity': 0.4,
+            },
+          });
+        }
+
+        // Active asset bright dot
+        if (!mapInstance.getLayer(LAYERS[4]!)) {
+          mapInstance.addLayer({
+            id: LAYERS[4]!,
+            type: 'circle',
+            source: SRC,
+            slot: 'top',
+            filter: ['==', ['get', 'active'], 1],
+            paint: {
+              'circle-pitch-alignment': 'map',
+              'circle-radius': 8,
+              'circle-color': '#ff1744',
+              'circle-stroke-width': 2,
+              'circle-stroke-color': '#ffffff',
+              'circle-opacity': 1,
+            },
+          });
+        }
+      } else {
+        cleanup();
+      }
+
+      return () => {
+        if (!mapInstance.getStyle()) return;
+        cleanup();
+      };
+    }, [exploreMode, explorePanelDepot, exploreAsset, mapLoaded, isDark]);
 
     // Update asset dots source + layer when data or theme changes
     useEffect(() => {
@@ -1411,7 +1781,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Mapbox GL typings lack `diff` option on setStyle
         mapInstance.setStyle(styleUrl, { diff: false } as any);
 
-        // Re-add GeoJSON layer after the new style finishes loading
+        // Re-add layers after the new style finishes loading
         const onStyleLoad = () => {
           addAssetLayer(mapInstance, isDark);
           mapInstance.off('style.load', onStyleLoad);
@@ -1454,13 +1824,94 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
       }
     }, [focusAssetId, mapLoaded, assets, onFocusComplete]);
 
-    // Dismiss tooltip on map click
+    // Click on map: if inside a depot cylinder, open tooltip; otherwise dismiss
     useEffect(() => {
       if (!map.current || !mapLoaded) return;
-      const handler = () => { setTooltipDepot(null); };
-      map.current.on('click', handler);
-      return () => { map.current?.off('click', handler); };
-    }, [mapLoaded]);
+      const mapInstance = map.current;
+
+      const R = 6371;
+      const SEGMENTS = 32;
+      const geoCircleClick = (lat: number, lng: number, radiusKm: number): [number, number][] => {
+        const points: [number, number][] = [];
+        for (let j = 0; j <= SEGMENTS; j++) {
+          const angle = (j / SEGMENTS) * Math.PI * 2;
+          const dLat = (radiusKm / R) * Math.cos(angle) * (180 / Math.PI);
+          const dLng =
+            ((radiusKm / R) * Math.sin(angle) * (180 / Math.PI)) / Math.cos((lat * Math.PI) / 180);
+          points.push([lng + dLng, lat + dLat]);
+        }
+        return points;
+      };
+      const pointInPoly = (px: number, py: number, polygon: { x: number; y: number }[]): boolean => {
+        let inside = false;
+        for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+          const pi = polygon[i]!;
+          const pj = polygon[j]!;
+          if (pi.y > py !== pj.y > py && px < ((pj.x - pi.x) * (py - pi.y)) / (pj.y - pi.y) + pi.x) {
+            inside = !inside;
+          }
+        }
+        return inside;
+      };
+
+      const handler = (e: mapboxgl.MapMouseEvent) => {
+        // Block depot interactions while in explore mode
+        if (exploreModeRef.current) return;
+        const mx = e.point.x;
+        const my = e.point.y;
+        let clickedDepot: string | null = null;
+        let closestDist = Infinity;
+
+        for (let idx = 0; idx < depotLocations.length; idx++) {
+          const marker = depotMarkers.current[idx];
+          if (marker && marker.getElement().style.display === 'none') continue;
+
+          const depot = depotLocations[idx]!;
+          const geoPoints = geoCircleClick(depot.lat, depot.lng, HOVER_RADIUS_KM);
+          const bottomPoly = geoPoints.map((p) => mapInstance.project(p as [number, number]));
+          const topPoly = bottomPoly.map((p) => ({ x: p.x, y: p.y - CYLINDER_HOVER_HEIGHT }));
+
+          const inBottom = pointInPoly(mx, my, bottomPoly);
+          const inTop = pointInPoly(mx, my, topPoly);
+          let inWalls = false;
+          if (!inBottom && !inTop) {
+            const minTopY = Math.min(...topPoly.map((p) => p.y));
+            const maxBotY = Math.max(...bottomPoly.map((p) => p.y));
+            if (my >= minTopY && my <= maxBotY) {
+              let minX = Infinity, maxX = -Infinity;
+              for (const p of bottomPoly) { if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x; }
+              inWalls = mx >= minX && mx <= maxX;
+            }
+          }
+
+          if (inBottom || inTop || inWalls) {
+            const center = mapInstance.project([depot.lng, depot.lat]);
+            const dist = Math.sqrt((mx - center.x) ** 2 + (my - center.y) ** 2);
+            if (dist < closestDist) {
+              clickedDepot = depot.name;
+              closestDist = dist;
+            }
+          }
+        }
+
+        if (clickedDepot) {
+          const depot = depotLocations.find(d => d.name === clickedDepot)!;
+          const depotColor = isValidHexColor(depot.color) ? depot.color : DEFAULT_DEPOT_COLOR;
+          const pos = mapInstance.project([depot.lng, depot.lat]);
+          setTooltipDepot({
+            name: depot.name,
+            color: depotColor,
+            assets: depotAssets[depot.name] || [],
+            position: { x: pos.x, y: pos.y },
+          });
+        } else {
+          setTooltipDepot(null);
+        }
+      };
+
+      mapInstance.on('click', handler);
+      return () => { mapInstance.off('click', handler); };
+    }, [mapLoaded, depotLocations, depotAssets]);
 
     // Update tooltip position on map move
     useEffect(() => {
@@ -1559,7 +2010,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
       `}</style>
 
         {/* Depot cluster tooltip */}
-        {tooltipDepot && (
+        {tooltipDepot && !exploreMode && (
           <DepotClusterTooltip
             depotName={tooltipDepot.name}
             depotColor={tooltipDepot.color}
@@ -1567,32 +2018,165 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
             position={tooltipDepot.position}
             onDismiss={() => setTooltipDepot(null)}
             onExplore={() => {
-              const depot = depotLocations.find(d => d.name === tooltipDepot.name);
-              if (depot && map.current) {
-                map.current.flyTo({ center: [depot.lng, depot.lat], zoom: 10, duration: 1500 });
-              }
-              setExplorePanelDepot({
+              const firstAsset = tooltipDepot.assets[0];
+              const depotData = {
                 name: tooltipDepot.name,
                 color: tooltipDepot.color,
                 assets: tooltipDepot.assets,
-              });
+              };
+              // Enter explore mode
+              setExploreMode(true);
+              setExplorePanelDepot(depotData);
               setTooltipDepot(null);
+              if (firstAsset && map.current) {
+                map.current.flyTo({
+                  center: [firstAsset.longitude, firstAsset.latitude],
+                  zoom: 16,
+                  duration: 1800,
+                  essential: true,
+                });
+                setExploreAsset({ id: firstAsset.id, depotColor: tooltipDepot.color });
+                setExploreAssetTab('overview');
+              }
             }}
           />
         )}
 
-        {/* Depot explore panel */}
-        {explorePanelDepot && (
-          <div className="absolute top-4 left-4 z-[200] w-[340px] max-h-[80vh] overflow-auto">
-            <DepotAssetPanel
+        {/* Depot explore panel (left side) */}
+        {explorePanelDepot && exploreMode && (
+            <DepotExplorePanel
+              key="explore-panel"
               assets={explorePanelDepot.assets}
               depotName={explorePanelDepot.name}
               depotColor={explorePanelDepot.color}
-              isDark={isDark}
-              onClose={() => setExplorePanelDepot(null)}
+              activeAssetId={exploreAsset?.id ?? null}
+              onAssetSelect={(asset) => {
+                if (map.current) {
+
+                  map.current.flyTo({
+                    center: [asset.longitude, asset.latitude],
+                    zoom: 16,
+                    duration: 1200,
+                    essential: true,
+                  });
+                  }
+                setExploreAsset({ id: asset.id, depotColor: explorePanelDepot.color });
+                setExploreAssetTab('overview');
+              }}
+              onPrev={() => {
+                if (!explorePanelDepot) return;
+                const assets = explorePanelDepot.assets;
+                const idx = assets.findIndex((a) => a.id === exploreAsset?.id);
+                const prev = assets[(idx - 1 + assets.length) % assets.length];
+                if (prev && map.current) {
+
+                  map.current.flyTo({ center: [prev.longitude, prev.latitude], zoom: 16, duration: 1000, essential: true });
+                    setExploreAsset({ id: prev.id, depotColor: explorePanelDepot.color });
+                  setExploreAssetTab('overview');
+                }
+              }}
+              onNext={() => {
+                if (!explorePanelDepot) return;
+                const assets = explorePanelDepot.assets;
+                const idx = assets.findIndex((a) => a.id === exploreAsset?.id);
+                const next = assets[(idx + 1) % assets.length];
+                if (next && map.current) {
+
+                  map.current.flyTo({ center: [next.longitude, next.latitude], zoom: 16, duration: 1000, essential: true });
+                    setExploreAsset({ id: next.id, depotColor: explorePanelDepot.color });
+                  setExploreAssetTab('overview');
+                }
+              }}
+              onClose={() => {
+                setExplorePanelDepot(null);
+                setExploreAsset(null);
+                setExploreMode(false);
+                unlockMap();
+              }}
             />
-          </div>
+          )}
+
+        {/* Asset detail slideout (right side, no backdrop blur in explore mode) */}
+        {exploreAsset && (
+          <AssetDetailSlideout
+            key={exploreAsset.id}
+            isDark={isDark}
+            assetId={exploreAsset.id}
+            activeTab={exploreAssetTab}
+            canEdit={false}
+            canDelete={false}
+            noBackdrop
+            onTabChange={setExploreAssetTab}
+            onClose={() => {
+              setExploreAsset(null);
+            }}
+          />
         )}
+
+        {/* Loading status bar — bottom of viewport */}
+        <div
+          className="absolute bottom-2 right-2 z-[250] transition-all duration-500 ease-out"
+          style={{
+            transform: loadingStatus.loading ? 'translateY(0)' : 'translateY(20px)',
+            opacity: loadingStatus.loading ? 1 : 0,
+            pointerEvents: 'none',
+            width: 300,
+          }}
+        >
+          <div
+            style={{
+              background: 'rgba(0, 0, 0, 0.55)',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: 10,
+              padding: '6px 14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+            }}
+          >
+            {/* Progress bar */}
+            <div
+              style={{
+                flex: 1,
+                height: 3,
+                borderRadius: 2,
+                background: 'rgba(255, 255, 255, 0.08)',
+                overflow: 'hidden',
+              }}
+            >
+              <div
+                style={{
+                  height: '100%',
+                  borderRadius: 2,
+                  background: 'linear-gradient(90deg, #bf00ff, #60a5fa)',
+                  width: loadingStatus.tilesTotal > 0
+                    ? `${Math.min((loadingStatus.tilesLoaded / loadingStatus.tilesTotal) * 100, 100)}%`
+                    : '0%',
+                  transition: 'width 0.3s ease-out',
+                }}
+              />
+            </div>
+            {/* Status text */}
+            <span
+              style={{
+                fontFamily: "'Lato', sans-serif",
+                fontSize: 10,
+                color: 'rgba(255, 255, 255, 0.5)',
+                whiteSpace: 'nowrap',
+                letterSpacing: '0.04em',
+              }}
+            >
+              {loadingStatus.source}
+              {loadingStatus.tilesTotal > 0 && (
+                <span style={{ color: 'rgba(255, 255, 255, 0.3)', marginLeft: 6 }}>
+                  {loadingStatus.tilesLoaded}/{loadingStatus.tilesTotal}
+                </span>
+              )}
+            </span>
+          </div>
+        </div>
       </div>
     );
   }
