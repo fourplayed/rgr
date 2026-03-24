@@ -78,14 +78,15 @@ function DepotHexGrid({
   activeDepots,
   onToggle,
 }: {
-  depots: ReturnType<typeof useDepots>['data'] & { code: string; name: string; color: string | null }[];
+  depots: ReturnType<typeof useDepots>['data'] &
+    { code: string; name: string; color: string | null }[];
   activeDepots: string[];
   onToggle: (name: string) => void;
 }) {
   const [liveKm, setLiveKm] = useState(0);
   const [lastKm, setLastKm] = useState<number | null>(null);
   const [isActive, setIsActive] = useState(false);
-  const [returning, setReturning] = useState(false);
+  const [_returning, setReturning] = useState(false);
   const [outboundKm, setOutboundKm] = useState<number | null>(null);
   const wasReturning = useRef(false);
   const wasActive = useRef(false);
@@ -124,7 +125,7 @@ function DepotHexGrid({
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  const pill = (name: string) => {
+  const _pill = (name: string) => {
     const depot = depots.find((d) => d.name === name);
     if (!depot) return null;
     return (
@@ -139,7 +140,8 @@ function DepotHexGrid({
   };
 
   // Which depot is last in the filtered order (destination)?
-  const lastFilteredDepot = activeDepots.length >= 2 ? activeDepots[activeDepots.length - 1] : null;
+  const _lastFilteredDepot =
+    activeDepots.length >= 2 ? activeDepots[activeDepots.length - 1] : null;
 
   const IMPACT_STYLE = {
     fontFamily: "Impact, 'Arial Narrow', 'Haettenschweiler', sans-serif",
@@ -150,7 +152,12 @@ function DepotHexGrid({
   // Track pill element positions for drawing connecting lines
   const pillRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const containerRef = useRef<HTMLDivElement>(null);
-  const [lineCoords, setLineCoords] = useState<{ x1: number; y1: number; x2: number; y2: number } | null>(null);
+  const [lineCoords, setLineCoords] = useState<{
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+  } | null>(null);
 
   // Compute line between the two filtered depots
   useEffect(() => {
@@ -163,7 +170,10 @@ function DepotHexGrid({
     const el1 = pillRefs.current[first];
     const el2 = pillRefs.current[last];
     const container = containerRef.current;
-    if (!el1 || !el2 || !container) { setLineCoords(null); return; }
+    if (!el1 || !el2 || !container) {
+      setLineCoords(null);
+      return;
+    }
 
     const cRect = container.getBoundingClientRect();
     const r1 = el1.getBoundingClientRect();
@@ -180,7 +190,11 @@ function DepotHexGrid({
     const depot = depots.find((d) => d.name === name);
     if (!depot) return null;
     return (
-      <div ref={(el) => { pillRefs.current[name] = el; }}>
+      <div
+        ref={(el) => {
+          pillRefs.current[name] = el;
+        }}
+      >
         <FilterPill
           key={depot.code}
           active={activeDepots.includes(depot.name)}
@@ -225,20 +239,33 @@ function DepotHexGrid({
       )}
 
       {/* Top row: 2 pills */}
-      <div className="flex justify-evenly w-full px-4 gap-6" style={{ position: 'relative', zIndex: 1 }}>
+      <div
+        className="flex justify-evenly w-full px-4 gap-6"
+        style={{ position: 'relative', zIndex: 1 }}
+      >
         {pillWithRef('Perth')}
         {pillWithRef('Carnarvon')}
       </div>
 
       {/* Middle row: pill — distance counter — pill */}
-      <div className="flex justify-between items-center w-full gap-3" style={{ position: 'relative', zIndex: 1 }}>
+      <div
+        className="flex justify-between items-center w-full gap-3"
+        style={{ position: 'relative', zIndex: 1 }}
+      >
         {pillWithRef('Wubin')}
-        <div className="flex flex-col items-center justify-center flex-1" style={{ marginTop: '-6px' }}>
+        <div
+          className="flex flex-col items-center justify-center flex-1"
+          style={{ marginTop: '-6px' }}
+        >
           <span
             className="text-3xl tabular-nums leading-none"
             style={{
               ...IMPACT_STYLE,
-              color: isActive ? '#ffffff' : lastKm !== null ? 'rgba(255, 255, 255, 0.5)' : 'rgba(255, 255, 255, 0.3)',
+              color: isActive
+                ? '#ffffff'
+                : lastKm !== null
+                  ? 'rgba(255, 255, 255, 0.5)'
+                  : 'rgba(255, 255, 255, 0.3)',
               textShadow: isActive ? '0 0 10px rgba(255, 255, 255, 0.4)' : 'none',
             }}
           >
@@ -260,7 +287,10 @@ function DepotHexGrid({
       </div>
 
       {/* Bottom row: 2 pills */}
-      <div className="flex justify-evenly w-full px-4 gap-6" style={{ position: 'relative', zIndex: 1 }}>
+      <div
+        className="flex justify-evenly w-full px-4 gap-6"
+        style={{ position: 'relative', zIndex: 1 }}
+      >
         {pillWithRef('Newman')}
         {pillWithRef('Karratha')}
       </div>
@@ -495,11 +525,7 @@ export function FilterSidebar({
         <div className="h-px bg-white/[0.08]" />
 
         {/* Depot pills — hexagon layout with live distance counter */}
-        <DepotHexGrid
-          depots={depots}
-          activeDepots={activeDepots}
-          onToggle={handleToggleDepot}
-        />
+        <DepotHexGrid depots={depots} activeDepots={activeDepots} onToggle={handleToggleDepot} />
 
         {/* Clear depot filters */}
         {activeDepots.length > 0 && (

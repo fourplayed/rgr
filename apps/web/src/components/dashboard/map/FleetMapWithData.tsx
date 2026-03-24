@@ -281,7 +281,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
     }, []);
 
     /** Disable all map navigation (pan, zoom, rotate, pitch) */
-    const lockMap = useCallback(() => {
+    const _lockMap = useCallback(() => {
       const m = map.current;
       if (!m) return;
       mapLockedRef.current = true;
@@ -498,7 +498,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         Carnarvon: 12,
       };
 
-      depotLocations.forEach((depot: DepotLocation, idx) => {
+      depotLocations.forEach((depot: DepotLocation, _idx) => {
         const depotColor = isValidHexColor(depot.color) ? depot.color : DEFAULT_DEPOT_COLOR;
         const z = depotZIndex[depot.name] ?? 10;
         const count = depotAssetCounts[depot.name] || 0;
@@ -531,7 +531,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
     // Keep badge counts and hover state in sync
     const filteredDepotNames = Array.isArray(filters.depot) ? filters.depot : [];
     useEffect(() => {
-      depotPopupRoots.current.forEach(({ root, depot }, idx) => {
+      depotPopupRoots.current.forEach(({ root, depot }, _idx) => {
         const depotColor = isValidHexColor(depot.color) ? depot.color : DEFAULT_DEPOT_COLOR;
         const depotName = depot.name;
         const isActive = filteredDepotNames.includes(depotName) || hoveredDepot === depotName;
@@ -665,11 +665,11 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         color: string,
         radiusKm: number,
         baseAlpha: number,
-        now: number,
-        startTime: number
+        _now: number,
+        _startTime: number
       ) => {
         if (radiusKm < 0.5) return;
-        const { center, offsetX, offsetY } = getDepotCenter(depot, depotIdx);
+        const { offsetX, offsetY } = getDepotCenter(depot, depotIdx);
         const outerPts = projectGeoRing(depot, radiusKm, offsetX, offsetY);
         if (outerPts.length < 3) return;
 

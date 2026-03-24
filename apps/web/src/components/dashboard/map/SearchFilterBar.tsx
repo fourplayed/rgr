@@ -51,7 +51,7 @@ function DepotFilterRows({
   showDepotLabels,
   onToggleDepotLabels,
   FilterPill,
-  pillDefaultColor,
+  pillDefaultColor: _pillDefaultColor,
 }: {
   depots: Depot[];
   filters: AssetFilters;
@@ -82,8 +82,12 @@ function DepotFilterRows({
     );
   };
 
-  const row1 = DEPOT_ROW1_NAMES.map((name) => depots.find((d) => d.name === name)).filter(Boolean) as Depot[];
-  const row2 = DEPOT_ROW2_NAMES.map((name) => depots.find((d) => d.name === name)).filter(Boolean) as Depot[];
+  const row1 = DEPOT_ROW1_NAMES.map((name) => depots.find((d) => d.name === name)).filter(
+    Boolean
+  ) as Depot[];
+  const row2 = DEPOT_ROW2_NAMES.map((name) => depots.find((d) => d.name === name)).filter(
+    Boolean
+  ) as Depot[];
   // Any depots not in either row go into row2
   const assigned = new Set([...DEPOT_ROW1_NAMES, ...DEPOT_ROW2_NAMES]);
   const extras = depots.filter((d) => !assigned.has(d.name));
