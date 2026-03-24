@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json.schemastore.org/wrangler.json",
+  "name": "rgr",
+  "pages_build_output_dir": "./apps/web/dist",
+  "compatibility_date": "2026-03-24"
+}
