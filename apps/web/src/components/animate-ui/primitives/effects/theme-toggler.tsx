@@ -17,9 +17,7 @@ type ChildrenRender =
 
 function getSystemEffective(): Resolved {
   if (typeof window === 'undefined') return 'light';
-  return window.matchMedia('(prefers-color-scheme: dark)').matches
-    ? 'dark'
-    : 'light';
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
 function getClipKeyframes(direction: Direction): [string, string] {
@@ -68,11 +66,7 @@ function ThemeToggler({
   });
 
   React.useEffect(() => {
-    if (
-      preview &&
-      theme === preview.effective &&
-      resolvedTheme === preview.resolved
-    ) {
+    if (preview && theme === preview.effective && resolvedTheme === preview.resolved) {
       setPreview(null);
     }
   }, [theme, resolvedTheme, preview]);
@@ -102,10 +96,7 @@ function ThemeToggler({
       await document.startViewTransition(() => {
         flushSync(() => {
           setPreview({ effective: theme, resolved });
-          document.documentElement.classList.toggle(
-            'dark',
-            resolved === 'dark',
-          );
+          document.documentElement.classList.toggle('dark', resolved === 'dark');
         });
       }).ready;
 
@@ -116,13 +107,13 @@ function ThemeToggler({
             duration: 1400,
             easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
             pseudoElement: '::view-transition-new(root)',
-          },
+          }
         )
         .finished.finally(() => {
           setTheme(theme);
         });
     },
-    [onImmediateChange, resolvedTheme, fromClip, toClip, setTheme],
+    [onImmediateChange, resolvedTheme, fromClip, toClip, setTheme]
   );
 
   return (
@@ -139,10 +130,4 @@ function ThemeToggler({
   );
 }
 
-export {
-  ThemeToggler,
-  type ThemeTogglerProps,
-  type ThemeSelection,
-  type Resolved,
-  type Direction,
-};
+export { ThemeToggler, type ThemeTogglerProps, type ThemeSelection, type Resolved, type Direction };

@@ -17,9 +17,7 @@ export interface DashboardPresenterProps {
 export function DashboardPresenter({ children }: DashboardPresenterProps) {
   return (
     <div className="relative h-full w-full overflow-hidden">
-      <ErrorBoundary>
-        {children}
-      </ErrorBoundary>
+      <ErrorBoundary>{children}</ErrorBoundary>
     </div>
   );
 }

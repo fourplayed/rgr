@@ -31,7 +31,13 @@ export const PinContainer = ({
 
   return (
     <div className="relative group/pin z-50 pointer-events-none">
-      <PinPerspective title={title} color={c} assetCount={assetCount} hovered={isHovered} hideLabel={hideLabel} />
+      <PinPerspective
+        title={title}
+        color={c}
+        assetCount={assetCount}
+        hovered={isHovered}
+        hideLabel={hideLabel}
+      />
     </div>
   );
 };
@@ -60,7 +66,8 @@ const PinPerspective = ({
             marginBottom: hovered ? '64px' : '38px',
             opacity: hideLabel ? 0 : 1,
             transform: hideLabel ? 'scale(0.85)' : 'scale(1)',
-            transition: 'opacity 0.25s ease-out, transform 0.25s ease-out, margin-bottom 0.5s ease-out',
+            transition:
+              'opacity 0.25s ease-out, transform 0.25s ease-out, margin-bottom 0.5s ease-out',
           }}
         >
           <div className="relative inline-flex flex-col items-center">
@@ -88,7 +95,9 @@ const PinPerspective = ({
                 className={`font-bold text-white transition-all duration-300 ease-out ${hovered ? 'text-[22px]' : 'text-[16px]'}`}
                 style={{ lineHeight: 1 }}
               >
-                {(assetCount ?? 0) >= 1000 ? `${Math.round((assetCount ?? 0) / 1000)}k` : (assetCount ?? 0)}
+                {(assetCount ?? 0) >= 1000
+                  ? `${Math.round((assetCount ?? 0) / 1000)}k`
+                  : (assetCount ?? 0)}
               </span>
             </div>
           </div>

@@ -63,9 +63,7 @@ function AnimatedCounter({ value, isLoading }: { value: number; isLoading: boole
   });
 
   if (isLoading) {
-    return (
-      <div className="w-10 h-8 rounded bg-white/10 animate-pulse" />
-    );
+    return <div className="w-10 h-8 rounded bg-white/10 animate-pulse" />;
   }
 
   return (

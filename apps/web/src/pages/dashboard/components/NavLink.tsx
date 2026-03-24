@@ -102,7 +102,12 @@ export const NavLink = React.memo<NavLinkProps>(
         >
           <span
             className={isEngaged ? '' : 'chrome-gradient-icon'}
-            style={{ flexShrink: 0, transition: 'color 0.3s ease', position: 'relative', zIndex: 1 }}
+            style={{
+              flexShrink: 0,
+              transition: 'color 0.3s ease',
+              position: 'relative',
+              zIndex: 1,
+            }}
           >
             <Icon
               width={20}

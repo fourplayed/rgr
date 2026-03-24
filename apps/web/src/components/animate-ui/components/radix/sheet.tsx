@@ -71,7 +71,7 @@ const SheetContent = React.forwardRef<HTMLDivElement, SheetContentProps>(
           side === 'left' && 'h-full w-[350px] border-r',
           side === 'top' && 'w-full h-[350px] border-b',
           side === 'bottom' && 'w-full h-[350px] border-t',
-          className,
+          className
         )}
         side={side}
         {...props}
@@ -92,22 +92,14 @@ SheetContent.displayName = 'SheetContent';
 type SheetHeaderProps = SheetHeaderPrimitiveProps;
 
 function SheetHeader({ className, ...props }: SheetHeaderProps) {
-  return (
-    <SheetHeaderPrimitive
-      className={cn('flex flex-col gap-1.5 p-4', className)}
-      {...props}
-    />
-  );
+  return <SheetHeaderPrimitive className={cn('flex flex-col gap-1.5 p-4', className)} {...props} />;
 }
 
 type SheetFooterProps = SheetFooterPrimitiveProps;
 
 function SheetFooter({ className, ...props }: SheetFooterProps) {
   return (
-    <SheetFooterPrimitive
-      className={cn('mt-auto flex flex-col gap-2 p-4', className)}
-      {...props}
-    />
+    <SheetFooterPrimitive className={cn('mt-auto flex flex-col gap-2 p-4', className)} {...props} />
   );
 }
 
@@ -115,10 +107,7 @@ type SheetTitleProps = SheetTitlePrimitiveProps;
 
 function SheetTitle({ className, ...props }: SheetTitleProps) {
   return (
-    <SheetTitlePrimitive
-      className={cn('text-foreground font-semibold', className)}
-      {...props}
-    />
+    <SheetTitlePrimitive className={cn('text-foreground font-semibold', className)} {...props} />
   );
 }
 

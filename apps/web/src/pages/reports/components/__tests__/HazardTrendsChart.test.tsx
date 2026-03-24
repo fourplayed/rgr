@@ -7,7 +7,9 @@ import { HazardTrendsChart } from '../HazardTrendsChart';
 import type { HazardTrendPoint } from '@/services/analyticsService';
 
 vi.mock('recharts', () => ({
-  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div data-testid="chart-container">{children}</div>,
+  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="chart-container">{children}</div>
+  ),
   BarChart: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   LineChart: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   PieChart: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,

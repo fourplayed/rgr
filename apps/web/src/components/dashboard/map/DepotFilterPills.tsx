@@ -25,8 +25,12 @@ export function DepotFilterPills({ activeDepots, onDepotChange }: DepotFilterPil
   };
 
   const { row1, row2 } = useMemo(() => {
-    const r1 = ROW1_NAMES.map((name) => depots.find((d) => d.name === name)).filter(Boolean) as typeof depots;
-    const r2 = ROW2_NAMES.map((name) => depots.find((d) => d.name === name)).filter(Boolean) as typeof depots;
+    const r1 = ROW1_NAMES.map((name) => depots.find((d) => d.name === name)).filter(
+      Boolean
+    ) as typeof depots;
+    const r2 = ROW2_NAMES.map((name) => depots.find((d) => d.name === name)).filter(
+      Boolean
+    ) as typeof depots;
     const assigned = new Set([...ROW1_NAMES, ...ROW2_NAMES]);
     const extras = depots.filter((d) => !assigned.has(d.name));
     return { row1: r1, row2: [...r2, ...extras] };

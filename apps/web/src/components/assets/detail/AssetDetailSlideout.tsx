@@ -42,7 +42,16 @@ const TABS: { key: AssetDetailTab; label: string }[] = [
 ];
 
 export const AssetDetailSlideout = React.memo<AssetDetailSlideoutProps>(
-  ({ isDark, assetId, activeTab, canEdit, canDelete, onTabChange, onClose, noBackdrop = false }) => {
+  ({
+    isDark,
+    assetId,
+    activeTab,
+    canEdit,
+    canDelete,
+    onTabChange,
+    onClose,
+    noBackdrop = false,
+  }) => {
     const { data: asset, isLoading, isError } = useAsset(assetId);
 
     const borderColor = 'rgba(255,255,255,0.1)';
@@ -52,16 +61,16 @@ export const AssetDetailSlideout = React.memo<AssetDetailSlideoutProps>(
         open
         modal={!noBackdrop}
         disablePointerDismissal={noBackdrop}
-        onOpenChange={(open) => { if (!open) onClose(); }}
+        onOpenChange={(open) => {
+          if (!open) onClose();
+        }}
       >
         <SheetContent
           side="right"
           showCloseButton={false}
           showOverlay={!noBackdrop}
           className={`!w-[420px] !max-w-[50vw] !border-l-0 flex flex-col !p-0 !gap-0 ${
-            noBackdrop
-              ? '!rounded-l-2xl !bg-transparent !backdrop-blur-none !shadow-none'
-              : ''
+            noBackdrop ? '!rounded-l-2xl !bg-transparent !backdrop-blur-none !shadow-none' : ''
           }`}
         >
           {/* Inner container with glassmorphic styling */}
@@ -98,7 +107,7 @@ export const AssetDetailSlideout = React.memo<AssetDetailSlideoutProps>(
                     {isLoading ? (
                       <span className="inline-block h-6 w-24 rounded animate-pulse bg-slate-700" />
                     ) : (
-                      asset?.assetNumber ?? 'Unknown'
+                      (asset?.assetNumber ?? 'Unknown')
                     )}
                   </SheetTitle>
                   <SheetDescription className="text-xs text-slate-400">
@@ -117,9 +126,7 @@ export const AssetDetailSlideout = React.memo<AssetDetailSlideoutProps>(
                       <Pencil className="w-4 h-4" />
                     </button>
                   )}
-                  <SheetClose
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
-                  >
+                  <SheetClose className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors">
                     <X className="w-5 h-5" />
                     <span className="sr-only">Close</span>
                   </SheetClose>
@@ -161,10 +168,19 @@ export const AssetDetailSlideout = React.memo<AssetDetailSlideoutProps>(
               ) : asset ? (
                 <>
                   {activeTab === 'overview' && (
-                    <AssetOverviewTab asset={asset} isDark={isDark} canEdit={canEdit} canDelete={canDelete} />
+                    <AssetOverviewTab
+                      asset={asset}
+                      isDark={isDark}
+                      canEdit={canEdit}
+                      canDelete={canDelete}
+                    />
                   )}
-                  {activeTab === 'scans' && <AssetScanHistoryTab assetId={assetId} isDark={isDark} />}
-                  {activeTab === 'maintenance' && <AssetMaintenanceTab assetId={assetId} isDark={isDark} />}
+                  {activeTab === 'scans' && (
+                    <AssetScanHistoryTab assetId={assetId} isDark={isDark} />
+                  )}
+                  {activeTab === 'maintenance' && (
+                    <AssetMaintenanceTab assetId={assetId} isDark={isDark} />
+                  )}
                   {activeTab === 'hazards' && <AssetHazardsTab assetId={assetId} isDark={isDark} />}
                 </>
               ) : null}

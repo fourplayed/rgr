@@ -223,7 +223,9 @@ export const DepotAssetPanel: React.FC<DepotAssetPanelProps> = ({
                   borderRadius: '50%',
                   background: STATUS_COLORS[asset.status] || '#6b7280',
                   flexShrink: 0,
-                  boxShadow: isDark ? `0 0 4px ${STATUS_COLORS[asset.status] || '#6b7280'}50` : 'none',
+                  boxShadow: isDark
+                    ? `0 0 4px ${STATUS_COLORS[asset.status] || '#6b7280'}50`
+                    : 'none',
                 }}
               />
             </button>

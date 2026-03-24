@@ -13,7 +13,7 @@ const BALL_R = 7;
 
 const PIN_COLORS = {
   trailer: '#00e5ff', // neon cyan
-  dolly:   '#e040fb', // neon purple
+  dolly: '#e040fb', // neon purple
 } as const;
 
 /** Draw a pin: thin needle with a glowing sphere at the top */
@@ -65,14 +65,17 @@ export function registerAssetIcons(map: mapboxgl.Map, _isDark: boolean): void {
     const normalCanvas = new OffscreenCanvas(ICON_W, NORMAL_H);
     drawPin(normalCanvas.getContext('2d')!, color, ICON_W, NORMAL_H);
     if (map.hasImage(normalName)) map.removeImage(normalName);
-    map.addImage(normalName, normalCanvas.getContext('2d')!.getImageData(0, 0, ICON_W, NORMAL_H), { pixelRatio: 2 });
+    map.addImage(normalName, normalCanvas.getContext('2d')!.getImageData(0, 0, ICON_W, NORMAL_H), {
+      pixelRatio: 2,
+    });
 
     // Hover pin (2x needle height)
     const hoverName = `${category}-pin-hover`;
     const hoverCanvas = new OffscreenCanvas(ICON_W, HOVER_H);
     drawPin(hoverCanvas.getContext('2d')!, color, ICON_W, HOVER_H);
     if (map.hasImage(hoverName)) map.removeImage(hoverName);
-    map.addImage(hoverName, hoverCanvas.getContext('2d')!.getImageData(0, 0, ICON_W, HOVER_H), { pixelRatio: 2 });
+    map.addImage(hoverName, hoverCanvas.getContext('2d')!.getImageData(0, 0, ICON_W, HOVER_H), {
+      pixelRatio: 2,
+    });
   }
-
 }

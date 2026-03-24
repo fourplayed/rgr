@@ -36,7 +36,9 @@ interface NavGroup {
 const navGroups: NavGroup[] = [
   {
     title: 'Dashboard',
-    items: [{ label: 'Dashboard', href: '/dashboard', icon: IoDesktopOutline, iconFilled: IoDesktop }],
+    items: [
+      { label: 'Dashboard', href: '/dashboard', icon: IoDesktopOutline, iconFilled: IoDesktop },
+    ],
   },
   {
     title: 'Assets',

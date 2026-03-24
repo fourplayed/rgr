@@ -23,39 +23,16 @@ export function WelcomePresenter({ state, actions }: WelcomePresenterProps) {
   const { handleGetStarted, navigateTo } = actions;
 
   return (
-    <div
-      className="relative min-h-screen overflow-y-auto"
-      style={{ zIndex: 1 }}
-    >
-      <WelcomeHeader
-        user={user}
-        isDark={isDark}
-        delay={0}
-      />
+    <div className="relative min-h-screen overflow-y-auto" style={{ zIndex: 1 }}>
+      <WelcomeHeader user={user} isDark={isDark} delay={0} />
 
-      <FleetOverview
-        stats={stats}
-        isLoading={isStatsLoading}
-        isDark={isDark}
-        delay={STAGGER_MS}
-      />
+      <FleetOverview stats={stats} isLoading={isStatsLoading} isDark={isDark} delay={STAGGER_MS} />
 
-      <QuickActions
-        isDark={isDark}
-        delay={STAGGER_MS * 2}
-        onNavigate={navigateTo}
-      />
+      <QuickActions isDark={isDark} delay={STAGGER_MS * 2} onNavigate={navigateTo} />
 
-      <AlertsSummary
-        isDark={isDark}
-        delay={STAGGER_MS * 3}
-      />
+      <AlertsSummary isDark={isDark} delay={STAGGER_MS * 3} />
 
-      <GetStartedCTA
-        isDark={isDark}
-        delay={STAGGER_MS * 4}
-        onGetStarted={handleGetStarted}
-      />
+      <GetStartedCTA isDark={isDark} delay={STAGGER_MS * 4} onGetStarted={handleGetStarted} />
     </div>
   );
 }

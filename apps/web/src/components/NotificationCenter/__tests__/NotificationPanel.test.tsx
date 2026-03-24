@@ -19,7 +19,9 @@ vi.mock('lucide-react', () => ({
 // Mock motion/react to avoid animation issues in tests
 vi.mock('motion/react', () => ({
   motion: {
-    div: ({ children, ...props }: Record<string, unknown>) => <div {...props}>{children as React.ReactNode}</div>,
+    div: ({ children, ...props }: Record<string, unknown>) => (
+      <div {...props}>{children as React.ReactNode}</div>
+    ),
   },
   AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
