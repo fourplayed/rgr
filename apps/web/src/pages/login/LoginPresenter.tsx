@@ -64,7 +64,7 @@ export function LoginPresenter({
   onNavigationReady,
 }: LoginPresenterProps) {
   // Global theme state from unified context
-  const { isDark } = useTheme();
+  const { isDark, toggleTheme } = useTheme();
 
   // Flip animation for form switching
   const { showForgotPassword, handleFlipToForgotPassword, handleFlipToLogin } = useFlipAnimation();
@@ -106,7 +106,7 @@ export function LoginPresenter({
     >
       {/* Theme toggle button - positioned at top-right of screen */}
       <div className="absolute top-6 right-6 z-30">
-        <ThemeToggle isDark={isDark} />
+        <ThemeToggle isDark={isDark} onToggle={toggleTheme} />
       </div>
 
       {/* Exit slide wrapper - slides logo + card + errors left on auth success */}

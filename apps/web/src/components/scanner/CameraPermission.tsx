@@ -1,7 +1,7 @@
 import { memo, type ReactNode } from 'react';
 import { Camera, AlertTriangle, CheckCircle, XCircle, Settings, LucideIcon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 
 /**
  * Permission states for camera access

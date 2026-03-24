@@ -14,28 +14,15 @@ import {
 import { buttonVariants } from '@/components/animate-ui/components/buttons/icon';
 import { cn } from '@/lib/utils';
 
-const getIcon = (
-  effective: ThemeSelection,
-  resolved: Resolved,
-  modes: ThemeSelection[],
-) => {
+const getIcon = (effective: ThemeSelection, resolved: Resolved, modes: ThemeSelection[]) => {
   const theme = modes.includes('system') ? effective : resolved;
-  return theme === 'system' ? (
-    <Monitor />
-  ) : theme === 'dark' ? (
-    <Moon />
-  ) : (
-    <Sun />
-  );
+  return theme === 'system' ? <Monitor /> : theme === 'dark' ? <Moon /> : <Sun />;
 };
 
-const getNextTheme = (
-  effective: ThemeSelection,
-  modes: ThemeSelection[],
-): ThemeSelection => {
+const getNextTheme = (effective: ThemeSelection, modes: ThemeSelection[]): ThemeSelection => {
   const i = modes.indexOf(effective);
-  if (i === -1) return modes[0];
-  return modes[(i + 1) % modes.length];
+  if (i === -1) return modes[0] as ThemeSelection;
+  return modes[(i + 1) % modes.length] as ThemeSelection;
 };
 
 type ThemeTogglerButtonProps = React.ComponentProps<'button'> &
@@ -63,7 +50,7 @@ function ThemeTogglerButton({
       resolvedTheme={resolvedTheme as Resolved}
       setTheme={setTheme}
       direction={direction}
-      onImmediateChange={onImmediateChange}
+      {...(onImmediateChange !== undefined ? { onImmediateChange } : {})}
     >
       {({ effective, resolved, toggleTheme }) => (
         <button

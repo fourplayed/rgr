@@ -57,6 +57,7 @@ function FlipButton({
 
   return (
     <FlipButtonProvider value={{ from, isVertical, rotateAxis }}>
+      {/* @ts-expect-error -- exactOptionalPropertyTypes: spreaded motion props may contain explicit undefined values */}
       <Component
         data-slot="flip-button"
         initial="initial"
@@ -106,6 +107,7 @@ function FlipButtonFront({
   const Component = asChild ? Slot : motion.span;
 
   return (
+    // @ts-expect-error -- exactOptionalPropertyTypes: spreaded motion props may contain explicit undefined values
     <Component
       data-slot="flip-button-front"
       variants={frontVariants}
@@ -152,6 +154,7 @@ function FlipButtonBack({
   const Component = asChild ? Slot : motion.span;
 
   return (
+    // @ts-expect-error -- exactOptionalPropertyTypes: spreaded motion props may contain explicit undefined values
     <Component
       data-slot="flip-button-back"
       variants={backVariants}

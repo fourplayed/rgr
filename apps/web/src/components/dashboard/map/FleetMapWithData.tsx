@@ -192,7 +192,9 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
       assets: DepotAsset[];
     } | null>(null);
     // Asset detail slideout state (triggered from Explore)
-    const [exploreAsset, setExploreAsset] = useState<{ id: string; depotColor: string } | null>(null);
+    const [exploreAsset, setExploreAsset] = useState<{ id: string; depotColor: string } | null>(
+      null
+    );
     const [exploreAssetTab, setExploreAssetTab] = useState<AssetDetailTab>('overview');
     // Whether explore mode is active (disables radar, shows asset dots)
     const [exploreMode, setExploreMode] = useState(false);
@@ -328,7 +330,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
           maxZoom: 13,
           maxBounds: [
             [105, -40], // SW corner (Western Australia + padding)
-            [135, -8],  // NE corner
+            [135, -8], // NE corner
           ],
           attributionControl: false,
         });
@@ -352,7 +354,9 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         mapInstance.on('dataloading', (e) => {
           if (!isMounted) return;
           tileCountRef.current.pending++;
-          const label = (e.sourceId && sourceLabels[e.sourceId]) || e.dataType || 'Map data';
+          // SAFETY: mapbox-gl emits sourceId on data events but the TS types don't include it
+          const sourceId = (e as Record<string, unknown>)['sourceId'] as string | undefined;
+          const label = (sourceId && sourceLabels[sourceId]) || e.dataType || 'Map data';
           setLoadingStatus({
             loading: true,
             source: `Loading ${label}...`,
@@ -366,7 +370,9 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
           if (tileCountRef.current.pending > 0) tileCountRef.current.pending--;
           tileCountRef.current.loaded++;
           const total = tileCountRef.current.loaded + tileCountRef.current.pending;
-          const label = (e.sourceId && sourceLabels[e.sourceId]) || e.dataType || 'Map data';
+          // SAFETY: mapbox-gl emits sourceId on data events but the TS types don't include it
+          const sourceId = (e as Record<string, unknown>)['sourceId'] as string | undefined;
+          const label = (sourceId && sourceLabels[sourceId]) || e.dataType || 'Map data';
           setLoadingStatus({
             loading: tileCountRef.current.pending > 0,
             source: tileCountRef.current.pending > 0 ? `Loading ${label}...` : 'Ready',
@@ -530,9 +536,10 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         const depotName = depot.name;
         const isActive = filteredDepotNames.includes(depotName) || hoveredDepot === depotName;
         // While scanning, show the live scanned count; otherwise show the full count
-        const count = isActive && scannedCounts[depotName] != null
-          ? scannedCounts[depotName]
-          : depotAssetCounts[depot.name] || 0;
+        const count =
+          isActive && scannedCounts[depotName] != null
+            ? scannedCounts[depotName]
+            : depotAssetCounts[depot.name] || 0;
         const isFiltered = filteredDepotNames.includes(depotName);
         const tooltipActive = tooltipDepot?.name === depotName;
         root.render(
@@ -546,7 +553,16 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
           />
         );
       });
-    }, [depotAssetCounts, depotAssets, activeDepot, isDark, hoveredDepot, filteredDepotNames, scannedCounts, tooltipDepot?.name]);
+    }, [
+      depotAssetCounts,
+      depotAssets,
+      activeDepot,
+      isDark,
+      hoveredDepot,
+      filteredDepotNames,
+      scannedCounts,
+      tooltipDepot?.name,
+    ]);
 
     // DOM-overlay pulsing rings — supports multiple simultaneous animations
     interface DepotAnim {
@@ -632,7 +648,6 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         });
       };
 
-
       /** Trace a geo-projected ring path (no stroke/fill — caller decides) */
       const traceGeoPath = (pts: { x: number; y: number }[]) => {
         ctx.beginPath();
@@ -643,7 +658,6 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         ctx.closePath();
       };
 
-
       /** Draw hi-tech scan overlay — all geometry geo-projected so it lies flat on the map. */
       const drawScanOverlay = (
         depot: DepotLocation,
@@ -652,7 +666,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         radiusKm: number,
         baseAlpha: number,
         now: number,
-        startTime: number,
+        startTime: number
       ) => {
         if (radiusKm < 0.5) return;
         const { center, offsetX, offsetY } = getDepotCenter(depot, depotIdx);
@@ -682,11 +696,8 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
           ctx.setLineDash([]);
         }
 
-
         ctx.restore();
       };
-
-
 
       const animate = () => {
         if (!map.current || !canvas) return;
@@ -711,7 +722,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
 
         anims.forEach((anim, name) => {
           const { depot, color } = anim;
-          const depotIdx = depotLocations.findIndex(d => d.name === name);
+          const depotIdx = depotLocations.findIndex((d) => d.name === name);
 
           if (anim.phase === 'expanding' || anim.phase === 'steady') {
             const elapsed = now - anim.startTime;
@@ -737,7 +748,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
                 const dLng = asset.longitude - depot.lng;
                 const distKm = Math.sqrt(
                   (dLat * 111.32) ** 2 +
-                  (dLng * 111.32 * Math.cos((depot.lat * Math.PI) / 180)) ** 2
+                    (dLng * 111.32 * Math.cos((depot.lat * Math.PI) / 180)) ** 2
                 );
                 if (distKm <= currentRadius) {
                   scanned.add(asset.id);
@@ -854,7 +865,8 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
             // Canvas overlay for glowing dot + tail + route trail (renders ABOVE the map)
             const canvas = document.createElement('canvas');
             canvas.className = 'route-dot-overlay';
-            canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:35;';
+            canvas.style.cssText =
+              'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:35;';
             container.appendChild(canvas);
             const ctx = canvas.getContext('2d');
             if (!ctx) return;
@@ -909,7 +921,10 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
               if (tripDone) return;
 
               const pts = screenPts();
-              if (pts.length < 2) { routeAnimFrame.current = requestAnimationFrame(animate); return; }
+              if (pts.length < 2) {
+                routeAnimFrame.current = requestAnimationFrame(animate);
+                return;
+              }
               const dists = cumDist(pts);
 
               const elapsed = performance.now() - startTime;
@@ -963,7 +978,14 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
               if (!isFinite(headPos.x) || !isFinite(headPos.y)) return;
 
               // Outer glow
-              const grad = ctx.createRadialGradient(headPos.x, headPos.y, 0, headPos.x, headPos.y, 16);
+              const grad = ctx.createRadialGradient(
+                headPos.x,
+                headPos.y,
+                0,
+                headPos.x,
+                headPos.y,
+                16
+              );
               grad.addColorStop(0, 'rgba(191, 0, 255, 0.8)');
               grad.addColorStop(0.3, 'rgba(191, 0, 255, 0.35)');
               grad.addColorStop(1, 'rgba(191, 0, 255, 0)');
@@ -1003,7 +1025,9 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
             mapInstance.once('style.load', setup);
           }
         })
-        .catch(() => { /* route is a visual enhancement */ });
+        .catch(() => {
+          /* route is a visual enhancement */
+        });
 
       return () => {
         cancelled = true;
@@ -1158,7 +1182,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
             });
             // Reset scanned assets — badge will recount from 0
             scannedAssetIdsRef.current.set(name, new Set());
-              setScannedCounts((prev) => ({ ...prev, [name]: 0 }));
+            setScannedCounts((prev) => ({ ...prev, [name]: 0 }));
           }
         } else {
           // Re-activating a depot that's collapsing — restart expand
@@ -1169,7 +1193,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
             anim.pulseStartTime = null;
             // Reset scan for recount
             scannedAssetIdsRef.current.set(name, new Set());
-              setScannedCounts((prev) => ({ ...prev, [name]: 0 }));
+            setScannedCounts((prev) => ({ ...prev, [name]: 0 }));
           }
         }
       });
@@ -1415,16 +1439,22 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
               'circle-pitch-alignment': 'map',
               'circle-radius': ['match', ['get', 'category'], 'trailer', 7, 'dolly', 5.5, 6],
               'circle-color': [
-                'match', ['get', 'category'],
-                'trailer', categoryColors['trailer'],
-                'dolly', categoryColors['dolly'],
+                'match',
+                ['get', 'category'],
+                'trailer',
+                categoryColors['trailer'],
+                'dolly',
+                categoryColors['dolly'],
                 defaultFill,
               ],
               'circle-stroke-width': 1.5,
               'circle-stroke-color': [
-                'match', ['get', 'category'],
-                'trailer', categoryColors['trailer'],
-                'dolly', categoryColors['dolly'],
+                'match',
+                ['get', 'category'],
+                'trailer',
+                categoryColors['trailer'],
+                'dolly',
+                categoryColors['dolly'],
                 defaultFill,
               ],
               'circle-opacity': 1,
@@ -1441,9 +1471,12 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
             slot: 'top',
             layout: {
               'icon-image': [
-                'match', ['get', 'category'],
-                'trailer', 'trailer-pin',
-                'dolly', 'dolly-pin',
+                'match',
+                ['get', 'category'],
+                'trailer',
+                'trailer-pin',
+                'dolly',
+                'dolly-pin',
                 'trailer-pin',
               ],
               'icon-size': 0.9,
@@ -1479,7 +1512,12 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
             paint: {
               'text-color': ['case', ['==', ['get', 'active'], 1], '#000000', '#ffffff'],
               'text-color-transition': { duration: 400, delay: 0 },
-              'text-halo-color': ['case', ['==', ['get', 'active'], 1], 'rgba(191,0,255,0.8)', 'rgba(0,0,0,0.7)'],
+              'text-halo-color': [
+                'case',
+                ['==', ['get', 'active'], 1],
+                'rgba(191,0,255,0.8)',
+                'rgba(0,0,0,0.7)',
+              ],
               'text-halo-color-transition': { duration: 400, delay: 0 },
               'text-halo-width': ['case', ['==', ['get', 'active'], 1], 3, 1.5],
               'text-halo-width-transition': { duration: 400, delay: 0 },
@@ -1855,12 +1893,19 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         }
         return points;
       };
-      const pointInPoly = (px: number, py: number, polygon: { x: number; y: number }[]): boolean => {
+      const pointInPoly = (
+        px: number,
+        py: number,
+        polygon: { x: number; y: number }[]
+      ): boolean => {
         let inside = false;
         for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
           const pi = polygon[i]!;
           const pj = polygon[j]!;
-          if (pi.y > py !== pj.y > py && px < ((pj.x - pi.x) * (py - pi.y)) / (pj.y - pi.y) + pi.x) {
+          if (
+            pi.y > py !== pj.y > py &&
+            px < ((pj.x - pi.x) * (py - pi.y)) / (pj.y - pi.y) + pi.x
+          ) {
             inside = !inside;
           }
         }
@@ -1891,8 +1936,12 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
             const minTopY = Math.min(...topPoly.map((p) => p.y));
             const maxBotY = Math.max(...bottomPoly.map((p) => p.y));
             if (my >= minTopY && my <= maxBotY) {
-              let minX = Infinity, maxX = -Infinity;
-              for (const p of bottomPoly) { if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x; }
+              let minX = Infinity,
+                maxX = -Infinity;
+              for (const p of bottomPoly) {
+                if (p.x < minX) minX = p.x;
+                if (p.x > maxX) maxX = p.x;
+              }
               inWalls = mx >= minX && mx <= maxX;
             }
           }
@@ -1908,7 +1957,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
         }
 
         if (clickedDepot) {
-          const depot = depotLocations.find(d => d.name === clickedDepot)!;
+          const depot = depotLocations.find((d) => d.name === clickedDepot)!;
           const depotColor = isValidHexColor(depot.color) ? depot.color : DEFAULT_DEPOT_COLOR;
           const pos = mapInstance.project([depot.lng, depot.lat]);
           setTooltipDepot({
@@ -1923,21 +1972,25 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
       };
 
       mapInstance.on('click', handler);
-      return () => { mapInstance.off('click', handler); };
+      return () => {
+        mapInstance.off('click', handler);
+      };
     }, [mapLoaded, depotLocations, depotAssets]);
 
     // Update tooltip position on map move
     useEffect(() => {
       if (!map.current || !mapLoaded || !tooltipDepot) return;
-      const depot = depotLocations.find(d => d.name === tooltipDepot.name);
+      const depot = depotLocations.find((d) => d.name === tooltipDepot.name);
       if (!depot) return;
       const mapInstance = map.current;
       const handler = () => {
         const pos = mapInstance.project([depot.lng, depot.lat]);
-        setTooltipDepot(prev => prev ? { ...prev, position: { x: pos.x, y: pos.y } } : null);
+        setTooltipDepot((prev) => (prev ? { ...prev, position: { x: pos.x, y: pos.y } } : null));
       };
       mapInstance.on('move', handler);
-      return () => { mapInstance.off('move', handler); };
+      return () => {
+        mapInstance.off('move', handler);
+      };
     }, [mapLoaded, tooltipDepot?.name, depotLocations]);
 
     return (
@@ -2069,14 +2122,13 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
               activeAssetId={exploreAsset?.id ?? null}
               onAssetSelect={(asset) => {
                 if (map.current) {
-
                   map.current.flyTo({
                     center: [asset.longitude, asset.latitude],
                     zoom: 13,
                     duration: 1200,
                     essential: true,
                   });
-                  }
+                }
                 setExploreAsset({ id: asset.id, depotColor: explorePanelDepot.color });
                 setExploreAssetTab('overview');
               }}
@@ -2086,9 +2138,13 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
                 const idx = assets.findIndex((a) => a.id === exploreAsset?.id);
                 const prev = assets[(idx - 1 + assets.length) % assets.length];
                 if (prev && map.current) {
-
-                  map.current.flyTo({ center: [prev.longitude, prev.latitude], zoom: 13, duration: 1200, essential: true });
-                    setExploreAsset({ id: prev.id, depotColor: explorePanelDepot.color });
+                  map.current.flyTo({
+                    center: [prev.longitude, prev.latitude],
+                    zoom: 13,
+                    duration: 1200,
+                    essential: true,
+                  });
+                  setExploreAsset({ id: prev.id, depotColor: explorePanelDepot.color });
                   setExploreAssetTab('overview');
                 }
               }}
@@ -2098,9 +2154,13 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
                 const idx = assets.findIndex((a) => a.id === exploreAsset?.id);
                 const next = assets[(idx + 1) % assets.length];
                 if (next && map.current) {
-
-                  map.current.flyTo({ center: [next.longitude, next.latitude], zoom: 13, duration: 1200, essential: true });
-                    setExploreAsset({ id: next.id, depotColor: explorePanelDepot.color });
+                  map.current.flyTo({
+                    center: [next.longitude, next.latitude],
+                    zoom: 13,
+                    duration: 1200,
+                    essential: true,
+                  });
+                  setExploreAsset({ id: next.id, depotColor: explorePanelDepot.color });
                   setExploreAssetTab('overview');
                 }
               }}
@@ -2169,9 +2229,10 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
                   height: '100%',
                   borderRadius: 2,
                   background: 'linear-gradient(90deg, #bf00ff, #60a5fa)',
-                  width: loadingStatus.tilesTotal > 0
-                    ? `${Math.min((loadingStatus.tilesLoaded / loadingStatus.tilesTotal) * 100, 100)}%`
-                    : '0%',
+                  width:
+                    loadingStatus.tilesTotal > 0
+                      ? `${Math.min((loadingStatus.tilesLoaded / loadingStatus.tilesTotal) * 100, 100)}%`
+                      : '0%',
                   transition: 'width 0.3s ease-out',
                 }}
               />

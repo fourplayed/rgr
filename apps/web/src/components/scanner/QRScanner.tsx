@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import { Camera, CameraOff, RefreshCw, SwitchCamera, CheckCircle, Sparkles } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/Button';
 import { useQRScanner } from '@/hooks/useQRScanner';
 
 // SAFLA 100/100 Compliance - Constants block for all numeric values

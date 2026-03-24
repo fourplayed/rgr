@@ -1,8 +1,8 @@
 import { useState, useCallback, FormEvent } from 'react';
 import { Search, QrCode, AlertCircle, CheckCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Card } from '@/components/ui/Card';
 import { isValidQRCode, extractAssetInfo, isAssetNumber } from '@rgr/shared';
 
 interface ManualEntryProps {
@@ -187,7 +187,9 @@ export default function ManualEntry({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="relative">
-            <label htmlFor="manual-entry-input" className="text-sm font-medium text-foreground">QR Code or Asset Number</label>
+            <label htmlFor="manual-entry-input" className="text-sm font-medium text-foreground">
+              QR Code or Asset Number
+            </label>
             <Input
               id="manual-entry-input"
               placeholder="rgr://asset/... or TL001"
@@ -199,7 +201,9 @@ export default function ManualEntry({
             />
             <div className="absolute right-3 top-8">{getStatusIcon()}</div>
             {displayError && <p className="text-sm text-destructive mt-1">{displayError}</p>}
-            {!displayError && getFormatHint() && <p className="text-sm text-muted-foreground mt-1">{getFormatHint()}</p>}
+            {!displayError && getFormatHint() && (
+              <p className="text-sm text-muted-foreground mt-1">{getFormatHint()}</p>
+            )}
           </div>
 
           {/* Format Examples */}
@@ -224,11 +228,7 @@ export default function ManualEntry({
           </div>
 
           <div className="flex gap-3">
-            <Button
-              type="submit"
-              disabled={isLoading || !parseResult?.isValid}
-              className="flex-1"
-            >
+            <Button type="submit" disabled={isLoading || !parseResult?.isValid} className="flex-1">
               <Search className="w-4 h-4 mr-2" />
               Look Up Asset
             </Button>

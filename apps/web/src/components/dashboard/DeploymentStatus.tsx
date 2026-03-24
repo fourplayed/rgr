@@ -25,7 +25,7 @@ import {
   Minus,
 } from 'lucide-react';
 import { VisionCard } from './vision/VisionCard';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@/components/ui/Badge';
 import { useDeploymentStatus } from '@/hooks/useDeploymentStatus';
 import type { WorkflowRun, WorkflowFilter } from './types/deployment';
 

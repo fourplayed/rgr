@@ -4,10 +4,7 @@ import * as React from 'react';
 import { motion, AnimatePresence, type HTMLMotionProps } from 'motion/react';
 
 import { Slot, type WithAsChild } from '@/components/animate-ui/primitives/animate/slot';
-import {
-  useIsInView,
-  type UseIsInViewOptions,
-} from '@/hooks/use-is-in-view';
+import { useIsInView, type UseIsInViewOptions } from '@/hooks/use-is-in-view';
 import { getStrictContext } from '@/lib/get-strict-context';
 
 type Side = 'top' | 'bottom' | 'left' | 'right';
@@ -39,20 +36,17 @@ function Particles({
   style,
   ...props
 }: ParticlesProps) {
-  const { ref: localRef, isInView } = useIsInView(
-    ref as React.Ref<HTMLDivElement>,
-    { inView, inViewOnce, inViewMargin },
-  );
+  const { ref: localRef, isInView } = useIsInView(ref as React.Ref<HTMLDivElement>, {
+    inView,
+    inViewOnce,
+    inViewMargin,
+  });
 
   const Component = asChild ? Slot : motion.div;
 
   return (
     <ParticlesProvider value={{ animate, isInView }}>
-      <Component
-        ref={localRef}
-        style={{ position: 'relative', ...style }}
-        {...props}
-      >
+      <Component ref={localRef} style={{ position: 'relative', ...style }} {...props}>
         {children}
       </Component>
     </ParticlesProvider>
@@ -125,6 +119,7 @@ function ParticlesEffect({
           return (
             <motion.div
               key={i}
+              // @ts-expect-error -- MotionStyle incompatible with CSSProperties spread under exactOptionalPropertyTypes
               style={{ ...containerStyle, ...style }}
               initial={{ scale: 0, opacity: 0 }}
               animate={{
@@ -147,9 +142,4 @@ function ParticlesEffect({
   );
 }
 
-export {
-  Particles,
-  ParticlesEffect,
-  type ParticlesProps,
-  type ParticlesEffectProps,
-};
+export { Particles, ParticlesEffect, type ParticlesProps, type ParticlesEffectProps };

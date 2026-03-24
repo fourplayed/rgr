@@ -20,7 +20,11 @@ import React, { useMemo } from 'react';
 import { motion } from 'motion/react';
 import { X } from 'lucide-react';
 import type { DepotAsset } from './depotTypes';
-import { FlipButton, FlipButtonFront, FlipButtonBack } from '@/components/animate-ui/components/buttons/flip';
+import {
+  FlipButton,
+  FlipButtonFront,
+  FlipButtonBack,
+} from '@/components/animate-ui/components/buttons/flip';
 
 export interface DepotClusterTooltipProps {
   depotName: string;
@@ -42,8 +46,9 @@ export const DepotClusterTooltip = React.memo<DepotClusterTooltipProps>(
     const statusCounts = useMemo(() => {
       const counts: Record<string, number> = { serviced: 0, maintenance: 0, out_of_service: 0 };
       for (const asset of assets) {
-        if (asset.status in counts) {
-          counts[asset.status]++;
+        const current = counts[asset.status];
+        if (current !== undefined) {
+          counts[asset.status] = current + 1;
         }
       }
       return counts;
@@ -51,13 +56,10 @@ export const DepotClusterTooltip = React.memo<DepotClusterTooltipProps>(
 
     const trailerCount = useMemo(
       () => assets.filter((a) => a.category === 'trailer').length,
-      [assets],
+      [assets]
     );
 
-    const dollyCount = useMemo(
-      () => assets.filter((a) => a.category === 'dolly').length,
-      [assets],
-    );
+    const dollyCount = useMemo(() => assets.filter((a) => a.category === 'dolly').length, [assets]);
 
     return (
       <motion.div
@@ -139,13 +141,41 @@ export const DepotClusterTooltip = React.memo<DepotClusterTooltipProps>(
           }}
         >
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <span style={{ color: '#fff', fontSize: 24, fontWeight: 800, lineHeight: 1 }}>{trailerCount}</span>
-            <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 2 }}>Trailers</span>
+            <span style={{ color: '#fff', fontSize: 24, fontWeight: 800, lineHeight: 1 }}>
+              {trailerCount}
+            </span>
+            <span
+              style={{
+                color: 'rgba(255,255,255,0.4)',
+                fontSize: 9,
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                marginTop: 2,
+              }}
+            >
+              Trailers
+            </span>
           </div>
-          <span style={{ color: 'rgba(255,255,255,0.15)', fontSize: 20, alignSelf: 'center' }}>|</span>
+          <span style={{ color: 'rgba(255,255,255,0.15)', fontSize: 20, alignSelf: 'center' }}>
+            |
+          </span>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <span style={{ color: '#fff', fontSize: 24, fontWeight: 800, lineHeight: 1 }}>{dollyCount}</span>
-            <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 2 }}>Dollies</span>
+            <span style={{ color: '#fff', fontSize: 24, fontWeight: 800, lineHeight: 1 }}>
+              {dollyCount}
+            </span>
+            <span
+              style={{
+                color: 'rgba(255,255,255,0.4)',
+                fontSize: 9,
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                marginTop: 2,
+              }}
+            >
+              Dollies
+            </span>
           </div>
         </div>
 
@@ -187,7 +217,11 @@ export const DepotClusterTooltip = React.memo<DepotClusterTooltipProps>(
 
         {/* Explore button */}
         <div style={{ padding: '6px 12px 10px' }}>
-          <FlipButton onClick={onExplore} className="w-full explore-flip-btn" style={{ pointerEvents: 'auto' }}>
+          <FlipButton
+            onClick={onExplore}
+            className="w-full explore-flip-btn"
+            style={{ pointerEvents: 'auto' }}
+          >
             <FlipButtonFront
               className="w-full"
               style={{
@@ -242,7 +276,7 @@ export const DepotClusterTooltip = React.memo<DepotClusterTooltipProps>(
         </div>
       </motion.div>
     );
-  },
+  }
 );
 
 DepotClusterTooltip.displayName = 'DepotClusterTooltip';
