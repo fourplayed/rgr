@@ -529,7 +529,10 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
     }, [mapLoaded, depotLocations, isDark, depotAssetCounts, depotAssets]);
 
     // Keep badge counts and hover state in sync
-    const filteredDepotNames = Array.isArray(filters.depot) ? filters.depot : [];
+    const filteredDepotNames = useMemo(
+      () => (Array.isArray(filters.depot) ? filters.depot : []),
+      [filters.depot]
+    );
     useEffect(() => {
       depotPopupRoots.current.forEach(({ root, depot }, _idx) => {
         const depotColor = isValidHexColor(depot.color) ? depot.color : DEFAULT_DEPOT_COLOR;
@@ -1991,7 +1994,7 @@ const FleetMapWithDataInner = forwardRef<FleetMapHandle, FleetMapWithDataProps>(
       return () => {
         mapInstance.off('move', handler);
       };
-    }, [mapLoaded, tooltipDepot?.name, depotLocations]);
+    }, [mapLoaded, tooltipDepot?.name, tooltipDepot, depotLocations]);
 
     return (
       <div
