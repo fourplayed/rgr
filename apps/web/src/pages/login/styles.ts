@@ -19,7 +19,7 @@ export const CARD_HEIGHT = 565;
 export const CARD_STYLES = {
   // Card styling - Light (chrome glassmorphism)
   light: {
-    background: 'rgba(0, 0, 0, 0.25)',
+    background: 'rgba(255, 255, 255, 0.65)',
     borderRadius: '0',
     border: 'none',
     boxShadow: 'none',
@@ -65,9 +65,9 @@ export const CARD_STYLES = {
 export const INPUT_STYLES = {
   // Light theme - simple border like dark theme (no fancy focus effects)
   light: {
-    backgroundColor: 'rgba(120, 130, 145, 0.35)',
-    border: '1px solid rgba(200, 210, 220, 0.6)',
-    color: '#cbd5e1', // slate
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    border: '1px solid rgba(0, 0, 48, 0.15)',
+    color: '#1E293B',
     outline: 'none',
   },
   // Removed lightFocus - no longer used

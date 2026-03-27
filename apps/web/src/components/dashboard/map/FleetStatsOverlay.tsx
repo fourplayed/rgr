@@ -8,7 +8,15 @@
 import { useFleetStatistics } from '@/hooks/useFleetData';
 
 const CARD =
-  'pointer-events-auto bg-[rgba(0,0,0,0.55)] backdrop-blur-xl border border-white/[0.12] rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] p-4';
+  'pointer-events-auto backdrop-blur-xl rounded-xl p-4 bg-[rgba(255,255,255,0.75)] border border-[rgba(0,0,48,0.08)] shadow-[0_8px_32px_rgba(0,0,0,0.1)] dark:bg-[rgba(0,0,0,0.55)] dark:border-white/[0.12] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5)]';
+
+/* Text color utility classes for light/dark theme support within stat cards */
+const TEXT_PRIMARY = 'text-[#1E293B] dark:text-white';
+const TEXT_SECONDARY = 'text-[#475569] dark:text-white/60';
+const TEXT_MUTED = 'text-[#64748B] dark:text-white/40';
+const TEXT_SEMI = 'text-[#334155] dark:text-white/70';
+const TEXT_DIM = 'text-[#64748B] dark:text-white/50';
+const BAR_BG = 'bg-[#D0D4DA] dark:bg-white/10';
 
 const STATUS_ROWS = [
   { key: 'totalAssets', label: 'Total', color: '#3b82f6' },

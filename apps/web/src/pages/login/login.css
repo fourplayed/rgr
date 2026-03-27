@@ -13,32 +13,32 @@
 
 /* Light theme button */
 .chrome-button-light {
-  background: linear-gradient(to bottom, #0000cc 0%, #0000aa 50%, #000088 100%);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  background: linear-gradient(to bottom, #1a1a99 0%, #2929cc 50%, #1a1a99 100%);
+  border: 1px solid rgba(26, 26, 153, 0.3);
   box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.5),
-    0 1px 2px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    0 1px 2px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .chrome-button-light:hover {
   box-shadow:
-    0 3px 4px rgba(0, 0, 0, 0.6),
-    0 2px 3px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    0 3px 6px rgba(26, 26, 153, 0.35),
+    0 2px 3px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
 .chrome-button-light:active {
   box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.4),
-    inset 0 1px 2px rgba(0, 0, 0, 0.3);
+    0 1px 2px rgba(0, 0, 0, 0.2),
+    inset 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .chrome-button-light::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, #0000ff 0%, #0000cc 50%, #0000aa 100%);
+  background: linear-gradient(to bottom, #2929cc 0%, #1a1a99 50%, #2929cc 100%);
   background-size: 200% 200%;
   background-position: 0% 50%;
   opacity: 0;
@@ -181,7 +181,7 @@
 }
 
 .themed-input-light:focus {
-  background-color: rgba(100, 110, 130, 0.45) !important;
+  background-color: rgba(255, 255, 255, 0.85) !important;
 }
 
 /* Remove browser autocomplete background styling */
@@ -199,9 +199,9 @@
 .themed-input-light:-webkit-autofill:hover,
 .themed-input-light:-webkit-autofill:focus,
 .themed-input-light:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 1000px rgba(120, 130, 145, 0.35) inset !important;
-  box-shadow: 0 0 0 1000px rgba(120, 130, 145, 0.35) inset !important;
-  -webkit-text-fill-color: #ffffff !important;
+  -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.7) inset !important;
+  box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.7) inset !important;
+  -webkit-text-fill-color: #1e293b !important;
   transition: background-color 5000s ease-in-out 0s;
 }
 

@@ -33,10 +33,10 @@ export const CONTENT_PANEL_STYLES = {
     borderRadius: '12px',
   },
   light: {
-    background: 'rgba(0, 0, 48, 0.45)',
+    background: 'rgba(255, 255, 255, 0.75)',
     backdropFilter: 'blur(16px)',
     WebkitBackdropFilter: 'blur(16px)',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
+    border: '1px solid rgba(0, 0, 48, 0.08)',
     borderRadius: '12px',
   },
 } as const;
