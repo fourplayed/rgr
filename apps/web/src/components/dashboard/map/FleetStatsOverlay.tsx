@@ -1,8 +1,9 @@
 /**
  * FleetStatsOverlay - Glassmorphic stats panel floating over the map
  *
- * Displays fleet statistics in dark glassmorphic cards on the left side
- * of the map. Cards have pointer-events but the container gaps do not,
+ * Displays fleet statistics in glassmorphic cards on the left side of the map.
+ * Cards adapt to light/dark theme: frosted white glass in light mode, dark
+ * glass in dark mode. Cards have pointer-events but the container gaps do not,
  * so map interaction is preserved between cards.
  */
 import { useFleetStatistics } from '@/hooks/useFleetData';
@@ -56,15 +57,17 @@ export function FleetStatsOverlay() {
         <p className="text-[11px] font-medium uppercase tracking-widest text-[#00A8FF]/70">
           Fleet Overview
         </p>
-        <p className="mt-1 text-4xl font-bold tabular-nums text-white">{stats.totalAssets}</p>
-        <p className="mt-0.5 text-xs text-white/40">Total Fleet Assets</p>
-        <div className="mt-3 flex gap-4 text-[11px] text-white/50">
+        <p className={`mt-1 text-4xl font-bold tabular-nums ${TEXT_PRIMARY}`}>
+          {stats.totalAssets}
+        </p>
+        <p className={`mt-0.5 text-xs ${TEXT_MUTED}`}>Total Fleet Assets</p>
+        <div className={`mt-3 flex gap-4 text-[11px] ${TEXT_DIM}`}>
           <span>
-            <span className="font-semibold text-white/70 tabular-nums">{stats.trailerCount}</span>{' '}
+            <span className={`font-semibold tabular-nums ${TEXT_SEMI}`}>{stats.trailerCount}</span>{' '}
             Trailers
           </span>
           <span>
-            <span className="font-semibold text-white/70 tabular-nums">{stats.dollyCount}</span>{' '}
+            <span className={`font-semibold tabular-nums ${TEXT_SEMI}`}>{stats.dollyCount}</span>{' '}
             Dollies
           </span>
         </div>
@@ -84,9 +87,9 @@ export function FleetStatsOverlay() {
                   style={{ backgroundColor: color }}
                   aria-hidden="true"
                 />
-                <span className="text-white/60">{label}</span>
+                <span className={TEXT_SECONDARY}>{label}</span>
               </div>
-              <span className="font-semibold tabular-nums text-white">{stats[key]}</span>
+              <span className={`font-semibold tabular-nums ${TEXT_PRIMARY}`}>{stats[key]}</span>
             </div>
           ))}
         </div>
@@ -97,13 +100,13 @@ export function FleetStatsOverlay() {
         <p className="mb-2 text-[11px] font-medium uppercase tracking-widest text-[#00A8FF]/70">
           Fleet Utilization
         </p>
-        <p className="text-3xl font-bold tabular-nums text-white">
+        <p className={`text-3xl font-bold tabular-nums ${TEXT_PRIMARY}`}>
           {utilization}
-          <span className="text-lg text-white/50">%</span>
+          <span className={`text-lg ${TEXT_DIM}`}>%</span>
         </p>
-        <p className="mt-0.5 text-xs text-white/40">Active utilization rate</p>
+        <p className={`mt-0.5 text-xs ${TEXT_MUTED}`}>Active utilization rate</p>
         {/* Progress bar */}
-        <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+        <div className={`mt-3 h-1.5 w-full overflow-hidden rounded-full ${BAR_BG}`}>
           <div
             className="h-full rounded-full bg-[#00A8FF] transition-all duration-700"
             style={{ width: `${utilization}%` }}
