@@ -346,9 +346,10 @@ export function FilterSidebar({
   const dragRef = useRef<HTMLDivElement>(null);
   const dragStart = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
 
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent) => {
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent) => {
       e.preventDefault();
+      (e.target as HTMLElement).setPointerCapture(e.pointerId);
       setIsDragging(true);
       dragStart.current = {
         x: e.clientX,
@@ -363,20 +364,20 @@ export function FilterSidebar({
   useEffect(() => {
     if (!isDragging) return;
 
-    const handleMouseMove = (e: MouseEvent) => {
+    const handlePointerMove = (e: PointerEvent) => {
       setPosition({
         x: dragStart.current.posX + (e.clientX - dragStart.current.x),
         y: dragStart.current.posY + (e.clientY - dragStart.current.y),
       });
     };
 
-    const handleMouseUp = () => setIsDragging(false);
+    const handlePointerUp = () => setIsDragging(false);
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('pointermove', handlePointerMove);
+    document.addEventListener('pointerup', handlePointerUp);
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('pointermove', handlePointerMove);
+      document.removeEventListener('pointerup', handlePointerUp);
     };
   }, [isDragging]);
 
@@ -419,7 +420,7 @@ export function FilterSidebar({
         style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
       >
         <button
-          onMouseDown={handleMouseDown}
+          onPointerDown={handlePointerDown}
           onClick={(_e) => {
             // Only open if it wasn't a drag
             if (
@@ -429,7 +430,7 @@ export function FilterSidebar({
               setCollapsed(false);
             }
           }}
-          className="relative flex items-center justify-center size-10 rounded-xl bg-[rgba(0,0,0,0.55)] backdrop-blur-xl border border-white/[0.12] shadow-[0_8px_32px_rgba(0,0,0,0.5)] text-white/60 hover:text-white transition-all duration-200 cursor-grab active:cursor-grabbing"
+          className="relative flex items-center justify-center size-10 rounded-xl bg-[rgba(0,0,0,0.55)] backdrop-blur-xl border border-white/[0.12] shadow-[0_8px_32px_rgba(0,0,0,0.5)] text-white/60 hover:text-white transition-all duration-200 cursor-grab active:cursor-grabbing touch-none"
         >
           <MousePointerClickIcon className="size-5" />
           {activeCount > 0 && (
@@ -451,8 +452,8 @@ export function FilterSidebar({
       <div className="flex flex-col gap-3 bg-[rgba(0,0,0,0.55)] backdrop-blur-xl rounded-xl border border-white/[0.12] px-3 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.5)] min-w-[340px]">
         {/* Header — draggable area */}
         <div
-          onMouseDown={handleMouseDown}
-          className="flex items-center justify-between select-none cursor-grab active:cursor-grabbing"
+          onPointerDown={handlePointerDown}
+          className="flex items-center justify-between select-none cursor-grab active:cursor-grabbing touch-none"
         >
           <div className="flex items-center gap-1.5">
             <GripVerticalIcon className="size-4 text-white/40" />
