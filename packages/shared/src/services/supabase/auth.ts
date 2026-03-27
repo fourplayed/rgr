@@ -151,9 +151,7 @@ export async function signInWithEmailSecure(
   const isLocalDev =
     typeof window !== 'undefined' &&
     (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-  const functionUrl = isLocalDev
-    ? `${config.url}/functions/v1/secure-auth`
-    : '/api/auth';
+  const functionUrl = isLocalDev ? `${config.url}/functions/v1/secure-auth` : '/api/auth';
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
