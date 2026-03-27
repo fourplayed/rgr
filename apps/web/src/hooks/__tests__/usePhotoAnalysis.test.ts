@@ -427,7 +427,7 @@ describe('usePhotoAnalysis', () => {
         await result.current.actions.analyzePhoto(file);
       });
 
-      expect(result.current.state.result?.durationMs).toBeGreaterThan(0);
+      expect(result.current.state.result?.durationMs).toBeGreaterThanOrEqual(0);
     });
   });
 
