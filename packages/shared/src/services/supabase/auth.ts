@@ -143,15 +143,7 @@ export async function signInWithEmailSecure(
   }
 
   const config = getSupabaseConfig();
-
-  // Prefer same-origin proxy (/api/auth) when deployed to Cloudflare Pages.
-  // This avoids cross-origin requests that Cloudflare bot protection may block.
-  // Falls back to direct Supabase Edge Function URL in development or
-  // when the proxy is not available.
-  const isLocalDev =
-    typeof window !== 'undefined' &&
-    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-  const functionUrl = isLocalDev ? `${config.url}/functions/v1/secure-auth` : '/api/auth';
+  const functionUrl = `${config.url}/functions/v1/secure-auth`;
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
@@ -160,18 +152,13 @@ export async function signInWithEmailSecure(
     // Uses raw fetch instead of supabase.functions.invoke() because
     // the user has no session token at login time — the SDK method
     // would attach an empty/invalid Authorization header.
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    // Only send Supabase headers when calling the Edge Function directly
-    if (isLocalDev) {
-      headers['apikey'] = config.anonKey;
-      headers['Authorization'] = `Bearer ${config.anonKey}`;
-    }
-
     const response = await fetch(functionUrl, {
       method: 'POST',
-      headers,
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: config.anonKey,
+        Authorization: `Bearer ${config.anonKey}`,
+      },
       body: JSON.stringify({
         email: credentials.email,
         password: credentials.password,
