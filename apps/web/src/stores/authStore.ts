@@ -30,12 +30,23 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       set({ error: null });
 
-      // Use secure auth (server-side rate limiting) by default; env var allows rollback
-      const loginFn =
-        import.meta.env['VITE_USE_SECURE_AUTH'] !== 'false'
-          ? signInWithEmailSecure
-          : signInWithEmail;
-      const result = await loginFn({ email, password });
+      // Try secure auth first (server-side rate limiting); fall back to direct
+      // Supabase auth if the Edge Function is unavailable or not deployed.
+      const useSecure = import.meta.env['VITE_USE_SECURE_AUTH'] !== 'false';
+      let result = useSecure
+        ? await signInWithEmailSecure({ email, password })
+        : await signInWithEmail({ email, password });
+
+      // If secure auth failed due to service unavailability, fall back to direct auth
+      if (
+        useSecure &&
+        !result.success &&
+        (result.error === 'Authentication service unavailable. Please try again later.' ||
+          result.error === 'Authentication service returned invalid response')
+      ) {
+        console.warn('[Auth] Secure auth unavailable, falling back to direct auth');
+        result = await signInWithEmail({ email, password });
+      }
 
       if (!result.success) {
         console.error('[Auth] Login error:', result.error);
